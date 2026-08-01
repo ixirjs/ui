@@ -8,6 +8,7 @@
 
 	let {
 		class: klass = '',
+		preset = undefined,
 		children = undefined,
 		fallback = {
 			animate: animateCollapsibleBody(),
@@ -16,15 +17,17 @@
 		...restProps
 	}: CollapsibleBodyProps<E, B> = $props();
 
+	const atom = bond?.atom('body');
+
 	const bodyProps = $derived({
-		...bond?.body().spread,
+		preset: preset ?? atom?.preset,
+		...atom?.spread,
 		...restProps
 	});
 </script>
 
 <HtmlAtom
 	{bond}
-	preset="collapsible.body"
 	class={['border-border', '$preset', klass]}
 	{fallback}
 	{...bodyProps}

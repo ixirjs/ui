@@ -11,14 +11,17 @@
 
 	let {
 		class: klass = '',
-		preset = 'stepper.step.indicator',
+		preset = undefined,
 		children = undefined,
 		...restProps
 	}: StepIndicatorProps<E, B> = $props();
 
 
+	const atom = bond.atom('indicator');
+
 	const indicatorProps = $derived({
-		...bond?.indicator().spread,
+		preset: preset ?? atom.preset,
+		...atom?.spread,
 		...restProps
 	});
 
@@ -27,7 +30,6 @@
 
 <Atom
 	{bond}
-	{preset}
 	class={[
 		'flex h-8 w-8 items-center justify-center border-border rounded-full border-2 transition-colors',
 		'transition-all',

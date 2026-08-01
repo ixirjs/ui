@@ -7,14 +7,17 @@
 		class: klass = '',
 		as = 'button',
 		children = undefined,
-		preset = 'accordion.item.header',
+		preset = undefined,
 		...restProps
-	}: AccordionItemHeaderProps = $props();
+	}: AccordionItemHeaderProps<E, B> = $props();
 
 	const bond = AccordionItemBond.get();
 
+	const atom = bond?.atom('header');
+
 	const headerProps = $derived({
-		...bond?.header().spread,
+		preset: preset ?? atom?.preset,
+		...atom?.spread,
 		...restProps
 	});
 </script>
@@ -23,7 +26,6 @@
 <HtmlAtom
 	{as}
 	{bond}
-	{preset}
 	class={[
 		'border-border relative box-border flex w-full cursor-pointer items-center',
 		'$preset',
@@ -32,7 +34,7 @@
 	tabindex={as !== 'button' ? 0 : undefined}
 	{...headerProps}
 >
-	{@render children?.({
-		accordionItem: bond
-	})}
+	{#if bond}
+		{@render children?.({ accordionItem: bond })}
+	{/if}
 </HtmlAtom>

@@ -16,28 +16,32 @@
 			enter: enterAccordionItemBody(),
 			exit: exitAccordionItemBody()
 		},
-		preset = 'accordion.item.body',
+		preset = undefined,
 		...restProps
 	}: AccordionItemBodyProps<E, B> = $props();
 
+	const atom = bond?.atom('body');
+
 	const bodyProps = $derived({
-		...bond?.body().spread,
+		preset: preset ?? atom?.preset,
+		...atom?.spread,
 		...restProps
 	});
+
+	const content = $derived(bond && isOpen ? body: undefined);
 </script>
 
-<!-- TODO: refactor conditional rendering using snippet based -->
- 
-{#if isOpen}
+{#snippet body(accordionItem: AccordionItemBond)}
 	<HtmlAtom
-		{preset}
-		{bond}
+		bond={accordionItem}
 		class={['border-border box-content h-0 opacity-0', '$preset', klass]}
-		onmount={onmount?.bind(bond.state)}
-		ondestroy={ondestroy?.bind(bond.state)}
+		onmount={onmount?.bind(accordionItem.state)}
+		ondestroy={ondestroy?.bind(accordionItem.state)}
 		{fallback}
 		{...bodyProps}
 	>
-		{@render children?.({ accordionItem: bond })}
+		{@render children?.({ accordionItem })}
 	</HtmlAtom>
-{/if}
+{/snippet}
+
+{@render content?.(bond!)}

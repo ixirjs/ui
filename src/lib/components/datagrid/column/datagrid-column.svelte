@@ -1,7 +1,5 @@
 <script lang="ts" generics="T = unknown, E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { nanoid } from 'nanoid';
-	import { untrack } from 'svelte';
-	import { defineProperty, defineState } from '$svelte-atoms/core/utils';
+	import { bindBond } from '$svelte-atoms/core/shared/bind-bond.svelte';
 	import { HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
 	import {
 		DataGridColumnBond,
@@ -9,41 +7,47 @@
 		type DataGridColumnBondProps
 	} from './bond.svelte';
 	import type { DatagridColumnProps } from '../types';
-
+	
+	const ID = $props.id();
+	
 	let {
 		class: klass = '',
-		id = nanoid(),
+		preset = undefined,
+		id = ID,
 		width = '1fr',
 		direction = 'asc',
 		hidden = false,
 		sortable = undefined,
-		factory = _factory,
+		factory = defaultFactory,
 		children = undefined,
 		onclick = undefined,
 		onsort = undefined,
 		...restProps
 	}: DatagridColumnProps<T, E, B> = $props();
 
-	const bond = untrack(() => factory()).share();
+	const binding = bindBond<DataGridColumnBond<T>>(
+		(props) => factory(props),
+		{
+			id: () => id,
+			width: () => width,
+			sortable: () => sortable,
+			hidden: () => hidden,
+			direction: () => direction
+		},
+		{ preset: () => preset }
+	);
+	const bond = binding.bond.share();
 
 	const isSortable = $derived(bond.state.isSortable);
-	const columnProps = $derived({ ...bond.root().spread, ...bond.state.props, ...restProps });
+	const columnProps = $derived({ ...binding.props, ...bond.state.props, ...restProps });
 	// const directionAsNumber = $derived(+(direction === 'asc'));
 
 	const unmount = bond.mount();
 
 	$effect(() => unmount);
 
-	function _factory(): DataGridColumnBond<T> {
-		const bondProps = defineState<DataGridColumnBondProps>([
-			defineProperty('id', () => id),
-			defineProperty('width', () => width),
-			defineProperty('sortable', () => sortable),
-			defineProperty('hidden', () => hidden),
-			defineProperty('direction', () => direction)
-		]);
-
-		const bondState = new DataGridColumnBondState(() => bondProps);
+	function defaultFactory(props: DataGridColumnBondProps): DataGridColumnBond<T> {
+		const bondState = new DataGridColumnBondState(props);
 		return new DataGridColumnBond<T>(bondState);
 	}
 
@@ -82,9 +86,8 @@
 {#if !hidden}
 	<HtmlAtom
 		{bond}
-			preset="datagrid.column"
 		class={[
-			'border-border flex cursor-pointer py-1 font-medium select-none',
+			'flex cursor-pointer py-1 font-medium select-none',
 			!!sortable && 'sortable',
 			'$preset',
 			klass

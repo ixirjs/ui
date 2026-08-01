@@ -9,15 +9,17 @@
 		class: klass = '',
 		as = 'p' as E,
 		children = undefined,
+		preset = undefined,
 		...restProps
 	}: FieldTextProps<E, B> = $props();
+
+	const helperTextProps = $derived({ preset: preset ?? 'field.helper-text', ...restProps });
 </script>
 
 <HtmlAtom
 	{as}
-	preset="field.helper-text"
 	class={['text-muted-foreground mt-1 text-xs', '$preset', klass]}
-	{...restProps}
+	{...helperTextProps}
 >
 	{@render children?.({ field: bond })}
 </HtmlAtom>

@@ -13,17 +13,21 @@
 	let {
 		class: klass = '',
 		as = 'button' as T,
-		preset = 'select.trigger',
+		preset = undefined,
 		children = undefined,
 		...restProps
 	}: SelectTriggerProps<T, B> = $props();
+
+	const atom = bond.atom('trigger');
+
+	const presentation = $derived({ preset: preset ?? atom.preset });
 </script>
 
 <Trigger
 	{as}
 	{bond}
-	preset={preset}
 	class={['border-border relative flex h-auto min-h-10 flex-wrap items-center', '$preset', klass]}
+	{...presentation}
 	{...restProps}
 >
 	{@render children?.({ select: bond, dropdown: bond })}

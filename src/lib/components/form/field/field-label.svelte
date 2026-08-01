@@ -7,16 +7,20 @@
 
 	let {
 		class: klass = '',
+		preset = undefined,
 		children = undefined,
 		...restProps
 	}: FieldLabelProps<E, B> = $props();
 
+	const atom = bond?.atom('label');
+
 	const labelProps = $derived({
-		...(bond?.label().spread ?? {}),
+		preset: preset ?? atom?.preset,
+		...(atom?.spread ?? {}),
 		...restProps
 	});
 </script>
 
-<HtmlAtom preset="field.label" class={['flex', '$preset', klass]} {...labelProps}>
+<HtmlAtom class={['flex', '$preset', klass]} {...labelProps}>
 	{@render children?.({ field: bond })}
 </HtmlAtom>

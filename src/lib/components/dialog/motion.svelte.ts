@@ -1,57 +1,6 @@
 import { DURATION } from '$svelte-atoms/core/shared';
 import { animate, easeInOut } from 'motion';
 import { DialogBond } from './bond.svelte';
-import { promiseWithResolvers } from '$svelte-atoms/core/utils/promise.svelte';
-
-type AnimateDialogRootParams = {
-	duration?: number;
-	delay?: number;
-	ease?: string;
-};
-
-export function animateDialogRoot(params: AnimateDialogRootParams = {}) {
-	const { duration = DURATION.smooth / 1000, delay = 0, ease = 'anticipate' } = params;
-
-	return (node: HTMLElement) => {
-		const bond = DialogBond.get();
-		const isOpen = bond?.state.props.open ?? false;
-
-		if (node instanceof HTMLDialogElement) {
-			node.show();
-		}
-
-		const promise = bond?.animationPromises.content;
-
-		if (!isOpen && promise) {
-			promise.then(({ duration: dr = 0, delay: dl = 0 }) => {
-				animate(
-					node,
-					{
-						opacity: +isOpen
-					},
-					{
-						duration,
-						delay:
-							duration + delay < dr + dl ? delay + Math.abs(dr + dl - (duration + delay)) : delay,
-						ease
-					}
-				);
-			});
-		} else {
-			animate(
-				node,
-				{
-					opacity: +isOpen
-				},
-				{
-					duration,
-					delay,
-					ease
-				}
-			);
-		}
-	};
-}
 
 type AnimateDialogContentParams = {
 	duration?: number;
@@ -67,16 +16,6 @@ export function animateDialogContent(params: AnimateDialogContentParams = {}) {
 	return (node: HTMLElement) => {
 		// Read bond inside the callback — safe at any call site, not just during component init
 		const bond = DialogBond.get();
-
-		const { resolve, promise } = promiseWithResolvers<{
-			duration: number;
-			delay: number;
-			controller?: any;
-		}>();
-
-		if (bond) {
-			bond.animationPromises.content = promise;
-		}
 
 		const isOpen = bond?.state.props.open ?? false;
 
@@ -105,7 +44,7 @@ export function animateDialogContent(params: AnimateDialogContentParams = {}) {
 
 			node.style.transformOrigin = `${transformOriginX} top`;
 
-			const c = animate(
+			animate(
 				node,
 				{
 					scaleX: isOpen ? [scaleX, 1] : [1, scaleX],
@@ -122,8 +61,6 @@ export function animateDialogContent(params: AnimateDialogContentParams = {}) {
 			);
 
 			mounted = true;
-
-			resolve({ duration, delay, controller: c });
 		} else {
 			animate(
 				node,

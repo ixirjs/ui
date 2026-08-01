@@ -1,11 +1,11 @@
-import { getContext, setContext, untrack } from 'svelte';
-import { AccordionBond, AccordionState } from '../bond.svelte';
+import { AccordionBond, type IAccordion } from '../bond.svelte';
+import { BondState, BondAtom, type BondStateProps } from '$svelte-atoms/core/shared/bond.svelte';
+import { defineBond, type BondOf, type ViewOf } from '$svelte-atoms/core/shared';
 import {
-	Bond,
-	BondState,
-	BondAtom,
-	type BondStateProps
-} from '$svelte-atoms/core/shared/bond.svelte';
+	createDisclosure,
+	type Disclosure
+} from '$svelte-atoms/core/shared/capabilities/disclosure.svelte';
+import { triggerContentLink } from '$svelte-atoms/core/shared/capabilities/relationship.svelte';
 import { isBrowser } from '$svelte-atoms/core/utils/dom.svelte';
 
 export type AccordionItemBondProps = BondStateProps & {
@@ -13,6 +13,7 @@ export type AccordionItemBondProps = BondStateProps & {
 	disabled: boolean;
 	multiple: boolean;
 	collapsible: boolean;
+	data?: unknown;
 };
 
 export type AccordionItemBondElements = {
@@ -22,8 +23,11 @@ export type AccordionItemBondElements = {
 	indicator: HTMLElement;
 };
 
-export class AccordionItemRootAtom extends BondAtom<AccordionItemBond> {
-	constructor(bond: AccordionItemBond) {
+// Bond view the item atoms type against — breaks the atom↔bond cycle via defineBond (§12.2).
+type AccordionItemBondView = ViewOf<AccordionItemBondState>;
+
+export class AccordionItemRootAtom extends BondAtom<AccordionItemBondView> {
+	constructor(bond: AccordionItemBondView) {
 		super(bond, 'root');
 	}
 
@@ -32,27 +36,31 @@ export class AccordionItemRootAtom extends BondAtom<AccordionItemBond> {
 			...super.attrs
 		};
 	}
+
+		// Register into parent accordion's item collection on mount; cleanup unregisters on destroy.
+	// Attached from the atom (not state.mount()) so the collection holds the real bond.
+	override onmount() {
+		// `this.bond` is the view; the runtime instance is the full bond the collection holds.
+		return this.bond.state.parent?.attachItem(this.bond.id, this.bond as AccordionItemBond);
+	}
 }
 
-export class AccordionItemHeaderAtom extends BondAtom<AccordionItemBond> {
-	constructor(bond: AccordionItemBond) {
+export class AccordionItemHeaderAtom extends BondAtom<AccordionItemBondView> {
+	constructor(bond: AccordionItemBondView) {
 		super(bond, 'header');
 	}
 
 	override get attrs() {
 		const isButtonElement = isBrowser() ? this.element instanceof HTMLButtonElement : false;
 
-		const props = untrack(() => this.bond.state?.props);
+		const props = this.bond.state?.props;
 		const isDisabled = props?.disabled ?? false;
-		const isOpen = this.bond.state?.isOpen ?? false;
 		const isActive = this.bond.state?.isActive ?? false;
 
+		// aria-controls + aria-expanded come from the trigger↔content link (role:'trigger').
 		return {
 			...super.attrs,
-			'aria-controls': `accordion-body-${this.bond.id}`,
-			'data-kind': 'accordion-header',
 			'aria-disabled': isDisabled,
-			'aria-expanded': isOpen,
 			'aria-selected': isActive,
 			role: isButtonElement ? undefined : 'button',
 			tabindex: isActive ? 0 : -1,
@@ -61,13 +69,13 @@ export class AccordionItemHeaderAtom extends BondAtom<AccordionItemBond> {
 	}
 
 	override get handlers() {
-		const props = untrack(() => this.bond.state?.props);
-		const isDisabled = props?.disabled ?? false;
-		const isMultiple = props?.multiple ?? false;
-		const isCollapsible = props?.collapsible ?? false;
-
 		return {
 			onpointerdown: (ev: PointerEvent) => {
+				const props = this.bond.state?.props;
+				const isDisabled = props?.disabled ?? false;
+				const isMultiple = props?.multiple ?? false;
+				const isCollapsible = props?.collapsible ?? false;
+
 				if (isDisabled) return;
 				if (ev.defaultPrevented) return;
 
@@ -75,9 +83,9 @@ export class AccordionItemHeaderAtom extends BondAtom<AccordionItemBond> {
 					this.bond.state.toggle();
 				} else {
 					if (isCollapsible) {
-						const values = untrack(() => this.bond.state.accordion?.props)?.values ?? [];
+						const values = this.bond.state.parent?.values ?? [];
 						const isActive = this.bond.state.isActive;
-						this.bond.state.accordion?.close(values);
+						this.bond.state.parent?.close([...values]);
 						if (!isActive) {
 							this.bond.state.open();
 						}
@@ -90,23 +98,22 @@ export class AccordionItemHeaderAtom extends BondAtom<AccordionItemBond> {
 	}
 }
 
-export class AccordionItemBodyAtom extends BondAtom<AccordionItemBond> {
-	constructor(bond: AccordionItemBond) {
+export class AccordionItemBodyAtom extends BondAtom<AccordionItemBondView> {
+	constructor(bond: AccordionItemBondView) {
 		super(bond, 'body');
 	}
 
 	override get attrs() {
+		// aria-labelledby + role=region come from the trigger↔content link (role:'content').
 		return {
 			...super.attrs,
-			'aria-labelledby': `accordion-header-${this.bond.id}`,
-			'aria-hidden': !this.bond.state?.isOpen,
-			role: 'region'
+			'aria-hidden': !this.bond.state?.isOpen
 		};
 	}
 }
 
-export class AccordionItemIndicatorAtom extends BondAtom<AccordionItemBond> {
-	constructor(bond: AccordionItemBond) {
+export class AccordionItemIndicatorAtom extends BondAtom<AccordionItemBondView> {
+	constructor(bond: AccordionItemBondView) {
 		super(bond, 'indicator');
 	}
 
@@ -118,58 +125,49 @@ export class AccordionItemIndicatorAtom extends BondAtom<AccordionItemBond> {
 	}
 }
 
-export class AccordionItemBond extends Bond<
-	AccordionItemBondProps,
-	AccordionItemBondState,
-	AccordionItemBondElements
-> {
-	constructor(state: AccordionItemBondState) {
-		super(state, 'accordion-item');
+// AccordionItemBond via defineBond (§6). header/body carry trigger↔content roles;
+// preset path is `accordion.item` (dotted), distinct from the DOM namespace `accordion-item`.
+export const AccordionItemBond = defineBond<
+	{
+		root: typeof AccordionItemRootAtom;
+		header: { atom: typeof AccordionItemHeaderAtom; role: 'trigger' };
+		body: { atom: typeof AccordionItemBodyAtom; role: 'content' };
+		indicator: typeof AccordionItemIndicatorAtom;
+	},
+	AccordionItemBondState
+>({
+	name: 'accordion-item',
+	preset: 'accordion.item',
+	atoms: {
+		root: AccordionItemRootAtom,
+		header: { atom: AccordionItemHeaderAtom, role: 'trigger' },
+		body: { atom: AccordionItemBodyAtom, role: 'content' },
+		indicator: AccordionItemIndicatorAtom
 	}
+});
 
-	share() {
-		return AccordionItemBond.set(this) as this;
-	}
-
-	/** Handle for granular access to root attrs and attachment */
-	root() {
-		return this.atom('root', () => new AccordionItemRootAtom(this));
-	}
-
-	/** Handle for granular access to header attrs, handlers, and attachment */
-	header() {
-		return this.atom('header', () => new AccordionItemHeaderAtom(this));
-	}
-
-	/** Handle for granular access to body attrs and attachment */
-	body() {
-		return this.atom('body', () => new AccordionItemBodyAtom(this));
-	}
-
-	/** Handle for granular access to indicator attrs and attachment */
-	indicator() {
-		return this.atom('indicator', () => new AccordionItemIndicatorAtom(this));
-	}
-
-	static get(): AccordionItemBond | undefined {
-		return getContext(AccordionItemBond.CONTEXT_KEY);
-	}
-	static set(bond: AccordionItemBond): AccordionItemBond {
-		return setContext(AccordionItemBond.CONTEXT_KEY, bond);
-	}
-}
+// Instance type of the accordion-item bond — paired with the const above.
+export type AccordionItemBond = BondOf<typeof AccordionItemBond>;
 
 export class AccordionItemBondState extends BondState<AccordionItemBondProps> {
-	static CONTEXT_KEY = '@atoms/context/accordion/item';
+	#parent: IAccordion | undefined;
 
-	#accordion?: AccordionState;
+	// Disclosure over the item's open state, driven by the parent accordion's selection.
+	#disclosure: Disclosure = createDisclosure({
+		get: () => this.isOpen ?? false,
+		set: (open) => (open ? this.open() : this.close())
+	});
 
-	constructor(props: () => AccordionItemBondProps) {
+	constructor(props: AccordionItemBondProps) {
 		super(props);
-		this.#accordion = AccordionBond.get()?.state;
-		if (!this.#accordion) {
+		this.#parent = AccordionBond.get()?.state;
+		if (!this.#parent) {
 			throw new Error('AccordionItemAtom must be used within an AccordionAtom context.');
 		}
+		// trigger↔content a11y link (§11.3): header (role:'trigger') gets aria-expanded +
+		// aria-controls; body (role:'content') gets aria-labelledby + role=region. Ids
+		// resolved via the role registry, replacing the hand-wired `accordion-*-${id}`.
+		this.capability(triggerContentLink(this.#disclosure, { contentRole: 'region' }));
 	}
 
 	get id() {
@@ -177,44 +175,33 @@ export class AccordionItemBondState extends BondState<AccordionItemBondProps> {
 	}
 
 	get accordionId() {
-		return this.accordion?.id;
+		return this.parent?.id;
 	}
 
 	get isOpen() {
-		return this.accordion?.props.values.includes(this.id);
+		return this.parent?.values.includes(this.id);
 	}
 
 	get isActive() {
 		return (
-			!this.props.disabled &&
-			!this.accordion?.props?.disabled &&
-			this.accordion?.props?.values.includes(this.id)
+			!this.props.disabled && !this.parent?.isDisabled && this.parent?.values.includes(this.id)
 		);
 	}
 
-	get accordion() {
-		return this.#accordion;
-	}
-
-	mount() {
-		this.accordion?.mountItem(this.id, {});
-
-		return this.unmount;
-	}
-
-	unmount() {
-		this.accordion?.unmountItem(this.id);
+	// The narrow parent contract this item depends on (not the whole bond).
+	get parent(): IAccordion | undefined {
+		return this.#parent;
 	}
 
 	open() {
-		this.accordion?.open([this.id]);
+		this.parent?.open([this.id]);
 	}
 
 	close() {
-		this.accordion?.close([this.id]);
+		this.parent?.close([this.id]);
 	}
 
 	toggle() {
-		this.accordion?.toggle(this.id);
+		this.parent?.toggle(this.id);
 	}
 }

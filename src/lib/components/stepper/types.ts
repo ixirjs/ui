@@ -17,70 +17,42 @@ export interface StepperRootProps<
 	E extends keyof HTMLElementTagNameMap = 'div',
 	B extends Base = Base
 > extends HtmlAtomProps<E, B, StepperChildren> {
-	/**
-	 * The active step index (0-based)
-	 * @bindable
-	 */
+	// Active step index (0-based, bindable).
 	step?: number;
 
-	/**
-	 * Whether to enforce linear progression (users can only go to next/previous steps)
-	 * @default false
-	 */
+	// Whether to enforce linear progression (only next/previous allowed). Default false.
 	linear?: boolean;
 
-	/**
-	 * Whether the stepper is disabled
-	 * @default false
-	 */
+	// Whether the stepper is disabled. Default false.
 	disabled?: boolean;
 
-	/**
-	 * Custom factory for creating stepper bond
-	 */
-	factory?: Factory<StepperBond>;
+	// Layout orientation. Default 'horizontal'.
+	orientation?: 'horizontal' | 'vertical';
 
-	/**
-	 * Child render function
-	 */
+	// Custom factory for creating the stepper bond.
+	factory?: Factory<StepperBond>;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface StepperHeaderProps<
 	E extends keyof HTMLElementTagNameMap = 'div',
 	B extends Base = Base
-> extends HtmlAtomProps<E, B, StepperChildren> {
-	/**
-	 * Child render function
-	 */
-}
+> extends HtmlAtomProps<E, B, StepperChildren> {}
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface StepperBodyProps<
 	E extends keyof HTMLElementTagNameMap = 'div',
 	B extends Base = Base
-> extends HtmlAtomProps<E, B, StepperChildren> {
-	/**
-	 * Child render function
-	 */
-}
+> extends HtmlAtomProps<E, B, StepperChildren> {}
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface StepperFooterProps<
 	E extends keyof HTMLElementTagNameMap = 'div',
 	B extends Base = Base
-> extends HtmlAtomProps<E, B, StepperChildren> {
-	/**
-	 * Child render function
-	 */
-}
+> extends HtmlAtomProps<E, B, StepperChildren> {}
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface StepperContentProps<
 	E extends keyof HTMLElementTagNameMap = 'div',
 	B extends Base = Base
-> extends HtmlAtomProps<E, B, StepperChildren> {
-	/**
-	 * Child render function
-	 */
-}
+> extends HtmlAtomProps<E, B, StepperChildren> {}

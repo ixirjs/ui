@@ -32,6 +32,8 @@ export interface ComboboxRootProps<
 	placements?: string[];
 	placement?: string;
 	offset?: number;
+	// Two-way-bindable search/filter text (bind:query). Bound by createBondFilter; cleared by Escape (ClearThenClose).
+	query?: string;
 	factory?: Factory<ComboboxBond>;
 }
 

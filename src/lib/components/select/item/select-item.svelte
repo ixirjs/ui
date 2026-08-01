@@ -1,5 +1,4 @@
 <script lang="ts" generics="D">
-	import { nanoid } from 'nanoid';
 	import { SelectItemAtom, type SelectItemAtomProps } from './bond.svelte';
 	import type { SelectItemProps } from './types';
 	import { SelectBond } from '../bond.svelte';
@@ -11,24 +10,32 @@
 		throw new Error('<SelectItem> must be used within a <Select>.');
 	}
 
+	const ID = $props.id();
+
 	let {
 		class: klass = '',
-		preset = 'select.item',
-		value = nanoid(),
+		preset = undefined,
+		id=ID,
+		value,
 		data = undefined,
 		children = undefined,
 		onclick = undefined as ((ev: MouseEvent) => void) | undefined,
 		...restProps
 	}: SelectItemProps<D> = $props();
 
+	// `atom`'s name is value-specific (`item-<value>`), so read the shared
+	// `select.item` preset from the bond's canonical item atom instead.
+	const presentation = $derived({ preset: preset ?? select.item().preset });
+
 	// Create reactive props object for the atom
 	const itemProps = $derived({
+		id,
 		value,
 		data
 	} as SelectItemAtomProps<D>);
 
 	// Create the atom instance
-	const atom = new SelectItemAtom<D>(() => itemProps, select);
+	const atom = new SelectItemAtom<D>(itemProps, select);
 
 	// Derived reactive properties
 	const isHighlighted = $derived(atom.isHighlighted);
@@ -42,10 +49,10 @@
 
 	// Register item with select state and handle mounting
 	$effect.pre(() => {
-		select.state.registerItem(value, atom);
+		select.state.registerItem(ID, atom);
 
 		return () => {
-			select.state.unregisterItem(value);
+			select.state.unregisterItem(ID);
 		};
 	});
 
@@ -64,7 +71,6 @@
 </script>
 
 <List.Item
-	{preset}
 	class={[
 		'cursor-pointer',
 		isHighlighted && 'bg-foreground/5',
@@ -74,6 +80,7 @@
 	]
 		.filter(Boolean)
 		.join(' ')}
+	{...presentation}
 	{...itemAttrs}
 	onclick={handleClick}
 >

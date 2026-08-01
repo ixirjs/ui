@@ -1,23 +1,4 @@
-/**
- * A rune that tracks the user's motion preferences via the `prefers-reduced-motion` media query.
- *
- * @returns An object with a `current` getter that returns `true` if the user prefers reduced motion, `false` otherwise.
- *
- * @example
- * ```svelte
- * <script>
- *   import { reducedMotion } from '@svelte-atoms/core';
- *
- *   const motion = reducedMotion();
- * </script>
- *
- * {#if motion.current}
- *   <div>Animations disabled</div>
- * {:else}
- *   <div class="animated">Animations enabled</div>
- * {/if}
- * ```
- */
+// Rune that tracks prefers-reduced-motion. Returns { current: boolean }.
 export function reducedMotion() {
 	let prefersReduced = $state<boolean>(false);
 

@@ -8,56 +8,27 @@ export type DrawerSide = 'left' | 'right' | 'top' | 'bottom';
 type EasingOption = Easing | Easing[] | Spring;
 
 type AnimateDrawerContentParams = {
-	/** Animation duration in seconds (default: 0.3) */
+	// Animation duration in seconds (default: 0.3)
 	duration?: number;
-	/** Delay before animation starts in seconds (default: 0) */
+	// Delay before animation starts in seconds (default: 0)
 	delay?: number;
-	/** Easing for open animation (default: smooth deceleration) */
+	// Easing for open animation (default: smooth deceleration)
 	easeOpen?: EasingOption;
-	/** Easing for close animation (default: snappy acceleration) */
+	// Easing for close animation (default: snappy acceleration)
 	easeClose?: EasingOption;
-	/** Easing override for both open/close */
+	// Easing override for both open/close
 	ease?: EasingOption;
-	/** Use spring physics for natural motion (default: false) */
+	// Use spring physics for natural motion (default: false)
 	spring?: boolean;
-	/** Spring stiffness (default: 300) */
+	// Spring stiffness (default: 300)
 	stiffness?: number;
-	/** Spring damping (default: 30) */
+	// Spring damping (default: 30)
 	damping?: number;
-	/** Disable pointer events during animation (default: true) */
+	// Disable pointer events during animation (default: true)
 	inert?: boolean;
 };
 
-/**
- * Modern drawer animation with smooth sliding and subtle fade
- * 
- * Features:
- * - Smooth directional slide from edge
- * - Subtle opacity fade (0.3 → 1) for depth
- * - Optimized easing curves for natural feel
- * - Optional spring physics
- * - Proper inert handling during animation
- * - Reads 'side' from Drawer.Root bond automatically
- * 
- * Improvements over old version:
- * - Added opacity fade for better visual hierarchy
- * - Smoother easing curves (custom cubic-bezier)
- * - Optional spring physics for bouncy feel
- * - Better duration defaults (0.3s vs 0.5s)
- * - Cleaner inert management
- * - Auto-detects side from bond (no manual prop needed)
- * 
- * @example
- * ```svelte
- * <Drawer.Root side="right">
- *   <Drawer.Content animate={animateDrawerContent()}>
- * </Drawer.Root>
- * 
- * <Drawer.Root side="left">
- *   <Drawer.Content animate={animateDrawerContent({ spring: true })}>
- * </Drawer.Root>
- * ```
- */
+// Drawer content animation: directional slide from edge + opacity fade. Auto-reads side from bond; optional spring physics.
 export function animateDrawerContent(params: AnimateDrawerContentParams = {}) {
 	const {
 		duration = 0.3,
@@ -72,10 +43,10 @@ export function animateDrawerContent(params: AnimateDrawerContentParams = {}) {
 	} = params;
 
 	const bond = untrack(() => DrawerBond.get());
-	
+
 	// Read side from bond (set in Drawer.Root)
 	const side = bond?.state.props.side ?? 'right';
-	
+
 	const position = getSidePosition(side);
 	const hidden = getHiddenTransform(side);
 
@@ -149,10 +120,7 @@ export function animateDrawerContent(params: AnimateDrawerContentParams = {}) {
 	};
 }
 
-/**
- * Returns the hidden (offscreen) translate values for each side.
- * The panel slides in from its edge — e.g. left panel starts at -100% x.
- */
+// Returns offscreen translate values per side (e.g. left → -100% x).
 function getHiddenTransform(side: DrawerSide): { x: string; y: string } {
 	switch (side) {
 		case 'left':
@@ -166,9 +134,7 @@ function getHiddenTransform(side: DrawerSide): { x: string; y: string } {
 	}
 }
 
-/**
- * Returns the CSS positioning properties to anchor the panel to its side.
- */
+// Returns CSS positioning properties to anchor the panel to its side.
 function getSidePosition(
 	side: DrawerSide
 ): Partial<Record<'top' | 'bottom' | 'left' | 'right' | 'height' | 'width', string>> {
@@ -185,19 +151,15 @@ function getSidePosition(
 }
 
 type AnimateDrawerRootParams = {
-	/** Animation duration in seconds (default: 0.3) */
+	// Animation duration in seconds (default: 0.3)
 	duration?: number;
-	/** Delay before animation starts in seconds (default: 0) */
+	// Delay before animation starts in seconds (default: 0)
 	delay?: number;
-	/** Easing function (default: smooth in-out) */
+	// Easing function (default: smooth in-out)
 	ease?: EasingOption;
 };
 
-/**
- * Backdrop/overlay fade animation for drawer
- * 
- * Fades the backdrop in/out smoothly when drawer opens/closes
- */
+// Fades the drawer backdrop in/out when drawer opens/closes.
 export function animateDrawerRoot(params: AnimateDrawerRootParams = {}) {
 	const { duration = 0.3, delay = 0, ease = [0.16, 1, 0.3, 1] } = params;
 

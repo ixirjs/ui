@@ -9,14 +9,17 @@
 	const bond = DrawerBond.get();
 
 	let {
-		class: klass = '',
+		preset = undefined,
 		as = 'p' as E,
 		children,
 		...restProps
 	}: SlideoverDescriptionProps<E, B> & HTMLAttributes<Element> = $props();
 
+	const atom = bond?.description();
+
 	const descriptionProps = $derived({
-		...bond?.description().spread,
+		preset: preset ?? atom?.preset,
+		...atom?.spread,
 		...restProps
 	});
 </script>
@@ -24,8 +27,6 @@
 <HtmlAtom
 	{as}
 	{bond}
-	preset="drawer.description"
-	class={['border-border', '$preset', klass]}
 	{...descriptionProps}
 >
 	{@render children?.({ drawer: bond })}

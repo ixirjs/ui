@@ -1,5 +1,5 @@
 <script lang="ts" generics="T">
-	import { defineProperty, defineState } from '$svelte-atoms/core/utils';
+	import { bindBond } from '$svelte-atoms/core/shared';
 	import { DropdownBond, DropdownBondState, type DropdownStateProps } from './bond.svelte';
 	import type { DropdownRootProps } from './types';
 
@@ -15,53 +15,39 @@
 		placement = 'bottom-start',
 		offset = 1,
 		keys = [],
-		factory = _factory,
+		factory = defaultFactory,
 		children = undefined,
 		onquerychange = undefined,
 		...restProps
 	}: DropdownRootProps<T> = $props();
 
-	const bondProps = defineState<DropdownStateProps>(
-		[
-			defineProperty(
-				'open',
-				() => open,
+	const binding = bindBond<DropdownBond>(
+		(props) => factory(props),
+		{
+			open: [() => open, (v) => { open = v; }],
+			// Component is generic over `T`; the bond's props are string-keyed — bridge with casts.
+			values: [
+				() => (multiple ? values : ([value].filter(Boolean) as T[])) as DropdownStateProps['values'],
 				(v) => {
-					open = v;
+					values = v as T[];
+					value = v?.[0] as T;
 				}
-			),
-			defineProperty(
-				'values',
-				() => (multiple ? values : [value].filter(Boolean) as T[]),
-				(v) => {
-					values = v;
-					value = v[0];
-				}
-			),
-			defineProperty(
-				'label',
-				() => label,
-				(v) => (label = v)
-			),
-			defineProperty(
-				'labels',
-				() => labels,
-				(v) => (labels = v)
-			),
-			defineProperty('multiple', () => multiple),
-			defineProperty('disabled', () => disabled),
-			defineProperty('placement', () => placement),
-			defineProperty('offset', () => offset),
-			defineProperty('placements', () => placements ?? []),
-			defineProperty('keys', () => keys ?? []),
-			defineProperty('rest', () => restProps)
-		],
-		() => ({})
+			],
+			label: [() => label, (v) => (label = v)],
+			labels: [() => labels, (v) => (labels = v)],
+			multiple: () => multiple,
+			disabled: () => disabled,
+			placement: () => placement as DropdownStateProps['placement'],
+			offset: () => offset,
+			placements: () => (placements ?? []) as DropdownStateProps['placements'],
+			keys: () => keys ?? [],
+			rest: () => restProps
+		}
 	);
-	const bond = factory(bondProps).share();
+	const bond = binding.bond.share();
 
-	function _factory(props: typeof bondProps) {
-		const bondState = new DropdownBondState(() => props);
+	function defaultFactory(props: DropdownStateProps) {
+		const bondState = new DropdownBondState(props);
 		return new DropdownBond(bondState);
 	}
 

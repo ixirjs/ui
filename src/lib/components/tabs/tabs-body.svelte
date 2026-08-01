@@ -15,12 +15,15 @@
 		class: klass = '',
 		as = 'div' as E,
 		children,
-		preset = 'tabs.body' as const,
+		preset = undefined,
 		...restProps
 	}: TabsBodyProps<E, B> = $props();
 
+	const atom = bond.atom('body');
+
 	const bodyProps = $derived({
-		...bond?.body().spread,
+		preset: preset ?? atom?.preset,
+		...atom?.spread,
 		...restProps
 	});
 </script>
@@ -28,9 +31,8 @@
 <Stack.Root
 	value={value}
 	{bond}
-	{preset}
 	{as}
-	class={['tabs-body border-border relative flex-1 flex flex-col', '$preset', klass]}
+	class={['tabs-body relative flex-1 flex flex-col', '$preset', klass]}
 	{...bodyProps}
 >
 	{@render children?.({ tabs: bond })}

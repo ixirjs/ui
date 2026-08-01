@@ -11,14 +11,17 @@
 
 	let {
 		class: klass = '',
-		preset = 'stepper.step.header',
+		preset = undefined,
 		children = undefined,
 		...restProps
 	}: StepHeaderProps<E, B> = $props();
 
 
+	const atom = bond.atom('header');
+
 	const headerProps = $derived({
-		...bond?.header().spread,
+		preset: preset ?? atom.preset,
+		...atom?.spread,
 		...restProps
 	});
 </script>
@@ -26,7 +29,6 @@
 <Atom
 	as="div"
 	{bond}
-	{preset}
 	class={['font-medium text-sm flex flex-col', '$preset', klass]}
 	{...headerProps}
 >

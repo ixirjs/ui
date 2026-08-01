@@ -12,8 +12,11 @@
 
 	let {
 		class: klass = '',
+		preset = undefined,
 		...restProps
 	} = $props();
+
+	const sortIconProps = $derived({ preset: preset ?? 'datagrid.column-sort-icon', ...restProps });
 
 	function _animate(node: HTMLElement) {
 		motion(
@@ -27,12 +30,11 @@
 {#if !!isSortable}
 	<HtmlAtom
 		{bond}
-			preset="datagrid.column-sort-icon"
 		class={['border-border', '$preset', klass]}
 		fallback={{
 			animate: _animate,
 		}}
-		{...restProps}
+		{...sortIconProps}
 	>
 		<Icon>
 			<IconArrowDown />

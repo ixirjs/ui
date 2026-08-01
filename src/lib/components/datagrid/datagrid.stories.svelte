@@ -51,7 +51,7 @@
 	{#snippet template()}
 		<DataGridCmp.Root bind:values {@attach datagridContainer.attach}>
 			<DataGridCmp.Header>
-				<DataGridCmp.Row header>
+				<DataGridCmp.Row>
 					<DataGridCmp.Column width="auto">
 						<DataGridCmp.Checkbox />
 					</DataGridCmp.Column>
@@ -131,7 +131,7 @@
 		}}
 	>
 		<DataGridCmp.Header class="h-min border-x-0 border-t-0">
-			<DataGridCmp.Row class="h-min" header>
+			<DataGridCmp.Row class="h-min">
 				<DataGridCmp.Column width="44px" />
 				<DataGridCmp.Column width="auto" class="pl-4">SKU Code</DataGridCmp.Column>
 				<DataGridCmp.Column width="auto">Store</DataGridCmp.Column>

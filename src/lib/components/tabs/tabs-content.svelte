@@ -6,15 +6,15 @@
 	const bond = TabsBond.get();
 
 	let {
-		preset = 'tabs.content' as const,
+		preset = undefined,
 		...restProps
 	}: TabsContentProps<E, B> = $props();
-	
+
 	const value = $derived(bond?.state?.props.value);
 	const items = $derived(Array.from(bond?.state?.tabContents ?? []));
 
 	const contentProps = $derived({
-		preset,
+		preset: preset ?? 'tabs.content',
 		...restProps
 	});
 </script>

@@ -12,11 +12,17 @@
 
 	let {
 		class: klass = '',
+		preset = undefined,
 		as = 'button' as E,
 		children = undefined,
 		onclick = undefined,
 		...restProps
 	}: DialogCloseButtonProps<E, B> = $props();
+
+	const closeProps = $derived({
+		preset: preset ?? 'dialog.close-button',
+		...restProps
+	});
 
 	function onclick_(ev: MouseEvent) {
 		onclick?.(ev);
@@ -31,10 +37,9 @@
 <HtmlAtom
 	{as}
 	{bond}
-	preset="dialog.close-button"
 	class={['border-border cursor-pointer', '$preset', klass]}
 	onclick={onclick_}
-	{...restProps}
+	{...closeProps}
 >
 	{#if children}
 		{@render children?.()}

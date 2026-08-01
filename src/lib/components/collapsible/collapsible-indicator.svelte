@@ -11,11 +11,15 @@
 
 	let {
 		class: klass = '',
+		preset = undefined,
 		children = undefined,
 		...restProps
 	}: CollapsibleIndicatorProps<E, B> = $props();
+	const atom = bond?.atom('indicator');
+
 	const indicatorProps = $derived({
-		...bond?.indicator().spread,
+		preset: preset ?? atom?.preset,
+		...atom?.spread,
 		...restProps
 	});
 
@@ -26,7 +30,6 @@
 
 <HtmlAtom
 	{bond}
-	preset="collapsible.indicator"
 	class={['border-border flex size-4 items-center justify-center', '$preset', klass]}
 	{...indicatorProps}
 >

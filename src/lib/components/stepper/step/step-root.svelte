@@ -1,5 +1,5 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { defineProperty, defineState } from '$svelte-atoms/core/utils';
+	import { bindBond } from '$svelte-atoms/core/shared/bind-bond.svelte';
 	import { type Base } from '$svelte-atoms/core/components/atom';
 	import { StepBond, StepBondState, type StepBondProps } from './bond.svelte';
 	import type { StepRootProps } from './types';
@@ -12,25 +12,28 @@
 		completed = false,
 		optional = false,
 		children = undefined,
-		factory = _factory as Factory<StepBond>,
+		factory = defaultFactory as Factory<StepBond>,
 	}: StepRootProps<E, B> = $props();
 
-	const stepProps = defineState<StepBondProps>([
-		defineProperty('index', () => index),
-		defineProperty('disabled', () => disabled),
-		defineProperty('completed', () => completed),
-		defineProperty('optional', () => optional),
-	]);
-
-	const bond = $derived(factory(stepProps).share());
+	const binding = bindBond<StepBond>(
+		(props) => factory(props),
+		{
+			index: () => index,
+			disabled: () => disabled,
+			completed: () => completed,
+			optional: () => optional
+		}
+	);
+	const bond = binding.bond.share();
 
 	bond.state.mount();
+	
 	onDestroy(()=> {
-		bond.state.unmount();  
+		bond.state.unmount();
 	});
 
-	function _factory(props = stepProps) {
-		const stepState = new StepBondState(() => props);
+	function defaultFactory(props: StepBondProps) {
+		const stepState = new StepBondState(props);
 		return new StepBond(stepState);
 	}
 

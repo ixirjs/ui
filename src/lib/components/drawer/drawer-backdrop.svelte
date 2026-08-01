@@ -10,18 +10,21 @@
 
 	let {
 		class: klass = '',
+		preset = undefined,
 		...restProps
 	}: SlideoverBackdropProps<E, B> & HTMLAttributes<Element> = $props();
 
+	const atom = bond?.backdrop();
+
 	const backdropProps = $derived({
-		...bond?.backdrop().spread,
+		preset: preset ?? atom?.preset,
+		...atom?.spread,
 		...restProps
 	});
 </script>
 
 <HtmlAtom
 	{bond}
-	preset="drawer.backdrop"
 	class={['border-border absolute inset-0 bg-black/30', '$preset', klass]}
 	{...backdropProps}
 />

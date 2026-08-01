@@ -5,6 +5,7 @@ import type { SelectBond } from './bond.svelte';
 import type { PopoverTriggerProps } from '$svelte-atoms/core/components/popover';
 import type { ClassValue } from 'svelte/elements';
 import type { SelectItemController } from './item';
+import type { SelectItemAtom } from './item/bond.svelte';
 
 // ============================================================================
 // Select Snippet Props (Extensible)
@@ -12,10 +13,10 @@ import type { SelectItemController } from './item';
 
 export interface SelectSnippetProps extends SnippetProps {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	select: SelectBond<any>;
-	/** @deprecated Use `select` */
+	select: SelectBond;
+	// @deprecated Use `select`
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	dropdown: SelectBond<any>;
+	dropdown: SelectBond;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -36,6 +37,8 @@ export interface SelectRootProps<
 	placement?: string;
 	offset?: number;
 	keys?: string[];
+	// Two-way-bindable filter text; driven by `createBondFilter`, cleared by Escape (`ClearThenClose`).
+	query?: string;
 	factory?: Factory<SelectBond>;
 	children?: SelectChildren;
 	onquerychange?: (query: string) => void;
@@ -82,5 +85,6 @@ export interface SelectSelection {
 	readonly label: string;
 	readonly createdAt: Date;
 	unselect: () => void;
-	controller?: SelectItemController<unknown>;
+	// The backing item — a `SelectItemAtom` (common) or `SelectItemController` facade.
+	controller?: SelectItemAtom<unknown> | SelectItemController<unknown>;
 }

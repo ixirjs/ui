@@ -8,6 +8,7 @@
 
 	let {
 		class: klass = '',
+		preset = undefined,
 		children = undefined,
 		fallback={
 			animate: animateDialogContent(),
@@ -15,14 +16,16 @@
 		...restProps
 	}: DialogContentProps<E, B> = $props();
 
+	const atom = bond?.content();
+
 	const dialogProps = $derived({
-		...bond?.content().spread,
+		preset: preset ?? atom?.preset,
+		...atom?.spread,
 		...restProps
 	});
 </script>
 
 <HtmlAtom
-	preset="dialog.content"
 	class={[
 		'bg-card text-foreground border-border flex h-fit w-full max-w-[90svw] flex-col rounded-md border py-4 shadow-sm opacity-0',
 		'$preset',

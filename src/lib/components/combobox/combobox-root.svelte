@@ -1,7 +1,8 @@
 <script lang="ts" generics="D">
 	import type { ComboboxRootProps } from './types';
-	import { defineProperty, defineState } from '$svelte-atoms/core/utils';
+	import { bindBond } from '$svelte-atoms/core/shared';
 	import { ComboboxBond, ComboboxBondState, type ComboboxBondProps } from './bond.svelte';
+	import { useFocusRestore } from '$svelte-atoms/core/shared/overlay';
 
 	let {
 		open = $bindable(false),
@@ -14,45 +15,44 @@
 		placements = ['bottom-start', 'bottom-end', 'top-start', 'top-end'],
 		placement = 'bottom-start',
 		offset = 1,
-		factory = _factory,
+		query = $bindable(''),
+		factory = defaultFactory,
 		children = undefined,
 		...restProps
 	}: ComboboxRootProps = $props();
 
-	const bondProps = defineState<ComboboxBondProps>(
-		[
-			defineProperty(
-				'open',
-				() => open,
-				(v) => {
-					open = v;
-				}
-			),
-			defineProperty(
-				'values',
-				() => (multiple ? values : [value]),
+	const binding = bindBond<ComboboxBond>(
+		(props) => factory(props),
+		{
+			open: [() => open, (v) => { open = v; }],
+			// Component is generic over `D`; the bond's props are string-keyed — bridge with casts.
+			values: [
+				() => (multiple ? values : [value]) as ComboboxBondProps['values'],
 				(v) => {
 					values = v;
-					value = v[0];
+					value = v?.[0];
 				}
-			),
-			defineProperty(
-				'label',
-				() => label,
-				(v) => (label = v)
-			),
-			defineProperty(
-				'labels',
-				() => labels,
-				(v) => (labels = v)
-			)
-		],
-		() => ({ disabled, multiple, placements, offset, placement: 'bottom-start', ...restProps })
+			],
+			label: [() => label, (v) => (label = v)],
+			labels: [() => labels, (v) => (labels = v)],
+			disabled: () => disabled,
+			multiple: () => multiple,
+			placements: () => (placements ?? []) as ComboboxBondProps['placements'],
+			offset: () => offset,
+			// Bond-owned filter source (read by `createBondFilter`, cleared by `ClearThenClose`).
+			// Wired as an accessor so writes are reactive and `bind:query` works.
+			query: [() => query, (v) => { query = v ?? ''; }]
+		},
+		// Frozen base — only genuinely-static defaults / restProps spread belong here.
+		{ base: () => ({ placement: 'bottom-start', ...restProps }) }
 	);
-	const bond = factory(bondProps).share();
+	const bond = binding.bond.share();
 
-	function _factory(props: typeof bondProps) {
-		const bondState = new ComboboxBondState<D>(() => props);
+	// Focus capture/restore reacts to `open` (ADR 0001 / ADR 0003).
+	useFocusRestore(bond);
+
+	function defaultFactory(props: ComboboxBondProps) {
+		const bondState = new ComboboxBondState<D>(props);
 
 		return new ComboboxBond(bondState).share();
 	}

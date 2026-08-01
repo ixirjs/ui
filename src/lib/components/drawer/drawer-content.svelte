@@ -12,6 +12,7 @@
 
 	let {
 		class: klass = '',
+		preset = undefined,
 		children = undefined,
 		fallback = {
 			animate: animateDrawerContent({ }),
@@ -20,14 +21,16 @@
 		...restProps
 	}: SlideoverContentProps<E, B> & HTMLAttributes<Element> & { side?: DrawerSide } = $props();
 
+	const atom = bond?.content();
+
 	const contentProps = $derived({
-		...bond?.content().spread,
+		preset: preset ?? atom?.preset,
+		...atom?.spread,
 		...restProps
 	});
 </script>
 
 <Atom
-	preset="drawer.content"
 	class={[
 		'bg-card text-foreground border-border pointer-events-none absolute',
 		isOpen && 'pointer-events-auto',

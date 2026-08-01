@@ -11,21 +11,23 @@
 
 	let {
 		class: klass = '',
-		preset = 'stepper.step.title',
+		preset = undefined,
 		children = undefined,
 		...restProps
 	}: StepTitleProps<E, B> = $props();
 
 
+	const atom = bond.atom('title');
+
 	const titleProps = $derived({
-		...bond?.title().spread,
+		preset: preset ?? atom.preset,
+		...atom?.spread,
 		...restProps
 	});
 </script>
 
 <Atom
 	as="div"
-	{preset}
 	class={['font-medium text-sm', '$preset', klass]}
 	{...titleProps}
 >

@@ -1,9 +1,8 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { defineProperty, defineState } from '$svelte-atoms/core/utils';
 	import { HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
 	import { AccordionBond, AccordionState, type AccordionStateProps } from './bond.svelte';
 	import type { AccordionRootProps } from './types';
-	import { untrack } from 'svelte';
+	import { bindBond } from '$svelte-atoms/core/shared/bind-bond.svelte';
 
 	let {
 		value = $bindable(undefined),
@@ -14,35 +13,32 @@
 		collapsible = false,
 		disabled = false,
 		children = undefined,
-		factory = _factory,
-		preset = 'accordion',
+		factory = defaultFactory,
+		preset = undefined,
 		...restProps
 	}: AccordionRootProps<E, B> = $props();
 
-	const bondProps = defineState<AccordionStateProps>([
-		defineProperty(
-			'values',
-			() => (multiple ? values : ([value].filter(Boolean) as string[])),
-			(v) => {
-				values = v;
-				value = values[0];
-			}
-		),
-		defineProperty('multiple', () => multiple),
-		defineProperty('collapsible', () => collapsible),
-		defineProperty('disabled', () => disabled),
-		defineProperty('rest', () => restProps)
-	]);
-	const bond = untrack(()=> factory(bondProps)).share();
+	const binding = bindBond<AccordionBond>(
+		(props) => factory(props),
+		{
+			values: [
+				() => (multiple ? values : ([value].filter(Boolean) as string[])),
+				(v) => {
+					values = v;
+					value = values[0];
+				}
+			],
+			multiple: () => multiple,
+			collapsible: () => collapsible,
+			disabled: () => disabled,
+			rest: () => restProps
+		},
+		{ preset: () => preset }
+	);
+	const bond = binding.bond.share();
 
-	const rootProps = $derived({
-		...bond.root().spread,
-		...restProps
-	});
-
-	function _factory(props: typeof bondProps = bondProps) {
-		const bondState = new AccordionState(() => props);
-
+	function defaultFactory(props: AccordionStateProps) {
+		const bondState = new AccordionState(props);
 		return new AccordionBond(bondState);
 	}
 
@@ -52,10 +48,9 @@
 </script>
 
 <HtmlAtom
-	{preset}
-	{bond}
 	class={['bg-card border-border flex list-none flex-col', '$preset', klass]}
-	{...rootProps}
+	{...binding.props}
+	{...restProps}
 >
 	{@render children?.({ accordion: bond })}
 </HtmlAtom>

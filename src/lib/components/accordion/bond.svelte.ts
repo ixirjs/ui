@@ -1,12 +1,11 @@
-import { SvelteMap } from 'svelte/reactivity';
 import type { AccordionItemBond } from './item/bond.svelte';
+import type { Collection } from '$svelte-atoms/core/shared/collection.svelte';
 import {
-	Bond,
-	BondState,
-	BondAtom,
-	type BondStateProps
-} from '$svelte-atoms/core/shared/bond.svelte';
-import { getContext, setContext, untrack } from 'svelte';
+	createSelection,
+	type SelectionModel
+} from '$svelte-atoms/core/shared/capabilities/selection.svelte';
+import { BondState, BondAtom, type BondStateProps } from '$svelte-atoms/core/shared/bond.svelte';
+import { defineBond, type BondOf, type ViewOf } from '$svelte-atoms/core/shared';
 
 export type AccordionStateProps = BondStateProps & {
 	open: boolean;
@@ -23,13 +22,16 @@ export type AccordionElements = {
 	indicator: HTMLElement;
 };
 
-export class AccordionRootAtom extends BondAtom<AccordionBond> {
-	constructor(bond: AccordionBond) {
+// Bond view the accordion atoms type against — breaks the atom↔bond cycle via defineBond (§12.2).
+type AccordionBondView = ViewOf<AccordionState>;
+
+export class AccordionRootAtom extends BondAtom<AccordionBondView> {
+	constructor(bond: AccordionBondView) {
 		super(bond, 'root');
 	}
 
 	override get attrs() {
-		const props = untrack(() => this.bond.state?.props);
+		const props = this.bond.state?.props;
 		const isOpen = props?.open ?? false;
 		const isDisabled = props?.disabled ?? false;
 		const isMultiple = props?.multiple ?? false;
@@ -43,90 +45,77 @@ export class AccordionRootAtom extends BondAtom<AccordionBond> {
 	}
 }
 
-export class AccordionBond extends Bond<AccordionStateProps, AccordionState, AccordionElements> {
-	static CONTEXT_KEY = '@atomic-sv/context/accordion';
+// AccordionBond via defineBond (§6): declares the root atom; selection lives on AccordionState.
+export const AccordionBond = defineBond<{ root: typeof AccordionRootAtom }, AccordionState>({
+	name: 'accordion',
+	atoms: { root: AccordionRootAtom }
+});
 
-	constructor(s: AccordionState) {
-		super(s, 'accordion');
-	}
+// Instance type of the accordion bond — paired with the const above (value + type).
+export type AccordionBond = BondOf<typeof AccordionBond>;
 
-	share(): this {
-		return AccordionBond.set(this) as this;
-	}
-
-	/** Handle for granular access to root attrs and attachment */
-	root() {
-		return this.atom('root', () => new AccordionRootAtom(this));
-	}
-
-	static get(): AccordionBond | undefined {
-		return getContext(AccordionBond.CONTEXT_KEY);
-	}
-
-	static set(bond: AccordionBond): AccordionBond {
-		return setContext(AccordionBond.CONTEXT_KEY, bond);
-	}
+// Narrow parent contract an item child depends on — minimal slice of AccordionState.
+// Implemented by AccordionState; keeps the child→parent seam explicit and stub-testable.
+export interface IAccordion {
+	readonly id: string;
+	readonly values: readonly string[];
+	readonly isDisabled: boolean;
+	open(ids: string[]): void;
+	close(ids: string[]): void;
+	toggle(id: string): void;
+	// Register a child item bond; returns a cleanup that unregisters it.
+	attachItem(id: string, item: AccordionItemBond): () => void;
 }
 
-export class AccordionState extends BondState<AccordionStateProps> {
-	#items: SvelteMap<string, unknown> = new SvelteMap();
+export class AccordionState extends BondState<AccordionStateProps> implements IAccordion {
+	// Selection capability over props.values (bindable backing); owns set-algebra + single/multiple mode.
+	#selection: SelectionModel<string> = createSelection<string>({
+		get: () => this.props.values,
+		set: (v) => (this.props.values = v),
+		mode: () => (this.props.multiple ? 'multiple' : 'single')
+	});
 
-	constructor(props: () => AccordionStateProps) {
-		super(props);
+	// The selection capability — which item values are open.
+	get selection(): SelectionModel<string> {
+		return this.#selection;
 	}
 
-	get activeItems() {
-		return this.props.values.map((d) => this.#items.get(d));
+	// IAccordion.values
+	get values(): readonly string[] {
+		return this.#selection.values;
 	}
 
+	// IAccordion.isDisabled
+	get isDisabled(): boolean {
+		return this.props.disabled ?? false;
+	}
+
+	// Insertion-ordered reactive collection of mounted item bonds.
+	get items(): Collection<AccordionItemBond> {
+		return this.collection<AccordionItemBond>('item');
+	}
+
+	// Mounted item bonds for the currently-open values, in values order.
+	get activeItems(): readonly (AccordionItemBond | undefined)[] {
+		return this.props.values.map((d) => this.items.get(d));
+	}
+
+	// IAccordion.open — delegates to the selection capability.
 	open(vals: string[]) {
-		if (this.props.multiple) {
-			// eslint-disable-next-line svelte/prefer-svelte-reactivity
-			const sequence = new Set(this.props.values ?? []);
-
-			for (const val of vals) {
-				sequence.add(val);
-			}
-
-			this.props.values = [...sequence];
-		} else {
-			this.props.values = [vals[0]].filter(Boolean) as string[];
-		}
+		this.#selection.select(vals);
 	}
 
+	// IAccordion.close — delegates to the selection capability.
 	close(vals: string[]) {
-		if (this.props.multiple) {
-			// eslint-disable-next-line svelte/prefer-svelte-reactivity
-			const sequence = new Set(this.props.values ?? []);
-
-			for (const val of vals) {
-				sequence.delete(val);
-			}
-
-			this.props.values = [...sequence];
-		} else {
-			this.props.values = [];
-		}
+		this.#selection.deselect(vals);
 	}
 
+	// IAccordion.toggle — delegates to the selection capability.
 	toggle(id: string) {
-		// eslint-disable-next-line svelte/prefer-svelte-reactivity
-		const sequence = new Set(this.props.values);
-
-		if (sequence.has(id)) {
-			sequence.delete(id);
-		} else {
-			sequence.add(id);
-		}
-
-		this.props.values = [...sequence];
+		this.#selection.toggle(id);
 	}
 
-	mountItem(id: string, item: AccordionItemBond) {
-		this.#items.set(id, item);
-	}
-
-	unmountItem(id: string) {
-		this.#items.delete(id);
+	attachItem(id: string, item: AccordionItemBond): () => void {
+		return this.items.attach(id, item);
 	}
 }

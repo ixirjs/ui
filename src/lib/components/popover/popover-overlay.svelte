@@ -20,13 +20,11 @@
     let { portal, children = undefined, ...restProps}: PopoverOverlayProps = $props();
 
     const overlayProps = $derived({
-        ...bond?.overlay().spread,
+        ...bond?.atom('overlay').spread,
         ...restProps
     });
 
-	/**
-	 * Calculate the final position and opacity for the popover content
-	 */
+	// Computes final transform and opacity from the current floating-ui position.
 	function calculatePosition() {
 		const position = bond.state.position;
 

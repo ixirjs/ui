@@ -1,16 +1,10 @@
-import { getContext, setContext } from 'svelte';
-import {
-	Bond,
-	BondState,
-	BondAtom,
-	type BondStateProps
-} from '$svelte-atoms/core/shared/bond.svelte';
-import { DataGridBond } from '../bond.svelte';
+import { Bond, BondState, BondAtom, type BondStateProps } from '$svelte-atoms/core/shared/bond.svelte';
+import { defineBond, type BondOf, type ViewOf } from '$svelte-atoms/core/shared';
+import { DataGridBond, type IDataGrid } from '../bond.svelte';
 import { getDatagridHeaderContext } from '../context';
 
 export type DataGridRowBondProps<T = unknown> = BondStateProps & {
 	value?: string;
-	header?: boolean;
 	data?: T;
 };
 
@@ -18,72 +12,97 @@ export type DataGridRowBondElements = {
 	root: HTMLElement;
 };
 
-export class DataGridRowRootAtom<T = unknown> extends BondAtom<DataGridRowBond<T>> {
-	constructor(bond: DataGridRowBond<T>) {
+// Bond shape the row atoms type this.bond against — breaks the atom↔bond cycle.
+type DataGridRowBondView = ViewOf<DataGridRowBondState>;
+
+export class DataGridRowRootAtom extends BondAtom<DataGridRowBondView> {
+	constructor(bond: DataGridRowBondView) {
 		super(bond, 'root');
+		// Project selection a11y (role:'item') onto data rows only — header rows are not selectable.
+		if (!bond.state.isHeader) this.role('item', bond.state.id);
 	}
 
 	override get attrs() {
+		// aria-selected + data-selected come from the datagrid's selection capability (role:'item').
 		return {
 			...super.attrs,
 			'data-kind': 'datagrid-row',
-			'data-header': this.bond.state.isHeader ? 'true' : undefined,
-			'data-selected': this.bond.state.isSelected ? 'true' : undefined
+			'data-header': this.bond.state.isHeader ? 'true' : undefined
 		};
 	}
 }
 
-export class DataGridRowBond<
-	T = unknown,
-	Props extends DataGridRowBondProps<T> = DataGridRowBondProps<T>,
-	State extends DataGridRowBondState<T, Props> = DataGridRowBondState<T, Props>,
-	Elements extends DataGridRowBondElements = DataGridRowBondElements
-> extends Bond<Props, State, Elements> {
-	static CONTEXT_KEY = '@atoms/context/datagrid/row';
+// Hand-written base for DataGridRowBond — captures parent datagrid (throws if absent) and provides mount/preset.
+class DataGridRowBondBase extends Bond<DataGridRowBondProps, DataGridRowBondState> {
+	readonly #parent: IDataGrid;
 
-	readonly #datagrid: DataGridBond<T>;
-
-	constructor(s: State) {
-		super(s, 'datagrid-row');
-		const datagrid = DataGridBond.get<T>();
+	constructor(state: DataGridRowBondState) {
+		super(state, 'datagrid-row');
+		const datagrid = DataGridBond.get() as DataGridBond | undefined;
 		if (!datagrid) throw new Error('DataGridRowBond must be used within a DataGridBond context.');
-		this.#datagrid = datagrid;
+		this.#parent = datagrid.state;
 	}
 
-	get datagrid(): DataGridBond<T> {
-		return this.#datagrid;
+	get datagrid(): IDataGrid {
+		return this.#parent;
 	}
 
-	share(): this {
-		return DataGridRowBond.set(this) as this;
+	// Preset namespace is datagrid.row (not the hyphenated DOM name datagrid-row).
+	override get preset(): string {
+		return 'datagrid.row';
 	}
 
 	mount(): () => void {
-		return this.#datagrid.state.mountRow(this.state.id, this);
-	}
-
-	root() {
-		return this.atom('root', () => new DataGridRowRootAtom(this));
-	}
-
-	static get<T = unknown>(): DataGridRowBond<T> | undefined {
-		return getContext(DataGridRowBond.CONTEXT_KEY);
-	}
-
-	static set<T = unknown>(bond: DataGridRowBond<T>): DataGridRowBond<T> {
-		return setContext(DataGridRowBond.CONTEXT_KEY, bond);
+		return this.#parent.mountRow(this.state.id, this as unknown as DataGridRowBond);
 	}
 }
+
+// DataGridRowBond via defineBond over DataGridRowBondBase; T carried by state/datagrid via generic facade.
+const DataGridRowBondImpl = defineBond<
+	{ root: typeof DataGridRowRootAtom },
+	DataGridRowBondState,
+	typeof DataGridRowBondBase
+>({
+	name: 'datagrid-row',
+	base: DataGridRowBondBase,
+	atoms: { root: DataGridRowRootAtom }
+});
+
+// Generic instance type — intersect to preserve Bond brand; narrows state/datagrid to carry T.
+export type DataGridRowBond<
+	T = unknown,
+	Props extends DataGridRowBondProps<T> = DataGridRowBondProps<T>,
+	State extends DataGridRowBondState<T, Props> = DataGridRowBondState<T, Props>
+> = BondOf<typeof DataGridRowBondImpl> & {
+	readonly state: State;
+	readonly datagrid: IDataGrid<T>;
+};
+
+// Generic-constructor facade over the non-generic impl.
+interface DataGridRowBondConstructor {
+	new <T = unknown>(state: DataGridRowBondState<T>): DataGridRowBond<T>;
+	readonly CONTEXT_KEY: string;
+	get<T = unknown>(): DataGridRowBond<T> | undefined;
+	set<T = unknown>(bond: DataGridRowBond<T>): DataGridRowBond<T>;
+}
+
+export const DataGridRowBond = DataGridRowBondImpl as unknown as DataGridRowBondConstructor;
 
 export class DataGridRowBondState<
 	T = unknown,
 	Props extends DataGridRowBondProps<T> = DataGridRowBondProps<T>
 > extends BondState<Props> {
-	readonly #datagrid = DataGridBond.get<T>();
-	readonly #isHeader: boolean = !!getDatagridHeaderContext();
+	readonly #parent: IDataGrid<T> | undefined = (
+		DataGridBond.get() as DataGridBond<T> | undefined
+	)?.state;
+	// Captured at construction; read live via getter so header-ness tracks the context's reactive flag.
+	readonly #headerContext = getDatagridHeaderContext();
 
-	constructor(props: () => Props) {
+	constructor(props: Props) {
 		super(props);
+		// Bridge datagrid's selection capability onto this row so aria-selected/data-selected are projected.
+		const selection = this.#parent?.selectionCapability();
+		if (selection) this.capability(selection);
 	}
 
 	get id(): string {
@@ -91,23 +110,23 @@ export class DataGridRowBondState<
 	}
 
 	get isSelected(): boolean {
-		return this.#datagrid?.state.props.values?.includes(this.id) ?? false;
+		return this.#parent?.isSelected(this.id) ?? false;
 	}
 
 	get isHeader(): boolean {
-		return this.#isHeader;
+		return this.#headerContext?.isHeader ?? false;
 	}
 
-	get datagrid() {
-		return this.#datagrid?.state;
+	get datagrid(): IDataGrid<T> | undefined {
+		return this.#parent;
 	}
 
 	select(): void {
-		this.#datagrid?.state.select([this.id]);
+		this.#parent?.select([this.id]);
 	}
 
 	unselect(): void {
-		this.#datagrid?.state.unselect([this.id]);
+		this.#parent?.unselect([this.id]);
 	}
 }
 

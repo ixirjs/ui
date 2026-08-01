@@ -19,11 +19,10 @@ export interface DialogProps<
 > extends HtmlAtomProps<E, B, DialogChildren> {
 	open?: boolean;
 	disabled?: boolean;
-	/** Controls backdrop click behaviour. 'modal' closes on backdrop click (default); 'non-modal' keeps it open. */
+	// Controls backdrop click behaviour. 'modal' closes on backdrop click (default); 'non-modal' keeps it open.
 	type?: 'modal' | 'non-modal' | undefined;
 	portal?: string | PortalBond;
 	factory?: (props: DialogBondProps) => DialogBond;
-	trigger?: DialogChildren;
 	onclick?: (ev: MouseEvent, bond: DialogBond) => void;
 }
 

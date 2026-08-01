@@ -16,15 +16,17 @@
 
 	const dropdownMenuBond = bond;
 
-	const virtualTriggerAtom = dropdownMenuBond.virtualTrigger();
+	const virtualTriggerAtom = dropdownMenuBond.atom('virtual-trigger');
 
 	let {
-		preset = 'context-menu.trigger',
+		preset = undefined,
 		onclick = null,
 		oncontextmenu = undefined,
 		class: klass = '',
 		...restProps
 	}: HTMLAttributes<ElementType> & ContextMenuTriggerProps<E, B> = $props();
+
+	const triggerProps = $derived({ preset: preset ?? 'context-menu.trigger', ...restProps });
 
 	function handleContextMenu(ev: MouseEvent) {
 		ev.preventDefault();
@@ -56,4 +58,4 @@
 	}
 </script>
 
-<Trigger {preset} class={['cursor-context-menu', klass]} onclick={onclick ?? undefined} oncontextmenu={handleContextMenu} {...restProps} />
+<Trigger class={['cursor-context-menu', klass]} onclick={onclick ?? undefined} oncontextmenu={handleContextMenu} {...triggerProps} />

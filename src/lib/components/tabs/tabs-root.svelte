@@ -3,7 +3,7 @@
 	generics="D extends string, E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base"
 >
 	import { TabsBond, TabsBondState, type TabsBondProps } from './bond.svelte';
-	import { defineProperty, defineState } from '$svelte-atoms/core/utils';
+	import { bindBond } from '$svelte-atoms/core/shared/bind-bond.svelte';
 	import { HtmlAtom as Atom, type Base } from '$svelte-atoms/core/components/atom';
 	import type { TabsRootProps } from './types';
 
@@ -12,38 +12,35 @@
 		value = $bindable(),
 		children,
 		onchange,
-		preset = 'tabs' as const,
+		preset = undefined,
 		...restProps
 	}: TabsRootProps<D, E, B> = $props();
 
 	let revision = $state(0);
 
-	const bondProps = defineState<TabsBondProps>([
-		defineProperty(
-			'value',
-			() => {
-				void revision; // Ensure reactivity in uncontrolled mode
-				return value;
-			},
-			(v) => {
-				value = v as D | undefined;
-				revision++; // Trigger reactivity in uncontrolled mode
-			}
-		),
-		defineProperty('rest', () => restProps)
-	]);
+	const binding = bindBond<TabsBond>(
+		(props) => defaultFactory(props),
+		{
+			value: [
+				() => {
+					void revision; // Ensure reactivity in uncontrolled mode
+					return value;
+				},
+				(v) => {
+					value = v as D | undefined;
+					revision++; // Trigger reactivity in uncontrolled mode
+				}
+			],
+			rest: () => restProps
+		},
+		{ preset: () => preset }
+	);
+	const bond = binding.bond.share();
 
-	function _factory(props: typeof bondProps = bondProps) {
-		const tabsState = new TabsBondState(() => props);
+	function defaultFactory(props: TabsBondProps) {
+		const tabsState = new TabsBondState(props);
 		return new TabsBond(tabsState);
 	}
-	
-	const bond = _factory(bondProps).share();
-
-	const rootProps = $derived({
-		...bond?.root().spread,
-		...restProps
-	});
 
 	$effect.pre(() => {
 		onchange?.(value as D);
@@ -55,10 +52,9 @@
 </script>
 
 <Atom
-	{bond}
-	preset="tabs"
-	class={['border-border flex w-full flex-1 flex-col', '$preset', klass]}
-	{...rootProps}
+	class={['flex w-full flex-1 flex-col', '$preset', klass]}
+	{...binding.props}
+	{...restProps}
 >
 	{@render children?.({ tabs: bond })}
 </Atom>

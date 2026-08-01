@@ -17,105 +17,60 @@ export interface StepRootProps<
 	E extends keyof HTMLElementTagNameMap = 'div',
 	B extends Base = Base
 > extends HtmlAtomProps<E, B, StepChildren> {
-	/**
-	 * The step index (0-based)
-	 */
+	// The step index (0-based).
 	index: number;
 
-	/**
-	 * Whether this step is disabled
-	 * @default false
-	 */
+	// Whether this step is disabled. Default false.
 	disabled?: boolean;
 
-	/**
-	 * Whether this step is completed
-	 * @default false
-	 */
+	// Whether this step is completed. Default false.
 	completed?: boolean;
 
-	/**
-	 * Whether this step is optional
-	 * @default false
-	 */
+	// Whether this step is optional. Default false.
 	optional?: boolean;
 
-	/**
-	 * Custom factory for creating step bond
-	 */
+	// Custom factory for creating the step bond.
 	factory?: Factory<StepBond>;
-
-	/**
-	 * Child render function
-	 */
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface StepIndicatorProps<
 	E extends keyof HTMLElementTagNameMap = 'div',
 	B extends Base = Base
-> extends HtmlAtomProps<E, B, StepChildren> {
-	/**
-	 * Child render function
-	 */
-}
+> extends HtmlAtomProps<E, B, StepChildren> {}
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface StepHeaderProps<
 	E extends keyof HTMLElementTagNameMap = 'div',
 	B extends Base = Base
-> extends HtmlAtomProps<E, B, StepChildren> {
-	/**
-	 * Child render function
-	 */
-}
+> extends HtmlAtomProps<E, B, StepChildren> {}
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface StepTitleProps<
 	E extends keyof HTMLElementTagNameMap = 'div',
 	B extends Base = Base
-> extends HtmlAtomProps<E, B, StepChildren> {
-	/**
-	 * Child render function
-	 */
-}
+> extends HtmlAtomProps<E, B, StepChildren> {}
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface StepDescriptionProps<
 	E extends keyof HTMLElementTagNameMap = 'p',
 	B extends Base = Base
-> extends HtmlAtomProps<E, B, StepChildren> {
-	/**
-	 * Child render function
-	 */
-}
+> extends HtmlAtomProps<E, B, StepChildren> {}
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface StepBodyProps<
 	E extends keyof HTMLElementTagNameMap = 'div',
 	B extends Base = Base
-> extends HtmlAtomProps<E, B, StepChildren> {
-	/**
-	 * Child render function
-	 */
-}
+> extends HtmlAtomProps<E, B, StepChildren> {}
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface StepSeparatorProps<
 	E extends keyof HTMLElementTagNameMap = 'div',
 	B extends Base = Base
-> extends HtmlAtomProps<E, B, StepChildren> {
-	/**
-	 * Child render function
-	 */
-}
+> extends HtmlAtomProps<E, B, StepChildren> {}
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface StepContentProps<
 	E extends keyof HTMLElementTagNameMap = 'div',
 	B extends Base = Base
-> extends HtmlAtomProps<E, B, StepChildren> {
-	/**
-	 * Child render function
-	 */
-}
+> extends HtmlAtomProps<E, B, StepChildren> {}

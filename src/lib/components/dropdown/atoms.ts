@@ -1,4 +1,2 @@
-/**
- * @deprecated Import from `select` instead. This module will be removed in a future version.
- */
+// @deprecated Import from `select` instead.
 export * from '../select/atoms';

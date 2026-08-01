@@ -3,10 +3,10 @@
 	import { Root } from '../popover/atoms';
 	import type { PopoverRootProps } from '../popover';
 
-	let { open = $bindable(false), factory = _factory, ...restProps }: PopoverRootProps = $props();
+	let { open = $bindable(false), factory = defaultFactory, ...restProps }: PopoverRootProps = $props();
 
-	function _factory(props: DropdownMenuBondProps) {
-		const menuBondState = new DropdownMenuBondState(() => props);
+	function defaultFactory(props: DropdownMenuBondProps) {
+		const menuBondState = new DropdownMenuBondState(props);
 		return new DropdownMenuBond(menuBondState);
 	}
 </script>

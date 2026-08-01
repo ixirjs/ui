@@ -41,33 +41,28 @@ export interface TabHeaderProps<
 export interface TabBodyProps<
 	E extends keyof HTMLElementTagNameMap = 'div',
 	B extends Base = Base
-> extends HtmlAtomProps<E, B, TabChildren> {
-}
+> extends HtmlAtomProps<E, B, TabChildren> {}
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface TabDescriptionProps<
 	E extends keyof HTMLElementTagNameMap = 'p',
 	B extends Base = Base
-> extends HtmlAtomProps<E, B, TabChildren> {
-}
+> extends HtmlAtomProps<E, B, TabChildren> {}
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface TabsHeaderProps<
 	E extends keyof HTMLElementTagNameMap = 'div',
 	B extends Base = Base
-> extends HtmlAtomProps<E, B, TabsChildren> {
-}
+> extends HtmlAtomProps<E, B, TabsChildren> {}
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface TabsBodyProps<
 	E extends keyof HTMLElementTagNameMap = 'div',
 	B extends Base = Base
-> extends HtmlAtomProps<E, B, TabsChildren> {
-}
+> extends HtmlAtomProps<E, B, TabsChildren> {}
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface TabsContentProps<
 	E extends keyof HTMLElementTagNameMap = 'div',
 	B extends Base = Base
-> extends HtmlAtomProps<E, B, TabsChildren> {
-}
+> extends HtmlAtomProps<E, B, TabsChildren> {}

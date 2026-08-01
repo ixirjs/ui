@@ -5,6 +5,7 @@ import type { Factory } from '$svelte-atoms/core/types';
 import type { DataGridRowBond } from './row/bond.svelte';
 import type { DataGridColumnBond } from './column/bond.svelte';
 import type { HtmlAtomProps, Base, SnippetProps } from '../atom';
+import type { PresetKey } from '$svelte-atoms/core/context/preset.svelte';
 import type { HtmlElementTagName } from '../element';
 import type { Direction, SortableType, Override } from '$svelte-atoms/core/types';
 
@@ -41,20 +42,20 @@ export interface DatagridRowSnippetProps<T = unknown> extends SnippetProps {
 export type DatagridRowChildren<T = unknown> = Snippet<[DatagridRowSnippetProps<T>]>;
 
 // ── Deprecated snippet aliases ───────────────────────────────────────────
-/** @deprecated Use `DatagridColumnSnippetProps` instead */
+// @deprecated Use `DatagridColumnSnippetProps` instead
 export interface DatagridThSnippetProps<T = unknown> extends DatagridColumnSnippetProps<T> {
 	th: DataGridColumnBond<T>;
 }
 
-/** @deprecated Use `DatagridColumnChildren` instead */
+// @deprecated Use `DatagridColumnChildren` instead
 export type DatagridThChildren<T = unknown> = DatagridColumnChildren<T>;
 
-/** @deprecated Use `DatagridRowSnippetProps` instead */
+// @deprecated Use `DatagridRowSnippetProps` instead
 export interface DatagridTrSnippetProps<T = unknown> extends DatagridRowSnippetProps<T> {
 	tr: DataGridRowBond<T>;
 }
 
-/** @deprecated Use `DatagridRowChildren` instead */
+// @deprecated Use `DatagridRowChildren` instead
 export type DatagridTrChildren<T = unknown> = DatagridRowChildren<T>;
 
 // ── Component prop types ────────────────────────────────────────────────────
@@ -105,11 +106,13 @@ export interface DatagridColumnProps<
 	screen?: string;
 	sortable?: boolean | SortableType;
 	hidden?: boolean;
-	factory?: () => DataGridColumnBond<T>;
+	factory?: Factory<DataGridColumnBond<T>>;
 	onsort?: (event: CustomEvent, options: { field?: SortableType; direction: Direction }) => void;
+	// Re-declared because `Override` collapses it into HtmlAtomProps' index signature.
+	preset?: PresetKey;
 }
 
-/** @deprecated Use `DatagridColumnProps` instead */
+// @deprecated Use `DatagridColumnProps` instead
 export type DatagridThProps<
 	T = unknown,
 	E extends HtmlElementTagName = 'div',
@@ -124,7 +127,7 @@ export interface DatagridCellProps<
 	onclick?: (ev: Event, options: { cell?: DataGridBond<T> }) => void;
 }
 
-/** @deprecated Use `DatagridCellProps` instead */
+// @deprecated Use `DatagridCellProps` instead
 export type DatagridTdProps<
 	T = unknown,
 	E extends HtmlElementTagName = 'div',
@@ -144,13 +147,14 @@ export interface DatagridRowProps<
 > {
 	value?: string;
 	rows?: string;
-	header?: boolean;
 	data?: T;
 	factory?: Factory<DataGridRowBond<T>>;
 	onclick?: (ev: Event, options: { row?: DataGridRowBond<T> }) => void;
+	// Re-declared because `Override` collapses it into HtmlAtomProps' index signature.
+	preset?: PresetKey;
 }
 
-/** @deprecated Use `DatagridRowProps` instead */
+// @deprecated Use `DatagridRowProps` instead
 export type DatagridTrProps<
 	T = unknown,
 	E extends HtmlElementTagName = 'div',

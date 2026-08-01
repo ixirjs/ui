@@ -12,14 +12,18 @@
 	let {
 		class: klass = '',
 		as = 'button' as E,
-		preset = 'popover.trigger',
+		preset = undefined,
 		children = undefined,
 		onpointerenter = undefined,
 		...restProps
 	}: PopoverTriggerProps<E, B> = $props();
- 
+
+	const atom = bond.atom('trigger');
+
+	const presentation = $derived({ preset: preset ?? atom.preset });
+
 	const triggerProps = $derived({
-		...bond.trigger().spread,
+		...atom.spread,
 		...restProps
 	});
 
@@ -34,10 +38,10 @@
 <HtmlAtom
 	{as}
 	{bond}
-	{preset}
 	class={['border-border flex w-fit cursor-pointer rounded-md p-2', '$preset', klass]}
 	type={as === 'button' ? 'button' : undefined}
 	onpointerenter={handlePointerEnter}
+	{...presentation}
 	{...triggerProps}
 >
 	{@render children?.({ popover: bond })}

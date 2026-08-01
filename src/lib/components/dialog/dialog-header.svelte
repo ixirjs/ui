@@ -5,21 +5,24 @@
 
 	let {
 		class: klass = '',
+		preset = undefined,
 		children = undefined,
 		...restProps
 	}: DialogHeaderProps<E, B> = $props();
 
 	const bond = DialogBond.get();
 
+	const atom = bond?.header();
+
 	const headerProps = $derived({
-		...bond?.header().spread,
+		preset: preset ?? atom?.preset,
+		...atom?.spread,
 		...restProps
 	});
 </script>
 
 <HtmlAtom
 	{bond}
-	preset="dialog.header"
 	class={['border-border', 'flex w-full px-4 text-xl', '$preset', klass]}
 	{...headerProps}
 >

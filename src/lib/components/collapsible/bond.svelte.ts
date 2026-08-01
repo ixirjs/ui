@@ -1,15 +1,17 @@
-import { getContext, setContext, untrack } from 'svelte';
+import { Bond, BondState, BondAtom, type BondStateProps } from '$svelte-atoms/core/shared/bond.svelte';
+import { defineBond, type BondOf, type ViewOf } from '$svelte-atoms/core/shared';
 import {
-	Bond,
-	BondState,
-	BondAtom,
-	type BondStateProps
-} from '$svelte-atoms/core/shared/bond.svelte';
+	createDisclosure,
+	type Disclosure
+} from '$svelte-atoms/core/shared/capabilities/disclosure.svelte';
+import { triggerContentLink } from '$svelte-atoms/core/shared/capabilities/relationship.svelte';
 import { isBrowser } from '$svelte-atoms/core/utils/dom.svelte';
 
 export type CollapsibleStateProps = BondStateProps & {
 	open: boolean;
 	disabled: boolean;
+	value?: string;
+	data?: unknown;
 	readonly rest?: Record<string, unknown>;
 };
 
@@ -20,27 +22,29 @@ export type CollapsibleDomElements = {
 	indicator: HTMLElement;
 };
 
-export class CollapsibleRootAtom extends BondAtom<CollapsibleBond> {
-	constructor(bond: CollapsibleBond) {
+// Bond shape the collapsible atoms type this.bond against — breaks the atom↔bond cycle.
+type CollapsibleBondView = ViewOf<CollapsibleState>;
+
+export class CollapsibleRootAtom extends BondAtom<CollapsibleBondView> {
+	constructor(bond: CollapsibleBondView) {
 		super(bond, 'root');
 	}
 }
 
-export class CollapsibleHeaderAtom extends BondAtom<CollapsibleBond> {
-	constructor(bond: CollapsibleBond) {
+export class CollapsibleHeaderAtom extends BondAtom<CollapsibleBondView> {
+	constructor(bond: CollapsibleBondView) {
 		super(bond, 'header');
 	}
 
 	override get attrs() {
-		const isDisabled = untrack(() => this.bond.state?.props)?.disabled ?? false;
-		const isOpen = untrack(() => this.bond.state?.props)?.open ?? false;
+		const isDisabled = this.bond.state?.props?.disabled ?? false;
 		const isButton = isBrowser() && this.element instanceof HTMLButtonElement;
 
+		// `aria-expanded` + `aria-controls` come from the trigger↔content link
+		// (role:'trigger'); only the button-vs-div semantics remain component-specific.
 		return {
 			...super.attrs,
 			'aria-disabled': isDisabled ? 'true' : 'false',
-			'aria-expanded': isOpen ? 'true' : 'false',
-			'aria-controls': `collapsible-body-${this.bond.id}`,
 			disabled: isButton ? isDisabled : undefined,
 			role: isButton ? undefined : 'button',
 			tabindex: isButton ? undefined : isDisabled ? -1 : 0
@@ -48,15 +52,15 @@ export class CollapsibleHeaderAtom extends BondAtom<CollapsibleBond> {
 	}
 
 	override get handlers() {
-		const isDisabled = untrack(() => this.bond.state?.props)?.disabled ?? false;
-
 		return {
 			onclick: () => {
+				const isDisabled = this.bond.state?.props?.disabled ?? false;
 				if (!isDisabled) {
 					this.bond.state.toggle();
 				}
 			},
 			onkeydown: (e: KeyboardEvent) => {
+				const isDisabled = this.bond.state?.props?.disabled ?? false;
 				if (!isDisabled && (e.key === 'Enter' || e.key === ' ')) {
 					e.preventDefault();
 					this.bond.state.toggle();
@@ -66,26 +70,24 @@ export class CollapsibleHeaderAtom extends BondAtom<CollapsibleBond> {
 	}
 }
 
-export class CollapsibleBodyAtom extends BondAtom<CollapsibleBond> {
-	constructor(bond: CollapsibleBond) {
+export class CollapsibleBodyAtom extends BondAtom<CollapsibleBondView> {
+	constructor(bond: CollapsibleBondView) {
 		super(bond, 'body');
 	}
 
 	override get attrs() {
-		const isOpen = untrack(() => this.bond.state?.props)?.open ?? false;
+		const isOpen = this.bond.state?.props?.open ?? false;
 
+		// aria-labelledby + role=region come from the trigger↔content link (role:'content').
 		return {
 			...super.attrs,
-			'aria-labelledby': `collapsible-header-${this.bond.id}`,
-			role: 'region',
-			id: `collapsible-body-${this.bond.id}`,
 			inert: isOpen ? undefined : true
 		};
 	}
 }
 
-export class CollapsibleIndicatorAtom extends BondAtom<CollapsibleBond> {
-	constructor(bond: CollapsibleBond) {
+export class CollapsibleIndicatorAtom extends BondAtom<CollapsibleBondView> {
+	constructor(bond: CollapsibleBondView) {
 		super(bond, 'indicator');
 	}
 
@@ -97,76 +99,74 @@ export class CollapsibleIndicatorAtom extends BondAtom<CollapsibleBond> {
 	}
 }
 
-export class CollapsibleBond extends Bond<
-	CollapsibleStateProps,
-	CollapsibleState,
-	CollapsibleDomElements
-> {
-	static CONTEXT_KEY = '@atoms/context/collapsible';
-
+// Hand-written base for CollapsibleBond — captures parent from context for nesting.
+class CollapsibleBondBase extends Bond<CollapsibleStateProps, CollapsibleState> {
 	#parent: CollapsibleBond | undefined;
 
 	constructor(state: CollapsibleState) {
 		super(state, 'collapsible');
-
 		this.#parent = CollapsibleBond.get();
 	}
 
-	get parent() {
+	get parent(): CollapsibleBond | undefined {
 		return this.#parent;
-	}
-
-	share() {
-		return CollapsibleBond.set(this) as this;
-	}
-
-	/** Handle for granular access to root attrs and attachment */
-	root() {
-		return this.atom('root', () => new CollapsibleRootAtom(this));
-	}
-
-	/** Handle for granular access to header attrs, handlers, and attachment */
-	header() {
-		return this.atom('header', () => new CollapsibleHeaderAtom(this));
-	}
-
-	/** Handle for granular access to body attrs and attachment */
-	body() {
-		return this.atom('body', () => new CollapsibleBodyAtom(this));
-	}
-
-	/** Handle for granular access to indicator attrs and attachment */
-	indicator() {
-		return this.atom('indicator', () => new CollapsibleIndicatorAtom(this));
-	}
-
-	static get(): CollapsibleBond | undefined {
-		return getContext(CollapsibleBond.CONTEXT_KEY);
-	}
-
-	static set(bond: CollapsibleBond): CollapsibleBond {
-		return setContext(CollapsibleBond.CONTEXT_KEY, bond);
 	}
 }
 
+// CollapsibleBond via defineBond over CollapsibleBondBase; trigger↔content link applied via atom roles.
+export const CollapsibleBond = defineBond<
+	{
+		root: typeof CollapsibleRootAtom;
+		header: { atom: typeof CollapsibleHeaderAtom; role: 'trigger' };
+		body: { atom: typeof CollapsibleBodyAtom; role: 'content' };
+		indicator: typeof CollapsibleIndicatorAtom;
+	},
+	CollapsibleState,
+	typeof CollapsibleBondBase
+>({
+	name: 'collapsible',
+	base: CollapsibleBondBase,
+	atoms: {
+		root: CollapsibleRootAtom,
+		header: { atom: CollapsibleHeaderAtom, role: 'trigger' },
+		body: { atom: CollapsibleBodyAtom, role: 'content' },
+		indicator: CollapsibleIndicatorAtom
+	}
+});
+
+// Instance type of the collapsible bond — paired with the const above.
+export type CollapsibleBond = BondOf<typeof CollapsibleBond>;
+
 export class CollapsibleState extends BondState<CollapsibleStateProps> {
-	constructor(props: () => CollapsibleStateProps) {
+	// Disclosure capability; open/closed state stored in props.open.
+	#disclosure: Disclosure = createDisclosure({
+		get: () => this.props.open,
+		set: (v) => (this.props.open = v)
+	});
+
+	constructor(props: CollapsibleStateProps) {
 		super(props);
+		// Projects aria-expanded/aria-controls onto header and aria-labelledby/role=region onto body.
+		this.capability(triggerContentLink(this.#disclosure, { contentRole: 'region' }));
+	}
+
+	get disclosure(): Disclosure {
+		return this.#disclosure;
 	}
 
 	get isOpen() {
-		return this.props.open;
+		return this.#disclosure.isOpen;
 	}
 
 	open() {
-		this.props.open = true;
+		this.#disclosure.open();
 	}
 
 	close() {
-		this.props.open = false;
+		this.#disclosure.close();
 	}
 
 	toggle() {
-		this.props.open = !this.props.open;
+		this.#disclosure.toggle();
 	}
 }

@@ -37,7 +37,15 @@ describe('extractRestProps', () => {
 
 	it('strips internal atom keys from preset', () => {
 		const result = extractRestProps(
-			{ class: 'text-red', base: 'div', as: 'span', variants: {}, compounds: [], defaults: {}, role: 'button' },
+			{
+				class: 'text-red',
+				base: 'div',
+				as: 'span',
+				variants: {},
+				compounds: [],
+				defaults: {},
+				role: 'button'
+			},
 			undefined,
 			{}
 		);

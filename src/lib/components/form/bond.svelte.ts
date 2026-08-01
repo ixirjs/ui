@@ -1,11 +1,15 @@
-import { getContext, setContext } from 'svelte';
-import { SvelteMap } from 'svelte/reactivity';
 import type { FieldBond } from './field/bond.svelte';
-import { Bond, BondState, type BondStateProps } from '$svelte-atoms/core/shared/bond.svelte';
+import {
+	bondContextKey,
+	Bond,
+	BondState,
+	type BondStateProps
+} from '$svelte-atoms/core/shared/bond.svelte';
 
 export type FormProps<Extension extends Record<string, unknown> = Record<string, unknown>> =
 	BondStateProps & {
 		renderless?: boolean;
+		validator?: unknown;
 		extend: Extension;
 		readonly rest?: Record<string, unknown>;
 	};
@@ -14,8 +18,8 @@ export type FormElements = {
 	root: HTMLElement;
 };
 
-export class FormBond extends Bond<FormProps, FormBondState, FormElements> {
-	static CONTEXT_KEY = '@atoms/context/form';
+export class FormBond extends Bond<FormProps, FormBondState> {
+	static CONTEXT_KEY = bondContextKey('form');
 
 	constructor(state: FormBondState) {
 		super(state);
@@ -32,35 +36,20 @@ export class FormBond extends Bond<FormProps, FormBondState, FormElements> {
 	control() {
 		return {};
 	}
-
-	share(): this {
-		return FormBond.set(this) as this;
-	}
-
-	static get(): FormBond | undefined {
-		return getContext(FormBond.CONTEXT_KEY);
-	}
-
-	static set(bond: FormBond): FormBond {
-		return setContext(FormBond.CONTEXT_KEY, bond);
-	}
 }
 
 export class FormBondState<Props extends FormProps = FormProps> extends BondState<Props> {
-	#fields = new SvelteMap<string, FieldBond>();
-
-	constructor(props: () => Props) {
+	constructor(props: Props) {
 		super(props);
 	}
 
 	mountField(id: string, atom: FieldBond) {
-		this.#fields.set(id, atom);
-
-		return () => this.unmountField(id);
+		// Collection.attach registers + returns the cleanup (see shared/collection.svelte.ts).
+		return this.collection<FieldBond>('field').attach(id, atom);
 	}
 
 	unmountField(id: string) {
-		this.#fields.delete(id);
+		this.collection<FieldBond>('field').delete(id);
 	}
 
 	validate() {
@@ -70,6 +59,6 @@ export class FormBondState<Props extends FormProps = FormProps> extends BondStat
 	clear() {}
 
 	get fields() {
-		return this.#fields.values().toArray();
+		return [...this.collection<FieldBond>('field').values];
 	}
 }

@@ -3,13 +3,22 @@ import { resolveVariants, mergeVariants, resolveLocalVariants } from './variants
 
 describe('resolveVariants', () => {
 	it('returns base class when no variants or compounds exist', () => {
-		const result = resolveVariants({ class: 'base-class', variants: {}, compounds: [], defaults: {} }, null, {});
+		const result = resolveVariants(
+			{ class: 'base-class', variants: {}, compounds: [], defaults: {} },
+			null,
+			{}
+		);
 		expect(result.class).toEqual(['base-class']);
 	});
 
 	it('picks the matching variant class', () => {
 		const result = resolveVariants(
-			{ class: '', variants: { size: { sm: 'text-sm', lg: 'text-lg' } }, compounds: [], defaults: {} },
+			{
+				class: '',
+				variants: { size: { sm: 'text-sm', lg: 'text-lg' } },
+				compounds: [],
+				defaults: {}
+			},
 			null,
 			{ size: 'sm' }
 		);
@@ -19,7 +28,12 @@ describe('resolveVariants', () => {
 
 	it('applies defaults when prop is absent', () => {
 		const result = resolveVariants(
-			{ class: '', variants: { size: { sm: 'text-sm', lg: 'text-lg' } }, compounds: [], defaults: { size: 'lg' } },
+			{
+				class: '',
+				variants: { size: { sm: 'text-sm', lg: 'text-lg' } },
+				compounds: [],
+				defaults: { size: 'lg' }
+			},
 			null,
 			{}
 		);

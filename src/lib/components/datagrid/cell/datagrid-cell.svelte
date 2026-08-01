@@ -3,14 +3,17 @@
 	import { HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
 	import type { DatagridCellProps } from '../types';
 
-	const bond = DataGridBond.get<T>();
+	const bond = (DataGridBond.get() as DataGridBond<T> | undefined);
 
 	let {
 		class: klass = '',
+		preset = undefined,
 		children = undefined,
 		onclick = undefined,
 		...restProps
 	}: DatagridCellProps<T, E, B> = $props();
+
+	const cellProps = $derived({ preset: preset ?? 'datagrid.cell', ...restProps });
 
 	let element = $state<HTMLElement | undefined>();
 
@@ -21,7 +24,7 @@
 		const index = Array.from(element.parentElement?.children ?? []).indexOf(element);
 		if (index === -1) return undefined;
 
-		for (const col of bond.state.columns.values()) {
+		for (const col of bond.state.columns.values) {
 			if (col.index === index) return col;
 		}
 
@@ -39,10 +42,9 @@
 	<HtmlAtom
 		{@attach (node) => { element = node; }}
 		{bond}
-		preset="datagrid.cell"
 		class={['border-border flex h-full items-center py-2 text-left', '$preset', klass]}
 		onclick={handleClick}
-		{...restProps}
+		{...cellProps}
 	>
 		{@render children?.({ datagrid: bond })}
 	</HtmlAtom>

@@ -1,21 +1,10 @@
 import { merge } from 'es-toolkit';
 import type { ClassValue } from 'svelte/elements';
 import { call } from '$svelte-atoms/core/utils/function';
-import type {
-	PresetEntryRecord,
-	PresetEntryValue
-} from '$svelte-atoms/core/context/preset.svelte';
+import type { PresetEntryRecord, PresetEntryValue } from '$svelte-atoms/core/context/preset.svelte';
 
-/**
- * Merges an ordered list of {@link PresetEntryRecord}s into a single record.
- *
- * - `class`: collected into an array (all classes preserved, later ones appended)
- * - `compounds`: arrays concatenated
- * - `attachments`: arrays concatenated
- * - `variants`: deep-merged
- * - `defaults`: shallow-merged
- * - any other field: last entry wins
- */
+// Merges an ordered list of PresetEntryRecords into a single record.
+// class/compounds/attachments: concatenated; variants: deep-merged; defaults: shallow-merged; other fields: last wins.
 export function mergePresetRecords(records: PresetEntryRecord[]): PresetEntryRecord | undefined {
 	const len = records.length;
 	if (!len) return undefined;
@@ -45,7 +34,9 @@ export function mergePresetRecords(records: PresetEntryRecord[]): PresetEntryRec
 		const recAttachments = record.attachments;
 		if (recAttachments?.length) {
 			for (let j = 0, jlen = recAttachments.length; j < jlen; j++)
-				attachments.push(recAttachments[j] as NonNullable<PresetEntryRecord['attachments']>[number]);
+				attachments.push(
+					recAttachments[j] as NonNullable<PresetEntryRecord['attachments']>[number]
+				);
 		}
 
 		if (record.variants) variantsList.push(record.variants);
@@ -87,19 +78,13 @@ export function mergePresetRecords(records: PresetEntryRecord[]): PresetEntryRec
 	return result;
 }
 
-/**
- * Resolves a preset to its concrete value.
- *
- * - If `preset` is falsy, returns `undefined`.
- * - If it is an array, each entry is resolved (unwrapping deferred factories)
- *   and the results are merged via {@link mergePresetRecords}.
- * - Otherwise, unwraps up to two levels of factory functions.
- */
+// Factory-unwrap depth cap — guards against accidental self-returning closures.
+const MAX_FACTORY_DEPTH = 8;
+
+// Resolve a preset to its concrete value. Falsy → undefined; array → each entry resolved then
+// merged via mergePresetRecords; otherwise unwrap nested factory functions (capped at MAX_FACTORY_DEPTH).
 export function resolvePreset(
-	preset:
-		| PresetEntryValue
-		| Array<PresetEntryValue>
-		| undefined
+	preset: PresetEntryValue | Array<PresetEntryValue> | undefined
 ): PresetEntryRecord | undefined;
 export function resolvePreset<T>(preset: T | (() => T) | undefined): T | undefined;
 export function resolvePreset(preset: unknown): unknown {
@@ -114,7 +99,10 @@ export function resolvePreset(preset: unknown): unknown {
 		return mergePresetRecords(resolved);
 	}
 
-	const result = call(preset);
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	return typeof result === 'function' ? (result as any)() : result;
+	let result = call(preset);
+	for (let depth = 0; typeof result === 'function' && depth < MAX_FACTORY_DEPTH; depth++) {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		result = (result as any)();
+	}
+	return result;
 }

@@ -1,13 +1,9 @@
-import { getContext, setContext, untrack } from 'svelte';
-import { TabsBond, TabsBondState } from '../bond.svelte';
+import { untrack } from 'svelte';
+import { TabsBond, type ITabs } from '../bond.svelte';
 import { getElementId } from '$svelte-atoms/core/utils/dom.svelte';
 import { portal } from '$svelte-atoms/core/attachments/portal.svelte';
-import {
-	Bond,
-	BondState,
-	BondAtom,
-	type BondStateProps
-} from '$svelte-atoms/core/shared/bond.svelte';
+import { Bond, BondState, BondAtom, type BondStateProps } from '$svelte-atoms/core/shared/bond.svelte';
+import { defineBond, type BondOf } from '$svelte-atoms/core/shared';
 
 export type TabBondProps<
 	T,
@@ -25,9 +21,12 @@ export type TabBondElement = {
 	description: HTMLElement;
 };
 
-class TabHeaderAtom extends BondAtom<TabBond, HTMLElement> {
-	constructor(bond: TabBond) {
+// Bond shape the tab atoms type `this.bond` against — breaks the atom↔bond cycle via `defineBond`.
+class TabHeaderAtom extends BondAtom<TabBondBase, HTMLElement> {
+	constructor(bond: TabBondBase) {
 		super(bond, 'header');
+		// `role('item', value)` opts this header into the parent's selection capability.
+		this.role('item', bond.value);
 	}
 	override get attrs() {
 		const bond = this.bond;
@@ -57,7 +56,7 @@ class TabHeaderAtom extends BondAtom<TabBond, HTMLElement> {
 	}
 
 	override onmount(node: HTMLElement): void | (() => void) {
-		const headerElement = this.bond.tabs?.element<HTMLElement>('header');
+		const headerElement = this.bond.tabs?.headerElement;
 
 		if (!headerElement) {
 			node.hidden = true;
@@ -68,8 +67,8 @@ class TabHeaderAtom extends BondAtom<TabBond, HTMLElement> {
 	}
 }
 
-class TabBodyAtom extends BondAtom<TabBond, HTMLElement> {
-	constructor(bond: TabBond) {
+class TabBodyAtom extends BondAtom<TabBondBase, HTMLElement> {
+	constructor(bond: TabBondBase) {
 		super(bond, 'body');
 	}
 	override get attrs() {
@@ -87,8 +86,8 @@ class TabBodyAtom extends BondAtom<TabBond, HTMLElement> {
 	}
 }
 
-class TabDescriptionAtom extends BondAtom<TabBond, HTMLElement> {
-	constructor(bond: TabBond) {
+class TabDescriptionAtom extends BondAtom<TabBondBase, HTMLElement> {
+	constructor(bond: TabBondBase) {
 		super(bond, 'description');
 	}
 	override get attrs() {
@@ -98,18 +97,19 @@ class TabDescriptionAtom extends BondAtom<TabBond, HTMLElement> {
 	}
 }
 
-export class TabBond<T = unknown> extends Bond<TabBondProps<T>, TabBondState<T>, TabBondElement> {
-	static CONTEXT_KEY = '@atoms/bonds/tabs/tab';
+// Hand-written base for TabBond — parent-tabs capture and value/text/mount helpers the atoms call.
+// Non-generic (T is a runtime phantom carried by state); generic surface re-exposed by the facade.
+class TabBondBase extends Bond<TabBondProps<unknown>, TabBondState> {
+	#parent: ITabs | undefined;
 
-	#tabs?: TabsBond<T>;
-
-	constructor(state: TabBondState<T>) {
+	constructor(state: TabBondState) {
 		super(state, 'tab');
-		this.#tabs = TabsBond.get() as TabsBond<T>;
+		this.#parent = TabsBond.get();
 	}
 
-	get tabs() {
-		return this.#tabs;
+	// The narrow parent contract this tab depends on (not the whole TabsBond).
+	get tabs(): ITabs | undefined {
+		return this.#parent;
 	}
 
 	get value() {
@@ -121,63 +121,78 @@ export class TabBond<T = unknown> extends Bond<TabBondProps<T>, TabBondState<T>,
 	}
 
 	mount() {
-		return this.#tabs?.state.mountItem(this.value, this);
+		return this.#parent?.mountItem(this.value, this as unknown as TabBond);
 	}
 	unmount() {
-		this.#tabs?.state.unmountItem(this.id);
-	}
-
-	share(): this {
-		return TabBond.set(this) as this;
-	}
-
-	header() {
-		return this.atom('header', () => new TabHeaderAtom(this));
-	}
-
-	body() {
-		return this.atom('body', () => new TabBodyAtom(this));
-	}
-
-	description() {
-		return this.atom('description', () => new TabDescriptionAtom(this));
-	}
-
-	static get(): TabBond | undefined {
-		return getContext(TabBond.CONTEXT_KEY);
-	}
-
-	static set(bond: TabBond): TabBond {
-		return setContext(TabBond.CONTEXT_KEY, bond);
+		this.#parent?.unmountItem(this.id);
 	}
 }
 
-export class TabBondState<T> extends BondState<TabBondProps<T>> {
-	#tabsBond?: TabsBond<T> = $state();
-	#tabsState?: TabsBondState<T> = $derived(this.#tabsBond?.state);
+// TabBond — `defineBond` (§6) over TabBondBase via the generic facade (see TabsBond);
+// T is carried by state/tabs.
+const TabBondImpl = defineBond<
+	{
+		header: typeof TabHeaderAtom;
+		body: typeof TabBodyAtom;
+		description: typeof TabDescriptionAtom;
+	},
+	TabBondState,
+	typeof TabBondBase
+>({
+	name: 'tab',
+	base: TabBondBase,
+	atoms: {
+		header: TabHeaderAtom,
+		body: TabBodyAtom,
+		description: TabDescriptionAtom
+	}
+});
 
-	constructor(props: () => TabBondProps<T>) {
+// Generic instance type — narrows `state`/`tabs` to carry `T` (brand-preserving).
+export type TabBond<T = unknown> = BondOf<typeof TabBondImpl> & {
+	readonly state: TabBondState<T>;
+	readonly tabs: ITabs<T> | undefined;
+};
+
+// Generic-constructor facade over the non-generic impl.
+interface TabBondConstructor {
+	new <T = unknown>(state: TabBondState<T>): TabBond<T>;
+	readonly CONTEXT_KEY: string;
+	get<T = unknown>(): TabBond<T> | undefined;
+	set<T = unknown>(bond: TabBond<T>): TabBond<T>;
+}
+
+export const TabBond = TabBondImpl as unknown as TabBondConstructor;
+
+export class TabBondState<T = unknown> extends BondState<TabBondProps<T>> {
+	// Narrow parent contract (not the whole TabsBond/TabsBondState).
+	#parent?: ITabs<T> = TabsBond.get() as TabsBond<T> | undefined;
+
+	constructor(props: TabBondProps<T>) {
 		super(props);
 
-		this.#tabsBond = TabsBond.get() as TabsBond<T>;
+		// Re-register the parent's selection capability on this child state so the tab-header
+		// atom can project it via `.role('item', value)`. Same instance — shared surface.
+		const selection = this.#parent?.selectionCapability();
+		if (selection) this.capability(selection);
 	}
 
 	get isActive() {
-		return this.#tabsState?.props.value === this.props.value;
+		return this.#parent?.activeValue === this.props.value;
 	}
 
 	get isDisabled() {
 		return (
 			this.props.disabled ??
-			this.#tabsBond?.elements?.header?.getAttribute?.('aria-disabled') === 'true'
+			this.#parent?.headerElement?.getAttribute?.('aria-disabled') === 'true'
 		);
 	}
 
 	select() {
-		this.#tabsState?.select(this.props.value);
+		this.#parent?.select(this.props.value);
 	}
 
 	unselect() {
-		this.#tabsState?.unselect();
+		this.#parent?.unselect();
 	}
 }

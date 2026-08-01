@@ -1,9 +1,6 @@
 <script lang="ts">
 	import { ComboboxBond } from './bond.svelte';
 	import { Item } from '$svelte-atoms/core/components/select/atoms';
-	import { SelectItemController as DropdownItemController } from '$svelte-atoms/core/components/select/item/controller.svelte';
-
-	import { on } from '$svelte-atoms/core/attachments';
 
 	const bond = ComboboxBond.get() as ComboboxBond;
 
@@ -13,38 +10,35 @@
 
 	let {
 		class: klass = '',
+		preset = undefined as string | string[] | undefined,
+		value = '',
 		children = undefined,
 		...restProps
 	} = $props();
+
+	const atom = bond.item();
+
+	const presentation = $derived({ preset: preset ?? atom.preset });
+
+	// `Select.Item`'s own handler runs this first, then bails if we've `preventDefault`ed — so we
+	// own the commit here. Toggle (so multi-select can deselect; single-select replaces), then
+	// close only when single-select. Updates `props.values`, which drives `allSelections` → chips.
+	function onItemClick(ev: MouseEvent) {
+		ev.preventDefault();
+		const selected = bond.state.props.values?.includes(value) ?? false;
+		if (selected) bond.state.unselect([value]);
+		else bond.state.select([value]);
+		if (!bond.state.props.multiple) bond.state.close();
+	}
 </script>
 
 <Item
-	{@attach (node: HTMLElement) => {
-		const item = DropdownItemController.get();
-
-		return on('click', (ev) => {
-			ev.preventDefault();
-
-			const currentTarget = ev.currentTarget as HTMLElement | undefined;
-
-			const textElement = (currentTarget?.querySelector('data-text') ?? currentTarget) as
-				| HTMLElement
-				| undefined;
-
-			// Set selected item text
-			bond.state.props.label = textElement?.innerText ?? '';
-			// Clear input query
-			bond.state.props.label = '';
-
-			item?.toggle();
-
-			bond?.state.close();
-		})(node);
-	}}
 	{bond}
-	preset="combobox.item"
+	{value}
 	class={['border-border', '$preset', klass].filter(Boolean).join(' ')}
+	{...presentation}
 	{...restProps}
+	onclick={onItemClick}
 >
 	{@render children?.({ combobox: bond })}
 </Item>

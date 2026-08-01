@@ -9,17 +9,22 @@
 
 	let {
 		class: klass = '',
+		preset = undefined as string | string[] | undefined,
 		children = undefined
 	} = $props();
 
+	const atom = bond.atom('indicator');
+
 	const isOpen = $derived(bond?.state.props.open ?? false);
+
+	const presentation = $derived({ preset: preset ?? atom.preset });
 </script>
 
 <HtmlAtom
 	{bond}
-	preset="popover.indicator"
 	class={['border-border flex h-5 items-center justify-center', '$preset', klass]}
-	{...bond.indicator().spread}
+	{...presentation}
+	{...atom.spread}
 >
 	{#if children}
 		{@render children?.({ popover: bond })}

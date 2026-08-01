@@ -17,14 +17,18 @@
 
 	let {
 		class: klass = '',
+		preset = undefined,
 		as = 'button' as E,
 		children,
 		onclick,
 		...restProps
 	}: TabHeaderProps<E, B> = $props();
 
+	const atom = bond.atom('header');
+
 	const headerProps = $derived({
-		...bond?.header().spread,
+		preset: preset ?? atom.preset,
+		...atom?.spread,
 		...restProps
 	});
 
@@ -43,7 +47,6 @@
 
 <Atom
 	{bond}
-	preset="tab.header"
 	as="button"
 	class={[
 		'border-border text-foreground/50 bg-foreground/0 hover:bg-foreground/5 active:bg-foreground/10 flex cursor-pointer items-center px-2 py-2 text-sm font-medium transition-colors duration-100',

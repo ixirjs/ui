@@ -7,19 +7,22 @@
 
 	let {
 		class: klass = '',
+		preset = undefined,
 		children = undefined,
 		...restProps
 	}: CollapsibleHeaderProps<E, B> = $props();
 
+	const atom = bond?.atom('header');
+
 	const collapsibleProps = $derived({
-		...bond?.header().spread,
+		preset: preset ?? atom?.preset,
+		...atom?.spread,
 		...restProps
 	});
 </script>
 
 <HtmlAtom
 	{bond}
-	preset="collapsible.header"
 	class={['border-border flex cursor-pointer items-center gap-2', '$preset', klass]}
 	{...collapsibleProps}
 >

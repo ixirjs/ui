@@ -12,17 +12,17 @@
 	let {
 		class: klass = '',
 		children = undefined,
-		preset = 'stepper.footer' as const,
+		preset = undefined,
 		...restProps
 	}: StepperFooterProps<E, B> = $props();
 
 	const footerProps = $derived({
+		preset: preset ?? 'stepper.footer',
 		...restProps
 	});
 </script>
 
 <HtmlAtom
-	{preset}
 	{bond}
 	class={['stepper-footer w-full', '$preset', klass]}
 	{...footerProps}

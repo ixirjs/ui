@@ -1,12 +1,13 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap='dialog', B extends Base = Base">
 	import type { HTMLAttributes } from 'svelte/elements';
-	import { defineProperty, defineState } from '$svelte-atoms/core/utils';
 	import Teleport from '$svelte-atoms/core/components/portal/teleport.svelte';
 	import type { Base } from '$svelte-atoms/core/components/atom';
 	import { DrawerBond, DrawerBondState, type DrawerBondProps } from './bond.svelte';
+	import { useFocusRestore } from '$svelte-atoms/core/shared/overlay';
 	import type { SlideoverRootProps } from './types';
 	import { ActivePortal, ZLayer } from '../portal';
 	import { animateDrawerRoot } from './motion';
+	import { bindBond } from '$svelte-atoms/core/shared';
 
 	type Element = HTMLElementTagNameMap[E];
 
@@ -15,12 +16,12 @@
 		side = 'right',
 		children = undefined,
 		class: klass = '',
-		as = 'div',
+		preset = undefined,
 		disabled = false,
 		portal = undefined,
 		"z-index": zindex = 1,
 		onclose = undefined,
-		factory = _factory,
+		factory = defaultFactory,
 		fallback = {
 			animate: animateDrawerRoot({}),
 			initial: animateDrawerRoot({ duration: 0 }),
@@ -33,25 +34,22 @@
 	);
 	const layer = new ZLayer('drawer', () => normalizedZIndex ?? 0).share();
 
-	const bondProps = defineState<DrawerBondProps>(
-		[
-			defineProperty(
-				'open',
-				() => open,
-				(v) => {
-					open = v;
-				}
-			),
-			defineProperty('disabled', () => disabled),
-			defineProperty('side', () => side),
-			defineProperty('rest', () => restProps)
-		],
-		() => ({})
+	const binding = bindBond<DrawerBond>(
+		(props) => factory(props),
+		{
+			open: [() => open, (v) => (open = v)],
+			disabled: () => disabled,
+			side: () => side,
+			rest: () => restProps
+		}
 	);
-	const bond = _factory(bondProps).share();
+	const bond = binding.bond.share();
+	
+	// Focus capture/restore reacts to `open` (ADR 0001 / ADR 0003).
+	useFocusRestore(bond);
 
 	const rootProps = $derived({
-		...bond?.root().spread,
+		...binding?.props,
 		...restProps
 	});
 
@@ -63,8 +61,8 @@
 		}
 	});
 
-	function _factory(props: typeof bondProps) {
-		const bondState = new DrawerBondState(() => props);
+	function defaultFactory(props: DrawerBondProps) {
+		const bondState = new DrawerBondState(props);
 		const bond = new DrawerBond(bondState);
 
 		return bond;
@@ -76,12 +74,9 @@
 </script>
 
 <Teleport
-	{as}
-	{bond}
 	portal={portal ?? 'root.l0'}
-	preset="drawer"
 	class={[
-		'border-border pointer-events-none fixed inset-0 h-full w-full overflow-hidden bg-transparent',
+		'pointer-events-none fixed inset-0 h-full w-full overflow-hidden bg-transparent',
 		!open && 'pointer-events-none',
 		'$preset',
 		klass

@@ -1,10 +1,6 @@
-import { getContext, setContext } from 'svelte';
-import {
-	Bond,
-	BondAtom,
-	BondState,
-	type BondStateProps
-} from '$svelte-atoms/core/shared/bond.svelte';
+import { BondAtom, BondState, type BondStateProps } from '$svelte-atoms/core/shared/bond.svelte';
+import { defineBond, type BondOf, type ViewOf } from '$svelte-atoms/core/shared';
+import { labelledControl } from '$svelte-atoms/core/shared/capabilities/relationship.svelte';
 
 export interface ValidationError {
 	path: (string | number)[];
@@ -103,6 +99,7 @@ export type FieldStateProps<
 	date?: Date | null;
 	number?: number;
 	checked?: boolean;
+	type?: string;
 	schema?: Schema;
 	validator?: ValidationAdapter<Schema, Value>;
 	onvalidation?: (result: ValidationResult<Value>) => void;
@@ -115,87 +112,72 @@ export type FieldDomElements = {
 	control: HTMLElement;
 };
 
-export class FieldRootAtom extends BondAtom<FieldBond, HTMLElement> {
-	constructor(bond: FieldBond) {
+// Bond shape the field atoms type `this.bond` against — breaks the atom↔bond cycle.
+type FieldBondView = ViewOf<FieldBondState>;
+
+export class FieldRootAtom extends BondAtom<FieldBondView, HTMLElement> {
+	constructor(bond: FieldBondView) {
 		super(bond, 'root');
 	}
 
 	override get attrs() {
+		const hasErrors = this.bond.state.errors.length > 0;
+		// The group is labelled by the field's label — resolved from the atom that declared the role.
 		return {
 			...super.attrs,
-			id: `root-${this.bond.id}`,
 			role: 'group',
-			'aria-labelledby': `label-${this.bond.id}`,
-			'aria-describedby': this.bond.state.errors.length > 0 ? `error-${this.bond.id}` : undefined,
-			'aria-invalid': `${this.bond.state.errors.length > 0}`
+			'aria-labelledby': this.bond.atomByRole('label')?.id,
+			'aria-describedby': hasErrors ? `error-${this.bond.id}` : undefined,
+			'aria-invalid': `${hasErrors}`
 		};
 	}
 }
 
-export class FieldLabelAtom extends BondAtom<FieldBond, HTMLElement> {
-	constructor(bond: FieldBond) {
+export class FieldLabelAtom extends BondAtom<FieldBondView, HTMLElement> {
+	constructor(bond: FieldBondView) {
 		super(bond, 'label');
 	}
-
-	override get attrs() {
-		return {
-			...super.attrs,
-			id: `label-${this.bond.id}`,
-			for: `control-${this.bond.id}`
-		};
-	}
+	// `for` and id come from the labelledControl link (role:'label', nativeFor).
 }
 
-export class FieldControlAtom extends BondAtom<FieldBond, HTMLElement> {
-	constructor(bond: FieldBond) {
+export class FieldControlAtom extends BondAtom<FieldBondView, HTMLElement> {
+	constructor(bond: FieldBondView) {
 		super(bond, 'control');
 	}
 
 	override get attrs() {
+		const hasErrors = this.bond.state.errors.length > 0;
+		// `aria-labelledby` comes from labelledControl (role:'control'); rest is validation state.
 		return {
 			...super.attrs,
-			id: `control-${this.bond.id}`,
-			'aria-labelledby': `label-${this.bond.id}`,
-			'aria-describedby': this.bond.state.errors.length > 0 ? `error-${this.bond.id}` : undefined,
-			'aria-invalid': `${this.bond.state.errors.length > 0}`,
+			'aria-describedby': hasErrors ? `error-${this.bond.id}` : undefined,
+			'aria-invalid': `${hasErrors}`,
 			'aria-disabled': `${this.bond.state.props.disabled}`,
 			'aria-readonly': `${this.bond.state.props.readonly}`,
-			'aria-errormessage': this.bond.state.errors.length > 0 ? `error-${this.bond.id}` : undefined
+			'aria-errormessage': hasErrors ? `error-${this.bond.id}` : undefined
 		};
 	}
 }
 
-export class FieldBond extends Bond<FieldStateProps, FieldBondState, FieldDomElements> {
-	static CONTEXT_KEY = '@atoms/context/form/field';
-
-	constructor(state: FieldBondState) {
-		super(state, 'field');
+// FieldBond — label/control fold in the labelled-control link via their roles; validation on FieldBondState.
+export const FieldBond = defineBond<
+	{
+		root: typeof FieldRootAtom;
+		label: { atom: typeof FieldLabelAtom; role: 'label' };
+		control: { atom: typeof FieldControlAtom; role: 'control' };
+	},
+	FieldBondState
+>({
+	name: 'field',
+	atoms: {
+		root: FieldRootAtom,
+		label: { atom: FieldLabelAtom, role: 'label' },
+		control: { atom: FieldControlAtom, role: 'control' }
 	}
+});
 
-	root() {
-		return this.atom('root', () => new FieldRootAtom(this));
-	}
-
-	label() {
-		return this.atom('label', () => new FieldLabelAtom(this));
-	}
-
-	control() {
-		return this.atom('control', () => new FieldControlAtom(this));
-	}
-
-	share(): this {
-		return FieldBond.set(this) as this;
-	}
-
-	static get(): FieldBond | undefined {
-		return getContext(FieldBond.CONTEXT_KEY);
-	}
-
-	static set(bond: FieldBond): FieldBond {
-		return setContext(FieldBond.CONTEXT_KEY, bond);
-	}
-}
+// Instance type — paired with the const above.
+export type FieldBond = BondOf<typeof FieldBond>;
 
 export class FieldBondState<
 	Props extends FieldStateProps = FieldStateProps
@@ -203,8 +185,11 @@ export class FieldBondState<
 	#errors = $state<ValidationError[]>([]);
 	#isValidating = $state(false);
 
-	constructor(props: () => Props) {
+	constructor(props: Props) {
 		super(props);
+		// label ↔ control a11y linkage: control gets aria-labelledby, label gets `for`.
+		// Validation attrs (aria-invalid/errormessage/…) stay on the control atom.
+		this.capability(labelledControl({ nativeFor: true }));
 	}
 
 	get value() {
@@ -223,7 +208,7 @@ export class FieldBondState<
 		return this.props.number;
 	}
 
-	get checked() {
+	get isChecked() {
 		return this.props.checked;
 	}
 

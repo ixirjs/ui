@@ -3,24 +3,25 @@
 	import { DataGridBond } from './bond.svelte';
 	import type { DatagridFooterProps } from './types';
 
-	const bond = DataGridBond.get<T>();
+	const bond = (DataGridBond.get() as DataGridBond<T> | undefined);
 	if (!bond) {
 		throw new Error('DataGrid.Footer must be used within DataGrid.Root.');
 	}
 
 	let {
 		class: klass = '',
+		preset = undefined,
 		children = undefined,
 		...restProps
 	}: DatagridFooterProps<T, E, B> = $props();
 
-	const footerProps = $derived({ ...bond.footer().spread, ...restProps });
+	const atom = bond.atom('footer');
+	const footerProps = $derived({ preset: preset ?? atom.preset, ...atom.spread, ...restProps });
 </script>
 
 <HtmlAtom
 	{bond}
-		preset="datagrid.footer"
-	class={['border-border', '$preset', klass, 'contents']}
+	class={['$preset', klass, 'contents']}
 	{...footerProps}
 >
 	{@render children?.({ datagrid: bond })}

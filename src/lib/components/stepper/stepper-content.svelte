@@ -1,6 +1,6 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
 	import { HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
-	import { StepperBond } from './bond.svelte';
+	import { StepperBond, type StepContentSnippet } from './bond.svelte';
 	import type { StepperContentProps } from './types';
 
 	const bond = StepperBond.get();
@@ -8,10 +8,10 @@
 	let {
 		class: klass = '',
 		children = undefined,
-		preset = 'stepper.content' as const,
+		preset = undefined,
 		...restProps
 	}: StepperContentProps<E, B> = $props();
-	
+
 	const activeStep = $derived(bond?.state?.getStep(bond?.state?.props?.step));
 	const activeStepContent = $derived(bond?.state?.activeStepContent);
 
@@ -19,27 +19,29 @@
 	const contentProps = $derived.by(()=> {
 		const { class: klass, ...restContentProps } = activeStepContent?.props ?? {};
 		return {
+			preset: preset ?? 'stepper.content',
 			...restContentProps,
 			...restProps
 		}
 	});
 
-
+	const content = $derived(activeStepContent && activeStep ? body : undefined);
 </script>
 
-{#if activeStepContent}
-	{#key activeStepContent}
+{#snippet body(stepContent: StepContentSnippet)}
+	{#key stepContent}
 		<HtmlAtom
-			{preset}
 			{bond}
 			class={['stepper-content w-full', '$preset', contentKlass, klass]}
 			{...contentProps}
 		>
 			<!-- Render teleported step content -->
-			{@render activeStepContent.children({ step: activeStep })}
+			{@render stepContent.children({ step: activeStep! })}
 
 			<!-- Optional custom content wrapper -->
 			<!-- {@render children?.({ stepper: bond })} -->
 		</HtmlAtom>
 	{/key}
-{/if}
+{/snippet}
+
+{@render content?.(activeStepContent!)}

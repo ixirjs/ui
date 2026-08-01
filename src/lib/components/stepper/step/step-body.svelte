@@ -10,15 +10,15 @@
 
 	let {
 		class: klass = '',
-		base=Stack.Item,
+		base = Stack.Item as unknown as B,
 		children = undefined,
-		preset = 'stepper.step.content' as const,
+		preset = undefined,
 		...restProps
 	}: StepContentProps<E, B> = $props();
 
 	const contentProps = $derived({
 		class: klass,
-		preset,
+		preset: preset ?? 'stepper.step.content',
 		base,
 		...restProps
 	});

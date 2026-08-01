@@ -1,9 +1,8 @@
 <script lang="ts">
-	import { untrack } from 'svelte';
 	import { PopoverState, PopoverBond } from './bond.svelte';
 	import type { PopoverStateProps } from './bond.svelte';
-	import { type BondStateProps } from '$svelte-atoms/core/shared/bond.svelte';
-	import { defineProperty, defineState } from '$svelte-atoms/core/utils';
+	import { useFocusRestore } from '$svelte-atoms/core/shared/overlay';
+	import { bindBond } from '$svelte-atoms/core/shared/bind-bond.svelte';
 	import type { PopoverRootProps } from './types';
 	import { DialogBond } from '../dialog/bond.svelte';
 	import { DrawerBond } from '../drawer';
@@ -48,32 +47,33 @@
 		placement = 'bottom',
 		offset = 1,
 		portal = undefined,
-		factory = _factory,
+		factory = defaultFactory,
 		children = undefined,
 		...restProps
 	}: PopoverRootProps = $props();
 
-	const bondProps = defineState<PopoverStateProps>([
-		defineProperty(
-			'open',
-			() => open && (owner?.state?.props?.open ?? true),
-			(v) => {
-				open = v;
-			}
-		),
-		defineProperty('disabled', () => disabled),
-		defineProperty('placement', () => placement),
-		defineProperty('offset', () => offset),
-		defineProperty('placements', () => placements ?? []),
-		defineProperty('portal', () => portal),
-		defineProperty('positionStrategy', () => positionStrategy),
-		defineProperty('rest', () => restProps)
-	]);
+	const binding = bindBond<PopoverBond>(
+		(props) => factory(props),
+		{
+			open: [() => open && (owner?.state?.props?.open ?? true), (v) => { open = v; }],
+			disabled: () => disabled,
+			placement: () => placement,
+			offset: () => offset,
+			placements: () => placements ?? [],
+			portal: () => portal,
+			positionStrategy: () => positionStrategy,
+			rest: () => restProps
+		}
+	);
+	const bond = binding.bond.share();
 
-	const bond = untrack(() => factory(bondProps as unknown as BondStateProps)).share();
+	// Focus capture/restore is a state-reactive consequence of `open`, not an
+	// imperative kernel method (ADR 0001 / ADR 0003). Covers popover, menu,
+	// dropdown-menu, context-menu, tooltip and date-picker — all render via this Root.
+	useFocusRestore(bond);
 
-	function _factory() {
-		const popoverState = new PopoverState(() => bondProps);
+	function defaultFactory(props: PopoverStateProps) {
+		const popoverState = new PopoverState(props);
 		const popoverBond = new PopoverBond(popoverState);
 
 		return popoverBond;

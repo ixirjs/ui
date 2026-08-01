@@ -11,21 +11,23 @@
 
 	let {
 		class: klass = '',
-		preset = 'stepper.step.description',
+		preset = undefined,
 		as="p",
 		children = undefined,
 		...restProps
 	}: StepDescriptionProps<E, B> = $props();
 
+	const atom = bond.atom('description');
+
 	const descriptionProps = $derived({
-		...bond?.description().spread,
+		preset: preset ?? atom.preset,
+		...atom?.spread,
 		...restProps
 	});
 </script>
 
 <Atom
 	{as}
-	{preset}
 	class={['text-xs text-muted-foreground', '$preset', klass]}
 	{...descriptionProps}
 >

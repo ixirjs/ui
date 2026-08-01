@@ -1,6 +1,5 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { nanoid } from 'nanoid';
-	import { defineProperty, defineState } from '$svelte-atoms/core/utils';
+	import { bindBond } from '$svelte-atoms/core/shared/bind-bond.svelte';
 	import { HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
 	import {
 		AccordionItemBond,
@@ -8,35 +7,31 @@
 		type AccordionItemBondProps
 	} from './bond.svelte';
 	import type { AccordionItemRootProps } from './types';
-	import { untrack } from 'svelte';
 
 	let {
 		class: klass = '',
-		value = nanoid(),
+		value,
 		data = undefined,
 		disabled = false,
-		factory = _factory,
+		factory = defaultFactory,
 		children = undefined,
-		preset = 'accordion.item',
+		preset = undefined,
 		...restProps
 	}: AccordionItemRootProps<E, B> = $props();
 
-	const accordionItemProps = defineState<AccordionItemBondProps>([
-		defineProperty('data', () => data),
-		defineProperty('disabled', () => disabled),
-		defineProperty('value', () => value)
-	]);
-	const bond = untrack(()=> factory(accordionItemProps)).share();
+	const binding = bindBond<AccordionItemBond>(
+		(props) => factory(props),
+		{
+			data: () => data,
+			disabled: () => disabled,
+			value: () => value
+		},
+		{ preset: () => preset }
+	);
+	const bond = binding.bond.share();
 
-	bond.state.mount();
-
-	const rootProps = $derived({
-		...bond.root().spread,
-		...restProps
-	});
-
-	function _factory(props: typeof accordionItemProps) {
-		const accordionItemState = new AccordionItemBondState(() => props);
+	function defaultFactory(props: AccordionItemBondProps) {
+		const accordionItemState = new AccordionItemBondState(props);
 		return new AccordionItemBond(accordionItemState);
 	}
 
@@ -46,10 +41,9 @@
 </script>
 
 <HtmlAtom
-	{bond}
-	{preset}
 	class={['border-border', '$preset', klass]}
-	{...rootProps}
+	{...binding.props}
+	{...restProps}
 >
 	{@render children?.({ accordionItem: bond })}
 </HtmlAtom>

@@ -1,6 +1,7 @@
 <script module>
 	import { defineMeta } from '@storybook/addon-svelte-csf';
 	import { Accordion as AAccordion, AccordionItem } from '.';
+	import { createLifecycleKey } from '../atom';
 
 	// More on how to set up stories at: https://storybook.js.org/docs/writing-stories
 	const { Story } = defineMeta({

@@ -10,6 +10,7 @@
 
 	let {
 		class: klass = '',
+		preset = undefined,
 		value = $bindable(),
 		checked = $bindable(),
 		number = $bindable(),
@@ -20,9 +21,12 @@
 		...restProps
 	}: FieldControlProps<E, B> = $props();
 	
+	const atom = bond?.atom('control');
+
 	const controlProps = $derived.by(() => {
 		return {
-			...(bond?.control().spread ?? {}),
+			preset: preset ?? atom?.preset,
+			...(atom?.spread ?? {}),
 			...restProps
 		};
 	});
@@ -63,7 +67,6 @@
 	{value}
 	{checked}
 	{name}
-	preset="field.control"
 	class={['flex items-center', '$preset', klass]}
 	oninput={(ev: InputEvent, detail: InputDetail) => handleInput(ev, detail)}
 	{...controlProps}

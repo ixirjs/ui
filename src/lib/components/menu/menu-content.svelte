@@ -10,19 +10,20 @@
 		class: klass = '',
 		as = 'ul' as T,
 		base = Root as B,
-		preset = 'menu.content',
+		preset = undefined,
 		children = undefined,
 		...restProps
 	} = $props();
+
+	const contentProps = $derived({ preset: preset ?? 'menu.content', ...restProps });
 </script>
 
 <Content
 	{as}
 	{base}
 	{bond}
-	{preset}
 	class={['border-border overflow-hidden p-0', '$preset', klass]}
-	{...restProps}
+	{...contentProps}
 >
 	{@render children?.()}
 </Content>

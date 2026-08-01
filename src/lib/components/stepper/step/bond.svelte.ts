@@ -1,16 +1,15 @@
-import { getContext, setContext, untrack } from 'svelte';
-import { StepperBond, StepperState } from '../bond.svelte';
-import {
-	Bond,
-	BondState,
-	BondAtom,
-	type BondStateProps
-} from '$svelte-atoms/core/shared/bond.svelte';
+import { StepperBond, type IStepper } from '../bond.svelte';
+import { BondState, BondAtom, type BondStateProps } from '$svelte-atoms/core/shared/bond.svelte';
+import { defineBond, type BondOf, type ViewOf } from '$svelte-atoms/core/shared';
+
+// Bond shape the step atoms type `this.bond` against — breaks the atom↔bond cycle.
+type StepBondView = ViewOf<StepBondState>;
 
 export type StepBondProps = BondStateProps & {
 	index: number;
 	disabled: boolean;
 	completed: boolean;
+	optional?: boolean;
 	error: boolean;
 };
 
@@ -24,19 +23,19 @@ export type StepBondElements = {
 	separator?: HTMLElement;
 };
 
-class StepRootAtom extends BondAtom<StepBond, HTMLElement> {
-	constructor(bond: StepBond) {
+class StepRootAtom extends BondAtom<StepBondView, HTMLElement> {
+	constructor(bond: StepBondView) {
 		super(bond, 'root');
 	}
 	override get attrs() {
 		const bond = this.bond;
 		const state = bond.state;
 
-		const props = untrack(() => bond.state.props);
+		const props = bond.state.props;
 
 		return {
 			...super.attrs,
-			'data-stepper': state?.stepper?.id ?? '',
+			'data-stepper': state?.parent?.id ?? '',
 			'data-index': props.index ?? 0,
 			'data-active': state?.isActive,
 			'data-completed': state?.isCompleted,
@@ -50,13 +49,13 @@ class StepRootAtom extends BondAtom<StepBond, HTMLElement> {
 	}
 }
 
-class StepIndicatorAtom extends BondAtom<StepBond, HTMLElement> {
-	constructor(bond: StepBond) {
+class StepIndicatorAtom extends BondAtom<StepBondView, HTMLElement> {
+	constructor(bond: StepBondView) {
 		super(bond, 'indicator');
 	}
 	override get attrs() {
-		const state = untrack(() => this.bond.state);
-		const props = untrack(() => this.bond.state.props);
+		const state = this.bond.state;
+		const props = this.bond.state.props;
 
 		return {
 			...super.attrs,
@@ -70,14 +69,14 @@ class StepIndicatorAtom extends BondAtom<StepBond, HTMLElement> {
 	}
 }
 
-class StepHeaderAtom extends BondAtom<StepBond, HTMLElement> {
-	constructor(bond: StepBond) {
+class StepHeaderAtom extends BondAtom<StepBondView, HTMLElement> {
+	constructor(bond: StepBondView) {
 		super(bond, 'header');
 	}
 	override get attrs() {
 		const bond = this.bond;
-		const state = untrack(() => bond.state);
-		const props = untrack(() => bond.state.props);
+		const state = bond.state;
+		const props = bond.state.props;
 
 		return {
 			...super.attrs,
@@ -89,8 +88,8 @@ class StepHeaderAtom extends BondAtom<StepBond, HTMLElement> {
 	}
 }
 
-class StepTitleAtom extends BondAtom<StepBond, HTMLElement> {
-	constructor(bond: StepBond) {
+class StepTitleAtom extends BondAtom<StepBondView, HTMLElement> {
+	constructor(bond: StepBondView) {
 		super(bond, 'title');
 	}
 	override get attrs() {
@@ -100,8 +99,8 @@ class StepTitleAtom extends BondAtom<StepBond, HTMLElement> {
 	}
 }
 
-class StepDescriptionAtom extends BondAtom<StepBond, HTMLElement> {
-	constructor(bond: StepBond) {
+class StepDescriptionAtom extends BondAtom<StepBondView, HTMLElement> {
+	constructor(bond: StepBondView) {
 		super(bond, 'description');
 	}
 	override get attrs() {
@@ -111,14 +110,14 @@ class StepDescriptionAtom extends BondAtom<StepBond, HTMLElement> {
 	}
 }
 
-class StepBodyAtom extends BondAtom<StepBond, HTMLElement> {
-	constructor(bond: StepBond) {
+class StepBodyAtom extends BondAtom<StepBondView, HTMLElement> {
+	constructor(bond: StepBondView) {
 		super(bond, 'body');
 	}
 	override get attrs() {
 		const bond = this.bond;
-		const state = untrack(() => bond.state);
-		const props = untrack(() => bond.state.props);
+		const state = bond.state;
+		const props = bond.state.props;
 
 		return {
 			...super.attrs,
@@ -130,13 +129,13 @@ class StepBodyAtom extends BondAtom<StepBond, HTMLElement> {
 	}
 }
 
-class StepSeparatorAtom extends BondAtom<StepBond, HTMLElement> {
-	constructor(bond: StepBond) {
+class StepSeparatorAtom extends BondAtom<StepBondView, HTMLElement> {
+	constructor(bond: StepBondView) {
 		super(bond, 'separator');
 	}
 	override get attrs() {
-		const state = untrack(() => this.bond.state);
-		const props = untrack(() => this.bond.state.props);
+		const state = this.bond.state;
+		const props = this.bond.state.props;
 
 		return {
 			...super.attrs,
@@ -150,100 +149,84 @@ class StepSeparatorAtom extends BondAtom<StepBond, HTMLElement> {
 	}
 }
 
-export class StepBond extends Bond<StepBondProps, StepBondState, StepBondElements> {
-	static CONTEXT_KEY = '@atoms/context/stepper/step';
-
-	constructor(state: StepBondState) {
-		super(state, 'step');
+// StepBond — `defineBond` (§6). `preset` is the dotted path (`stepper.step`), distinct
+// from the DOM namespace (`step`); parent wiring lives on StepBondState.
+export const StepBond = defineBond<
+	{
+		root: typeof StepRootAtom;
+		indicator: typeof StepIndicatorAtom;
+		header: typeof StepHeaderAtom;
+		title: typeof StepTitleAtom;
+		description: typeof StepDescriptionAtom;
+		body: typeof StepBodyAtom;
+		separator: typeof StepSeparatorAtom;
+	},
+	StepBondState
+>({
+	name: 'step',
+	preset: 'stepper.step',
+	atoms: {
+		root: StepRootAtom,
+		indicator: StepIndicatorAtom,
+		header: StepHeaderAtom,
+		title: StepTitleAtom,
+		description: StepDescriptionAtom,
+		body: StepBodyAtom,
+		separator: StepSeparatorAtom
 	}
+});
 
-	share() {
-		return StepBond.set(this) as this;
-	}
-
-	root() {
-		return this.atom('root', () => new StepRootAtom(this));
-	}
-
-	indicator() {
-		return this.atom('indicator', () => new StepIndicatorAtom(this));
-	}
-
-	header() {
-		return this.atom('header', () => new StepHeaderAtom(this));
-	}
-
-	title() {
-		return this.atom('title', () => new StepTitleAtom(this));
-	}
-
-	description() {
-		return this.atom('description', () => new StepDescriptionAtom(this));
-	}
-
-	body() {
-		return this.atom('body', () => new StepBodyAtom(this));
-	}
-
-	separator() {
-		return this.atom('separator', () => new StepSeparatorAtom(this));
-	}
-
-	static get(): StepBond | undefined {
-		return getContext(StepBond.CONTEXT_KEY);
-	}
-
-	static set(bond: StepBond): StepBond {
-		return setContext(StepBond.CONTEXT_KEY, bond);
-	}
-}
+// Instance type of the step bond — paired with the `const` above.
+export type StepBond = BondOf<typeof StepBond>;
 
 export class StepBondState extends BondState<StepBondProps> {
-	#stepper?: StepperState;
+	// Narrow parent contract (not the whole StepperState).
+	#parent?: IStepper;
 
-	constructor(props: () => StepBondProps) {
+	constructor(props: StepBondProps) {
 		super(props);
 		const stepperBond = StepperBond.get();
 		if (!stepperBond) {
 			throw new Error('Step must be used within a Stepper context.');
 		}
-		this.#stepper = stepperBond.state;
+		this.#parent = stepperBond.state;
 	}
 
 	get isActive() {
-		return this.#stepper?.props.step === this.props.index;
+		return this.#parent?.activeStep === this.props.index;
 	}
 
 	get isCompleted() {
-		const stepperStep = this.#stepper?.props.step;
+		const activeStep = this.#parent?.activeStep;
 		return (
-			this.props.completed || (typeof stepperStep === 'number' && stepperStep > this.props.index)
+			this.props.completed || (typeof activeStep === 'number' && activeStep > this.props.index)
 		);
 	}
 
 	get isDisabled() {
 		return (
 			this.props.disabled ||
-			(this.#stepper?.props.linear && this.props.index > this.#stepper.props.step + 1)
+			(this.#parent?.linear && this.props.index > this.#parent.activeStep + 1)
 		);
 	}
 
-	get stepper() {
-		return this.#stepper;
+	// The narrow parent contract this step depends on.
+	get parent() {
+		return this.#parent;
 	}
 
 	mount() {
-		this.#stepper?.mountStep(this.props.index, {} as StepBond);
+		this.#parent?.mountStep(this.props.index, {} as StepBond);
 		return this.unmount;
 	}
 
 	unmount = () => {
-		this.#stepper?.unmountStep(this.props.index);
+		this.#parent?.unmountStep(this.props.index);
 	};
 
 	activate() {
 		if (!this.isDisabled) {
-			this.#stepper?.navigation.goto(this.props.index);
+			this.#parent?.goto(this.props.index);
 		}
 	}
 }

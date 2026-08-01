@@ -12,16 +12,20 @@ export class DropdownMenuItemAtom<B extends DropdownMenuBond = DropdownMenuBond>
 	HTMLElement
 > {
 	#id: string;
-	#props: () => DropdownMenuItemAtomProps;
+	#props: DropdownMenuItemAtomProps;
 	#menuBond: B;
 	// eslint-disable-next-line svelte/prefer-svelte-reactivity
 	#createdAt = new Date();
 
-	constructor(props: () => DropdownMenuItemAtomProps, menuBond: B) {
-		super(menuBond, `item-${props().id}`);
+	constructor(props: DropdownMenuItemAtomProps, menuBond: B) {
+		super(menuBond, `item-${props.id}`);
 		this.#props = props;
 		this.#menuBond = menuBond;
-		this.#id = props().id ?? nanoid();
+		this.#id = props.id ?? nanoid();
+		// Fold in the roving capability's `item` projection (`data-highlighted` from
+		// the shared RovingFocus). Attrs-only — the .svelte keeps its own click
+		// (close). Mirrors SelectItemAtom. See docs/extensibility-vision.md §11.3.
+		this.role('item', this.#id);
 	}
 
 	get id() {
@@ -33,22 +37,23 @@ export class DropdownMenuItemAtom<B extends DropdownMenuBond = DropdownMenuBond>
 	}
 
 	get props() {
-		return this.#props();
+		return this.#props;
 	}
 
 	get isHighlighted() {
-		return this.#menuBond.state.highlightedId === this.id;
+		return this.#menuBond.state.roving.activeId === this.id;
 	}
 
 	override get attrs() {
 		const itemId = `menu-item-${this.id}`;
+		// `data-highlighted` comes from the roving capability's `item` projection
+		// (folded via `.role('item', id)` in the constructor) — not hand-rolled here.
 		return {
 			...super.attrs,
 			id: itemId,
 			role: 'menuitem',
-			'data-highlighted': this.isHighlighted,
-			'aria-disabled': this.#props().disabled ? true : undefined,
-			tabIndex: this.#props().disabled ? -1 : 0
+			'aria-disabled': this.#props.disabled ? true : undefined,
+			tabIndex: this.#props.disabled ? -1 : 0
 		};
 	}
 
@@ -62,13 +67,5 @@ export class DropdownMenuItemAtom<B extends DropdownMenuBond = DropdownMenuBond>
 
 	close() {
 		this.#menuBond?.state.close();
-	}
-
-	onmount() {
-		this.#menuBond?.state?.mountItem?.(this.id, this as any);
-
-		return () => {
-			this.#menuBond?.state?.unmountItem?.(this.id);
-		};
 	}
 }

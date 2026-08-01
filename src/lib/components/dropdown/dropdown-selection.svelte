@@ -17,11 +17,14 @@
 		class: klass = '',
 		as = 'div' as T,
 		base = undefined,
+		preset = undefined,
 		selection,
 		children,
 		onclose,
 		...restProps
 	}: DropdownSelectionProps<T, B> = $props();
+
+	const selectionProps = $derived({ preset: preset ?? 'dropdown.value', ...restProps });
 
 	const _base = $derived((base ?? isMultiple) ? Chip : undefined);
 
@@ -38,14 +41,13 @@
 	{as}
 	{bond}
 	base={_base}
-	preset="dropdown.value"
 	class={[
 		'dropdown-value border-border inline-flex h-6 flex-nowrap items-center gap-1 rounded-sm px-2 whitespace-nowrap',
 		'$preset',
 		klass
 	]}
 	onclose={handleClose}
-	{...restProps}
+	{...selectionProps}
 >
 	{#if children}
 		{@render children?.()}

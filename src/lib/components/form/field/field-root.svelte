@@ -1,6 +1,6 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { onDestroy, untrack } from 'svelte';
-	import { defineProperty, defineState } from '$svelte-atoms/core/utils';
+	import { onDestroy } from 'svelte';
+	import { bindBond } from '$svelte-atoms/core/shared/bind-bond.svelte';
 	import { HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
 	import { FieldBond, FieldBondState, type FieldStateProps } from './bond.svelte';
 	import type { FieldRootProps } from '../types';
@@ -11,50 +11,36 @@
 	let {
 		value = $bindable(),
 		class: klass = '',
+		preset = undefined,
 		name = undefined,
 		schema = undefined,
 		validator = undefined,
-		factory = _factory,
+		factory = defaultFactory,
 		children = undefined,
 		...restProps
 	}: FieldRootProps<E, B> = $props();
 
-	const bondProps = defineState<FieldStateProps>([
-		defineProperty(
-			'name',
-			() => name,
-			(v) => (name = v)
-		),
-		defineProperty(
-			'value',
-			() => value,
-			(v) => (value = v)
-		),
-		defineProperty('type', () => typeof value),
-		defineProperty('schema', () => schema),
-		defineProperty(
-			'validator',
-			() =>
-				validator ??
-				(formBond?.state?.props as { validator?: FieldStateProps['validator'] } | undefined)
-					?.validator
-		)
-	]);
-	const bondFactory = untrack(() => factory);
-	const bond = bondFactory(bondProps).share();
-
-	const rootProps = $derived(
-		({
-			...bond.root().spread,
-			...restProps
-		}) as Record<string, unknown>
+	const binding = bindBond<FieldBond>(
+		(props) => factory(props),
+		{
+			name: [() => name, (v) => (name = v)],
+			value: [() => value, (v) => (value = v)],
+			type: () => typeof value,
+			schema: () => schema,
+			validator: () =>
+				(validator ??
+					(formBond?.state?.props as { validator?: FieldStateProps['validator'] } | undefined)
+						?.validator) as FieldStateProps['validator']
+		},
+		{ preset: () => preset }
 	);
+	const bond = binding.bond.share();
 
 	const unmount = formBond?.state.mountField(bond.id, bond) ?? (() => {});
 	onDestroy(() => unmount());
 
-	function _factory(props: typeof bondProps) {
-		const bondState = new FieldBondState(() => props);
+	function defaultFactory(props: FieldStateProps) {
+		const bondState = new FieldBondState(props);
 		return new FieldBond(bondState);
 	}
 
@@ -64,6 +50,6 @@
 	
 </script>
 
-<HtmlAtom preset="field" class={['flex flex-col', '$preset', klass]} {...rootProps}>
+<HtmlAtom class={['flex flex-col', '$preset', klass]} {...binding.props} {...restProps}>
 	{@render children?.({ field: bond })}
 </HtmlAtom>

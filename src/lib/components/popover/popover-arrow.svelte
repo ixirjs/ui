@@ -12,6 +12,7 @@
 
 	let {
 		class: klass = '',
+		preset = undefined,
 		children = undefined,
 		fallback = {
 			animate: _animate
@@ -19,12 +20,16 @@
 		...restProps
 	}: PopoverArrowProps<E, B> = $props();
 
+	const atom = bond.atom('arrow');
+
+	const presentation = $derived({ preset: preset ?? atom.preset });
+
 	const position = $derived(bond.state.position);
 	const middlewareArrowData = $derived(position?.middlewareData?.arrow);
 	const side = $derived(position?.placement?.split('-')[0] ?? 'top');
 
 	const arrowProps = $derived({
-		...bond.arrow().spread,
+		...atom.spread,
 		...restProps
 	} as Record<string, unknown>);
 
@@ -77,9 +82,9 @@
 <HtmlAtom
 	{bond}
 	{fallback}
-	preset="popover.arrow"
 	class={['text-border border-border pointer-events-none absolute opacity-0', '$preset', klass]}
 	style="{side}: 100%;"
+	{...presentation}
 	{...arrowProps}
 >
 	{#if children}

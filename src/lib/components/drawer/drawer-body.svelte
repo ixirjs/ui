@@ -7,23 +7,24 @@
 	type Element = HTMLElementTagNameMap[E];
 
 	let {
-		class: klass = '',
+		preset = undefined,
 		children = undefined,
 		...restProps
 	}: DrawerBodyProps<E, B> & HTMLAttributes<Element> = $props();
 
 	const bond = DrawerBond.get();
 
+	const atom = bond?.body();
+
 	const bodyProps = $derived({
-		...bond?.body().spread,
+		preset: preset ?? atom?.preset,
+		...atom?.spread,
 		...restProps
 	});
 </script>
 
 <HtmlAtom
 	{bond}
-	preset="drawer.body"
-	class={['border-border', '$preset', klass]}
 	{...bodyProps}
 >
 	{@render children?.({ drawer: bond })}

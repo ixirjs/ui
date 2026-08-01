@@ -2,7 +2,7 @@
 	import type { Snippet } from 'svelte';
 	import type { HTMLAttributes } from 'svelte/elements';
 	import { HtmlAtom, type HtmlAtomProps, type Base } from '$svelte-atoms/core/components/atom';
-	import { defineState, defineProperty } from '$svelte-atoms/core/utils/state';
+	import { bindBond } from '$svelte-atoms/core/shared/bind-bond.svelte';
 	import type { Override, Factory } from '$svelte-atoms/core/types';
 	import { FormBond, FormBondState, type FormProps } from './bond.svelte';
 
@@ -32,22 +32,28 @@
 		class: klass = '',
 		renderless = false,
 		validator = undefined,
-		factory = _factory,
+		factory = defaultFactory,
 		children = undefined,
+		preset = undefined,
 		...restProps
-	}: FormRootProps<S> & HTMLAttributes<HTMLFormElement> = $props();
+	}: FormRootProps<B> & HTMLAttributes<HTMLFormElement> = $props();
 
-	const bondProps = defineState<FormProps>([
-		defineProperty('renderless', () => renderless),
-		defineProperty('validator', () => validator),
-		defineProperty('rest', () => restProps)
-	]);
-	const bond = factory(bondProps).share();
+	const formProps = $derived({ preset: preset ?? 'form', ...restProps });
 
-	function _factory(props: typeof bondProps) {
+	const binding = bindBond<FormBond>(
+		(props) => factory(props),
+		{
+			renderless: () => renderless,
+			validator: () => validator,
+			rest: () => restProps
+		}
+	);
+	const bond = binding.bond.share();
+
+	function defaultFactory(props: FormProps) {
 		// Placeholder for any factory logic if needed
 
-		const bondState = new FormBondState(() => props);
+		const bondState = new FormBondState(props);
 
 		return new FormBond(bondState);
 	}
@@ -55,12 +61,14 @@
 	export function getBond() {
 		return bond;
 	}
+
+	const content = $derived(renderless ? children : renderfull);
 </script>
 
-{#if renderless}
-	{@render children?.({ form: bond })}
-{:else}
-	<HtmlAtom {bond} preset="form" class={['$preset', klass]} as="form" {...restProps}>
-		{@render children?.({ form: bond })}
+{#snippet renderfull({ form }: { form: FormBond })}
+	<HtmlAtom bond={form} class={['$preset', klass]} as="form" {...formProps}>
+		{@render children?.({ form })}
 	</HtmlAtom>
-{/if}
+{/snippet}
+
+{@render content?.({ form: bond })}

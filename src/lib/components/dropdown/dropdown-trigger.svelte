@@ -13,18 +13,19 @@
 	let {
 		class: klass = '',
 		as = 'button' as T,
-		preset = 'dropdown.trigger',
+		preset = undefined,
 		children = undefined,
 		...restProps
 	}: DropdownTriggerProps<T, B> = $props();
+
+	const triggerProps = $derived({ preset: preset ?? 'dropdown.trigger', ...restProps });
 </script>
 
 <Trigger
 	{as}
 	{bond}
-	preset={preset}
-	class={['border-border relative flex h-auto min-h-10 flex-wrap items-center', '$preset', klass]}
-	{...restProps}
+	class={['relative flex h-auto min-h-10 flex-wrap items-center', '$preset', klass]}
+	{...triggerProps}
 >
 	{@render children?.({ dropdown: bond })}
 </Trigger>

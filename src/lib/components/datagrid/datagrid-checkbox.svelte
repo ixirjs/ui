@@ -3,12 +3,14 @@
 	import { DataGridBond } from './bond.svelte';
 	import { DataGridRowBond } from './row/bond.svelte';
 	import type { DatagridCheckboxProps } from './types';
+	import type { PresetKey } from '$svelte-atoms/core/context/preset.svelte';
 
 	const datagridBond = DataGridBond.get();
 	const datagridRowBond = DataGridRowBond.get();
 
 	let {
 		class: klass = '',
+		preset = undefined,
 		value = undefined,
 		checked = $bindable(false),
 		onclick = undefined,
@@ -16,6 +18,11 @@
 		onchange = undefined,
 		...restProps
 	}: DatagridCheckboxProps = $props();
+
+	const checkboxProps = $derived({
+		preset: (preset ?? 'datagrid.checkbox') as PresetKey,
+		...restProps
+	});
 
 	const isHeader = $derived(datagridRowBond?.state.isHeader ?? false);
 	const rowId = $derived(datagridRowBond?.state.id);
@@ -41,11 +48,15 @@
 
 	function handleHeaderChange(ev?: Event) {
 		const checked = !isAllSelected;
-		const currentEvent = ev ?? new Event('input');
+		// The Checkbox calls `preventDefault()` internally (to stop ancestor-<label>
+		// double-toggling) before forwarding this event to `oninput`, so the incoming
+		// `ev` is already `defaultPrevented`. Use a fresh event for the cancellation
+		// protocol so it reflects *the consumer's* intent, not the checkbox's internals.
+		const currentEvent = new Event(ev?.type ?? 'input');
 		handleCallbacks(currentEvent, checked);
 		if (currentEvent.defaultPrevented) return;
 
-		const allIds = [...(datagridBond?.state.rows.keys() ?? [])];
+		const allIds = [...(datagridBond?.state.rows.keys ?? [])];
 
 		if(checked === true){
 			datagridBond?.state.select(allIds);
@@ -56,7 +67,9 @@
 
 	function handleRowChange(ev?: Event) {
 		const checked = !isRowSelected;
-		const currentEvent = ev ?? new Event('input');
+		// Fresh event — the incoming `ev` is already `defaultPrevented` by the Checkbox's
+		// internal label-forwarding guard. See note in `handleHeaderChange`.
+		const currentEvent = new Event(ev?.type ?? 'input');
 		handleCallbacks(currentEvent, checked);
 		if (currentEvent.defaultPrevented || !rowId) return;
 
@@ -73,12 +86,11 @@
 		{...(value !== undefined ? { value: value as string } : {})}
 		{...(onclick ? { onclick: onclick as (ev?: Event) => void } : {})}
 		bond={datagridRowBond}
-		preset="datagrid.checkbox"
 		class={classNames}
 		checked={isAllSelected}
 		indeterminate={isHeaderIndeterminate}
 		oninput={handleHeaderChange}
-		{...restProps}
+		{...checkboxProps}
 	/>
 {/snippet}
 
@@ -87,11 +99,10 @@
 		{...(value !== undefined ? { value: value as string } : {})}
 		{...(onclick ? { onclick: onclick as (ev?: Event) => void } : {})}
 		bond={datagridRowBond}
-		preset="datagrid.checkbox"
 		class={classNames}
 		checked={isRowSelected}
 		oninput={handleRowChange}
-		{...restProps}
+		{...checkboxProps}
 	/>
 {/snippet}
 

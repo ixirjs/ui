@@ -164,9 +164,9 @@
 								header={stepData.header}
 								body={stepData.body}
 								completed={stepData.completed}
-								optional={stepData.optional}
+								optional={stepData.optional ?? false}
 							>
-								{#snippet children({ step })}
+								{#snippet children()}
 									<Step.Header class="flex w-full">
 										<div class="flex gap-2">
 											<div class="flex flex-col">

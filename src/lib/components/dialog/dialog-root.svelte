@@ -1,23 +1,23 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
 	import { Teleport, ActivePortal } from '$svelte-atoms/core/components/portal';
-	import { defineProperty, defineState } from '$svelte-atoms/core/utils';
 	import type { Base } from '$svelte-atoms/core/components/atom';
 	import { DialogBond, DialogBondState, type DialogBondProps } from './bond.svelte';
+	import { useFocusRestore } from '$svelte-atoms/core/shared/overlay';
 	import type { DialogProps } from './types';
 	import { ZLayer } from '../portal/zlayer.svelte';
-	import { untrack } from 'svelte';
+	import { bindBond } from '$svelte-atoms/core/shared';
 
 	let {
 		class: klass = '',
+		preset = undefined,
 		open = $bindable(false),
 		disabled = false,
 		type = 'modal' as 'modal' | 'non-modal',
 		as = 'dialog' as E,
 		"z-index": zindex = 0,
 		portal = undefined,
-		factory = _factory,
+		factory = defaultFactory,
 		children = undefined,
-		trigger = undefined,
 		onclick = undefined,
 		...restProps
 	}: DialogProps<E, B> = $props();
@@ -27,29 +27,28 @@
 	);
 	const layer = new ZLayer('dialog', () => normalizedZIndex ?? 0).share();
 
-	const bondProps = defineState<DialogBondProps>(
-		[
-			defineProperty(
-				'open',
-				() => open,
-				(v) => {
-					open = v;
-				}
-			),
-			defineProperty('rest', () => restProps)
-		],
-		() => ({ disabled })
+	const binding = bindBond<DialogBond>(
+		(props) => factory(props),
+		{
+			open: [() => open, (v) => (open = v)],
+			disabled: () => disabled,
+			rest: () => restProps
+		},
+		{ preset: () => preset }
 	);
+	const bond = binding.bond.share();
 
-	const bond = untrack(() => factory(bondProps)).share();
+	// Focus capture/restore reacts to `open` (ADR 0001 / ADR 0003) — restores to
+	// the previously-focused element however the dialog closes.
+	useFocusRestore(bond); 
 
 	const rootProps: Record<string, unknown> = $derived({
-		...bond?.root().spread,
+		...binding?.props,
 		...restProps
 	});
 
-	function _factory(props: typeof bondProps) {
-		const bondState = new DialogBondState(() => props);
+	function defaultFactory(props: DialogBondProps) {
+		const bondState = new DialogBondState(props);
 		return new DialogBond(bondState);
 	}
 
@@ -75,12 +74,9 @@
 	}
 </script>
 
-{@render trigger?.({ dialog: bond })}
 
 <Teleport
 	{as}
-	{bond}
-	preset="dialog"
 	portal={portal ?? 'root.l0'}
 	class={[
 		'border-border pointer-events-none fixed top-0 left-0 flex h-full w-full items-center justify-center bg-neutral-900/0 transition-colors duration-200',

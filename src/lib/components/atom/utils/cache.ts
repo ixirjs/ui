@@ -2,16 +2,8 @@ import type { Bond } from '$svelte-atoms/core/shared';
 
 export type ResolvedProps = Record<string, unknown>;
 
-/**
- * Two-level cache for resolved variants (legacy / public API).
- *
- * - Outer key: bond instance (WeakMap — automatically GC'd when the bond is destroyed).
- * - Inner key: JSON-stringified variant-relevant props.
- * - Bond-less calls share a single flat Map.
- *
- * Kept exported for backward compatibility. Internal callers prefer
- * `getDefCacheMap` which avoids global cross-component cache pollution.
- */
+// Two-level cache for resolved variants (legacy/public API): WeakMap<bond, Map<key, result>>.
+// Exported for backward compat; internal callers prefer `getDefCacheMap`.
 const variantCacheByBond = new WeakMap<object, Map<string, ResolvedProps>>();
 const variantCacheNoBond = new Map<string, ResolvedProps>();
 
@@ -27,14 +19,8 @@ export function getCacheMap(bond: Bond | null | undefined): Map<string, Resolved
 	return map;
 }
 
-/**
- * Per-definition cache. The cache map is scoped to a `(def, bond)` pair, so
- * different atoms never share the same eviction window — eliminating the
- * cross-component thrash of the legacy global Map.
- *
- * `def` is keyed by reference via WeakMap, so cache entries are GC'd when
- * the variant definition is no longer reachable.
- */
+// Per-(def, bond) cache: isolates eviction windows per atom, avoids cross-component thrash.
+// Both keys are WeakMap-held so entries are GC'd when either becomes unreachable.
 const defCacheBondMap = new WeakMap<object, WeakMap<object, Map<string, ResolvedProps>>>();
 const defCacheNoBondMap = new WeakMap<object, Map<string, ResolvedProps>>();
 
@@ -64,20 +50,23 @@ export function getDefCacheMap(
 	return m;
 }
 
-/**
- * Performs a true-LRU lookup (touch on hit) and returns the cached value, or
- * `undefined` if absent. Avoids the FIFO eviction bug of the previous impl.
- */
-export function lruGet<V>(map: Map<string, V>, key: string): V | undefined {
+// LRU lookup via delete+re-insert; recency tracking only kicks in at capacity
+// (below capacity, touching is pure overhead — benchmarked 5–27x a plain Map.get).
+export function lruGet<V>(
+	map: Map<string, V>,
+	key: string,
+	max: number = MAX_CACHE_SIZE
+): V | undefined {
 	const v = map.get(key);
 	if (v === undefined) return undefined;
-	// Re-insert to mark as most-recently-used (Map preserves insertion order).
-	map.delete(key);
-	map.set(key, v);
+	if (map.size >= max) {
+		map.delete(key);
+		map.set(key, v);
+	}
 	return v;
 }
 
-/** Insert with capacity eviction of the least-recently-used entry. */
+// Insert with LRU eviction when at capacity.
 export function lruSet<V>(map: Map<string, V>, key: string, value: V, max: number): void {
 	if (map.size >= max) {
 		const firstKey = map.keys().next().value;
@@ -86,10 +75,7 @@ export function lruSet<V>(map: Map<string, V>, key: string, value: V, max: numbe
 	map.set(key, value);
 }
 
-/**
- * Cached `Object.keys(obj)` keyed by `obj` reference. Variant maps are stable
- * per definition, so we avoid re-allocating the keys array every render.
- */
+// Cached Object.keys() keyed by object reference; variant maps are stable per definition.
 const ownKeysCache = new WeakMap<object, string[]>();
 const EMPTY_KEYS: readonly string[] = Object.freeze([]);
 
@@ -103,17 +89,26 @@ export function getCachedOwnKeys(obj: object | null | undefined): readonly strin
 	return keys;
 }
 
-/** Returns true if `obj` has at least one own enumerable key. */
+// Cached Object.getOwnPropertySymbols() for stable presentation objects (preset, variants, fallbacks).
+// Do NOT use for per-render-fresh objects like rest props — cache insert with no future hit.
+const ownSymbolsCache = new WeakMap<object, readonly symbol[]>();
+
+export function getCachedOwnSymbols(obj: object): readonly symbol[] {
+	let syms = ownSymbolsCache.get(obj);
+	if (!syms) {
+		syms = Object.getOwnPropertySymbols(obj);
+		ownSymbolsCache.set(obj, syms);
+	}
+	return syms;
+}
+
+// Returns true if `obj` has at least one own enumerable key.
 export function hasOwnKeys(obj: object): boolean {
 	for (const k in obj) if (Object.hasOwn(obj, k)) return true;
 	return false;
 }
 
-/**
- * Cached `hasOwnKeys` keyed weakly by the input object. Defaults objects are
- * stable per variant definition, so we avoid re-walking the prototype chain
- * on every render. Sentinel `null` is treated as "no" without consuming a slot.
- */
+// Cached `hasOwnKeys` keyed weakly; defaults objects are stable per definition.
 const hasOwnKeysCache = new WeakMap<object, boolean>();
 
 export function hasOwnKeysCached(obj: object | null | undefined): boolean {
@@ -125,11 +120,7 @@ export function hasOwnKeysCached(obj: object | null | undefined): boolean {
 	return result;
 }
 
-/**
- * Cached non-`class` keys for a compound variant condition. Compounds are
- * stable per variant definition, so their condition keys never change.
- * Weakly keyed → freed when the compound object is unreachable.
- */
+// Cached non-`class` condition keys for a compound variant; stable per definition, weakly keyed.
 const compoundKeysCache = new WeakMap<object, string[]>();
 
 export function getCompoundConditionKeys(compound: object): string[] {

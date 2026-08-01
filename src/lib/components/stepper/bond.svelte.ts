@@ -1,17 +1,13 @@
-import { SvelteMap } from 'svelte/reactivity';
 import type { StepBond } from './step/bond.svelte';
-import {
-	Bond,
-	BondState,
-	BondAtom,
-	type BondStateProps
-} from '$svelte-atoms/core/shared/bond.svelte';
-import { getContext, setContext } from 'svelte';
+import { BondState, BondAtom, type BondStateProps } from '$svelte-atoms/core/shared/bond.svelte';
+import { defineBond, type BondOf, type ViewOf } from '$svelte-atoms/core/shared';
 import type { Snippet } from 'svelte';
 
 export type StepperStateProps = BondStateProps & {
 	step: number;
 	linear?: boolean;
+	disabled?: boolean;
+	orientation?: 'horizontal' | 'vertical';
 	readonly rest?: Record<string, unknown>;
 };
 
@@ -21,11 +17,28 @@ export type StepperElements = {
 
 export type StepContentSnippet = {
 	props: Record<string, unknown>;
-	children: Snippet<[{ step?: StepBond }]>;
+	children: Snippet<[{ step: StepBond }]>;
 };
 
-export class StepperRootAtom extends BondAtom<StepperBond> {
-	constructor(bond: StepperBond) {
+// Narrow parent contract a StepBond child depends on — not the whole StepperState.
+// StepperState implements IStepper; the child holds this interface (stubbable, locality-preserving).
+export interface IStepper {
+	// The parent stepper's id (for `data-stepper` cross-reference).
+	readonly id: string;
+	// The active step index (`props.step`).
+	readonly activeStep: number;
+	// Linear mode — only adjacent forward navigation is allowed.
+	readonly linear: boolean;
+	mountStep(index: number, step: StepBond): () => void;
+	unmountStep(index: number): void;
+	goto(index: number): void;
+}
+
+// Bond shape the stepper atoms type `this.bond` against — breaks the atom↔bond cycle.
+type StepperBondView = ViewOf<StepperState>;
+
+export class StepperRootAtom extends BondAtom<StepperBondView> {
+	constructor(bond: StepperBondView) {
 		super(bond, 'root');
 	}
 	override get attrs() {
@@ -36,39 +49,29 @@ export class StepperRootAtom extends BondAtom<StepperBond> {
 	}
 }
 
-export class StepperBond extends Bond<StepperStateProps, StepperState, StepperElements> {
-	static CONTEXT_KEY = '@atoms/context/stepper';
+// StepperBond — `defineBond` (§6). Step orchestration lives on {@link StepperState}.
+export const StepperBond = defineBond<{ root: typeof StepperRootAtom }, StepperState>({
+	name: 'stepper',
+	atoms: { root: StepperRootAtom }
+});
 
-	constructor(s: StepperState) {
-		super(s, 'stepper');
+// Instance type of the stepper bond — paired with the `const` above.
+export type StepperBond = BondOf<typeof StepperBond>;
+
+export class StepperState extends BondState<StepperStateProps> implements IStepper {
+	// Kind-cached Collections keyed by String(index). `totalSteps` = collection size (reactive).
+	get steps() {
+		return this.collection<StepBond>('step');
 	}
 
-	share(): this {
-		return StepperBond.set(this) as this;
+	get stepContents() {
+		return this.collection<{
+			props: Record<string, unknown>;
+			children: Snippet<[{ step: StepBond }]>;
+		}>('content');
 	}
 
-	root() {
-		return this.atom('root', () => new StepperRootAtom(this));
-	}
-
-	static get(): StepperBond | undefined {
-		return getContext(StepperBond.CONTEXT_KEY);
-	}
-
-	static set(bond: StepperBond): StepperBond {
-		return setContext(StepperBond.CONTEXT_KEY, bond);
-	}
-}
-
-export class StepperState extends BondState<StepperStateProps> {
-	#steps: SvelteMap<number, StepBond> = new SvelteMap();
-	#stepContents: SvelteMap<
-		number,
-		{ props: Record<string, unknown>; children: Snippet<[{ step?: StepBond }]> }
-	> = new SvelteMap();
-	#totalSteps = $state(0);
-
-	constructor(props: () => StepperStateProps) {
+	constructor(props: StepperStateProps) {
 		super(props);
 	}
 
@@ -76,8 +79,13 @@ export class StepperState extends BondState<StepperStateProps> {
 		return this.props.step;
 	}
 
+	// Linear mode — part of the {@link IStepper} child contract.
+	get linear() {
+		return this.props.linear ?? false;
+	}
+
 	get totalSteps() {
-		return this.#totalSteps;
+		return this.steps.size;
 	}
 
 	get isFirstStep() {
@@ -85,11 +93,11 @@ export class StepperState extends BondState<StepperStateProps> {
 	}
 
 	get isLastStep() {
-		return this.props.step === this.#totalSteps - 1;
+		return this.props.step === this.totalSteps - 1;
 	}
 
 	get activeStepContent() {
-		return this.#stepContents.get(this.props.step);
+		return this.stepContents.get(String(this.props.step));
 	}
 
 	get navigation() {
@@ -108,7 +116,7 @@ export class StepperState extends BondState<StepperStateProps> {
 				this.props.step = 0;
 			},
 			goto: (step: number) => {
-				if (step >= 0 && step < this.#totalSteps) {
+				if (step >= 0 && step < this.totalSteps) {
 					// In linear mode, only allow going to previous steps or next immediate step
 					if (this.props.linear) {
 						if (step <= this.props.step + 1) {
@@ -122,29 +130,32 @@ export class StepperState extends BondState<StepperStateProps> {
 		};
 	}
 
+	// Flat alias of `navigation.goto` — the {@link IStepper} child contract.
+	goto(index: number) {
+		this.navigation.goto(index);
+	}
+
 	mountStep(index: number, step: StepBond) {
-		this.#steps.set(index, step);
-		this.#totalSteps = this.#steps.size;
+		return this.steps.attach(String(index), step);
 	}
 
 	unmountStep(index: number) {
-		this.#steps.delete(index);
-		this.#totalSteps = this.#steps.size;
+		this.steps.delete(String(index));
 	}
 
 	getStep(index: number) {
-		return this.#steps.get(index);
+		return this.steps.get(String(index));
 	}
 
 	registerStepContent(
 		index: number,
 		props: Record<string, unknown>,
-		children: Snippet<[{ step?: StepBond }]>
+		children: Snippet<[{ step: StepBond }]>
 	) {
-		this.#stepContents.set(index, { props, children });
+		return this.stepContents.attach(String(index), { props, children });
 	}
 
 	unregisterStepContent(index: number) {
-		this.#stepContents.delete(index);
+		this.stepContents.delete(String(index));
 	}
 }

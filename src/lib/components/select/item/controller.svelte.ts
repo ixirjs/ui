@@ -1,7 +1,7 @@
 import { getContext, setContext } from 'svelte';
 import { createAttachmentKey } from 'svelte/attachments';
 import { nanoid } from 'nanoid';
-import { SelectBond, SelectBondState, type SelectStateProps } from '../bond.svelte';
+import { SelectBond } from '../bond.svelte';
 import type { DropdownMenuItemControllerInterface } from '$svelte-atoms/core/components/dropdown-menu/item/controller.svelte';
 
 export type SelectItemProps<T = unknown> = {
@@ -11,27 +11,27 @@ export type SelectItemProps<T = unknown> = {
 	readonly data?: T;
 };
 
-export class SelectItemController<T = unknown>
-	implements DropdownMenuItemControllerInterface<SelectItemProps<T>>
-{
+export class SelectItemController<T = unknown> implements DropdownMenuItemControllerInterface<
+	SelectItemProps<T>
+> {
 	static CONTEXT_KEY = '@atoms/context/select/item';
 
 	#id: string;
-	#props: () => SelectItemProps<T>;
+	#props: SelectItemProps<T>;
 	#element: HTMLElement | null = null;
-	#select: SelectBond<SelectStateProps, SelectBondState<SelectStateProps>> | undefined;
+	#select: SelectBond | undefined;
 
 	#unmount?: (() => void) | undefined;
 
 	// eslint-disable-next-line svelte/prefer-svelte-reactivity
 	#createdAt = new Date();
 
-	constructor(props: () => SelectItemProps<T>) {
+	constructor(props: SelectItemProps<T>) {
 		this.#props = props;
 		this.#id = this.props.id ?? nanoid();
 
 		this.#select = SelectBond.get() as
-			| SelectBond<SelectStateProps, SelectBondState<SelectStateProps>>
+			| SelectBond
 			| undefined;
 
 		if (!this.#select) {
@@ -48,7 +48,7 @@ export class SelectItemController<T = unknown>
 	}
 
 	get props() {
-		return this.#props();
+		return this.#props;
 	}
 
 	get element() {
@@ -63,9 +63,10 @@ export class SelectItemController<T = unknown>
 		return this.props?.data;
 	}
 
-	// get select() {
-	// 	return this.#select;
-	// }
+	// Named `selectBond` to avoid colliding with the `select()` method.
+	get selectBond() {
+		return this.#select;
+	}
 
 	get label() {
 		const element = (this.#element?.querySelector('[data-label]') ?? this.#element) as
@@ -76,7 +77,8 @@ export class SelectItemController<T = unknown>
 	}
 
 	get isHighlighted() {
-		return this.#select?.state.highlightedItem?.id === this.id;
+		// The controller mounts into the roving by its own `#id`, so the active id IS that id.
+		return this.#select?.state.roving.activeId === this.id;
 	}
 
 	get isSelected() {

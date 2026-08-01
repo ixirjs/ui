@@ -2,10 +2,10 @@
 	import { MenuBond, MenuBondState, type MenuBondProps } from './bond.svelte';
 	import { Root } from '../popover/atoms';
 
-	let { open = $bindable(false), factory = _factory, children, ...restProps } = $props();
+	let { open = $bindable(false), factory = defaultFactory, children, ...restProps } = $props();
 
-	function _factory(props: MenuBondProps) {
-		const menuBondState = new MenuBondState(() => props);
+	function defaultFactory(props: MenuBondProps) {
+		const menuBondState = new MenuBondState(props);
 		return new MenuBond(menuBondState);
 	}
 </script>

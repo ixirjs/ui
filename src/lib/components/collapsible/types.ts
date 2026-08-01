@@ -3,27 +3,16 @@ import type { HtmlAtomProps, Base, SnippetProps } from '$svelte-atoms/core/compo
 import type { Factory, Override } from '$svelte-atoms/core/types';
 import type { CollapsibleBond } from './bond.svelte';
 
-/**
- * Extend this interface to add custom collapsible root properties in your application.
- */
+// Extension points: merge custom props into collapsible parts by augmenting these interfaces.
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface CollapsibleRootExtendProps {}
 
-/**
- * Extend this interface to add custom collapsible header properties in your application.
- */
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface CollapsibleHeaderExtendProps {}
 
-/**
- * Extend this interface to add custom collapsible body properties in your application.
- */
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface CollapsibleBodyExtendProps {}
 
-/**
- * Extend this interface to add custom collapsible indicator properties in your application.
- */
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface CollapsibleIndicatorExtendProps {}
 
@@ -65,7 +54,5 @@ export type CollapsibleIndicatorProps<
 	B extends Base = Base
 > = HtmlAtomProps<E, B, CollapsibleChildren> & CollapsibleIndicatorExtendProps;
 
-/**
- * @deprecated Use CollapsibleRootExtendProps instead
- */
+// @deprecated Use CollapsibleRootExtendProps instead
 export type CollapsibleExtendProps = CollapsibleRootExtendProps;

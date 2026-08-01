@@ -1,10 +1,5 @@
-import { getContext, setContext } from 'svelte';
-import {
-	Bond,
-	BondState,
-	BondAtom,
-	type BondStateProps
-} from '$svelte-atoms/core/shared/bond.svelte';
+import { BondState, BondAtom, type BondStateProps } from '$svelte-atoms/core/shared/bond.svelte';
+import { defineBond, type BondOf, type ViewOf } from '$svelte-atoms/core/shared';
 import { DataGridBond } from '../bond.svelte';
 
 export type DataGridCellBondProps<T = unknown> = BondStateProps & {
@@ -15,8 +10,11 @@ export type DataGridCellElements = {
 	root: HTMLElement;
 };
 
-export class DataGridCellRootAtom<T = unknown> extends BondAtom<DataGridCellBond<T>> {
-	constructor(bond: DataGridCellBond<T>) {
+// Bond shape the cell atoms type this.bond against — breaks the atom↔bond cycle.
+type DataGridCellBondView = ViewOf<DataGridCellBondState>;
+
+export class DataGridCellRootAtom extends BondAtom<DataGridCellBondView> {
+	constructor(bond: DataGridCellBondView) {
 		super(bond, 'root');
 	}
 
@@ -28,38 +26,34 @@ export class DataGridCellRootAtom<T = unknown> extends BondAtom<DataGridCellBond
 	}
 }
 
-export class DataGridCellBond<T = unknown> extends Bond<
-	DataGridCellBondProps<T>,
-	DataGridCellBondState<T>,
-	DataGridCellElements
-> {
-	static CONTEXT_KEY = '@atoms/context/datagrid/cell';
+// DataGridCellBond via defineBond; T is a runtime phantom on state — generic facade pattern.
+const DataGridCellBondImpl = defineBond<
+	{ root: typeof DataGridCellRootAtom },
+	DataGridCellBondState
+>({
+	name: 'datagrid-cell',
+	atoms: { root: DataGridCellRootAtom }
+});
 
-	constructor(s: DataGridCellBondState<T>) {
-		super(s, 'datagrid-cell');
-	}
+// Generic instance type — intersect to preserve Bond brand; narrows state to carry T.
+export type DataGridCellBond<T = unknown> = BondOf<typeof DataGridCellBondImpl> & {
+	readonly state: DataGridCellBondState<T>;
+};
 
-	share(): this {
-		return DataGridCellBond.set(this) as this;
-	}
-
-	root() {
-		return this.atom('root', () => new DataGridCellRootAtom(this));
-	}
-
-	static get<T = unknown>(): DataGridCellBond<T> | undefined {
-		return getContext(DataGridCellBond.CONTEXT_KEY);
-	}
-
-	static set<T = unknown>(bond: DataGridCellBond<T>): DataGridCellBond<T> {
-		return setContext(DataGridCellBond.CONTEXT_KEY, bond);
-	}
+// Generic-constructor facade over the non-generic impl.
+interface DataGridCellBondConstructor {
+	new <T = unknown>(state: DataGridCellBondState<T>): DataGridCellBond<T>;
+	readonly CONTEXT_KEY: string;
+	get<T = unknown>(): DataGridCellBond<T> | undefined;
+	set<T = unknown>(bond: DataGridCellBond<T>): DataGridCellBond<T>;
 }
 
-export class DataGridCellBondState<T = unknown> extends BondState<DataGridCellBondProps<T>> {
-	readonly #datagrid = DataGridBond.get<T>();
+export const DataGridCellBond = DataGridCellBondImpl as unknown as DataGridCellBondConstructor;
 
-	constructor(props: () => DataGridCellBondProps<T>) {
+export class DataGridCellBondState<T = unknown> extends BondState<DataGridCellBondProps<T>> {
+	readonly #datagrid = DataGridBond.get() as DataGridBond<T> | undefined;
+
+	constructor(props: DataGridCellBondProps<T>) {
 		super(props);
 	}
 

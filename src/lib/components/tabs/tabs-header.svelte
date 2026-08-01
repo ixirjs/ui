@@ -12,20 +12,22 @@
 	let {
 		class: klass = '',
 		children,
-		preset = 'tabs.header' as const,
+		preset = undefined,
 		...restProps
 	}: TabsHeaderProps<E, B> = $props();
 
+	const atom = bond.atom('header');
+
 	const headerProps = $derived({
-		...bond?.header().spread,
+		preset: preset ?? atom?.preset,
+		...atom?.spread,
 		...restProps
 	});
 </script>
 
 <Atom
 	{bond}
-	{preset}
-	class={['relative flex min-w-full border-border', '$preset', klass]}
+	class={['relative flex min-w-full', '$preset', klass]}
 	{...headerProps}
 >
 	{@render children?.({ tabs: bond })}

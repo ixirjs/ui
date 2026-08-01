@@ -1,6 +1,5 @@
 <script lang="ts" generics="T = unknown, E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { untrack } from 'svelte';
-	import { defineProperty, defineState } from '$svelte-atoms/core/utils';
+	import { bindBond } from '$svelte-atoms/core/shared/bind-bond.svelte';
 	import { HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
 	import { DataGridBond, DataGridBondState, type DataGridStateProps } from './bond.svelte';
 	import type { DatagridRootProps } from './types';
@@ -8,28 +7,27 @@
 
 	let {
 		class: klass = '',
+		preset = undefined,
 		values = $bindable([]),
 		template = undefined,
 		fallbackTemplate = 'auto',
-		factory = _factory,
+		factory = defaultFactory,
 		children = undefined,
 		...restProps
 	}: DatagridRootProps<T, E, B> = $props();
 
-	const bondProps = defineState<DataGridStateProps<T>>([
-		defineProperty('template', () => template),
-		defineProperty(
-			'values',
-			() => values,
-			(v) => (values = v)
-		)
-	]);
+	const binding = bindBond<DataGridBond<T>>(
+		(props) => factory(props),
+		{
+			template: () => template,
+			values: [() => values, (v) => (values = v ?? [])]
+		},
+		{ preset: () => preset }
+	);
+	const bond = binding.bond.share();
 
-	const bond = untrack(() => factory(bondProps)).share();
-	const rootProps = $derived({ ...bond.root().spread, ...restProps });
-
-	function _factory(props?: DataGridStateProps<T>) {
-		const state = new DataGridBondState<T>(() => props ?? bondProps);
+	function defaultFactory(props: DataGridStateProps<T>) {
+		const state = new DataGridBondState<T>(props);
 		return new DataGridBond<T>(state);
 	}
 
@@ -40,10 +38,10 @@
 
 <HtmlAtom
 	{bond}
-	preset="datagrid"
-	class={['border-border datagrid-root w-full gap-x-0 gap-y-0', '$preset', klass]}
+	class={['datagrid-root w-full gap-x-0 gap-y-0', '$preset', klass]}
 	style="--template-columns:{bond.state.template || fallbackTemplate}"
-	{...rootProps}
+	{...binding.props}
+	{...restProps}
 >
 	{@render children?.({ datagrid: bond })}
 </HtmlAtom>

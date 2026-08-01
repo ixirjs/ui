@@ -1,20 +1,13 @@
-<script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import type { Base, HtmlAtomProps } from './types';
+<script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base, C extends AnySnippet = Snippet">
+	import { type Component, type Snippet } from 'svelte';
+	import type { AnySnippet, Base, HtmlAtomProps } from './types';
 	import { RootBond } from '../root';
 	import { HtmlElement } from '../element';
 	import { getPreset } from '$svelte-atoms/core/context';
 	import type { PresetModuleName } from '$svelte-atoms/core/context/preset.svelte';
 	import SnippetRenderer from './snippet-renderer.svelte';
-	import type { Component } from 'svelte';
-	import type { ClassValue } from '$svelte-atoms/core/utils';
-	import {
-		resolvePreset,
-		resolveLocalVariants,
-		mergeVariants,
-		mergeClassesWithPreset,
-		extractRestProps,
-		isSnippetBase
-	} from './utils';
+	import * as resolvers from './resolvers';
+	import { runLifecycle } from './lifecycle.svelte';
 
 	const rootBond = RootBond.get();
 
@@ -28,51 +21,42 @@
 		fallback = undefined,
 		children: children = undefined,
 		...restProps
-	}: HtmlAtomProps<E, B> = $props();
+	}: HtmlAtomProps<E, B, C> = $props();
 
-	// Memoize preset resolution - only recompute when presetKey or bond changes
-	const preset = $derived.by(() => {
-		if (!presetKey) return undefined;
-		const result = getPreset(presetKey as PresetModuleName)?.(bond);
-		return resolvePreset(result);
-	});
-
-	// Resolve local variants - either VariantDefinition or function
-	const localVariants = $derived(resolveLocalVariants(variants, bond, restProps));
-
-	// Merge preset variants with local variants
-	// Memoized to avoid recomputation when inputs haven't changed
-	const mergedVariants = $derived.by(() => {
-		return mergeVariants(
-			preset?.variants,
-			preset?.class,
-			preset?.compounds,
-			preset?.defaults,
-			localVariants,
-			bond,
-			restProps
-		);
-	});
-
-	const finalKlass = $derived(
-		mergeClassesWithPreset(klass, preset?.class, mergedVariants?.class as ClassValue)
+	// Bond lifecycle attachments (createLifecycleKey): fire each phase's `(bond) => …` callbacks
+	// against the live bond and hand back the props with those symbol keys stripped, so they
+	// never reach the DOM (where a symbol-fn prop would be mistaken for a node attachment).
+	const lifecycle = runLifecycle(
+		() => restProps,
+		() => bond
 	);
 
-	const finalBase = $derived(base ?? preset?.base);
-	const finalAs = $derived(as ?? preset?.as);
-	const finalRestProps = $derived(extractRestProps(preset, mergedVariants, restProps, fallback));
+	// Each stage call goes through the orchestrator; reactivity granularity is
+	// preserved because each $derived reads only the props its stage needs.
+	const preset = $derived.by(() =>
+		resolvers.resolvePreset(presetKey as PresetModuleName | PresetModuleName[], bond, getPreset)
+	);
+	const localVariants = $derived(resolvers.resolveLocalVariants(variants, bond, lifecycle.rest));
+	const mergedVariants = $derived.by(() =>
+		resolvers.resolveVariants(preset, localVariants, bond, lifecycle.rest)
+	);
+	// The merge kernel: ONE walk over fallback → preset → variants → rest
+	// (ADR 0004 Decision 5). Class string and spread attrs both come from it.
+	const folded = $derived.by(() =>
+		resolvers.foldLayers(preset, mergedVariants, lifecycle.rest, fallback)
+	);
+	const finalKlass = $derived(resolvers.resolveClass(klass, folded));
+	const finalBase = $derived(resolvers.resolveBase(base, preset));
+	const finalAs = $derived(resolvers.resolveAs(as, preset));
+	const finalRestProps = $derived(folded.attrs);
 
 	const atom = $derived(rootBond?.state?.props?.renderers?.html ?? HtmlElement);
 
-	// Memoize the snippet check so the renderer component / props don't both
-	// recompute it on every reactive tick.
-	const baseIsSnippet = $derived(isSnippetBase(finalBase));
+	const baseIsSnippet = $derived(resolvers.isSnippetBase(finalBase));
 
 	// Track the renderer component and its props as INDEPENDENT signals.
-	// - `rendererComponent` only flips when the underlying base/atom changes,
-	//   so Svelte won't tear down + remount when only props change.
-	// - `rendererProps` re-allocates when any prop changes, but doesn't drag
-	//   the component identity with it (no nested `{ component, props }` wrapper).
+	// Component identity only flips when base/atom change; prop changes
+	// don't drag the component identity with them.
 	const RendererComponent = $derived(
 		baseIsSnippet ? (SnippetRenderer as unknown as Component) : ((finalBase ?? atom) as Component)
 	);
@@ -91,7 +75,7 @@
 	});
 
 	function forwardChildren(...args: any[]) {
-		return children?.(...args);
+		return (children as ((...args: unknown[]) => unknown) | undefined)?.(...args);
 	}
 </script>
 

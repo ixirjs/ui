@@ -5,51 +5,35 @@ import type { TransitionFunction } from '$svelte-atoms/core/components/element';
 import type { PortalBond } from '$svelte-atoms/core/components/portal';
 import type { DrawerBond } from './bond.svelte';
 
-/**
- * Extend this interface to add custom drawer/slideover root properties in your application.
- */
+// Extend to add custom drawer root properties in your application.
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface DrawerExtendProps {}
 
-/**
- * Extend this interface to add custom drawer/slideover content properties in your application.
- */
+// Extend to add custom drawer content properties in your application.
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface DrawerContentExtendProps {}
 
-/**
- * Extend this interface to add custom drawer/slideover header properties in your application.
- */
+// Extend to add custom drawer header properties in your application.
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface DrawerHeaderExtendProps {}
 
-/**
- * Extend this interface to add custom drawer/slideover body properties in your application.
- */
+// Extend to add custom drawer body properties in your application.
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface DrawerBodyExtendProps {}
 
-/**
- * Extend this interface to add custom drawer/slideover footer properties in your application.
- */
+// Extend to add custom drawer footer properties in your application.
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface DrawerFooterExtendProps {}
 
-/**
- * Extend this interface to add custom drawer/slideover title properties in your application.
- */
+// Extend to add custom drawer title properties in your application.
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface DrawerTitleExtendProps {}
 
-/**
- * Extend this interface to add custom drawer/slideover description properties in your application.
- */
+// Extend to add custom drawer description properties in your application.
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface DrawerDescriptionExtendProps {}
 
-/**
- * Extend this interface to add custom drawer/slideover backdrop properties in your application.
- */
+// Extend to add custom drawer backdrop properties in your application.
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface DrawerBackdropExtendProps {}
 
@@ -74,7 +58,7 @@ export interface SlideoverRootProps<E extends keyof HTMLElementTagNameMap, B ext
 			}
 		>,
 		DrawerExtendProps {
-	"z-index"?: number;
+	'z-index'?: number;
 	open?: boolean;
 	disabled?: boolean;
 	side?: 'left' | 'right' | 'top' | 'bottom';

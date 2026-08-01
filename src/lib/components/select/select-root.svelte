@@ -1,6 +1,7 @@
 <script lang="ts" generics="T">
-	import { defineProperty, defineState } from '$svelte-atoms/core/utils';
+	import { bindBond } from '$svelte-atoms/core/shared';
 	import { SelectBond, SelectBondState, type SelectStateProps } from './bond.svelte';
+	import { useFocusRestore } from '$svelte-atoms/core/shared/overlay';
 	import type { SelectRootProps } from './types';
 
 	let {
@@ -15,54 +16,48 @@
 		placement = 'bottom-start',
 		offset = 1,
 		keys = [],
-		factory = _factory,
+		query = $bindable(''),
+		factory = defaultFactory,
 		children = undefined,
 		onquerychange = undefined,
 		...restProps
 	}: SelectRootProps<T> = $props();
 
-	const bondProps = defineState<SelectStateProps>(
-		[
-			defineProperty(
-				'open',
-				() => open,
+	const binding = bindBond<SelectBond>(
+		(props) => factory(props),
+		{
+			open: [() => open, (v) => { open = v; }],
+			// Component is generic over `T`; the bond's props are string-keyed — bridge with casts.
+			values: [
+				() => (multiple ? values : ([value].filter(Boolean) as T[])) as SelectStateProps['values'],
 				(v) => {
-					open = v;
+					values = v as T[];
+					value = v?.[0] as T;
 				}
-			),
-			defineProperty(
-				'values',
-				() => (multiple ? values : [value].filter(Boolean) as T[]),
-				(v) => {
-					values = v;
-					value = v[0];
-				}
-			),
-			defineProperty(
-				'label',
-				() => label,
-				(v) => (label = v)
-			),
-			defineProperty(
-				'labels',
-				() => labels,
-				(v) => (labels = v)
-			),
-			defineProperty('multiple', () => multiple),
-			defineProperty('disabled', () => disabled),
-			defineProperty('placement', () => placement),
-			defineProperty('offset', () => offset),
-			defineProperty('placements', () => placements ?? []),
-			defineProperty('keys', () => keys ?? []),
-			defineProperty('rest', () => restProps)
-		],
-		() => ({})
+			],
+			label: [() => label, (v) => (label = v)],
+			labels: [() => labels, (v) => (labels = v)],
+			multiple: () => multiple,
+			disabled: () => disabled,
+			placement: () => placement as SelectStateProps['placement'],
+			offset: () => offset,
+			placements: () => (placements ?? []) as SelectStateProps['placements'],
+			keys: () => keys ?? [],
+			// `query` is the bond-owned filter source (read by `createBondFilter`, cleared by
+			// `ClearThenClose`). Wired here so writes are reactive and `bind:query` works;
+			// `onquerychange` fires on each change.
+			query: [() => query, (v) => { query = v ?? ''; onquerychange?.(v ?? ''); }],
+			rest: () => restProps
+		}
 	);
 
-	const bond = factory(bondProps).share();
+	const bond = binding.bond.share();
 
-	function _factory(props: typeof bondProps) {
-		const bondState = new SelectBondState(() => props);
+	// Focus capture/restore reacts to `open` (ADR 0001 / ADR 0003).
+	useFocusRestore(bond);
+
+	function defaultFactory(props: SelectStateProps) {
+		const bondState = new SelectBondState(props);
 		return new SelectBond(bondState);
 	}
 

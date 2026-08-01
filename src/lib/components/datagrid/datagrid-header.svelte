@@ -4,38 +4,27 @@
 	import { DataGridBond } from './bond.svelte';
 	import type { DatagridHeaderProps } from './types';
 
-	const bond = DataGridBond.get<T>();
+	const bond = (DataGridBond.get() as DataGridBond<T> | undefined);
 	if (!bond) {
 		throw new Error('DataGrid.Header must be used within DataGrid.Root.');
 	}
 
 	let {
 		class: klass = '',
+		preset = undefined,
 		children = undefined,
 		...restProps
 	}: DatagridHeaderProps<T, E, B> = $props();
 
-	const header = $state(true);
+	setDatagridHeaderContext({ isHeader: true });
 
-	const derived_header = $derived({
-		data: {
-			header
-		}
-	});
-
-	setDatagridHeaderContext({
-		get derived() {
-			return derived_header;
-		}
-	});
-
-	const headerProps = $derived({ ...bond.header().spread, ...restProps });
+	const atom = bond.atom('header');
+	const headerProps = $derived({ preset: preset ?? atom.preset, ...atom.spread, ...restProps });
 </script>
 
 <HtmlAtom
 	{bond}
-		preset="datagrid.header"
-	class={['border-border col-span-full grid grid-cols-subgrid', '$preset', klass]}
+	class={['col-span-full grid grid-cols-subgrid', '$preset', klass]}
 	{...headerProps}
 >
 	{@render children?.({ datagrid: bond })}

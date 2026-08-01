@@ -4,15 +4,17 @@
 	import type { DatagridBodyProps } from './types';
 	import { tick } from 'svelte';
 
-	const bond = DataGridBond.get<T>();
+	const bond = (DataGridBond.get() as DataGridBond<T> | undefined);
 
 	let {
 		class: klass = '',
+		preset = undefined,
 		children = undefined,
 		...restProps
 	}: DatagridBodyProps<T, E, B> = $props();
 
-	const bodyProps = $derived({ ...bond?.body().spread, ...restProps });
+	const atom = bond?.atom('body');
+	const bodyProps = $derived({ preset: preset ?? atom?.preset, ...atom?.spread, ...restProps });
 
 	// Defer rendering rows until the grid template has been computed from the
 	// registered columns. Without this gate, the body renders on the same tick
@@ -32,8 +34,7 @@
 
 <HtmlAtom
 	{bond}
-	preset="datagrid.body"
-	class={['border-border contents', '$preset', klass]}
+	class={['contents', '$preset', klass]}
 	{...bodyProps}
 >
 	{@render content?.({ datagrid: bond })}

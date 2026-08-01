@@ -15,13 +15,15 @@
 	let {
 		class: klass = '',
 		children,
-		preset = 'tab.body' as const,
+		preset = undefined,
 		...restProps
 	}: TabBodyProps<E, B> = $props();
 
+	const atom = tabBond.atom('body');
+
 	const contentProps = $derived({
-		preset,
-		...tabBond?.body().spread,
+		preset: preset ?? atom?.preset,
+		...atom?.spread,
 		...restProps
 	});
 
@@ -48,7 +50,7 @@
 
 {#snippet body({children = undefined, selected = false, ...props}: Record<string, unknown> = {})}
 	<Stack.Item 
-		class={['tab-body border-border pointer-events-none flex h-auto w-full min-w-full flex-1 flex-col', selected && 'pointer-events-auto', '$preset', klass]} 
+		class={['tab-body pointer-events-none flex h-auto w-full min-w-full flex-1 flex-col', selected && 'pointer-events-auto', '$preset', klass]} 
 		value={value}
 		inert={selected ? undefined : true} 
 		{...contentProps} 

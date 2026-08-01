@@ -1,19 +1,12 @@
-import type { Bond, BondStateProps } from '$lib/shared/bond.svelte';
+import type { Bond, BondState, BondStateProps } from '$lib/shared/bond.svelte';
 
-/**
- * Deeply merges type U into T, overriding conflicting properties
- * Provides better IntelliSense and handles edge cases
- */
+// Override conflicting properties of T with U.
 export type Override<T, U> = Omit<T, keyof U> & U;
 
-/**
- * Alternative: Partial override that maintains optional properties
- */
+// Partial override maintaining optional properties.
 export type PartialOverride<T, U extends Partial<T>> = Omit<T, keyof U> & U;
 
-/**
- * Alternative: Deep override for nested objects
- */
+// Deep override for nested objects.
 export type DeepOverride<T, U> = U extends object
 	? T extends object
 		? {
@@ -22,10 +15,17 @@ export type DeepOverride<T, U> = U extends object
 		: U
 	: U;
 
-export type Factory<T extends Bond> = (props?: BondStateProps) => T;
+// Extracts the state-props type a Bond was parameterized with; reads `state` first so defineBond bonds resolve correctly.
+type PropsOf<T extends Bond> = T extends { state: BondState<infer P> }
+	? P
+	: T extends Bond<infer P>
+		? P
+		: BondStateProps;
 
-/** Sort direction */
+export type Factory<T extends Bond> = (props: PropsOf<T>) => T;
+
+// Sort direction.
 export type Direction = 'asc' | 'desc';
 
-/** Column sort type — the field key used when sorting */
+// Column sort type — the field key used when sorting.
 export type SortableType = string;

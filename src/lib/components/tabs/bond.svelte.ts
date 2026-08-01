@@ -1,12 +1,18 @@
-import { getContext, setContext } from 'svelte';
 import type { Snippet } from 'svelte';
-import { SvelteMap } from 'svelte/reactivity';
 import {
 	Bond,
 	BondState,
 	BondAtom,
-	type BondStateProps
+	type BondStateProps,
+	type Capability
 } from '$svelte-atoms/core/shared/bond.svelte';
+import { defineBond, type BondOf, type ViewOf } from '$svelte-atoms/core/shared';
+import {
+	createSelection,
+	selectionCapability,
+	type SelectionModel
+} from '$svelte-atoms/core/shared/capabilities/selection.svelte';
+import type { Collection } from '$svelte-atoms/core/shared/collection.svelte';
 import type { TabBond } from './tab/bond.svelte';
 
 export type TabsBondProps<T extends Record<string, unknown> = Record<string, unknown>> =
@@ -28,8 +34,28 @@ export type TabContentSnippet = {
 	children: Snippet<[{ tab?: TabBond }]>;
 };
 
-export class TabsRootAtom extends BondAtom<TabsBond> {
-	constructor(bond: TabsBond) {
+// Narrow parent contract a TabBond child depends on — not the whole TabsBond.
+// Tab needs both state-level (mount/select/active value) and bond-level (header element,
+// selection capability) members, so TabsBond implements it (thin delegators).
+export interface ITabs<T = unknown> {
+	readonly id: string;
+	// The active tab value (`props.value`).
+	readonly activeValue: string | undefined;
+	// The parent's header element — tab headers portal into it.
+	readonly headerElement: HTMLElement | undefined;
+	// The selection capability a tab header re-registers to project `aria-selected`.
+	selectionCapability(): Capability | undefined;
+	mountItem(value: string, tab: TabBond<T>): () => void;
+	unmountItem(id: string): void;
+	select(value: string): void;
+	unselect(): void;
+}
+
+// Bond shape the tabs atoms type `this.bond` against — breaks the atom↔bond cycle.
+type TabsBondView = ViewOf<TabsBondState>;
+
+export class TabsRootAtom extends BondAtom<TabsBondView> {
+	constructor(bond: TabsBondView) {
 		super(bond, 'root');
 	}
 
@@ -41,8 +67,8 @@ export class TabsRootAtom extends BondAtom<TabsBond> {
 	}
 }
 
-export class TabsHeaderAtom extends BondAtom<TabsBond> {
-	constructor(bond: TabsBond) {
+export class TabsHeaderAtom extends BondAtom<TabsBondView> {
+	constructor(bond: TabsBondView) {
 		super(bond, 'header');
 	}
 
@@ -54,8 +80,8 @@ export class TabsHeaderAtom extends BondAtom<TabsBond> {
 	}
 }
 
-export class TabsBodyAtom extends BondAtom<TabsBond> {
-	constructor(bond: TabsBond) {
+export class TabsBodyAtom extends BondAtom<TabsBondView> {
+	constructor(bond: TabsBondView) {
 		super(bond, 'body');
 	}
 
@@ -67,53 +93,100 @@ export class TabsBodyAtom extends BondAtom<TabsBond> {
 	}
 }
 
-export class TabsBond<T = unknown> extends Bond<TabsBondProps, TabsBondState<T>, TabElements> {
-	static CONTEXT_KEY = '@atoms/bonds/tabs';
-
-	constructor(s: TabsBondState<T>) {
-		super(s, 'tabs');
+// Hand-written base for TabsBond — the ITabs delegators tab children depend on.
+// Non-generic (T is a runtime phantom carried by state); generic surface re-exposed by the facade.
+class TabsBondBase extends Bond<TabsBondProps, TabsBondState> implements ITabs {
+	// ── ITabs: the narrow contract tab children depend on (delegators) ──
+	get activeValue() {
+		return this.state.props.value;
 	}
-
-	share(): this {
-		return TabsBond.set(this) as this;
+	get headerElement() {
+		return this.element<HTMLElement>('header');
 	}
-
-	/** Handle for granular access to root attrs and attachment */
-	root() {
-		return this.atom('root', () => new TabsRootAtom(this));
+	selectionCapability(): Capability | undefined {
+		return this.capability('selection');
 	}
-
-	/** Handle for granular access to header attrs and attachment */
-	header() {
-		return this.atom('header', () => new TabsHeaderAtom(this));
+	mountItem(value: string, tab: TabBond) {
+		return this.state.mountItem(value, tab);
 	}
-
-	/** Handle for granular access to body attrs and attachment */
-	body() {
-		return this.atom('body', () => new TabsBodyAtom(this));
+	unmountItem(id: string) {
+		this.state.unmountItem(id);
 	}
-
-	static get(): TabsBond | undefined {
-		return getContext(TabsBond.CONTEXT_KEY);
+	select(value: string) {
+		this.state.select(value);
 	}
-
-	static set(bond: TabsBond): TabsBond {
-		return setContext(TabsBond.CONTEXT_KEY, bond);
+	unselect() {
+		this.state.unselect();
 	}
 }
 
-export class TabsBondState<T> extends BondState<TabsBondProps> {
-	#items: Map<string, TabBond<T>> = new SvelteMap();
-	#tabContents: SvelteMap<
-		string,
-		{ value: string; render: Snippet<[Record<string, unknown>]>; props: Record<string, unknown> }
-	> = new SvelteMap();
+// TabsBond — `defineBond` (§6) over TabsBondBase via the generic facade:
+// non-generic impl re-exposed with T through a generic-constructor interface + `type TabsBond<T>`.
+const TabsBondImpl = defineBond<
+	{ root: typeof TabsRootAtom; header: typeof TabsHeaderAtom; body: typeof TabsBodyAtom },
+	TabsBondState,
+	typeof TabsBondBase
+>({
+	name: 'tabs',
+	base: TabsBondBase,
+	atoms: { root: TabsRootAtom, header: TabsHeaderAtom, body: TabsBodyAtom }
+});
+
+// Generic instance type — narrows `state` and re-types the `ITabs<T>` surface (brand-preserving).
+export type TabsBond<T = unknown> = BondOf<typeof TabsBondImpl> & {
+	readonly state: TabsBondState<T>;
+} & ITabs<T>;
+
+// Generic-constructor facade over the non-generic impl.
+interface TabsBondConstructor {
+	new <T = unknown>(state: TabsBondState<T>): TabsBond<T>;
+	readonly CONTEXT_KEY: string;
+	get<T = unknown>(): TabsBond<T> | undefined;
+	set<T = unknown>(bond: TabsBond<T>): TabsBond<T>;
+}
+
+export const TabsBond = TabsBondImpl as unknown as TabsBondConstructor;
+
+export class TabsBondState<T = unknown> extends BondState<TabsBondProps> {
 	#selectedItem = $derived(
-		this.props?.value ? this.#items.get(this.props?.value) : undefined
+		this.props?.value ? this.items.get(this.props?.value) : undefined
 	) as TabBond<T>;
 
-	constructor(props: () => TabsBondProps) {
+	// Selection capability (single mode). Tabs store a scalar `props.value`; the backing
+	// adapts it to the array surface (value ↔ [value]). `interactive: false` means
+	// state-reflection only — the tab-header owns its disabled-guarded onclick.
+	#selectionCap = this.capability(
+		selectionCapability(
+			createSelection<string>({
+				get: () => (this.props.value ? [this.props.value] : []),
+				set: (vs) => (this.props.value = vs[0]),
+				mode: () => 'single'
+			}),
+			{ commit: 'select', interactive: false }
+		)
+	);
+
+	constructor(props: TabsBondProps) {
 		super(props);
+	}
+
+	// The selection capability surface — the active tab value.
+	get selection(): SelectionModel<string> {
+		return this.#selectionCap.surface;
+	}
+
+	// Insertion-ordered reactive collection of mounted tab bonds.
+	get items(): Collection<TabBond<T>> {
+		return this.collection<TabBond<T>>('item');
+	}
+
+	// Deferred tab-content snippets — kind-cached Collection keyed by value.
+	get #contents() {
+		return this.collection<{
+			value: string;
+			render: Snippet<[Record<string, unknown>]>;
+			props: Record<string, unknown>;
+		}>('content');
 	}
 
 	get selectedItem() {
@@ -121,50 +194,50 @@ export class TabsBondState<T> extends BondState<TabsBondProps> {
 	}
 
 	get tabContents() {
-		return this.#tabContents.values();
+		return this.#contents.values;
 	}
 
 	get activeTabContent() {
-		return this.props?.value ? this.#tabContents.get(this.props.value) : undefined;
+		return this.props?.value ? this.#contents.get(this.props.value) : undefined;
 	}
 
 	mountItem<I extends T>(id: string, item: TabBond<I>) {
-		if (this.#items.size && !this.props.value) {
+		if (this.items.size && !this.props.value) {
 			this.props.value = item.state.props.value;
 		}
 
-		this.#items.set(id, item);
-
-		return () => this.unmountItem(id);
+		// Collection.attach registers + returns the cleanup (replaces the old
+		// set + `() => unmountItem`). See shared/collection.svelte.ts.
+		return this.items.attach(id, item as unknown as TabBond<T>);
 	}
 
 	unmountItem(id: string) {
-		this.#items.delete(id);
+		this.items.delete(id);
 	}
 
 	select(id: string) {
-		this.props.value = id;
+		this.selection.select(id);
 	}
 
 	unselect() {
-		this.props.value = undefined;
+		this.selection.clear();
 	}
 
 	registerTabContent(
 		id: string,
 		content: { render: Snippet<[Record<string, unknown>]>; props: Record<string, unknown> }
 	) {
-		this.#tabContents.set(id, {
+		this.#contents.attach(id, {
 			value: id,
 			...content
 		});
 	}
 
 	unregisterTabContent(id: string) {
-		this.#tabContents.delete(id);
+		this.#contents.delete(id);
 	}
 
 	getTab(id: string) {
-		return this.#items.get(id);
+		return this.items.get(id);
 	}
 }

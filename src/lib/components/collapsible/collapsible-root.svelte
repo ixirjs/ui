@@ -1,6 +1,5 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { nanoid } from 'nanoid';
-	import { defineProperty, defineState } from '$svelte-atoms/core/utils';
+	import { bindBond } from '$svelte-atoms/core/shared/bind-bond.svelte';
 	import { HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
 	import { CollapsibleBond, CollapsibleState, type CollapsibleStateProps } from './bond.svelte';
 	import type { CollapsibleRootProps } from './types';
@@ -8,35 +7,30 @@
 	let {
 		open = $bindable(false),
 		class: klass = '',
-		value = nanoid(),
+		preset = undefined,
+		value,
 		data = undefined,
 		disabled = false,
-		factory = _factory,
+		factory = defaultFactory,
 		children = undefined,
 		...restProps
 	}: CollapsibleRootProps<E, B> = $props();
 
-	const bondProps = defineState<CollapsibleStateProps>([
-		defineProperty(
-			'open',
-			() => open,
-			(v) => (open = v)
-		),
-		defineProperty('data', () => data),
-		defineProperty('disabled', () => disabled),
-		defineProperty('value', () => value),
-		defineProperty('rest', () => restProps)
-	]);
+	const binding = bindBond<CollapsibleBond>(
+		(props) => factory(props),
+		{
+			open: [() => open, (v) => (open = v)],
+			data: () => data,
+			disabled: () => disabled,
+			value: () => value,
+			rest: () => restProps
+		},
+		{ preset: () => preset }
+	);
+	const bond = binding.bond.share();
 
-	const bond = _factory(bondProps).share();
-
-	const rootProps = $derived({
-		...bond.root().spread,
-		...restProps
-	});
-
-	function _factory(props: typeof bondProps) {
-		const bondState = new CollapsibleState(() => props);
+	function defaultFactory(props: CollapsibleStateProps) {
+		const bondState = new CollapsibleState(props);
 		return new CollapsibleBond(bondState).share();
 	}
 
@@ -47,9 +41,9 @@
 
 <HtmlAtom
 	{bond}
-	preset="collapsible"
 	class={['border-border flex w-full flex-col overflow-hidden', '$preset', klass]}
-	{...rootProps}
+	{...binding.props}
+	{...restProps}
 >
 	{@render children?.({ collapsible: bond })}
 </HtmlAtom>

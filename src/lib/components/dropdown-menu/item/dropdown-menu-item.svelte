@@ -14,32 +14,45 @@
 		throw new Error('<DropdownMenuItem> must be used within a <DropdownMenu>.');
 	}
 
+	const ID = $props.id();
 	let {
 		class: klass = '',
-		id,
-		preset: presetKey = 'dropdown-menu.item',
+		id = ID,
+		preset = undefined,
 		disabled = undefined,
 		children = undefined,
 		onclick = undefined,
 		...restProps
 	}: DropdownMenuItemProps = $props();
 
+	// `atom`'s name is id-specific (`item-<id>`), so read the shared
+	// `dropdown-menu.item` preset from the bond's canonical item atom instead.
+	const presentation = $derived({ preset: preset ?? menu.item().preset });
+
 	// Create reactive props object for the atom
 	const itemProps = $derived<DropdownMenuItemAtomProps>({
-		id: id ?? '',
+		id,
 		disabled
 	});
 
 	// Create the atom instance
-	const atom = new DropdownMenuItemAtom<typeof menu>(() => itemProps, menu);
+	const atom = new DropdownMenuItemAtom<typeof menu>(itemProps, menu);
 
-	// Derived reactive properties
-	const isHighlighted = $derived(atom.isHighlighted);
-
-	// Merge atom attrs with custom props
+	// Merge atom spread (attrs + handlers + element attachment + roving projection)
+	// with custom props.
 	const itemAttrs = $derived({
-		...atom.attrs,
+		...atom.spread,
 		...restProps
+	});
+
+	// Register the item into the bond so roving focus / keyboard navigation can see
+	// it. Stable (outside the reactive `spread`), so it never feeds the mount loop.
+	$effect.pre(() => {
+		menu.state.registerItem(ID, atom);
+
+		return () => {
+			menu.state.unregisterItem(ID);
+		};
 	});
 
 	function handleClick(ev: MouseEvent) {
@@ -60,7 +73,6 @@
 </script>
 
 <List.Item
-	preset={presetKey}
 	class={[
 		'border-border last:border-b-0 hover:bg-foreground/5 active:bg-foreground/10 outline-primary cursor-pointer border-b',
 		'$preset',
@@ -68,6 +80,7 @@
 	]
 		.filter(Boolean)
 		.join(' ')}
+	{...presentation}
 	{...itemAttrs}
 	onclick={handleClick}
 >

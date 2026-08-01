@@ -12,12 +12,15 @@
 	let {
 		class: klass = '',
 		children = undefined,
-		preset = 'accordion.item.indicator',
+		preset = undefined,
 		...restProps
 	}: AccordionItemIndicatorProps<E, B> = $props();
 
+	const atom = bond?.atom('indicator');
+
 	const indicatorProps = $derived({
-		...bond?.indicator().spread,
+		preset: preset ?? atom?.preset,
+		...atom?.spread,
 		...restProps
 	});
 
@@ -27,11 +30,10 @@
 </script>
 
 <HtmlAtom
-	{preset}
 	class={['border-border pointer-events-none flex items-center justify-center', '$preset', klass]}
 	{...indicatorProps}
 >
-	{#if children}
+	{#if children && bond}
 		{@render children({ accordionItem: bond })}
 	{:else}
 		<Icon src={IconArrowDown} />

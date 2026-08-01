@@ -31,6 +31,7 @@
 	let {
 		class: klass = '',
 		overlay: Overlay = PopoverOverlay,
+		preset = undefined,
 		children = undefined,
 		onclickoutside = undefined,
 		fallback = {
@@ -39,10 +40,14 @@
 		...restProps
 	}: PopoverContentProps<E, B> = $props();
 
+	const atom = bond.atom('content');
+
+	const presentation = $derived({ preset: preset ?? atom.preset });
+
 	const portalId = $derived(activePortalBond?.id);
 
 	const contentProps = $derived({
-		...bond?.content().spread,
+		...atom.spread,
 		...restProps
 	});
 
@@ -73,12 +78,12 @@
 		{@attach clickoutAttachement}
 		{bond}
 		{fallback}
-		preset="popover.content"
 		class={[
 			'popover-content bg-popover text-popover-foreground border-border rounded-md border p-2 opacity-0 shadow-lg outline-none',
 			'$preset',
 			klass
 		]}
+		{...presentation}
 		{...contentProps}
 	>
 		{@render children?.({ popover: bond })}

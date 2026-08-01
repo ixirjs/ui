@@ -3,39 +3,20 @@ import { untrack } from 'svelte';
 import { PopoverBond } from '.';
 
 export type AnimatePopoverContentParams = {
-	/** Animation duration in seconds (default: 0.2) */
+	// Animation duration in seconds (default: 0.2)
 	duration?: number;
-	/** Delay before animation starts in seconds (default: 0) */
+	// Delay before animation starts in seconds (default: 0)
 	delay?: number;
-	/** Use spring physics for natural motion (default: false) */
+	// Use spring physics for natural motion (default: false)
 	spring?: boolean;
-	/** Spring stiffness (default: 300) */
+	// Spring stiffness (default: 300)
 	stiffness?: number;
-	/** Spring damping (default: 30) */
+	// Spring damping (default: 30)
 	damping?: number;
 };
 
-/**
- * Modern popover animation inspired by Radix UI and Linear
- * 
- * Features:
- * - Vertical scale only (0.96 → 1) for depth without width distortion
- * - Smart directional slide (adapts to offset and arrow presence)
- * - Smooth fade (0 → 1)
- * - Optional spring physics for natural feel
- * - Transform origin anchored to trigger side
- * 
- * Edge cases handled:
- * - offset=0: Minimal slide (4px) for subtle effect
- * - No arrow: Uses offset-based slide distance
- * - With arrow: Enhanced slide for arrow reveal
- * 
- * @example
- * ```svelte
- * <Popover.Content animate={animatePopoverContent()}>
- * <Popover.Content animate={animatePopoverContent({ spring: true })}>
- * ```
- */
+// Popover enter/exit animation: vertical scale (0.96→1), directional slide, fade.
+// Adapts slide distance to offset and arrow presence; optionally uses spring physics.
 export function animatePopoverContent(params: AnimatePopoverContentParams = {}) {
 	let prevOpen: boolean | undefined;
 
@@ -43,7 +24,7 @@ export function animatePopoverContent(params: AnimatePopoverContentParams = {}) 
 
 	return (node: HTMLElement) => {
 		const {
-			duration = .05,
+			duration = 0.05,
 			delay = 0,
 			spring: useSpring = false,
 			stiffness = 300,
@@ -69,7 +50,7 @@ export function animatePopoverContent(params: AnimatePopoverContentParams = {}) 
 
 			// Calculate transform origin (anchor point relative to trigger)
 			const transformOrigin = getTransformOrigin(side, alignment);
-			
+
 			// Calculate smart directional offset based on offset and arrow
 			const slideDistance = getSmartSlideDistance(offset, hasArrow);
 			const { x: offsetX, y: offsetY } = getDirectionalOffset(side, slideDistance);
@@ -102,10 +83,7 @@ export function animatePopoverContent(params: AnimatePopoverContentParams = {}) 
 	};
 }
 
-/**
- * Calculate transform origin based on popover placement
- * Anchors the animation to the side closest to the trigger
- */
+// Returns transform-origin anchored to the trigger side for the given placement.
 function getTransformOrigin(side: string, alignment: string): string {
 	const horizontal = (() => {
 		if (side === 'top' || side === 'bottom') {
@@ -128,15 +106,7 @@ function getTransformOrigin(side: string, alignment: string): string {
 	return `${horizontal} ${vertical}`;
 }
 
-/**
- * Calculate smart slide distance based on offset and arrow configuration
- * 
- * Logic:
- * - offset=0 & no arrow: 4px (minimal, subtle effect)
- * - offset=0 & arrow: 6px (enough to show arrow animation)
- * - offset>0 & no arrow: min(offset/2, 8px) (proportional to gap)
- * - offset>0 & arrow: 8px (standard directional slide)
- */
+// Slide distance: 4px (flush/no-arrow), 6px (flush+arrow), min(offset/2,8) (gap/no-arrow), 8px (gap+arrow).
 function getSmartSlideDistance(offset: number, hasArrow: boolean): number {
 	if (offset === 0) {
 		// Flush against trigger - use minimal slide
@@ -153,9 +123,7 @@ function getSmartSlideDistance(offset: number, hasArrow: boolean): number {
 	return Math.min(offset / 2, 8);
 }
 
-/**
- * Calculate directional offset based on placement side
- */
+// Maps placement side to {x,y} slide vector.
 function getDirectionalOffset(side: string, distance: number): { x: number; y: number } {
 	switch (side) {
 		case 'top':

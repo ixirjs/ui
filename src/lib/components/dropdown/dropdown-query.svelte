@@ -12,9 +12,12 @@
 	let {
 		value = $bindable(),
 		class: klass = '',
+		preset = undefined,
 		children = undefined,
 		...restProps
 	}: DropdownQueryProps = $props();
+
+	const queryProps = $derived({ preset: preset ?? 'dropdown.query', ...restProps });
 </script>
 
 <Input.Control
@@ -25,7 +28,6 @@
 		}
 	}
 	{bond}
-	preset="dropdown.query"
 	class={['inline-flex h-auto w-auto flex-1 py-1', '$preset', klass]}
-	{...restProps}
+	{...queryProps}
 />

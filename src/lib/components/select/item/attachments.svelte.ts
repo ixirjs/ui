@@ -5,7 +5,7 @@ export function selectItem(
 	callback: (node: HTMLElement, item?: SelectItemController, select?: SelectBond) => any
 ) {
 	const item = SelectItemController.get();
-	const bond = item?.select;
+	const bond = item?.selectBond;
 
 	return (node: HTMLElement) => callback(node, item, bond);
 }

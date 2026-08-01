@@ -2,7 +2,10 @@ import { TabsBond } from '../bond.svelte';
 import { TabBond } from './bond.svelte';
 
 export function tab(
-	callback: (node: HTMLElement, { tab, tabs }: { tab?: TabBond<unknown>|undefined; tabs?: TabsBond<unknown>|undefined }) => any
+	callback: (
+		node: HTMLElement,
+		{ tab, tabs }: { tab?: TabBond<unknown> | undefined; tabs?: TabsBond<unknown> | undefined }
+	) => any
 ) {
 	const tabBond = TabBond.get();
 	const tabsBond = TabsBond.get();

@@ -11,13 +11,17 @@
 
 	let {
 		class: klass = '',
+		preset = undefined,
 		as = 'p' as E,
 		children,
 		...restProps
 	}: TabDescriptionProps<E, B> = $props();
 
+	const atom = bond.atom('description');
+
 	const descriptionProps = $derived({
-		...bond?.description().spread,
+		preset: preset ?? atom.preset,
+		...atom?.spread,
 		...restProps
 	});
 </script>
@@ -25,7 +29,6 @@
 <Atom
 	{bond}
 	{as}
-	preset="tab.description"
 	class={['border-border', '$preset', klass]}
 	{...descriptionProps}
 >

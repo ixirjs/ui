@@ -5,89 +5,46 @@ import {
 	type DropdownStateProps
 } from '$svelte-atoms/core/components/dropdown/bond.svelte';
 import { BondAtom } from '$svelte-atoms/core/shared/bond.svelte';
+import {
+	defineBond,
+	createInput,
+	inputCapability,
+	type ViewOf,
+	type BondOf
+} from '$svelte-atoms/core/shared';
 import { SvelteMap } from 'svelte/reactivity';
 import { nanoid } from 'nanoid';
 import type { ComboboxSelection } from './types';
 
-export type ComboboxBondProps = DropdownStateProps & {
-	readonly rest?: Record<string, unknown>;
-};
+// Inherits query/ClearThenClose from Select. Combobox overrides the 'input' capability so
+// query (filter box) and value (trigger box) are independent stores, not a shared mirror.
+export type ComboboxBondProps = DropdownStateProps;
 
 export type ComboboxBondElements = PopoverDomElements & {
-	input: HTMLInputElement;
+	control: HTMLInputElement;
 };
 
-class ComboboxControlAtom extends BondAtom<ComboboxBond, HTMLInputElement> {
-	constructor(bond: ComboboxBond) {
-		super(bond, 'input');
-	}
-	override get attrs() {
-		const bond = this.bond;
-		return {
-			...super.attrs,
-			role: 'combobox' as const,
-			'aria-autocomplete': 'list' as const,
-			'aria-expanded': bond.state.props.open ?? false,
-			'aria-controls': `overlay-${bond.id}`,
-			'aria-activedescendant': bond.state.selections.at(0)?.id
-				? `item-${bond.state.selections.at(0)?.id}`
-				: undefined,
-			'aria-disabled': bond.state.props.disabled ?? false,
-			tabindex: bond.state.props.disabled ? -1 : 0
-		};
-	}
-
-	override get handlers() {
-		const bond = this.bond;
-		const isMultiselect = bond.state.props.multiple ?? false;
-		return {
-			oninput: () => {
-				if (!isMultiselect) {
-					bond.state.props.values = [];
-				}
-			},
-			onkeydown: (ev: KeyboardEvent) => {
-				if (bond.state.props.disabled) return;
-
-				if (ev.key === 'Enter' && isMultiselect) {
-					const currentTarget = ev.currentTarget as HTMLInputElement;
-					const value = currentTarget.value.trim();
-					if (value !== '') {
-						bond.state.addSelection(value);
-					}
-				}
-			}
-		};
-	}
-}
-
-export class ComboboxBond extends DropdownBond<
-	ComboboxBondProps,
-	ComboboxBondState,
-	ComboboxBondElements
-> {
-	constructor(s: ComboboxBondState) {
-		super(s);
-	}
-
-	control() {
-		return this.atom('input', () => new ComboboxControlAtom(this));
-	}
-
-	static get(): ComboboxBond | undefined {
-		return super.get() as ComboboxBond | undefined;
-	}
-
-	static set(context: ComboboxBond): ComboboxBond {
-		return super.set(context) as ComboboxBond;
-	}
-}
-
+// State first (a class) — self-contained, extends the select/dropdown state. Selection, roving,
+// and the `ClearThenClose` escape are inherited from Select.
 export class ComboboxBondState extends DropdownBondState<ComboboxBondProps> {
 	#userSelections = new SvelteMap<string, ComboboxSelection>();
 
-	constructor(props: () => ComboboxBondProps) {
+	constructor(props: ComboboxBondProps) {
 		super(props);
+		// Override Select's filter-only input with two independent fields:
+		// query → filter text; value → selected item's value (commits selection on set).
+		this.capability(
+			inputCapability(
+				createInput({
+					query: { get: () => this.props.query ?? '', set: (v) => (this.props.query = v) },
+					value: {
+						get: () => this.props.values?.[0] ?? '',
+						set: (v) => this.selection.select(v ? [v] : [])
+					}
+				}),
+				{ itemDomId: (id) => this.itemDomId(id) }
+			)
+		);
 	}
 
 	addSelection(label: string) {
@@ -119,7 +76,9 @@ export class ComboboxBondState extends DropdownBondState<ComboboxBondProps> {
 			label: controller.label,
 			createdAt: controller.createdAt, // default date for items from the list
 			controller,
-			unselect: () => this.unselect([controller.id])
+			// Deselect by the item's VALUE — `props.values` holds values, not the atom's
+			// `id` (a nanoid); passing `id` matched nothing, so dismiss was a no-op.
+			unselect: () => this.unselect([controller.value])
 		}));
 
 		return [...itemSelections, ...this.userSelections].sort(
@@ -133,3 +92,56 @@ export class ComboboxBondState extends DropdownBondState<ComboboxBondProps> {
 		this.props.label = labels[0] ?? '';
 	}
 }
+
+// Narrow bond view used by ComboboxControlAtom to avoid the atom↔bond cycle.
+type ComboboxBondView = ViewOf<ComboboxBondState>;
+
+class ComboboxControlAtom extends BondAtom<ComboboxBondView, HTMLInputElement> {
+	constructor(bond: ComboboxBondView) {
+		super(bond, 'control');
+		// Play the 'input' capability's 'value' role (combobox aria-*, oninput→value).
+		// Combobox-specific handlers below chain on top via composeHandlers.
+		this.role('input', 'value');
+	}
+
+	override get handlers() {
+		const bond = this.bond;
+		const isMultiselect = bond.state.props.multiple ?? false;
+		return {
+			// Typing replaces the current single selection (the capability's oninput, which
+			// writes `query`, runs alongside this — both fire).
+			oninput: () => {
+				if (!isMultiselect) {
+					bond.state.props.values = [];
+				}
+			},
+			onkeydown: (ev: KeyboardEvent) => {
+				if (bond.state.isDisabled) return;
+
+				if (ev.key === 'Enter' && isMultiselect) {
+					const currentTarget = ev.currentTarget as HTMLInputElement;
+					const value = currentTarget.value.trim();
+					if (value !== '') {
+						bond.state.addSelection(value);
+					}
+				}
+			}
+		};
+	}
+}
+
+// ComboboxBond — flat composition over DropdownBond, adds an editable control atom.
+// 'input' capability, ClearThenClose escape, and trigger are all inherited from Select.
+export const ComboboxBond = defineBond<
+	{ control: typeof ComboboxControlAtom },
+	ComboboxBondState
+>({
+	parts: [DropdownBond],
+	name: 'combobox',
+	atoms: {
+		control: ComboboxControlAtom
+	}
+});
+
+// Instance type — paired with the const above (value + type).
+export type ComboboxBond = BondOf<typeof ComboboxBond>;

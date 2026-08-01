@@ -6,6 +6,7 @@
 
 	let {
 		class: klass = '',
+		preset = undefined,
 		children = undefined,
 		...restProps
 	} = $props();
@@ -13,6 +14,7 @@
 	const hasValue = $derived(!!bond?.state.props.values?.length);
 
 	const placeholderProps = $derived({
+		preset: preset ?? 'dropdown.placeholder',
 		...bond?.placeholder(),
 		...restProps
 	});
@@ -21,9 +23,8 @@
 {#if !hasValue}
 	<HtmlAtom
 		{bond}
-		preset="dropdown.placeholder"
 		class={[
-			'border-border absolute inset-0 flex h-full w-full items-center px-2 leading-1 opacity-50 outline-none',
+			'absolute inset-0 flex h-full w-full items-center px-2 leading-1 opacity-50 outline-none',
 			'$preset',
 			klass
 		]}

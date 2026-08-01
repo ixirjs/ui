@@ -5,20 +5,24 @@
 
 	const bond = StepperBond.get();
 
+	if (!bond) {
+		throw new Error('Stepper.Header must be used within a Stepper component.');
+	}
+
 	let {
 		class: klass = '',
 		children = undefined,
-		preset = 'stepper.header' as const,
+		preset = undefined,
 		...restProps
 	}: StepperHeaderProps<E, B> = $props();
 
 	const headerProps = $derived({
+		preset: preset ?? 'stepper.header',
 		...restProps
 	});
 </script>
 
 <HtmlAtom
-	{preset}
 	{bond}
 	class={['stepper-header w-full', '$preset', klass]}
 	{...headerProps}

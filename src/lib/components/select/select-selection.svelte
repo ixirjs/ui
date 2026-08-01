@@ -17,11 +17,16 @@
 		class: klass = '',
 		as = 'div' as T,
 		base = undefined,
+		preset = undefined,
 		selection,
 		children,
 		onclose,
 		...restProps
 	}: SelectSelectionProps<T, B> = $props();
+
+	const atom = bond.value();
+
+	const presentation = $derived({ preset: preset ?? atom.preset });
 
 	const _base = $derived((base ?? isMultiple) ? Chip : undefined);
 
@@ -38,13 +43,13 @@
 	{as}
 	{bond}
 	base={_base}
-	preset="select.value"
 	class={[
 		'select-value border-border inline-flex h-6 flex-nowrap items-center gap-1 rounded-sm px-2 whitespace-nowrap',
 		'$preset',
 		klass
 	]}
 	onclose={handleClose}
+	{...presentation}
 	{...restProps}
 >
 	{#if children}

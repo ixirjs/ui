@@ -5,6 +5,7 @@
 
 	let {
 		class: klass = '',
+		preset = undefined,
 		as = 'h3' as E,
 		children = undefined,
 		...restProps
@@ -12,8 +13,11 @@
 
 	const bond = DialogBond.get();
 
+	const atom = bond?.title();
+
 	const titleProps = $derived({
-		...bond?.title().spread,
+		preset: preset ?? atom?.preset,
+		...atom?.spread,
 		...restProps
 	});
 </script>
@@ -21,7 +25,6 @@
 <HtmlAtom
 	{as}
 	{bond}
-	preset="dialog.title"
 	class={['border-border', '$preset', klass]}
 	{...titleProps}
 >

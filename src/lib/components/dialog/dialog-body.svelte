@@ -5,21 +5,24 @@
 
 	let {
 		class: klass,
+		preset = undefined,
 		children = undefined,
 		...restProps
 	}: DialogBodyProps<E, B> = $props();
 
 	const bond = DialogBond.get();
 
+	const atom = bond?.body();
+
 	const bodyProps = $derived({
-		...bond?.body().spread,
+		preset: preset ?? atom?.preset,
+		...atom?.spread,
 		...restProps
 	});
 </script>
 
 <HtmlAtom
 	{bond}
-	preset="dialog.body"
 	class={['border-border px-4 py-2', '$preset', klass]}
 	{...bodyProps}
 >

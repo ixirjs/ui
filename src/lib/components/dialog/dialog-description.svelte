@@ -5,6 +5,7 @@
 
 	let {
 		class: klass = '',
+		preset = undefined,
 		as = 'p' as E,
 		children = undefined,
 		...restProps
@@ -12,15 +13,17 @@
 
 	const bond = DialogBond.get();
 
+	const atom = bond?.description();
+
 	const descriptionProps = $derived({
-		...bond?.description().spread,
+		preset: preset ?? atom?.preset,
+		...atom?.spread,
 		...restProps
 	});
 </script>
 
 <HtmlAtom
 	{as}
-	preset="dialog.description"
 	class={['border-border', '$preset', klass]}
 	{...descriptionProps}
 >

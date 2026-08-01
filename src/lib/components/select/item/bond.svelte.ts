@@ -14,16 +14,20 @@ export class SelectItemAtom<Data = unknown, B extends SelectBond = SelectBond> e
 	HTMLElement
 > {
 	#id: string;
-	#props: () => SelectItemAtomProps<Data>;
+	#props: SelectItemAtomProps<Data>;
 	#selectBond: B;
 	// eslint-disable-next-line svelte/prefer-svelte-reactivity
 	#createdAt = new Date();
 
-	constructor(props: () => SelectItemAtomProps<Data>, selectBond: B) {
-		super(selectBond, `item-${props().value}`);
+	constructor(props: SelectItemAtomProps<Data>, selectBond: B) {
+		super(selectBond, `item-${props.value}`);
 		this.#props = props;
 		this.#selectBond = selectBond;
-		this.#id = props().id ?? nanoid();
+		this.#id = props.id ?? nanoid();
+		// Fold in the selection capability's `item` projection (aria-selected +
+		// data-selected from the shared model). Attrs-only — the .svelte keeps its
+		// own click (select + close). See docs/extensibility-vision.md §11.3.
+		this.role('item', props.value);
 	}
 
 	get id() {
@@ -35,7 +39,7 @@ export class SelectItemAtom<Data = unknown, B extends SelectBond = SelectBond> e
 	}
 
 	get props() {
-		return this.#props();
+		return this.#props;
 	}
 
 	get value() {
@@ -51,11 +55,12 @@ export class SelectItemAtom<Data = unknown, B extends SelectBond = SelectBond> e
 			| HTMLElement
 			| undefined
 			| null;
-		return element?.innerText ?? this.#props().label ?? '';
+		return element?.innerText ?? this.#props.label ?? '';
 	}
 
 	get isHighlighted() {
-		return this.#selectBond.state.highlightedItem?.id === this.id;
+		// Select items register into the roving by `value`, so the active id IS the value.
+		return this.#selectBond.state.roving.activeId === this.value;
 	}
 
 	get isSelected() {
@@ -64,13 +69,13 @@ export class SelectItemAtom<Data = unknown, B extends SelectBond = SelectBond> e
 
 	override get attrs() {
 		const itemId = `select-item-${this.id}`;
+		// `aria-selected` + `data-selected` (selection capability) and `data-highlighted`
+		// (roving capability) all come from the `item` projections folded in by
+		// `.role('item', value)` in the constructor — none are hand-rolled here.
 		return {
 			...super.attrs,
 			id: itemId,
-			role: 'option',
-			'aria-selected': this.isSelected,
-			'data-selected': this.isSelected,
-			'data-highlighted': this.isHighlighted
+			role: 'option'
 		};
 	}
 
@@ -96,12 +101,5 @@ export class SelectItemAtom<Data = unknown, B extends SelectBond = SelectBond> e
 
 	close() {
 		this.#selectBond?.state.close();
-	}
-
-	onmount() {
-		this.#selectBond?.state?.mountItem?.(this.value, this as any);
-		return () => {
-			this.#selectBond?.state?.unmountItem?.(this.value);
-		};
 	}
 }

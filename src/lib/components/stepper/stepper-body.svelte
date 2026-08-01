@@ -6,21 +6,25 @@
 
 	const bond = StepperBond.get();
 
+	if (!bond) {
+		throw new Error('Stepper.Body must be used within a Stepper component.');
+	}
+
 	let {
 		class: klass = '',
-		base=Stack.Root,
+		base = Stack.Root as unknown as B,
 		children = undefined,
-		preset = 'stepper.body' as const,
+		preset = undefined,
 		...restProps
 	}: StepperBodyProps<E, B> = $props();
 
 	const bodyProps = $derived({
+		preset: preset ?? 'stepper.body',
 		...restProps
 	});
 </script>
 
 <HtmlAtom
-	{preset}
 	{bond}
 	{base}
 	class={['stepper-body w-full', '$preset', klass]}
