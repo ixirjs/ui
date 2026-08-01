@@ -1,5 +1,6 @@
 import type { Base, HtmlAtomProps, SnippetProps } from '$ixirjs/ui/components/atom';
 import type { Snippet } from 'svelte';
+import type { HTMLInputAttributes } from 'svelte/elements';
 import type { Override, StateChangeCallback } from '$ixirjs/ui/types';
 import type { ClassValue } from '$ixirjs/ui/utils';
 import type { Factory } from '$ixirjs/ui/types';
@@ -25,6 +26,7 @@ export type TimeFull = `${HourDigits}:${MinuteDigits}`;
 
 export type InputControlType =
 	| 'text'
+	| 'search'
 	| 'number'
 	| 'email'
 	| 'url'
@@ -109,7 +111,10 @@ export interface InputNumber24HourControlProps {
 	max?: TimeFull;
 }
 
-export interface InputNumberControlProps {
+export interface InputNumberControlProps extends Omit<
+	HTMLInputAttributes,
+	'min' | 'max' | 'step' | 'disabled' | 'placeholder' | 'onchange' | 'oninput'
+> {
 	number?: number;
 	min?: number;
 	max?: number;
@@ -127,7 +132,10 @@ export interface InputNumberControlProps {
 }
 
 // Time Control
-export interface InputTimeControlProps {
+export interface InputTimeControlProps extends Omit<
+	HTMLInputAttributes,
+	'value' | 'min' | 'max' | 'disabled' | 'readonly' | 'class' | 'onchange' | 'oninput'
+> {
 	// HH:MM or HH:MM:SS, always 24h internally
 	value?: string;
 	// Date to sync time with (bindable)
@@ -149,7 +157,10 @@ export interface InputTimeControlProps {
 	onvaluechange?: InputStateChangeCallback<string, { date: Date | undefined }>;
 }
 
-export interface InputDateTimeControlProps {
+export interface InputDateTimeControlProps extends Omit<
+	HTMLInputAttributes,
+	'value' | 'disabled' | 'readonly' | 'class' | 'onchange' | 'oninput'
+> {
 	// YYYY-MM-DDTHH:MM or YYYY-MM-DDTHH:MM:SS
 	value?: string;
 	// bindable, derived from value
@@ -167,7 +178,10 @@ export interface InputDateTimeControlProps {
 	onvaluechange?: InputStateChangeCallback<string, { date: Date | null }>;
 }
 
-export interface InputDateControlProps {
+export interface InputDateControlProps extends Omit<
+	HTMLInputAttributes,
+	'value' | 'disabled' | 'readonly' | 'class' | 'onchange' | 'oninput'
+> {
 	// YYYY-MM-DD
 	value?: string;
 	// bindable, derived from value
@@ -185,7 +199,10 @@ export interface InputDateControlProps {
 	onvaluechange?: InputStateChangeCallback<string, { date: Date | null }>;
 }
 
-export interface InputFileControlProps {
+export interface InputFileControlProps extends Omit<
+	HTMLInputAttributes,
+	'files' | 'accept' | 'multiple' | 'disabled' | 'placeholder' | 'class' | 'onchange' | 'oninput'
+> {
 	// bindable
 	files?: File[];
 	// MIME types / extensions, e.g. "image/*,.pdf"
@@ -203,7 +220,10 @@ export interface InputFileControlProps {
 
 // Single source of truth for shared string-value text controls. Native callbacks receive only
 // their DOM event; semantic value notifications use the package-wide state callback contract.
-export interface TextControlPropsBase {
+export interface TextControlPropsBase extends Omit<
+	HTMLInputAttributes,
+	'value' | 'type' | 'placeholder' | 'disabled' | 'readonly' | 'class' | 'onchange' | 'oninput'
+> {
 	value?: string;
 	placeholder?: string;
 	disabled?: boolean;
@@ -234,7 +254,10 @@ export interface InputPasswordControlProps extends TextControlPropsBase {
 	onvisiblechange?: InputStateChangeCallback<boolean, { value: string }, MouseEvent>;
 }
 
-export interface InputLocationControlProps {
+export interface InputLocationControlProps extends Omit<
+	HTMLInputAttributes,
+	'value' | 'placeholder' | 'disabled' | 'readonly' | 'class' | 'onchange' | 'oninput'
+> {
 	// raw coords e.g. "40.7128, -74.0060", bindable, normalised on input/paste
 	value?: string;
 	// decimal degrees, bindable, derived from value
@@ -267,7 +290,10 @@ export interface PhoneSpan {
 	type: PhoneSpanType;
 }
 
-export interface InputPhoneControlProps {
+export interface InputPhoneControlProps extends Omit<
+	HTMLInputAttributes,
+	'value' | 'placeholder' | 'disabled' | 'readonly' | 'class' | 'onchange' | 'oninput'
+> {
 	// Clean digits only (no format chars); full string in free mode
 	value?: string;
 	// Input mask: `#` = required digit, `[#]` = optional digit, other chars are literals
@@ -286,7 +312,19 @@ export interface InputPhoneControlProps {
 	span?: Snippet<[PhoneSpan]>;
 }
 
-export interface InputCurrencyControlProps {
+export interface InputCurrencyControlProps extends Omit<
+	HTMLInputAttributes,
+	| 'value'
+	| 'min'
+	| 'max'
+	| 'step'
+	| 'placeholder'
+	| 'disabled'
+	| 'readonly'
+	| 'class'
+	| 'onchange'
+	| 'oninput'
+> {
 	// raw decimal string, bindable, e.g. "1234.50"
 	value?: string;
 	// parsed amount, bindable
@@ -314,7 +352,10 @@ export interface InputCurrencyControlProps {
 // Color Control — types live in ./color/types.ts
 export type { InputColorControlProps } from './color/types';
 
-export interface InputOtpControlProps {
+export interface InputOtpControlProps extends Omit<
+	HTMLInputAttributes,
+	'value' | 'type' | 'placeholder' | 'disabled' | 'readonly' | 'class' | 'onchange' | 'oninput'
+> {
 	// entered characters, bindable
 	value?: string;
 	// default 6
