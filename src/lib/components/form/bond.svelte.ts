@@ -1,5 +1,5 @@
 import type { FieldBond } from './field/bond.svelte';
-import { bondContextKey, Bond, type BondStateProps } from '$svelte-atoms/core/shared/bond';
+import { bondContextKey, Bond, type BondStateProps } from '$ixirjs/ui/shared/bond';
 
 // -----------------------------------------------------------------------------
 // Public types
@@ -25,6 +25,8 @@ export class FormBond<Props extends FormProps = FormProps> extends Bond<Props> {
 
 	constructor(props: Props, name = 'form') {
 		super(props, name);
+		// Fields mount after the root activates capabilities; establish this collection first.
+		void this.fields;
 	}
 
 	root() {

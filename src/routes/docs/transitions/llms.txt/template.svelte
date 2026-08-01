@@ -11,8 +11,8 @@
 	const close = '</' + 'script>';
 
 	const motionExample = `${open}
-	import { Component, toTransitionConfig } from '@svelte-atoms/core';
-	import { animate } from '@svelte-atoms/vibra';
+	import { Component, toTransitionConfig } from '@ixirjs/ui';
+	import { animate } from '@ixirjs/vibra';
 ${close}
 
 <Component
@@ -37,7 +37,7 @@ ${close}
 </Component>`;
 
 	const svelteTransitionsExample = `${open}
-	import { Component } from '@svelte-atoms/core';
+	import { Component } from '@ixirjs/ui';
 	import { slide, fade } from 'svelte/transition';
 ${close}
 
@@ -49,8 +49,8 @@ ${close}
 </Component>`;
 
 	const accordionExample = `${open}
-	import { Accordion, AccordionItem, toTransitionConfig } from '@svelte-atoms/core';
-	import { animate } from '@svelte-atoms/vibra';
+	import { Accordion, AccordionItem, toTransitionConfig } from '@ixirjs/ui';
+	import { animate } from '@ixirjs/vibra';
 ${close}
 
 <Accordion>
@@ -73,7 +73,7 @@ ${close}
 </Accordion>`;
 
 	const customAnimationExample = `${open}
-	import { Component } from '@svelte-atoms/core';
+	import { Component } from '@ixirjs/ui';
 
 	function customEnter(node) {
 		// Your custom animation logic
@@ -96,16 +96,16 @@ ${close}
 
 <FrontMatter {frontmatter} />
 
-# Transitions & Animations Most components in {inlineCode('@svelte-atoms/core')} support custom transitions
-and animations through lifecycle hooks. This allows you to create smooth enter/exit animations using {inlineCode(
-	'@svelte-atoms/vibra'
+# Transitions & Animations Most components in {inlineCode('@ixirjs/ui')} support custom transitions and
+animations through lifecycle hooks. This allows you to create smooth enter/exit animations using {inlineCode(
+	'@ixirjs/vibra'
 )}, Svelte transitions, or custom animation libraries. ## Animation Hooks Components that support
 transitions typically provide these props: - {inlineCode('initial')} - Set the initial state before the
 element is mounted - {inlineCode('enter')} - Define the enter animation when element appears - {inlineCode(
 	'exit'
 )} - Define the exit animation when element disappears - {inlineCode('animate')} - Define animations that
-run when the element's state changes ## Using @svelte-atoms/vibra (Recommended) The recommended approach
-is to use {inlineCode('@svelte-atoms/vibra')} with the {inlineCode('toTransitionConfig')} helper:
+run when the element's state changes ## Using @ixirjs/vibra (Recommended) The recommended approach is
+to use {inlineCode('@ixirjs/vibra')} with the {inlineCode('toTransitionConfig')} helper:
 
 {codeBlock(motionExample, 'svelte')}
 

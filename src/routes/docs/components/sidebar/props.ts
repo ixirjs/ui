@@ -13,6 +13,12 @@ export const sidebarRootProps: PropDefinition[] = [
 		description: 'Whether the sidebar panel is currently open. Bindable for two-way control.'
 	},
 	{
+		name: 'onopenchange',
+		type: 'StateChangeCallback<boolean, SidebarBond> | undefined',
+		default: 'undefined',
+		description: 'Called after a real open-state transition commits.'
+	},
+	{
 		name: 'disabled',
 		type: 'boolean | undefined',
 		default: 'false',

@@ -1,5 +1,7 @@
 import { type Component, type Snippet } from 'svelte';
-import { type HtmlAtomProps, type SnippetProps } from '$svelte-atoms/core/components/atom';
+import { type HtmlAtomProps, type SnippetProps } from '$ixirjs/ui/components/atom';
+import type { StateChangeCallback } from '$ixirjs/ui/types';
+import type { PresetLike } from '$ixirjs/ui/preset';
 
 export interface CheckboxSnippetProps extends SnippetProps {
 	checked?: boolean;
@@ -7,6 +9,13 @@ export interface CheckboxSnippetProps extends SnippetProps {
 }
 
 export type CheckboxChildren = Snippet<[CheckboxSnippetProps]>;
+
+export interface CheckboxPresets {
+	/** Presentation layer for the internal checkmark slot. */
+	checkmark?: PresetLike;
+	/** Presentation layer for the internal indeterminate slot. */
+	indeterminate?: PresetLike;
+}
 
 export interface CheckboxProps extends HtmlAtomProps<'button', never, CheckboxChildren> {
 	value?: string;
@@ -18,9 +27,14 @@ export interface CheckboxProps extends HtmlAtomProps<'button', never, CheckboxCh
 	name?: string;
 	checkedContent?: Component | Snippet;
 	indeterminateContent?: Component | Snippet;
-	onclick?: (ev?: Event) => void;
-	onchange?: (ev?: Event, options?: { checked: boolean }) => void;
-	oninput?: (ev?: Event, options?: { checked: boolean }) => void;
-	onblur?: () => void;
-	onfocus?: () => void;
+	/** Per-instance presentation overrides for compound slots. */
+	presets?: CheckboxPresets;
+	// Semantic state callback; runs after `checked` commits.
+	oncheckedchange?: StateChangeCallback<boolean>;
+	// Native DOM callbacks retain their event-only signatures.
+	onclick?: (event: MouseEvent) => void;
+	onchange?: (event: Event) => void;
+	oninput?: (event: Event) => void;
+	onblur?: (event: FocusEvent) => void;
+	onfocus?: (event: FocusEvent) => void;
 }

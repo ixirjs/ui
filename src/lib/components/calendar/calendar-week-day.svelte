@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { cn } from '$svelte-atoms/core/utils';
-	import { createAtomInstance } from '$svelte-atoms/core/shared/bond';
-	import { mergePresetProps, HtmlAtom } from '../atom';
+	import { cn } from '$ixirjs/ui/utils';
+	import { createAtomInstance } from '$ixirjs/ui/shared/bond';
+	import { mergeAtomProps, HtmlAtom } from '$ixirjs/ui/components/atom';
 	import { CalendarBond } from './bond.svelte';
 	import { untrack } from 'svelte';
 
@@ -17,19 +17,15 @@
 		...restProps
 	} = $props();
 	const atom = calendarBond
-		? createAtomInstance(() => `weekday-${index}`, {
+		? createAtomInstance(undefined, {
+				resolveKey: () => `weekday-${index}`,
 				bond: calendarBond,
 				factory: (owner) => owner!.weekDay(index),
 				register: { key: untrack(() => `weekday-${index}`) }
 			})
 		: undefined;
 
-	const weekDayProps = $derived(
-		mergePresetProps(preset, 'calendar.weekday', {
-			...atom?.spread,
-			...restProps
-		})
-	);
+	const weekDayProps = $derived(mergeAtomProps(atom, preset ?? 'calendar.weekday', restProps));
 </script>
 
 <HtmlAtom

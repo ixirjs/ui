@@ -1,6 +1,6 @@
 import type { Snippet } from 'svelte';
-import type { HtmlAtomProps, Base, SnippetProps } from '$svelte-atoms/core/components/atom';
-import type { Factory } from '$svelte-atoms/core/types';
+import type { HtmlAtomProps, Base, SnippetProps } from '$ixirjs/ui/components/atom';
+import type { Factory, StateChangeCallback } from '$ixirjs/ui/types';
 import type { CollapsibleBond } from './bond.svelte';
 
 // Extension points: merge custom props into collapsible parts by augmenting these interfaces.
@@ -34,6 +34,7 @@ export type CollapsibleRootProps<
 		data?: any;
 		disabled?: boolean;
 		factory?: Factory<CollapsibleBond>;
+		onopenchange?: StateChangeCallback<boolean, CollapsibleBond>;
 	};
 
 export type CollapsibleHeaderProps<
@@ -50,6 +51,3 @@ export type CollapsibleIndicatorProps<
 	E extends keyof HTMLElementTagNameMap = 'div',
 	B extends Base = Base
 > = HtmlAtomProps<E, B, CollapsibleChildren> & CollapsibleIndicatorExtendProps;
-
-/** @deprecated Use `CollapsibleRootExtendProps` instead. */
-export type CollapsibleExtendProps = CollapsibleRootExtendProps;

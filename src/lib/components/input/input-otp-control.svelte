@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { resolveControlPreset, writeInputValue } from './shared';
-	import { clamp } from '$svelte-atoms/core/utils/math';
-	import { cn, toClassValue } from '$svelte-atoms/core/utils';
+	import { inputChangeContext, resolveControlPreset, writeInputValue } from './shared';
+	import { clamp } from '$ixirjs/ui/utils/math';
+	import { cn, toClassValue } from '$ixirjs/ui/utils';
 	import { InputBond } from './bond.svelte';
 	import type { InputOtpControlProps } from './types';
 
@@ -19,11 +19,17 @@
 		preset: presetKey = 'input.otp',
 		onchange = undefined,
 		oninput = undefined,
+		onvaluechange = undefined,
 		oncomplete = undefined,
 		...restProps
 	}: InputOtpControlProps = $props();
 
-	const preset = resolveControlPreset(() => presetKey, bond);
+	const preset = resolveControlPreset(
+		() => presetKey,
+		bond,
+		() => restProps,
+		() => toClassValue(klass, bond)
+	);
 
 	let slotEls = $state<Array<HTMLInputElement | undefined>>([]);
 
@@ -56,14 +62,13 @@
 		slotEls[clamp(index, 0, length - 1)]?.focus();
 	}
 
-	function emit(ev: Event) {
-		const detail = { value };
-		oninput?.(ev, detail);
-		if (isFull) {
-			onchange?.(ev, detail);
-			if (!wasFull) {
-				oncomplete?.(value);
-			}
+	function emit(event: Event) {
+		onvaluechange?.(
+			value,
+			inputChangeContext(bond, event, event.type === 'paste' ? 'paste' : 'input')
+		);
+		if (isFull && !wasFull) {
+			oncomplete?.(value);
 		}
 		wasFull = isFull;
 	}
@@ -134,11 +139,15 @@
 	function handlePaste(ev: ClipboardEvent, fromIndex: number) {
 		ev.preventDefault();
 		const pasted = ev.clipboardData?.getData('text') ?? '';
-		const chars = pasted
-			.split('')
-			.filter(isValidChar)
-			.map(normalizeChar)
-			.slice(0, length - fromIndex);
+		// One pass, stopping at the number of slots left. The split/filter/map/slice chain built four
+		// arrays and validated the WHOLE paste before discarding all but the first few characters —
+		// pasting a page of text to fill six slots did a page of work.
+		const limit = length - fromIndex;
+		const chars: string[] = [];
+		for (let index = 0; index < pasted.length && chars.length < limit; index++) {
+			const char = pasted[index]!;
+			if (isValidChar(char)) chars.push(normalizeChar(char));
+		}
 
 		if (!chars.length) return;
 
@@ -159,10 +168,11 @@
 		'inline-flex items-center gap-1',
 		bond && 'h-full py-1 px-1',
 		disabled && 'cursor-not-allowed opacity-50',
-		preset?.class,
-		toClassValue(klass, bond)
+		preset.class
 	)}
-	{...restProps}
+	{...preset.attrs}
+	{oninput}
+	{onchange}
 >
 	{#each slots as slotVal, i (i)}
 		{#if groupSize !== undefined && i > 0 && i % groupSize === 0}

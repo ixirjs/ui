@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { flushSync } from 'svelte';
 import { createRovingFocus, rovingCapability, type RovingBacking } from './roving.svelte';
-import { Bond, BondState, Atom, bondContextKey, type BondStateProps } from '../../bond';
+import { Bond, Atom, bondContextKey, type BondStateProps } from '$ixirjs/ui/shared/bond';
 
 // Reactive ordered-id list standing in for a bond's Collection.
 function makeBacking(initial: string[] = [], wrap = true) {
@@ -97,21 +97,17 @@ describe('RovingFocus — wrap disabled', () => {
 });
 
 describe('rovingCapability — aria-activedescendant projection onto the container', () => {
-	class TState extends BondState<BondStateProps> {
+	class TState {
 		ids = $state<string[]>(['a', 'b', 'c']);
 		roving = createRovingFocus({ ids: () => this.ids });
-		constructor() {
-			super({});
-		}
 	}
 	class TBond extends Bond<BondStateProps> {
 		static CONTEXT_KEY = bondContextKey('test-roving');
-		constructor(state: TState) {
-			super(state, 'test');
-		}
+		readonly model: TState;
 
-		override get state(): TState {
-			return super.state as TState;
+		constructor(readonly state: TState) {
+			super({}, 'test');
+			this.model = state;
 		}
 	}
 	class TAtom extends Atom<TBond> {
@@ -123,16 +119,14 @@ describe('rovingCapability — aria-activedescendant projection onto the contain
 	it('is annotated as a Layer 1 projection over the roving focus model surface', () => {
 		const cap = rovingCapability(createRovingFocus(makeBacking(['a', 'b']).backing));
 		expect(cap.meta).toMatchObject({
-			layer: 1,
-			kind: 'projection',
 			projects: ['container', 'item']
 		});
 	});
 
 	it('container reflects the active item id (mapped to a DOM id)', () => {
 		const bond = new TBond(new TState());
-		bond.state.capability(
-			rovingCapability(bond.state.roving, {
+		bond.capability(
+			rovingCapability(bond.model.roving, {
 				itemDomId: (id) => `item-${id}`,
 				orientation: 'vertical'
 			})
@@ -142,29 +136,29 @@ describe('rovingCapability — aria-activedescendant projection onto the contain
 		expect(container.spread['aria-activedescendant']).toBeUndefined(); // nothing active
 		expect(container.spread['aria-orientation']).toBe('vertical');
 
-		bond.state.roving.next(); // → 'a'
+		bond.model.roving.next(); // → 'a'
 		expect(container.spread['aria-activedescendant']).toBe('item-a');
-		bond.state.roving.next(); // → 'b'
+		bond.model.roving.next(); // → 'b'
 		expect(container.spread['aria-activedescendant']).toBe('item-b');
 	});
 
 	it('defaults itemDomId to identity', () => {
 		const bond = new TBond(new TState());
-		bond.state.capability(rovingCapability(bond.state.roving));
+		bond.capability(rovingCapability(bond.model.roving));
 		const container = new TAtom(bond, 'list').role('container');
-		bond.state.roving.goto('c');
+		bond.model.roving.goto('c');
 		expect(container.spread['aria-activedescendant']).toBe('c');
 	});
 
 	it('item reflects whether it is the highlighted one (boolean data-highlighted)', () => {
 		const bond = new TBond(new TState());
-		bond.state.capability(rovingCapability(bond.state.roving));
+		bond.capability(rovingCapability(bond.model.roving));
 		const itemB = new TAtom(bond, 'b').role('item', 'b');
 
 		expect(itemB.spread['data-highlighted']).toBe(false); // nothing active
-		bond.state.roving.goto('a');
+		bond.model.roving.goto('a');
 		expect(itemB.spread['data-highlighted']).toBe(false); // a active, not b
-		bond.state.roving.goto('b');
+		bond.model.roving.goto('b');
 		expect(itemB.spread['data-highlighted']).toBe(true); // b active → highlighted
 	});
 });
@@ -203,5 +197,16 @@ describe('RovingFocus — reactive over the injected list', () => {
 		flushSync();
 		expect(seen).toBeNull();
 		dispose();
+	});
+
+	it('preserves active identity across a temporary removal and reinsertion', () => {
+		const { backing, setIds } = makeBacking(['a', 'b']);
+		const r = createRovingFocus(backing);
+		r.goto('b');
+
+		setIds(['a']);
+		expect(r.activeId).toBeNull();
+		setIds(['a', 'b']);
+		expect(r.activeId).toBe('b');
 	});
 });

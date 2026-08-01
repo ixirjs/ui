@@ -1,10 +1,11 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { bindBond } from '$svelte-atoms/core/shared';
-	import { createAtomInstance } from '$svelte-atoms/core/shared/bond';
-	import { type Base } from '$svelte-atoms/core/components/atom';
-	import { StepBond, StepRootAtom, type StepBondProps } from './bond.svelte';
+	import { useRoot } from '$ixirjs/ui/shared';
+	import { type Base } from '$ixirjs/ui/components/atom';
+	import { StepBond, type StepBondProps } from './bond.svelte';
 	import type { StepRootProps } from './types';
 	import { onDestroy } from 'svelte';
+
+	const ID = $props.id();
 
 	// Step.Root is renderless (registration-only — it renders `children`, not an element), so there is
 	// no host element to forward the inherited HtmlAtomProps (class/preset/…) onto; they're intentionally unused.
@@ -18,18 +19,16 @@
 		factory = defaultFactory
 	}: StepRootProps<E, B> = $props();
 
-	const binding = bindBond<StepBond>((props) => factory(props), {
-		index: () => index,
-		disabled: () => disabled,
-		completed: () => completed,
-		optional: () => optional
-	});
-	const bond = binding.bond.share();
-
-	createAtomInstance<StepRootAtom, StepBond>('root', {
-		bond,
-		factory: (owner) => new StepRootAtom(owner as StepBond)
-	});
+	const bond = useRoot(
+		StepBond,
+		{
+			index: () => index,
+			disabled: () => disabled,
+			completed: () => completed,
+			optional: () => optional
+		},
+		{ id: () => ID, factory: (props) => factory(props) }
+	).bond;
 
 	const unmountStep = bond.mount(bond);
 

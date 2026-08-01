@@ -1,7 +1,8 @@
 <script lang="ts">
-	import { mergePresetProps } from '$svelte-atoms/core/components/atom';
-	import { toClassValue } from '$svelte-atoms/core/utils';
-	import { HtmlAtom } from '../atom';
+	import { mergePresetProps } from '$ixirjs/ui/components/atom';
+	import { toClassValue } from '$ixirjs/ui/utils';
+	import { HtmlAtom } from '$ixirjs/ui/components/atom';
+	import type { ImageProps } from './types';
 
 	let {
 		class: klass = '',
@@ -10,7 +11,7 @@
 		children = undefined,
 		preset = undefined,
 		...restProps
-	} = $props();
+	}: ImageProps = $props();
 
 	let hasError = $state(false);
 

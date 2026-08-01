@@ -1,5 +1,5 @@
 const presetCode = `
-import { setPreset } from '@svelte-atoms/core';
+import { setPreset } from '@ixirjs/ui/preset';
 
 const preset = setPreset({
   divider: () => ({
@@ -57,8 +57,8 @@ export const metadata = {
 		'Visual separator for content sections with horizontal/vertical orientation and optional labels.',
 	componentType: 'simple' as const,
 	status: 'stable' as const,
-	packageName: '@svelte-atoms/core',
-	importCode: "import { Divider } from '@svelte-atoms/core';",
+	packageName: '@ixirjs/ui',
+	importCode: "import { Divider } from '@ixirjs/ui';",
 	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Divider' }],
 	useCases,
 	examples: {

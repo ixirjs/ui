@@ -1,5 +1,5 @@
 const presetCode = `
-import { setPreset } from '@svelte-atoms/core';
+import { setPreset } from '@ixirjs/ui/preset';
 
 const preset = setPreset({
   sidebar: () => ({
@@ -66,8 +66,8 @@ export const metadata = {
 		'Collapsible side panel with left/right placement, smooth animations, and state binding.',
 	componentType: 'compound' as const,
 	status: 'stable' as const,
-	packageName: '@svelte-atoms/core',
-	importCode: "import { Sidebar } from '@svelte-atoms/core';",
+	packageName: '@ixirjs/ui',
+	importCode: "import { Sidebar } from '@ixirjs/ui';",
 	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Sidebar' }],
 	useCases,
 	componentsSummary,

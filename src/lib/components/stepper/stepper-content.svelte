@@ -1,5 +1,5 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { mergePresetProps, HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
+	import { mergePresetProps, HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
 	import { StepperBond, type StepContentSnippet } from './bond.svelte';
 	import type { StepperContentProps } from './types';
 
@@ -27,15 +27,16 @@
 </script>
 
 {#snippet body(stepContent: StepContentSnippet)}
-	{#key stepContent}
-		<HtmlAtom
-			{bond}
-			class={['stepper-content w-full', '$preset', contentKlass, klass]}
-			{...contentProps}
-		>
+	<HtmlAtom
+		{bond}
+		class={['stepper-content w-full', '$preset', contentKlass, klass]}
+		{...contentProps}
+	>
+		<!-- Keep the host stable; key only the content subtree so atom-based bases can tear down cleanly. -->
+		{#key stepContent}
 			{@render stepContent.children({ step: activeStep! })}
-		</HtmlAtom>
-	{/key}
+		{/key}
+	</HtmlAtom>
 {/snippet}
 
 {@render content?.(activeStepContent!)}

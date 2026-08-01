@@ -1,51 +1,50 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { bindBond } from '$svelte-atoms/core/shared/bond/bind.svelte';
-	import { createAtomInstance } from '$svelte-atoms/core/shared/bond';
-	import { HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
-	import { mergeAtomProps } from '$svelte-atoms/core/components/atom';
-	import { TreeBond, type TreeRootAtom } from './bond.svelte';
+	import { controlledProp, useRoot } from '$ixirjs/ui/shared';
+	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import { TreeBond } from './bond.svelte';
 	import type { TreeRootProps } from './types';
+
+	const ID = $props.id();
 
 	let {
 		open = $bindable(false),
 		disabled = false,
 		class: klass = '',
 		preset = undefined,
+		presets = undefined,
 		children = undefined,
 		factory = (props) => TreeBond.create(props),
+		onopenchange = undefined,
 		...restProps
 	}: TreeRootProps<E, B> = $props();
 
-	let openState = $derived(open);
-
-	const binding = bindBond<TreeBond>(
-		(props) => factory(props),
-		{
-			open: [
-				() => openState,
-				(v) => {
-					openState = v;
-					open = openState;
-				}
-			],
-			disabled: () => disabled
-		},
-		{ preset: () => preset }
-	);
-	const bond: TreeBond = binding.bond.share();
-	const rootAtom = createAtomInstance<TreeRootAtom, TreeBond, HTMLElement>('root', {
-		bond,
-		factory: (owner) => owner!.root() as TreeRootAtom
+	const openProp = controlledProp<boolean, TreeBond>({
+		get: () => open,
+		set: (value) => (open = value),
+		onchange: (value, context) => onopenchange?.(value, context),
+		context: (bond) => bond.takeOpenChangeContext()
 	});
-	const rootProps = $derived(
-		mergeAtomProps(rootAtom, preset, { ...binding.stateProps, ...restProps })
+
+	const root = useRoot(
+		TreeBond,
+		{
+			open: openProp,
+			disabled: () => disabled,
+			presets: () => presets
+		},
+		{
+			preset: () => preset,
+			id: () => ID,
+			factory: (props) => factory(props)
+		}
 	);
+	const bond: TreeBond = root.bond;
 
 	export function getBond(): TreeBond {
 		return bond;
 	}
 </script>
 
-<HtmlAtom class={['flex flex-col', '$preset', klass]} {...rootProps}>
+<HtmlAtom class={['flex flex-col', '$preset', klass]} {...root.props} {...restProps} part={root}>
 	{@render children?.({ tree: bond })}
 </HtmlAtom>

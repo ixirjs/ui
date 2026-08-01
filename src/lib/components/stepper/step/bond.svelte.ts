@@ -1,11 +1,13 @@
-import { StepperBond, type IStepper } from '../bond.svelte';
-import { Bond, defineAtom, type BondStateProps } from '$svelte-atoms/core/shared/bond';
-import { defineBond, type BondOf } from '$svelte-atoms/core/shared';
+import { StepperBond, type IStepper } from '$ixirjs/ui/components/stepper/bond.svelte';
+import { internCapabilityFactory } from '$ixirjs/ui/shared/capability/intern';
+import { Bond, defineAtom, type BondStateProps } from '$ixirjs/ui/shared/bond';
+import { defineBond, type BondOf } from '$ixirjs/ui/shared';
 import {
 	defineAtomCapability,
 	sharedCapabilityKey,
-	type AtomHost
-} from '$svelte-atoms/core/shared/capability';
+	type AtomHost,
+	type CapabilityKey
+} from '$ixirjs/ui/shared/capability';
 
 // -----------------------------------------------------------------------------
 // Internal types
@@ -39,11 +41,23 @@ export type StepBondElements = {
 // Capability slots and shared helpers
 // -----------------------------------------------------------------------------
 
-const STEP_ROOT = sharedCapabilityKey<void>('@svelte-atoms/step:root');
-const STEP_INDICATOR = sharedCapabilityKey<void>('@svelte-atoms/step:indicator');
-const STEP_HEADER = sharedCapabilityKey<void>('@svelte-atoms/step:header');
-const STEP_BODY = sharedCapabilityKey<void>('@svelte-atoms/step:body');
-const STEP_SEPARATOR = sharedCapabilityKey<void>('@svelte-atoms/step:separator');
+const STEP_ROOT = sharedCapabilityKey<void>({ owner: '@ixirjs/step', name: 'root', version: 1 });
+const STEP_INDICATOR = sharedCapabilityKey<void>({
+	owner: '@ixirjs/step',
+	name: 'indicator',
+	version: 1
+});
+const STEP_HEADER = sharedCapabilityKey<void>({
+	owner: '@ixirjs/step',
+	name: 'header',
+	version: 1
+});
+const STEP_BODY = sharedCapabilityKey<void>({ owner: '@ixirjs/step', name: 'body', version: 1 });
+const STEP_SEPARATOR = sharedCapabilityKey<void>({
+	owner: '@ixirjs/step',
+	name: 'separator',
+	version: 1
+});
 
 // -----------------------------------------------------------------------------
 // Atom definitions
@@ -84,16 +98,14 @@ export type StepSeparatorAtom = InstanceType<typeof StepSeparatorAtom>;
 // Atom capabilities
 // -----------------------------------------------------------------------------
 
-function stepRootPresentation() {
+const stepRootPresentation = internCapabilityFactory(function stepRootPresentation() {
 	return defineAtomCapability<void, AtomHost, StepBondView>({
 		slot: STEP_ROOT,
 		meta: {
-			layer: 1,
-			kind: 'projection',
 			projects: ['root'],
 			docs: 'Step root status and ARIA grouping projection.'
 		},
-		behavior: {
+		attach: {
 			attrs: (_node, bond) => ({
 				'data-stepper': bond?.parent?.id ?? '',
 				'data-index': bond?.props.index ?? 0,
@@ -105,18 +117,16 @@ function stepRootPresentation() {
 			})
 		}
 	});
-}
+});
 
-function stepIndicatorPresentation() {
+const stepIndicatorPresentation = internCapabilityFactory(function stepIndicatorPresentation() {
 	return defineAtomCapability<void, AtomHost, StepBondView>({
 		slot: STEP_INDICATOR,
 		meta: {
-			layer: 1,
-			kind: 'projection',
 			projects: ['indicator'],
 			docs: 'Step indicator current-step and status projection.'
 		},
-		behavior: {
+		attach: {
 			attrs: (_node, bond) => ({
 				'aria-current': bond?.isActive ? ('step' as const) : undefined,
 				...stepStatusAttrs(bond),
@@ -124,33 +134,29 @@ function stepIndicatorPresentation() {
 			})
 		}
 	});
-}
+});
 
-function stepStatusPresentation(slot: symbol, part: string) {
+function stepStatusPresentation(slot: CapabilityKey<void>, part: string) {
 	return defineAtomCapability<void, AtomHost, StepBondView>({
 		slot,
 		meta: {
-			layer: 1,
-			kind: 'projection',
 			projects: [part],
 			docs: `Step ${part} status projection.`
 		},
-		behavior: {
+		attach: {
 			attrs: (_node, bond) => stepStatusAttrs(bond)
 		}
 	});
 }
 
-function stepSeparatorPresentation() {
+const stepSeparatorPresentation = internCapabilityFactory(function stepSeparatorPresentation() {
 	return defineAtomCapability<void, AtomHost, StepBondView>({
 		slot: STEP_SEPARATOR,
 		meta: {
-			layer: 1,
-			kind: 'projection',
 			projects: ['separator'],
 			docs: 'Step separator presentation and status projection.'
 		},
-		behavior: {
+		attach: {
 			attrs: (_node, bond) => ({
 				'aria-hidden': 'true',
 				role: 'presentation' as const,
@@ -158,7 +164,7 @@ function stepSeparatorPresentation() {
 			})
 		}
 	});
-}
+});
 
 function stepStatusAttrs(bond: StepBondView | undefined) {
 	return {
@@ -228,20 +234,7 @@ class StepBondBase extends Bond<StepBondProps> {
 // Bond spec and constructor facade
 // -----------------------------------------------------------------------------
 
-const StepBondImpl = defineBond<
-	{
-		root: typeof StepRootAtom;
-		indicator: typeof StepIndicatorAtom;
-		header: typeof StepHeaderAtom;
-		title: typeof StepTitleAtom;
-		description: typeof StepDescriptionAtom;
-		body: typeof StepBodyAtom;
-		separator: typeof StepSeparatorAtom;
-	},
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	any,
-	typeof StepBondBase
->({
+export const StepBond = defineBond({
 	name: 'step',
 	preset: 'stepper.step',
 	base: StepBondBase,
@@ -256,16 +249,4 @@ const StepBondImpl = defineBond<
 	}
 });
 
-export type StepBond = BondOf<typeof StepBondImpl>;
-
-interface StepBondConstructor {
-	new (props: StepBondProps): StepBond;
-	readonly CONTEXT_KEY: string;
-	readonly spec: (typeof StepBondImpl)['spec'];
-	get(): StepBond | undefined;
-	getOrThrow(message?: string): StepBond;
-	set(bond: StepBond): StepBond;
-	create(props: StepBondProps): StepBond;
-}
-
-export const StepBond = StepBondImpl as unknown as StepBondConstructor;
+export type StepBond = BondOf<typeof StepBond>;

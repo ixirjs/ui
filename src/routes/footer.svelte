@@ -30,7 +30,7 @@
 			</div>
 
 			<a
-				href="https://github.com/svelte-atoms/core"
+				href="https://github.com/ixirjs/ui"
 				target="_blank"
 				rel="noopener noreferrer"
 				class="text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 text-sm transition-colors"

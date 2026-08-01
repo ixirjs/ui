@@ -1,8 +1,8 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
 	import type { ScrollableTrackProps } from './types';
-	import { ScrollableBond } from './bond.svelte';
-	import { createAtomInstance } from '$svelte-atoms/core/shared/bond';
-	import { mergePresetProps, HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
+	import { ScrollableBond, ScrollableTrackAtom } from './bond.svelte';
+	import { createAtomInstance } from '$ixirjs/ui/shared/bond';
+	import { mergeAtomProps, HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
 
 	let {
 		class: klass = '',
@@ -14,20 +14,19 @@
 
 	const bond = ScrollableBond.getOrThrow('ScrollableTrack must be used within a ScrollableRoot');
 
-	const hasYScroll = $derived(bond.state.props.scrollHeight > bond.state.props.clientHeight);
-	const hasXScroll = $derived(bond.state.props.scrollWidth > bond.state.props.clientWidth);
+	const hasYScroll = $derived(bond.props.scrollHeight > bond.props.clientHeight);
+	const hasXScroll = $derived(bond.props.scrollWidth > bond.props.clientWidth);
 	const hasScroll = $derived(hasXScroll || hasYScroll);
-	const isOpen = $derived(bond?.state?.props?.open ?? true);
-	const isScrolling = $derived(bond?.state?.props?.isScrolling ?? false);
+	const isOpen = $derived(bond?.props?.open ?? true);
+	const isScrolling = $derived(bond?.props?.isScrolling ?? false);
 
-	const atom = createAtomInstance(() => (orientation === 'horizontal' ? 'trackX' : 'trackY'), {
+	const atom = createAtomInstance(undefined, {
+		resolveKey: () => (orientation === 'horizontal' ? 'trackX' : 'trackY'),
 		bond,
-		factory: (owner, key) => (key === 'trackX' ? owner!.trackX() : owner!.trackY())
+		factory: (owner, key) => new ScrollableTrackAtom(owner!, key === 'trackX' ? 'x' : 'y')
 	});
 
-	const trackProps = $derived(
-		mergePresetProps(preset, 'scrollable.track', { ...atom.spread, ...restProps })
-	);
+	const trackProps = $derived(mergeAtomProps(atom, preset ?? 'scrollable.track', restProps));
 </script>
 
 {#if (isOpen || isScrolling) && hasScroll}

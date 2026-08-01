@@ -1,10 +1,8 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'p', B extends Base = Base">
-	import { mergeAtomProps, HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
-	import { createAtomInstance } from '$svelte-atoms/core/shared/bond';
-	import { StepBond, StepDescriptionAtom } from './bond.svelte';
+	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import { usePart } from '$ixirjs/ui/shared';
+	import { StepBond } from './bond.svelte';
 	import type { StepDescriptionProps } from './types';
-
-	const bond = StepBond.getOrThrow('StepDescription must be used within a Step component.');
 
 	let {
 		class: klass = '',
@@ -14,14 +12,11 @@
 		...restProps
 	}: StepDescriptionProps<E, B> = $props();
 
-	const atom = createAtomInstance<StepDescriptionAtom, StepBond>('description', {
-		bond,
-		factory: (owner) => new StepDescriptionAtom(owner as StepBond)
+	const part = usePart(StepBond, 'description', () => restProps, {
+		preset: () => preset
 	});
-
-	const descriptionProps = $derived(mergeAtomProps(atom, preset, restProps));
 </script>
 
-<HtmlAtom {as} class={['text-xs text-muted-foreground', '$preset', klass]} {...descriptionProps}>
-	{@render children?.({ step: bond })}
+<HtmlAtom {as} class={['text-xs text-muted-foreground', '$preset', klass]} {...restProps} {part}>
+	{@render children?.({ step: part.bond })}
 </HtmlAtom>

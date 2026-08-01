@@ -1,31 +1,26 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { mergeAtomProps, HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
-	import { createAtomInstance } from '$svelte-atoms/core/shared/bond';
+	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import { usePart } from '$ixirjs/ui/shared';
 	import { TreeBond } from './bond.svelte';
 	import type { TreeBodyProps } from './types';
-	import { animateTreeBody } from './motion.svelte';
-
-	const bond = TreeBond.getOrThrow('<Tree.Body /> must be used within a <Tree.Root />');
+	import { attachTreeBodyMotion } from './motion.svelte';
 
 	let {
 		class: klass = '',
 		preset = undefined,
 		children = undefined,
-		fallback = {
-			animate: animateTreeBody(),
-			initial: animateTreeBody({ duration: 0 })
-		},
 		...restProps
 	}: TreeBodyProps<E, B> = $props();
 
-	const atom = createAtomInstance('body', {
-		bond,
-		factory: (owner) => owner!.body()
-	});
+	// An attachment rather than a `defaults` motion phase: identical behavior, but it keeps this
+	// part on HtmlAtom's native renderer instead of the HtmlElement adapter. See the motion module.
+	const motion = attachTreeBodyMotion();
 
-	const bodyProps = $derived(mergeAtomProps(atom, preset, restProps));
+	const part = usePart(TreeBond, 'body', () => restProps, {
+		preset: () => preset
+	});
 </script>
 
-<HtmlAtom {bond} class={['pl-4', '$preset', klass]} {fallback} {...bodyProps}>
-	{@render children?.({ tree: bond })}
+<HtmlAtom class={['overflow-hidden pl-4', '$preset', klass]} {@attach motion} {...restProps} {part}>
+	{@render children?.({ tree: part.bond })}
 </HtmlAtom>

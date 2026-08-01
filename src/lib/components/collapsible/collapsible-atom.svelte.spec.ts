@@ -1,91 +1,144 @@
+import { page } from '@vitest/browser/context';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
-import Probe, { capturedBond, resetCapturedBond } from './collapsible-atom-probe.svelte';
-import { Atom } from '$svelte-atoms/core/shared/bond';
+import Probe, {
+	capturedBond,
+	resetCapturedBond
+} from '$ixirjs/ui/test/components/collapsible/collapsible-atom-probe.test.svelte';
+import { Atom } from '$ixirjs/ui/shared/bond';
+import { disclosureTrigger } from '$ixirjs/ui/shared/capability/models/disclosure.svelte';
+import Header from './collapsible-header.svelte';
 import {
 	CollapsibleBond,
 	CollapsibleBodyAtom,
 	CollapsibleHeaderAtom,
 	CollapsibleIndicatorAtom,
-	CollapsibleRootAtom
+	CollapsibleRootAtom,
+	type CollapsibleStateProps
 } from './bond.svelte';
 
-describe('Collapsible component-owned Atoms', () => {
+function makeBond(initial: Partial<CollapsibleStateProps> = {}) {
+	const props = $state<CollapsibleStateProps>({ open: false, disabled: false, ...initial });
+	return { bond: CollapsibleBond.create(props), props };
+}
+
+function clickEvent(): MouseEvent {
+	return { button: 0, defaultPrevented: false } as MouseEvent;
+}
+
+describe('Collapsible Bond interface', () => {
 	beforeEach(resetCapturedBond);
 
-	it('self-constructs a merged CollapsibleBond via create()', () => {
-		const bond = CollapsibleBond.create({ open: false, disabled: false });
+	it('self-constructs without generated Atom methods and exposes predicate state', () => {
+		const { bond, props } = makeBond({ disabled: true });
 
 		expect(bond).toBeInstanceOf(CollapsibleBond);
-		expect(bond.state.props.open).toBe(false);
+		expect(bond.props.open).toBe(false);
+		expect(bond.isOpen).toBe(false);
+		expect(bond.isDisabled).toBe(true);
 		expect((bond as unknown as Record<string, unknown>).header).toBeUndefined();
+
+		props.open = true;
+		expect(bond.isOpen).toBe(true);
 	});
 
-	it('registers rendered part nodes without legacy generated atom methods', () => {
+	it('mutates open state through methods and trigger handlers', () => {
+		const { bond, props } = makeBond();
+		const header = new CollapsibleHeaderAtom(bond).role('trigger');
+
+		bond.open();
+		expect(props.open).toBe(true);
+		bond.close();
+		expect(props.open).toBe(false);
+		bond.toggle();
+		expect(props.open).toBe(true);
+
+		(header.spread.onclick as (event: MouseEvent) => void)(clickEvent());
+		expect(props.open).toBe(false);
+	});
+
+	it('toggles from a rendered click', async () => {
 		const { unmount } = render(Probe);
-		const bond = capturedBond;
 
-		expect(bond).toBeDefined();
-		expect((bond as unknown as Record<string, unknown>).root).toBeUndefined();
-		expect((bond as unknown as Record<string, unknown>).header).toBeUndefined();
-		expect((bond as unknown as Record<string, unknown>).body).toBeUndefined();
-		expect((bond as unknown as Record<string, unknown>).indicator).toBeUndefined();
-		expect(bond?.node('root')).toBeInstanceOf(CollapsibleRootAtom);
-		expect(bond?.node('header')).toBeInstanceOf(CollapsibleHeaderAtom);
-		expect(bond?.node('body')).toBeInstanceOf(CollapsibleBodyAtom);
-		expect(bond?.node('indicator')).toBeInstanceOf(CollapsibleIndicatorAtom);
-		for (const node of [
-			bond?.node('root'),
-			bond?.node('header'),
-			bond?.node('body'),
-			bond?.node('indicator')
-		]) {
-			expect(node).toBeInstanceOf(Atom);
-		}
-		expect(bond?.nodes()).toHaveLength(4);
-		expect(
-			bond
-				?.node('header')
-				?.describeCapabilities()
-				.map((cap) => cap.description)
-		).toContain('@svelte-atoms/collapsible:header');
-		expect(
-			bond
-				?.node('body')
-				?.describeCapabilities()
-				.map((cap) => cap.description)
-		).toContain('@svelte-atoms/collapsible:body');
+		await page.getByText('Toggle').click();
+		expect(capturedBond?.isOpen).toBe(false);
 
+		await page.getByText('Toggle').click();
+		expect(capturedBond?.isOpen).toBe(true);
 		unmount();
-
-		expect(bond?.nodes()).toEqual([]);
 	});
 
-	it('keeps Collapsible node capabilities without part-method adapters', () => {
-		const bond = CollapsibleBond.create({ open: false, disabled: true });
+	it('projects reactive capability and relationship attrs onto registered Atoms', () => {
+		const { bond, props } = makeBond({ disabled: true });
 		const header = new CollapsibleHeaderAtom(bond).role('trigger');
 		const body = new CollapsibleBodyAtom(bond).role('content');
 		const indicator = new CollapsibleIndicatorAtom(bond);
+		bond.register(header);
+		bond.register(body);
 
-		for (const node of [header, body, indicator]) {
-			expect(node).toBeInstanceOf(Atom);
-		}
-
-		expect(header.describeCapabilities().map((cap) => cap.description)).toContain(
-			'@svelte-atoms/collapsible:header'
+		expect(header?.capabilities.map((cap) => cap.slot.description)).toContain(
+			'@ixirjs/collapsible:header'
+		);
+		expect(body?.capabilities.map((cap) => cap.slot.description)).toContain(
+			'@ixirjs/collapsible:body'
 		);
 		expect(header.spread.role).toBe('button');
 		expect(header.spread.tabindex).toBe(-1);
 		expect(header.spread['aria-disabled']).toBe('true');
-
-		expect(body.describeCapabilities().map((cap) => cap.description)).toContain(
-			'@svelte-atoms/collapsible:body'
-		);
+		expect(header.spread['aria-controls']).toBe(body.id);
+		expect(header.spread['aria-expanded']).toBe(false);
 		expect(body.spread.role).toBe('region');
+		expect(body.spread['aria-labelledby']).toBe(header.id);
 		expect(body.spread.inert).toBe(true);
-
-		bond.state.props.open = true;
-		expect(body.spread.inert).toBeUndefined();
 		expect(indicator.spread.role).toBe('icon');
+
+		props.disabled = false;
+		props.open = true;
+		expect(header.spread['aria-disabled']).toBe('false');
+		expect(header.spread.tabindex).toBe(0);
+		expect(header.spread['aria-expanded']).toBe(true);
+		expect(body.spread.inert).toBeUndefined();
+	});
+
+	it('allows a last-wins trigger policy replacement', () => {
+		const { bond, props } = makeBond();
+		bond.capability(disclosureTrigger({ disabled: true }));
+		const header = new CollapsibleHeaderAtom(bond).role('trigger');
+
+		(header.spread.onclick as (event: MouseEvent) => void)(clickEvent());
+		expect(props.open).toBe(false);
+	});
+
+	it('registers rendered part Atoms once and cleans them up on unmount', () => {
+		const { unmount } = render(Probe);
+		const bond = capturedBond;
+
+		expect(bond).toBeDefined();
+		expect(bond?.nodeByPart('root')).toBeInstanceOf(CollapsibleRootAtom);
+		expect(bond?.nodeByPart('header')).toBeInstanceOf(CollapsibleHeaderAtom);
+		expect(bond?.nodeByPart('body')).toBeInstanceOf(CollapsibleBodyAtom);
+		expect(bond?.nodeByPart('indicator')).toBeInstanceOf(CollapsibleIndicatorAtom);
+		expect(bond?.nodeByPart('header')).toBe(bond?.nodeByPart('header'));
+		expect(bond?.nodesByPart('header')).toHaveLength(1);
+		expect(
+			[
+				bond?.nodeByPart('root'),
+				bond?.nodeByPart('header'),
+				bond?.nodeByPart('body'),
+				bond?.nodeByPart('indicator')
+			].every((node) => node instanceof Atom)
+		).toBe(true);
+
+		unmount();
+		expect(bond?.nodesByPart('root')).toEqual([]);
+		expect(bond?.nodesByPart('header')).toEqual([]);
+		expect(bond?.nodesByPart('body')).toEqual([]);
+		expect(bond?.nodesByPart('indicator')).toEqual([]);
+	});
+
+	it('rejects descendant parts outside a root context', () => {
+		expect(() => render(Header)).toThrow(
+			'<Collapsible.Header /> must be used within a <Collapsible.Root />'
+		);
 	});
 });

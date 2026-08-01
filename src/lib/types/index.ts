@@ -1,4 +1,15 @@
-import type { Bond, BondState, BondStateProps } from '$lib/shared/bond';
+import type { Bond, BondStateProps } from '$lib/shared/bond';
+
+export interface StateChangeContext<B = never, E extends Event = Event> {
+	event?: E;
+	bond?: B;
+	reason?: string;
+}
+
+export type StateChangeCallback<Value, B = never, E extends Event = Event> = (
+	value: Value,
+	context: StateChangeContext<B, E>
+) => void;
 
 // Override conflicting properties of T with U.
 export type Override<T, U> = Omit<T, keyof U> & U;
@@ -16,16 +27,14 @@ export type DeepOverride<T, U> = U extends object
 	: U;
 
 // Extracts the props type a Bond was parameterized with; reads the bond first so props-owned
-// defineBond bases resolve without relying on the BondState compatibility slot.
+// defineBond bases resolve directly from the base class.
 type PropsOf<T extends Bond> = T extends { readonly __props?: infer P }
 	? P
 	: T extends { readonly props: infer P }
 		? P
 		: T extends Bond<infer P>
 			? P
-			: T extends { state: BondState<infer P> }
-				? P
-				: BondStateProps;
+			: BondStateProps;
 
 export type Factory<T extends Bond> = (props: PropsOf<T>) => T;
 

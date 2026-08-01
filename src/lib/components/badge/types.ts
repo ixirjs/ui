@@ -1,4 +1,4 @@
-import type { HtmlAtomProps, SnippetProps } from '$svelte-atoms/core/components/atom';
+import type { HtmlAtomProps, SnippetProps } from '$ixirjs/ui/components/atom';
 import type { Snippet } from 'svelte';
 
 // Badge snippet props

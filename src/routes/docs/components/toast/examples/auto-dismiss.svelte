@@ -11,7 +11,9 @@
 		<Toast.Root
 			bind:open
 			duration={3000}
-			onclose={() => (open = false)}
+			onopenchange={(nextOpen) => {
+				if (!nextOpen) open = false;
+			}}
 			class={[
 				'relative flex w-80 flex-col gap-1 rounded-md border border-border bg-card p-4 pr-8 shadow-md transition-opacity',
 				!open && 'invisible'

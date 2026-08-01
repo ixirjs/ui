@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { Tooltip } from '$svelte-atoms/core/components/tooltip';
-	import { Button } from '$svelte-atoms/core/components/button';
+	import { Tooltip } from '$ixirjs/ui/components/tooltip';
+	import { Button } from '$ixirjs/ui/components/button';
 
 	let open = $state(false);
 </script>
@@ -40,6 +40,6 @@
 	<Tooltip.Content class="bg-popover border-border rounded-md border px-3 py-2 text-xs shadow-md">
 		<p class="font-medium">Unsaved changes</p>
 		<p class="text-muted-foreground mt-0.5">Save your draft before publishing.</p>
-		<Tooltip.Arrow />
+		<Tooltip.Tail />
 	</Tooltip.Content>
 </Tooltip.Root>

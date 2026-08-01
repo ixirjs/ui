@@ -1,5 +1,9 @@
-import { clamp } from '../../../utils/math';
-import { defineCapability, sharedCapabilityKey, type Capability } from '../capability';
+import { clamp } from '$ixirjs/ui/utils/math';
+import {
+	defineCapability,
+	sharedCapabilityKey,
+	type Capability
+} from '$ixirjs/ui/shared/capability/capability';
 
 export interface RangeValueBacking {
 	value(): number;
@@ -26,30 +30,42 @@ export interface RangeValueModel {
 	decrement(amount?: number): void;
 }
 
-export const RANGE_VALUE = sharedCapabilityKey<RangeValueModel>('@svelte-atoms/cap:range-value');
+export const RANGE_VALUE = sharedCapabilityKey<RangeValueModel>({
+	owner: '@ixirjs/cap',
+	name: 'range-value',
+	version: 1
+});
 
 export function createRangeValue(backing: RangeValueBacking): RangeValueModel {
+	const bounds = (): readonly [number, number] => normalizeBounds(backing.min?.(), backing.max?.());
+	const value = (): number => {
+		const [min, max] = bounds();
+		const current = backing.value();
+		return clamp(Number.isFinite(current) ? current : min, min, max);
+	};
+	const step = (): number => normalizeStep(backing.step?.());
+
 	return {
 		get value() {
-			return backing.value();
+			return value();
 		},
 		get min() {
-			return backing.min?.() ?? 0;
+			return bounds()[0];
 		},
 		get max() {
-			return backing.max?.() ?? 100;
+			return bounds()[1];
 		},
 		get step() {
-			return backing.step?.() ?? 1;
+			return step();
 		},
 		get percent() {
-			return rangePercent(backing.value(), backing.min?.() ?? 0, backing.max?.() ?? 100);
+			return rangePercent(value(), this.min, this.max);
 		},
 		get isAtMin() {
-			return backing.value() <= (backing.min?.() ?? 0);
+			return value() <= this.min;
 		},
 		get isAtMax() {
-			return backing.value() >= (backing.max?.() ?? 100);
+			return value() >= this.max;
 		},
 		get isDisabled() {
 			return backing.disabled?.() ?? false;
@@ -57,15 +73,16 @@ export function createRangeValue(backing: RangeValueBacking): RangeValueModel {
 		get isReadonly() {
 			return backing.readonly?.() ?? false;
 		},
-		set(value) {
+		set(next) {
 			if (backing.disabled?.() || backing.readonly?.()) return;
-			backing.set?.(clamp(value, backing.min?.() ?? 0, backing.max?.() ?? 100));
+			const [min, max] = bounds();
+			backing.set?.(clamp(Number.isFinite(next) ? next : min, min, max));
 		},
-		increment(amount = backing.step?.() ?? 1) {
-			this.set(backing.value() + amount);
+		increment(amount = step()) {
+			this.set(value() + amount);
 		},
-		decrement(amount = backing.step?.() ?? 1) {
-			this.set(backing.value() - amount);
+		decrement(amount = step()) {
+			this.set(value() - amount);
 		}
 	};
 }
@@ -86,8 +103,6 @@ export function rangeValueCapability(
 		slot: RANGE_VALUE,
 		surface: range,
 		meta: {
-			layer: 1,
-			kind: 'model',
 			projects: roles,
 			docs: 'Range value, bounds, step, and percent model with slider-style projection.'
 		},
@@ -100,6 +115,7 @@ export function rangeValueCapability(
 							'aria-valuemax': range.max,
 							'aria-valuenow': range.value,
 							'aria-valuetext': valueText(range),
+							tabindex: range.isDisabled ? -1 : 0,
 							'aria-disabled': range.isDisabled ? 'true' : undefined,
 							'aria-readonly': range.isReadonly ? 'true' : undefined,
 							'data-value': range.value,
@@ -118,6 +134,19 @@ export function rangeValueCapability(
 	});
 }
 
+function normalizeBounds(
+	min: number | undefined,
+	max: number | undefined
+): readonly [number, number] {
+	const lower = typeof min === 'number' && Number.isFinite(min) ? min : 0;
+	const upper = typeof max === 'number' && Number.isFinite(max) ? max : 100;
+	return lower <= upper ? [lower, upper] : [upper, lower];
+}
+
+function normalizeStep(step: number | undefined): number {
+	return typeof step === 'number' && Number.isFinite(step) && step > 0 ? step : 1;
+}
+
 function rangePercent(value: number, min: number, max: number): number {
 	const span = max - min;
 	if (span <= 0) return value >= max ? 100 : 0;
@@ -125,6 +154,8 @@ function rangePercent(value: number, min: number, max: number): number {
 }
 
 function handleRangeKey(event: KeyboardEvent, range: RangeValueModel): void {
+	if (range.isDisabled || range.isReadonly) return;
+
 	switch (event.key) {
 		case 'ArrowRight':
 		case 'ArrowUp':

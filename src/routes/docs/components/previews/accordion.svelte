@@ -22,7 +22,7 @@
 				<AccordionItem.Indicator class="ml-auto h-3 w-3" />
 			</AccordionItem.Header>
 			<AccordionItem.Body class="text-xs text-muted-foreground px-2 pb-0.5">
-				Run <code class="font-mono">npm i @svelte-atoms/core</code>.
+				Run <code class="font-mono">npm i @ixirjs/ui</code>.
 			</AccordionItem.Body>
 		</AccordionItem.Root>
 	</Accordion>

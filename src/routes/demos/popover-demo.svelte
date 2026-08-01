@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { Popover } from '$svelte-atoms/core/components/popover';
-	import { Button } from '$svelte-atoms/core/components/button';
-	import { Badge } from '$svelte-atoms/core/components/badge';
+	import { Popover } from '$ixirjs/ui/components/popover';
+	import { Button } from '$ixirjs/ui/components/button';
+	import { Badge } from '$ixirjs/ui/components/badge';
 
 	let open = $state(false);
 
@@ -82,6 +82,6 @@
 				Clear filters
 			</button>
 		</div>
-		<Popover.Arrow />
+		<Popover.Tail />
 	</Popover.Content>
 </Popover.Root>

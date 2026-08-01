@@ -4,4 +4,4 @@ export { default as SvgElement } from './svg-element.svelte';
 export * as Element from './atoms';
 
 export * from './types';
-export { scaleFade, type ScaleFadeParams } from './motion';
+export { scaleFade, type ScaleFadeParams } from './motion.svelte';

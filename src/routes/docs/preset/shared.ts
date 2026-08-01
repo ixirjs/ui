@@ -11,7 +11,7 @@ export const metadata = {
 		'Hierarchical preset system (global → route → component)',
 		'Dynamic presets with reactive Bond values',
 		'Compound component support with dot notation',
-		'$preset placeholder for controlled insertion',
+		'Automatic preset class insertion with consumer-last precedence',
 		'Automatic class merging and conflict resolution',
 		'Type-safe preset definitions',
 		'Zero runtime overhead',
@@ -58,10 +58,10 @@ export const metadata = {
 				'Change styles based on isOpen, isActive, or any Bond property using the bond parameter in preset functions'
 		},
 		{
-			feature: '$preset Placeholder',
+			feature: 'Closed Attribute Namespace',
 			description:
-				'Control exactly where preset classes are inserted in the class string for fine-grained control',
-			example: "class={['base-classes', '$preset', 'user-overrides']}"
+				'Keep DOM attributes under attrs so future configuration fields cannot collide with HTML',
+			example: "attrs: { 'data-component': 'button', 'aria-label': 'Save' }"
 		},
 		{
 			feature: 'Extended Attributes',

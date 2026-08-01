@@ -1,6 +1,7 @@
 import type { Snippet } from 'svelte';
-import type { HtmlAtomProps, Base } from '$svelte-atoms/core/components/atom';
+import type { HtmlAtomProps, Base } from '$ixirjs/ui/components/atom';
 import type { ToastBond, ToastBondProps } from './bond.svelte';
+import type { StateChangeCallback } from '$ixirjs/ui/types';
 
 // Snippet props
 export interface ToastSnippetProps {
@@ -18,7 +19,9 @@ export interface ToastRootProps<
 	dismissible?: boolean;
 	// Auto-dismiss duration in ms. Set to 0 to disable. Default: 0.
 	duration?: number;
-	onclose?: () => void;
+	/** Native close event handler for the rendered element. */
+	onclose?: ((event: Event) => void) | undefined;
+	onopenchange?: StateChangeCallback<boolean, ToastBond> | undefined;
 	// Optional factory to construct a custom bond.
 	factory?: (props: ToastBondProps) => ToastBond;
 }
@@ -35,8 +38,10 @@ export interface ToastDescriptionProps<
 	B extends Base = Base
 > extends HtmlAtomProps<E, B, ToastChildren> {}
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface ToastCloseProps<
 	E extends keyof HTMLElementTagNameMap = 'button',
 	B extends Base = Base
-> extends HtmlAtomProps<E, B, ToastChildren> {}
+> extends HtmlAtomProps<E, B, ToastChildren> {
+	onclick?: ((event: MouseEvent) => void) | undefined;
+	onkeydown?: ((event: KeyboardEvent) => void) | undefined;
+}

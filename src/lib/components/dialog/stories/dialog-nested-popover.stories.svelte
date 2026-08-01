@@ -1,9 +1,9 @@
-<script module>
+<script module lang="ts">
 	import { defineMeta } from '@storybook/addon-svelte-csf';
 	import { Dialog as ADialog } from '..';
-	import { Popover } from '$svelte-atoms/core/components/popover';
-	import { Button } from '../../button';
-	import { zAnchor } from '$svelte-atoms/core/attachments';
+	import { Popover } from '$ixirjs/ui/components/popover';
+	import { Button } from '$ixirjs/ui/components/button';
+	import { ZLayer } from '$ixirjs/ui/components/portal';
 
 	// A Portal is a containment scope.
 	//
@@ -13,13 +13,17 @@
 	//    the trigger scrolls out — rather than spilling into the viewport.
 	//
 	// 2. STICKY-UNDER: the Dialog header is `sticky` and registers itself
-	//    as a ZLayer anchor (`zAnchor('dialog-header')`). The "Behind header" Popover
+	//    as a legacy ZLayer anchor. The "Behind header" Popover
 	//    declares `order={{ below: 'dialog-header' }}`, so it renders *beneath* the sticky
 	//    header as it scrolls under it — while the default Popover renders above.
 	const { Story } = defineMeta({
 		title: 'Atoms/Dialog/Nested Popover',
 		parameters: { layout: 'fullscreen' }
 	});
+
+	function legacyAnchor(name: string, value: number) {
+		return (_node: HTMLElement) => ZLayer.anchor(name, () => value);
+	}
 </script>
 
 <script lang="ts">
@@ -40,10 +44,7 @@
 					header") and above the `{ below }` popover (5−1=4, "behind header"). The anchor value
 					must equal the header's CSS z so computed order matches paint order.
 				-->
-				<ADialog.Header
-					class="bg-card sticky top-0 z-5 flex items-center"
-					{@attach zAnchor('dialog-header', 5)}
-				>
+				<ADialog.Header class="bg-card sticky top-0 z-5" {@attach legacyAnchor('dialog-header', 5)}>
 					<div class="font-semibold">Containment demo</div>
 					<ADialog.CloseButton class="ml-auto" />
 				</ADialog.Header>

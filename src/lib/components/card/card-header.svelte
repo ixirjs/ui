@@ -1,9 +1,8 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { mergePresetProps, HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
+	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import { usePart } from '$ixirjs/ui/shared';
 	import { CardBond } from './bond.svelte';
 	import type { CardHeaderProps } from './types';
-
-	const bond = CardBond.get();
 
 	let {
 		class: klass = '',
@@ -13,16 +12,17 @@
 		...restProps
 	}: CardHeaderProps<E, B> = $props();
 
-	const headerProps = $derived(
-		mergePresetProps(preset, 'card.header', { ...bond?.header(), ...restProps })
-	);
+	const part = usePart(CardBond, 'header', () => restProps, {
+		context: 'optional',
+		preset: () => preset
+	});
 </script>
 
 <HtmlAtom
+	{...restProps}
 	{as}
-	{bond}
+	{part}
 	class={['card-header border-border flex flex-col space-y-1.5 px-4 py-4', '$preset', klass]}
-	{...headerProps}
 >
 	{@render children?.()}
 </HtmlAtom>

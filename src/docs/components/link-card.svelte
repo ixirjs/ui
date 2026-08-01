@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Card } from '$svelte-atoms/core/components/card';
+	import { Card } from '$ixirjs/ui/components/card';
 	import type { Snippet } from 'svelte';
 
 	let {

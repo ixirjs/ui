@@ -1,7 +1,7 @@
 const presetCode = `
-import { createPreset } from '@svelte-atoms/core';
+import { definePreset } from '@ixirjs/ui/preset';
 
-const preset = createPreset({
+const preset = definePreset({
 	toast: () => ({
 		class: 'relative flex w-80 flex-col gap-1 rounded-md border border-border bg-card p-4 pr-8 shadow-md backdrop-blur-xs',
 		variants: {
@@ -77,8 +77,8 @@ export const metadata = {
 		'Temporary notification that appears at the screen edge for non-intrusive feedback and system messages.',
 	componentType: 'simple' as const,
 	status: 'stable' as const,
-	packageName: '@svelte-atoms/core',
-	importCode: "import { Toast, Toaster } from '@svelte-atoms/core/toast';",
+	packageName: '@ixirjs/ui',
+	importCode: "import { Toast, Toaster } from '@ixirjs/ui/components/toast';",
 	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Toast' }],
 	useCases,
 	componentsSummary,

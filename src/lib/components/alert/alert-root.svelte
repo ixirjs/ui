@@ -1,9 +1,11 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { bindBond } from '$svelte-atoms/core/shared';
-	import { mergePresetProps, HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
+	import { useRoot } from '$ixirjs/ui/shared';
+	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
 	import { AlertBond } from './bond.svelte';
 	import type { AlertRootProps } from './types';
 	import './alert.css';
+
+	const ID = $props.id();
 
 	let {
 		class: klass = '',
@@ -15,13 +17,15 @@
 		...restProps
 	}: AlertRootProps<E, B> = $props();
 
-	const binding = bindBond<AlertBond>((props) => factory(props), {
-		disabled: () => disabled,
-		extend: () => extend
-	});
-	const bond = binding.bond.share();
-
-	const rootProps = $derived(mergePresetProps(preset, 'alert', { ...bond.root(), ...restProps }));
+	const root = useRoot(
+		AlertBond,
+		{
+			disabled: () => disabled,
+			extend: () => extend
+		},
+		{ id: () => ID, preset: () => preset, factory: (props) => factory(props) }
+	);
+	const bond = root.bond;
 
 	export function getBond() {
 		return bond;
@@ -38,8 +42,8 @@
 		'$preset',
 		klass
 	]}
-	{bond}
-	{...rootProps}
+	{...restProps}
+	part={root}
 >
 	{@render children?.({ alert: bond })}
 </HtmlAtom>

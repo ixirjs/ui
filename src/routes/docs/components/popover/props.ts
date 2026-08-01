@@ -8,6 +8,13 @@ export const popoverRootProps: PropDefinition[] = [
 		description: 'Open'
 	},
 	{
+		name: 'onopenchange',
+		type: 'StateChangeCallback<boolean, PopoverBond> \\| undefined',
+		default: 'undefined',
+		description:
+			'Called after a real open-state transition commits; dismissal events and reasons are included when available.'
+	},
+	{
 		name: 'disabled',
 		type: 'boolean \\| undefined',
 		default: 'false',
@@ -34,8 +41,9 @@ export const popoverRootProps: PropDefinition[] = [
 	{
 		name: 'portal',
 		type: 'string \\| PortalBond \\| undefined',
-		default: "''",
-		description: 'Portal'
+		default: 'ambient portal → root.l0',
+		description:
+			'Portal target selector or PortalBond instance. Resolution is explicit target → ambient portal → root.l0, preserving nested overlay containment.'
 	},
 	{
 		name: 'extend',
@@ -231,7 +239,7 @@ export const popoverIndicatorProps: PropDefinition[] = [
 	}
 ];
 
-export const popoverArrowProps: PropDefinition[] = [
+export const popoverTailProps: PropDefinition[] = [
 	{
 		name: 'bond',
 		type: 'Bond',

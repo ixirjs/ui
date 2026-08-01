@@ -1,5 +1,5 @@
-import { Bond, type BondStateProps } from '$svelte-atoms/core/shared/bond';
-import { defineBond, type BondOf } from '$svelte-atoms/core/shared';
+import { Bond, type BondStateProps } from '$ixirjs/ui/shared/bond';
+import { defineBond, type BondOf } from '$ixirjs/ui/shared';
 import {
 	CalendarRootAtom,
 	CalendarBodyAtom,
@@ -70,40 +70,32 @@ class CalendarBondBase extends Bond<CalendarBondProps> {
 
 	selectDate(date: Date) {
 		if (!this.props.start) {
-			this.props.range[0] = date;
+			this.props.range = [date, this.props.range[1]];
 		} else if (!this.props.end) {
-			this.props.range[1] = date;
+			this.props.range = [this.props.range[0], date];
 		} else {
-			this.props.range[0] = date;
-			this.props.range[1] = undefined;
+			this.props.range = [date, undefined];
 		}
-
-		this.props.range = [...this.props.range];
 	}
 
 	selectStart(date: Date) {
-		this.props.range[0] = date;
-		this.props.range = [...this.props.range];
+		this.props.range = [date, this.props.range[1]];
 	}
 
 	selectEnd(date: Date) {
-		this.props.range[1] = date;
-		this.props.range = [...this.props.range];
+		this.props.range = [this.props.range[0], date];
 	}
 
 	unselect() {
 		this.props.range = [undefined, undefined];
-		this.props.range = [...this.props.range];
 	}
 
 	unselectStart() {
-		this.props.range[0] = undefined;
-		this.props.range = [...this.props.range];
+		this.props.range = [undefined, this.props.range[1]];
 	}
 
 	unselectEnd() {
-		this.props.range[1] = undefined;
-		this.props.range = [...this.props.range];
+		this.props.range = [this.props.range[0], undefined];
 	}
 
 	nextMonth() {
@@ -125,22 +117,22 @@ class CalendarBondBase extends Bond<CalendarBondProps> {
 	}
 
 	isDaySelected(day: Day): boolean {
-		if (this.props.range) {
-			const start = this.props.range[0];
-			const end = this.props.range[1];
-
-			if (!start) return false;
-
-			const dayTime = day.date.getTime();
-			const startTime = start.getTime();
-
-			if (!end) return dayTime === startTime;
-
-			const endTime = end.getTime();
-			return dayTime >= startTime && dayTime <= endTime;
+		if (this.props.type !== 'range') {
+			return this.props.value?.getTime() === day.date.getTime();
 		}
 
-		return this.props.value?.getTime() === day.date.getTime();
+		const start = this.props.range[0];
+		const end = this.props.range[1];
+
+		if (!start) return false;
+
+		const dayTime = day.date.getTime();
+		const startTime = start.getTime();
+
+		if (!end) return dayTime === startTime;
+
+		const endTime = end.getTime();
+		return dayTime >= startTime && dayTime <= endTime;
 	}
 }
 
@@ -151,16 +143,7 @@ class CalendarBondBase extends Bond<CalendarBondProps> {
 // Bond spec and constructor facade
 // -----------------------------------------------------------------------------
 
-const CalendarBondImpl = defineBond<
-	{
-		root: typeof CalendarRootAtom;
-		body: typeof CalendarBodyAtom;
-		header: typeof CalendarHeaderAtom;
-	},
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	any,
-	typeof CalendarBondBase
->({
+export const CalendarBond = defineBond({
 	name: 'calendar',
 	base: CalendarBondBase,
 	atoms: {
@@ -171,16 +154,4 @@ const CalendarBondImpl = defineBond<
 });
 
 // Instance type — paired with the const above (value + type).
-export type CalendarBond = BondOf<typeof CalendarBondImpl>;
-
-interface CalendarBondConstructor {
-	new (props: CalendarBondProps): CalendarBond;
-	readonly CONTEXT_KEY: string;
-	readonly spec: (typeof CalendarBondImpl)['spec'];
-	get(): CalendarBond | undefined;
-	getOrThrow(message?: string): CalendarBond;
-	set(bond: CalendarBond): CalendarBond;
-	create(props: CalendarBondProps): CalendarBond;
-}
-
-export const CalendarBond = CalendarBondImpl as unknown as CalendarBondConstructor;
+export type CalendarBond = BondOf<typeof CalendarBond>;

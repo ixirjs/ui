@@ -1,11 +1,12 @@
-<script lang="ts">
-	import { getRadioGroupContext } from './context';
-	import { Stack } from '../stack';
-	import { toClassValue } from '$svelte-atoms/core/utils';
-	import { mergePresetProps, HtmlAtom } from '$svelte-atoms/core/components/atom';
-	import { animateRadioIndicatorIn, animateRadioIndicatorOut } from './motion';
+<script lang="ts" generics="T = string">
+	import { RadioGroupBond, type RadioCheckedChangeListener } from './bond.svelte';
+	import { Stack } from '$ixirjs/ui/components/stack';
+	import { toClassValue } from '$ixirjs/ui/utils';
+	import { mergePresetProps, HtmlAtom } from '$ixirjs/ui/components/atom';
+	import { animateRadioIndicatorIn, animateRadioIndicatorOut } from './motion.svelte';
+	import type { RadioProps } from './types';
 
-	const radioGroupContext = getRadioGroupContext();
+	const radioGroupBond = RadioGroupBond.get() as RadioGroupBond<T> | undefined;
 
 	let {
 		class: klass = '',
@@ -19,25 +20,26 @@
 		readonly = false,
 		onchange = undefined,
 		oninput = undefined,
+		oncheckedchange = undefined,
 		checkedContent = undefined,
 		...restProps
-	} = $props();
+	}: RadioProps<T> = $props();
 
 	const radioProps = $derived(mergePresetProps(preset, 'radio', restProps));
 
-	const _disabled = $derived(radioGroupContext?.disabled);
-	const _required = $derived(radioGroupContext?.required);
-	const _readonly = $derived(radioGroupContext?.readonly);
-	const _name = $derived(radioGroupContext?.name);
+	const _disabled = $derived(radioGroupBond?.props.disabled);
+	const _required = $derived(radioGroupBond?.props.required);
+	const _readonly = $derived(radioGroupBond?.props.readonly);
+	const _name = $derived(radioGroupBond?.props.name);
 
 	const proxy = {
 		get current() {
-			return radioGroupContext?.value ?? group;
+			return radioGroupBond?.props.value ?? group;
 		},
 		set current(v) {
 			group = v;
-			if (radioGroupContext) {
-				radioGroupContext.value = v;
+			if (radioGroupBond) {
+				radioGroupBond.props.value = v;
 			}
 		}
 	};
@@ -51,29 +53,57 @@
 		isChecked ? (checkedContent ? customCheckedContent : defaultCheckedContent) : undefined
 	);
 
-	function handleChange(ev: Event) {
-		const checked = (ev.currentTarget as HTMLInputElement)?.checked ?? false;
+	const notifyChecked: RadioCheckedChangeListener = (nextChecked, event) => {
+		oncheckedchange?.(nextChecked, { event });
+	};
 
-		onchange?.(ev, {
-			checked,
-			value: checked,
-			type: 'boolean'
-		});
+	$effect(() => {
+		if (!radioGroupBond || value === undefined) return;
+		return radioGroupBond.registerItem(value, notifyChecked);
+	});
+
+	let hasStandaloneInitialized = false;
+	let previousStandaloneChecked = false;
+	let pendingStandaloneEvent: Event | undefined;
+
+	$effect(() => {
+		if (radioGroupBond) return;
+
+		const nextChecked = isChecked;
+		if (hasStandaloneInitialized && previousStandaloneChecked !== nextChecked) {
+			if (pendingStandaloneEvent) notifyChecked(nextChecked, pendingStandaloneEvent);
+			else oncheckedchange?.(nextChecked, {});
+		}
+
+		previousStandaloneChecked = nextChecked;
+		pendingStandaloneEvent = undefined;
+		hasStandaloneInitialized = true;
+	});
+
+	function handleChange(event: Event) {
+		onchange?.(event);
 	}
 
-	function handleInput(ev: Event) {
-		const currentTarget = ev.currentTarget as HTMLInputElement;
-		const _checked = currentTarget?.checked ?? false;
+	function select(event: Event) {
+		if (value === undefined) return false;
 
-		oninput?.(ev, {
-			checked: _checked,
-			value: _checked,
-			type: 'boolean'
-		});
-
-		if (ev.defaultPrevented) {
-			return;
+		if (radioGroupBond) {
+			return radioGroupBond.select(value, event, notifyChecked);
 		}
+
+		if (Object.is(group, value)) return false;
+		group = value;
+		return true;
+	}
+
+	function handleInput(event: Event) {
+		const input = event.currentTarget as HTMLInputElement;
+		oninput?.(event);
+
+		if (!input.checked) return;
+
+		if (!radioGroupBond) pendingStandaloneEvent = event;
+		if (!select(event) && !radioGroupBond) pendingStandaloneEvent = undefined;
 	}
 </script>
 

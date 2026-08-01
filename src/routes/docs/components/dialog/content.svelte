@@ -1,6 +1,12 @@
 <script lang="ts">
 	import { createExampleLoader } from '$docs/utils/example-loader';
-	import { DocComponentPage, DocExample, DocCode, DocPropsTabs } from '$docs/components';
+	import {
+		DocComponentPage,
+		DocExample,
+		DocCode,
+		DocPropsTabs,
+		DocSection
+	} from '$docs/components';
 	import type { PropsSection } from '$docs/components';
 	import {
 		dialogProps,
@@ -35,7 +41,7 @@
 		{ label: 'Dialog.Footer', presetKey: 'dialog.footer', props: dialogFooterProps },
 		{ label: 'Dialog.Title', presetKey: 'dialog.title', props: dialogTitleProps },
 		{ label: 'Dialog.Description', presetKey: 'dialog.description', props: dialogDescriptionProps },
-		{ label: 'Dialog.CloseButton', presetKey: 'dialog.close-button', props: dialogCloseButtonProps }
+		{ label: 'Dialog.CloseButton', presetKey: 'dialog.close', props: dialogCloseButtonProps }
 	];
 
 	const _loaders = import.meta.glob('./examples/*.svelte');
@@ -70,6 +76,14 @@
 			description="Confirmation dialog for irreversible actions."
 			{...ex('./examples/destructive.svelte')}
 		/>
+	{/snippet}
+
+	{#snippet extra()}
+		<DocSection title="Portal containment">
+			Dialog content resolves its target in this order: an explicit <code>portal</code>, the ambient
+			portal supplied by its host, then <code>root.l0</code>. Nested overlays therefore remain
+			scoped to the dialog's host instead of detaching to <code>document.body</code>.
+		</DocSection>
 	{/snippet}
 
 	{#snippet apiReference()}

@@ -36,7 +36,7 @@
 	{metadata}
 	{frontmatter}
 	prev={{ label: 'Card', href: '/docs/components/card' }}
-	next={{ label: 'Collapsible', href: '/docs/components/collapsible' }}
+	next={{ label: 'Chip', href: '/docs/components/chip' }}
 >
 	{#snippet preset()}
 		<DocCode code={metadata.examples.preset} lang="typescript" />

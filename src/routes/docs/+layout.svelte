@@ -179,7 +179,7 @@
 		data={sidebarData}
 		pathname={$page.url.pathname}
 		open={mobileNavOpen}
-		onclose={() => (mobileNavOpen = false)}
+		ondismiss={() => (mobileNavOpen = false)}
 	/>
 
 	<main bind:this={mainEl} class="docs-scroll min-w-0 flex-1 py-8">
@@ -187,7 +187,7 @@
 		<DocsFooter />
 	</main>
 
-	<DocsTocSidebar {toc} {activeId} open={mobileTocOpen} onclose={() => (mobileTocOpen = false)} />
+	<DocsTocSidebar {toc} {activeId} open={mobileTocOpen} ondismiss={() => (mobileTocOpen = false)} />
 </div>
 
 <style>

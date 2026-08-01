@@ -1,5 +1,5 @@
 import { createContext, type Component } from 'svelte';
-import { nanoid } from 'nanoid';
+import { generateId } from '$ixirjs/ui/shared/bond';
 import { SvelteMap } from 'svelte/reactivity';
 
 export type ToastType = 'info' | 'success' | 'error' | 'warning' | 'default';
@@ -49,7 +49,7 @@ const [get, set] = createContext<Toaster>();
  *   {@const layer = new ZLayer('ambient')}
  *   <ol class="fixed bottom-4 right-4 …" style="z-index: {layer.value}" aria-live="polite">
  *     {#each toaster.toasts as item (item.id)}
- *       <Toast.Root open onclose={() => toaster.dismiss(item.id)}>…</Toast.Root>
+ *       <Toast.Root open onopenchange={(open) => !open && toaster.dismiss(item.id)}>…</Toast.Root>
  *     {/each}
  *   </ol>
  * </Teleport>
@@ -69,7 +69,7 @@ export class Toaster {
 	}
 
 	add<T = unknown>(type: ToastType = 'default', options: ToastOptions<T> = {}): string {
-		const id = options.id ?? nanoid(8);
+		const id = options.id ?? generateId('toast');
 
 		// Existing id: update in place.
 		const existing = this.#toasts.get(id);

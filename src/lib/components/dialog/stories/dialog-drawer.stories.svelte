@@ -1,8 +1,8 @@
 <script module>
 	import { defineMeta } from '@storybook/addon-svelte-csf';
 	import { Dialog as ADialog } from '..';
-	import { clickoutDrawer, Drawer, animateDrawerContent } from '../../drawer';
-	import { Button } from '../../button';
+	import { clickoutDrawer, Drawer, animateDrawerContent } from '$ixirjs/ui/components/drawer';
+	import { Button } from '$ixirjs/ui/components/button';
 
 	// A Drawer opened *inside* Dialog content resolves to the Dialog's own
 	// Portal scope, so its backdrop and panel slide in over the dialog card rather than the
@@ -32,12 +32,12 @@
 		<Button variant="primary" onclick={() => (open = true)}>Open dialog</Button>
 		<!-- Live readout — house style for interactive stories. -->
 		<code class="text-muted-foreground font-mono text-xs">
-			drawer open → {drawerOpen} · filters → [{selected.join(', ')}]
+			drawer open: {drawerOpen} · filters: [{selected.join(', ')}]
 		</code>
 
 		<ADialog.Root class="bg-neutral-900/40" z-index={10} bind:open type="modal">
 			<ADialog.Content class="relative h-100 max-w-2xl overflow-hidden">
-				<ADialog.Header class="flex items-center">
+				<ADialog.Header>
 					<ADialog.Title>Project</ADialog.Title>
 					<ADialog.CloseButton class="ml-auto" />
 				</ADialog.Header>
@@ -53,21 +53,19 @@
 				</ADialog.Body>
 
 				<Drawer.Root bind:open={drawerOpen} side="right" position="absolute">
-					<Drawer.Backdrop class="bg-black/30 backdrop-blur-sm" />
+					<Drawer.Backdrop class="bg-black/30" />
 					<Drawer.Content
-						class="bg-background flex h-full w-72 flex-col border-l shadow-xl"
+						class="bg-background flex h-full w-72 flex-col border-l"
 						animate={animateDrawerContent()}
 						{@attach clickoutDrawer((_, bond) => {
-							bond?.state?.close?.();
+							bond?.close?.();
 						})}
 					>
 						<!-- justify-between keeps the close button pinned top-right beside the title block. -->
 						<Drawer.Header class="flex items-start justify-between gap-4 border-b px-5 py-4">
 							<div class="flex flex-col gap-0.5">
-								<Drawer.Title class="text-base font-semibold">Filters</Drawer.Title>
-								<Drawer.Description class="text-muted-foreground text-sm">
-									Narrow the results.
-								</Drawer.Description>
+								<Drawer.Title class="text-base">Filters</Drawer.Title>
+								<Drawer.Description class="text-sm">Narrow the results.</Drawer.Description>
 							</div>
 							<button
 								class="text-muted-foreground hover:bg-muted hover:text-foreground -mr-1 rounded-md p-1.5 transition-colors"
@@ -121,7 +119,7 @@
 							</div>
 						</Drawer.Body>
 
-						<Drawer.Footer class="flex items-center gap-2 border-t px-5 py-4">
+						<Drawer.Footer class="flex items-center gap-2 px-5 py-4">
 							<button
 								class="text-muted-foreground hover:text-foreground rounded-md px-3 py-2 text-sm font-medium transition-colors"
 								onclick={() => (selected = [])}
@@ -138,7 +136,7 @@
 					</Drawer.Content>
 				</Drawer.Root>
 
-				<ADialog.Footer class="flex justify-end gap-2">
+				<ADialog.Footer>
 					<Button variant="outline" onclick={() => (open = false)}>Close</Button>
 				</ADialog.Footer>
 			</ADialog.Content>

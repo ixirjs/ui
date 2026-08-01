@@ -1,36 +1,30 @@
 <script lang="ts">
-	import { cn } from '$svelte-atoms/core/utils';
-	import type { ClassValue } from 'svelte/elements';
+	import { HtmlAtom, mergePresetProps } from '$ixirjs/ui/components/atom';
+	import type { SwatchProps } from './types';
 
-	let {
-		class: klass = '',
-		color = '',
-		...restProps
-	}: {
-		class?: ClassValue;
-		color: string;
-		[key: string]: unknown;
-	} = $props();
+	let { class: klass = '', color = '', preset = undefined, ...restProps }: SwatchProps = $props();
 
 	const isEmpty = $derived(!color.trim());
+	const swatchProps = $derived(mergePresetProps(preset, 'swatch', restProps));
 </script>
 
-<span
+<HtmlAtom
+	as="span"
 	role="img"
 	aria-label={isEmpty ? 'No color' : `Color: ${color}`}
 	title={color || undefined}
-	class={cn('swatch', klass)}
-	{...restProps}
+	class={['swatch', '$preset', klass]}
+	{...swatchProps}
 >
 	<span aria-hidden="true" class="checkerboard absolute inset-[0.5px] rounded-inherit"></span>
 	{#if !isEmpty}
 		<span aria-hidden="true" class="fill absolute -inset-px" style="background-color: {color};"
 		></span>
 	{/if}
-</span>
+</HtmlAtom>
 
 <style>
-	.swatch {
+	:global(.swatch) {
 		position: relative;
 		display: inline-block;
 		flex-shrink: 0;

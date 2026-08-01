@@ -4,8 +4,8 @@ import Probe, {
 	capturedStepBond,
 	capturedStepperBond,
 	resetCapturedBonds
-} from './stepper-atom-probe.svelte';
-import { Atom } from '$svelte-atoms/core/shared/bond';
+} from '$ixirjs/ui/test/components/stepper/stepper-atom-probe.test.svelte';
+import { Atom } from '$ixirjs/ui/shared/bond';
 import { StepperBond, StepperRootAtom } from './bond.svelte';
 import {
 	StepBodyAtom,
@@ -33,14 +33,14 @@ describe('Stepper component-owned Atoms', () => {
 		expect(stepper?.props.step).toBe(0);
 		expect(step?.props.index).toBe(0);
 
-		const stepperRoot = stepper?.node('root');
-		const stepRoot = step?.node('root');
-		const indicator = step?.node('indicator');
-		const header = step?.node('header');
-		const title = step?.node('title');
-		const description = step?.node('description');
-		const separator = step?.node('separator');
-		const body = step?.node('body');
+		const stepperRoot = stepper?.nodeByPart('root');
+		const stepRoot = step?.nodeByPart('root');
+		const indicator = step?.nodeByPart('indicator');
+		const header = step?.nodeByPart('header');
+		const title = step?.nodeByPart('title');
+		const description = step?.nodeByPart('description');
+		const separator = step?.nodeByPart('separator');
+		const body = step?.nodeByPart('body');
 
 		expect(stepperRoot).toBeInstanceOf(StepperRootAtom);
 		expect(stepRoot).toBeInstanceOf(StepRootAtom);
@@ -62,8 +62,14 @@ describe('Stepper component-owned Atoms', () => {
 		]) {
 			expect(node).toBeInstanceOf(Atom);
 		}
-		expect(stepper?.nodes()).toHaveLength(1);
-		expect(step?.nodes()).toHaveLength(7);
+		expect(stepper?.nodesByPart('root')).toEqual([stepperRoot]);
+		expect(step?.nodesByPart('root')).toEqual([stepRoot]);
+		expect(step?.nodesByPart('indicator')).toEqual([indicator]);
+		expect(step?.nodesByPart('header')).toEqual([header]);
+		expect(step?.nodesByPart('title')).toEqual([title]);
+		expect(step?.nodesByPart('description')).toEqual([description]);
+		expect(step?.nodesByPart('separator')).toEqual([separator]);
+		expect(step?.nodesByPart('body')).toEqual([body]);
 		expect(stepper?.steps.get('0')).toBe(step);
 
 		expect(stepperRoot?.spread.role).toBe('group');
@@ -77,39 +83,41 @@ describe('Stepper component-owned Atoms', () => {
 		expect(separator?.spread.role).toBe('presentation');
 		expect(separator?.spread['aria-hidden']).toBe('true');
 
-		expect(typeof stepper?.root).toBe('function');
-		expect(typeof step?.root).toBe('function');
-		expect(typeof step?.indicator).toBe('function');
-		expect(typeof step?.header).toBe('function');
-		expect(typeof step?.title).toBe('function');
-		expect(typeof step?.description).toBe('function');
-		expect(typeof step?.body).toBe('function');
-		expect(typeof step?.separator).toBe('function');
-		expect(stepper?.root()).toBeInstanceOf(StepperRootAtom);
-		expect(step?.root()).toBeInstanceOf(StepRootAtom);
-		expect(step?.indicator()).toBeInstanceOf(StepIndicatorAtom);
-		expect(step?.header()).toBeInstanceOf(StepHeaderAtom);
-		expect(step?.title()).toBeInstanceOf(StepTitleAtom);
-		expect(step?.description()).toBeInstanceOf(StepDescriptionAtom);
-		expect(step?.body()).toBeInstanceOf(StepBodyAtom);
-		expect(step?.separator()).toBeInstanceOf(StepSeparatorAtom);
+		expect(stepper?.nodeByPart('root')).toBeInstanceOf(StepperRootAtom);
+		expect(step?.nodeByPart('root')).toBeInstanceOf(StepRootAtom);
+		expect(step?.nodeByPart('indicator')).toBeInstanceOf(StepIndicatorAtom);
+		expect(step?.nodeByPart('header')).toBeInstanceOf(StepHeaderAtom);
+		expect(step?.nodeByPart('title')).toBeInstanceOf(StepTitleAtom);
+		expect(step?.nodeByPart('description')).toBeInstanceOf(StepDescriptionAtom);
+		expect(step?.nodeByPart('body')).toBeInstanceOf(StepBodyAtom);
+		expect(step?.nodeByPart('separator')).toBeInstanceOf(StepSeparatorAtom);
 		for (const node of [
-			stepper?.root(),
-			step?.root(),
-			step?.indicator(),
-			step?.header(),
-			step?.title(),
-			step?.description(),
-			step?.body(),
-			step?.separator()
+			stepper?.nodeByPart('root'),
+			step?.nodeByPart('root'),
+			step?.nodeByPart('indicator'),
+			step?.nodeByPart('header'),
+			step?.nodeByPart('title'),
+			step?.nodeByPart('description'),
+			step?.nodeByPart('body'),
+			step?.nodeByPart('separator')
 		]) {
 			expect(node).toBeInstanceOf(Atom);
 		}
 
 		unmount();
 
-		expect(stepper?.nodes()).toEqual([]);
-		expect(step?.nodes()).toEqual([]);
+		expect(stepper?.nodesByPart('root')).toEqual([]);
+		for (const part of [
+			'root',
+			'indicator',
+			'header',
+			'title',
+			'description',
+			'separator',
+			'body'
+		]) {
+			expect(step?.nodesByPart(part)).toEqual([]);
+		}
 		expect(stepper?.steps.get('0')).toBeUndefined();
 	});
 });

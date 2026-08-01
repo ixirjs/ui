@@ -2,41 +2,41 @@
 	lang="ts"
 	generics="E extends keyof HTMLElementTagNameMap = 'dialog', B extends Base = Base"
 >
-	import { type Base } from '$svelte-atoms/core/components/atom';
-	import { bindBond, useCapabilities } from '$svelte-atoms/core/shared';
+	import type { Base } from '$ixirjs/ui/components/atom';
+	import { controlledProp, useRoot } from '$ixirjs/ui/shared';
 	import { PopoverDialogBond } from './bond.svelte';
 	import type { PopoverDialogRootProps } from './types';
+
+	const ID = $props.id();
 
 	let {
 		open = $bindable(false),
 		disabled = false,
-		children = undefined,
-		...restProps
+		presets = undefined,
+		onopenchange = undefined,
+		children = undefined
 	}: PopoverDialogRootProps<E, B> = $props();
 
-	let openState = $derived(open);
+	const openProp = controlledProp<boolean, PopoverDialogBond>({
+		get: () => open,
+		set: (value) => (open = value),
+		onchange: (value, context) => onopenchange?.(value, context),
+		context: (bond) => bond.takeOpenChangeContext()
+	});
 
 	// The fused bond — Popover's trigger/disclosure + Dialog's modal presentation.
 	// Root only owns state + context; the trigger renders in flow (`<PopoverDialog.Trigger>`)
 	// and the modal self-portals from `<PopoverDialog.Content>`.
-	const binding = bindBond<PopoverDialogBond>((props) => new PopoverDialogBond(props), {
-		open: [
-			() => openState,
-			(v) => {
-				openState = v;
-				open = openState;
-			}
-		],
-		disabled: () => disabled,
-		// Vestigial: element-less context root, no typed channel to forward restProps.
-		rest: () => restProps
-	});
-	const bond = binding.bond.share();
-
-	// Activate the bond's capability setups: the focus capability captures activeElement on open
-	// and restores it to the trigger's prior focus on close, and the escape capability enrolls
-	// this overlay in the topmost-open-overlay stack so only the frontmost surface acts on Escape.
-	useCapabilities(bond);
+	const root = useRoot(
+		PopoverDialogBond,
+		{
+			open: openProp,
+			disabled: () => disabled,
+			presets: () => presets
+		},
+		{ atom: false, id: () => ID, factory: (props) => new PopoverDialogBond(props) }
+	);
+	const bond = root.bond;
 
 	export function getBond() {
 		return bond;

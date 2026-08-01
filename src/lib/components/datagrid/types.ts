@@ -1,13 +1,14 @@
 import type { Snippet } from 'svelte';
+import type { MouseEventHandler } from 'svelte/elements';
 import type { DataGridBond } from './bond.svelte';
-import type { CheckboxProps } from '../checkbox/types';
-import type { Factory } from '$svelte-atoms/core/types';
+import type { CheckboxProps } from '$ixirjs/ui/components/checkbox/types';
+import type { Factory, StateChangeCallback } from '$ixirjs/ui/types';
 import type { DataGridRowBond } from './row/bond.svelte';
 import type { DataGridColumnBond } from './column/bond.svelte';
-import type { HtmlAtomProps, Base, SnippetProps } from '../atom';
-import type { PresetKey } from '$svelte-atoms/core/context/preset.svelte';
-import type { HtmlElementTagName } from '../element';
-import type { Direction, SortableType, Override } from '$svelte-atoms/core/types';
+import type { HtmlAtomProps, Base, SnippetProps } from '$ixirjs/ui/components/atom';
+import type { PresetKey } from '$ixirjs/ui/preset';
+import type { HtmlElementTagName } from '$ixirjs/ui/components/element';
+import type { Direction, SortableType, Override } from '$ixirjs/ui/types';
 
 // Shared types
 
@@ -39,24 +40,6 @@ export interface DatagridRowSnippetProps<T = unknown> extends SnippetProps {
 
 export type DatagridRowChildren<T = unknown> = Snippet<[DatagridRowSnippetProps<T>]>;
 
-// Deprecated snippet aliases
-
-/** @deprecated Use `DatagridColumnSnippetProps` instead. */
-export interface DatagridThSnippetProps<T = unknown> extends DatagridColumnSnippetProps<T> {
-	th: DataGridColumnBond<T>;
-}
-
-/** @deprecated Use `DatagridColumnChildren` instead. */
-export type DatagridThChildren<T = unknown> = DatagridColumnChildren<T>;
-
-/** @deprecated Use `DatagridRowSnippetProps` instead. */
-export interface DatagridTrSnippetProps<T = unknown> extends DatagridRowSnippetProps<T> {
-	tr: DataGridRowBond<T>;
-}
-
-/** @deprecated Use `DatagridRowChildren` instead. */
-export type DatagridTrChildren<T = unknown> = DatagridRowChildren<T>;
-
 // Component prop types
 
 export interface DatagridRootProps<
@@ -68,6 +51,7 @@ export interface DatagridRootProps<
 	fallbackTemplate?: string;
 	values?: string[];
 	factory?: Factory<DataGridBond<T>>;
+	onvalueschange?: StateChangeCallback<string[], DataGridBond<T>>;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
@@ -97,7 +81,10 @@ export interface DatagridColumnProps<
 	B extends Base = Base
 > extends Override<
 	HtmlAtomProps<E, B, DatagridColumnChildren<T>>,
-	{ children?: DatagridColumnChildren<T> }
+	{
+		children?: DatagridColumnChildren<T>;
+		onclick?: MouseEventHandler<HTMLElementTagNameMap[E]>;
+	}
 > {
 	id?: string;
 	width?: string;
@@ -106,32 +93,19 @@ export interface DatagridColumnProps<
 	sortable?: boolean | SortableType;
 	hidden?: boolean;
 	factory?: Factory<DataGridColumnBond<T>>;
-	onsort?: (event: CustomEvent, options: { field?: SortableType; direction: Direction }) => void;
+	onsort?: StateChangeCallback<SortBy, DataGridColumnBond<T>, MouseEvent>;
 	// Re-declared because `Override` collapses it into HtmlAtomProps' index signature.
 	preset?: PresetKey;
 }
 
-/** @deprecated Use `DatagridColumnProps` instead. */
-export type DatagridThProps<
-	T = unknown,
-	E extends HtmlElementTagName = 'div',
-	B extends Base = Base
-> = DatagridColumnProps<T, E, B>;
-
+// `onclick` was re-declared here; it is now inherited from `ElementProps` with the same element
+// type. Kept as an interface rather than collapsed to an alias so it stays augmentable.
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface DatagridCellProps<
 	T = unknown,
 	E extends HtmlElementTagName = 'div',
 	B extends Base = Base
-> extends HtmlAtomProps<E, B, DatagridChildren<T>> {
-	onclick?: (ev: Event, options: { cell?: DataGridBond<T> }) => void;
-}
-
-/** @deprecated Use `DatagridCellProps` instead. */
-export type DatagridTdProps<
-	T = unknown,
-	E extends HtmlElementTagName = 'div',
-	B extends Base = Base
-> = DatagridCellProps<T, E, B>;
+> extends HtmlAtomProps<E, B, DatagridChildren<T>> {}
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface DatagridCheckboxProps extends Omit<CheckboxProps, 'children'> {}
@@ -142,20 +116,15 @@ export interface DatagridRowProps<
 	B extends Base = Base
 > extends Override<
 	HtmlAtomProps<E, B, DatagridRowChildren<T>>,
-	{ children?: DatagridRowChildren<T> }
+	{
+		children?: DatagridRowChildren<T>;
+		onclick?: MouseEventHandler<HTMLElementTagNameMap[E]>;
+	}
 > {
 	value?: string;
 	rows?: string;
 	data?: T;
 	factory?: Factory<DataGridRowBond<T>>;
-	onclick?: (ev: Event, options: { row?: DataGridRowBond<T> }) => void;
 	// Re-declared because `Override` collapses it into HtmlAtomProps' index signature.
 	preset?: PresetKey;
 }
-
-/** @deprecated Use `DatagridRowProps` instead. */
-export type DatagridTrProps<
-	T = unknown,
-	E extends HtmlElementTagName = 'div',
-	B extends Base = Base
-> = DatagridRowProps<T, E, B>;

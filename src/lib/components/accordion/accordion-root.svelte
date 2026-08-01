@@ -1,9 +1,10 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { HtmlAtom, mergeAtomProps, type Base } from '$svelte-atoms/core/components/atom';
-	import { createAtomInstance } from '$svelte-atoms/core/shared/bond';
-	import { AccordionBond, AccordionRootAtom, type AccordionBondProps } from './bond.svelte';
+	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import { controlledProp, useRoot } from '$ixirjs/ui/shared';
+	import { AccordionBond, type AccordionBondProps } from './bond.svelte';
 	import type { AccordionRootProps } from './types';
-	import { bindBond } from '$svelte-atoms/core/shared/bond/bind.svelte';
+
+	const ID = $props.id();
 
 	let {
 		value = $bindable(undefined),
@@ -13,42 +14,49 @@
 		multiple = false,
 		collapsible = false,
 		disabled = false,
+		onvaluechange = undefined,
+		onvalueschange = undefined,
 		children = undefined,
 		factory = defaultFactory,
 		preset = undefined,
+		presets = undefined,
 		...restProps
 	}: AccordionRootProps<E, B> = $props();
 
-	let valueState = $derived<string | undefined>(value);
-	let valuesState = $derived<string[]>(values);
+	const valuesProp = controlledProp<string[], AccordionBond>({
+		get: () => (multiple ? values : ([value].filter(Boolean) as string[])),
+		set: (next) => {
+			values = next;
+			value = next[0];
+		},
+		equals: sameValues,
+		onchange: (next, context) => {
+			if (multiple) onvalueschange?.(next, context);
+			else onvaluechange?.(next[0], context);
+		}
+	});
 
-	const binding = bindBond<AccordionBond>(
-		(props) => factory(props),
+	const root = useRoot(
+		AccordionBond,
 		{
-			open: () => (multiple ? valuesState.length > 0 : valueState !== undefined),
-			values: [
-				() => (multiple ? valuesState : ([valueState].filter(Boolean) as string[])),
-				(v) => {
-					valuesState = v;
-					valueState = valuesState[0];
-					values = valuesState;
-					value = valueState;
-				}
-			],
+			open: () => valuesProp.value.length > 0,
+			values: valuesProp,
 			multiple: () => multiple,
 			collapsible: () => collapsible,
-			disabled: () => disabled
+			disabled: () => disabled,
+			presets: () => presets
 		},
-		{ preset: () => preset }
+		{
+			preset: () => preset,
+			id: () => ID,
+			factory: (props) => factory(props)
+		}
 	);
-	const bond = binding.bond.share();
-	const rootAtom = createAtomInstance<AccordionRootAtom, AccordionBond>('root', {
-		bond,
-		factory: (owner) => new AccordionRootAtom(owner as AccordionBond)
-	});
-	const rootProps = $derived(
-		mergeAtomProps(rootAtom, preset, { ...binding.stateProps, ...restProps })
-	);
+	const bond = root.bond;
+
+	function sameValues(left: readonly string[], right: readonly string[]) {
+		return left.length === right.length && left.every((item, index) => item === right[index]);
+	}
 
 	function defaultFactory(props: AccordionBondProps) {
 		return AccordionBond.create(props);
@@ -61,7 +69,9 @@
 
 <HtmlAtom
 	class={['bg-card border-border flex list-none flex-col', '$preset', klass]}
-	{...rootProps}
+	{...root.props}
+	{...restProps}
+	part={root}
 >
 	{@render children?.({ accordion: bond })}
 </HtmlAtom>

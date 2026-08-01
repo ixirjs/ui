@@ -51,7 +51,7 @@
 	{contentType}
 	{metadata}
 	{frontmatter}
-	prev={{ label: 'Context Menu', href: '/docs/components/context-menu' }}
+	prev={{ label: 'DatePicker', href: '/docs/components/date-picker' }}
 	next={{ label: 'Dialog', href: '/docs/components/dialog' }}
 >
 	{#snippet preset()}

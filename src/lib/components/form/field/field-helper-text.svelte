@@ -1,10 +1,8 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'p', B extends Base = Base">
-	import { mergeAtomProps, HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
-	import { createAtomInstance } from '$svelte-atoms/core/shared/bond';
-	import { FieldBond, FieldDescriptionAtom } from './bond.svelte';
-	import type { FieldTextProps } from '../types';
-
-	const bond = FieldBond.get();
+	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import { usePart } from '$ixirjs/ui/shared';
+	import { FieldBond } from './bond.svelte';
+	import type { FieldTextProps } from '$ixirjs/ui/components/form/types';
 
 	let {
 		class: klass = '',
@@ -14,20 +12,18 @@
 		...restProps
 	}: FieldTextProps<E, B> = $props();
 
-	const atom = bond
-		? createAtomInstance<FieldDescriptionAtom, FieldBond, HTMLElement>('description', {
-				bond,
-				factory: (owner) => new FieldDescriptionAtom(owner as FieldBond).role('description')
-			})
-		: undefined;
-	const helperTextProps = $derived(mergeAtomProps(atom, preset ?? 'field.helper-text', restProps));
+	const part = usePart(FieldBond, 'description', () => restProps, {
+		message: '<Field.HelperText /> must be used within a <Field.Root />',
+		preset: () => preset ?? 'field.helper-text'
+	});
+	const bond = part.bond;
 </script>
 
 <HtmlAtom
 	{as}
-	{bond}
 	class={['text-muted-foreground mt-1 text-xs', '$preset', klass]}
-	{...helperTextProps}
+	{...restProps}
+	{part}
 >
 	{@render children?.({ field: bond })}
 </HtmlAtom>

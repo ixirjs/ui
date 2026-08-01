@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { mergePresetProps, HtmlAtom } from '$svelte-atoms/core/components/atom';
+	import { mergePresetProps, HtmlAtom } from '$ixirjs/ui/components/atom';
 	import type { BadgeProps } from './types';
 
 	let {

@@ -1,8 +1,13 @@
 <script lang="ts">
-	import { resolveControlPreset } from '../shared';
-	import { clamp } from '$svelte-atoms/core/utils/math';
-	import { cn, toClassValue } from '$svelte-atoms/core/utils';
-	import { InputBond } from '../bond.svelte';
+	import {
+		inputChangeContext,
+		resolveControlPreset,
+		writeInputValue
+	} from '$ixirjs/ui/components/input/shared';
+	import { clamp } from '$ixirjs/ui/utils/math';
+	import { cn, toClassValue } from '$ixirjs/ui/utils';
+	import { InputBond } from '$ixirjs/ui/components/input/bond.svelte';
+	import type { StateChangeContext } from '$ixirjs/ui/types';
 	import type { InputColorControlProps } from './types';
 	import type { ColorFormat, ChannelValues, ChannelDef } from './types';
 	import Segment from './segment.svelte';
@@ -21,10 +26,16 @@
 		preset: presetKey = 'input.color',
 		onchange = undefined,
 		oninput = undefined,
+		onvaluechange = undefined,
 		...restProps
 	}: InputColorControlProps = $props();
 
-	const preset = resolveControlPreset(() => presetKey, bond);
+	const preset = resolveControlPreset(
+		() => presetKey,
+		bond,
+		() => restProps,
+		() => toClassValue(klass, bond)
+	);
 
 	const activeFormat = $derived<ColorFormat>(formatProp ?? detectFormat(value) ?? 'hex');
 	const def = $derived(FORMAT_DEFS[activeFormat]);
@@ -58,31 +69,36 @@
 
 	// Mirror the bindable value onto the bond state.
 	$effect(() => {
-		if (bond) bond.state.props.value = value;
+		writeInputValue(bond, value);
 	});
 
-	function emitLive(built: string) {
+	function commitValue(built: string, event: Event | undefined, reason: string) {
+		const changed = built !== value;
 		value = built;
-		if (bond) bond.state.props.value = built;
-		oninput?.(new Event('input'), { value: built });
+		writeInputValue(bond, built);
+		if (changed) {
+			onvaluechange?.(value, inputChangeContext(bond, event, reason));
+		}
 	}
 
-	function emitCommit(ev: Event, built: string) {
-		value = built;
-		if (bond) bond.state.props.value = built;
-		onchange?.(ev, { value: built });
-	}
-
-	function handleChannelChange(channelId: string, val: number | string | undefined) {
+	function handleChannelChange(
+		channelId: string,
+		val: number | string | undefined,
+		context: StateChangeContext
+	) {
 		const newChannels = channelId === 'alpha' ? channels : { ...channels, [channelId]: val };
 		const newAlpha = channelId === 'alpha' ? (val as number | undefined) : alpha;
-		emitLive(buildColor(activeFormat, newChannels, newAlpha));
+		commitValue(buildColor(activeFormat, newChannels, newAlpha), context.event, 'input');
 	}
 
-	function handleChannelCommit(ev: Event, channelId: string, val: number | string | undefined) {
+	function handleChannelCommit(
+		channelId: string,
+		val: number | string | undefined,
+		context: StateChangeContext
+	) {
 		const newChannels = channelId === 'alpha' ? channels : { ...channels, [channelId]: val };
 		const newAlpha = channelId === 'alpha' ? (val as number | undefined) : alpha;
-		emitCommit(ev, buildColor(activeFormat, newChannels, newAlpha));
+		commitValue(buildColor(activeFormat, newChannels, newAlpha), context.event, 'commit');
 	}
 </script>
 
@@ -90,10 +106,9 @@
 	class={cn(
 		'inline-flex h-full items-center gap-0.5 px-2',
 		disabled && 'cursor-not-allowed opacity-50',
-		preset?.class,
-		toClassValue(klass, bond)
+		preset.class
 	)}
-	{...restProps}
+	{...preset.attrs}
 >
 	{#if value || def}
 		{@const isHexFmt = activeFormat === 'hex'}
@@ -111,13 +126,17 @@
 				{disabled}
 				{readonly}
 				class="min-w-[12ch] bg-transparent font-mono text-sm text-foreground outline-none placeholder:text-muted-foreground"
-				oninput={(ev) => {
-					const v = (ev.currentTarget as HTMLInputElement).value.replace(/\s/g, '');
-					emitLive(v);
+				oninput={(event) => {
+					oninput?.(event);
+					if (event.defaultPrevented) return;
+					const next = (event.currentTarget as HTMLInputElement).value.replace(/\s/g, '');
+					commitValue(next, event, 'input');
 				}}
-				onchange={(ev) => {
-					const v = (ev.currentTarget as HTMLInputElement).value.replace(/\s/g, '');
-					emitCommit(ev, v);
+				onchange={(event) => {
+					onchange?.(event);
+					if (event.defaultPrevented) return;
+					const next = (event.currentTarget as HTMLInputElement).value.replace(/\s/g, '');
+					commitValue(next, event, 'change');
 				}}
 			/>
 
@@ -131,8 +150,10 @@
 					channel={ch}
 					{disabled}
 					{readonly}
-					onchange={(v) => handleChannelChange(ch.id, v)}
-					oncommit={(ev, v) => handleChannelCommit(ev, ch.id, v)}
+					{oninput}
+					{onchange}
+					onvaluechange={(v, context) => handleChannelChange(ch.id, v, context)}
+					oncommit={(v, context) => handleChannelCommit(ch.id, v, context)}
 					onfocusmove={(dir) => focusSeg(i + dir)}
 				/>
 			{/each}
@@ -144,8 +165,10 @@
 					channel={alphaDef}
 					{disabled}
 					{readonly}
-					onchange={(v) => handleChannelChange('alpha', v)}
-					oncommit={(ev, v) => handleChannelCommit(ev, 'alpha', v)}
+					{oninput}
+					{onchange}
+					onvaluechange={(v, context) => handleChannelChange('alpha', v, context)}
+					oncommit={(v, context) => handleChannelCommit('alpha', v, context)}
 					onfocusmove={(dir) => focusSeg(alphaIdx + dir)}
 				/>
 			{/if}
@@ -174,8 +197,10 @@
 					channel={ch}
 					{disabled}
 					{readonly}
-					onchange={(v) => handleChannelChange(ch.id, v)}
-					oncommit={(ev, v) => handleChannelCommit(ev, ch.id, v)}
+					{oninput}
+					{onchange}
+					onvaluechange={(v, context) => handleChannelChange(ch.id, v, context)}
+					oncommit={(v, context) => handleChannelCommit(ch.id, v, context)}
 					onfocusmove={(dir) => focusSeg(i + dir)}
 				/>
 			{/each}
@@ -188,8 +213,10 @@
 					channel={alphaDef}
 					{disabled}
 					{readonly}
-					onchange={(v) => handleChannelChange('alpha', v)}
-					oncommit={(ev, v) => handleChannelCommit(ev, 'alpha', v)}
+					{oninput}
+					{onchange}
+					onvaluechange={(v, context) => handleChannelChange('alpha', v, context)}
+					oncommit={(v, context) => handleChannelCommit('alpha', v, context)}
 					onfocusmove={(dir) => focusSeg(alphaIdx + dir)}
 				/>
 			{/if}

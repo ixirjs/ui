@@ -1,4 +1,8 @@
-import { defineCapability, sharedCapabilityKey, type Capability } from '../capability';
+import {
+	defineCapability,
+	sharedCapabilityKey,
+	type Capability
+} from '$ixirjs/ui/shared/capability/capability';
 
 export type StatusName =
 	| 'active'
@@ -18,7 +22,11 @@ export interface StatusModel {
 	is(name: StatusName): boolean;
 }
 
-export const STATUS = sharedCapabilityKey<StatusModel>('@svelte-atoms/cap:status');
+export const STATUS = sharedCapabilityKey<StatusModel>({
+	owner: '@ixirjs/cap',
+	name: 'status',
+	version: 1
+});
 
 export function createStatus(accessors: StatusAccessors): StatusModel {
 	const names = Object.keys(accessors) as StatusName[];
@@ -46,8 +54,6 @@ export function statusCapability(
 		slot: STATUS,
 		surface: status,
 		meta: {
-			layer: 1,
-			kind: 'projection',
 			projects: roles,
 			docs: 'Scoped status projection for repeated boolean state attrs.'
 		},

@@ -1,11 +1,8 @@
 import type { Component } from 'svelte';
-import type { PresetKey } from '$svelte-atoms/core/context/preset.svelte';
+import type { HtmlAtomProps } from '$ixirjs/ui/components/atom';
 
-export interface AvatarProps {
-	class?: string;
-	preset?: PresetKey;
+export interface AvatarProps extends HtmlAtomProps<'div'> {
 	src?: string | Component;
 	alt?: string;
 	readonly element?: HTMLElement;
-	[key: string]: unknown;
 }

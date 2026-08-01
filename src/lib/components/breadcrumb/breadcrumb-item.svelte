@@ -1,5 +1,6 @@
-<script lang="ts">
-	import { mergePresetProps, HtmlAtom } from '$svelte-atoms/core/components/atom';
+<script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'a', B extends Base = Base">
+	import { mergePresetProps, HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import type { BreadcrumbItemProps } from './types';
 
 	let {
 		class: klass = '',
@@ -8,7 +9,7 @@
 		preset = undefined,
 		children = undefined,
 		...restProps
-	} = $props();
+	}: BreadcrumbItemProps<E, B> = $props();
 
 	const itemProps = $derived(mergePresetProps(preset, 'breadcrumb.item', restProps));
 </script>

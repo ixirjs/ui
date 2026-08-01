@@ -1,7 +1,7 @@
 <script module>
 	import { defineMeta } from '@storybook/addon-svelte-csf';
 	import { Combobox as ACombobox } from '..';
-	import { Input } from '$svelte-atoms/core/components/input';
+	import { Input } from '$ixirjs/ui/components/input';
 	import { flip } from 'svelte/animate';
 
 	const { Story } = defineMeta({
@@ -33,13 +33,13 @@
 	type Option = { value: string; label: string };
 
 	const languages: Option[] = [
-		{ value: 'Rust', label: '🦀 Rust' },
-		{ value: 'Go', label: '🐹 Go' },
-		{ value: 'TypeScript', label: '🟦 TypeScript' },
-		{ value: 'Python', label: '🐍 Python' },
-		{ value: 'Elixir', label: '💧 Elixir' },
-		{ value: 'Zig', label: '⚡ Zig' },
-		{ value: 'Swift', label: '🐦 Swift' }
+		{ value: 'Rust', label: 'Rust' },
+		{ value: 'Go', label: 'Go' },
+		{ value: 'TypeScript', label: 'TypeScript' },
+		{ value: 'Python', label: 'Python' },
+		{ value: 'Elixir', label: 'Elixir' },
+		{ value: 'Zig', label: 'Zig' },
+		{ value: 'Swift', label: 'Swift' }
 	];
 
 	// `bind:query` two-way-binds each Root's `query` prop — what `Combobox.Query` writes and
@@ -67,12 +67,18 @@
 	let searchC = $state('');
 	const filteredC = $derived(languages.filter(match(searchC)));
 
-	const itemClass =
-		'flex cursor-pointer items-center gap-2 px-3 py-2 text-sm text-foreground transition-colors hover:bg-foreground/5 data-[highlighted=true]:bg-foreground/5 data-[selected]:bg-primary/10 data-[selected]:font-medium data-[selected]:text-primary';
-	const contentClass = 'border-border bg-popover z-50 overflow-hidden rounded-lg border shadow-lg';
+	// Surface + row look lives in the shared stories preset (`combobox.content` `flat` variant /
+	// `combobox.item` `flat` variant); the trigger field look is the `combobox.trigger` default.
 	const inputClass =
 		'text-foreground placeholder:text-muted-foreground min-w-24 flex-1 bg-transparent text-sm outline-none';
 </script>
+
+<!-- Selected-state check icon, reused by the item lists below. -->
+{#snippet checkIcon()}
+	<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="size-3.5">
+		<path d="M20 6 9 17l-5-5" />
+	</svg>
+{/snippet}
 
 <!-- 0. Default — configurable via Storybook controls. Supports both single and multiple modes. -->
 <Story name="Basic">
@@ -89,7 +95,7 @@
 			>
 				<ACombobox.Trigger
 					base={Input.Root}
-					class="border-border flex h-auto min-h-11 w-full flex-wrap items-center gap-1 rounded-lg border px-3 py-2"
+					class="flex h-auto min-h-11 w-full flex-wrap items-center gap-1 px-3 py-2"
 				>
 					{#if args.multiple}
 						<ACombobox.Selections class="flex flex-wrap gap-1">
@@ -110,21 +116,23 @@
 					<ACombobox.Query class={inputClass} placeholder={args.placeholder} />
 				</ACombobox.Trigger>
 
-				<ACombobox.Content class={contentClass}>
+				<ACombobox.Content variant="flat" class="z-50 overflow-hidden">
 					<div class="max-h-60 overflow-auto py-1">
 						{#each defaultFiltered as item (item.value)}
 							<div animate:flip={{ duration: 150 }}>
-								<ACombobox.Item value={item.value} class={itemClass}>
+								<ACombobox.Item value={item.value} variant="flat">
 									<span class="flex-1">{item.label}</span>
 									{#if args.multiple}
 										<span
 											class="text-primary opacity-0 data-on:opacity-100"
-											data-on={defaultValues.includes(item.value) ? '' : undefined}>✓</span
+											data-on={defaultValues.includes(item.value) ? '' : undefined}
+											>{@render checkIcon()}</span
 										>
 									{:else}
 										<span
 											class="text-primary opacity-0 data-on:opacity-100"
-											data-on={defaultValue === item.value ? '' : undefined}>✓</span
+											data-on={defaultValue === item.value ? '' : undefined}
+											>{@render checkIcon()}</span
 										>
 									{/if}
 								</ACombobox.Item>
@@ -150,15 +158,12 @@
 </Story>
 
 <!-- 1. Autocomplete (single) — one filter box in the trigger; the picked item shows as a chip
-     beside it. Typing filters (`Combobox.Query` → `query`); selecting commits the value. -->
+     beside it. Typing filters (`Combobox.Query` -> `query`); selecting commits the value. -->
 <Story name="Autocomplete">
 	<div class="flex flex-col gap-2" style="width: 340px;">
 		<p class="text-foreground text-sm font-medium">Language</p>
 		<ACombobox.Root keys={allKeys} bind:query={searchA} bind:value={single}>
-			<ACombobox.Trigger
-				base={Input.Root}
-				class="border-border flex h-11 w-full items-center gap-1 rounded-lg border px-3"
-			>
+			<ACombobox.Trigger base={Input.Root} class="flex h-11 w-full items-center gap-1 px-3">
 				<ACombobox.Selections class="flex flex-wrap gap-1">
 					{#snippet children({ selections })}
 						{#each selections as selection (selection.id)}
@@ -171,11 +176,11 @@
 				<ACombobox.Query class={inputClass} placeholder="Search a language…" />
 			</ACombobox.Trigger>
 
-			<ACombobox.Content class={contentClass}>
+			<ACombobox.Content variant="flat" class="z-50 overflow-hidden">
 				<div class="max-h-60 overflow-auto py-1">
 					{#each filteredA as item (item.value)}
 						<div animate:flip={{ duration: 150 }}>
-							<ACombobox.Item value={item.value} class={itemClass}>{item.label}</ACombobox.Item>
+							<ACombobox.Item value={item.value} variant="flat">{item.label}</ACombobox.Item>
 						</div>
 					{/each}
 					{#if filteredA.length === 0}
@@ -197,26 +202,31 @@
 	<div class="flex flex-col gap-2" style="width: 340px;">
 		<p class="text-foreground text-sm font-medium">Language</p>
 		<ACombobox.Root keys={allKeys} bind:query={searchB} bind:value={split}>
-			<ACombobox.Trigger
-				base={Input.Root}
-				class="border-border flex h-11 w-full items-center gap-2 rounded-lg border px-3"
-			>
+			<ACombobox.Trigger base={Input.Root} class="flex h-11 w-full items-center gap-2 px-3">
 				<ACombobox.Control class={inputClass} placeholder="No language selected" />
-				<span class="text-muted-foreground text-xs">▼</span>
+				<svg
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					class="text-muted-foreground size-4"
+				>
+					<path d="m6 9 6 6 6-6" />
+				</svg>
 			</ACombobox.Trigger>
 
-			<ACombobox.Content class={contentClass}>
+			<ACombobox.Content variant="flat" class="z-50 overflow-hidden">
 				<div class="border-border border-b p-2">
 					<ACombobox.Query class={inputClass} placeholder="Search…  (Esc clears)" />
 				</div>
 				<div class="max-h-52 overflow-auto py-1">
 					{#each filteredB as item (item.value)}
 						<div animate:flip={{ duration: 150 }}>
-							<ACombobox.Item value={item.value} class={itemClass}>
+							<ACombobox.Item value={item.value} variant="flat">
 								<span class="flex-1" data-label>{item.label}</span>
 								<span
 									class="text-primary opacity-0 data-on:opacity-100"
-									data-on={split === item.value ? '' : undefined}>✓</span
+									data-on={split === item.value ? '' : undefined}>{@render checkIcon()}</span
 								>
 							</ACombobox.Item>
 						</div>
@@ -241,7 +251,7 @@
 		<ACombobox.Root keys={allKeys} bind:query={searchC} bind:values={many} multiple>
 			<ACombobox.Trigger
 				base={Input.Root}
-				class="border-border flex h-auto min-h-11 w-full flex-wrap items-center gap-1 rounded-lg border px-3 py-2"
+				class="flex h-auto min-h-11 w-full flex-wrap items-center gap-1 px-3 py-2"
 			>
 				<ACombobox.Selections class="flex flex-wrap gap-1">
 					{#snippet children({ selections })}
@@ -260,15 +270,15 @@
 				<ACombobox.Query class={inputClass} placeholder="Filter…" />
 			</ACombobox.Trigger>
 
-			<ACombobox.Content class={contentClass}>
+			<ACombobox.Content variant="flat" class="z-50 overflow-hidden">
 				<div class="max-h-60 overflow-auto py-1">
 					{#each filteredC as item (item.value)}
 						<div animate:flip={{ duration: 150 }}>
-							<ACombobox.Item value={item.value} class={itemClass}>
+							<ACombobox.Item value={item.value} variant="flat">
 								<span class="flex-1" data-label>{item.label}</span>
 								<span
 									class="text-primary opacity-0 data-on:opacity-100"
-									data-on={many.includes(item.value) ? '' : undefined}>✓</span
+									data-on={many.includes(item.value) ? '' : undefined}>{@render checkIcon()}</span
 								>
 							</ACombobox.Item>
 						</div>

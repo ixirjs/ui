@@ -3,12 +3,12 @@
 	generics="Src extends Component = Component, E extends HtmlElementTagName = 'div', B extends Base = Base"
 >
 	import type { Component } from 'svelte';
-	import { mergePresetProps, HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
+	import { mergePresetProps, HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
 	import type {
 		HtmlElementTagName,
 		HtmlElementType,
 		HtmlElementAttributes
-	} from '$svelte-atoms/core/components/element';
+	} from '$ixirjs/ui/components/element';
 	import type { IconProps } from './types';
 	import './icon.css';
 

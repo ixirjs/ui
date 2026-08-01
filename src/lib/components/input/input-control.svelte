@@ -1,13 +1,18 @@
 <script lang="ts" generics="B extends Base = Base">
-	import { on } from '$svelte-atoms/core/attachments/event.svelte';
-	import { resolveControlPreset, INPUT_FIELD_CLASS, writeInputValue } from './shared';
-	import { cn, toClassValue } from '$svelte-atoms/core/utils';
-	import type { Base } from '$svelte-atoms/core/components/atom';
-	import { createAtomInstance } from '$svelte-atoms/core/shared/bond';
-	import { InputBond, InputControlAtom } from './bond.svelte';
+	import {
+		resolveControlPreset,
+		INPUT_FIELD_CLASS,
+		inputChangeContext,
+		writeInputChecked,
+		writeInputFiles,
+		writeInputRawValue
+	} from './shared';
+	import { cn } from '$ixirjs/ui/utils';
+	import type { Base } from '$ixirjs/ui/components/atom';
+	import { usePart } from '$ixirjs/ui/shared';
+	import { InputBond } from './bond.svelte';
 	import type { InputControlProps } from './types';
-
-	const bond = InputBond.get();
+	import type { PresetLike } from '$ixirjs/ui/preset';
 
 	let {
 		value = $bindable(),
@@ -18,74 +23,108 @@
 		class: klass = '',
 		type = 'text',
 		preset: presetKey = 'input.control',
+		presetLayer = undefined as PresetLike | undefined,
 		onchange = undefined,
 		oninput = undefined,
+		onvaluechange = undefined,
+		onnumberchange = undefined,
+		onfileschange = undefined,
+		ondatechange = undefined,
+		oncheckedchange = undefined,
 		// pulled out of restProps: a void `<input>` can't take a (1-arg) children snippet.
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		children = undefined,
 		...restProps
 	}: InputControlProps<B> = $props();
 
-	const preset = resolveControlPreset(() => presetKey, bond);
-	const atom = bond
-		? createAtomInstance<InputControlAtom, InputBond, HTMLInputElement>('input', {
-				bond,
-				register: { key: 'input' },
-				factory: (owner) => new InputControlAtom(owner!)
-			})
-		: undefined;
+	// Native input presentation stays with its adapter; usePart owns context, Atom identity,
+	// registration, roles, and teardown.
+	const part = usePart(InputBond, 'input', {}, { context: 'optional' });
+	const bond = part.bond;
+	const preset = resolveControlPreset(
+		() => presetKey,
+		bond,
+		() => restProps,
+		() => klass,
+		undefined,
+		() => presetLayer as PresetLike | undefined
+	);
 
 	const valueProps = $derived({
-		...(atom?.spread ?? {}),
-		...restProps
+		...part.atom.spread,
+		...preset.attrs
 	});
 
-	// Single source of truth for the change/input detail payload (reads current bindable values).
-	const changeDetail = (event: Event) => ({ value, files, date, number, checked, event });
-
-	function handleChange(ev: Event & { currentTarget: EventTarget & HTMLInputElement }) {
-		if (!onchange) return;
-
-		onchange?.(ev, changeDetail(ev));
+	function changeDetails() {
+		return { value, files, date, number, checked };
 	}
 
-	function handleInput(ev: Event & { currentTarget: EventTarget & HTMLInputElement }) {
-		if (!oninput) return;
+	function handleChange(event: Event) {
+		onchange?.(event);
+	}
 
-		const currentTarget = ev.currentTarget as HTMLInputElement;
+	function handleInput(event: Event & { currentTarget: EventTarget & HTMLInputElement }) {
+		oninput?.(event);
+		if (event.defaultPrevented) return;
 
-		if (type === 'number') {
-			number = currentTarget.valueAsNumber;
+		const input = event.currentTarget;
+		const inputType = input.type;
+
+		if (inputType === 'file') {
+			files = Array.from(input.files ?? []);
+			writeInputFiles(bond, files);
+			onfileschange?.(files, inputChangeContext(bond, event, 'input', changeDetails()));
+			return;
 		}
 
-		if (type === 'date' || type == 'time' || type === 'datetime-local') {
-			date = currentTarget.valueAsDate;
+		value =
+			inputType === 'number'
+				? input.value.trim() === '' || Number.isNaN(input.valueAsNumber)
+					? undefined
+					: input.valueAsNumber
+				: input.value;
+		writeInputRawValue(bond, value);
+
+		if (inputType === 'number') {
+			number =
+				input.value.trim() === '' || Number.isNaN(input.valueAsNumber)
+					? undefined
+					: input.valueAsNumber;
+			onnumberchange?.(
+				number,
+				inputChangeContext(bond, event, number === undefined ? 'clear' : 'input', changeDetails())
+			);
 		}
 
-		oninput?.(ev, changeDetail(ev));
+		if (['date', 'time', 'datetime-local', 'month', 'week'].includes(inputType)) {
+			date = input.valueAsDate;
+			ondatechange?.(date, inputChangeContext(bond, event, 'input', changeDetails()));
+		}
+
+		if (inputType === 'checkbox' || inputType === 'radio') {
+			checked = input.checked;
+			writeInputChecked(bond, checked);
+			oncheckedchange?.(checked, inputChangeContext(bond, event, 'input', changeDetails()));
+		}
+
+		onvaluechange?.(
+			value,
+			inputChangeContext(
+				bond,
+				event,
+				inputType === 'number' && number === undefined ? 'clear' : 'input',
+				changeDetails()
+			)
+		);
 	}
 </script>
 
 <input
-	bind:value={
-		() => value,
-		(v) => {
-			value = v;
-			// Write through the bond's InputModel rather than poking `props.value` directly.
-			writeInputValue(bond, v);
-		}
-	}
-	class={cn(INPUT_FIELD_CLASS, preset?.class, toClassValue(klass, bond))}
+	class={cn(INPUT_FIELD_CLASS, preset.class)}
+	{...valueProps}
 	type={type ?? 'text'}
+	value={type === 'file' ? undefined : value}
+	{checked}
 	onchange={handleChange}
 	oninput={handleInput}
-	{...valueProps}
-	{@attach (node) => {
-		if (type === 'file') {
-			return on('input', () => {
-				files = Array.from(node.files || []);
-				bond!.state.props.files = files;
-			})(node);
-		}
-	}}
 />

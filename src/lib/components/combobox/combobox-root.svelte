@@ -1,7 +1,9 @@
 <script lang="ts">
 	import type { ComboboxRootProps } from './types';
-	import { bindBond, useCapabilities } from '$svelte-atoms/core/shared';
+	import { controlledProp, useRoot } from '@ixirjs/ui/shared';
 	import { ComboboxBond, type ComboboxBondProps } from './bond.svelte';
+
+	const ID = $props.id();
 
 	let {
 		open = $bindable(false),
@@ -14,74 +16,79 @@
 		placements = ['bottom-start', 'bottom-end', 'top-start', 'top-end'],
 		placement = 'bottom-start',
 		offset = 1,
+		keys = [],
 		query = $bindable(''),
+		presets = undefined,
 		factory = defaultFactory,
 		children = undefined,
-		...restProps
+		onopenchange = undefined,
+		onvaluechange = undefined,
+		onvalueschange = undefined,
+		onquerychange = undefined
 	}: ComboboxRootProps = $props();
 
-	let openState = $derived(open);
-	let valueState = $derived(value);
-	let valuesState = $derived(values);
-	let labelState = $derived(label);
-	let labelsState = $derived(labels);
-	let queryState = $derived(query);
+	function valuesEqual(left: readonly unknown[], right: readonly unknown[]) {
+		return (
+			left.length === right.length && left.every((item, index) => Object.is(item, right[index]))
+		);
+	}
 
-	const binding = bindBond<ComboboxBond>((props) => factory(props), {
-		open: [
-			() => openState,
-			(v) => {
-				openState = v;
-				open = openState;
-			}
-		],
-		// The bond's props are string-keyed; the bindables are loosely typed — bridge with casts.
-		values: [
-			() => (multiple ? valuesState : [valueState]) as ComboboxBondProps['values'],
-			(v) => {
-				valuesState = v;
-				valueState = valuesState?.[0];
-				values = valuesState;
-				value = valueState;
-			}
-		],
-		label: [
-			() => labelState,
-			(v) => {
-				labelState = v;
-				label = labelState;
-			}
-		],
-		labels: [
-			() => labelsState,
-			(v) => {
-				labelsState = v;
-				labels = labelsState;
-			}
-		],
-		disabled: () => disabled,
-		multiple: () => multiple,
-		placement: () => placement as ComboboxBondProps['placement'],
-		placements: () => (placements ?? []) as ComboboxBondProps['placements'],
-		offset: () => offset,
-		// Bond-owned filter source (read by `createBondFilter`, cleared by `ClearThenClose`).
-		// Wired as an accessor so writes are reactive and `bind:query` works.
-		query: [
-			() => queryState,
-			(v) => {
-				queryState = v ?? '';
-				query = queryState;
-			}
-		],
-		// Vestigial: element-less context root, no typed channel to forward restProps.
-		rest: () => restProps
+	const openProp = controlledProp<boolean, ComboboxBond>({
+		get: () => open,
+		set: (next) => (open = next),
+		onchange: (next, context) => onopenchange?.(next, context)
 	});
-	const bond = binding.bond.share();
+	const valuesProp = controlledProp<ComboboxBondProps['values'], ComboboxBond>({
+		get: () =>
+			(multiple ? (values ?? []) : value == null ? [] : [value]) as ComboboxBondProps['values'],
+		set: (next) => {
+			const selected = (next ?? []) as unknown[];
+			values = selected;
+			value = selected[0];
+		},
+		equals: (left, right) => valuesEqual(left ?? [], right ?? []),
+		onchange: (next, context) => {
+			const selected = (next ?? []) as unknown[];
+			if (multiple) onvalueschange?.(selected, context);
+			else onvaluechange?.(selected[0], context);
+		}
+	});
+	const labelProp = controlledProp<string | undefined, ComboboxBond>({
+		get: () => label,
+		set: (next) => (label = next)
+	});
+	const labelsProp = controlledProp<string[] | undefined, ComboboxBond>({
+		get: () => labels,
+		set: (next) => (labels = next)
+	});
+	const queryProp = controlledProp<string | undefined, ComboboxBond>({
+		get: () => query,
+		set: (next) => (query = next ?? ''),
+		onchange: (next, context) => onquerychange?.(next ?? '', context)
+	});
 
-	useCapabilities(bond);
+	const root = useRoot(
+		ComboboxBond,
+		{
+			open: openProp,
+			values: valuesProp,
+			label: labelProp,
+			labels: labelsProp,
+			disabled: () => disabled,
+			multiple: () => multiple,
+			placement: () => placement as ComboboxBondProps['placement'],
+			placements: () => (placements ?? []) as ComboboxBondProps['placements'],
+			offset: () => offset,
+			keys: () => keys,
+			query: queryProp,
+			presets: () => presets
+		},
+		{ atom: false, id: () => ID, factory: (props) => factory(props) }
+	);
+	const bond = root.bond;
 
 	function defaultFactory(props: ComboboxBondProps) {
-		return ComboboxBond.create(props).share();
+		return ComboboxBond.create(props);
 	}
 
 	export function getBond() {

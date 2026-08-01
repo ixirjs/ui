@@ -1,5 +1,5 @@
 const presetCode = `
-import { setPreset } from '@svelte-atoms/core';
+import { setPreset } from '@ixirjs/ui/preset';
 
 const preset = setPreset({
   select: () => ({
@@ -106,8 +106,8 @@ export const metadata = {
 		'Flexible select with single/multiple selection, search, and advanced composition via Dropdown and Popover.',
 	componentType: 'compound' as const,
 	status: 'stable' as const,
-	packageName: '@svelte-atoms/core',
-	importCode: "import { Select } from '@svelte-atoms/core';",
+	packageName: '@ixirjs/ui',
+	importCode: "import { Select } from '@ixirjs/ui';",
 	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Select' }],
 	useCases,
 	componentsSummary,

@@ -87,7 +87,7 @@
 			{#snippet children({ sidebar })}
 				<div class="bg-background flex h-screen w-full">
 					<Sidebar_.Content
-						class="bg-card border-border flex flex-col border-r whitespace-nowrap"
+						class="flex flex-col"
 						animate={animateSidebarContent({ axis: 'x', 0: '64px', 1: '264px' })}
 						initial={animateSidebarContent({ axis: 'x', 0: '64px', 1: '264px', duration: 0 })}
 					>

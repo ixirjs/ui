@@ -1,5 +1,5 @@
 const presetCode = `
-import { setPreset } from '@svelte-atoms/core/context';
+import { setPreset } from '@ixirjs/ui/preset';
 
 setPreset({
   'tree.root': () => ({
@@ -80,8 +80,8 @@ export const metadata = {
 		'Recursive tree component for hierarchical data with expandable nodes and unlimited depth.',
 	componentType: 'compound' as const,
 	status: 'stable' as const,
-	packageName: '@svelte-atoms/core',
-	importCode: "import { Tree } from '@svelte-atoms/core';",
+	packageName: '@ixirjs/ui',
+	importCode: "import { Tree } from '@ixirjs/ui';",
 	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Tree' }],
 	useCases,
 	componentsSummary,

@@ -1,12 +1,11 @@
-import { closeOverlay } from '$svelte-atoms/core/components/portal/host/policies/overlay-view';
-import { Atom } from '$svelte-atoms/core/shared/bond';
+import { Atom } from '$ixirjs/ui/shared/bond';
 import {
 	defineAtomCapability,
 	sharedCapabilityKey,
 	type AtomHost
-} from '$svelte-atoms/core/shared/capability';
-import { nanoid } from 'nanoid';
-import type { DropdownMenuBond } from '../bond.svelte';
+} from '$ixirjs/ui/shared/capability';
+import { generateId } from '$ixirjs/ui/shared/bond';
+import type { DropdownMenuBond } from '$ixirjs/ui/components/dropdown-menu/bond.svelte';
 
 // -----------------------------------------------------------------------------
 // Public types
@@ -22,7 +21,11 @@ export type DropdownMenuItemAtomProps = {
 // Capability slots and shared helpers
 // -----------------------------------------------------------------------------
 
-const DROPDOWN_MENU_ITEM = sharedCapabilityKey<void>('@svelte-atoms/dropdown-menu:item-node');
+const DROPDOWN_MENU_ITEM = sharedCapabilityKey<void>({
+	owner: '@ixirjs/dropdown-menu',
+	name: 'item-node',
+	version: 1
+});
 
 // -----------------------------------------------------------------------------
 // Atom definitions
@@ -42,7 +45,7 @@ export class DropdownMenuItemAtom<B extends DropdownMenuBond = DropdownMenuBond>
 		super(menuBond, `item-${props.id}`);
 		this.#props = props;
 		this.#menuBond = menuBond;
-		this.#id = props.id ?? nanoid();
+		this.#id = props.id ?? generateId();
 		// Fold in the roving capability's `item` projection (`data-highlighted`); attrs-only,
 		// the .svelte keeps its own click.
 		this.role('item', this.#id);
@@ -79,8 +82,12 @@ export class DropdownMenuItemAtom<B extends DropdownMenuBond = DropdownMenuBond>
 		};
 	}
 
-	close() {
-		closeOverlay(this.#menuBond);
+	close(event?: Event) {
+		this.#menuBond.stageOpenChange({
+			...(event ? { event } : {}),
+			reason: 'item-select'
+		});
+		this.#menuBond.close();
 	}
 }
 
@@ -94,20 +101,20 @@ function dropdownMenuItemPresentation<B extends DropdownMenuBond>(
 	return defineAtomCapability<void, AtomHost, B>({
 		slot: DROPDOWN_MENU_ITEM,
 		meta: {
-			layer: 1,
-			kind: 'policy',
 			projects: ['item'],
 			docs: 'Dropdown menu rendered item role, disabled projection, and close policy.'
 		},
-		behavior: {
+		attach: {
 			attrs: () => ({
 				role: 'menuitem',
 				'aria-disabled': disabled() ? true : undefined,
 				tabIndex: disabled() ? -1 : 0
 			}),
 			handlers: (_node, bond) => ({
-				onclick: () => {
-					if (bond) closeOverlay(bond);
+				onclick: (event: MouseEvent) => {
+					if (!bond) return;
+					bond.stageOpenChange({ event, reason: 'item-select' });
+					bond.close();
 				}
 			})
 		}

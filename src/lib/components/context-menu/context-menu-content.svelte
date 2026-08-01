@@ -1,12 +1,12 @@
-<script lang="ts" generics="E extends HtmlElementTagName, B extends Base = Base">
-	import { clickout } from '$svelte-atoms/core/attachments';
-	import { containsTarget } from '$svelte-atoms/core/utils/dom.svelte';
-	import type { Base } from '../atom';
-	import type { HtmlElementTagName } from '../element';
-	import { popoverNode, type PopoverBond, type PopoverContentProps } from '../popover';
-	import { closeOverlay } from '../portal/host/policies/overlay-view';
-	import { Content } from '../dropdown-menu/atoms';
+<script lang="ts" generics="E extends HtmlElementTagName = 'ul', B extends Base = Base">
+	import { clickout } from '$ixirjs/ui/attachments';
+	import { containsTarget } from '$ixirjs/ui/utils/dom.svelte';
+	import type { Base } from '$ixirjs/ui/components/atom';
+	import type { HtmlElementTagName } from '$ixirjs/ui/components/element';
+	import { popoverNode, type PopoverBond } from '$ixirjs/ui/components/popover';
+	import { Content } from '$ixirjs/ui/components/dropdown-menu/atoms';
 	import { ContextMenuBond } from './bond.svelte';
+	import type { ContextMenuContentProps } from './types';
 
 	const bond = ContextMenuBond.getOrThrow(
 		'<ContextMenu.Content /> must be used within a <ContextMenu.Root />'
@@ -14,7 +14,7 @@
 
 	// Context menus size to their own `min-w-*` class, not the trigger: empty `minWidth` floor
 	// drops the inherited dropdown default so the class wins. Opt back in per-instance with `minWidth`.
-	let { onclickoutside, minWidth = '', ...restProps }: PopoverContentProps<E, B> = $props();
+	let { onclickoutside, minWidth = '', ...restProps }: ContextMenuContentProps<E, B> = $props();
 
 	function onclickoutHandler(ev: PointerEvent, bond: PopoverBond) {
 		// Right-click on the trigger should not close the popover.
@@ -22,18 +22,19 @@
 			return;
 		}
 
-		closeOverlay(bond);
+		bond.stageOpenChange({ event: ev, reason: 'outside-press' });
+		bond.close();
 	}
 
 	function contextMenuOutAttachement(node: HTMLElement) {
 		const cleanup = clickout(
 			(ev) => {
 				if (onclickoutside) {
-					onclickoutside(ev, bond as unknown as PopoverBond);
+					onclickoutside(ev, bond);
 					return;
 				}
 
-				onclickoutHandler(ev, bond as unknown as PopoverBond);
+				onclickoutHandler(ev, bond);
 			},
 			{ type: 'pointerdown' }
 		)(node);

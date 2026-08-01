@@ -1,14 +1,11 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
 	import type { Snippet } from 'svelte';
-	import { mergeAtomProps, type Base } from '$svelte-atoms/core/components/atom';
-	import { createAtomInstance } from '$svelte-atoms/core/shared/bond';
-	import { TabBodyAtom, TabBond } from './bond.svelte';
-	import { TabsBond } from '../bond.svelte';
-	import type { TabBodyProps } from '../types';
-	import { Stack } from '../../stack';
-
-	const tabBond = TabBond.getOrThrow('TabBody must be used within a Tab');
-	const tabsBond = TabsBond.get();
+	import { type Base } from '$ixirjs/ui/components/atom';
+	import { usePart } from '$ixirjs/ui/shared';
+	import { TabBond } from './bond.svelte';
+	import { TabsBond } from '$ixirjs/ui/components/tabs/bond.svelte';
+	import type { TabBodyProps } from '$ixirjs/ui/components/tabs/types';
+	import { Stack } from '$ixirjs/ui/components/stack';
 
 	let {
 		class: klass = '',
@@ -17,14 +14,12 @@
 		...restProps
 	}: TabBodyProps<E, B> = $props();
 
-	const atom = createAtomInstance<TabBodyAtom, TabBond, HTMLElement>('body', {
-		bond: tabBond,
-		factory: (owner) => new TabBodyAtom(owner as TabBond)
+	const part = usePart(TabBond, 'body', () => restProps, {
+		preset: () => preset
 	});
-
-	const contentProps = $derived(mergeAtomProps(atom, preset, restProps));
-
-	const value = $derived(tabBond?.props.value);
+	const tabBond = part.bond;
+	const tabsBond = TabsBond.get();
+	const value = $derived(tabBond.props.value);
 
 	// Register content snippet with tabs while mounted.
 	$effect.pre(() => {
@@ -63,7 +58,7 @@
 		]}
 		{value}
 		inert={selected ? undefined : true}
-		{...contentProps}
+		{...part.props}
 		{...props}
 	>
 		{@render children?.({

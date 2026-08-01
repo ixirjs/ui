@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { Bond, Atom, type Behavior, type BondStateProps } from './index';
-import { clickTrigger } from '$svelte-atoms/core/components/portal/host/policies/trigger.svelte';
+import { clickTrigger } from '$ixirjs/ui/components/overlay/policies/trigger.svelte';
 
 // Specs for Atom.behavior() — the generic behavior-composition seam.
 // The last describe proves the real ClickTrigger policy works through use() and coexists with the atom's own handler.

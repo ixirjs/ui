@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { Icon } from '$svelte-atoms/core/components/icon';
-	import { mergePresetProps, HtmlAtom } from '$svelte-atoms/core/components/atom';
-	import CheckmarkRegularIcon from '$svelte-atoms/core/icons/icon-checkmark.svelte';
+	import { Icon } from '$ixirjs/ui/components/icon';
+	import { mergePresetProps, HtmlAtom } from '$ixirjs/ui/components/atom';
+	import CheckmarkRegularIcon from '$ixirjs/ui/icons/icon-checkmark.svelte';
 	import type { CheckboxProps } from './types';
-	import { animateCheckboxIndicator } from './motion';
+	import { animateCheckboxIndicator } from './motion.svelte';
 	import './checkbox.css';
-	import { Input } from '../input';
+	import { Input } from '$ixirjs/ui/components/input';
 
 	let {
 		class: klass = '',
@@ -23,10 +23,12 @@
 		initial,
 		onchange,
 		oninput,
+		oncheckedchange,
 		onblur,
 		onfocus,
 		onclick = undefined,
 		preset = undefined,
+		presets = undefined,
 		...restProps
 	}: CheckboxProps = $props();
 
@@ -42,50 +44,49 @@
 		isIndeterminate ? indeterminateSnippet : showCheckmark ? checkedSnippet : undefined
 	);
 
-	function handleChange(ev: Event) {
-		onchange?.(ev, {
-			checked: checked
-		});
+	function handleChange(event: Event) {
+		onchange?.(event);
 	}
 
-	function handleInput(ev: Event) {
-		oninput?.(ev, {
-			checked: checked
-		});
+	function handleInput(event: Event) {
+		const input = event.currentTarget as HTMLInputElement;
+		const nextChecked = input.checked;
+		const changed = checked !== nextChecked;
+
+		checked = nextChecked;
+		indeterminate = input.indeterminate;
+		oninput?.(event);
+
+		if (changed) {
+			oncheckedchange?.(nextChecked, { event });
+		}
 	}
 
-	function handleClick(ev: MouseEvent) {
+	function handleClick(event: MouseEvent) {
 		if (disabled) return;
 
-		// Click forwarded by the native input (e.g. clicking surrounding <label> text); bind:checked already owns that toggle.
-		if (ev.target === checkboxElement) {
+		// Click forwarded by the native input (e.g. clicking surrounding <label> text); the input event owns the commit.
+		if (event.target === checkboxElement) {
 			return;
 		}
 
-		onclick?.(ev);
+		onclick?.(event);
 
-		if (ev.defaultPrevented) {
+		if (event.defaultPrevented) {
 			return;
 		}
 
-		// We own the toggle below. preventDefault stops an ancestor <label> from forwarding this click to the
-		// hidden input and toggling a second time; stopPropagation would NOT, since forwarding is a default action.
-		ev.preventDefault();
-
-		if (indeterminate) {
-			indeterminate = false;
-			checked = true;
-		} else {
-			checked = !checked;
-		}
-
-		handleInput(ev);
+		// Delegate the state transition to the native input so oninput/onchange receive real DOM events.
+		// Prevent the ancestor label's default forwarding from toggling the input a second time.
+		event.preventDefault();
+		checkboxElement?.click();
 	}
 </script>
 
 {#snippet indeterminateSnippet()}
 	<HtmlAtom
 		preset="checkbox.indeterminate"
+		presetLayer={presets?.indeterminate}
 		class={[
 			'checkbox-indeterminate pointer-events-none flex size-full scale-50 items-center justify-center rounded-inherit bg-current'
 		]}
@@ -98,6 +99,7 @@
 {#snippet customCheckedSnippet()}
 	<HtmlAtom
 		preset="checkbox.checkmark"
+		presetLayer={presets?.checkmark}
 		class={[
 			'checkbox-indicator text-accent pointer-events-none flex h-full content-center items-center justify-center overflow-hidden p-0.5'
 		]}
@@ -110,6 +112,7 @@
 {#snippet defaultCheckedSnippet()}
 	<HtmlAtom
 		preset="checkbox.checkmark"
+		presetLayer={presets?.checkmark}
 		class={[
 			'checkbox-indicator text-accent pointer-events-none flex h-full content-center items-center justify-center overflow-hidden p-0.5'
 		]}

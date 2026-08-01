@@ -67,14 +67,15 @@ export const metadata = {
 		},
 		{
 			title: 'Registry Lookup',
-			description: 'Use bond.node() and bond.nodes() to find rendered Atoms.',
+			description:
+				'Use bond.nodeByPart(), bond.nodesByPart(), and bond.nodeByRole() to find rendered Atoms.',
 			useCase: 'Building complex components with multiple sub-components that need shared state'
 		},
 		{
-			title: 'Generated Methods',
+			title: 'Explicit Registry Lookup',
 			description:
-				'Generated part methods construct Atoms directly; rendered parts should still register their own stable Atoms.',
-			useCase: 'Keeping older authoring types available while components own DOM lifecycle'
+				'Generated detached-Atom methods were removed. Use nodeByPart(), nodesByPart(), and nodeByRole() for mounted lookup.',
+			useCase: 'Finding rendered Atoms without creating detached runtime objects'
 		}
 	]
 };

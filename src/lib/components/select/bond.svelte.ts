@@ -4,26 +4,28 @@ import {
 	DropdownMenuContentAtom,
 	type DropdownMenuBondElements,
 	type DropdownMenuBondProps
-} from '$svelte-atoms/core/components/dropdown-menu/bond.svelte';
-import { closeOverlay } from '$svelte-atoms/core/components/portal/host/policies/overlay-view';
-import { defineAtom } from '$svelte-atoms/core/shared/bond';
+} from '$ixirjs/ui/components/dropdown-menu/bond.svelte';
+
+import { closeOverlay } from '$ixirjs/ui/components/overlay/policies/overlay-view';
+import { defineAtom } from '$ixirjs/ui/shared/bond';
 import {
 	ariaRole,
 	defineBond,
+	internCapabilityFactory,
 	createInput,
 	inputCapability,
 	defineAtomCapability,
 	sharedCapabilityKey,
-	type BondOf,
-	type BondSpec,
-	type AtomHost
-} from '$svelte-atoms/core/shared';
+	type BondOf
+} from '@ixirjs/ui/shared';
+// AtomHost is a protocol record, classified experimental (ADR 0008).
+import type { AtomHost } from '$ixirjs/ui/shared/capability';
 import {
 	createSelection,
 	selectionCapability,
 	type SelectionModel
-} from '$svelte-atoms/core/shared/capability/models/selection.svelte';
-import { clickTrigger, clearThenClose } from '$svelte-atoms/core/components/portal/host';
+} from '$ixirjs/ui/shared/capability/models/selection.svelte';
+import { clickTrigger, clearThenClose } from '$ixirjs/ui/components/overlay';
 import type { SelectItemAtom } from './item/bond.svelte';
 
 // -----------------------------------------------------------------------------
@@ -37,7 +39,7 @@ export type SelectStateProps = DropdownMenuBondProps & {
 	label?: string;
 	multiple?: boolean;
 	keys?: string[];
-	// Reactive search/filter text; read/written by `createBondFilter` and bound to the `'input'` capability's `query` target.
+	// Reactive search/filter text; read by `filterSelectData` and bound to the `'input'` capability's `query` target.
 	query?: string;
 };
 
@@ -54,10 +56,19 @@ export class SelectBondBase<
 	ItemData = unknown
 > extends DropdownMenuBondBase<Props> {
 	// Items live in the inherited `'item'` Collection, keyed by value — roving and `aria-activedescendant` resolve from it.
-	#selections = $derived(
-		(this.props.values?.map((value) => this.items.get(value)).filter(Boolean) ??
-			[]) as unknown as SelectItemAtom<ItemData>[]
-	);
+	// One pass. The map/filter chain allocated a full-length array of possibly-missing items before
+	// discarding the gaps, and `filter(Boolean)` does not narrow, which is what forced the double
+	// cast; resolving inside the loop keeps the type honest.
+	#selections = $derived.by(() => {
+		const values = this.props.values;
+		if (!values?.length) return [] as SelectItemAtom<ItemData>[];
+		const selections: SelectItemAtom<ItemData>[] = [];
+		for (let index = 0; index < values.length; index++) {
+			const item = this.items.get(values[index]!) as SelectItemAtom<ItemData> | undefined;
+			if (item) selections.push(item);
+		}
+		return selections;
+	});
 
 	// Selection model (single/multiple via `props.multiple`); storage in `props.values`, label derivation stays on the bond.
 	#selection: SelectionModel<string> = createSelection<string>({
@@ -72,7 +83,7 @@ export class SelectBondBase<
 		// `interactive: false` — the item keeps its own click (select + close).
 		this.capability(selectionCapability(this.#selection, { interactive: false }));
 		// Filter input (role 'input'/'query'): text is the bond-owned `query` prop (the
-		// `createBondFilter` source). Filter-only — no `value` field; Combobox adds one (last-wins).
+		// `filterSelectData` source). Filter-only — no `value` field; Combobox adds one (last-wins).
 		this.capability(
 			inputCapability(
 				createInput({
@@ -130,7 +141,11 @@ type SelectBondView = SelectBondBase;
 // Capability slots and shared helpers
 // -----------------------------------------------------------------------------
 
-const SELECT_CONTENT = sharedCapabilityKey<void>('@svelte-atoms/select:content');
+const SELECT_CONTENT = sharedCapabilityKey<void>({
+	owner: '@ixirjs/select',
+	name: 'content',
+	version: 1
+});
 
 // -----------------------------------------------------------------------------
 // Atom definitions
@@ -175,29 +190,32 @@ export type SelectQueryAtom = InstanceType<typeof SelectQueryAtom>;
 // Atom capabilities
 // -----------------------------------------------------------------------------
 
-function selectContentPresentation() {
+const selectContentPresentation = internCapabilityFactory(function selectContentPresentation() {
 	return defineAtomCapability<void, AtomHost, SelectBondView>({
 		slot: SELECT_CONTENT,
 		meta: {
-			layer: 1,
-			kind: 'projection',
 			projects: ['content'],
 			docs: 'Select content multi-select projection.'
 		},
-		behavior: {
+		attach: {
 			attrs: (_node, bond) => ({
 				// aria-activedescendant + orientation + role come from dropdown/roving.
 				'aria-multiselectable': bond?.props.multiple ?? false
 			})
 		}
 	});
-}
+});
 
 // -----------------------------------------------------------------------------
 // Bond spec and constructor facade
 // -----------------------------------------------------------------------------
 
-const selectSpec = {
+// SelectBond — flat composition over `DropdownMenuBond`: listbox content, placeholder/value/query
+// atoms, trigger `aria-haspopup='listbox'`, `ClearThenClose` clears query on Escape.
+// Inlined deliberately: `defineBond<const S>` infers `parts` as a tuple only from a literal
+// argument. A hoisted spec widens it to an array, which makes `AtomsOf` resolve every inherited
+// slot to `never` and blocks `usePart` on slots the runtime spec merge does provide.
+export const SelectBond = defineBond({
 	parts: [DropdownMenuBond],
 	name: 'select',
 	base: SelectBondBase,
@@ -208,45 +226,10 @@ const selectSpec = {
 		query: SelectQueryAtom
 	},
 	capabilities: () => [clickTrigger({ ariaHasPopup: 'listbox' }), clearThenClose]
-} satisfies BondSpec<
-	{
-		content: { atom: typeof SelectContentAtom; role: 'container' };
-		placeholder: typeof SelectPlaceholderAtom;
-		value: typeof SelectValueAtom;
-		query: typeof SelectQueryAtom;
-	},
-	typeof SelectBondBase
->;
-
-// SelectBond — flat composition over `DropdownMenuBond`: listbox content, placeholder/value/query
-// atoms, trigger `aria-haspopup='listbox'`, `ClearThenClose` clears query on Escape.
-const SelectBondImpl = defineBond<
-	{
-		content: { atom: typeof SelectContentAtom; role: 'container' };
-		placeholder: typeof SelectPlaceholderAtom;
-		value: typeof SelectValueAtom;
-		query: typeof SelectQueryAtom;
-	},
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	any,
-	typeof SelectBondBase
->(selectSpec);
+});
 
 // Instance type paired with the `const`; item-data precision lives on `SelectBondBase`/`SelectItemAtom` generics.
-export type SelectBond<ItemData = unknown> = BondOf<typeof SelectBondImpl> &
+export type SelectBond<ItemData = unknown> = BondOf<typeof SelectBond> &
 	SelectBondBase<SelectStateProps, ItemData>;
-
-interface SelectBondConstructor {
-	new (props: SelectStateProps): SelectBond;
-	readonly CONTEXT_KEY: string;
-	readonly CONTEXT_KEYS?: readonly string[];
-	readonly spec: (typeof SelectBondImpl)['spec'];
-	get(): SelectBond | undefined;
-	getOrThrow(message?: string): SelectBond;
-	set(bond: SelectBond): SelectBond;
-	create(props: SelectStateProps): SelectBond;
-}
-
-export const SelectBond = SelectBondImpl as unknown as SelectBondConstructor;
 
 export { closeOverlay };

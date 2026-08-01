@@ -1,5 +1,5 @@
 const presetCode = `
-import { setPreset } from '@svelte-atoms/core';
+import { setPreset } from '@ixirjs/ui/preset';
 
 const preset = setPreset({
   scrollable: () => ({
@@ -83,8 +83,8 @@ export const metadata = {
 		'Custom-styled scrollable container with full control over scroll position and appearance.',
 	componentType: 'compound' as const,
 	status: 'stable' as const,
-	packageName: '@svelte-atoms/core',
-	importCode: "import { Scrollable } from '@svelte-atoms/core';",
+	packageName: '@ixirjs/ui',
+	importCode: "import { Scrollable } from '@ixirjs/ui';",
 	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Scrollable' }],
 	useCases,
 	componentsSummary,

@@ -1,6 +1,6 @@
 <script module>
 	import { defineMeta } from '@storybook/addon-svelte-csf';
-	import { default as SliderCmp } from '../slider.svelte';
+	import { default as SliderCmp } from '$ixirjs/ui/components/slider/slider.svelte';
 
 	const { Story } = defineMeta({
 		title: 'Atoms/Slider',

@@ -1,7 +1,8 @@
-import { Bond, defineAtom, type BondStateProps } from '$svelte-atoms/core/shared/bond';
-import { defineBond, type BondOf } from '$svelte-atoms/core/shared';
-import { DataGridBond, type IDataGrid } from '../bond.svelte';
-import { rowColumnCellLink } from '$svelte-atoms/core/shared/capability/models/relationship.svelte';
+import { Bond, defineAtom, type BondStateProps } from '$ixirjs/ui/shared/bond';
+import { defineBond, type BondOf } from '@ixirjs/ui/shared';
+import { specializeDefinition } from '$ixirjs/ui/shared/authoring/metadata';
+import { DataGridBond, type IDataGrid } from '$ixirjs/ui/components/datagrid/bond.svelte';
+import { rowColumnCellLink } from '$ixirjs/ui/shared/capability/models/relationship.svelte';
 
 // -----------------------------------------------------------------------------
 // Public types
@@ -9,10 +10,6 @@ import { rowColumnCellLink } from '$svelte-atoms/core/shared/capability/models/r
 
 export type DataGridCellBondProps<T = unknown> = BondStateProps & {
 	data?: T;
-};
-
-export type DataGridCellElements = {
-	root: HTMLElement;
 };
 
 // -----------------------------------------------------------------------------
@@ -51,12 +48,7 @@ class DataGridCellBondBase<T = unknown> extends Bond<DataGridCellBondProps<T>> {
 // Bond spec and constructor facade
 // -----------------------------------------------------------------------------
 
-const DataGridCellBondImpl = defineBond<
-	{ root: typeof DataGridCellRootAtom },
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	any,
-	typeof DataGridCellBondBase
->({
+const DataGridCellBondDefinition = defineBond({
 	name: 'datagrid-cell',
 	base: DataGridCellBondBase,
 	atoms: { root: DataGridCellRootAtom }
@@ -66,7 +58,7 @@ const DataGridCellBondImpl = defineBond<
 // Public types
 // -----------------------------------------------------------------------------
 
-export type DataGridCellBond<T = unknown> = BondOf<typeof DataGridCellBondImpl> & {
+export type DataGridCellBond<T = unknown> = BondOf<typeof DataGridCellBondDefinition> & {
 	readonly __props?: DataGridCellBondProps<T>;
 	readonly datagrid: IDataGrid<T> | undefined;
 };
@@ -77,17 +69,26 @@ export type DataGridCellBond<T = unknown> = BondOf<typeof DataGridCellBondImpl> 
 // Bond spec and constructor facade
 // -----------------------------------------------------------------------------
 
-interface DataGridCellBondConstructor {
+// TS cannot retain a class value's type parameter through `typeof DataGridCellBondDefinition`; this
+// minimal static facade preserves generic construction and context lookup ergonomics.
+interface DataGridCellBondGenericFacade {
 	new <T = unknown>(props: DataGridCellBondProps<T>): DataGridCellBond<T>;
-	readonly CONTEXT_KEY: string;
 	get<T = unknown>(): DataGridCellBond<T> | undefined;
+	getOrThrow<T = unknown>(message?: string): DataGridCellBond<T>;
+	optional<T = unknown>(): DataGridCellBond<T> | undefined;
+	required<T = unknown>(message?: string): DataGridCellBond<T>;
 	set<T = unknown>(bond: DataGridCellBond<T>): DataGridCellBond<T>;
 	create<T = unknown>(props: DataGridCellBondProps<T>): DataGridCellBond<T>;
 }
 
-export const DataGridCellBond = DataGridCellBondImpl as unknown as DataGridCellBondConstructor;
+// Replace only generic-sensitive signatures. The mapped original retains defineBond's
+// untouched statics and definition phantom metadata while dropping its construct signature.
+type DataGridCellBondConstructor = Omit<
+	typeof DataGridCellBondDefinition,
+	keyof DataGridCellBondGenericFacade
+> &
+	DataGridCellBondGenericFacade;
 
-// Backward-compatible aliases for existing imports.
-export type DataGridTdBondProps<T = unknown> = DataGridCellBondProps<T>;
-export type DataGridTdElements = DataGridCellElements;
-export { DataGridCellBond as DataGridTdBond };
+export const DataGridCellBond = specializeDefinition<DataGridCellBondConstructor>(
+	DataGridCellBondDefinition
+);

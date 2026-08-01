@@ -1,4 +1,4 @@
-import { animate } from 'motion';
+import { animate } from '$ixirjs/ui/shared';
 import { untrack } from 'svelte';
 import { getPopoverPosition, PopoverBond } from './bond.svelte';
 
@@ -7,16 +7,16 @@ export type AnimatePopoverContentParams = {
 	duration?: number;
 	// Delay before animation starts in seconds (default: 0)
 	delay?: number;
-	// Use spring physics for natural motion (default: false)
+	// Use spring-like timing for natural motion (default: false)
 	spring?: boolean;
-	// Spring stiffness (default: 300)
+	// Spring-like stiffness hint (default: 300)
 	stiffness?: number;
-	// Spring damping (default: 30)
+	// Spring-like damping hint (default: 30)
 	damping?: number;
 };
 
 // Popover enter/exit animation: vertical scale (0.96→1), directional slide, fade.
-// Adapts slide distance to offset and arrow presence; optionally uses spring physics.
+// Adapts slide distance to offset and tail presence; optionally uses spring-like timing.
 export function animatePopoverContent(params: AnimatePopoverContentParams = {}) {
 	let prevOpen: boolean | undefined;
 
@@ -49,11 +49,11 @@ export function animatePopoverContent(params: AnimatePopoverContentParams = {}) 
 			const [side = 'bottom', alignment = ''] = placement?.split('-') ?? ['bottom', ''];
 
 			const offset = untrack(() => bond?.props.offset ?? 0);
-			const hasArrow = untrack(() => Boolean(bond?.node('arrow')));
+			const hasTail = untrack(() => Boolean(bond?.nodeByPart('tail')));
 
 			const transformOrigin = getTransformOrigin(side, alignment);
 
-			const slideDistance = getSmartSlideDistance(offset, hasArrow);
+			const slideDistance = getSmartSlideDistance(offset, hasTail);
 			const { x: offsetX, y: offsetY } = getDirectionalOffset(side, slideDistance);
 
 			node.style.transformOrigin = transformOrigin;
@@ -104,17 +104,17 @@ function getTransformOrigin(side: string, alignment: string): string {
 	return `${horizontal} ${vertical}`;
 }
 
-// Slide distance: 4px (flush/no-arrow), 6px (flush+arrow), min(offset/2,8) (gap/no-arrow), 8px (gap+arrow).
-function getSmartSlideDistance(offset: number, hasArrow: boolean): number {
+// Slide distance: 4px (flush/no-tail), 6px (flush+tail), min(offset/2,8) (gap/no-tail), 8px (gap+tail).
+function getSmartSlideDistance(offset: number, hasTail: boolean): number {
 	if (offset === 0) {
-		return hasArrow ? 6 : 4;
+		return hasTail ? 6 : 4;
 	}
 
-	if (hasArrow) {
+	if (hasTail) {
 		return 8;
 	}
 
-	// No arrow, gap > 0: proportional slide that scales with the gap (max 8px).
+	// No tail, gap > 0: proportional slide that scales with the gap (max 8px).
 	return Math.min(offset / 2, 8);
 }
 

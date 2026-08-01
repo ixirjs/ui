@@ -1,5 +1,5 @@
 const presetCode = `
-import { setPreset } from '@svelte-atoms/core';
+import { setPreset } from '@ixirjs/ui/preset';
 
 const preset = setPreset({
   slider: () => ({
@@ -61,8 +61,8 @@ export const metadata = {
 		'Single-value range input with bindable value, horizontal or vertical orientation, and customizable thumb and track rendering.',
 	componentType: 'simple' as const,
 	status: 'beta' as const,
-	packageName: '@svelte-atoms/core',
-	importCode: "import { Slider } from '@svelte-atoms/core';",
+	packageName: '@ixirjs/ui',
+	importCode: "import { Slider } from '@ixirjs/ui';",
 	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Slider' }],
 	useCases,
 	examples: {

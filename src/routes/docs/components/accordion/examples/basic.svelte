@@ -20,7 +20,7 @@
 				<AccordionItem.Indicator class="ml-auto" />
 			</AccordionItem.Header>
 			<AccordionItem.Body>
-				Simply run npm install @svelte-atoms/core to add it to your project.
+				Simply run npm install @ixirjs/ui to add it to your project.
 			</AccordionItem.Body>
 		</AccordionItem.Root>
 		<AccordionItem.Root>

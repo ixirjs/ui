@@ -1,19 +1,22 @@
-import { Bond, Atom } from '$svelte-atoms/core/shared/bond';
-import { defineBond, type BondOf } from '$svelte-atoms/core/shared/authoring/define.svelte';
+import { Bond, Atom } from '$ixirjs/ui/shared/bond';
+import { defineBond, type BondOf } from '$ixirjs/ui/shared/authoring/define.svelte';
+import { capabilityKey, defineCapability } from '$ixirjs/ui/shared/capability/capability';
 import {
 	createDisclosure,
-	disclosureCapability,
-	disclosureClose,
 	type Disclosure
-} from '$svelte-atoms/core/shared/capability/models/disclosure.svelte';
-import type { DisclosureStateProps } from '$svelte-atoms/core/shared/capability/models/disclosure-state.svelte';
-import { labelledControl } from '$svelte-atoms/core/shared/capability/models/relationship.svelte';
+} from '$ixirjs/ui/shared/capability/models/disclosure.svelte';
+import type { DisclosureStateProps } from '$ixirjs/ui/shared/capability/models/disclosure-state.svelte';
+import { toastCapabilities } from '$ixirjs/ui/shared/capability/models/archetypes.svelte';
+import type { StateChangeContext } from '$ixirjs/ui/types';
 
 // -----------------------------------------------------------------------------
 // Public types
 // -----------------------------------------------------------------------------
 
-export type ToastBondProps = DisclosureStateProps;
+export type ToastBondProps = DisclosureStateProps & {
+	dismissible?: boolean;
+	duration?: number;
+};
 
 export type ToastBondElements = {
 	root: HTMLElement;
@@ -40,7 +43,7 @@ export class ToastRootAtom extends Atom<ToastBondView> {
 	}
 
 	override get attrs() {
-		const props = this.bond.state?.props;
+		const props = this.requireBond()?.props;
 		const isOpen = props?.open ?? false;
 		const isDisabled = props?.disabled ?? false;
 
@@ -77,13 +80,8 @@ export class ToastCloseAtom extends Atom<ToastBondView> {
 	}
 
 	override get attrs() {
-		const el = this.element;
-		const isButton = el instanceof Element && el.tagName.toLowerCase() === 'button';
 		return {
 			...super.attrs,
-			type: isButton ? 'button' : undefined,
-			role: isButton ? undefined : 'button',
-			tabindex: isButton ? undefined : 0,
 			'aria-label': 'Dismiss notification'
 		};
 	}
@@ -93,7 +91,27 @@ export class ToastCloseAtom extends Atom<ToastBondView> {
 // Bond implementation
 // -----------------------------------------------------------------------------
 
+const TOAST_TIMEOUT = capabilityKey('@ixirjs/toast-timeout');
+
+const toastTimeoutCapability = defineCapability({
+	slot: TOAST_TIMEOUT,
+	meta: { docs: 'Closes an open toast after its configured duration.' },
+	setup: (bond) => {
+		const toast = bond as ToastBondBase;
+		$effect(() => {
+			const duration = toast.props.duration ?? 0;
+			if (!toast.isOpen || duration <= 0) return;
+			const handle = setTimeout(() => {
+				toast.stageOpenChange({ reason: 'timeout' });
+				toast.close();
+			}, duration);
+			return () => clearTimeout(handle);
+		});
+	}
+});
+
 class ToastBondBase extends Bond<ToastBondProps> {
+	#openChangeContext: Pick<StateChangeContext, 'event' | 'reason'> | undefined;
 	// Storage stays in props.open.
 	readonly disclosure: Disclosure = createDisclosure({
 		get: () => this.props.open,
@@ -102,9 +120,29 @@ class ToastBondBase extends Bond<ToastBondProps> {
 
 	constructor(props: ToastBondProps, name = 'toast') {
 		super(props, name);
-		this.capability(disclosureCapability(this.disclosure));
-		this.capability(disclosureClose({ disabled: false, stopPropagation: true }));
-		this.capability(labelledControl());
+		this.registerCapabilities(
+			toastCapabilities({
+				disclosure: this.disclosure,
+				close: {
+					disabled: (bond) => (bond as ToastBondBase).props.dismissible === false,
+					stopPropagation: true
+				}
+			})
+		);
+		this.capability(toastTimeoutCapability);
+	}
+
+	stageOpenChange(context: Pick<StateChangeContext, 'event' | 'reason'>): void {
+		this.#openChangeContext = context;
+		queueMicrotask(() => {
+			if (this.#openChangeContext === context) this.#openChangeContext = undefined;
+		});
+	}
+
+	takeOpenChangeContext(): Pick<StateChangeContext, 'event' | 'reason'> {
+		const context = this.#openChangeContext ?? {};
+		this.#openChangeContext = undefined;
+		return context;
 	}
 
 	get isOpen(): boolean {
@@ -131,44 +169,22 @@ class ToastBondBase extends Bond<ToastBondProps> {
 	}
 }
 
-// Toast bond via defineBond: roles and key alias dismiss↔close are generated.
+// Toast bond via defineBond: the declaration maps the dismiss slot to the close part and role.
 
 // -----------------------------------------------------------------------------
 // Bond spec and constructor facade
 // -----------------------------------------------------------------------------
 
-const ToastBondImpl = defineBond<
-	{
-		root: { atom: typeof ToastRootAtom; role: 'control' };
-		title: { atom: typeof ToastTitleAtom; role: 'label' };
-		description: { atom: typeof ToastDescriptionAtom; role: 'description' };
-		dismiss: { atom: typeof ToastCloseAtom; key: 'close'; role: 'close' };
-	},
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	any,
-	typeof ToastBondBase
->({
+export const ToastBond = defineBond({
 	name: 'toast',
 	base: ToastBondBase,
 	atoms: {
 		root: { atom: ToastRootAtom, role: 'control' },
 		title: { atom: ToastTitleAtom, role: 'label' },
 		description: { atom: ToastDescriptionAtom, role: 'description' },
-		dismiss: { atom: ToastCloseAtom, key: 'close', role: 'close' }
+		dismiss: { atom: ToastCloseAtom, part: 'close', role: 'close' }
 	}
 });
 
 // ToastBond works as both value (new ToastBond(state)) and type (ToastBond | undefined).
-export type ToastBond = BondOf<typeof ToastBondImpl>;
-
-interface ToastBondConstructor {
-	new (props: ToastBondProps): ToastBond;
-	readonly CONTEXT_KEY: string;
-	readonly spec: (typeof ToastBondImpl)['spec'];
-	get(): ToastBond | undefined;
-	getOrThrow(message?: string): ToastBond;
-	set(bond: ToastBond): ToastBond;
-	create(props: ToastBondProps): ToastBond;
-}
-
-export const ToastBond = ToastBondImpl as unknown as ToastBondConstructor;
+export type ToastBond = BondOf<typeof ToastBond>;

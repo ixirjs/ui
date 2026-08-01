@@ -1,7 +1,7 @@
 <script module>
 	import { defineMeta } from '@storybook/addon-svelte-csf';
 	import { DropdownMenu as ADropdownMenu } from '..';
-	import { Button } from '$svelte-atoms/core/components/button';
+	import { Button } from '$ixirjs/ui/components/button';
 
 	const { Story } = defineMeta({
 		title: 'Atoms/DropdownMenu',
@@ -56,9 +56,7 @@
 
 <Story name="Basic">
 	{#snippet template(args)}
-		<div
-			class="bg-background bg-dot-grid flex h-screen w-full flex-col items-center justify-center gap-4"
-		>
+		<div class="flex h-screen w-full flex-col items-center justify-center gap-4">
 			<ADropdownMenu.Root {...args}>
 				<ADropdownMenu.Trigger base={Button}>Options</ADropdownMenu.Trigger>
 				<ADropdownMenu.Content>
@@ -77,9 +75,7 @@
 </Story>
 
 <Story name="Language Selector">
-	<div
-		class="bg-background bg-dot-grid flex h-screen w-full flex-col items-center justify-center gap-4"
-	>
+	<div class="flex h-screen w-full flex-col items-center justify-center gap-4">
 		<ADropdownMenu.Root bind:open>
 			<ADropdownMenu.Trigger base={Button}
 				>{language === '—' ? 'Select a language' : language}</ADropdownMenu.Trigger
@@ -122,9 +118,21 @@
 							</div>
 							<ADropdownMenu.Root placement="bottom-end" placements={['bottom-end', 'top-end']}>
 								<ADropdownMenu.Trigger
-									class="text-muted-foreground hover:text-foreground hover:bg-muted shrink-0 rounded-md p-1.5 opacity-0 transition group-hover:opacity-100 focus:opacity-100"
+									variant="ghost-icon"
+									class="shrink-0 opacity-0 group-hover:opacity-100 focus:opacity-100"
+									aria-label="Row actions"
 								>
-									&#x22EF;
+									<svg
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2"
+										class="size-4"
+									>
+										<circle cx="12" cy="12" r="1" />
+										<circle cx="19" cy="12" r="1" />
+										<circle cx="5" cy="12" r="1" />
+									</svg>
 								</ADropdownMenu.Trigger>
 								<ADropdownMenu.Content>
 									<ADropdownMenu.Item onclick={() => (lastAction = `Edit row ${i + 1}`)}
@@ -152,9 +160,7 @@
 </Story>
 
 <Story name="With Groups">
-	<div
-		class="bg-background bg-dot-grid flex h-screen w-full flex-col items-center justify-center gap-4"
-	>
+	<div class="flex h-screen w-full flex-col items-center justify-center gap-4">
 		<ADropdownMenu.Root bind:open={actionOpen} placement="bottom-start">
 			<ADropdownMenu.Trigger base={Button}>Actions</ADropdownMenu.Trigger>
 			<ADropdownMenu.Content>
@@ -183,13 +189,9 @@
 </Story>
 
 <Story name="Profile Menu">
-	<div
-		class="bg-background bg-dot-grid flex h-screen w-full flex-col items-center justify-center gap-4"
-	>
+	<div class="flex h-screen w-full flex-col items-center justify-center gap-4">
 		<ADropdownMenu.Root bind:open={profileOpen} placement="bottom-end">
-			<ADropdownMenu.Trigger
-				class="border-border bg-card hover:border-foreground/40 flex items-center gap-3 rounded-full border py-1.5 pl-1.5 pr-4 text-sm transition-colors"
-			>
+			<ADropdownMenu.Trigger variant="chip">
 				<span
 					class="bg-primary text-primary-foreground flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold"
 				>

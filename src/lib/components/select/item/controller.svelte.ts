@@ -1,9 +1,9 @@
 import { getContext, setContext } from 'svelte';
 import { createAttachmentKey } from 'svelte/attachments';
-import { nanoid } from 'nanoid';
-import { SelectBond } from '../bond.svelte';
-import { closeOverlay } from '$svelte-atoms/core/components/portal/host/policies/overlay-view';
-import type { DropdownMenuItemControllerInterface } from '$svelte-atoms/core/components/dropdown-menu/item/controller.svelte';
+import { generateId } from '$ixirjs/ui/shared/bond';
+import { SelectBond } from '$ixirjs/ui/components/select/bond.svelte';
+import { closeOverlay } from '$ixirjs/ui/components/overlay/policies/overlay-view';
+import type { DropdownMenuItemControllerInterface } from '$ixirjs/ui/components/dropdown-menu/item/controller.svelte';
 
 export type SelectItemProps<T = unknown> = {
 	readonly id: string;
@@ -29,7 +29,7 @@ export class SelectItemController<T = unknown> implements DropdownMenuItemContro
 
 	constructor(props: SelectItemProps<T>) {
 		this.#props = props;
-		this.#id = this.props.id ?? nanoid();
+		this.#id = this.props.id ?? generateId();
 
 		this.#select = SelectBond.get() as SelectBond | undefined;
 

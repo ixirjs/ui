@@ -1,4 +1,8 @@
-import { defineCapability, sharedCapabilityKey, type Capability } from '../capability';
+import {
+	defineCapability,
+	sharedCapabilityKey,
+	type Capability
+} from '$ixirjs/ui/shared/capability/capability';
 
 export interface PaginationBacking {
 	page(): number;
@@ -23,22 +27,28 @@ export interface PaginationModel {
 	previousPage(): void;
 }
 
-export const PAGINATION = sharedCapabilityKey<PaginationModel>('@svelte-atoms/cap:pagination');
+export const PAGINATION = sharedCapabilityKey<PaginationModel>({
+	owner: '@ixirjs/cap',
+	name: 'pagination',
+	version: 1
+});
 
 export function createPagination(backing: PaginationBacking): PaginationModel {
 	const model: PaginationModel = {
 		get page() {
-			return Math.max(1, backing.page());
+			return positiveInteger(backing.page());
 		},
 		get pageSize() {
-			return Math.max(1, backing.pageSize());
+			return positiveInteger(backing.pageSize());
 		},
 		get total() {
-			return backing.total?.();
+			const total = backing.total?.();
+			return total === undefined ? undefined : nonnegativeInteger(total);
 		},
 		get pageCount() {
-			const total = backing.total?.();
-			return total === undefined ? undefined : Math.max(1, Math.ceil(total / model.pageSize));
+			return model.total === undefined
+				? undefined
+				: Math.max(1, Math.ceil(model.total / model.pageSize));
 		},
 		get startIndex() {
 			return (model.page - 1) * model.pageSize;
@@ -58,7 +68,7 @@ export function createPagination(backing: PaginationBacking): PaginationModel {
 			backing.setPage?.(clampPage(page, model.pageCount));
 		},
 		setPageSize(pageSize) {
-			backing.setPageSize?.(Math.max(1, pageSize));
+			backing.setPageSize?.(positiveInteger(pageSize));
 		},
 		nextPage() {
 			if (model.hasNext) model.setPage(model.page + 1);
@@ -89,8 +99,6 @@ export function paginationCapability(
 		slot: PAGINATION,
 		surface: pagination,
 		meta: {
-			layer: 1,
-			kind: 'model',
 			projects,
 			docs: 'Page, page size, total, and navigation boundary model.'
 		},
@@ -134,7 +142,15 @@ export function paginationCapability(
 	});
 }
 
+function positiveInteger(value: number): number {
+	return Number.isFinite(value) ? Math.max(1, Math.floor(value)) : 1;
+}
+
+function nonnegativeInteger(value: number): number {
+	return Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
+}
+
 function clampPage(page: number, pageCount: number | undefined): number {
-	const lower = Math.max(1, page);
+	const lower = positiveInteger(page);
 	return pageCount === undefined ? lower : Math.min(lower, pageCount);
 }

@@ -81,7 +81,7 @@ The following components are inherited from Dropdown, Popover, and List modules:
 
 ```svelte
 <script>
-	import { ContextMenu } from '@svelte-atoms/core/context-menu';
+	import { ContextMenu } from '@ixirjs/ui/components/context-menu';
 </script>
 
 <ContextMenu.Root>
@@ -200,7 +200,7 @@ Note: Context menus should be used sparingly as they may not be discoverable by 
 Customize the context menu appearance using presets:
 
 ```typescript
-import { createPreset } from '@svelte-atoms/core';
+import { createPreset } from '@ixirjs/ui';
 
 const preset = createPreset({
 	'context-menu.trigger': () => ({

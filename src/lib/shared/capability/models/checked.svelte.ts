@@ -1,4 +1,8 @@
-import { defineCapability, sharedCapabilityKey, type Capability } from '../capability';
+import {
+	defineCapability,
+	sharedCapabilityKey,
+	type Capability
+} from '$ixirjs/ui/shared/capability/capability';
 
 export type CheckedState = boolean | 'mixed';
 
@@ -17,7 +21,11 @@ export interface CheckedModel {
 	toggle(): void;
 }
 
-export const CHECKED = sharedCapabilityKey<CheckedModel>('@svelte-atoms/cap:checked');
+export const CHECKED = sharedCapabilityKey<CheckedModel>({
+	owner: '@ixirjs/cap',
+	name: 'checked',
+	version: 1
+});
 
 export function createChecked(backing: CheckedBacking): CheckedModel {
 	return {
@@ -60,8 +68,6 @@ export function checkedCapability(
 		slot: CHECKED,
 		surface: checked,
 		meta: {
-			layer: 1,
-			kind: 'model',
 			projects: roles,
 			docs: 'Checked, unchecked, and mixed state model with scoped checked-state projection.'
 		},

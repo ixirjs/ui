@@ -5,7 +5,7 @@ import { createMcpHandler } from 'mcp-handler';
 import { z } from 'zod';
 import { dev } from '$app/environment';
 
-// MCP Server Implementation for @svelte-atoms/core
+// MCP Server Implementation for @ixirjs/ui
 // Using @modelcontextprotocol/sdk with HTTP transport
 
 let baseUrl: string | null = null;
@@ -257,7 +257,7 @@ const handler = createMcpHandler(
 			{
 				name: 'imports',
 				title: 'Import Guide',
-				description: 'How to import components and utilities from @svelte-atoms/core'
+				description: 'How to import components and utilities from @ixirjs/ui'
 			},
 			{
 				name: 'variants',
@@ -411,7 +411,7 @@ const handler = createMcpHandler(
 		server.registerPrompt(
 			'create-component',
 			{
-				description: 'Generate a new component using @svelte-atoms/core',
+				description: 'Generate a new component using @ixirjs/ui',
 				argsSchema: {
 					componentType: z
 						.string()
@@ -429,7 +429,7 @@ const handler = createMcpHandler(
 							role: 'user',
 							content: {
 								type: 'text',
-								text: `Create a ${type} component using @svelte-atoms/core library with the following features: ${feat}\n\nCRITICAL IMPORT RULES:\n- ALL imports MUST use named imports from '@svelte-atoms/core'\n- Example: import { Button, Input, Dialog } from '@svelte-atoms/core';\n- NEVER use default imports\n- NEVER use subpath imports like '@svelte-atoms/core/components/button'\n- Component names are PascalCase (Button, Dialog, Dropdown)\n- Utility names are camelCase (clickOutside, portal, focusTrap)\n\nFollow these guidelines:\n1. Use Svelte 5 syntax with runes ($state, $derived, $effect)\n2. Import components using named imports from @svelte-atoms/core\n3. Use proper TypeScript types\n4. Follow kebab-case for file names\n5. Include accessibility features\n6. Add inline code comments\n\nProvide complete, working code with correct imports.`
+								text: `Create a ${type} component using @ixirjs/ui library with the following features: ${feat}\n\nCRITICAL IMPORT RULES:\n- ALL imports MUST use named imports from '@ixirjs/ui'\n- Example: import { Button, Input, Dialog } from '@ixirjs/ui';\n- NEVER use default imports\n- NEVER use subpath imports like '@ixirjs/ui/components/button'\n- Component names are PascalCase (Button, Dialog, Dropdown)\n- Utility names are camelCase (clickOutside, portal, focusTrap)\n\nFollow these guidelines:\n1. Use Svelte 5 syntax with runes ($state, $derived, $effect)\n2. Import components using named imports from @ixirjs/ui\n3. Use proper TypeScript types\n4. Follow kebab-case for file names\n5. Include accessibility features\n6. Add inline code comments\n\nProvide complete, working code with correct imports.`
 							}
 						}
 					]
@@ -456,7 +456,7 @@ const handler = createMcpHandler(
 							role: 'user',
 							content: {
 								type: 'text',
-								text: `Fix the following component from @svelte-atoms/core:\n\nIssue: ${issueStr}\n\nCode:\n\`\`\`svelte\n${codeStr}\n\`\`\`\n\nCRITICAL: Ensure all imports use named imports from '@svelte-atoms/core'\nExample: import { Button, Input } from '@svelte-atoms/core';\n\nProvide the corrected code following @svelte-atoms/core best practices.`
+								text: `Fix the following component from @ixirjs/ui:\n\nIssue: ${issueStr}\n\nCode:\n\`\`\`svelte\n${codeStr}\n\`\`\`\n\nCRITICAL: Ensure all imports use named imports from '@ixirjs/ui'\nExample: import { Button, Input } from '@ixirjs/ui';\n\nProvide the corrected code following @ixirjs/ui best practices.`
 							}
 						}
 					]
@@ -481,7 +481,7 @@ const handler = createMcpHandler(
 							role: 'user',
 							content: {
 								type: 'text',
-								text: `Improve the following component using @svelte-atoms/core best practices:\n\n\`\`\`svelte\n${codeStr}\n\`\`\`\n\nSuggestions should include:\n1. Correct imports (named imports from '@svelte-atoms/core')\n2. Better use of library features\n3. Performance optimizations\n4. Accessibility improvements\n5. Code organization\n6. TypeScript type safety`
+								text: `Improve the following component using @ixirjs/ui best practices:\n\n\`\`\`svelte\n${codeStr}\n\`\`\`\n\nSuggestions should include:\n1. Correct imports (named imports from '@ixirjs/ui')\n2. Better use of library features\n3. Performance optimizations\n4. Accessibility improvements\n5. Code organization\n6. TypeScript type safety`
 							}
 						}
 					]

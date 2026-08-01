@@ -1,14 +1,15 @@
-import { Bond, Atom } from '$svelte-atoms/core/shared/bond';
-import { defineBond, type BondOf } from '$svelte-atoms/core/shared';
+import { Bond, Atom } from '$ixirjs/ui/shared/bond';
+import { defineBond, type BondOf } from '$ixirjs/ui/shared';
 import {
 	createDisclosure,
 	disclosureCapability,
 	disclosureTrigger,
 	type Disclosure
-} from '$svelte-atoms/core/shared/capability/models/disclosure.svelte';
-import type { DisclosureStateProps } from '$svelte-atoms/core/shared/capability/models/disclosure-state.svelte';
-import { treeItemGroupLink } from '$svelte-atoms/core/shared/capability/models/relationship.svelte';
-import { isBrowser } from '$svelte-atoms/core/utils/dom.svelte';
+} from '$ixirjs/ui/shared/capability/models/disclosure.svelte';
+import type { DisclosureStateProps } from '$ixirjs/ui/shared/capability/models/disclosure-state.svelte';
+import { treeItemGroupLink } from '$ixirjs/ui/shared/capability/models/relationship.svelte';
+import { isBrowser } from '$ixirjs/ui/utils/dom.svelte';
+import type { StateChangeContext } from '$ixirjs/ui/types';
 
 // -----------------------------------------------------------------------------
 // Public types
@@ -36,39 +37,38 @@ export class TreeRootAtom extends Atom<TreeBondView, HTMLElement> {
 		super(bond, 'root');
 	}
 	override get attrs() {
-		const bond = this.bond;
-		const props = bond.state?.props;
+		const bond = this.requireBond();
+		const props = bond?.props;
 		const isDisabled = props?.disabled ?? false;
 
 		// aria-expanded lives on the header (trigger↔content link); root labelled by the header.
 		return {
 			...super.attrs,
-			'aria-labelledby': bond.atomByRole('treeitem')?.id,
+			'aria-labelledby': bond.nodeByRole('treeitem')?.id,
 			'aria-disabled': isDisabled
 		};
 	}
 }
 
-class TreeHeaderAtom extends Atom<TreeBondView, HTMLElement> {
+export class TreeHeaderAtom extends Atom<TreeBondView, HTMLElement> {
 	constructor(bond: TreeBondView) {
 		super(bond, 'header');
 		this.role('treeitem');
 	}
 	override get attrs() {
-		const bond = this.bond;
+		const bond = this.requireBond();
 		const isButtonElement = isBrowser() ? bond.elements.header instanceof HTMLButtonElement : false;
-		const role = isButtonElement ? '' : 'button';
-		const tabindex = !isButtonElement || bond.state.props.disabled ? -1 : 0;
-		// aria-controls + aria-expanded come from the trigger↔content link (role:'trigger').
+		const tabindex = !isButtonElement || bond.props.disabled ? -1 : 0;
+		// The treeitem relationship owns the semantic role; do not compete with it by
+		// projecting a native button role for non-button headers.
 		return {
 			...super.attrs,
-			role,
 			tabindex
 		};
 	}
 }
 
-class TreeBodyAtom extends Atom<TreeBondView, HTMLElement> {
+export class TreeBodyAtom extends Atom<TreeBondView, HTMLElement> {
 	constructor(bond: TreeBondView) {
 		super(bond, 'body');
 		this.role('treegroup');
@@ -81,7 +81,7 @@ class TreeBodyAtom extends Atom<TreeBondView, HTMLElement> {
 	}
 }
 
-class TreeIndicatorAtom extends Atom<TreeBondView, HTMLElement> {
+export class TreeIndicatorAtom extends Atom<TreeBondView, HTMLElement> {
 	constructor(bond: TreeBondView) {
 		super(bond, 'indicator');
 	}
@@ -95,6 +95,7 @@ class TreeIndicatorAtom extends Atom<TreeBondView, HTMLElement> {
 
 class TreeBondBase extends Bond<TreeBondProps> {
 	#parent: TreeBond | undefined;
+	#openChangeContext: Pick<StateChangeContext, 'event' | 'reason'> | undefined;
 	readonly disclosure: Disclosure = createDisclosure({
 		get: () => this.props.open,
 		set: (v) => (this.props.open = v)
@@ -105,12 +106,25 @@ class TreeBondBase extends Bond<TreeBondProps> {
 		this.#parent = getOptionalParentTree();
 		this.capability(disclosureCapability(this.disclosure));
 		// treeitem↔group link: header gets aria-expanded/controls; body gets aria-labelledby/group.
-		this.capability(treeItemGroupLink(this.disclosure));
+		this.capability(treeItemGroupLink());
 		this.capability(disclosureTrigger({ event: 'pointerdown' }));
 	}
 
 	get parent(): TreeBond | undefined {
 		return this.#parent;
+	}
+
+	stageOpenChange(context: Pick<StateChangeContext, 'event' | 'reason'>): void {
+		this.#openChangeContext = context;
+		queueMicrotask(() => {
+			if (this.#openChangeContext === context) this.#openChangeContext = undefined;
+		});
+	}
+
+	takeOpenChangeContext(): Pick<StateChangeContext, 'event' | 'reason'> {
+		const context = this.#openChangeContext ?? {};
+		this.#openChangeContext = undefined;
+		return context;
 	}
 
 	get isOpen(): boolean {
@@ -146,37 +160,15 @@ function getOptionalParentTree(): TreeBond | undefined {
 // Bond spec and constructor facade
 // -----------------------------------------------------------------------------
 
-const TreeBondImpl = defineBond<
-	{
-		root: typeof TreeRootAtom;
-		header: { atom: typeof TreeHeaderAtom; role: 'trigger' };
-		body: { atom: typeof TreeBodyAtom; role: 'content' };
-		indicator: typeof TreeIndicatorAtom;
-	},
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	any,
-	typeof TreeBondBase
->({
+export const TreeBond = defineBond({
 	name: 'tree',
 	base: TreeBondBase,
 	atoms: {
-		root: TreeRootAtom,
+		root: { atom: TreeRootAtom, selfLayer: true },
 		header: { atom: TreeHeaderAtom, role: 'trigger' },
 		body: { atom: TreeBodyAtom, role: 'content' },
 		indicator: TreeIndicatorAtom
 	}
 });
 
-export type TreeBond = BondOf<typeof TreeBondImpl>;
-
-interface TreeBondConstructor {
-	new (props: TreeBondProps): TreeBond;
-	readonly CONTEXT_KEY: string;
-	readonly spec: (typeof TreeBondImpl)['spec'];
-	get(): TreeBond | undefined;
-	getOrThrow(message?: string): TreeBond;
-	set(bond: TreeBond): TreeBond;
-	create(props: TreeBondProps): TreeBond;
-}
-
-export const TreeBond = TreeBondImpl as unknown as TreeBondConstructor;
+export type TreeBond = BondOf<typeof TreeBond>;

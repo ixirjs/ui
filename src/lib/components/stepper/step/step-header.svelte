@@ -1,10 +1,8 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { mergeAtomProps, HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
-	import { createAtomInstance } from '$svelte-atoms/core/shared/bond';
-	import { StepBond, StepHeaderAtom } from './bond.svelte';
+	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import { usePart } from '$ixirjs/ui/shared';
+	import { StepBond } from './bond.svelte';
 	import type { StepHeaderProps } from './types';
-
-	const bond = StepBond.getOrThrow('StepHeader must be used within a Step component.');
 
 	let {
 		class: klass = '',
@@ -13,19 +11,16 @@
 		...restProps
 	}: StepHeaderProps<E, B> = $props();
 
-	const atom = createAtomInstance<StepHeaderAtom, StepBond>('header', {
-		bond,
-		factory: (owner) => new StepHeaderAtom(owner as StepBond)
+	const part = usePart(StepBond, 'header', () => restProps, {
+		preset: () => preset
 	});
-
-	const headerProps = $derived(mergeAtomProps(atom, preset, restProps));
 </script>
 
 <HtmlAtom
 	as="div"
-	{bond}
 	class={['font-medium text-sm flex flex-col', '$preset', klass]}
-	{...headerProps}
+	{...restProps}
+	{part}
 >
-	{@render children?.({ step: bond })}
+	{@render children?.({ step: part.bond })}
 </HtmlAtom>

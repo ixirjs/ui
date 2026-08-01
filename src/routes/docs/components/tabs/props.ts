@@ -25,10 +25,11 @@ export const tabsRootProps: PropDefinition[] = [
 		description: 'Children'
 	},
 	{
-		name: 'onchange',
-		type: '((value: D) => void) | undefined',
+		name: 'onvaluechange',
+		type: 'StateChangeCallback<D | undefined, TabsBond> | undefined',
 		default: 'undefined',
-		description: 'Onchange'
+		description:
+			'Semantic callback fired after the active value commits. Receives `(value, { bond? })`.'
 	},
 	{
 		name: '...atomProps',
@@ -48,9 +49,9 @@ export const tabHeaderProps: PropDefinition[] = [
 	},
 	{
 		name: 'onclick',
-		type: '((ev: PointerEvent, context: { tab?: TabBond<unknown>; }) => void) | undefined',
+		type: '((event: MouseEvent) => void) | undefined',
 		default: 'undefined',
-		description: 'Onclick'
+		description: 'Native click callback. Receives only the DOM event.'
 	},
 	{
 		name: '...atomProps',

@@ -1,6 +1,6 @@
 # ROADMAP — future improvements (from the shadcn-svelte comparison)
 
-_Standalone, trackable roadmap distilled from [iterations 1–17](README.md). The numbered iterations are the evidence; [iteration-16-final.md](iteration-16-final.md) is the full reasoning. This file is the actionable checklist — update the status boxes as items land._
+_Standalone, trackable roadmap distilled from the [iteration findings](README.md). This file is the actionable checklist — update the status boxes as items land._
 
 _Status verified against `src/lib` on 2026-06-22 (baseline commit `7f9da8ac`)._
 
@@ -29,7 +29,7 @@ In 13 of 15 investigative iterations the gap was _"the capability exists but isn
 - [ ] **0.2 — Enable Home/End** for select / combobox / menu. Model already implements it; pure config flip. _T · iter 2,11_
 - [ ] **0.3 — Demote memo-engine internals** out of `./utils` (mark `@internal`). Shrinks the public API surface; the engine is a liability if exposed. _L · iter 10_
 - [ ] **0.4 — Normalize off-convention error messages** (~10%). Consistency of the "must be used within" misuse story. _L · iter 13_
-- [ ] **0.5 — Docs:** recommend `@svelte-atoms/core/<component>` deep imports + document the `<Icon src>` BYO convention. Bundle-sensitive consumers; clarifies lucide is optional. _L · iter 5,7_
+- [ ] **0.5 — Docs:** recommend `@ixirjs/ui/<component>` deep imports + document the `<Icon src>` BYO convention. Bundle-sensitive consumers; clarifies lucide is optional. _L · iter 5,7_
 
 ## Tier 1 — high impact, low/medium effort (the DX + correctness unlock)
 
@@ -94,4 +94,4 @@ These already beat shadcn; the roadmap must not trade them away:
 
 ---
 
-_When an item lands, tick its box (`[ ]` → `[x]`) here and append a dated note to [iteration-17-tracking.md](iteration-17-tracking.md). Findings are point-in-time — re-verify against `src/lib` before starting an item._
+_When an item lands, tick its box (`[ ]` → `[x]`) here. Findings are point-in-time — re-verify against `src/lib` before starting an item._

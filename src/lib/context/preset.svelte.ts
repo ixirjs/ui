@@ -1,245 +1,140 @@
 import { getContext, setContext } from 'svelte';
-import type { ClassValue } from 'svelte/elements';
-import { mergePresetRecords, resolvePreset } from '$svelte-atoms/core/components/atom/utils/preset';
-import type { Base } from '$svelte-atoms/core/components/atom';
-import type { Bond } from '../shared';
-import type { Attachment } from 'svelte/attachments';
+import { DEV } from 'esm-env';
+import { BUILT_IN_PRESET_KEYS } from '$ixirjs/ui/preset/manifest';
+import type {
+	FallbackPreset,
+	MergedPresetLayers,
+	Preset,
+	PresetContext,
+	PresetEntry,
+	PresetEntryValue,
+	PresetModuleName
+} from '$ixirjs/ui/preset/types';
 
-const CONTEXT_KEY = '@svelte-atoms/context/preset';
+export type {
+	BuiltInPresetModuleMap,
+	FallbackPreset,
+	MergedPresetLayers,
+	Motion,
+	MotionAnimateFunction,
+	MotionCleanup,
+	MotionInitialFunction,
+	MotionTransitionFunction,
+	Preset,
+	PresetContext,
+	PresetEntry,
+	PresetEntryRecord,
+	PresetEntryValue,
+	PresetKey,
+	PresetLike,
+	PresetModuleMap,
+	PresetModuleName,
+	PresetRender,
+	ResolvedMotion
+} from '$ixirjs/ui/preset/types';
 
-export interface PresetEntryRecord {
-	[key: string]: unknown;
-	class?: ClassValue;
-	as?: string;
-	base?: Base;
-	variants?: Record<string, Record<string, unknown>>;
-	compounds?: Array<Record<string, unknown>>;
-	defaults?: Record<string, unknown>;
-	attachments?: Attachment[];
+const CONTEXT_KEY = '@ixirjs/context/preset';
+
+export function fallbackPreset(...presets: readonly PresetModuleName[]): FallbackPreset {
+	return Object.freeze({ kind: 'fallback-preset', presets: Object.freeze([...presets]) });
 }
 
-// A single preset entry value — either a record or a deferred factory returning one.
-export type PresetEntryValue = PresetEntryRecord | (() => PresetEntryRecord);
-
-// A preset entry — invoked with a bond, returns a PresetEntryValue or array.
-// Arrays are merged in order (later entries win), enabling layered overrides.
-export type PresetEntry = (
-	bond: Bond | undefined | null,
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- public extension point: forwarded args are opaque
-	...args: any[]
-) => PresetEntryValue | Array<PresetEntryValue>;
-
-// Registry of preset slot names → PresetEntry. Extend via module augmentation to add custom slots with full autocomplete.
-export interface PresetModuleMap {
-	accordion: PresetEntry;
-	'accordion.item.body': PresetEntry;
-	'accordion.item.header': PresetEntry;
-	'accordion.item.indicator': PresetEntry;
-	'accordion.item': PresetEntry;
-	'alert.actions': PresetEntry;
-	'alert.close-button': PresetEntry;
-	'alert.content': PresetEntry;
-	'alert.description': PresetEntry;
-	'alert.icon': PresetEntry;
-	alert: PresetEntry;
-	'alert.title': PresetEntry;
-	'card.content': PresetEntry;
-	'card.description': PresetEntry;
-	'card.footer': PresetEntry;
-	'card.header': PresetEntry;
-	'card.body': PresetEntry;
-	'card.media': PresetEntry;
-	card: PresetEntry;
-	'card.subtitle': PresetEntry;
-	'card.title': PresetEntry;
-	'collapsible.body': PresetEntry;
-	'collapsible.header': PresetEntry;
-	'collapsible.indicator': PresetEntry;
-	collapsible: PresetEntry;
-	'combobox.control': PresetEntry;
-	'combobox.trigger': PresetEntry;
-	'combobox.item': PresetEntry;
-	'combobox.content': PresetEntry;
-	'select.content': PresetEntry;
-	'select.item': PresetEntry;
-	'select.trigger': PresetEntry;
-	'dropdown-menu.content': PresetEntry;
-	'dropdown-menu.item': PresetEntry;
-	'context-menu.content': PresetEntry;
-	'context-menu.item': PresetEntry;
-	'dialog.close-button': PresetEntry;
-	'dialog.body': PresetEntry;
-	'dialog.content': PresetEntry;
-	'dialog.description': PresetEntry;
-	'dialog.footer': PresetEntry;
-	'dialog.header': PresetEntry;
-	dialog: PresetEntry;
-	'dialog.title': PresetEntry;
-	divider: PresetEntry;
-	'dropdown.placeholder': PresetEntry;
-	'dropdown.query': PresetEntry;
-	'dropdown.trigger': PresetEntry;
-	'dropdown.selections': PresetEntry;
-	'dropdown.selection': PresetEntry;
-	dropdown: PresetEntry;
-	'dropdown.item': PresetEntry;
-	'field.control': PresetEntry;
-	'field.label': PresetEntry;
-	'field.helper-text': PresetEntry;
-	field: PresetEntry;
-	form: PresetEntry;
-	icon: PresetEntry;
-	input: PresetEntry;
-	'input.control': PresetEntry;
-	'input.password': PresetEntry;
-	'input.placeholder': PresetEntry;
-	label: PresetEntry;
-	'layer.inner': PresetEntry;
-	layer: PresetEntry;
-	link: PresetEntry;
-	'list.divider': PresetEntry;
-	'list.group': PresetEntry;
-	'list.item': PresetEntry;
-	'menu.content': PresetEntry;
-	'menu.list': PresetEntry;
-	'popover.arrow': PresetEntry;
-	'popover.indicator': PresetEntry;
-	'popover.content': PresetEntry;
-	'popover.trigger': PresetEntry;
-	'portal.inner': PresetEntry;
-	portal: PresetEntry;
-	root: PresetEntry;
-	'root.portals': PresetEntry;
-	'sidebar.content': PresetEntry;
-	sidebar: PresetEntry;
-	'drawer.backdrop': PresetEntry;
-	'drawer.body': PresetEntry;
-	'drawer.content': PresetEntry;
-	'drawer.description': PresetEntry;
-	'drawer.title': PresetEntry;
-	'drawer.footer': PresetEntry;
-	'drawer.header': PresetEntry;
-	drawer: PresetEntry;
-	'stack.root': PresetEntry;
-	'stack.item': PresetEntry;
-	stepper: PresetEntry;
-	'stepper.header': PresetEntry;
-	'stepper.body': PresetEntry;
-	'stepper.footer': PresetEntry;
-	'stepper.step': PresetEntry;
-	'stepper.step.indicator': PresetEntry;
-	'stepper.step.header': PresetEntry;
-	'stepper.step.body': PresetEntry;
-	'stepper.step.separator': PresetEntry;
-	'tabs.body': PresetEntry;
-	'tabs.header': PresetEntry;
-	tabs: PresetEntry;
-	'tab.header': PresetEntry;
-	'tab.body': PresetEntry;
-	'tab.description': PresetEntry;
-	tab: PresetEntry;
-	'tree.body': PresetEntry;
-	'tree.header': PresetEntry;
-	'tree.indicator': PresetEntry;
-	tree: PresetEntry;
-	datagrid: PresetEntry;
-	'datagrid.header': PresetEntry;
-	'datagrid.column': PresetEntry;
-	'datagrid.body': PresetEntry;
-	'datagrid.row': PresetEntry;
-	'datagrid.cell': PresetEntry;
-	'datagrid.footer': PresetEntry;
-	'datagrid.checkbox': PresetEntry;
-	'datagrid.sort-icon': PresetEntry;
-	scrollable: PresetEntry;
-	'scrollable.container': PresetEntry;
-	'scrollable.content': PresetEntry;
-	'scrollable.track': PresetEntry;
-	'scrollable.thumb': PresetEntry;
-	toast: PresetEntry;
-	'toast.title': PresetEntry;
-	'toast.description': PresetEntry;
-	'toast.close': PresetEntry;
-	breadcrumb: PresetEntry;
-	'breadcrumb.item': PresetEntry;
-	'breadcrumb.separator': PresetEntry;
-	badge: PresetEntry;
-	chip: PresetEntry;
-	'chip.close-button': PresetEntry;
-	button: PresetEntry;
-	checkbox: PresetEntry;
-	'checkbox.checkmark': PresetEntry;
-	'checkbox.indeterminate': PresetEntry;
-	radio: PresetEntry;
-	'radio.group': PresetEntry;
-	container: PresetEntry;
-	calendar: PresetEntry;
-	'calendar.day': PresetEntry;
-	'calendar.header': PresetEntry;
-	'calendar.weekday': PresetEntry;
-	'calendar.body': PresetEntry;
-	'datepicker.trigger': PresetEntry;
-	'datepicker.calendar': PresetEntry;
-	'datepicker.years': PresetEntry;
-	'datepicker.months': PresetEntry;
-	'datepicker.header': PresetEntry;
-	progress: PresetEntry;
-	'progress.linear': PresetEntry;
-	'progress.linear.track': PresetEntry;
-	'progress.linear.fill': PresetEntry;
-	'progress.circular': PresetEntry;
-	'progress.circular.track': PresetEntry;
-	'progress.circular.fill': PresetEntry;
+export function mergePresetLayers(...layers: readonly PresetEntryValue[]): MergedPresetLayers {
+	return Object.freeze({ kind: 'merged-preset-layers', layers: Object.freeze([...layers]) });
 }
 
-// All valid preset slot names — derived from PresetModuleMap for extensibility.
-export type PresetModuleName = keyof PresetModuleMap;
-
-// A preset key accepted by atoms — a single slot name or an ordered fallback chain (first-registered-wins).
-export type PresetKey = PresetModuleName | (string & {}) | (PresetModuleName | (string & {}))[];
-
-export type Preset = { [K in PresetModuleName]: PresetModuleMap[K] };
+/** Defines a checked, partial theme without exposing the registry representation. */
+export function definePreset<const P extends Partial<Preset>>(preset: P): P {
+	if (DEV) for (const key of Object.keys(preset)) warnOnMisspelledKey(key);
+	return Object.freeze({ ...preset }) as P;
+}
 
 export function getPreset<K extends PresetModuleName>(key: K): PresetEntry | undefined;
 export function getPreset(): Partial<Preset> | undefined;
 export function getPreset(...args: unknown[]) {
-	const context = getContext<Partial<Preset> | undefined>(CONTEXT_KEY);
-	if (args.length) {
-		const key = args[0] as PresetModuleName;
-		return context?.[key];
-	}
-	return context;
+	const preset = getContext<Partial<Preset> | undefined>(CONTEXT_KEY);
+	if (args.length) return preset?.[args[0] as PresetModuleName];
+	return preset;
 }
 
-export function setPreset(preset: Partial<Preset>) {
-	return mergePreset(() => preset);
+function resolvePresetEntry(entry: PresetEntry, context: PresetContext): PresetEntryValue {
+	return typeof entry === 'function' ? entry(context) : entry;
+}
+
+function mergePresetEntries(existing: PresetEntry, next: PresetEntry): PresetEntry {
+	return (context) =>
+		mergePresetLayers(resolvePresetEntry(existing, context), resolvePresetEntry(next, context));
+}
+
+// Unknown preset keys are *not* an error: an app may register slots for its own components through
+// `PresetModuleMap` augmentation, and nothing at runtime can see that augmentation. So the check only
+// fires on a near-miss of a shipped key — the shape a typo takes — and stays silent otherwise.
+//
+// Both entry points check, and the shared `warnedPresetKeys` keeps the pair from warning twice for a
+// `definePreset` result later handed to `setPreset` — the common path.
+const warnedPresetKeys = new Set<string>();
+// A Set, not `BUILT_IN_PRESET_KEYS.includes`: `mergePreset` runs per render that installs a preset,
+// so a linear scan of 210 keys per key per render is on the hot path even though the warning is not.
+const knownPresetKeys = new Set<string>(BUILT_IN_PRESET_KEYS);
+
+function warnOnMisspelledKey(key: string): void {
+	if (knownPresetKeys.has(key) || warnedPresetKeys.has(key)) return;
+	warnedPresetKeys.add(key);
+	const limit = key.length <= 6 ? 1 : 2;
+	let best: string | undefined;
+	let bestDistance = limit + 1;
+	for (const candidate of BUILT_IN_PRESET_KEYS as readonly string[]) {
+		const distance = editDistance(key, candidate, bestDistance - 1);
+		if (distance < bestDistance) {
+			bestDistance = distance;
+			best = candidate;
+		}
+	}
+	if (best) {
+		console.warn(`[ixirjs] unknown preset key "${key}". Did you mean "${best}"?`);
+	}
+}
+
+// Levenshtein, abandoned as soon as the whole row exceeds `max` — every shipped key is compared
+// against every unknown one, so the bail-out is what keeps that quadratic sweep cheap.
+function editDistance(a: string, b: string, max: number): number {
+	if (Math.abs(a.length - b.length) > max) return max + 1;
+	let previous = Array.from({ length: b.length + 1 }, (_, index) => index);
+	for (let i = 1; i <= a.length; i++) {
+		const row = [i];
+		let rowMin = i;
+		for (let j = 1; j <= b.length; j++) {
+			const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+			const value = Math.min(previous[j]! + 1, row[j - 1]! + 1, previous[j - 1]! + cost);
+			row.push(value);
+			if (value < rowMin) rowMin = value;
+		}
+		if (rowMin > max) return max + 1;
+		previous = row;
+	}
+	return previous[b.length]!;
+}
+
+// Context installation is initialization-scoped: call while creating the provider component.
+// Runtime reactivity belongs inside entry factories, whose reads are tracked by presentation.
+export function setPreset(preset: Partial<Preset>): void {
+	mergePreset(() => preset);
 }
 
 export function mergePreset(
 	callback: (currentPreset: Partial<Preset> | undefined) => Partial<Preset>
-) {
+): void {
 	const currentPreset = getPreset();
 	const override = callback(currentPreset);
 	const result: Partial<Preset> = { ...currentPreset };
 
-	const keys = Object.keys(override) as PresetModuleName[];
-	for (const k of keys) {
-		const next = override[k];
+	for (const key of Object.keys(override) as PresetModuleName[]) {
+		const next = override[key];
 		if (!next) continue;
-		const existing = currentPreset?.[k];
-		if (existing) {
-			const e = existing,
-				n = next;
-			result[k] = ((bond, ...args) => {
-				const a = resolvePreset(e(bond, ...args));
-				const b = resolvePreset(n(bond, ...args));
-				if (a && b) return mergePresetRecords([a, b]);
-				return a ?? b;
-			}) as PresetEntry;
-		} else {
-			result[k] = next;
-		}
+		if (DEV) warnOnMisspelledKey(key);
+		const existing = result[key];
+		result[key] = existing ? mergePresetEntries(existing, next) : next;
 	}
 
-	return setContext(CONTEXT_KEY, result);
+	setContext(CONTEXT_KEY, result);
 }

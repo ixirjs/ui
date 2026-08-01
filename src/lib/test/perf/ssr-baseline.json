@@ -1,0 +1,43 @@
+{
+	"machine": "AMD Ryzen 9 PRO 8945HS w/ Radeon 780M Graphics \u00d716",
+	"node": "v24.13.1",
+	"recorded": "2026-07-28",
+	"layers": {
+		"plain": {
+			"micros": 0.28,
+			"gcShare": 0.711,
+			"bytesPerCard": 356,
+			"sha": "666f19e09e6a"
+		},
+		"htmlatom": {
+			"micros": 11.34,
+			"gcShare": 0.239,
+			"bytesPerCard": 538,
+			"sha": "0019ef11f10f"
+		},
+		"card": {
+			"micros": 46.84,
+			"gcShare": 0.201,
+			"bytesPerCard": 891,
+			"sha": "aaca8ba2bfed"
+		},
+		"collapsible": {
+			"micros": 56.07,
+			"gcShare": 0.191,
+			"bytesPerCard": 828,
+			"sha": "d90ce98f6767"
+		},
+		"datagrid": {
+			"micros": 39.57,
+			"gcShare": 0.168,
+			"bytesPerCard": 993,
+			"sha": "dd1d76819c96"
+		},
+		"tree": {
+			"micros": 67.3,
+			"gcShare": 0.207,
+			"bytesPerCard": 853,
+			"sha": "87db8928db72"
+		}
+	}
+}

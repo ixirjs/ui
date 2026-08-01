@@ -1,5 +1,5 @@
-import { Bond, Atom, type BondStateProps } from '$svelte-atoms/core/shared/bond';
-import { createInput, defineBond, type BondOf, type InputModel } from '$svelte-atoms/core/shared';
+import { Bond, Atom, type BondStateProps } from '$ixirjs/ui/shared/bond';
+import { createInput, defineBond, type BondOf, type InputModel } from '$ixirjs/ui/shared';
 import { SvelteDate } from 'svelte/reactivity';
 
 // -----------------------------------------------------------------------------
@@ -7,11 +7,11 @@ import { SvelteDate } from 'svelte/reactivity';
 // -----------------------------------------------------------------------------
 
 export type InputStateProps = BondStateProps & {
-	value?: string | number | Date;
+	value?: string | number | Date | undefined;
 	readonly number?: number;
 	readonly date?: Date;
 	files?: File[];
-	checked?: string[];
+	checked?: boolean;
 	group?: unknown[];
 };
 
@@ -52,9 +52,9 @@ export class InputRootAtom extends Atom<InputBondView> {
 export class InputControlAtom extends Atom<InputBondView, HTMLInputElement> {
 	#type = $state<string>();
 
-	constructor(bond: InputBondView) {
+	constructor(bond?: InputBondView) {
 		// Named `control` (not `input`) to avoid the redundant `input-input-*` id prefix.
-		super(bond, 'control');
+		super(bond, 'control', { namespace: 'input' });
 	}
 
 	get type() {
@@ -78,8 +78,8 @@ export class InputControlAtom extends Atom<InputBondView, HTMLInputElement> {
 }
 
 export class InputPlaceholderAtom extends Atom<InputBondView> {
-	constructor(bond: InputBondView) {
-		super(bond, 'placeholder');
+	constructor(bond?: InputBondView) {
+		super(bond, 'placeholder', { namespace: 'input' });
 	}
 
 	override get attrs() {
@@ -113,7 +113,8 @@ class InputBondBase extends Bond<InputStateProps> {
 	// get/set map to the bindable `value` prop.
 	// Value coerced to number; undefined if the element type isn't 'number' or value isn't finite.
 	get number(): number | undefined {
-		if ((this.node('input') as InputControlAtom | undefined)?.type !== 'number') return undefined;
+		if ((this.nodeByPart('input') as InputControlAtom | undefined)?.type !== 'number')
+			return undefined;
 
 		const raw = this.value.get();
 		if (raw.trim() === '') return undefined;
@@ -124,7 +125,7 @@ class InputBondBase extends Bond<InputStateProps> {
 
 	// Value coerced to Date; undefined if not a date-like input type or value doesn't parse.
 	get date(): Date | undefined {
-		const control = this.node('input') as InputControlAtom | undefined;
+		const control = this.nodeByPart('input') as InputControlAtom | undefined;
 		if (!control?.type || !DATE_INPUT_TYPES.includes(control.type)) return undefined;
 
 		const raw = this.value.get();
@@ -139,7 +140,7 @@ class InputBondBase extends Bond<InputStateProps> {
 	}
 
 	get files() {
-		return this.state.props.files ?? [];
+		return this.props.files ?? [];
 	}
 }
 
@@ -149,16 +150,7 @@ class InputBondBase extends Bond<InputStateProps> {
 // Bond spec and constructor facade
 // -----------------------------------------------------------------------------
 
-const InputBondImpl = defineBond<
-	{
-		root: typeof InputRootAtom;
-		input: typeof InputControlAtom;
-		placeholder: typeof InputPlaceholderAtom;
-	},
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	any,
-	typeof InputBondBase
->({
+export const InputBond = defineBond({
 	name: 'input',
 	base: InputBondBase,
 	atoms: {
@@ -169,16 +161,4 @@ const InputBondImpl = defineBond<
 });
 
 // Instance type of the input bond — paired with the const above.
-export type InputBond = BondOf<typeof InputBondImpl>;
-
-interface InputBondConstructor {
-	new (props: InputStateProps): InputBond;
-	readonly CONTEXT_KEY: string;
-	readonly spec: (typeof InputBondImpl)['spec'];
-	get(): InputBond | undefined;
-	getOrThrow(message?: string): InputBond;
-	set(bond: InputBond): InputBond;
-	create(props: InputStateProps): InputBond;
-}
-
-export const InputBond = InputBondImpl as unknown as InputBondConstructor;
+export type InputBond = BondOf<typeof InputBond>;

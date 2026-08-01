@@ -1,40 +1,39 @@
 import { describe, it, expect, vi } from 'vitest';
 import {
 	Bond,
-	BondState,
 	Atom,
 	defineCapability,
-	defineModelCapability,
 	defineProjectionCapability,
-	defineRelationshipCapability,
-	definePolicyCapability,
-	defineEffectCapability,
-	defineFocusedCapability,
-	defineArchetypeCapabilities,
-	explainBondRole,
 	sharedCapabilityKey,
 	capabilityKey,
 	type BondStateProps,
 	type Capability
-} from '../bond';
-import { useCapabilities } from './use.svelte';
+} from '$ixirjs/ui/shared/bond';
 
 // defineCapability is the canonical authoring entry point: a typed role-map (or a raw behavior
 // escape hatch) folded into a Capability, plus the surface-access (#3/#4) and setup-guard (#5)
 // primitives it pairs with. These specs lock the seam the 9-issue pass introduced.
 
-const MODEL = sharedCapabilityKey<{ value: number }>('@svelte-atoms/test:dc:model');
-const DEP = sharedCapabilityKey<{ tag: string }>('@svelte-atoms/test:dc:dep');
+const MODEL = sharedCapabilityKey<{ value: number }>({
+	owner: '@ixirjs/test',
+	name: 'dc:model',
+	version: 1
+});
+const DEP = sharedCapabilityKey<{ tag: string }>({
+	owner: '@ixirjs/test',
+	name: 'dc:dep',
+	version: 1
+});
 
-class S extends BondState<BondStateProps> {
+class S extends Bond<BondStateProps> {
 	constructor() {
 		super({});
 	}
 }
 
 class TestBond extends Bond {
-	constructor(state: BondState = new S()) {
-		super(state, 'test');
+	constructor(readonly state = new S()) {
+		super({}, 'test');
 	}
 }
 
@@ -63,6 +62,14 @@ describe('defineCapability — typed role map', () => {
 		const cap = defineCapability<{ value: number }>({ slot: MODEL, surface: { value: 1 } });
 		expect(cap.behavior).toBeUndefined();
 		expect(cap.surface).toEqual({ value: 1 });
+	});
+
+	it('rejects a surface that disagrees with its typed slot', () => {
+		const mismatchedRegistration = () =>
+			// @ts-expect-error MODEL carries a { value: number } surface contract.
+			defineCapability({ slot: MODEL, surface: { value: 'not a number' } });
+
+		expect(mismatchedRegistration).toBeTypeOf('function');
 	});
 
 	it('a role entry returning undefined opts that role out (conditional projection)', () => {
@@ -99,15 +106,12 @@ describe('defineCapability — typed role map', () => {
 		expect(behaviors[0]!.attrs?.(mkBond())).toEqual({ id: 'x' });
 	});
 
-	it('carries inert metadata into describeCapabilities()', () => {
+	it('carries inert metadata onto the registered descriptor', () => {
 		const state = new S();
 		const cap = defineCapability({
 			slot: MODEL,
 			meta: {
-				layer: 1,
-				kind: 'policy',
 				projects: ['trigger'],
-				requiresRoles: ['trigger', 'content'],
 				conflicts: [DEP],
 				docs: 'test policy'
 			}
@@ -115,21 +119,12 @@ describe('defineCapability — typed role map', () => {
 
 		state.capability(cap);
 
-		expect(cap.meta?.kind).toBe('policy');
-		expect(state.describeCapabilities()[0]!.meta).toEqual(cap.meta);
+		expect(state.capabilities[0]!.meta).toEqual(cap.meta);
 	});
 });
 
 describe('faceted capability helpers', () => {
-	it('defines a Layer 1 model capability without projection behavior', () => {
-		const cap = defineModelCapability({ slot: MODEL, surface: { value: 1 } });
-
-		expect(cap.surface).toEqual({ value: 1 });
-		expect(cap.behavior).toBeUndefined();
-		expect(cap.meta).toMatchObject({ layer: 1, kind: 'model' });
-	});
-
-	it('defines a Layer 1 projection capability from a typed role map', () => {
+	it('defines a projection capability from a typed role map', () => {
 		const cap = defineProjectionCapability({
 			slot: capabilityKey('projection'),
 			roles: {
@@ -138,140 +133,88 @@ describe('faceted capability helpers', () => {
 		});
 
 		expect(cap.meta).toMatchObject({
-			layer: 1,
-			kind: 'projection',
 			projects: ['trigger']
 		});
 		expect(cap.behavior?.('trigger')?.attrs?.(mkBond())).toEqual({ 'data-trigger': true });
 	});
 
 	it('defines relationship, policy, and effect facets with explicit intent metadata', () => {
-		const relationship = defineRelationshipCapability({
+		const relationship = defineCapability({
 			slot: capabilityKey('relationship'),
-			meta: { projects: ['trigger', 'content'], requiresRoles: ['trigger', 'content'] }
+			meta: { projects: ['trigger', 'content'] }
 		});
-		const policy = definePolicyCapability({
+		const policy = defineCapability({
 			slot: capabilityKey('policy'),
 			meta: { projects: ['trigger'] },
 			behavior: (role) =>
 				role === 'trigger' ? { handlers: () => ({ onclick: () => {} }) } : undefined
 		});
-		const effect = defineEffectCapability({
+		const effect = defineCapability({
 			slot: capabilityKey('effect'),
 			setup: () => {},
 			meta: { docs: 'installs a whole-bond listener' }
 		});
 
-		expect(relationship.meta).toMatchObject({
-			layer: 1,
-			kind: 'relationship',
-			requiresRoles: ['trigger', 'content']
+		expect(relationship.meta).toMatchObject({ host: 'bond', projects: ['trigger', 'content'] });
+		expect(policy.meta).toMatchObject({
+			host: 'bond',
+			projects: ['trigger']
 		});
-		expect(policy.meta).toMatchObject({ layer: 1, kind: 'policy', projects: ['trigger'] });
 		expect(policy.behavior?.('trigger')).toBeDefined();
-		expect(effect.meta).toMatchObject({ layer: 1, kind: 'effect' });
+		expect(effect.meta).toMatchObject({ docs: 'installs a whole-bond listener' });
 		expect(effect.setup).toBeTypeOf('function');
-	});
-
-	it('labels focused capabilities and archetype bundles without changing member capabilities', () => {
-		const model = defineModelCapability({ slot: MODEL, surface: { value: 2 } });
-		const focused = defineFocusedCapability({
-			slot: capabilityKey('focused'),
-			capabilities: [model],
-			meta: { docs: 'selectable collection kit' }
-		});
-		const archetype = defineArchetypeCapabilities([model], { docs: 'listbox recipe' });
-
-		expect(focused.surface).toEqual([model]);
-		expect(focused.meta).toMatchObject({ layer: 2, kind: 'focused' });
-		expect(archetype).toHaveLength(1);
-		expect(archetype[0]).toBe(model);
-		expect(archetype.meta).toMatchObject({ layer: 3, kind: 'archetype' });
 	});
 });
 
 describe('surface / requireCapability / requireSurface — typed access (#3/#4)', () => {
 	it('surface() returns the held model, undefined when the slot is empty', () => {
 		const bond = mkBond();
-		expect(bond.state.surface(MODEL)).toBeUndefined();
-		bond.state.capability(
-			defineCapability<{ value: number }>({ slot: MODEL, surface: { value: 42 } })
-		);
-		expect(bond.state.surface(MODEL)).toEqual({ value: 42 });
+		expect(bond.surface(MODEL)).toBeUndefined();
+		bond.capability(defineCapability<{ value: number }>({ slot: MODEL, surface: { value: 42 } }));
+		expect(bond.surface(MODEL)).toEqual({ value: 42 });
 	});
 
 	it('requireCapability() throws (no warn) when the slot is empty', () => {
 		const bond = mkBond();
-		expect(() => bond.state.requireCapability(MODEL)).toThrowError(/required capability/);
+		expect(() => bond.requireCapability(MODEL)).toThrowError(/required capability/);
 	});
 
 	it('requireSurface() returns the model, throws when slot or surface is absent', () => {
 		const bond = mkBond();
-		expect(() => bond.state.requireSurface(MODEL)).toThrowError(/required capability/);
+		expect(() => bond.requireSurface(MODEL)).toThrowError(/required capability/);
 		// Registered but surface-less.
-		bond.state.capability(defineCapability({ slot: MODEL, roles: {} }));
-		expect(() => bond.state.requireSurface(MODEL)).toThrowError(/no surface/);
-	});
-});
-
-describe('explainRole — projection introspection (#7)', () => {
-	it('reports each capability that contributes to a role, with resolved attrs', () => {
-		const bond = mkBond();
-		bond.state.capability(
-			defineCapability({
-				slot: capabilityKey('a'),
-				meta: { layer: 1, kind: 'projection', projects: ['item'] },
-				roles: { item: (id) => ({ attrs: () => ({ a: id }) }) }
-			})
-		);
-		bond.state.capability(
-			defineCapability({
-				slot: capabilityKey('b'),
-				roles: { item: () => ({ attrs: () => ({ b: 1 }) }) }
-			})
-		);
-		const info = explainBondRole(bond, 'item', 'q');
-		expect(info).toHaveLength(2);
-		expect(info[0]!.meta).toMatchObject({ kind: 'projection', projects: ['item'] });
-		expect(info[0]!.attrs).toEqual({ a: 'q' });
-		expect(info[1]!.attrs).toEqual({ b: 1 });
-		// A capability that doesn't handle the role is absent from the report.
-		expect(explainBondRole(bond, 'surface')).toHaveLength(0);
+		bond.capability(defineCapability({ slot: MODEL, roles: {} }));
+		expect(() => bond.requireSurface(MODEL)).toThrowError(/no surface/);
 	});
 });
 
 describe('setup guard (#5)', () => {
-	it('warns when a setup-bearing capability is registered but useCapabilities was never called', () => {
+	it('warns when a setup-bearing capability lifecycle was never activated', async () => {
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 		const bond = mkBond();
-		// setup returns void so useCapabilities (not called here anyway) wouldn't need a component context.
-		bond.state.capability(defineCapability({ slot: capabilityKey('fx'), setup: () => {} }));
-		// Trigger the deferred DEV validation via a projection ('surface' is a void role — no ctx).
+		bond.capability(defineCapability({ slot: capabilityKey('fx'), setup: () => {} }));
 		new (class extends Atom {})(bond, 'probe').role('surface');
-		expect(warn).toHaveBeenCalledWith(
-			expect.stringContaining('useCapabilities(bond) was never called')
-		);
+		// Deferred: bindBond activates in its own constructor, so the question is only answerable
+		// once the turn settles.
+		await Promise.resolve();
+		expect(warn).toHaveBeenCalledWith(expect.stringContaining('lifecycle was never activated'));
 		warn.mockRestore();
 	});
 
-	it('stays quiet once useCapabilities has marked the bond live', () => {
+	it('stays quiet once the lifecycle is marked active', () => {
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 		const bond = mkBond();
-		// Void teardown so useCapabilities does not register an onDestroy (no component here).
 		const cap: Capability = defineCapability({ slot: capabilityKey('fx2'), setup: () => {} });
-		bond.state.capability(cap);
-		useCapabilities(bond); // marks setup consumed before any projection
+		bond.capability(cap);
+		bond.markSetupConsumed();
 		new (class extends Atom {})(bond, 'probe').role('surface');
-		expect(warn).not.toHaveBeenCalledWith(
-			expect.stringContaining('useCapabilities(bond) was never called')
-		);
+		expect(warn).not.toHaveBeenCalledWith(expect.stringContaining('lifecycle was never activated'));
 		warn.mockRestore();
 	});
 });
 
 describe('deferred capability validation', () => {
-	it('validates each registered capability in a multi-level requires chain', () => {
-		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+	it('rejects an incomplete multi-level requires chain before projection', () => {
 		const state = new S();
 		const a = capabilityKey('requires:a');
 		const b = capabilityKey('requires:b');
@@ -280,34 +223,24 @@ describe('deferred capability validation', () => {
 		state.capability(defineCapability({ slot: a, requires: [b], roles: { item: () => ({}) } }));
 		state.capability(defineCapability({ slot: b, requires: [c], roles: { item: () => ({}) } }));
 
-		state.behaviorsForRole('item');
-
-		expect(warn).toHaveBeenCalledTimes(1);
-		expect(warn).toHaveBeenCalledWith(
-			expect.stringContaining('capability "requires:b" requires slot "requires:c"')
+		expect(() => state.behaviorsForRole('item')).toThrow(
+			'capability "requires:b" requires slot "requires:c"'
 		);
-		warn.mockRestore();
 	});
 
-	it('does not re-run validation for capabilities registered after the first projection', () => {
-		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+	it('rejects capability registration after the first projection', () => {
 		const state = new S();
 		const ready = capabilityKey('late:ready');
 		const late = capabilityKey('late:capability');
-		const missing = capabilityKey('late:missing');
 
 		state.capability(
 			defineCapability({ slot: ready, roles: { item: () => ({ attrs: () => ({ ready: true }) }) } })
 		);
 		state.behaviorsForRole('item');
 
-		state.capability(
-			defineCapability({ slot: late, requires: [missing], roles: { item: () => ({}) } })
-		);
-		state.behaviorsForRole('item');
-
-		expect(warn).not.toHaveBeenCalledWith(expect.stringContaining('requires slot'));
-		warn.mockRestore();
+		expect(() =>
+			state.capability(defineCapability({ slot: late, roles: { item: () => ({}) } }))
+		).toThrow('after activation or role projection');
 	});
 
 	it('warns when capability metadata declares a conflict with a registered slot or projected role', () => {

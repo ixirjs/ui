@@ -1,5 +1,5 @@
 const presetCode = `
-import { setPreset } from '@svelte-atoms/core/context';
+import { setPreset } from '@ixirjs/ui/preset';
 
 setPreset({
   'tooltip.trigger': () => ({
@@ -77,8 +77,8 @@ export const metadata = {
 		'Floating label providing additional context when hovering or focusing on an element.',
 	componentType: 'compound' as const,
 	status: 'stable' as const,
-	packageName: '@svelte-atoms/core',
-	importCode: "import { Tooltip } from '@svelte-atoms/core';",
+	packageName: '@ixirjs/ui',
+	importCode: "import { Tooltip } from '@ixirjs/ui';",
 	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Tooltip' }],
 	useCases,
 	componentsSummary,

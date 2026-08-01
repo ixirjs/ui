@@ -73,6 +73,13 @@
 			status: 'Beta',
 			href: '/docs/components/textarea'
 		},
+		{
+			name: 'DatePicker',
+			description: 'Popover calendar wired to a trigger for single or range date selection',
+			category: 'Form',
+			status: 'Beta',
+			href: '/docs/components/date-picker'
+		},
 		// Display
 		{
 			name: 'Avatar',
@@ -89,11 +96,25 @@
 			href: '/docs/components/badge'
 		},
 		{
+			name: 'Calendar',
+			description: 'Composable month-grid calendar for single-date or range selection',
+			category: 'Display',
+			status: 'Beta',
+			href: '/docs/components/calendar'
+		},
+		{
 			name: 'Card',
 			description: 'Structured content container with header, body, and footer',
 			category: 'Display',
 			status: 'Stable',
 			href: '/docs/components/card'
+		},
+		{
+			name: 'Chip',
+			description: 'Dismissible inline label with a wired close button',
+			category: 'Display',
+			status: 'Beta',
+			href: '/docs/components/chip'
 		},
 		{
 			name: 'DataGrid',
@@ -233,7 +254,7 @@
 		},
 		{
 			name: 'Popover',
-			description: 'Floating content panel with smart positioning and arrow',
+			description: 'Floating content panel with smart positioning and tail',
 			category: 'Overlay',
 			status: 'Beta',
 			href: '/docs/components/popover'

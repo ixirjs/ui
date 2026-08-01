@@ -1,15 +1,15 @@
 import type { QRCodeBrowser } from '@qrcode-js/browser';
+import type { HtmlAtomProps } from '$ixirjs/ui/components/atom';
 
 type QRCodeOptions = Parameters<ReturnType<typeof QRCodeBrowser>['setOptions']>[0];
 
-export type QRCodeProps = {
-	class?: string;
-	value: string;
-	finder?: QRCodeOptions['finder'];
-	dots?: QRCodeOptions['dots'];
-	drawFunction?: QRCodeOptions['drawFunction'];
-	gradient?: QRCodeOptions['gradient'];
-	logo?: QRCodeOptions['logo'];
-	margin?: QRCodeOptions['margin'];
-	qr?: QRCodeOptions['qr'];
-};
+export interface QRCodeProps extends HtmlAtomProps<'div'> {
+	value?: string | undefined;
+	finder?: QRCodeOptions['finder'] | undefined;
+	dots?: QRCodeOptions['dots'] | undefined;
+	drawFunction?: QRCodeOptions['drawFunction'] | undefined;
+	gradient?: QRCodeOptions['gradient'] | undefined;
+	logo?: QRCodeOptions['logo'] | undefined;
+	margin?: QRCodeOptions['margin'] | undefined;
+	qr?: QRCodeOptions['qr'] | undefined;
+}

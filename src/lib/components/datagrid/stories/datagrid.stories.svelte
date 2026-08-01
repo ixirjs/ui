@@ -1,11 +1,11 @@
 <script module>
 	import { defineMeta } from '@storybook/addon-svelte-csf';
-	import { DataGrid as DataGridCmp } from '..';
-	import { Select } from '$svelte-atoms/core/components/select';
-	import MoreVerticalIcon from '$svelte-atoms/core/icons/icon-more-vert.svelte';
-	import ArrowDownIcon from '$svelte-atoms/core/icons/icon-arrow-down.svelte';
-	import { Icon } from '$svelte-atoms/core/components/icon';
-	import { container } from '$svelte-atoms/core/runes/container.svelte';
+	import { DataGrid as DataGridCmp, type SortBy } from '..';
+	import { Select } from '$ixirjs/ui/components/select';
+	import MoreVerticalIcon from '$ixirjs/ui/icons/icon-more-vert.svelte';
+	import ArrowDownIcon from '$ixirjs/ui/icons/icon-arrow-down.svelte';
+	import { Icon } from '$ixirjs/ui/components/icon';
+	import { container } from '$ixirjs/ui/runes/container.svelte';
 
 	const { Story } = defineMeta({
 		title: 'Atoms/DataGrid',
@@ -158,8 +158,8 @@
 	const datagridContainer = container();
 
 	// --- Sortable Columns story state ---
-	// `onsort` reports the column's `sortable` field id + the toggled `direction`;
-	// we keep it in `sortBy` and derive the ordered rows from it (the grid never mutates data).
+	// `onsort` reports the column id, its `sortable` field, and committed direction;
+	// we keep that semantic value in `sortBy` and derive the ordered rows (the grid never mutates data).
 	type SortField = 'name' | 'role' | 'department';
 	let sortBy = $state<{ field: SortField; direction: 'asc' | 'desc' }>({
 		field: 'name',
@@ -172,8 +172,8 @@
 		return direction === 'desc' ? ordered.reverse() : ordered;
 	});
 
-	function handleSort(_ev: CustomEvent, options: { field?: string; direction: 'asc' | 'desc' }) {
-		if (options.field) sortBy = { field: options.field as SortField, direction: options.direction };
+	function handleSort(sort: SortBy) {
+		if (sort.by) sortBy = { field: sort.by as SortField, direction: sort.direction };
 	}
 
 	// --- Empty State story ---
@@ -187,7 +187,7 @@
 	{#snippet template(args)}
 		<div class="flex w-xl flex-col gap-2">
 			<code class="font-mono text-xs text-muted-foreground">
-				bind:values → [{values.map((v) => `"${v}"`).join(', ')}]
+				bind:values -> [{values.map((v) => `"${v}"`).join(', ')}]
 			</code>
 
 			<DataGridCmp.Root bind:values {@attach datagridContainer.attach} {...args}>
@@ -250,11 +250,11 @@
 								>
 									<Icon src={MoreVerticalIcon} />
 								</Select.Trigger>
-								<Select.List>
+								<Select.Content>
 									<Select.Item value="view">View Profile</Select.Item>
 									<Select.Item value="edit">Edit</Select.Item>
 									<Select.Item value="remove">Remove</Select.Item>
-								</Select.List>
+								</Select.Content>
 							</DataGridCmp.Cell>
 						</DataGridCmp.Row>
 					{/each}
@@ -276,8 +276,8 @@
 </Story>
 
 <!-- Sortable columns: `sortable="<field>"` marks a column clickable; clicking toggles its
-     `direction` and fires `onsort` with `{ field, direction }`. The story owns the ordering —
-     it sorts a copy from `sortBy` and never mutates the source rows. -->
+     `direction` and fires `onsort` with `{ id, by, direction }` plus the real click event in
+     callback context. The story owns the ordering and never mutates source rows. -->
 <Story name="Sortable Columns">
 	<div class="flex w-lg flex-col gap-2">
 		{#snippet sortIcon(field: SortField)}
@@ -296,8 +296,7 @@
 		{/snippet}
 
 		<code class="font-mono text-xs text-muted-foreground">
-			sort: {sortBy.field}
-			{sortBy.direction === 'asc' ? '↑' : '↓'}
+			sort: {sortBy.field} ({sortBy.direction})
 		</code>
 
 		<DataGridCmp.Root>
@@ -364,7 +363,7 @@
 				{:else}
 					{#each inventoryView as item (item.id)}
 						<DataGridCmp.Row value={item.id}>
-							<DataGridCmp.Cell class="font-mono text-xs font-semibold text-primary">
+							<DataGridCmp.Cell variant="code">
 								{item.code}
 							</DataGridCmp.Cell>
 							<DataGridCmp.Cell class="font-medium text-foreground">{item.name}</DataGridCmp.Cell>
@@ -430,7 +429,7 @@
 			<div class="col-[2/-1] grid h-min grid-cols-subgrid gap-x-2">
 				{#each inventoryRows as item (item.id)}
 					<DataGridCmp.Row>
-						<DataGridCmp.Cell class="font-mono text-xs font-semibold text-primary">
+						<DataGridCmp.Cell variant="code">
 							{item.code}
 						</DataGridCmp.Cell>
 						<DataGridCmp.Cell>{item.store}</DataGridCmp.Cell>

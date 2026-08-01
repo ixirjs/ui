@@ -1,6 +1,11 @@
 <script lang="ts">
-	import { resolveControlPreset, INPUT_FIELD_CLASS, writeInputValue } from './shared';
-	import { cn, toClassValue } from '$svelte-atoms/core/utils';
+	import {
+		resolveControlPreset,
+		INPUT_FIELD_CLASS,
+		inputChangeContext,
+		writeInputValue
+	} from './shared';
+	import { cn } from '$ixirjs/ui/utils';
 	import { InputBond } from './bond.svelte';
 	import type { InputPasswordControlProps } from './types';
 
@@ -17,28 +22,44 @@
 		preset: presetKey = 'input.password',
 		onchange = undefined,
 		oninput = undefined,
+		onvaluechange = undefined,
+		onvisiblechange = undefined,
 		...restProps
 	}: InputPasswordControlProps = $props();
 
-	const preset = resolveControlPreset(() => presetKey, bond);
+	const preset = resolveControlPreset(
+		() => presetKey,
+		bond,
+		() => restProps,
+		() => klass,
+		() => ({ disabled, readonly, visible })
+	);
 
-	function handleChange(ev: Event) {
-		onchange?.(ev, { value });
+	function handleChange(event: Event) {
+		onchange?.(event);
 	}
 
-	function handleInput(ev: Event) {
-		const input = ev.currentTarget as HTMLInputElement;
-		value = input.value;
+	function handleInput(event: Event) {
+		oninput?.(event);
+		if (event.defaultPrevented) return;
+
+		value = (event.currentTarget as HTMLInputElement).value;
 		writeInputValue(bond, value);
-		oninput?.(ev, { value });
+		onvaluechange?.(value, inputChangeContext(bond, event, 'input'));
 	}
 
-	function toggle() {
+	function toggle(event?: MouseEvent) {
+		if (disabled) return;
 		visible = !visible;
+		onvisiblechange?.(visible, inputChangeContext(bond, event, 'toggle', { value }));
 	}
 </script>
 
-{#snippet defaultToggle(opts: { visible: boolean; toggle: () => void; disabled: boolean })}
+{#snippet defaultToggle(opts: {
+	visible: boolean;
+	toggle: (event?: MouseEvent) => void;
+	disabled: boolean;
+})}
 	<button
 		type="button"
 		onclick={opts.toggle}
@@ -83,10 +104,10 @@
 	{placeholder}
 	{disabled}
 	{readonly}
-	class={cn(INPUT_FIELD_CLASS, preset?.class, toClassValue(klass, bond))}
+	class={cn(INPUT_FIELD_CLASS, preset.class)}
+	{...preset.attrs}
 	onchange={handleChange}
 	oninput={handleInput}
-	{...restProps}
 />
 
 {@render (toggleContent ?? defaultToggle)({ visible, toggle, disabled })}

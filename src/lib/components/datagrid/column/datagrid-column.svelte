@@ -2,15 +2,10 @@
 	lang="ts"
 	generics="T = unknown, E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base"
 >
-	import { bindBond } from '$svelte-atoms/core/shared/bond/bind.svelte';
-	import { createAtomInstance } from '$svelte-atoms/core/shared/bond';
-	import { HtmlAtom, mergeAtomProps, type Base } from '$svelte-atoms/core/components/atom';
-	import {
-		DataGridColumnBond,
-		DataGridColumnRootAtom,
-		type DataGridColumnBondProps
-	} from './bond.svelte';
-	import type { DatagridColumnProps } from '../types';
+	import { useRoot } from '@ixirjs/ui/shared';
+	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import { DataGridColumnBond, type DataGridColumnBondProps } from './bond.svelte';
+	import type { DatagridColumnProps, SortBy } from '$ixirjs/ui/components/datagrid/types';
 
 	const ID = $props.id();
 
@@ -29,8 +24,8 @@
 		...restProps
 	}: DatagridColumnProps<T, E, B> = $props();
 
-	const binding = bindBond<DataGridColumnBond<T>>(
-		(props) => factory(props),
+	const root = useRoot(
+		DataGridColumnBond,
 		{
 			id: () => id,
 			width: () => width,
@@ -38,19 +33,11 @@
 			hidden: () => hidden,
 			direction: () => direction
 		},
-		{ preset: () => preset }
+		{ preset: () => preset, factory: (props) => factory(props as DataGridColumnBondProps) }
 	);
-	const bond = binding.bond.share();
-	const rootAtom = createAtomInstance<DataGridColumnRootAtom, DataGridColumnBond<T>>('root', {
-		bond,
-		factory: (owner) => new DataGridColumnRootAtom(owner as DataGridColumnBond<T>)
-	});
+	const bond = root.bond as DataGridColumnBond<T>;
 
 	const isSortable = $derived(bond.isSortable);
-	const columnProps = $derived(
-		mergeAtomProps(rootAtom, preset, { ...binding.stateProps, ...bond.props, ...restProps })
-	);
-
 	const unmount = bond.mount();
 
 	$effect(() => unmount);
@@ -59,42 +46,33 @@
 		return DataGridColumnBond.create<T>(props);
 	}
 
-	function onclick_(ev: Event) {
-		const onClick = onclick as
-			| ((event: MouseEvent & { currentTarget: EventTarget & HTMLDivElement }) => void)
-			| undefined;
-		onClick?.(ev as MouseEvent & { currentTarget: EventTarget & HTMLDivElement });
+	function handleClick(event: MouseEvent) {
+		const onClick = onclick as ((event: MouseEvent) => void) | undefined;
+		onClick?.(event);
+		if (event.defaultPrevented || !isSortable) return;
 
-		if (!ev.defaultPrevented) {
-			if (!isSortable) {
-				return;
-			}
+		direction = direction === 'asc' ? 'desc' : 'asc';
 
-			if (direction === 'asc') {
-				direction = 'desc';
-			} else {
-				direction = 'asc';
-			}
-
-			if (typeof sortable === 'string') {
-				onsort?.(new CustomEvent('sort'), { field: sortable, direction });
-			} else {
-				onsort?.(new CustomEvent('sort'), { direction });
-			}
-		}
+		const sort: SortBy = {
+			id: bond.id,
+			direction,
+			...(typeof sortable === 'string' ? { by: sortable } : {})
+		};
+		onsort?.(sort, { bond, event, reason: 'click' });
 	}
 </script>
 
 {#if !hidden}
 	<HtmlAtom
+		{...restProps}
+		part={root}
 		class={[
 			'flex cursor-pointer py-1 font-medium select-none',
 			!!sortable && 'sortable',
 			'$preset',
 			klass
 		]}
-		onclick={onclick_}
-		{...columnProps}
+		onclick={handleClick}
 	>
 		{@render children?.({ column: bond })}
 	</HtmlAtom>

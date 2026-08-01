@@ -16,7 +16,7 @@
 				<span class="text-foreground font-medium">How do I install it?</span>
 				<AccordionItem.Indicator class="ml-auto" />
 			</AccordionItem.Header>
-			<AccordionItem.Body>Run: npm install @svelte-atoms/core</AccordionItem.Body>
+			<AccordionItem.Body>Run: npm install @ixirjs/ui</AccordionItem.Body>
 		</AccordionItem.Root>
 	</Accordion>
 </div>

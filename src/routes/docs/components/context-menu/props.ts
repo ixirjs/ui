@@ -10,296 +10,151 @@ export const contextMenuRootProps: PropDefinition[] = [
 		name: 'open',
 		type: 'boolean | undefined',
 		default: 'false',
-		description: 'Controls the open state of the context menu'
-	},
-	{
-		name: 'value',
-		type: 'unknown',
-		default: 'undefined',
-		description: 'Selected value when using single selection'
-	},
-	{
-		name: 'values',
-		type: 'unknown[] | undefined',
-		default: 'undefined',
-		description: 'Selected values when using multiple selection'
-	},
-	{
-		name: 'label',
-		type: 'string | undefined',
-		default: 'undefined',
-		description: 'Derived label for the selected item'
-	},
-	{
-		name: 'labels',
-		type: 'string[] | undefined',
-		default: 'undefined',
-		description: 'Derived labels for selected items'
-	},
-	{
-		name: 'multiple',
-		type: 'boolean | undefined',
-		default: 'false',
-		description: 'Enables multi-select behavior for menu items'
+		description: 'Bindable open state for the menu.'
 	},
 	{
 		name: 'disabled',
 		type: 'boolean | undefined',
 		default: 'false',
-		description: 'Whether the context menu is disabled'
+		description: 'Prevents the context-menu trigger from opening the menu.'
+	},
+	{
+		name: 'placement',
+		type: 'Placement | undefined',
+		default: "'bottom-start'",
+		description: 'Preferred Floating UI placement for the menu.'
 	},
 	{
 		name: 'placements',
 		type: 'Placement[] | undefined',
 		default: 'undefined',
-		description: 'Array of preferred placements for positioning'
-	},
-	{
-		name: 'placement',
-		type: 'Placement | undefined',
-		default: 'undefined',
-		description: 'Preferred placement for the context menu'
+		description: 'Ordered fallback placements used when the preferred placement does not fit.'
 	},
 	{
 		name: 'offset',
 		type: 'number | undefined',
-		default: '1',
-		description: 'Offset distance from the trigger element'
+		default: 'undefined',
+		description: 'Distance in pixels between the virtual cursor anchor and content.'
 	},
 	{
-		name: 'keys',
-		type: 'string[] | undefined',
-		default: '[]',
-		description: 'Optional keyboard search keys used by the dropdown bond'
+		name: 'position',
+		type: "'fixed' | 'absolute' | undefined",
+		default: "'absolute'",
+		description: 'CSS positioning strategy for floating content.'
+	},
+	{
+		name: 'portal',
+		type: 'string | PortalBond | undefined',
+		default: 'ambient portal → root.l0',
+		description:
+			'Portal target selector or PortalBond instance. Resolution is explicit target → ambient portal → root.l0, preserving nested overlay containment.'
+	},
+	{
+		name: 'onopenchange',
+		type: 'StateChangeCallback<boolean, ContextMenuBond> | undefined',
+		default: 'undefined',
+		description: 'Runs after an open-state transition commits.'
 	},
 	{
 		name: 'factory',
-		type: 'Factory<DropdownBond> | undefined',
+		type: '((props: ContextMenuBondProps) => ContextMenuBond) | undefined',
 		default: 'undefined',
-		description: 'Factory function for creating the dropdown bond'
-	},
-	{
-		name: 'onquerychange',
-		type: '((query: string) => void) | undefined',
-		default: 'undefined',
-		description: 'Callback for query updates inherited from Dropdown.Root'
-	},
-	{
-		name: 'children',
-		type: 'Snippet<[{ dropdown: DropdownBond; }]> | undefined',
-		default: 'undefined',
-		description: 'Children content snippet with dropdown bond access'
+		description: 'Advanced factory for a custom context-menu bond.'
 	}
 ];
 
 export const contextMenuTriggerProps: PropDefinition[] = [
 	{
 		name: 'preset',
-		type: 'string',
-		default: "'context-menu.trigger'",
-		description: 'Preset key for styling the trigger element'
+		type: 'PresetKey | undefined',
+		default: 'undefined',
+		description:
+			'Optional presentation override; the trigger resolves the context-menu trigger preset.'
 	},
 	{
 		name: 'oncontextmenu',
 		type: '((event: MouseEvent) => void) | undefined',
 		default: 'undefined',
 		description:
-			'Custom context menu event handler. The default behavior opens the menu at cursor position.'
+			'Native callback run before opening. Call event.preventDefault() to cancel opening.'
 	},
 	{
 		name: 'onclick',
 		type: '((event: MouseEvent) => void) | undefined',
-		default: 'null',
-		description: 'Regular click event handler'
+		default: 'undefined',
+		description: 'Native click callback. Clicks do not open the context menu.'
 	},
 	{
 		name: '...atomProps',
 		type: 'HtmlAtomProps',
 		default: '-',
-		description:
-			'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
+		description: 'Other supported HTML atom props, including class and children.'
 	}
 ];
 
 export const contextMenuContentProps: PropDefinition[] = [
 	{
-		name: 'bond',
-		type: 'Bond',
-		default: 'undefined',
-		description: 'Bond object for component communication'
-	},
-	{
-		name: 'base',
-		type: 'Component | Snippet',
-		default: 'undefined',
-		description: 'Base component or snippet to render'
-	},
-	{
 		name: 'preset',
-		type: 'PresetModuleName | string',
-		default: "'menu.content'",
+		type: 'PresetKey | undefined',
+		default: 'undefined',
+		description: 'Use context-menu.content for a context-menu-specific presentation entry.'
+	},
+	{
+		name: 'minWidth',
+		type: 'AnchorSize | undefined',
+		default: "''",
+		description: 'Minimum width. Context menus do not inherit the trigger width by default.'
+	},
+	{
+		name: 'width / maxWidth',
+		type: 'AnchorSize | undefined',
+		default: 'undefined',
 		description:
-			'Default inherited preset. Pass `preset="context-menu.content"` if you want a namespaced context menu preset.'
+			'Fixed or maximum content width, as a CSS length or function of trigger measurements.'
 	},
 	{
-		name: 'variants',
-		type: 'VariantDefinition | Function',
+		name: 'onclickoutside',
+		type: '((event: PointerEvent, bond: PopoverBond) => void) | undefined',
 		default: 'undefined',
-		description: 'Variant definition or function to resolve variants'
-	},
-	{
-		name: 'class',
-		type: 'ClassValue | ClassValue[]',
-		default: 'undefined',
-		description: 'CSS class(es) to apply to the element'
-	},
-	{
-		name: 'as',
-		type: 'string',
-		default: 'undefined',
-		description: 'HTML tag to render as'
-	},
-	{
-		name: 'global',
-		type: 'boolean',
-		default: 'false',
-		description: 'Whether to use global styles'
-	},
-	{
-		name: 'initial',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Function called on initial render'
-	},
-	{
-		name: 'enter',
-		type: 'TransitionFunction',
-		default: 'undefined',
-		description: 'Transition function for entering'
-	},
-	{
-		name: 'exit',
-		type: 'TransitionFunction',
-		default: 'undefined',
-		description: 'Transition function for exiting'
-	},
-	{
-		name: 'animate',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Animation function'
-	},
-	{
-		name: 'onmount',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Function called when element is mounted'
-	},
-	{
-		name: 'ondestroy',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Function called when element is destroyed'
-	},
-	{
-		name: 'children',
-		type: 'Snippet',
-		default: 'undefined',
-		description: 'Children content snippet'
-	}
-];
-
-export const contextMenuItemProps: PropDefinition[] = [
-	{
-		name: 'class',
-		type: 'ClassValue',
-		default: 'undefined',
-		description: 'Custom CSS class(es) to apply to the menu item'
-	},
-	{
-		name: 'preset',
-		type: 'string | undefined',
-		default: "'dropdown.item'",
-		description:
-			'Default inherited preset. Pass `preset="context-menu.item"` if you want a namespaced context menu preset.'
-	},
-	{
-		name: 'value',
-		type: 'string | undefined',
-		default: 'nanoid()',
-		description: 'Unique value used for selection state'
-	},
-	{
-		name: 'data',
-		type: 'unknown',
-		default: 'undefined',
-		description: 'Custom data attached to the item controller'
-	},
-	{
-		name: 'disabled',
-		type: 'boolean | undefined',
-		default: 'false',
-		description: 'Whether the menu item is disabled'
-	},
-	{
-		name: 'onclick',
-		type: '((event: MouseEvent) => void) | undefined',
-		default: 'undefined',
-		description: 'Click event handler'
-	},
-	{
-		name: 'onmount',
-		type: '((this: DropdownItemController) => void) | undefined',
-		default: 'undefined',
-		description: 'Function called when element is mounted'
-	},
-	{
-		name: 'ondestroy',
-		type: '((this: DropdownItemController) => void) | undefined',
-		default: 'undefined',
-		description: 'Function called when element is destroyed'
-	},
-	{
-		name: 'animate',
-		type: '((this: DropdownItemController) => any) | undefined',
-		default: 'undefined',
-		description: 'Animation configuration'
-	},
-	{
-		name: 'enter',
-		type: '((this: DropdownItemController) => any) | undefined',
-		default: 'undefined',
-		description: 'Transition function for entering'
-	},
-	{
-		name: 'exit',
-		type: '((this: DropdownItemController) => any) | undefined',
-		default: 'undefined',
-		description: 'Transition function for exiting'
-	},
-	{
-		name: 'initial',
-		type: '((this: DropdownItemController) => any) | undefined',
-		default: 'undefined',
-		description: 'Initial state configuration'
-	},
-	{
-		name: 'factory',
-		type: '(() => DropdownItemController) | undefined',
-		default: 'undefined',
-		description: 'Factory function to create a custom DropdownItemController instance'
-	},
-	{
-		name: 'children',
-		type: 'Snippet<[{ dropdownItem: DropdownItemController; }]> | undefined',
-		default: 'undefined',
-		description: 'Render prop for children'
+		description: 'Called for an outside press; providing it replaces the default close handler.'
 	},
 	{
 		name: '...atomProps',
 		type: 'HtmlAtomProps',
 		default: '-',
-		description:
-			'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
+		description: 'Other supported HTML atom props, including class, children, and as.'
+	}
+];
+
+export const contextMenuItemProps: PropDefinition[] = [
+	{
+		name: 'id',
+		type: 'string | undefined',
+		default: 'generated id',
+		description: 'Stable item identity used by roving focus.'
+	},
+	{
+		name: 'preset',
+		type: 'PresetKey | undefined',
+		default: 'undefined',
+		description: 'Use context-menu.item for a context-menu-specific presentation entry.'
+	},
+	{
+		name: 'disabled',
+		type: 'boolean | undefined',
+		default: 'undefined',
+		description: 'Disables the item.'
+	},
+	{
+		name: 'onclick',
+		type: '((event: MouseEvent) => void) | undefined',
+		default: 'undefined',
+		description: 'Native click callback. Call event.preventDefault() to keep the menu open.'
+	},
+	{
+		name: '...atomProps',
+		type: 'HtmlAtomProps',
+		default: '-',
+		description: 'Other supported HTML atom props, including class and children.'
 	}
 ];

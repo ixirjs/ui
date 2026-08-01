@@ -1,6 +1,7 @@
 import type { Snippet } from 'svelte';
-import type { HtmlAtomProps, Base } from '$svelte-atoms/core/components/atom';
-import type { Factory } from '$svelte-atoms/core/types';
+import type { HTMLAttributes } from 'svelte/elements';
+import type { HtmlAtomProps, Base } from '$ixirjs/ui/components/atom';
+import type { Factory, Override, StateChangeCallback } from '$ixirjs/ui/types';
 import type { FormBond } from './bond.svelte';
 import type { FieldBond, FieldStateProps } from './field/bond.svelte';
 
@@ -21,17 +22,36 @@ export interface FieldSnippetProps extends SnippetProps {
 
 export type FieldChildren = Snippet<[FieldSnippetProps]>;
 
-interface CommonProps {
+// Extension point: merge custom props into Form.Root by augmenting this interface. The Field
+// parts are interface-shaped, so they are augmented directly instead.
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface FormRootExtendProps {}
+
+interface FormCommonProps {
 	factory?: Factory<FormBond>;
 	// Validation adapter/schema forwarded to the form bond (typed `unknown` there).
 	validator?: unknown;
+	preset?: HtmlAtomProps<'form'>['preset'];
 }
 
-export interface FormRootProps<B extends Base = Base>
-	extends HtmlAtomProps<'form', B, FormChildren>, CommonProps {
-	renderless?: boolean;
+type FormRenderlessProps = {
+	renderless?: true;
+	class?: never;
 	children?: FormChildren;
-}
+};
+
+type FormRenderfullProps<B extends Base = Base> = Override<
+	HtmlAtomProps<'form', B, FormChildren>,
+	{
+		renderless?: false;
+		children?: FormChildren;
+	}
+> &
+	HTMLAttributes<HTMLFormElement>;
+
+export type FormRootProps<B extends Base = Base> = FormCommonProps &
+	FormRootExtendProps &
+	(FormRenderlessProps | FormRenderfullProps<B>);
 
 export interface FieldRootProps<
 	E extends keyof HTMLElementTagNameMap = 'div',
@@ -42,7 +62,7 @@ export interface FieldRootProps<
 	name?: string;
 	value?: unknown;
 	schema?: Schema;
-	parse?: (schema: Schema) => void;
+	validator?: unknown;
 	extend?: Record<string, unknown>;
 	factory?: ((props: FieldStateProps) => FieldBond) | Factory<FieldBond>;
 }
@@ -54,15 +74,21 @@ export interface FieldLabelProps<
 	for?: never;
 }
 
-// Detail payload forwarded to `Field.Control`'s `oninput` — type-agnostic, so every typed
-// value channel is optional. Matches what the control reads off the input at runtime.
-export interface FieldInputDetail {
-	value?: unknown;
-	files?: File[];
-	date?: Date | null;
-	number?: number;
-	checked?: boolean;
+export interface FieldControlChangeDetails {
+	value: unknown;
+	files: File[];
+	date: Date | null;
+	number: number | undefined;
+	checked: boolean;
+	amount?: number | undefined;
+	lat?: number | undefined;
+	lng?: number | undefined;
 }
+
+type FieldStateChangeCallback<Value> = (
+	value: Value,
+	context: Parameters<StateChangeCallback<Value, FieldBond>>[1] & FieldControlChangeDetails
+) => void;
 
 export interface FieldControlProps<
 	E extends keyof HTMLElementTagNameMap = 'div',
@@ -71,9 +97,18 @@ export interface FieldControlProps<
 	value?: unknown;
 	valueAsDate?: Date;
 	valueAsNumber?: number;
+	date?: Date | null;
+	number?: number;
 	checked?: boolean;
 	files?: File[] | null;
-	oninput?: (ev: InputEvent, detail?: FieldInputDetail) => void;
+	// Native callbacks retain their event-only DOM signatures.
+	oninput?: (event: Event) => void;
+	onchange?: (event: Event) => void;
+	onvaluechange?: FieldStateChangeCallback<unknown>;
+	onnumberchange?: FieldStateChangeCallback<number | undefined>;
+	onfileschange?: FieldStateChangeCallback<File[]>;
+	ondatechange?: FieldStateChangeCallback<Date | null>;
+	oncheckedchange?: FieldStateChangeCallback<boolean>;
 	children?: FieldChildren;
 }
 

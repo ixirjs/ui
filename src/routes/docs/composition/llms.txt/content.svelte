@@ -20,7 +20,7 @@ Composition with {inlineCode('base')}
 
 {codeBlock(
 	`<script lang="ts">
-  import { Button, Popover } from '@svelte-atoms/core';
+  import { Button, Popover } from '@ixirjs/ui';
 </script>
 
 <Popover.Root>
@@ -38,7 +38,7 @@ Composition with {inlineCode('base')}
 
 {codeBlock(
 	`<script lang="ts">
-  import { Field, Input } from '@svelte-atoms/core';
+  import { Field, Input } from '@ixirjs/ui';
 </script>
 
 <Field.Root name="password">
@@ -53,7 +53,7 @@ Composition with {inlineCode('base')}
 
 {codeBlock(
 	`<script lang="ts">
-  import { Select, Button } from '@svelte-atoms/core';
+  import { Select, Button } from '@ixirjs/ui';
 </script>
 
 <Select.Root>
@@ -61,10 +61,10 @@ Composition with {inlineCode('base')}
     <Select.Placeholder>Select a value</Select.Placeholder>
   </Select.Trigger>
   <Select.Content>
-    <Select.List>
+    <Select.Content>
       <Select.Item value="a">Option A</Select.Item>
       <Select.Item value="b">Option B</Select.Item>
-    </Select.List>
+    </Select.Content>
   </Select.Content>
 </Select.Root>`,
 	'svelte'

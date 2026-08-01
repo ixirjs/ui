@@ -1,5 +1,5 @@
 const presetCode = `
-import { setPreset } from '@svelte-atoms/core';
+import { setPreset } from '@ixirjs/ui/preset';
 
 setPreset({
   'stack.root': () => ({
@@ -64,8 +64,8 @@ export const metadata = {
 		'Layers multiple elements in the same visual space using CSS Grid with natural parent sizing and z-order control.',
 	componentType: 'compound' as const,
 	status: 'stable' as const,
-	packageName: '@svelte-atoms/core',
-	importCode: "import { Stack } from '@svelte-atoms/core';",
+	packageName: '@ixirjs/ui',
+	importCode: "import { Stack } from '@ixirjs/ui';",
 	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Stack' }],
 	useCases,
 	componentsSummary,

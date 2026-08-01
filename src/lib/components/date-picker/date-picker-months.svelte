@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { mergePresetProps } from '$svelte-atoms/core/components/atom';
-	import { animate } from 'motion';
-	import { getYear, getMonth, setMonth } from 'date-fns';
-	import { cn } from '$svelte-atoms/core/utils';
-	import { HtmlAtom } from '../atom';
+	import { mergePresetProps } from '$ixirjs/ui/components/atom';
+	import { animate } from '$ixirjs/ui/shared';
+	import { getYear, getMonth, setMonth } from '$ixirjs/ui/utils/date';
+	import { cn } from '$ixirjs/ui/utils';
+	import { HtmlAtom } from '$ixirjs/ui/components/atom';
 	import { DatePickerBond } from './bond.svelte';
 	import type { DatePickerMonthsProps } from './types';
 
@@ -11,7 +11,7 @@
 		'<DatePicker.Months /> must be used within a <DatePicker.Root />'
 	);
 
-	const pivote = $derived(datePicker?.state.props.pivote ?? new Date());
+	const pivote = $derived(datePicker?.props.pivote ?? new Date());
 
 	const currentYear = $derived(getYear(pivote));
 	const currentMonth = $derived(getMonth(pivote));
@@ -62,9 +62,9 @@
 	}
 
 	function handleMonthSelect(monthIndex: number) {
-		if (!datePicker?.state.props.pivote) return;
-		const current = datePicker.state.props.pivote;
-		datePicker.state.props.pivote = setMonth(current, monthIndex);
+		if (!datePicker?.props.pivote) return;
+		const current = datePicker.props.pivote;
+		datePicker.props.pivote = setMonth(current, monthIndex);
 
 		datePicker.closeMonthsPicker();
 	}

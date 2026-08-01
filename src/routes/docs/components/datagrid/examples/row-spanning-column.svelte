@@ -81,18 +81,18 @@
 		<div class="col-[2/-1] grid h-min grid-cols-subgrid gap-x-2">
 			{#each inventoryRows as item (item.id)}
 				<DataGrid.Row value={item.id}>
-					<DataGrid.Td class="font-mono text-xs font-semibold text-primary">
+					<DataGrid.Cell class="font-mono text-xs font-semibold text-primary">
 						{item.code}
-					</DataGrid.Td>
-					<DataGrid.Td>{item.store}</DataGrid.Td>
-					<DataGrid.Td class="font-medium">{item.name}</DataGrid.Td>
-					<DataGrid.Td>
+					</DataGrid.Cell>
+					<DataGrid.Cell>{item.store}</DataGrid.Cell>
+					<DataGrid.Cell class="font-medium">{item.name}</DataGrid.Cell>
+					<DataGrid.Cell>
 						<span
 							class="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground"
 						>
 							{item.category}
 						</span>
-					</DataGrid.Td>
+					</DataGrid.Cell>
 				</DataGrid.Row>
 			{/each}
 		</div>

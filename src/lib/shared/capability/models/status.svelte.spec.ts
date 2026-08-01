@@ -1,21 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { Bond, Atom, BondState, bondContextKey, type BondStateProps } from '../../bond';
+import { Bond, Atom, bondContextKey, type BondStateProps } from '$ixirjs/ui/shared/bond';
 import { createStatus, statusCapability, STATUS } from './status.svelte';
 
-class TestState extends BondState<BondStateProps> {
+class TestState {
 	disabled = $state(false);
 	readonly = $state(false);
 	busy = $state(false);
-
-	constructor() {
-		super({});
-	}
 }
 
 class TestBond extends Bond<BondStateProps> {
 	static CONTEXT_KEY = bondContextKey('test-status');
-	constructor(state = new TestState()) {
-		super(state, 'test');
+	constructor(readonly state = new TestState()) {
+		super({}, 'test');
 	}
 	addAtom(key: string, role: string) {
 		const atom = new TestAtom(this, key).role(role);
@@ -40,14 +36,12 @@ describe('statusCapability', () => {
 			busy: () => state.busy
 		});
 		const cap = statusCapability(status, { roles: ['control'] });
-		bond.state.capability(cap);
+		bond.capability(cap);
 		const control = bond.addAtom('control', 'control');
 
 		expect(cap.slot).toBe(STATUS);
 		expect(cap.surface).toBe(status);
 		expect(cap.meta).toMatchObject({
-			layer: 1,
-			kind: 'projection',
 			projects: ['control']
 		});
 		expect(status.is('disabled')).toBe(false);
@@ -69,7 +63,7 @@ describe('statusCapability', () => {
 	it('only projects the configured statuses and roles', () => {
 		const state = new TestState();
 		const bond = new TestBond(state);
-		bond.state.capability(
+		bond.capability(
 			statusCapability(createStatus({ disabled: () => state.disabled, busy: () => state.busy }), {
 				roles: ['button'],
 				statuses: ['disabled']

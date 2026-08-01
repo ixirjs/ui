@@ -1,20 +1,24 @@
-import { defineAtom } from '$svelte-atoms/core/shared/bond';
-import { defineBond, type BondOf } from '$svelte-atoms/core/shared';
+import { defineAtom } from '$ixirjs/ui/shared/bond';
+import { internCapabilityFactory } from '$ixirjs/ui/shared/capability/intern';
+import { defineBond, type BondOf } from '$ixirjs/ui/shared';
 import {
 	ariaRole,
 	defineAtomCapability,
 	sharedCapabilityKey,
 	type AtomHost
-} from '$svelte-atoms/core/shared/capability';
+} from '$ixirjs/ui/shared/capability';
 import {
 	OverlayBond,
 	ModalContentAtom,
 	ModalRootAtom,
+	ESCAPE,
+	escapePolicy,
 	modalCapabilities,
 	TRIGGER,
 	type ModalOverlayElements,
 	type OverlayStateProps
-} from '$svelte-atoms/core/components/portal/host';
+} from '$ixirjs/ui/components/overlay';
+import type { StateChangeContext } from '$ixirjs/ui/types';
 
 // -----------------------------------------------------------------------------
 // Public types
@@ -38,8 +42,23 @@ export type DialogBondElements = ModalOverlayElements & {
 export class DialogBondBase<
 	Props extends DialogBondProps = DialogBondProps
 > extends OverlayBond<Props> {
+	#openChangeContext: Pick<StateChangeContext, 'event' | 'reason'> | undefined;
+
 	constructor(props: Props, name = 'dialog') {
 		super(props, name);
+	}
+
+	stageOpenChange(context: Pick<StateChangeContext, 'event' | 'reason'>): void {
+		this.#openChangeContext = context;
+		queueMicrotask(() => {
+			if (this.#openChangeContext === context) this.#openChangeContext = undefined;
+		});
+	}
+
+	takeOpenChangeContext(): Pick<StateChangeContext, 'event' | 'reason'> {
+		const context = this.#openChangeContext ?? {};
+		this.#openChangeContext = undefined;
+		return context;
 	}
 }
 
@@ -53,8 +72,16 @@ type DialogBondView = DialogBondBase<DialogBondProps>;
 // Capability slots and shared helpers
 // -----------------------------------------------------------------------------
 
-const DIALOG_TITLE = sharedCapabilityKey<void>('@svelte-atoms/dialog:title');
-const DIALOG_BODY = sharedCapabilityKey<void>('@svelte-atoms/dialog:body');
+const DIALOG_TITLE = sharedCapabilityKey<void>({
+	owner: '@ixirjs/dialog',
+	name: 'title',
+	version: 1
+});
+const DIALOG_BODY = sharedCapabilityKey<void>({
+	owner: '@ixirjs/dialog',
+	name: 'body',
+	version: 1
+});
 
 // Root atom for modal overlays. The shared modal capability wires ARIA, inert, focus, and escape.
 
@@ -104,41 +131,37 @@ export type DialogCloseAtom = InstanceType<typeof DialogCloseAtom>;
 // Atom capabilities
 // -----------------------------------------------------------------------------
 
-function dialogTitlePresentation() {
+const dialogTitlePresentation = internCapabilityFactory(function dialogTitlePresentation() {
 	return defineAtomCapability<void, AtomHost, DialogBondView>({
 		slot: DIALOG_TITLE,
 		meta: {
-			layer: 1,
-			kind: 'projection',
 			projects: ['title'],
 			docs: 'Dialog title heading projection.'
 		},
-		behavior: {
+		attach: {
 			attrs: () => ({
 				role: 'heading',
 				'aria-level': 2
 			})
 		}
 	});
-}
+});
 
-function dialogBodyPresentation() {
+const dialogBodyPresentation = internCapabilityFactory(function dialogBodyPresentation() {
 	return defineAtomCapability<void, AtomHost, DialogBondView>({
 		slot: DIALOG_BODY,
 		meta: {
-			layer: 1,
-			kind: 'projection',
 			projects: ['body'],
 			docs: 'Dialog body live region projection.'
 		},
-		behavior: {
+		attach: {
 			attrs: () => ({
 				role: 'region',
 				'aria-live': 'polite'
 			})
 		}
 	});
-}
+});
 
 // Controlled modal disclosure (no trigger — use PopoverDialog for that); trigger capability filtered out.
 // Nested popovers teleport into the dialog's own in-content OverlayPortal, so they position with the
@@ -148,55 +171,37 @@ function dialogBodyPresentation() {
 // Bond spec and constructor facade
 // -----------------------------------------------------------------------------
 
-const DialogBondImpl = defineBond<
-	{
-		root: typeof DialogRootAtom;
-		content: typeof DialogContentAtom;
-		header: typeof DialogHeaderAtom;
-		title: typeof DialogTitleAtom;
-		description: typeof DialogDescriptionAtom;
-		body: typeof DialogBodyAtom;
-		footer: typeof DialogFooterAtom;
-		closeButton: { atom: typeof DialogCloseAtom; key: 'close' };
-	},
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	any,
-	typeof DialogBondBase
->({
+export const DialogBond = defineBond({
 	name: 'dialog',
 	base: DialogBondBase,
-	capabilities: () => modalCapabilities().filter((c) => c.slot !== TRIGGER),
+	capabilities: () => [
+		...modalCapabilities().filter(
+			(capability) => capability.slot !== TRIGGER && capability.slot !== ESCAPE
+		),
+		escapePolicy((bond, event) => {
+			const dialog = bond as DialogBondBase;
+			dialog.stageOpenChange({ event, reason: 'escape' });
+			dialog.close();
+		})
+	],
 	atoms: {
-		root: DialogRootAtom,
+		root: { atom: DialogRootAtom, selfLayer: true },
 		content: DialogContentAtom,
-		header: DialogHeaderAtom,
+		header: { atom: DialogHeaderAtom, cardinality: 'many' },
 		title: DialogTitleAtom,
 		description: DialogDescriptionAtom,
-		body: DialogBodyAtom,
-		footer: DialogFooterAtom,
-		closeButton: { atom: DialogCloseAtom, key: 'close' }
+		body: { atom: DialogBodyAtom, cardinality: 'many' },
+		footer: { atom: DialogFooterAtom, cardinality: 'many' },
+		closeButton: { atom: DialogCloseAtom, part: 'close', cardinality: 'many' }
 	}
 });
 
 // Propagate OverlayBond's context key transitively so fused bonds (e.g. PopoverDialogBond) re-share it.
-Object.defineProperty(DialogBondImpl, 'CONTEXT_KEYS', {
-	value: [DialogBondImpl.CONTEXT_KEY, OverlayBond.CONTEXT_KEY],
+Object.defineProperty(DialogBond, 'CONTEXT_KEYS', {
+	value: [DialogBond.CONTEXT_KEY, OverlayBond.CONTEXT_KEY],
 	writable: true,
 	configurable: true
 });
 
 // Instance type of the dialog bond — paired with the const above (value + type).
-export type DialogBond = BondOf<typeof DialogBondImpl>;
-
-interface DialogBondConstructor {
-	new (props: DialogBondProps): DialogBond;
-	readonly CONTEXT_KEY: string;
-	readonly CONTEXT_KEYS?: readonly string[];
-	readonly spec: (typeof DialogBondImpl)['spec'];
-	get(): DialogBond | undefined;
-	getOrThrow(message?: string): DialogBond;
-	set(bond: DialogBond): DialogBond;
-	create(props: DialogBondProps): DialogBond;
-}
-
-export const DialogBond = DialogBondImpl as unknown as DialogBondConstructor;
+export type DialogBond = BondOf<typeof DialogBond>;

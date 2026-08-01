@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { Bond, Atom, BondState, bondContextKey, type BondStateProps } from '../../bond';
+import { Bond, Atom, bondContextKey, type BondStateProps } from '$ixirjs/ui/shared/bond';
+import { defineCapability } from '$ixirjs/ui/shared/capability/capability';
 import {
 	activationPolicy,
 	ACTIVATION_POLICY,
@@ -30,7 +31,7 @@ import {
 	type TrackPressDetail
 } from '.';
 
-class TestState extends BondState<BondStateProps> {
+class TestState {
 	open = $state(false);
 	text = $state('query');
 	selected = $state<readonly string[]>(['a']);
@@ -55,16 +56,12 @@ class TestState extends BondState<BondStateProps> {
 		},
 		mode: () => 'multiple'
 	});
-
-	constructor() {
-		super({});
-	}
 }
 
 class TestBond extends Bond<BondStateProps> {
 	static CONTEXT_KEY = bondContextKey('test-interaction-policies');
-	constructor(state = new TestState()) {
-		super(state, 'test');
+	constructor(readonly state = new TestState()) {
+		super({}, 'test');
 	}
 	addAtom(key: string, role: string, ctx?: unknown) {
 		const atom = new TestAtom(this, key).role(role, ctx);
@@ -96,13 +93,13 @@ describe('remaining interaction policy primitives', () => {
 		const state = new TestState();
 		const bond = new TestBond(state);
 		const cap = focusTrigger();
-		bond.state.capability(disclosureCapability(state.disclosure));
-		bond.state.capability(cap);
+		bond.capability(disclosureCapability(state.disclosure));
+		bond.capability(cap);
 		const trigger = bond.addAtom('trigger', 'trigger');
 
 		expect(cap.slot).toBe(FOCUS_TRIGGER);
 		expect(cap.requires).toEqual([expect.any(Symbol)]);
-		expect(cap.meta).toMatchObject({ layer: 1, kind: 'policy', projects: ['trigger'] });
+		expect(cap.meta).toMatchObject({ projects: ['trigger'] });
 
 		(trigger.spread.onfocusin as (ev: FocusEvent) => void)(event<FocusEvent>());
 		expect(state.open).toBe(true);
@@ -115,31 +112,37 @@ describe('remaining interaction policy primitives', () => {
 		const onActivate = vi.fn();
 		const bond = new TestBond();
 		const cap = activationPolicy({ onActivate });
-		bond.state.capability(cap);
+		bond.capability(cap);
 		const control = bond.addAtom('control', 'control');
 
 		expect(cap.slot).toBe(ACTIVATION_POLICY);
 		expect(control.spread.role).toBe('button');
 		expect(control.spread.tabindex).toBe(0);
 
-		(control.spread.onclick as (ev: MouseEvent) => void)(event<MouseEvent>());
+		(control.spread.onclick as (ev: MouseEvent) => void)(
+			event<MouseEvent>({ type: 'click', isPrimary: false })
+		);
 		(control.spread.onkeydown as (ev: KeyboardEvent) => void)(
 			event<KeyboardEvent>({ key: 'Enter' })
 		);
+		(control.spread.onkeydown as (ev: KeyboardEvent) => void)(
+			event<KeyboardEvent>({ key: 'Enter', repeat: true })
+		);
+		(control.spread.onclick as (ev: MouseEvent) => void)(event<MouseEvent>({ button: 1 }));
 		expect(onActivate).toHaveBeenCalledTimes(2);
 	});
 
 	it('clearPolicy clears known input first, then selection when input is empty', () => {
 		const state = new TestState();
 		const bond = new TestBond(state);
-		bond.state.capability({ slot: INPUT, surface: state.input });
-		bond.state.capability(selectionCapability(state.selection));
+		bond.capability(defineCapability({ slot: INPUT, surface: state.input }));
+		bond.capability(selectionCapability(state.selection));
 		const cap = clearPolicy();
-		bond.state.capability(cap);
+		bond.capability(cap);
 		const clear = bond.addAtom('clear', 'clear');
 
 		expect(cap.slot).toBe(CLEAR_POLICY);
-		expect(cap.meta).toMatchObject({ layer: 1, kind: 'policy', projects: ['clear'] });
+		expect(cap.meta).toMatchObject({ projects: ['clear'] });
 
 		(clear.spread.onclick as (ev: MouseEvent) => void)(event<MouseEvent>());
 		expect(state.text).toBe('');
@@ -151,9 +154,10 @@ describe('remaining interaction policy primitives', () => {
 
 	it('thumbDragPolicy reports pointer drag deltas', () => {
 		const onDrag = vi.fn();
+		const onEnd = vi.fn();
 		const bond = new TestBond();
-		const cap = thumbDragPolicy({ axis: 'x', onDrag });
-		bond.state.capability(cap);
+		const cap = thumbDragPolicy({ axis: 'x', onDrag, onEnd });
+		bond.capability(cap);
 		const thumb = bond.addAtom('thumb', 'thumb');
 
 		expect(cap.slot).toBe(THUMB_DRAG_POLICY);
@@ -167,13 +171,63 @@ describe('remaining interaction policy primitives', () => {
 		const detail = onDrag.mock.calls[0]?.[0] as DragPolicyDetail;
 		expect(detail.deltaX).toBe(5);
 		expect(detail.deltaY).toBe(0);
+
+		// A cancelled drag ends the drag: onEnd runs so a caller can release state it staged in
+		// onStart, and further moves are ignored. The event is forwarded so a caller that needs to
+		// distinguish "completed" from "aborted" can read `event.type`.
+		(thumb.spread.onpointercancel as (ev: PointerEvent) => void)(
+			event<PointerEvent>({ pointerId: 1, clientX: 15, clientY: 40 })
+		);
+		(thumb.spread.onpointermove as (ev: PointerEvent) => void)(
+			event<PointerEvent>({ pointerId: 1, clientX: 20, clientY: 40 })
+		);
+		expect(onDrag).toHaveBeenCalledTimes(1);
+		expect(onEnd).toHaveBeenCalledTimes(1);
+	});
+
+	it('projects one thumb drag per role context, so paired thumbs drag independently', () => {
+		const onDrag = vi.fn();
+		const bond = new TestBond();
+		bond.capability(thumbDragPolicy({ onDrag }));
+		const thumbX = bond.addAtom('thumbX', 'thumb', 'x');
+		const thumbY = bond.addAtom('thumbY', 'thumb', 'y');
+
+		(thumbX.spread.onpointerdown as (ev: PointerEvent) => void)(
+			event<PointerEvent>({ pointerId: 1, clientX: 10, clientY: 10 })
+		);
+		// Y never received a pointerdown, so its own in-flight drag is empty and it stays quiet.
+		(thumbY.spread.onpointermove as (ev: PointerEvent) => void)(
+			event<PointerEvent>({ pointerId: 1, clientX: 30, clientY: 30 })
+		);
+		expect(onDrag).not.toHaveBeenCalled();
+
+		(thumbX.spread.onpointermove as (ev: PointerEvent) => void)(
+			event<PointerEvent>({ pointerId: 1, clientX: 30, clientY: 30 })
+		);
+		expect(onDrag).toHaveBeenCalledTimes(1);
+		expect(onDrag.mock.calls[0]?.[3]).toBe('x');
+	});
+
+	it('pointer policies ignore non-primary pointers', () => {
+		const onPress = vi.fn();
+		const bond = new TestBond();
+		bond.capability(trackPressPolicy({ onPress }));
+		const track = bond.addAtom('track', 'track');
+
+		(track.spread.onpointerdown as (ev: PointerEvent) => void)(
+			event<PointerEvent>({ button: 1, clientX: 60, clientY: 25 })
+		);
+		(track.spread.onpointerdown as (ev: PointerEvent) => void)(
+			event<PointerEvent>({ isPrimary: false, clientX: 60, clientY: 25 })
+		);
+		expect(onPress).not.toHaveBeenCalled();
 	});
 
 	it('trackPressPolicy reports press position as percentages', () => {
 		const onPress = vi.fn();
 		const bond = new TestBond();
 		const cap = trackPressPolicy({ onPress });
-		bond.state.capability(cap);
+		bond.capability(cap);
 		const track = bond.addAtom('track', 'track');
 
 		expect(cap.slot).toBe(TRACK_PRESS_POLICY);
@@ -196,7 +250,7 @@ describe('remaining interaction policy primitives', () => {
 		const onResize = vi.fn();
 		const bond = new TestBond();
 		const cap = resizeHandlePolicy({ onResize });
-		bond.state.capability(cap);
+		bond.capability(cap);
 		const handle = bond.addAtom('handle', 'handle');
 
 		expect(cap.slot).toBe(RESIZE_HANDLE_POLICY);
@@ -216,7 +270,7 @@ describe('remaining interaction policy primitives', () => {
 		const onReorder = vi.fn();
 		const bond = new TestBond();
 		const cap = reorderDragPolicy({ onReorder });
-		bond.state.capability(cap);
+		bond.capability(cap);
 		const a = bond.addAtom('a', 'item', 'a');
 		const b = bond.addAtom('b', 'item', 'b');
 
@@ -227,13 +281,34 @@ describe('remaining interaction policy primitives', () => {
 		expect(onReorder).toHaveBeenCalledWith('a', 'b', bond, expect.any(Object));
 	});
 
+	it('reorderDragPolicy rejects external and cross-bond drag sources', () => {
+		const onReorder = vi.fn();
+		const cap = reorderDragPolicy({ onReorder });
+		const sourceBond = new TestBond();
+		const targetBond = new TestBond();
+		sourceBond.capability(cap);
+		targetBond.capability(cap);
+		const source = sourceBond.addAtom('source', 'item', 'source');
+		const target = targetBond.addAtom('target', 'item', 'target');
+		const external = event<DragEvent>({
+			dataTransfer: { getData: () => 'untrusted', setData: vi.fn() }
+		});
+
+		(source.spread.ondragstart as (ev: DragEvent) => void)(external);
+		(target.spread.ondragover as (ev: DragEvent) => void)(external);
+		(target.spread.ondrop as (ev: DragEvent) => void)(external);
+
+		expect(external.defaultPrevented).toBe(false);
+		expect(onReorder).not.toHaveBeenCalled();
+	});
+
 	it('longPressPolicy runs after the configured delay', () => {
 		vi.useFakeTimers();
 		try {
 			const onLongPress = vi.fn();
 			const bond = new TestBond();
 			const cap = longPressPolicy({ delay: 25, onLongPress });
-			bond.state.capability(cap);
+			bond.capability(cap);
 			const control = bond.addAtom('control', 'control');
 
 			expect(cap.slot).toBe(LONG_PRESS_POLICY);
@@ -247,11 +322,41 @@ describe('remaining interaction policy primitives', () => {
 		}
 	});
 
+	it('longPressPolicy cancels on pointer cancellation', () => {
+		vi.useFakeTimers();
+		try {
+			const onLongPress = vi.fn();
+			const bond = new TestBond();
+			bond.capability(longPressPolicy({ delay: 25, onLongPress }));
+			const control = bond.addAtom('control', 'control');
+
+			(control.spread.onpointerdown as (ev: PointerEvent) => void)(
+				event<PointerEvent>({ pointerId: 1 })
+			);
+			(control.spread.onpointercancel as (ev: PointerEvent) => void)(
+				event<PointerEvent>({ pointerId: 2 })
+			);
+			vi.advanceTimersByTime(25);
+			expect(onLongPress).toHaveBeenCalledTimes(1);
+
+			(control.spread.onpointerdown as (ev: PointerEvent) => void)(
+				event<PointerEvent>({ pointerId: 1 })
+			);
+			(control.spread.onpointercancel as (ev: PointerEvent) => void)(
+				event<PointerEvent>({ pointerId: 1 })
+			);
+			vi.advanceTimersByTime(25);
+			expect(onLongPress).toHaveBeenCalledTimes(1);
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
 	it('swipePolicy reports allowed swipe directions past the threshold', () => {
 		const onSwipe = vi.fn();
 		const bond = new TestBond();
 		const cap = swipePolicy({ threshold: 20, directions: ['left'], onSwipe });
-		bond.state.capability(cap);
+		bond.capability(cap);
 		const surface = bond.addAtom('surface', 'surface');
 
 		expect(cap.slot).toBe(SWIPE_POLICY);

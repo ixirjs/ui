@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { flushSync } from 'svelte';
-import { Bond, Atom, BondState, type BondStateProps } from '../../bond';
+import { Bond, Atom, type BondStateProps } from '$ixirjs/ui/shared/bond';
 import {
 	createDisclosure,
 	disclosureCapability,
@@ -26,7 +26,7 @@ function makeBacking(initial = false) {
 
 type ActivationProps = BondStateProps & { disabled: boolean };
 
-class ActivationState extends BondState<ActivationProps> {
+class ActivationState extends Bond<ActivationProps> {
 	open = $state(false);
 	disclosure = createDisclosure({
 		get: () => this.open,
@@ -40,7 +40,7 @@ class ActivationState extends BondState<ActivationProps> {
 }
 
 class ActivationBond extends Bond<ActivationProps> {
-	constructor(state = new ActivationState()) {
+	constructor(readonly state = new ActivationState()) {
 		super(state.props, 'activation');
 		for (const capability of state.capabilities) this.capability(capability);
 	}
@@ -86,10 +86,7 @@ describe('Disclosure — degenerate SelectionModel over {self}', () => {
 		const cap = disclosureCapability(disclosure);
 		expect(cap.slot).toBe(DISCLOSURE);
 		expect(cap.surface).toBe(disclosure);
-		expect(cap.meta).toMatchObject({
-			layer: 1,
-			kind: 'model'
-		});
+		expect(cap.meta).toMatchObject({});
 	});
 
 	it('starts from the backing value', () => {
@@ -151,7 +148,9 @@ describe('Disclosure activation policies', () => {
 	it('disclosureTrigger toggles on guarded click and Enter/Space', () => {
 		const { atom, state } = activationFixture('trigger', disclosureTrigger());
 
-		(atom.spread.onclick as (ev: MouseEvent) => void)(clickEvent());
+		const browserClick = clickEvent({ type: 'click' });
+		Object.assign(browserClick, { isPrimary: false });
+		(atom.spread.onclick as (ev: MouseEvent) => void)(browserClick);
 		expect(state.open).toBe(true);
 
 		const enter = keyEvent('Enter');
@@ -165,7 +164,7 @@ describe('Disclosure activation policies', () => {
 		expect(state.open).toBe(true);
 	});
 
-	it('disclosureTrigger ignores disabled, defaultPrevented, and right-click events', () => {
+	it('disclosureTrigger ignores disabled, preempted, repeated, and non-primary activation events', () => {
 		const { atom, state } = activationFixture('trigger', disclosureTrigger());
 
 		state.props.disabled = true;
@@ -176,7 +175,10 @@ describe('Disclosure activation policies', () => {
 		(atom.spread.onclick as (ev: MouseEvent) => void)(clickEvent({ defaultPrevented: true }));
 		expect(state.open).toBe(false);
 
-		(atom.spread.onclick as (ev: MouseEvent) => void)(clickEvent({ button: 2 }));
+		(atom.spread.onclick as (ev: MouseEvent) => void)(clickEvent({ button: 1 }));
+		expect(state.open).toBe(false);
+
+		(atom.spread.onkeydown as (ev: KeyboardEvent) => void)(keyEvent('Enter', { repeat: true }));
 		expect(state.open).toBe(false);
 	});
 
@@ -188,8 +190,8 @@ describe('Disclosure activation policies', () => {
 		expect(toggle.slot).toBe(DISCLOSURE_TOGGLE);
 		expect(disclosureTrigger().slot).toBe(DISCLOSURE_TRIGGER);
 		expect(close.requires).toEqual([DISCLOSURE]);
-		expect(close.meta).toMatchObject({ layer: 1, kind: 'policy', projects: ['close'] });
-		expect(toggle.meta).toMatchObject({ layer: 1, kind: 'policy', projects: ['toggle'] });
+		expect(close.meta).toMatchObject({ projects: ['close'] });
+		expect(toggle.meta).toMatchObject({ projects: ['toggle'] });
 
 		const closeFixture = activationFixture('close', close);
 		closeFixture.state.open = true;

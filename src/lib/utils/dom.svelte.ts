@@ -22,7 +22,7 @@ export function prefersReducedMotion(): boolean {
 }
 
 /** Single source of truth for what counts as a tabbable element. */
-export const FOCUSABLE_SELECTORS = [
+const FOCUSABLE_SELECTORS = [
 	'a[href]',
 	'button:not([disabled])',
 	'textarea:not([disabled])',

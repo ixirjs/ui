@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Atom } from '$svelte-atoms/core/shared/bond';
+import { Atom } from '$ixirjs/ui/shared/bond';
 import {
 	FieldBond,
 	FieldControlAtom,
@@ -11,8 +11,8 @@ import {
 import {
 	VALIDATION,
 	type ValidationResult
-} from '$svelte-atoms/core/shared/capability/models/validation.svelte';
-import { STATUS } from '$svelte-atoms/core/shared/capability/models/status.svelte';
+} from '$ixirjs/ui/shared/capability/models/validation.svelte';
+import { STATUS } from '$ixirjs/ui/shared/capability/models/status.svelte';
 
 // Unit verification of the role stitch; FieldBond avoids getContext so it's constructable in tests.
 function makeField() {
@@ -65,16 +65,12 @@ describe('FieldBond — label ↔ control linkage via labelledControl', () => {
 	it('registers validation and status as Layer 1 capabilities', () => {
 		const bond = makeField();
 
-		expect(bond.state.capability(VALIDATION)?.surface).toBe(bond.validation);
-		expect(bond.state.capability(VALIDATION)?.meta).toMatchObject({
-			layer: 1,
-			kind: 'model',
+		expect(bond.capability(VALIDATION)?.surface).toBe(bond.validation);
+		expect(bond.capability(VALIDATION)?.meta).toMatchObject({
 			projects: ['control', 'error']
 		});
-		expect(bond.state.capability(STATUS)?.surface).toBe(bond.status);
-		expect(bond.state.capability(STATUS)?.meta).toMatchObject({
-			layer: 1,
-			kind: 'projection',
+		expect(bond.capability(STATUS)?.surface).toBe(bond.status);
+		expect(bond.capability(STATUS)?.meta).toMatchObject({
 			projects: ['control']
 		});
 	});
@@ -129,16 +125,18 @@ describe('FieldBond — label ↔ control linkage via labelledControl', () => {
 		for (const node of [root, label, control, description]) {
 			expect(node).toBeInstanceOf(Atom);
 		}
-		expect(bond.node('root')).toBe(root);
-		expect(bond.node('label')).toBe(label);
-		expect(bond.node('control')).toBe(control);
-		expect(bond.node('description')).toBe(description);
+		expect(bond.nodeByPart('root')).toBe(root);
+		expect(bond.nodeByPart('label')).toBe(label);
+		expect(bond.nodeByPart('control')).toBe(control);
+		expect(bond.nodeByPart('description')).toBe(description);
 		expect(control.spread['aria-labelledby']).toBe(label.id);
 		expect(label.spread.for).toBe(control.id);
 		expect(root.spread['aria-labelledby']).toBe(label.id);
 		expect(root.spread['aria-describedby']).toBe(description.id);
 
 		for (let i = unmounts.length - 1; i >= 0; i--) unmounts[i]!();
-		expect(bond.nodes()).toEqual([]);
+		for (const part of ['root', 'label', 'control', 'description']) {
+			expect(bond.nodesByPart(part)).toEqual([]);
+		}
 	});
 });

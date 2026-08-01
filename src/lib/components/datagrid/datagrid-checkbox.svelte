@@ -1,12 +1,14 @@
 <script lang="ts">
-	import { Checkbox } from '$svelte-atoms/core/components/checkbox';
-	import { mergePresetProps } from '$svelte-atoms/core/components/atom';
+	import { Checkbox } from '$ixirjs/ui/components/checkbox';
+	import { mergePresetProps } from '$ixirjs/ui/components/atom';
 	import { DataGridBond } from './bond.svelte';
 	import { DataGridRowBond } from './row/bond.svelte';
 	import type { DatagridCheckboxProps } from './types';
 
-	const datagridBond = DataGridBond.get();
 	const datagridRowBond = DataGridRowBond.get();
+	// The row Bond already holds the grid it resolved; fall back to context only when this checkbox
+	// is rendered outside a row, where there is no row Bond to ask.
+	const datagridBond = datagridRowBond?.datagrid ?? DataGridBond.get();
 
 	let {
 		class: klass = '',
@@ -54,10 +56,11 @@
 
 		const allIds = [...(datagridBond?.rows.keys ?? [])];
 
+		const context = ev ? { event: ev } : undefined;
 		if (checked === true) {
-			datagridBond?.select(allIds);
+			datagridBond?.select(allIds, context);
 		} else {
-			datagridBond?.unselect(allIds);
+			datagridBond?.unselect(allIds, context);
 		}
 	}
 
@@ -68,10 +71,11 @@
 		handleCallbacks(currentEvent, checked);
 		if (currentEvent.defaultPrevented || !rowId) return;
 
+		const context = ev ? { event: ev } : undefined;
 		if (checked) {
-			datagridRowBond?.select();
+			datagridRowBond?.select(context);
 		} else {
-			datagridRowBond?.unselect();
+			datagridRowBond?.unselect(context);
 		}
 	}
 </script>

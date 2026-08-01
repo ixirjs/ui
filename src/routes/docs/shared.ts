@@ -1,10 +1,10 @@
 export const metadata = {
-	title: '@svelte-atoms/core Documentation',
+	title: '@ixirjs/ui Documentation',
 	description:
-		'Complete documentation for @svelte-atoms/core - a modern UI component library for Svelte 5.',
+		'Complete documentation for @ixirjs/ui - a modern UI component library for Svelte 5.',
 	pageTitle: 'Documentation',
 	pageDescription:
-		'@svelte-atoms/core is a modern UI component library built with Svelte 5, TypeScript, and Tailwind CSS. It provides a comprehensive set of headless components with full accessibility, keyboard navigation, and flexible styling through variants and presets.',
+		'@ixirjs/ui is a modern UI component library built with Svelte 5, TypeScript, and Tailwind CSS. It provides a comprehensive set of headless components with full accessibility, keyboard navigation, and flexible styling through variants and presets.',
 	breadcrumbs: [{ label: 'Docs' }],
 
 	overview:
@@ -144,7 +144,6 @@ export const metadata = {
 				description: 'Breadcrumb component'
 			},
 			{ title: 'Link', href: '/docs/components/link/llms.txt', description: 'Link component' },
-			{ title: 'Menu', href: '/docs/components/menu/llms.txt', description: 'Menu component' },
 			{
 				title: 'Sidebar',
 				href: '/docs/components/sidebar/llms.txt',
@@ -215,9 +214,9 @@ export const metadata = {
 				description: 'Popover component'
 			},
 			{
-				title: 'Dropdown',
-				href: '/docs/components/dropdown/llms.txt',
-				description: 'Dropdown component'
+				title: 'Dropdown Menu',
+				href: '/docs/components/dropdown-menu/llms.txt',
+				description: 'Dropdown menu component'
 			},
 			{
 				title: 'Tooltip',

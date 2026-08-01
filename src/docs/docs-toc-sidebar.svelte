@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { animateDrawerContent, Drawer } from '$lib/components/drawer';
-	import { DURATION } from '$svelte-atoms/core';
+	import { DURATION } from '$ixirjs/ui/shared';
 
 	type TocEntry = { id: string; text: string };
 
@@ -8,14 +8,14 @@
 		toc: TocEntry[];
 		activeId?: string;
 		open?: boolean;
-		onclose?: () => void;
+		ondismiss?: () => void;
 	};
 
-	let { toc, activeId = '', open = $bindable(false), onclose }: Props = $props();
+	let { toc, activeId = '', open = $bindable(false), ondismiss }: Props = $props();
 
 	function handleClose() {
 		open = false;
-		onclose?.();
+		ondismiss?.();
 	}
 
 	function handleAnchorClick(event: MouseEvent, id: string) {
@@ -58,12 +58,19 @@
 {/if}
 
 <!-- Mobile: Drawer from right -->
-<Drawer.Root bind:open {onclose} side="right" class="lg:hidden z-50">
+<Drawer.Root
+	bind:open
+	onopenchange={(nextOpen) => {
+		if (!nextOpen) ondismiss?.();
+	}}
+	side="right"
+	class="lg:hidden z-50"
+>
 	{#snippet children({ drawer })}
 		<Drawer.Backdrop
 			class={[
 				'duration-75 bg-black/0 transition-[backdrop-filter]',
-				drawer.state.props.open ? 'backdrop-grayscale-100' : ''
+				drawer.props.open ? 'backdrop-grayscale-100' : ''
 			]}
 		/>
 		<Drawer.Content

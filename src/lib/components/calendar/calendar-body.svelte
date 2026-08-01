@@ -1,12 +1,8 @@
 <script lang="ts">
 	import CalendarDay from './calendar-day.svelte';
 	import { CalendarBond } from './bond.svelte';
-	import { cn } from '$svelte-atoms/core/utils';
-	import { mergePresetProps, HtmlAtom } from '../atom';
-
-	const calendarBond = CalendarBond.get();
-
-	const currentMonth = $derived(calendarBond?.state.props.currentMonth);
+	import { HtmlAtom } from '$ixirjs/ui/components/atom';
+	import { usePart } from '$ixirjs/ui/shared';
 
 	let {
 		class: klass = '',
@@ -20,6 +16,12 @@
 		children = undefined,
 		...restProps
 	} = $props();
+
+	const part = usePart(CalendarBond, 'body', () => restProps, {
+		preset: () => preset
+	});
+	const calendarBond = part.bond;
+	const currentMonth = $derived(calendarBond.props.currentMonth);
 
 	// Days to lay out: with outsideDays the full 6-week grid; otherwise drop any week
 	// that is entirely off-month (the redundant all-next/prev-month row) while keeping
@@ -36,13 +38,13 @@
 		}
 		return weeks.filter((week) => week.some((day) => !day.offmonth)).flat();
 	});
-
-	const bodyProps = $derived(
-		mergePresetProps(preset, 'calendar.body', { ...calendarBond?.body().spread, ...restProps })
-	);
 </script>
 
-<HtmlAtom class={cn('col-span-full grid w-full grid-cols-subgrid', klass)} {...bodyProps}>
+<HtmlAtom
+	class={['col-span-full grid w-full grid-cols-subgrid', '$preset', klass]}
+	{...restProps}
+	{part}
+>
 	{#each visibleDays as day (day.id)}
 		{#if !outsideDays && day.offmonth}
 			<div aria-hidden="true"></div>

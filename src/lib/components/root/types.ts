@@ -1,5 +1,7 @@
-import type { HtmlAtomProps, Base, SnippetProps } from '$svelte-atoms/core/components/atom';
+import type { HtmlAtomProps, Base, SnippetProps } from '$ixirjs/ui/components/atom';
 import type { Snippet } from 'svelte';
+
+export type RootPortals = 'root.l0';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface RootSnippetProps extends SnippetProps {}
@@ -10,6 +12,6 @@ export interface RootProps<
 	E extends keyof HTMLElementTagNameMap = 'div',
 	B extends Base = Base
 > extends HtmlAtomProps<E, B> {
-	// Custom portal configuration snippet (rendered in place of the default Portal.Outer/Inner).
+	// Additional portal configuration rendered inside the default root portal host.
 	portal?: Snippet;
 }

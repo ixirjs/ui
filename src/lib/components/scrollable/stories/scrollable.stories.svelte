@@ -1,9 +1,8 @@
 <script module>
 	import { defineMeta } from '@storybook/addon-svelte-csf';
 	import { Scrollable as Scrollable_ } from '..';
-	import { animate } from 'motion';
-	import { ScrollableBond } from '../bond.svelte';
-	import { on } from '$svelte-atoms/core/attachments/event.svelte';
+	import { ScrollableBond } from '$ixirjs/ui/components/scrollable/bond.svelte';
+	import { on } from '$ixirjs/ui/attachments/event.svelte';
 
 	const { Story } = defineMeta({
 		title: 'Atoms/Scrollable',
@@ -186,11 +185,11 @@
 						if (!scrollable) return;
 
 						const c1 = on('pointerenter', () => {
-							scrollable.state.props.open = true;
+							scrollable.props.open = true;
 						})(node);
 
 						const c2 = on('pointerleave', () => {
-							scrollable.state.props.open = false;
+							scrollable.props.open = false;
 						})(node);
 
 						return () => {
@@ -223,32 +222,10 @@
 						</Scrollable_.Content>
 					</Scrollable_.Container>
 
-					<Scrollable_.Track
-						orientation="vertical"
-						class="inset-y-0 right-0 w-0.5 rounded-md"
-						initial={(node: HTMLElement) => {
-							animate(node, { opacity: 0, right: 0, top: 0, bottom: 0 }, { duration: 0 });
-						}}
-						enter={(node: HTMLElement) => {
-							animate(
-								node,
-								{ opacity: 1, right: 6, top: 6, bottom: 6 },
-								{ duration: 0.3, ease: 'easeOut' }
-							);
-							return { duration: 300 };
-						}}
-						exit={(node: HTMLElement) => {
-							animate(
-								node,
-								{ opacity: 0, right: 0, top: 0, bottom: 0 },
-								{ duration: 0.3, ease: 'easeOut' }
-							);
-							return { duration: 300 };
-						}}
-					>
+					<Scrollable_.Track orientation="vertical" class="w-0.5">
 						<Scrollable_.Thumb
 							orientation="vertical"
-							class="bg-foreground/20 hover:bg-foreground/30 left-[50%] w-1.5 origin-center translate-x-[-50%] rounded-full transition-colors"
+							class="left-[50%] w-1.5 origin-center translate-x-[-50%]"
 						/>
 					</Scrollable_.Track>
 				</Scrollable_.Root>
@@ -270,27 +247,44 @@
 	{/snippet}
 </Story>
 
-<Story name="Simple Debug">
-	<div class="flex h-screen w-full items-center justify-center bg-muted p-6">
-		<Scrollable_.Root class="border relative h-96 w-96 border-black" open={true}>
+<Story name="Scroll Metrics">
+	<div class="bg-muted flex h-screen w-full items-center justify-center p-6">
+		<Scrollable_.Root
+			class="border-border bg-card relative h-96 w-96 rounded-xl border"
+			open={true}
+		>
 			{#snippet children({ scrollable })}
-				<div class="bg-blue-200 absolute left-0 top-0 z-50 p-2 text-xs">
-					<p>Scroll Y: {scrollable.state.props.scrollY}</p>
-					<p>Scroll Height: {scrollable.state.props.scrollHeight}</p>
-					<p>Client Height: {scrollable.state.props.clientHeight}</p>
-					<p>Can Scroll Y: {scrollable.canScrollY}</p>
+				<!-- Live readout: the bond exposes scroll geometry + the canScroll flags. -->
+				<div
+					class="border-border bg-card/90 text-muted-foreground absolute left-2 top-2 z-50 rounded-md border p-2 text-xs backdrop-blur"
+				>
+					<p>
+						scrollY: <span class="text-foreground tabular-nums">{scrollable.props.scrollY}</span>
+					</p>
+					<p>
+						scrollHeight:
+						<span class="text-foreground tabular-nums">{scrollable.props.scrollHeight}</span>
+					</p>
+					<p>
+						clientHeight:
+						<span class="text-foreground tabular-nums">{scrollable.props.clientHeight}</span>
+					</p>
+					<p>canScrollY: <span class="text-foreground">{scrollable.canScrollY}</span></p>
 				</div>
 
 				<Scrollable_.Container class="h-full">
-					<Scrollable_.Content class="flex flex-col gap-4 p-4">
+					<Scrollable_.Content class="flex flex-col gap-3 p-4">
 						{#each Array(50) as _, i (i)}
-							<div class="bg-white p-4 shadow">Item {i + 1}</div>
+							<div class="bg-muted text-foreground rounded-md p-3 text-sm">Item {i + 1}</div>
 						{/each}
 					</Scrollable_.Content>
 				</Scrollable_.Container>
 
-				<Scrollable_.Track orientation="vertical" class="bg-yellow-300">
-					<Scrollable_.Thumb orientation="vertical" class="!bg-red-500 !opacity-100" />
+				<Scrollable_.Track orientation="vertical" class="w-1.5">
+					<Scrollable_.Thumb
+						orientation="vertical"
+						class="left-[50%] w-1.5 origin-center translate-x-[-50%]"
+					/>
 				</Scrollable_.Track>
 			{/snippet}
 		</Scrollable_.Root>

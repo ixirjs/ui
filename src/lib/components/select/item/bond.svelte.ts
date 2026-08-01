@@ -1,12 +1,11 @@
-import { closeOverlay } from '$svelte-atoms/core/components/portal/host/policies/overlay-view';
-import { Atom } from '$svelte-atoms/core/shared/bond';
+import { closeOverlay } from '$ixirjs/ui/components/overlay/policies/overlay-view';
+import { Atom, generateId } from '$ixirjs/ui/shared/bond';
 import {
 	defineAtomCapability,
 	sharedCapabilityKey,
 	type AtomHost
-} from '$svelte-atoms/core/shared/capability';
-import { nanoid } from 'nanoid';
-import type { SelectBond } from '../bond.svelte';
+} from '$ixirjs/ui/shared/capability';
+import type { SelectBond } from '$ixirjs/ui/components/select/bond.svelte';
 
 // -----------------------------------------------------------------------------
 // Public types
@@ -23,7 +22,11 @@ export type SelectItemAtomProps<T = unknown> = {
 // Capability slots and shared helpers
 // -----------------------------------------------------------------------------
 
-const SELECT_ITEM = sharedCapabilityKey<void>('@svelte-atoms/select:item-node');
+const SELECT_ITEM = sharedCapabilityKey<void>({
+	owner: '@ixirjs/select',
+	name: 'item-node',
+	version: 1
+});
 
 // -----------------------------------------------------------------------------
 // Atom definitions
@@ -43,7 +46,7 @@ export class SelectItemAtom<Data = unknown, B extends SelectBond = SelectBond> e
 		super(selectBond, `item-${props.value}`);
 		this.#props = props;
 		this.#selectBond = selectBond;
-		this.#id = props.id ?? nanoid();
+		this.#id = props.id ?? generateId();
 		// Fold in the selection capability's `item` projection (aria-selected +
 		// data-selected from the shared model). Attrs-only — the .svelte keeps its
 		// own click (select + close).
@@ -128,12 +131,10 @@ function selectItemPresentation<B extends SelectBond>() {
 	return defineAtomCapability<void, AtomHost, B>({
 		slot: SELECT_ITEM,
 		meta: {
-			layer: 1,
-			kind: 'projection',
 			projects: ['item'],
 			docs: 'Select rendered item option role projection.'
 		},
-		behavior: {
+		attach: {
 			attrs: () => ({
 				role: 'option'
 			})

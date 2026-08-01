@@ -1,4 +1,4 @@
-import type { SelectBond } from '../bond.svelte';
+import type { SelectBond } from '$ixirjs/ui/components/select/bond.svelte';
 import { SelectItemController } from './controller.svelte';
 
 export function selectItem(

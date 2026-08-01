@@ -1,6 +1,18 @@
-import { defineCapability, sharedCapabilityKey, type Capability } from '../capability';
+import {
+	defineCapability,
+	sharedCapabilityKey,
+	type Capability,
+	type CapabilityKey
+} from '$ixirjs/ui/shared/capability/capability';
 
-export const VALIDATION = sharedCapabilityKey<ValidationModel>('@svelte-atoms/cap:validation');
+export const VALIDATION = sharedCapabilityKey<ValidationModel>({
+	owner: '@ixirjs/cap',
+	name: 'validation',
+	version: 1
+});
+
+const validationSlot = <T>(): CapabilityKey<ValidationModel<T>> =>
+	VALIDATION as CapabilityKey<ValidationModel<T>>;
 
 export interface ValidationError {
 	path: (string | number)[];
@@ -37,13 +49,20 @@ export function createValidation<T = unknown>(
 ): ValidationModel<T> {
 	let errors = $state<ValidationError[]>([]);
 	let isValidating = $state(false);
+	let validationRequest = 0;
 
 	function apply(result: ValidationResult<T>): ValidationResult<T> {
 		errors = result.errors;
 		return result;
 	}
 
+	function invalidateAsyncValidation(): void {
+		validationRequest++;
+		isValidating = false;
+	}
+
 	function validate(): ValidationResult<T> {
+		invalidateAsyncValidation();
 		return apply(backing.validate?.() ?? ok<T>());
 	}
 
@@ -61,14 +80,17 @@ export function createValidation<T = unknown>(
 		async validateAsync() {
 			if (!backing.validateAsync) return validate();
 
+			const request = ++validationRequest;
 			isValidating = true;
 			try {
-				return apply(await backing.validateAsync());
+				const result = await backing.validateAsync();
+				return request === validationRequest ? apply(result) : result;
 			} finally {
-				isValidating = false;
+				if (request === validationRequest) isValidating = false;
 			}
 		},
 		clear() {
+			invalidateAsyncValidation();
 			errors = [];
 		}
 	};
@@ -88,11 +110,9 @@ export function validationCapability<T = unknown>(
 	const projects = [...roles, ...errorRoles];
 
 	return defineCapability<ValidationModel<T>>({
-		slot: VALIDATION,
+		slot: validationSlot<T>(),
 		surface: validation,
 		meta: {
-			layer: 1,
-			kind: 'model',
 			projects,
 			docs: 'Validation model and scoped validation status projection.'
 		},

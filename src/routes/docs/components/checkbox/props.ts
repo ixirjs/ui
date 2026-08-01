@@ -44,10 +44,23 @@ export const checkboxProps: PropDefinition[] = [
 		description: 'Custom content to render when the checkbox is in the indeterminate state'
 	},
 	{
-		name: 'onchange',
-		type: '((ev?: Event, options?: { checked: boolean }) => void) | undefined',
+		name: 'oncheckedchange',
+		type: 'StateChangeCallback<boolean> | undefined',
 		default: 'undefined',
-		description: 'Callback fired when the checked state changes'
+		description:
+			'Semantic callback fired after the checked state commits. Receives `(checked, { event })`.'
+	},
+	{
+		name: 'oninput',
+		type: '((event: Event) => void) | undefined',
+		default: 'undefined',
+		description: 'Native input-event callback. Receives only the DOM event.'
+	},
+	{
+		name: 'onchange',
+		type: '((event: Event) => void) | undefined',
+		default: 'undefined',
+		description: 'Native change-event callback. Receives only the DOM event.'
 	},
 	{
 		name: '...atomProps',

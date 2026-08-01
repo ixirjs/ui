@@ -1,5 +1,4 @@
-import { DURATION } from '$svelte-atoms/core/shared';
-import { animate, easeInOut, type Easing } from 'motion';
+import { animate, DURATION, type Easing } from '$ixirjs/ui/shared';
 import { DialogBond } from './bond.svelte';
 
 type AnimateDialogContentParams = {
@@ -9,7 +8,7 @@ type AnimateDialogContentParams = {
 };
 
 export function animateDialogContent(params: AnimateDialogContentParams = {}) {
-	const { duration = DURATION.fast / 1000, delay = 0, ease = easeInOut } = params;
+	const { duration = DURATION.fast / 1000, delay = 0, ease = 'easeInOut' } = params;
 
 	let mounted = false;
 
@@ -17,7 +16,7 @@ export function animateDialogContent(params: AnimateDialogContentParams = {}) {
 		// Read bond inside the callback so it works outside component init
 		const bond = DialogBond.get();
 
-		const isOpen = bond?.state.props.open ?? false;
+		const isOpen = bond?.props.open ?? false;
 
 		if (isOpen) {
 			const rootElement = bond?.elements.root;

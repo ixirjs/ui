@@ -1,5 +1,9 @@
-import { clamp } from '../../../utils/math';
-import { defineCapability, sharedCapabilityKey, type Capability } from '../capability';
+import { clamp } from '$ixirjs/ui/utils/math';
+import {
+	defineCapability,
+	sharedCapabilityKey,
+	type Capability
+} from '$ixirjs/ui/shared/capability/capability';
 
 export interface ProgressValueBacking {
 	value(): number | null | undefined;
@@ -16,28 +20,31 @@ export interface ProgressValueModel {
 	readonly isCompleted: boolean;
 }
 
-export const PROGRESS_VALUE = sharedCapabilityKey<ProgressValueModel>(
-	'@svelte-atoms/cap:progress-value'
-);
+export const PROGRESS_VALUE = sharedCapabilityKey<ProgressValueModel>({
+	owner: '@ixirjs/cap',
+	name: 'progress-value',
+	version: 1
+});
 
 export function createProgressValue(backing: ProgressValueBacking): ProgressValueModel {
+	const bounds = (): readonly [number, number] => normalizeBounds(backing.min?.(), backing.max?.());
 	return {
 		get value() {
-			return normalizeValue(backing.value());
+			const [min, max] = bounds();
+			return normalizeValue(backing.value(), min, max);
 		},
 		get min() {
-			return backing.min?.() ?? 0;
+			return bounds()[0];
 		},
 		get max() {
-			return backing.max?.() ?? 100;
+			return bounds()[1];
 		},
 		get percent() {
-			const value = normalizeValue(backing.value());
-			if (value === null) return null;
-			return progressPercent(value, backing.min?.() ?? 0, backing.max?.() ?? 100);
+			const value = this.value;
+			return value === null ? null : progressPercent(value, this.min, this.max);
 		},
 		get isIndeterminate() {
-			return normalizeValue(backing.value()) === null;
+			return this.value === null;
 		},
 		get isCompleted() {
 			return this.percent === 100;
@@ -61,8 +68,6 @@ export function progressValueCapability(
 		slot: PROGRESS_VALUE,
 		surface: progress,
 		meta: {
-			layer: 1,
-			kind: 'model',
 			projects: roles,
 			docs: 'Progress value model and scoped progressbar projection.'
 		},
@@ -75,8 +80,19 @@ export function progressValueCapability(
 	});
 }
 
-function normalizeValue(value: number | null | undefined): number | null {
-	return value === null || value === undefined ? null : value;
+function normalizeValue(value: number | null | undefined, min: number, max: number): number | null {
+	return value === null || value === undefined || !Number.isFinite(value)
+		? null
+		: clamp(value, min, max);
+}
+
+function normalizeBounds(
+	min: number | undefined,
+	max: number | undefined
+): readonly [number, number] {
+	const lower = typeof min === 'number' && Number.isFinite(min) ? min : 0;
+	const upper = typeof max === 'number' && Number.isFinite(max) ? max : 100;
+	return lower <= upper ? [lower, upper] : [upper, lower];
 }
 
 function progressPercent(value: number, min: number, max: number): number {

@@ -24,11 +24,11 @@
 		<DataGrid.Body>
 			{#each users as user (user.id)}
 				<DataGrid.Row value={user.id}>
-					<DataGrid.Td>
+					<DataGrid.Cell>
 						<DataGrid.Checkbox />
-					</DataGrid.Td>
-					<DataGrid.Td>{user.name}</DataGrid.Td>
-					<DataGrid.Td>{user.email}</DataGrid.Td>
+					</DataGrid.Cell>
+					<DataGrid.Cell>{user.name}</DataGrid.Cell>
+					<DataGrid.Cell>{user.email}</DataGrid.Cell>
 				</DataGrid.Row>
 			{/each}
 		</DataGrid.Body>

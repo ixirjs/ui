@@ -1,6 +1,6 @@
-import { Atom } from '$svelte-atoms/core/shared';
-import type { Bond } from '$svelte-atoms/core/shared/bond';
-import { getElementId } from '$svelte-atoms/core/utils/dom.svelte';
+import { Atom } from '$ixirjs/ui/shared';
+import type { Bond } from '$ixirjs/ui/shared/bond';
+import { getElementId } from '$ixirjs/ui/utils/dom.svelte';
 import type { CalendarBondProps } from './bond.svelte';
 import type { Day } from './types';
 
@@ -22,7 +22,7 @@ export class CalendarRootAtom extends Atom<CalendarBondView> {
 			...super.attrs,
 			role: 'application',
 			'aria-label': 'Calendar',
-			'aria-disabled': this.bond.state.props.disabled ?? false
+			'aria-disabled': this.requireBond().props.disabled ?? false
 		};
 	}
 }
@@ -36,9 +36,9 @@ export class CalendarBodyAtom extends Atom<CalendarBondView> {
 		// Preserves the historic ids (`calendar-month-*`), distinct from the natural `calendar-body`.
 		return {
 			...super.attrs,
-			id: getElementId(this.bond.id, 'calendar-month'),
+			id: getElementId(this.requireBond().id, 'calendar-month'),
 			role: 'grid',
-			'aria-labelledby': getElementId(this.bond.id, 'calendar-month-label')
+			'aria-labelledby': getElementId(this.requireBond().id, 'calendar-month-label')
 		};
 	}
 
@@ -56,7 +56,7 @@ export class CalendarHeaderAtom extends Atom<CalendarBondView> {
 		// Preserves the historic id (`calendar-weekdays-*`), distinct from the natural `calendar-header`.
 		return {
 			...super.attrs,
-			id: getElementId(this.bond.id, 'calendar-weekdays'),
+			id: getElementId(this.requireBond().id, 'calendar-weekdays'),
 			role: 'row'
 		};
 	}
@@ -95,7 +95,7 @@ export class CalendarDayAtom extends Atom<CalendarBondView> {
 			...super.attrs,
 			'data-kind': 'calendar-day',
 			role: 'gridcell',
-			'aria-selected': this.bond.isDaySelected(this.day),
+			'aria-selected': this.requireBond().isDaySelected(this.day),
 			'aria-disabled': this.day.disabled,
 			tabindex: this.day.disabled ? -1 : 0
 		};

@@ -1,7 +1,7 @@
-import { createBondAttachment } from '$svelte-atoms/core/components/internal/attachments.svelte';
+import { createBondAttachment } from '$ixirjs/ui/components/internal/attachments.svelte';
 import { PopoverBond } from './bond.svelte';
-import { clickout as gclickout } from '$svelte-atoms/core/attachments/clickout.svelte';
-import { containsTarget } from '$svelte-atoms/core/utils/dom.svelte';
+import { clickout as gclickout } from '$ixirjs/ui/attachments/clickout.svelte';
+import { containsTarget } from '$ixirjs/ui/utils/dom.svelte';
 
 export const popover = createBondAttachment<PopoverBond>(PopoverBond);
 

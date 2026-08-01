@@ -7,18 +7,6 @@ export interface PropDefinition {
 
 export const alertRootProps: PropDefinition[] = [
 	{
-		name: 'dismissible',
-		type: 'boolean | undefined',
-		default: 'false',
-		description: 'Whether the alert can be dismissed by the user'
-	},
-	{
-		name: 'dismissed',
-		type: 'boolean | undefined',
-		default: 'false',
-		description: 'Controlled dismissed state. Bind to this to respond when alert is closed.'
-	},
-	{
 		name: 'disabled',
 		type: 'boolean | undefined',
 		default: 'false',

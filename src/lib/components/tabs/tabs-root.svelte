@@ -2,58 +2,62 @@
 	lang="ts"
 	generics="D extends string, E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base"
 >
-	import { TabsBond, TabsRootAtom, type TabsBondProps } from './bond.svelte';
-	import { bindBond } from '$svelte-atoms/core/shared/bond/bind.svelte';
-	import { createAtomInstance } from '$svelte-atoms/core/shared/bond';
-	import { HtmlAtom, mergeAtomProps, type Base } from '$svelte-atoms/core/components/atom';
+	import { onMount } from 'svelte';
+	import { TabsBond, type TabsBondProps } from './bond.svelte';
+	import { controlledProp, useRoot } from '$ixirjs/ui/shared';
+	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
 	import type { TabsRootProps } from './types';
+
+	const ID = $props.id();
 
 	let {
 		class: klass = '',
 		value = $bindable(),
 		children,
-		onchange,
+		onvaluechange = undefined,
+		onchange = undefined,
 		preset = undefined,
+		presets = undefined,
 		...restProps
 	}: TabsRootProps<D, E, B> = $props();
 
-	let valueState = $derived<D | undefined>(value as D | undefined);
-
-	const binding = bindBond<TabsBond>(
-		(props) => defaultFactory(props),
-		{
-			value: [
-				() => valueState,
-				(v) => {
-					valueState = v as D | undefined;
-					value = valueState;
-				}
-			]
-		},
-		{ preset: () => preset }
-	);
-	const bond = binding.bond.share();
-	const rootAtom = createAtomInstance<TabsRootAtom, TabsBond>('root', {
-		bond,
-		factory: (owner) => new TabsRootAtom(owner as TabsBond)
+	let callbacksReady = false;
+	const valueProp = controlledProp<string | undefined, TabsBond>({
+		get: () => value,
+		set: (next) => (value = next as D | undefined),
+		onchange: (next, context) => onvaluechange?.(next as D | undefined, context),
+		notifyWhen: () => callbacksReady
 	});
-	const rootProps = $derived(
-		mergeAtomProps(rootAtom, preset, { ...binding.stateProps, ...restProps })
+
+	const root = useRoot(
+		TabsBond,
+		{ value: valueProp, presets: () => presets },
+		{
+			preset: () => preset,
+			id: () => ID,
+			factory: (props) => defaultFactory(props)
+		}
 	);
+	const bond = root.bond;
+	onMount(() => {
+		callbacksReady = true;
+	});
 
 	function defaultFactory(props: TabsBondProps) {
 		return TabsBond.create(props);
 	}
-
-	$effect.pre(() => {
-		onchange?.(valueState as D);
-	});
 
 	export function getBond() {
 		return bond;
 	}
 </script>
 
-<HtmlAtom class={['flex w-full flex-1 flex-col', '$preset', klass]} {...rootProps}>
+<HtmlAtom
+	class={['flex w-full flex-1 flex-col', '$preset', klass]}
+	{...root.props}
+	{...restProps}
+	part={root}
+	{onchange}
+>
 	{@render children?.({ tabs: bond })}
 </HtmlAtom>

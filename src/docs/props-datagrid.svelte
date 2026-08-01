@@ -37,17 +37,17 @@
 		<DataGrid.Body>
 			{#each data as item (item)}
 				<DataGrid.Row>
-					<DataGrid.Td class="text-foreground px-6 py-4 font-mono text-sm whitespace-nowrap"
-						>{item.name}</DataGrid.Td
+					<DataGrid.Cell class="text-foreground px-6 py-4 font-mono text-sm whitespace-nowrap"
+						>{item.name}</DataGrid.Cell
 					>
-					<DataGrid.Td class="text-muted-foreground px-6 py-4 text-sm whitespace-nowrap"
-						>{item.type}</DataGrid.Td
+					<DataGrid.Cell class="text-muted-foreground px-6 py-4 text-sm whitespace-nowrap"
+						>{item.type}</DataGrid.Cell
 					>
-					<DataGrid.Td class="text-muted-foreground px-6 py-4 text-sm whitespace-nowrap"
-						>{item.default}</DataGrid.Td
+					<DataGrid.Cell class="text-muted-foreground px-6 py-4 text-sm whitespace-nowrap"
+						>{item.default}</DataGrid.Cell
 					>
-					<DataGrid.Td class="text-foreground px-6 py-4 text-sm whitespace-nowrap"
-						>{item.description}</DataGrid.Td
+					<DataGrid.Cell class="text-foreground px-6 py-4 text-sm whitespace-nowrap"
+						>{item.description}</DataGrid.Cell
 					>
 				</DataGrid.Row>
 			{/each}

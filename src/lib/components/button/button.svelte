@@ -1,7 +1,6 @@
 <script lang="ts">
-	import type { HTMLAttributes } from 'svelte/elements';
 	import type { ButtonProps } from './types';
-	import { mergePresetProps, HtmlAtom } from '$svelte-atoms/core/components/atom';
+	import { mergePresetProps, HtmlAtom } from '$ixirjs/ui/components/atom';
 
 	let {
 		class: klass = '',
@@ -9,9 +8,11 @@
 		preset = undefined,
 		children = undefined,
 		...restProps
-	}: ButtonProps & HTMLAttributes<HTMLButtonElement> = $props();
+	}: ButtonProps = $props();
 
-	const buttonProps = $derived(mergePresetProps(preset, 'button', { ...restProps, type }));
+	// Keep the rest-props proxy intact: HtmlAtom receives `type` separately, after this spread,
+	// so the semantic default and explicit caller value both win over preset attributes.
+	const buttonProps = $derived(mergePresetProps(preset, 'button', restProps));
 </script>
 
 <HtmlAtom
@@ -22,6 +23,7 @@
 		klass
 	]}
 	{...buttonProps}
+	{type}
 >
 	{@render children?.()}
 </HtmlAtom>

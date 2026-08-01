@@ -4,8 +4,8 @@ import Probe, {
 	capturedTabBond,
 	capturedTabsBond,
 	resetCapturedBonds
-} from './tabs-atom-probe.svelte';
-import { Atom } from '$svelte-atoms/core/shared/bond';
+} from '$ixirjs/ui/test/components/tabs/tabs-atom-probe.test.svelte';
+import { Atom } from '$ixirjs/ui/shared/bond';
 import { TabsBodyAtom, TabsBond, TabsHeaderAtom, TabsRootAtom } from './bond.svelte';
 import { TabBodyAtom, TabBond, TabDescriptionAtom, TabHeaderAtom } from './tab/bond.svelte';
 
@@ -24,12 +24,12 @@ describe('Tabs component-owned Atoms', () => {
 		expect(tabs?.props.value).toBe('one');
 		expect(tab?.props.value).toBe('one');
 
-		const tabsRoot = tabs?.node('root');
-		const tabsHeader = tabs?.node('header');
-		const tabsBody = tabs?.node('body');
-		const tabHeader = tab?.node('header');
-		const tabBody = tab?.node('body');
-		const tabDescription = tab?.node('description');
+		const tabsRoot = tabs?.nodeByPart('root');
+		const tabsHeader = tabs?.nodeByPart('header');
+		const tabsBody = tabs?.nodeByPart('body');
+		const tabHeader = tab?.nodeByPart('header');
+		const tabBody = tab?.nodeByPart('body');
+		const tabDescription = tab?.nodeByPart('description');
 
 		expect(tabsRoot).toBeInstanceOf(TabsRootAtom);
 		expect(tabsHeader).toBeInstanceOf(TabsHeaderAtom);
@@ -40,8 +40,12 @@ describe('Tabs component-owned Atoms', () => {
 		for (const node of [tabsRoot, tabsHeader, tabsBody, tabHeader, tabBody, tabDescription]) {
 			expect(node).toBeInstanceOf(Atom);
 		}
-		expect(tabs?.nodes()).toHaveLength(3);
-		expect(tab?.nodes()).toHaveLength(3);
+		expect(tabs?.nodesByPart('root')).toEqual([tabsRoot]);
+		expect(tabs?.nodesByPart('header')).toEqual([tabsHeader]);
+		expect(tabs?.nodesByPart('body')).toEqual([tabsBody]);
+		expect(tab?.nodesByPart('header')).toEqual([tabHeader]);
+		expect(tab?.nodesByPart('body')).toEqual([tabBody]);
+		expect(tab?.nodesByPart('description')).toEqual([tabDescription]);
 		expect(tabs?.items.get('one')).toBe(tab);
 
 		expect(tabsRoot?.spread['aria-orientation']).toBe('horizontal');
@@ -54,33 +58,31 @@ describe('Tabs component-owned Atoms', () => {
 		expect(tabBody?.spread['aria-labelledby']).toBe(tabHeader?.id);
 		expect(tabBody?.spread['data-active']).toBe(true);
 
-		expect(typeof tabs?.root).toBe('function');
-		expect(typeof tabs?.header).toBe('function');
-		expect(typeof tabs?.body).toBe('function');
-		expect(typeof tab?.header).toBe('function');
-		expect(typeof tab?.body).toBe('function');
-		expect(typeof tab?.description).toBe('function');
-		expect(tabs?.root()).toBeInstanceOf(TabsRootAtom);
-		expect(tabs?.header()).toBeInstanceOf(TabsHeaderAtom);
-		expect(tabs?.body()).toBeInstanceOf(TabsBodyAtom);
-		expect(tab?.header()).toBeInstanceOf(TabHeaderAtom);
-		expect(tab?.body()).toBeInstanceOf(TabBodyAtom);
-		expect(tab?.description()).toBeInstanceOf(TabDescriptionAtom);
+		expect(tabs?.nodeByPart('root')).toBeInstanceOf(TabsRootAtom);
+		expect(tabs?.nodeByPart('header')).toBeInstanceOf(TabsHeaderAtom);
+		expect(tabs?.nodeByPart('body')).toBeInstanceOf(TabsBodyAtom);
+		expect(tab?.nodeByPart('header')).toBeInstanceOf(TabHeaderAtom);
+		expect(tab?.nodeByPart('body')).toBeInstanceOf(TabBodyAtom);
+		expect(tab?.nodeByPart('description')).toBeInstanceOf(TabDescriptionAtom);
 		for (const node of [
-			tabs?.root(),
-			tabs?.header(),
-			tabs?.body(),
-			tab?.header(),
-			tab?.body(),
-			tab?.description()
+			tabs?.nodeByPart('root'),
+			tabs?.nodeByPart('header'),
+			tabs?.nodeByPart('body'),
+			tab?.nodeByPart('header'),
+			tab?.nodeByPart('body'),
+			tab?.nodeByPart('description')
 		]) {
 			expect(node).toBeInstanceOf(Atom);
 		}
 
 		unmount();
 
-		expect(tabs?.nodes()).toEqual([]);
-		expect(tab?.nodes()).toEqual([]);
+		for (const part of ['root', 'header', 'body']) {
+			expect(tabs?.nodesByPart(part)).toEqual([]);
+		}
+		for (const part of ['header', 'body', 'description']) {
+			expect(tab?.nodesByPart(part)).toEqual([]);
+		}
 		expect(tabs?.items.get('one')).toBeUndefined();
 	});
 });

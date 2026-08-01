@@ -13,6 +13,13 @@ export const tooltipRootProps: PropDefinition[] = [
 		description: 'Controls the open/closed state of the tooltip. Bindable.'
 	},
 	{
+		name: 'onopenchange',
+		type: 'StateChangeCallback<boolean, TooltipBond> | undefined',
+		default: 'undefined',
+		description:
+			'Called after a real open-state transition commits; pointer and dismissal details are included when available.'
+	},
+	{
 		name: 'placement',
 		type: '"top" | "bottom" | "left" | "right" | "top-start" | "top-end" | "bottom-start" | "bottom-end" | ...',
 		default: '"top"',

@@ -24,7 +24,7 @@
 		{ label: 'Alert.Title', presetKey: 'alert.title', props: alertSubPartProps },
 		{ label: 'Alert.Description', presetKey: 'alert.description', props: alertSubPartProps },
 		{ label: 'Alert.Content', presetKey: 'alert.content', props: alertSubPartProps },
-		{ label: 'Alert.CloseButton', presetKey: 'alert.close-button', props: alertSubPartProps },
+		{ label: 'Alert.CloseButton', presetKey: 'alert.close', props: alertSubPartProps },
 		{ label: 'Alert.Actions', presetKey: 'alert.actions', props: alertSubPartProps }
 	];
 
@@ -48,7 +48,7 @@
 		<DocCode lang="typescript" code={metadata.examples.preset} />
 		<DocOnly for="markdown">
 			**Available Preset Keys:** `alert`, `alert.icon`, `alert.title`, `alert.description`,
-			`alert.content`, `alert.actions`, `alert.close-button`
+			`alert.content`, `alert.actions`, `alert.close`
 		</DocOnly>
 	{/snippet}
 

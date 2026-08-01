@@ -76,7 +76,7 @@ Atoms
 
 {codeBlock(
 	`
-import { HtmlAtom } from '@svelte-atoms/core';
+import { HtmlAtom } from '@ixirjs/ui';
 `,
 	'typescript'
 )}
@@ -85,7 +85,7 @@ import { HtmlAtom } from '@svelte-atoms/core';
 
 {codeBlock(
 	`
-import { defineVariants } from '@svelte-atoms/core/utils';
+import { defineVariants } from '@ixirjs/ui/utils';
 
 const buttonVariants = defineVariants({
   variants: {

@@ -7,7 +7,11 @@ export type BondAttachmentCallback<B, R = void | (() => void)> = (
 	bond: B | undefined
 ) => R;
 
-export function createBondAttachment<B>(context: BondContext<B>) {
+export type BondAttachment<B> = <R = void | (() => void)>(
+	callback: BondAttachmentCallback<B, R>
+) => (node: HTMLElement) => R;
+
+export function createBondAttachment<B>(context: BondContext<B>): BondAttachment<B> {
 	return function bondAttachment<R = void | (() => void)>(callback: BondAttachmentCallback<B, R>) {
 		const bond = context.get();
 		return (node: HTMLElement) => callback(node, bond);

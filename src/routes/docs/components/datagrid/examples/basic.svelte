@@ -19,9 +19,9 @@
 	<DataGrid.Body>
 		{#each users as user (user.id)}
 			<DataGrid.Row value={user.id}>
-				<DataGrid.Td>{user.name}</DataGrid.Td>
-				<DataGrid.Td>{user.email}</DataGrid.Td>
-				<DataGrid.Td>{user.role}</DataGrid.Td>
+				<DataGrid.Cell>{user.name}</DataGrid.Cell>
+				<DataGrid.Cell>{user.email}</DataGrid.Cell>
+				<DataGrid.Cell>{user.role}</DataGrid.Cell>
 			</DataGrid.Row>
 		{/each}
 	</DataGrid.Body>

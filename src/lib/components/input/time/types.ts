@@ -1,5 +1,7 @@
 // Types for the input/time sub-module.
 
+import type { StateChangeCallback } from '$ixirjs/ui/types';
+
 export interface SegmentProps {
 	value?: number | undefined;
 	min: number;
@@ -9,10 +11,13 @@ export interface SegmentProps {
 	disabled?: boolean;
 	readonly?: boolean;
 	class?: string;
-	onchange?: (value: number | undefined) => void;
+	// Native contenteditable callbacks remain event-only.
+	onchange?: (event: Event) => void;
+	oninput?: (event: Event) => void;
+	onvaluechange?: StateChangeCallback<number | undefined>;
 	onfocusmove?: (dir: -1 | 1) => void;
 	// Fired when ArrowUp/Down wraps past min/max.
-	onrollover?: (dir: 1 | -1) => void;
+	onrollover?: StateChangeCallback<1 | -1, never, KeyboardEvent>;
 }
 
 export interface TimeParts {
@@ -31,6 +36,6 @@ export interface DateTimeParts {
 	seconds?: number;
 }
 
-// Loose variant for segment onchange callbacks: Segment fires (number | undefined),
+// Loose variant for segment semantic callbacks: Segment fires (number | undefined),
 // which exactOptionalPropertyTypes rejects as a direct Parts key. Strip undefined before spreading.
 export type LooseParts<T> = { [K in keyof T]: number | undefined };

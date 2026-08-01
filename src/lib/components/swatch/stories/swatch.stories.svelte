@@ -25,6 +25,33 @@
 	{/snippet}
 </Story>
 
+<!-- Real-world: a brand palette card, the kind of surface a design-tokens panel shows. -->
+<Story name="Brand Palette">
+	{#snippet template()}
+		{@const tokens = [
+			{ name: 'Primary', value: 'oklch(0.62 0.19 259)' },
+			{ name: 'Accent', value: 'oklch(0.72 0.18 145)' },
+			{ name: 'Warning', value: 'oklch(0.79 0.16 84)' },
+			{ name: 'Danger', value: 'oklch(0.62 0.22 27)' },
+			{ name: 'Neutral', value: 'oklch(0.55 0.02 260)' }
+		]}
+		<div class="w-72 rounded-xl border p-4">
+			<h3 class="mb-3 text-sm font-semibold">Brand colors</h3>
+			<ul class="flex flex-col gap-2">
+				{#each tokens as token (token.name)}
+					<li class="flex items-center gap-3">
+						<Swatch color={token.value} class="size-8 rounded-md" />
+						<div class="flex flex-1 flex-col">
+							<span class="text-sm font-medium">{token.name}</span>
+							<code class="text-muted-foreground font-mono text-xs">{token.value}</code>
+						</div>
+					</li>
+				{/each}
+			</ul>
+		</div>
+	{/snippet}
+</Story>
+
 <!-- Basic colors -->
 <Story name="Basic Colors">
 	<div class="flex flex-wrap gap-3 p-4">

@@ -67,6 +67,42 @@ export const inputControlProps: PropDefinition[] = [
 		description: 'Makes the input read-only, allowing focus but not editing.'
 	},
 	{
+		name: 'oninput',
+		type: '((event: Event) => void) | undefined',
+		default: 'undefined',
+		description: 'Native input callback. Receives only the DOM event.'
+	},
+	{
+		name: 'onchange',
+		type: '((event: Event) => void) | undefined',
+		default: 'undefined',
+		description: 'Native change callback. Receives only the DOM event.'
+	},
+	{
+		name: 'onvaluechange',
+		type: 'InputStateChangeCallback<unknown, InputControlChangeDetails> | undefined',
+		default: 'undefined',
+		description: 'Semantic callback for the parsed input value.'
+	},
+	{
+		name: 'onnumberchange',
+		type: 'InputStateChangeCallback<number | undefined, InputControlChangeDetails> | undefined',
+		default: 'undefined',
+		description: 'Semantic callback for `type="number"`.'
+	},
+	{
+		name: 'onfileschange',
+		type: 'InputStateChangeCallback<File[], InputControlChangeDetails> | undefined',
+		default: 'undefined',
+		description: 'Semantic callback for `type="file"`.'
+	},
+	{
+		name: 'ondatechange',
+		type: 'InputStateChangeCallback<Date | null, InputControlChangeDetails> | undefined',
+		default: 'undefined',
+		description: 'Semantic callback for native date/time input types.'
+	},
+	{
 		name: '...atomProps',
 		type: 'HtmlAtomProps',
 		default: '-',
@@ -88,12 +124,24 @@ export const commonControlProps: PropDefinition[] = [
 	{ name: 'class', type: 'string', default: "''", description: 'Additional CSS classes.' },
 	{ name: 'preset', type: 'string', default: 'per-type', description: 'Override the preset key.' },
 	{
-		name: 'onchange',
-		type: 'function',
+		name: 'oninput',
+		type: '((event: Event) => void) | undefined',
 		default: 'undefined',
-		description: 'Fired on commit (blur / Enter).'
+		description: 'Native input callback. Receives only the DOM event.'
 	},
-	{ name: 'oninput', type: 'function', default: 'undefined', description: 'Fired on every change.' }
+	{
+		name: 'onchange',
+		type: '((event: Event) => void) | undefined',
+		default: 'undefined',
+		description: 'Native change callback. Receives only the DOM event.'
+	},
+	{
+		name: 'onvaluechange',
+		type: 'StateChangeCallback<string, InputBond> | undefined',
+		default: 'undefined',
+		description:
+			'Semantic callback fired after a string value commits. Receives `(value, context)`.'
+	}
 ];
 
 export const textControlProps: PropDefinition[] = [
@@ -106,6 +154,12 @@ export const textControlProps: PropDefinition[] = [
 		type: 'boolean',
 		default: 'false',
 		description: 'Makes the control read-only.'
+	},
+	{
+		name: 'onvaluechange',
+		type: 'StateChangeCallback<string, InputBond> | undefined',
+		default: 'undefined',
+		description: 'Semantic value callback; native `oninput` and `onchange` are event-only.'
 	}
 ];
 
@@ -124,6 +178,18 @@ export const passwordControlProps: PropDefinition[] = [
 		type: 'Snippet',
 		default: 'built-in',
 		description: 'Custom show/hide toggle button.'
+	},
+	{
+		name: 'onvaluechange',
+		type: 'StateChangeCallback<string, InputBond> | undefined',
+		default: 'undefined',
+		description: 'Semantic password value callback.'
+	},
+	{
+		name: 'onvisiblechange',
+		type: 'InputStateChangeCallback<boolean, { value: string }, MouseEvent> | undefined',
+		default: 'undefined',
+		description: 'Semantic visibility callback. Context includes the current password value.'
 	}
 ];
 
@@ -136,6 +202,12 @@ export const emailControlProps: PropDefinition[] = [
 		type: 'boolean',
 		default: 'false',
 		description: 'Makes the control read-only.'
+	},
+	{
+		name: 'onvaluechange',
+		type: 'StateChangeCallback<string, InputBond> | undefined',
+		default: 'undefined',
+		description: 'Semantic value callback; native `oninput` and `onchange` are event-only.'
 	}
 ];
 
@@ -148,6 +220,12 @@ export const urlControlProps: PropDefinition[] = [
 		type: 'boolean',
 		default: 'false',
 		description: 'Makes the control read-only.'
+	},
+	{
+		name: 'onvaluechange',
+		type: 'StateChangeCallback<string, InputBond> | undefined',
+		default: 'undefined',
+		description: 'Semantic value callback; native `oninput` and `onchange` are event-only.'
 	}
 ];
 
@@ -165,7 +243,13 @@ export const phoneControlProps: PropDefinition[] = [
 		default: 'undefined',
 		description: 'Color map for segment highlighting.'
 	},
-	{ name: 'disabled', type: 'boolean', default: 'false', description: 'Disables the control.' }
+	{ name: 'disabled', type: 'boolean', default: 'false', description: 'Disables the control.' },
+	{
+		name: 'onvaluechange',
+		type: 'StateChangeCallback<string, InputBond> | undefined',
+		default: 'undefined',
+		description: 'Semantic value callback; native `oninput` and `onchange` are event-only.'
+	}
 ];
 
 export const numberControlProps: PropDefinition[] = [
@@ -173,7 +257,18 @@ export const numberControlProps: PropDefinition[] = [
 	{ name: 'step', type: 'number', default: '1', description: 'Increment/decrement step.' },
 	{ name: 'min', type: 'number', default: 'undefined', description: 'Minimum allowed value.' },
 	{ name: 'max', type: 'number', default: 'undefined', description: 'Maximum allowed value.' },
-	{ name: 'buttons', type: 'boolean', default: 'true', description: 'Show/hide increment buttons.' }
+	{
+		name: 'buttons',
+		type: 'boolean',
+		default: 'true',
+		description: 'Show/hide increment buttons.'
+	},
+	{
+		name: 'onnumberchange',
+		type: 'StateChangeCallback<number | undefined, InputBond> | undefined',
+		default: 'undefined',
+		description: 'Semantic number callback; native `oninput` and `onchange` are event-only.'
+	}
 ];
 
 export const currencyControlProps: PropDefinition[] = [
@@ -193,7 +288,13 @@ export const currencyControlProps: PropDefinition[] = [
 	},
 	{ name: 'precision', type: 'number', default: '2', description: 'Decimal places.' },
 	{ name: 'min', type: 'number', default: 'undefined', description: 'Minimum value.' },
-	{ name: 'max', type: 'number', default: 'undefined', description: 'Maximum value.' }
+	{ name: 'max', type: 'number', default: 'undefined', description: 'Maximum value.' },
+	{
+		name: 'onvaluechange',
+		type: 'InputStateChangeCallback<string, { amount: number | undefined }> | undefined',
+		default: 'undefined',
+		description: 'Semantic value callback with parsed `amount`; native callbacks are event-only.'
+	}
 ];
 
 export const timeControlProps: PropDefinition[] = [
@@ -210,7 +311,13 @@ export const timeControlProps: PropDefinition[] = [
 		description: 'Bindable Date object (time portion).'
 	},
 	{ name: 'hourFormat', type: '12 | 24', default: '24', description: '12-hour or 24-hour format.' },
-	{ name: 'withSeconds', type: 'boolean', default: 'false', description: 'Show seconds segment.' }
+	{ name: 'withSeconds', type: 'boolean', default: 'false', description: 'Show seconds segment.' },
+	{
+		name: 'onvaluechange',
+		type: 'InputStateChangeCallback<string, { date: Date | undefined }> | undefined',
+		default: 'undefined',
+		description: 'Semantic value callback with the synchronized `date` in context.'
+	}
 ];
 
 export const dateControlProps: PropDefinition[] = [
@@ -220,14 +327,27 @@ export const dateControlProps: PropDefinition[] = [
 		default: "''",
 		description: 'Bindable date string (YYYY-MM-DD).'
 	},
-	{ name: 'date', type: 'Date', default: 'undefined', description: 'Bindable Date object.' }
+	{ name: 'date', type: 'Date', default: 'undefined', description: 'Bindable Date object.' },
+	{
+		name: 'onvaluechange',
+		type: 'InputStateChangeCallback<string, { date: Date | null }> | undefined',
+		default: 'undefined',
+		description:
+			'Semantic value callback with `date` in context. `ondatechange` belongs to native-type `Input.Control`.'
+	}
 ];
 
 export const dateTimeControlProps: PropDefinition[] = [
 	{ name: 'value', type: 'string', default: "''", description: 'Bindable datetime string.' },
 	{ name: 'date', type: 'Date', default: 'undefined', description: 'Bindable Date object.' },
 	{ name: 'hourFormat', type: '12 | 24', default: '24', description: '12-hour or 24-hour format.' },
-	{ name: 'withSeconds', type: 'boolean', default: 'false', description: 'Show seconds segment.' }
+	{ name: 'withSeconds', type: 'boolean', default: 'false', description: 'Show seconds segment.' },
+	{
+		name: 'onvaluechange',
+		type: 'InputStateChangeCallback<string, { date: Date | null }> | undefined',
+		default: 'undefined',
+		description: 'Semantic value callback with the synchronized `date` in context.'
+	}
 ];
 
 export const colorControlProps: PropDefinition[] = [
@@ -246,15 +366,21 @@ export const colorControlProps: PropDefinition[] = [
 	},
 	{
 		name: 'oninput',
-		type: 'function',
+		type: '((event: Event) => void) | undefined',
 		default: 'undefined',
-		description: 'Fires on every channel edit (live).'
+		description: 'Native input callback. Receives only the DOM event.'
 	},
 	{
 		name: 'onchange',
-		type: 'function',
+		type: '((event: Event) => void) | undefined',
 		default: 'undefined',
-		description: 'Fires on blur or Enter (commit).'
+		description: 'Native change callback. Receives only the DOM event.'
+	},
+	{
+		name: 'onvaluechange',
+		type: 'StateChangeCallback<string, InputBond> | undefined',
+		default: 'undefined',
+		description: 'Semantic color value callback with event, bond, and reason context.'
 	}
 ];
 
@@ -272,6 +398,12 @@ export const otpControlProps: PropDefinition[] = [
 		type: 'number',
 		default: 'undefined',
 		description: 'Visual grouping (gap every N slots).'
+	},
+	{
+		name: 'onvaluechange',
+		type: 'StateChangeCallback<string, InputBond> | undefined',
+		default: 'undefined',
+		description: 'Semantic value callback; native `oninput` and `onchange` are event-only.'
 	},
 	{
 		name: 'oncomplete',
@@ -300,6 +432,12 @@ export const fileControlProps: PropDefinition[] = [
 		type: 'Snippet',
 		default: 'built-in',
 		description: 'Custom trigger button content.'
+	},
+	{
+		name: 'onfileschange',
+		type: 'StateChangeCallback<File[], InputBond> | undefined',
+		default: 'undefined',
+		description: 'Semantic file-list callback; native `oninput` and `onchange` are event-only.'
 	}
 ];
 
@@ -319,5 +457,10 @@ export const locationControlProps: PropDefinition[] = [
 		description: 'Decimal degrees or degrees/minutes/seconds.'
 	},
 	{ name: 'precision', type: 'number', default: '6', description: 'Decimal places for DD format.' },
-	{ name: 'locate', type: 'boolean', default: 'false', description: 'Show a geolocation button.' }
+	{
+		name: 'onvaluechange',
+		type: 'InputStateChangeCallback<string, { lat: number | undefined; lng: number | undefined }> | undefined',
+		default: 'undefined',
+		description: 'Semantic value callback with parsed `lat` and `lng` in context.'
+	}
 ];

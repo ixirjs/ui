@@ -10,7 +10,9 @@
 	<Toast.Root
 		bind:open={toastVisible}
 		duration={3000}
-		onclose={() => (toastVisible = false)}
+		onopenchange={(open) => {
+			if (!open) toastVisible = false;
+		}}
 		class={[
 			'border-border bg-card text-card-foreground relative w-52 rounded-lg border p-3 shadow-md transition-all duration-300',
 			toastVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-1 pointer-events-none'

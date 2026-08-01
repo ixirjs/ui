@@ -1,15 +1,17 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { bindBond } from '$svelte-atoms/core/shared';
-	import { createAtomInstance } from '$svelte-atoms/core/shared/bond';
-	import { HtmlAtom, mergeAtomProps, type Base } from '$svelte-atoms/core/components/atom';
-	import { StepperBond, StepperRootAtom, type StepperBondProps } from './bond.svelte';
+	import { controlledProp, useRoot } from '$ixirjs/ui/shared';
+	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import { StepperBond, type StepperBondProps } from './bond.svelte';
 	import type { StepperRootProps } from './types';
+
+	const ID = $props.id();
 
 	let {
 		step = $bindable(0),
 		linear = false,
 		disabled = false,
 		orientation = 'horizontal',
+		onstepchange = undefined,
 		class: klass = '',
 		children = undefined,
 		factory = defaultFactory,
@@ -17,32 +19,27 @@
 		...restProps
 	}: StepperRootProps<E, B> = $props();
 
-	let stepState = $derived(step);
+	const stepProp = controlledProp<number, StepperBond>({
+		get: () => step,
+		set: (value) => (step = value),
+		onchange: (value, context) => onstepchange?.(value, context)
+	});
 
-	const binding = bindBond<StepperBond>(
-		(props) => factory(props),
+	const root = useRoot(
+		StepperBond,
 		{
-			step: [
-				() => stepState,
-				(v) => {
-					stepState = v;
-					step = stepState;
-				}
-			],
+			step: stepProp,
 			linear: () => linear,
 			disabled: () => disabled,
 			orientation: () => orientation
 		},
-		{ preset: () => preset }
+		{
+			preset: () => preset,
+			id: () => ID,
+			factory: (props) => factory(props)
+		}
 	);
-	const bond = binding.bond.share();
-	const rootAtom = createAtomInstance<StepperRootAtom, StepperBond>('root', {
-		bond,
-		factory: (owner) => new StepperRootAtom(owner as StepperBond)
-	});
-	const rootProps = $derived(
-		mergeAtomProps(rootAtom, preset, { ...binding.stateProps, ...restProps })
-	);
+	const bond = root.bond;
 
 	function defaultFactory(props: StepperBondProps) {
 		return StepperBond.create(props);
@@ -53,6 +50,6 @@
 	}
 </script>
 
-<HtmlAtom class={['flex flex-col', '$preset', klass]} {...rootProps}>
+<HtmlAtom class={['flex flex-col', '$preset', klass]} {...root.props} {...restProps} part={root}>
 	{@render children?.({ stepper: bond })}
 </HtmlAtom>

@@ -20,7 +20,7 @@ single export:
 
 {codeBlock(
 	`<script lang="ts">
-  import { Button } from '@svelte-atoms/core';
+  import { Button } from '@ixirjs/ui';
 </script>
 
 <Button variant="primary">Save</Button>`,
@@ -31,7 +31,7 @@ single export:
 
 {codeBlock(
 	`<script lang="ts">
-  import { Popover, Button } from '@svelte-atoms/core';
+  import { Popover, Button } from '@ixirjs/ui';
 </script>
 
 <Popover.Root>
@@ -58,7 +58,7 @@ Use {inlineCode('base={...}')} to layer behavior from one component into another
 
 {codeBlock(
 	`<script lang="ts">
-  import { Field, Input } from '@svelte-atoms/core';
+  import { Field, Input } from '@ixirjs/ui';
 </script>
 
 <Field.Root name="email">

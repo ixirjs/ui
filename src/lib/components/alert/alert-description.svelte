@@ -1,9 +1,8 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { mergePresetProps, HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
+	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import { usePart } from '$ixirjs/ui/shared';
 	import { AlertBond } from './bond.svelte';
 	import type { AlertDescriptionProps } from './types';
-
-	const bond = AlertBond.get();
 
 	let {
 		class: klass = '',
@@ -13,16 +12,18 @@
 		...restProps
 	}: AlertDescriptionProps<E, B> = $props();
 
-	const descriptionProps = $derived(
-		mergePresetProps(preset, 'alert.description', { ...bond?.description(), ...restProps })
-	);
+	const part = usePart(AlertBond, 'description', () => restProps, {
+		context: 'optional',
+		preset: () => preset
+	});
+	const bond = part.bond;
 </script>
 
 <HtmlAtom
-	{bond}
 	class={['alert-description border-border mt-1 text-sm leading-relaxed', '$preset', klass]}
 	{as}
-	{...descriptionProps}
+	{...restProps}
+	{part}
 >
 	{@render children?.({ alert: bond! })}
 </HtmlAtom>

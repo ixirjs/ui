@@ -57,7 +57,7 @@
 		</div>
 		<div class="flex items-center gap-3">
 			<Avatar alt="Broken" src="https://example.com/does-not-exist.jpg" />
-			<span class="text-sm">Broken src → initials fallback</span>
+			<span class="text-sm">Broken src falls back to initials</span>
 		</div>
 	</div>
 </Story>
@@ -81,6 +81,36 @@
 		/>
 		<Avatar alt="Jane Doe" class="ring-background ring-2" />
 		<Avatar alt="John Smith" class="ring-background ring-2" />
-		<Avatar alt="+ 4" class="ring-background ring-2" />
+		<Avatar alt="+4" class="ring-background ring-2" />
+	</div>
+</Story>
+
+<Story name="Team Members">
+	<!-- Real-world use case: a member list row, avatar paired with name + role -->
+	<div class="w-80 rounded-xl border p-4">
+		<h3 class="mb-3 text-sm font-semibold">Project team</h3>
+		<ul class="flex flex-col gap-3">
+			<li class="flex items-center gap-3">
+				<Avatar src="https://picsum.photos/seed/avatar2/80/80" alt="Jane Doe" />
+				<div class="min-w-0">
+					<p class="truncate text-sm font-medium">Jane Doe</p>
+					<p class="text-muted-foreground truncate text-xs">Product designer</p>
+				</div>
+			</li>
+			<li class="flex items-center gap-3">
+				<Avatar alt="Marcus Lee" />
+				<div class="min-w-0">
+					<p class="truncate text-sm font-medium">Marcus Lee</p>
+					<p class="text-muted-foreground truncate text-xs">Frontend engineer</p>
+				</div>
+			</li>
+			<li class="flex items-center gap-3">
+				<Avatar alt="Priya Nair" />
+				<div class="min-w-0">
+					<p class="truncate text-sm font-medium">Priya Nair</p>
+					<p class="text-muted-foreground truncate text-xs">Engineering manager</p>
+				</div>
+			</li>
+		</ul>
 	</div>
 </Story>

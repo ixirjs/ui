@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { flushSync } from 'svelte';
 import { Collection } from './collection.svelte';
-import { BondState, type BondStateProps } from './index';
+import { Bond, type BondStateProps } from './index';
 
-class CollectionOwnerState extends BondState<BondStateProps> {
+class CollectionOwnerState extends Bond<BondStateProps> {
 	#values = $derived(this.items.values);
 
 	constructor() {
@@ -116,7 +116,7 @@ describe('Collection<T>', () => {
 		expect(c.size).toBe(0);
 	});
 
-	it('keeps derived views reactive when a BondState eagerly owns the collection', () => {
+	it('keeps derived views reactive when a Bond eagerly owns the collection', () => {
 		const state = new CollectionOwnerState();
 
 		expect(state.values).toEqual([]);

@@ -54,7 +54,7 @@
 				<div>
 					<label for="text-input" class="mb-1 block text-sm font-medium text-gray-700">Text</label>
 					<Input.Root id="text-input" type="text" value="Click me" class="text-sm">
-						<Input.Value class="py-2" bind:value={buttonContent} />
+						<Input.Control class="py-2" bind:value={buttonContent} />
 					</Input.Root>
 				</div>
 			</div>

@@ -1,16 +1,28 @@
-import { defineCapability, sharedCapabilityKey, type Capability } from '../capability';
+import {
+	defineCapability,
+	sharedCapabilityKey,
+	type Capability
+} from '$ixirjs/ui/shared/capability/capability';
 
 export type Orientation = 'horizontal' | 'vertical';
 export type AriaCurrentValue = boolean | 'page' | 'step' | 'location' | 'date' | 'time';
 export type ProjectionAccessor<T> = T | ((ctx: unknown, role: string) => T);
 
-export const ORIENTATION_PROJECTION = sharedCapabilityKey<void>(
-	'@svelte-atoms/cap:orientation-projection'
-);
-export const DISABLED_PROJECTION = sharedCapabilityKey<void>(
-	'@svelte-atoms/cap:disabled-projection'
-);
-export const CURRENT_PROJECTION = sharedCapabilityKey<void>('@svelte-atoms/cap:current-projection');
+export const ORIENTATION_PROJECTION = sharedCapabilityKey<void>({
+	owner: '@ixirjs/cap',
+	name: 'orientation-projection',
+	version: 1
+});
+export const DISABLED_PROJECTION = sharedCapabilityKey<void>({
+	owner: '@ixirjs/cap',
+	name: 'disabled-projection',
+	version: 1
+});
+export const CURRENT_PROJECTION = sharedCapabilityKey<void>({
+	owner: '@ixirjs/cap',
+	name: 'current-projection',
+	version: 1
+});
 
 export interface OrientationProjectionOptions {
 	roles?: readonly string[];
@@ -23,8 +35,6 @@ export function orientationProjection(options: OrientationProjectionOptions): Ca
 	return defineCapability<void>({
 		slot: ORIENTATION_PROJECTION,
 		meta: {
-			layer: 1,
-			kind: 'projection',
 			projects: roles,
 			docs: 'Generic horizontal/vertical orientation projection.'
 		},
@@ -59,8 +69,6 @@ export function disabledProjection(options: DisabledProjectionOptions): Capabili
 	return defineCapability<void>({
 		slot: DISABLED_PROJECTION,
 		meta: {
-			layer: 1,
-			kind: 'projection',
 			projects: roles,
 			docs: 'Generic disabled projection with ARIA, native disabled, and tabindex guard attrs.'
 		},
@@ -94,8 +102,6 @@ export function currentProjection(options: CurrentProjectionOptions): Capability
 	return defineCapability<void>({
 		slot: CURRENT_PROJECTION,
 		meta: {
-			layer: 1,
-			kind: 'projection',
 			projects: roles,
 			docs: 'Generic aria-current projection for pages, steps, dates, and navigation items.'
 		},

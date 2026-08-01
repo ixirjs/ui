@@ -1,5 +1,5 @@
 const presetCode = `
-import { setPreset } from '@svelte-atoms/core';
+import { setPreset } from '@ixirjs/ui/preset';
 
 const preset = setPreset({
   collapsible: () => ({
@@ -84,8 +84,8 @@ export const metadata = {
 		'Toggle visibility of content sections with independent open/closed state and animated transitions.',
 	componentType: 'compound' as const,
 	status: 'stable' as const,
-	packageName: '@svelte-atoms/core',
-	importCode: "import { Collapsible } from '@svelte-atoms/core';",
+	packageName: '@ixirjs/ui',
+	importCode: "import { Collapsible } from '@ixirjs/ui';",
 	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Collapsible' }],
 	useCases,
 	componentsSummary,

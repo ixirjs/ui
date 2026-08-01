@@ -1,10 +1,17 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
-import { Atom } from '$svelte-atoms/core/shared/bond';
-import { PopoverArrowAtom, PopoverIndicatorAtom, PopoverOverlayAtom } from '../popover/bond.svelte';
-import { SelectPlaceholderAtom, SelectQueryAtom } from '../select/bond.svelte';
-import { SelectItemAtom } from '../select/item/bond.svelte';
-import Probe, { capturedBond, resetCapturedBond } from './combobox-atom-probe.svelte';
+import { Atom } from '$ixirjs/ui/shared/bond';
+import {
+	PopoverTailAtom,
+	PopoverIndicatorAtom,
+	PopoverOverlayAtom
+} from '$ixirjs/ui/components/popover/bond.svelte';
+import { SelectPlaceholderAtom, SelectQueryAtom } from '$ixirjs/ui/components/select/bond.svelte';
+import { SelectItemAtom } from '$ixirjs/ui/components/select/item/bond.svelte';
+import Probe, {
+	capturedBond,
+	resetCapturedBond
+} from '$ixirjs/ui/test/components/combobox/combobox-atom-probe.test.svelte';
 import { ComboboxBond, ComboboxControlAtom } from './bond.svelte';
 
 describe('Combobox component-owned Atoms', () => {
@@ -18,22 +25,22 @@ describe('Combobox component-owned Atoms', () => {
 		expect(combobox).toBeInstanceOf(ComboboxBond);
 		expect(combobox?.isOpen).toBe(true);
 
-		const trigger = combobox?.node('trigger');
-		const overlay = combobox?.node('overlay');
-		const content = combobox?.node('content');
-		const placeholder = combobox?.node('placeholder');
-		const control = combobox?.node('control');
-		const query = combobox?.node('query');
-		const item = combobox?.node('item');
-		const arrow = combobox?.node('arrow');
-		const indicator = combobox?.node('indicator');
+		const trigger = combobox?.nodeByPart('trigger');
+		const overlay = combobox?.nodeByPart('overlay');
+		const content = combobox?.nodeByPart('content');
+		const placeholder = combobox?.nodeByPart('placeholder');
+		const control = combobox?.nodeByPart('control');
+		const query = combobox?.nodeByPart('query');
+		const item = combobox?.nodeByPart('item');
+		const tail = combobox?.nodeByPart('tail');
+		const indicator = combobox?.nodeByPart('indicator');
 
 		expect(overlay).toBeInstanceOf(PopoverOverlayAtom);
 		expect(placeholder).toBeInstanceOf(SelectPlaceholderAtom);
 		expect(control).toBeInstanceOf(ComboboxControlAtom);
 		expect(query).toBeInstanceOf(SelectQueryAtom);
 		expect(item).toBeInstanceOf(SelectItemAtom);
-		expect(arrow).toBeInstanceOf(PopoverArrowAtom);
+		expect(tail).toBeInstanceOf(PopoverTailAtom);
 		expect(indicator).toBeInstanceOf(PopoverIndicatorAtom);
 		for (const node of [
 			trigger,
@@ -43,7 +50,7 @@ describe('Combobox component-owned Atoms', () => {
 			control,
 			query,
 			item,
-			arrow,
+			tail,
 			indicator
 		]) {
 			expect(node).toBeInstanceOf(Atom);
@@ -55,40 +62,21 @@ describe('Combobox component-owned Atoms', () => {
 		expect(item?.spread.role).toBe('option');
 		expect(combobox?.items.get('alpha')).toBe(item);
 
-		const generated = combobox as unknown as Record<
-			| 'trigger'
-			| 'overlay'
-			| 'content'
-			| 'placeholder'
-			| 'control'
-			| 'query'
-			| 'item'
-			| 'arrow'
-			| 'indicator',
-			() => Atom
-		>;
-		const generatedNodes = [
-			generated.trigger(),
-			generated.overlay(),
-			generated.content(),
-			generated.placeholder(),
-			generated.control(),
-			generated.query(),
-			generated.item(),
-			generated.arrow(),
-			generated.indicator()
-		];
-		expect(generatedNodes[1]).toBeInstanceOf(PopoverOverlayAtom);
-		expect(generatedNodes[3]).toBeInstanceOf(SelectPlaceholderAtom);
-		expect(generatedNodes[4]).toBeInstanceOf(ComboboxControlAtom);
-		expect(generatedNodes[5]).toBeInstanceOf(SelectQueryAtom);
-		for (const node of generatedNodes) {
-			expect(node).toBeInstanceOf(Atom);
-		}
-
 		unmount();
 
-		expect(combobox?.nodes()).toEqual([]);
+		for (const part of [
+			'trigger',
+			'overlay',
+			'content',
+			'placeholder',
+			'control',
+			'query',
+			'item',
+			'tail',
+			'indicator'
+		]) {
+			expect(combobox?.nodesByPart(part)).toEqual([]);
+		}
 		expect(combobox?.items.get('alpha')).toBeUndefined();
 	});
 });

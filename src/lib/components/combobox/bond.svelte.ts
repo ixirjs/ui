@@ -1,22 +1,24 @@
-import { type PopoverDomElements } from '$svelte-atoms/core/components/popover/bond.svelte';
+import { type PopoverDomElements } from '$ixirjs/ui/components/popover/bond.svelte';
+
 import {
 	SelectBond as DropdownBond,
 	SelectBondBase as DropdownBondBase,
 	type SelectStateProps as DropdownStateProps
-} from '$svelte-atoms/core/components/select/bond.svelte';
-import { defineAtom } from '$svelte-atoms/core/shared/bond';
+} from '$ixirjs/ui/components/select/bond.svelte';
+import { defineAtom } from '$ixirjs/ui/shared/bond';
 import {
 	defineBond,
+	internCapabilityFactory,
 	type BondOf,
 	createInput,
 	inputCapability,
 	defineAtomCapability,
-	sharedCapabilityKey,
-	type BondSpec,
-	type AtomHost
-} from '$svelte-atoms/core/shared';
+	sharedCapabilityKey
+} from '@ixirjs/ui/shared';
+// AtomHost is a protocol record, classified experimental (ADR 0008).
+import type { AtomHost } from '$ixirjs/ui/shared/capability';
 import { SvelteMap } from 'svelte/reactivity';
-import { nanoid } from 'nanoid';
+import { generateId } from '$ixirjs/ui/shared/bond';
 import type { ComboboxSelection } from './types';
 
 // Inherits query/ClearThenClose from Select. Combobox overrides the 'input' capability so
@@ -80,7 +82,7 @@ export class ComboboxBondBase extends DropdownBondBase<ComboboxBondProps> {
 	}
 
 	addSelection(label: string) {
-		const id = nanoid();
+		const id = generateId('combobox-selection');
 		// eslint-disable-next-line svelte/prefer-svelte-reactivity
 		const createdAt = new Date();
 		this.#userSelections.set(id, {
@@ -109,7 +111,7 @@ export class ComboboxBondBase extends DropdownBondBase<ComboboxBondProps> {
 			createdAt: controller.createdAt, // default date for items from the list
 			controller,
 			// Deselect by the item's VALUE — `props.values` holds values, not the atom's
-			// `id` (a nanoid); passing `id` matched nothing, so dismiss was a no-op.
+			// `id` (a generated identity); passing `id` matched nothing, so dismiss was a no-op.
 			unselect: () => this.unselect([controller.value])
 		}));
 
@@ -137,7 +139,11 @@ type ComboboxBondView = ComboboxBondBase;
 // Capability slots and shared helpers
 // -----------------------------------------------------------------------------
 
-const COMBOBOX_CONTROL = sharedCapabilityKey<void>('@svelte-atoms/combobox:control');
+const COMBOBOX_CONTROL = sharedCapabilityKey<void>({
+	owner: '@ixirjs/combobox',
+	name: 'control',
+	version: 1
+});
 
 // -----------------------------------------------------------------------------
 // Atom definitions
@@ -158,16 +164,14 @@ export type ComboboxControlAtom = InstanceType<typeof ComboboxControlAtom>;
 // Atom capabilities
 // -----------------------------------------------------------------------------
 
-function comboboxControlPresentation() {
+const comboboxControlPresentation = internCapabilityFactory(function comboboxControlPresentation() {
 	return defineAtomCapability<void, AtomHost, ComboboxBondView>({
 		slot: COMBOBOX_CONTROL,
 		meta: {
-			layer: 1,
-			kind: 'policy',
 			projects: ['control'],
 			docs: 'Combobox control single-selection clearing and multi-selection entry policy.'
 		},
-		behavior: {
+		attach: {
 			handlers: (_node, bond) => {
 				const isMultiselect = bond?.props.multiple ?? false;
 				return {
@@ -191,42 +195,25 @@ function comboboxControlPresentation() {
 			}
 		}
 	});
-}
+});
 
 // -----------------------------------------------------------------------------
 // Bond spec and constructor facade
 // -----------------------------------------------------------------------------
 
-const comboboxSpec = {
+// ComboboxBond — flat composition over DropdownBond, adds an editable control atom.
+// 'input' capability, ClearThenClose escape, and trigger are all inherited from Select.
+// Inlined deliberately: `defineBond<const S>` infers `parts` as a tuple only from a literal
+// argument. A hoisted spec widens it to an array, which makes `AtomsOf` resolve every inherited
+// slot to `never` and blocks `usePart` on slots the runtime spec merge does provide.
+export const ComboboxBond = defineBond({
 	parts: [DropdownBond],
 	name: 'combobox',
 	base: ComboboxBondBase,
 	atoms: {
 		control: ComboboxControlAtom
 	}
-} satisfies BondSpec<{ control: typeof ComboboxControlAtom }, typeof ComboboxBondBase>;
-
-// ComboboxBond — flat composition over DropdownBond, adds an editable control atom.
-// 'input' capability, ClearThenClose escape, and trigger are all inherited from Select.
-const ComboboxBondImpl = defineBond<
-	{ control: typeof ComboboxControlAtom },
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	any,
-	typeof ComboboxBondBase
->(comboboxSpec);
+});
 
 // Instance type — paired with the const above (value + type).
-export type ComboboxBond = BondOf<typeof ComboboxBondImpl>;
-
-interface ComboboxBondConstructor {
-	new (props: ComboboxBondProps): ComboboxBond;
-	readonly CONTEXT_KEY: string;
-	readonly CONTEXT_KEYS?: readonly string[];
-	readonly spec: (typeof ComboboxBondImpl)['spec'];
-	get(): ComboboxBond | undefined;
-	getOrThrow(message?: string): ComboboxBond;
-	set(bond: ComboboxBond): ComboboxBond;
-	create(props: ComboboxBondProps): ComboboxBond;
-}
-
-export const ComboboxBond = ComboboxBondImpl as unknown as ComboboxBondConstructor;
+export type ComboboxBond = BondOf<typeof ComboboxBond>;

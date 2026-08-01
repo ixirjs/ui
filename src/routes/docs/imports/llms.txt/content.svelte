@@ -15,58 +15,63 @@
 
 <FrontMatter {frontmatter} />
 
-# Import Guide for @svelte-atoms/core ## Golden Rule Import public APIs from {inlineCode(
-	'@svelte-atoms/core'
-)}.
+# Import Guide for @ixirjs/ui ## Application components Import application components from the root
+package by default:
 
 {codeBlock(
-	`import { Button, Popover, Select, Input, Form, Field } from '@svelte-atoms/core';`,
+	`import { Button, ContextMenu, Field, Form, Input, Popover, Select } from '@ixirjs/ui';`,
 	'typescript'
 )}
 
-## Current Import Patterns ### Single components Use direct named exports for single components:
-
-{codeBlock(`import { Button, Badge, Avatar, Kbd } from '@svelte-atoms/core';`, 'typescript')}
-
-### Namespaced component families Many compound components are exported as namespaces:
+Root imports are the most convenient choice when a module uses several components. ## Public
+component subpaths Every curated facade under the {inlineCode('@ixirjs/ui/components/*')} namespace is
+public. Use one when it makes an isolated component dependency clearer or when a tool requires a component-level
+entry point:
 
 {codeBlock(
-	`import { Popover, Select, DropdownMenu, Input, Field } from '@svelte-atoms/core';`,
+	`import { Button } from '@ixirjs/ui/components/button';
+import { Field } from '@ixirjs/ui/components/form/field';`,
 	'typescript'
 )}
 
-Then use atoms from each namespace:
+Do not import private source paths such as
+{inlineCode('@ixirjs/ui/dist/components/button/button.svelte')} or {inlineCode('src/lib/...')}.
+Component-level imports always use the {inlineCode('@ixirjs/ui/components/*')} namespace. ## Presets and
+utilities Use their dedicated public subpaths:
 
 {codeBlock(
-	`<Popover.Root>
+	`import { setPreset } from '@ixirjs/ui';
+import type { Preset } from '@ixirjs/ui/preset';
+import { cn, defineVariants } from '@ixirjs/ui/utils';`,
+	'typescript'
+)}
+
+## Namespaced component families Compound components are namespaces regardless of whether they come
+from the root or a public component subpath:
+
+{codeBlock(
+	`import { Button, Popover } from '@ixirjs/ui';
+
+<Popover.Root>
   <Popover.Trigger base={Button}>Open</Popover.Trigger>
-  <Popover.Content>
-    Content
-  </Popover.Content>
+  <Popover.Content>Content</Popover.Content>
 </Popover.Root>`,
 	'svelte'
 )}
 
-### Utilities and context helpers
-
-{codeBlock(`import { cn, defineVariants, setPreset } from '@svelte-atoms/core';`, 'typescript')}
-
-## Recommended Structure - Keep all package imports in one line per module. - Import types with {inlineCode(
-	'import type'
-)} when possible. - Prefer canonical names over deprecated aliases (for example, use {inlineCode(
-	'DropdownMenu'
-)} over legacy menu aliases). ## Common Mistakes
+## Common mistakes
 
 {list([
-	'Default imports from @svelte-atoms/core (the package uses named exports).',
-	'Importing from private source paths like src/lib/... in application code.',
-	'Mixing deprecated aliases when a canonical namespace exists.',
+	'Default imports from @ixirjs/ui; the package uses named exports.',
+	'Importing from private source paths.',
+	'Using a subpath that is not in the package export map.',
 	'Using lowercase component names in imports.'
 ])}
 
-## Correct vs Incorrect
+## Valid imports
 
 {codeBlock(
-	`// Incorrect\nimport Button from '@svelte-atoms/core';\nimport { Button } from '@svelte-atoms/core/components/button';\n\n// Correct\nimport { Button, Popover } from '@svelte-atoms/core';`,
+	`import { Button, Popover } from '@ixirjs/ui';
+import { Button as StandaloneButton } from '@ixirjs/ui/components/button';`,
 	'typescript'
 )}

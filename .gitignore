@@ -3,6 +3,8 @@ node_modules
 
 # Output
 .output
+/.bench-out
+/.bench-ab
 .vercel
 .netlify
 .wrangler
@@ -26,3 +28,9 @@ vite.config.ts.timestamp-*
 
 *storybook.log
 storybook-static
+
+# Vitest browser-mode failure screenshots
+**/__screenshots__
+
+# Agent memory scratch
+memory/

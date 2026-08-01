@@ -1,7 +1,7 @@
 <script module>
 	import { defineMeta } from '@storybook/addon-svelte-csf';
-	import { default as RadioComponent } from '../radio.svelte';
-	import { default as RadioGroupComponent } from '../radio-group.svelte';
+	import { default as RadioComponent } from '$ixirjs/ui/components/radio/radio.svelte';
+	import { default as RadioGroupComponent } from '$ixirjs/ui/components/radio/radio-group.svelte';
 
 	const { Story } = defineMeta({
 		title: 'Atoms/RadioGroup',
@@ -21,7 +21,7 @@
 
 <script lang="ts">
 	let value = $state('option1');
-	let controlledValue = $state('option1');
+	let controlledValue = $state('medium');
 	let disabledValue = $state('option2');
 	let horizontalValue = $state('monthly');
 </script>
@@ -48,31 +48,18 @@
 	{/snippet}
 </Story>
 
-<Story name="Group">
-	<RadioGroupComponent class="gap-4" name="choice" bind:value={controlledValue}>
-		<label class="flex items-center gap-2">
-			<RadioComponent class="size-8" value="t1" />
-			<div>Test 1</div>
-		</label>
-
-		<label class="flex items-center gap-2">
-			<RadioComponent class="size-8" value="t2" />
-			<div>Test 2</div>
-		</label>
-
-		<label class="flex items-center gap-2">
-			<RadioComponent class="size-8" value="t3" />
-			<div>Test 3</div>
-		</label>
-
-		<label class="flex items-center gap-2">
-			<RadioComponent class="size-8" value="t4" />
-			<div>Test 4</div>
-		</label>
-	</RadioGroupComponent>
-
-	<div class="mt-8">
-		Selected value: <strong>{controlledValue}</strong>
+<!-- Controlled: read the selected value back from `bind:value`. -->
+<Story name="Controlled">
+	<div class="flex flex-col gap-4">
+		<RadioGroupComponent class="gap-3" name="choice" bind:value={controlledValue}>
+			{#each ['Small', 'Medium', 'Large'] as size (size)}
+				<label class="flex cursor-pointer items-center gap-2">
+					<RadioComponent value={size.toLowerCase()} />
+					<span class="text-sm font-medium">{size}</span>
+				</label>
+			{/each}
+		</RadioGroupComponent>
+		<p class="text-muted-foreground text-xs">Selected: <strong>{controlledValue}</strong></p>
 	</div>
 </Story>
 

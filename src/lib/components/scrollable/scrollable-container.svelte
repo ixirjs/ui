@@ -1,9 +1,9 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
 	import type { ScrollableContainerProps } from './types';
 	import { ScrollableBond } from './bond.svelte';
-	import { resizeObserver } from '$svelte-atoms/core/attachments/resize-observer.svelte';
-	import { createAtomInstance } from '$svelte-atoms/core/shared/bond';
-	import { mergeAtomProps, HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
+	import { resizeObserver } from '$ixirjs/ui/attachments/resize-observer.svelte';
+	import { usePart } from '$ixirjs/ui/shared';
+	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
 	import './scrollable-container.css';
 
 	let {
@@ -13,33 +13,26 @@
 		...restProps
 	}: ScrollableContainerProps<E, B> = $props();
 
-	const bond = ScrollableBond.getOrThrow(
-		'ScrollableContainer must be used within a ScrollableRoot'
-	);
-
-	const atom = createAtomInstance('container', {
-		bond,
-		factory: (owner) => owner!.container()
+	const part = usePart(ScrollableBond, 'container', () => restProps, {
+		preset: () => preset
 	});
-
-	const containerProps = $derived(mergeAtomProps(atom, preset, restProps));
 </script>
 
 <HtmlAtom
 	{@attach (node: HTMLElement) => {
-		if (!bond) return;
+		if (!part.bond) return;
 
 		return resizeObserver(() => {
-			bond.state.props.clientWidth = node.clientWidth;
-			bond.state.props.clientHeight = node.clientHeight;
-			bond.state.props.scrollWidth = node.scrollWidth;
-			bond.state.props.scrollHeight = node.scrollHeight;
+			part.bond.props.clientWidth = node.clientWidth;
+			part.bond.props.clientHeight = node.clientHeight;
+			part.bond.props.scrollWidth = node.scrollWidth;
+			part.bond.props.scrollHeight = node.scrollHeight;
 		})(node);
 	}}
-	{bond}
 	as="div"
 	class={['scrollable-container h-full max-h-full w-full overflow-auto', '$preset', klass]}
-	{...containerProps}
+	{...restProps}
+	{part}
 >
 	{#if children}
 		{@render children()}

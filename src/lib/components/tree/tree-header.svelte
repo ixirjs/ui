@@ -1,41 +1,52 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import type { HTMLAttributes } from 'svelte/elements';
-	import { mergeAtomProps, HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
-	import { createAtomInstance } from '$svelte-atoms/core/shared/bond';
+	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import { usePart } from '$ixirjs/ui/shared';
 	import { TreeBond } from './bond.svelte';
 	import type { TreeHeaderProps } from './types';
 
-	type Element = HTMLElementTagNameMap[E];
-
-	const bond = TreeBond.getOrThrow('<Tree.Header /> must be used within a <Tree.Root />');
-
+	// `& HTMLAttributes<…>` used to be needed here because `ElementProps` carried no DOM attributes.
+	// It does now, and intersecting a second source of `onpointerdown` only makes the handler type
+	// ambiguous, so the props type stands alone.
 	let {
 		class: klass = '',
 		preset = undefined,
 		children = undefined,
 		onpointerdown = undefined,
+		onkeydown = undefined,
 		...restProps
-	}: TreeHeaderProps<E, B> & HTMLAttributes<Element> = $props();
+	}: TreeHeaderProps<E, B> = $props();
 
-	const atom = createAtomInstance('header', {
-		bond,
-		factory: (owner) => owner!.header()
+	type PointerHandlerEvent = Parameters<NonNullable<typeof onpointerdown>>[0];
+	type KeyHandlerEvent = Parameters<NonNullable<typeof onkeydown>>[0];
+
+	const part = usePart(TreeBond, 'header', () => restProps, {
+		preset: () => preset
 	});
 
-	const headerProps = $derived(mergeAtomProps(atom, preset, restProps));
+	// These run before the atom's own disclosure handler and stage the reason for it. The seam
+	// composes the two — consumer handler first, then the atom's, skipped when default is prevented
+	// — so neither needs to invoke the atom handler by hand.
+	function handlePointerDown(event: PointerHandlerEvent) {
+		onpointerdown?.(event);
+		if (event.defaultPrevented) return;
+		part.bond.stageOpenChange({ event, reason: 'trigger' });
+	}
 
-	function handlePointerDown(ev: PointerEvent & { currentTarget: EventTarget & Element }) {
-		onpointerdown?.(ev);
-		if (ev.defaultPrevented) return;
-		(headerProps.onpointerdown as ((ev: PointerEvent) => void) | undefined)?.(ev);
+	function handleKeydown(event: KeyHandlerEvent) {
+		onkeydown?.(event);
+		if (event.defaultPrevented) return;
+		if (event.key === 'Enter' || event.key === ' ') {
+			part.bond.stageOpenChange({ event, reason: 'trigger' });
+		}
 	}
 </script>
 
 <HtmlAtom
-	{bond}
 	class={['cursor-pointer', '$preset', klass]}
-	{...headerProps}
+	{...restProps}
+	{part}
 	onpointerdown={handlePointerDown}
+	onkeydown={handleKeydown}
 >
-	{@render children?.({ tree: bond })}
+	{@render children?.({ tree: part.bond })}
 </HtmlAtom>

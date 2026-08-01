@@ -1,7 +1,8 @@
 import type { Snippet } from 'svelte';
-import type { SnippetProps } from '$svelte-atoms/core/components/atom';
-import type { Factory } from '$svelte-atoms/core/types';
+import type { SnippetProps } from '$ixirjs/ui/components/atom';
+import type { Factory, StateChangeCallback } from '$ixirjs/ui/types';
 import type { CalendarBond } from './bond.svelte';
+import type { PresetKey } from '$ixirjs/ui/preset';
 
 export type Day = {
 	id: number;
@@ -39,9 +40,9 @@ export type CalendarChildren = Snippet<[CalendarSnippetProps]>;
 
 export interface CalendarRootProps {
 	class?: string;
-	preset?: string;
+	preset?: PresetKey;
 
-	value?: Date;
+	value?: Date | undefined;
 	range?: CalendarRange;
 
 	start?: Date;
@@ -58,17 +59,21 @@ export interface CalendarRootProps {
 
 	factory?: Factory<CalendarBond>;
 
-	onchange?: (ev: CustomEvent, params: { range: CalendarRange; pivote: Date }) => void;
+	onvaluechange?: StateChangeCallback<Date | undefined, CalendarBond>;
+	onrangechange?: StateChangeCallback<CalendarRange, CalendarBond>;
+	onpivotechange?: StateChangeCallback<Date, CalendarBond>;
+	// Native DOM callbacks retain event-only semantics.
+	onchange?: (event: Event) => void;
 
 	children?: CalendarChildren;
 }
 
 export interface CalendarDayProps {
 	class?: string;
-	preset?: string;
+	preset?: PresetKey;
 	day: Day;
 	as?: string;
-	onclick?: () => void;
+	onclick?: (event: MouseEvent) => void;
 	readonly element?: HTMLElement;
 	children?: CalendarChildren;
 }

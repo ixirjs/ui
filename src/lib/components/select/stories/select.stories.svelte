@@ -1,9 +1,9 @@
 <script module>
 	import { defineMeta } from '@storybook/addon-svelte-csf';
 	import { Select as ASelect, type SelectBond, type SelectSelection } from '..';
-	import { Input } from '$svelte-atoms/core/components/input';
+	import { Input } from '$ixirjs/ui/components/input';
 	import { flip } from 'svelte/animate';
-	import { openOverlay } from '$svelte-atoms/core/components/portal/host/policies/overlay-view';
+	import { openOverlay } from '$ixirjs/ui/components/overlay/policies/overlay-view';
 
 	const { Story } = defineMeta({
 		title: 'Atoms/Select',
@@ -35,23 +35,23 @@
 	type Option = { value: string; label: string; group?: string };
 
 	const countries: Option[] = [
-		{ value: 'us', label: '🇺🇸 United States' },
-		{ value: 'uk', label: '🇬🇧 United Kingdom' },
-		{ value: 'de', label: '🇩🇪 Germany' },
-		{ value: 'fr', label: '🇫🇷 France' },
-		{ value: 'jp', label: '🇯🇵 Japan' },
-		{ value: 'br', label: '🇧🇷 Brazil' },
-		{ value: 'au', label: '🇦🇺 Australia' },
-		{ value: 'ca', label: '🇨🇦 Canada' }
+		{ value: 'us', label: 'United States' },
+		{ value: 'uk', label: 'United Kingdom' },
+		{ value: 'de', label: 'Germany' },
+		{ value: 'fr', label: 'France' },
+		{ value: 'jp', label: 'Japan' },
+		{ value: 'br', label: 'Brazil' },
+		{ value: 'au', label: 'Australia' },
+		{ value: 'ca', label: 'Canada' }
 	];
 
 	const team: Option[] = [
-		{ value: 'alice', label: '👩‍💻 Alice Chen' },
-		{ value: 'bob', label: '👨‍🎨 Bob Martinez' },
-		{ value: 'charlie', label: '👨‍🔬 Charlie Kim' },
-		{ value: 'diana', label: '👩‍🏫 Diana Ross' },
-		{ value: 'evan', label: '👨‍🚀 Evan Wright' },
-		{ value: 'fiona', label: '👩‍⚕️ Fiona Garcia' }
+		{ value: 'alice', label: 'Alice Chen' },
+		{ value: 'bob', label: 'Bob Martinez' },
+		{ value: 'charlie', label: 'Charlie Kim' },
+		{ value: 'diana', label: 'Diana Ross' },
+		{ value: 'evan', label: 'Evan Wright' },
+		{ value: 'fiona', label: 'Fiona Garcia' }
 	];
 
 	const frameworks: Option[] = [
@@ -98,12 +98,26 @@
 		countries.filter((c) => c.label.toLowerCase().includes(countrySearch.trim().toLowerCase()))
 	);
 
-	const itemClass =
-		'flex cursor-pointer items-center gap-2 px-3 py-2 text-sm text-foreground transition-colors hover:bg-foreground/5 data-[highlighted=true]:bg-foreground/5 data-[selected]:bg-primary/10 data-[selected]:font-medium data-[selected]:text-primary';
-	const contentClass = 'border-border bg-popover z-50 overflow-hidden rounded-lg border shadow-sm';
-	const triggerClass =
-		'border-border flex h-11 w-full items-center gap-2 rounded-lg border px-3 transition-colors hover:border-foreground/30';
+	// Look (surface / row / field-button) lives in the shared stories preset via `variant="…"`;
+	// stories keep only per-instance structure (sizing, flex, gutters) inline.
+	const checkClass = 'text-primary h-4 w-4 shrink-0 opacity-0 data-on:opacity-100';
 </script>
+
+<!-- The selected-state checkmark: an inline SVG icon that fades in via `data-on`. -->
+{#snippet check(on: boolean)}
+	<svg
+		viewBox="0 0 24 24"
+		fill="none"
+		stroke="currentColor"
+		stroke-width="2"
+		stroke-linecap="round"
+		stroke-linejoin="round"
+		class={checkClass}
+		data-on={on ? '' : undefined}
+	>
+		<path d="M20 6 9 17l-5-5" />
+	</svg>
+{/snippet}
 
 <!-- Default — fully configurable via Storybook controls (multiple, disabled, placement). -->
 <Story name="Basic">
@@ -120,7 +134,8 @@
 					{@const hasValues = (select.props.values ?? []).length > 0}
 					<ASelect.Trigger
 						base={Input.Root}
-						class={triggerClass}
+						variant="field"
+						class="flex h-11 w-full items-center gap-2 px-3"
 						onclick={(ev: MouseEvent) => {
 							ev.preventDefault();
 							openOverlay(select);
@@ -152,16 +167,12 @@
 						<ASelect.Indicator class="text-muted-foreground shrink-0" />
 					</ASelect.Trigger>
 
-					<ASelect.Content class={contentClass}>
+					<ASelect.Content variant="flat" class="z-50 overflow-hidden">
 						<div class="max-h-60 overflow-auto py-1">
 							{#each countries as item (item.value)}
-								<ASelect.Item value={item.value} class={itemClass}>
+								<ASelect.Item value={item.value} variant="flat">
 									<span class="flex-1" data-label>{item.label}</span>
-									<span
-										class="text-primary opacity-0 data-on:opacity-100"
-										data-on={(select.props.values ?? []).includes(item.value) ? '' : undefined}
-										>✓</span
-									>
+									{@render check((select.props.values ?? []).includes(item.value))}
 								</ASelect.Item>
 							{/each}
 						</div>
@@ -180,7 +191,8 @@
 			{#snippet children({ select })}
 				<ASelect.Trigger
 					base={Input.Root}
-					class={triggerClass}
+					variant="field"
+					class="flex h-11 w-full items-center gap-2 px-3"
 					onclick={(ev: MouseEvent) => {
 						ev.preventDefault();
 						openOverlay(select);
@@ -201,15 +213,12 @@
 					<ASelect.Indicator class="text-muted-foreground shrink-0" />
 				</ASelect.Trigger>
 
-				<ASelect.Content class={contentClass}>
+				<ASelect.Content variant="flat" class="z-50 overflow-hidden">
 					<div class="max-h-60 overflow-auto py-1">
 						{#each countries as item (item.value)}
-							<ASelect.Item value={item.value} class={itemClass}>
+							<ASelect.Item value={item.value} variant="flat">
 								<span class="flex-1" data-label>{item.label}</span>
-								<span
-									class="text-primary opacity-0 data-on:opacity-100"
-									data-on={country === item.value ? '' : undefined}>✓</span
-								>
+								{@render check(country === item.value)}
 							</ASelect.Item>
 						{/each}
 					</div>
@@ -228,7 +237,8 @@
 			{#snippet children({ select })}
 				<ASelect.Trigger
 					base={Input.Root}
-					class="border-border flex h-auto min-h-11 w-full flex-wrap items-center gap-1 rounded-lg border px-3 py-2 transition-colors hover:border-foreground/30"
+					variant="field"
+					class="flex h-auto min-h-11 w-full flex-wrap items-center gap-1 px-3 py-2"
 					onclick={(ev: MouseEvent) => {
 						ev.preventDefault();
 						openOverlay(select);
@@ -256,15 +266,12 @@
 					<ASelect.Indicator class="text-muted-foreground shrink-0" />
 				</ASelect.Trigger>
 
-				<ASelect.Content class={contentClass}>
+				<ASelect.Content variant="flat" class="z-50 overflow-hidden">
 					<div class="max-h-60 overflow-auto py-1">
 						{#each team as item (item.value)}
-							<ASelect.Item value={item.value} class={itemClass}>
+							<ASelect.Item value={item.value} variant="flat">
 								<span class="flex-1" data-label>{item.label}</span>
-								<span
-									class="text-primary opacity-0 data-on:opacity-100"
-									data-on={members.includes(item.value) ? '' : undefined}>✓</span
-								>
+								{@render check(members.includes(item.value))}
 							</ASelect.Item>
 						{/each}
 					</div>
@@ -275,7 +282,7 @@
 	</div>
 </Story>
 
-<!-- 3. Searchable — built-in `Select.Query` filter box + `createBondFilter`. Escape clears the
+<!-- 3. Searchable — built-in `Select.Query` filter box + `filterSelectData`. Escape clears the
      query first (ClearThenClose), then closes. Shows the empty / no-results state. -->
 <Story name="Searchable">
 	<div class="flex flex-col gap-2" style="width: 320px;">
@@ -288,7 +295,8 @@
 			{#snippet children({ select })}
 				<ASelect.Trigger
 					base={Input.Root}
-					class={triggerClass}
+					variant="field"
+					class="flex h-11 w-full items-center gap-2 px-3"
 					onclick={(ev: MouseEvent) => {
 						ev.preventDefault();
 						openOverlay(select);
@@ -309,7 +317,7 @@
 					<ASelect.Indicator class="text-muted-foreground shrink-0" />
 				</ASelect.Trigger>
 
-				<ASelect.Content class={contentClass}>
+				<ASelect.Content variant="flat" class="z-50 overflow-hidden">
 					<div class="border-border border-b p-2">
 						<ASelect.Query
 							class="text-foreground placeholder:text-muted-foreground w-full border-0 bg-transparent px-1 text-sm outline-none"
@@ -319,12 +327,9 @@
 					<div class="max-h-52 overflow-auto py-1">
 						{#each filteredCountries as item (item.value)}
 							<div animate:flip={{ duration: 150 }}>
-								<ASelect.Item value={item.value} class={itemClass}>
+								<ASelect.Item value={item.value} variant="flat">
 									<span class="flex-1" data-label>{item.label}</span>
-									<span
-										class="text-primary opacity-0 data-on:opacity-100"
-										data-on={country === item.value ? '' : undefined}>✓</span
-									>
+									{@render check(country === item.value)}
 								</ASelect.Item>
 							</div>
 						{/each}
@@ -348,7 +353,8 @@
 			{#snippet children({ select })}
 				<ASelect.Trigger
 					base={Input.Root}
-					class={triggerClass}
+					variant="field"
+					class="flex h-11 w-full items-center gap-2 px-3"
 					onclick={(ev: MouseEvent) => {
 						ev.preventDefault();
 						openOverlay(select);
@@ -369,11 +375,11 @@
 					<ASelect.Indicator class="text-muted-foreground shrink-0" />
 				</ASelect.Trigger>
 
-				<ASelect.Content class={contentClass}>
+				<ASelect.Content variant="flat" class="z-50 overflow-hidden">
 					<div class="max-h-72 overflow-auto py-1">
 						{#each groupedFrameworks as section, i (section.group)}
 							{#if i > 0}
-								<ASelect.Divider class="bg-border my-1 h-px" />
+								<ASelect.Divider />
 							{/if}
 							<ASelect.Group>
 								<ASelect.Title
@@ -382,12 +388,9 @@
 									{section.group}
 								</ASelect.Title>
 								{#each section.items as item (item.value)}
-									<ASelect.Item value={item.value} class={itemClass}>
+									<ASelect.Item value={item.value} variant="flat">
 										<span class="flex-1" data-label>{item.label}</span>
-										<span
-											class="text-primary opacity-0 data-on:opacity-100"
-											data-on={framework === item.value ? '' : undefined}>✓</span
-										>
+										{@render check(framework === item.value)}
 									</ASelect.Item>
 								{/each}
 							</ASelect.Group>
@@ -406,7 +409,8 @@
 		<ASelect.Root keys={countries.map((c) => c.value)} bind:value={disabledValue} disabled>
 			<ASelect.Trigger
 				base={Input.Root}
-				class="border-border flex h-11 w-full cursor-not-allowed items-center gap-2 rounded-lg border px-3 opacity-60"
+				variant="locked"
+				class="flex h-11 w-full cursor-not-allowed items-center gap-2 px-3"
 			>
 				<div class="text-foreground flex flex-1 flex-wrap items-center gap-1 text-sm">
 					<ASelect.Selections getSelections={selectionsFrom(countries)}>
@@ -423,10 +427,10 @@
 				<ASelect.Indicator class="text-muted-foreground shrink-0" />
 			</ASelect.Trigger>
 
-			<ASelect.Content class={contentClass}>
+			<ASelect.Content variant="flat" class="z-50 overflow-hidden">
 				<div class="py-1">
 					{#each countries as item (item.value)}
-						<ASelect.Item value={item.value} class={itemClass}>{item.label}</ASelect.Item>
+						<ASelect.Item value={item.value} variant="flat">{item.label}</ASelect.Item>
 					{/each}
 				</div>
 			</ASelect.Content>

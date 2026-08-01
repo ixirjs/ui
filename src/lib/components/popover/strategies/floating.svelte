@@ -1,30 +1,24 @@
 <script lang="ts">
-	import {
-		autoUpdate,
-		computePosition,
-		arrow,
-		flip,
-		shift,
-		offset,
-		hide,
-		type ComputePositionConfig,
-		type Strategy
-	} from '@floating-ui/dom';
+	import * as floating from '@floating-ui/dom';
+	import type { ComputePositionConfig, Strategy } from '@floating-ui/dom';
 	import {
 		notifyPopoverComputed,
 		popoverNode,
 		PopoverBond,
 		shouldTrackPopoverPosition,
 		type PopoverParams
-	} from '../bond.svelte';
-	import type { BondVirtualElement } from '$svelte-atoms/core/shared/bond';
-	import { PortalBond } from '$svelte-atoms/core/components/portal';
+	} from '$ixirjs/ui/components/popover/bond.svelte';
+	import type { BondVirtualElement } from '$ixirjs/ui/shared/bond';
+	import type { PortalBond } from '$ixirjs/ui/components/portal';
+
+	let { portal = undefined }: { portal?: PortalBond | undefined } = $props();
 
 	const bond = PopoverBond.get();
 
-	// In-scope Portal; its boundary clips the overlay to this Portal.
-	const portalBond = PortalBond.get();
-	const boundary = $derived(portalBond?.boundaryElement);
+	type AutoUpdate = typeof floating.autoUpdate;
+
+	// The content-resolved Portal owns both the teleport sink and floating boundary.
+	const boundary = $derived(portal?.sinkElement);
 
 	const tracking = $derived(bond ? shouldTrackPopoverPosition(bond) : false);
 	const reference = $derived(
@@ -40,42 +34,46 @@
 	// CSS positioning strategy, set explicitly by the consumer via the `position` root prop.
 	const position = $derived<Strategy>(bond?.props.position ?? 'absolute');
 
-	$effect.pre(() => {
-		// Re-run once the Portal boundary resolves (it may mount after this popover).
+	$effect(() => {
+		// Run after PortalSurface commits its attachment so floating-ui measures the canonical sink.
 		void boundary;
 
 		if (!bond || !reference || !overlay || !tracking) return;
 
 		// Re-runs if the `position` strategy changes: tears down auto-update, recomputes.
-		const cleanup = compute(bond, position)({}, autoUpdate);
+		const cleanup = compute(bond, position)({}, floating.autoUpdate);
 
 		return () => cleanup?.();
 	});
 
 	function compute(bond: PopoverBond, strategy: Strategy) {
-		return (props: Record<string, unknown>, updater: typeof autoUpdate | undefined = undefined) => {
-			const { offset: ofs, placements, placement } = bond.props;
+		// AutoUpdate may invoke its callback after the owning effect is destroyed. Snapshot all
+		// derived inputs at setup so late measurements never read inert Svelte deriveds.
+		const boundaryElement = boundary;
+		const referenceElement = reference;
+		const overlayElement = overlay;
+		const { offset: ofs, placements, placement } = bond.props;
+		const tailElement = popoverNode(bond, 'tail')?.element as HTMLElement | undefined;
 
-			const arrowElement = popoverNode(bond, 'arrow')?.element as HTMLElement | undefined;
-
-			if (!reference || !overlay) {
+		return (props: Record<string, unknown>, updater: AutoUpdate | undefined = undefined) => {
+			if (!referenceElement || !overlayElement) {
 				return;
 			}
 
-			// Middleware stack. flip/shift/hide measure overflow against `boundary` — the in-scope
-			// Portal's clip box — so the overlay stays inside it, not the viewport.
+			// Middleware stack. flip/shift/hide measure overflow against the resolved Portal sink,
+			// so positioning and porting share the same containment boundary.
 			const middleware: ComputePositionConfig['middleware'] = [
-				offset(ofs),
-				flip({
+				floating.offset(ofs),
+				floating.flip({
 					fallbackPlacements: placements,
 					padding: 8,
 					crossAxis: true,
 					fallbackStrategy: 'bestFit',
-					boundary: boundary ?? 'clippingAncestors'
+					boundary: boundaryElement ?? 'clippingAncestors'
 				}),
-				shift({
+				floating.shift({
 					padding: 8,
-					boundary: boundary ?? 'clippingAncestors',
+					boundary: boundaryElement ?? 'clippingAncestors',
 					limiter: {
 						fn: (state) => {
 							const { x, y } = state;
@@ -85,18 +83,20 @@
 				})
 			];
 
-			if (arrowElement) {
-				middleware.push(arrow({ element: arrowElement }));
+			if (tailElement) {
+				// floating-ui's own `arrow()` middleware — not our naming.
+				middleware.push(floating.arrow({ element: tailElement }));
 			}
 
-			// Hide the overlay when the anchor scrolls out of view, skipping layout work.
-			middleware.push(hide());
+			// Hide the overlay when the anchor leaves the resolved Portal boundary.
+			middleware.push(floating.hide({ boundary: boundaryElement ?? 'clippingAncestors' }));
 
-			const onchangeCallback = props.onchange as PopoverParams['onchange'];
+			const onpositionchange = props.onpositionchange as PopoverParams['onpositionchange'];
 
 			const compute = async () => {
-				const position = await computePosition(reference, overlay, {
+				const position = await floating.computePosition(referenceElement, overlayElement, {
 					placement: placement ?? 'bottom',
+
 					middleware,
 					strategy
 				});
@@ -112,20 +112,26 @@
 					x,
 					y
 				});
-				onchangeCallback?.(overlay, position);
+				onpositionchange?.(overlayElement, position);
 
 				// Publish the trigger's measured size as CSS vars so content can match it — via a
 				// class (`min-w-[var(--sa-anchor-width)]`) or the sizing props
 				// (`minWidth="var(--sa-anchor-width)"`). Reuses computePosition's layout read.
-				if (reference && reference instanceof Element) {
-					overlay.style.setProperty('--sa-anchor-width', `${reference.clientWidth}px`);
-					overlay.style.setProperty('--sa-anchor-height', `${reference.clientHeight}px`);
+				if (referenceElement instanceof Element) {
+					overlayElement.style.setProperty(
+						'--sa-anchor-width',
+						`${referenceElement.clientWidth}px`
+					);
+					overlayElement.style.setProperty(
+						'--sa-anchor-height',
+						`${referenceElement.clientHeight}px`
+					);
 				}
 			};
 
 			// Auto-update if provided, else compute once.
 			if (updater) {
-				return updater(reference, overlay, compute, {
+				return updater(referenceElement, overlayElement, compute, {
 					ancestorScroll: true,
 					// Off: thrashes its IntersectionObserver at scroll edges (recompute storm);
 					// hide() covers the out-of-view case instead.

@@ -13,14 +13,14 @@
 		</DataGrid.Header>
 		<DataGrid.Body>
 			<DataGrid.Row value="1">
-				<DataGrid.Td>Alice</DataGrid.Td>
-				<DataGrid.Td>Admin</DataGrid.Td>
-				<DataGrid.Td>Active</DataGrid.Td>
+				<DataGrid.Cell>Alice</DataGrid.Cell>
+				<DataGrid.Cell>Admin</DataGrid.Cell>
+				<DataGrid.Cell>Active</DataGrid.Cell>
 			</DataGrid.Row>
 			<DataGrid.Row value="2">
-				<DataGrid.Td>Bob</DataGrid.Td>
-				<DataGrid.Td>Editor</DataGrid.Td>
-				<DataGrid.Td>Idle</DataGrid.Td>
+				<DataGrid.Cell>Bob</DataGrid.Cell>
+				<DataGrid.Cell>Editor</DataGrid.Cell>
+				<DataGrid.Cell>Idle</DataGrid.Cell>
 			</DataGrid.Row>
 		</DataGrid.Body>
 	</DataGrid.Root>

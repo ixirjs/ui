@@ -36,7 +36,7 @@
 	{metadata}
 	{frontmatter}
 	prev={{ label: 'Breadcrumb', href: '/docs/components/breadcrumb' }}
-	next={{ label: 'Card', href: '/docs/components/card' }}
+	next={{ label: 'Calendar', href: '/docs/components/calendar' }}
 >
 	{#snippet preset()}
 		<DocOnly for="html">

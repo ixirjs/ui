@@ -1,13 +1,14 @@
 <script lang="ts">
-	import { mergePresetProps, HtmlAtom } from '$svelte-atoms/core/components/atom';
+	import { mergePresetProps, HtmlAtom } from '$ixirjs/ui/components/atom';
 	import { InputBond } from './bond.svelte';
+	import { inputChangeContext, writeInputFiles } from './shared';
 	import type { InputFileControlProps } from './types';
 
 	const bond = InputBond.get();
 
 	let {
 		class: klass = '',
-		files = $bindable<File[]>(),
+		files = $bindable<File[]>([]),
 		accept = undefined,
 		multiple = false,
 		disabled = false,
@@ -15,6 +16,8 @@
 		triggerContent = undefined,
 		preset = undefined,
 		onchange = undefined,
+		oninput = undefined,
+		onfileschange = undefined,
 		...restProps
 	}: InputFileControlProps = $props();
 
@@ -31,23 +34,25 @@
 		return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
 	}
 
-	function handleChange(ev: Event) {
-		const input = ev.currentTarget as HTMLInputElement;
-		files = Array.from(input.files ?? []);
-		if (bond) bond.state.props.files = files;
-		onchange?.(ev, { files });
+	function handleChange(event: Event) {
+		onchange?.(event);
+		if (event.defaultPrevented) return;
+
+		files = Array.from((event.currentTarget as HTMLInputElement).files ?? []);
+		writeInputFiles(bond, files);
+		onfileschange?.(files, inputChangeContext(bond, event, 'change'));
 	}
 
 	function openPicker() {
 		if (!disabled) inputEl?.click();
 	}
 
-	function clearFiles(ev: MouseEvent) {
-		ev.stopPropagation();
+	function clearFiles(event: MouseEvent) {
+		event.stopPropagation();
 		files = [];
 		if (inputEl) inputEl.value = '';
-		if (bond) bond.state.props.files = [];
-		onchange?.(ev, { files: [] });
+		writeInputFiles(bond, files);
+		onfileschange?.(files, inputChangeContext(bond, event, 'clear'));
 	}
 </script>
 
@@ -60,6 +65,7 @@
 	{disabled}
 	class="sr-only"
 	onchange={handleChange}
+	{oninput}
 	{...restProps}
 />
 

@@ -9,8 +9,8 @@ Parts call bond.trigger(), bond.content(), or bond.atom(...).
 
 // Current wording
 Bond owns shared state, mutations, context, capabilities, and registered Atoms.
-Atom Components create their own Atoms with createAtomInstance(...).
-Parts read rendered Atoms with bond.node(...) and bond.nodes(...).`;
+Atom Components create their own Atoms with createAtomInstance(...); ordinary fixed descendants use usePart(...).
+Parts read rendered Atoms with bond.nodeByPart(...), bond.nodesByPart(...), and bond.nodeByRole(...).`;
 
 	const stateCode = `// Before: state class as the public authoring surface
 class DialogState extends BondState<DialogProps> {
@@ -39,7 +39,7 @@ const trigger = bond.trigger();
 
 // After: the rendered part owns its runtime Atom
 const trigger = createAtomInstance('trigger', {
-  bond: () => DialogBond.required(),
+  resolveBond: () => DialogBond.getOrThrow(),
   capabilities: [elementRef(), pressable(), ariaRole('button')]
 });
 
@@ -51,10 +51,10 @@ const trigger = bond.trigger();
 trigger.element?.focus();
 
 // After: lookup reads the registry of rendered Atoms
-const trigger = bond.node('trigger');
+const trigger = bond.nodeByPart('trigger');
 trigger?.element?.focus();
 
-const items = bond.nodes('item');`;
+const items = bond.nodesByPart('item');`;
 
 	const capabilityCode = `// Bond capability: shared state, coordination, role projection, or setup
 this.capability(disclosureCapability({
@@ -109,7 +109,8 @@ const trigger = createAtomInstance('trigger', {
 	<Section.Header>
 		<Section.Title>Move State Onto The Bond</Section.Title>
 		<Section.Subtitle>
-			New authoring uses one public controller: the Bond. BondState remains only for compatibility.
+			Authoring uses one public controller: the Bond. BondState has been removed; state that used to
+			live on it belongs on a Bond subclass, which a definition names as its <code>base</code>.
 		</Section.Subtitle>
 	</Section.Header>
 
@@ -142,8 +143,11 @@ const trigger = createAtomInstance('trigger', {
 	<Section.Header>
 		<Section.Title>Use Registry Lookup</Section.Title>
 		<Section.Subtitle>
-			Use <code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">bond.node()</code>
-			and <code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">bond.nodes()</code>
+			Use <code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">bond.nodeByPart()</code
+			>,
+			<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">bond.nodesByPart()</code>,
+			and
+			<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">bond.nodeByRole()</code>
 			to inspect rendered Atoms.
 		</Section.Subtitle>
 	</Section.Header>
@@ -170,12 +174,17 @@ const trigger = createAtomInstance('trigger', {
 	<div class="border-border rounded-lg border p-5">
 		<p class="text-foreground mb-2 text-sm font-semibold">Migration checklist</p>
 		<ul class="text-muted-foreground list-disc space-y-1 pl-5 text-sm">
-			<li>Replace public BondState wording with Bond.</li>
+			<li>Replace BondState hosts with a Bond subclass, passed to defineBond as its base.</li>
 			<li>Move shared getters and mutation methods onto the Bond.</li>
 			<li>Create runtime Atoms in rendered Svelte parts with createAtomInstance.</li>
-			<li>Use bond.node and bond.nodes for rendered Atom lookup.</li>
+			<li>Use nodeByPart, nodesByPart, and nodeByRole for rendered Atom lookup.</li>
+			<li>
+				Use canonical component names: Input.Control, Combobox.Control, DataGrid.Row/Column/Cell,
+				and DropdownMenu.Content.
+			</li>
+			<li>Use filterSelectData instead of the removed dropdown/filter aliases.</li>
 			<li>Move repeated behavior into Bond or Atom capabilities.</li>
-			<li>Keep generated part methods only as compatibility adapters.</li>
+			<li>Remove generated part methods; they are no longer compatibility adapters.</li>
 		</ul>
 	</div>
 </Section.Root>

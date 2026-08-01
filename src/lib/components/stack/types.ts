@@ -1,5 +1,7 @@
-import type { HtmlAtomProps, Base, SnippetProps } from '$svelte-atoms/core/components/atom';
+import type { HtmlAtomProps, Base, SnippetProps } from '$ixirjs/ui/components/atom';
 import type { Snippet } from 'svelte';
+import type { Factory, StateChangeCallback } from '$ixirjs/ui/types';
+import type { StackBond } from './bond.svelte';
 
 // Stack Snippet Props
 
@@ -13,7 +15,10 @@ export interface StackRootProps<
 	B extends Base = Base
 > extends HtmlAtomProps<E, B, StackChildren> {
 	// The value of the topmost (front) item — bindable, updates reactively.
-	value?: string;
+	value?: string | undefined;
+	factory?: Factory<StackBond>;
+	// Semantic callback; runs after the topmost value commits.
+	onvaluechange?: StateChangeCallback<string | undefined, StackBond> | undefined;
 }
 
 export interface StackItemProps<

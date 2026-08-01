@@ -1,5 +1,5 @@
 const presetCode = `
-import { setPreset } from '@svelte-atoms/core';
+import { setPreset } from '@ixirjs/ui/preset';
 
 const preset = setPreset({
   label: () => ({
@@ -52,8 +52,8 @@ export const metadata = {
 		'Semantic label component for form inputs with enhanced accessibility and interactive hit area.',
 	componentType: 'simple' as const,
 	status: 'stable' as const,
-	packageName: '@svelte-atoms/core',
-	importCode: "import { Label } from '@svelte-atoms/core';",
+	packageName: '@ixirjs/ui',
+	importCode: "import { Label } from '@ixirjs/ui';",
 	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Label' }],
 	useCases,
 	examples: {

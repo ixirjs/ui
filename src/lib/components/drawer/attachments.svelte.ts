@@ -1,26 +1,34 @@
-import { clickout } from '$svelte-atoms/core/attachments/clickout.svelte';
-import { clickAction } from '$svelte-atoms/core/attachments/event.svelte';
-import { containsTarget } from '$svelte-atoms/core/utils/dom.svelte';
+import { clickout } from '$ixirjs/ui/attachments/clickout.svelte';
+import { clickAction } from '$ixirjs/ui/attachments/event.svelte';
+import { createBondAttachment } from '$ixirjs/ui/components/internal/attachments.svelte';
+import { DISCLOSURE } from '$ixirjs/ui/shared/capability/models/disclosure.svelte';
+import { containsTarget } from '$ixirjs/ui/utils/dom.svelte';
 import { DrawerBond } from './bond.svelte';
 
-export function drawer(callback: (node: HTMLElement, bond?: DrawerBond) => void | (() => void)) {
-	const bond = DrawerBond.get();
-	return (node: HTMLElement) => callback(node, bond);
-}
+export const drawer = createBondAttachment<DrawerBond>(DrawerBond);
 
 export function toggleDrawer(onclick?: (ev: MouseEvent) => void) {
 	const bond = DrawerBond.get();
-	return clickAction(() => bond?.toggle(), onclick);
+	return clickAction((event) => {
+		bond?.stageOpenChange({ event, reason: 'trigger' });
+		(bond?.surface(DISCLOSURE) ?? bond)?.toggle();
+	}, onclick);
 }
 
 export function openDrawer(onclick?: (ev: MouseEvent) => void) {
 	const bond = DrawerBond.get();
-	return clickAction(() => bond?.open(), onclick);
+	return clickAction((event) => {
+		bond?.stageOpenChange({ event, reason: 'trigger' });
+		(bond?.surface(DISCLOSURE) ?? bond)?.open();
+	}, onclick);
 }
 
 export function closeDrawer(onclick?: (ev: MouseEvent) => void) {
 	const bond = DrawerBond.get();
-	return clickAction(() => bond?.close(), onclick);
+	return clickAction((event) => {
+		bond?.stageOpenChange({ event, reason: 'close-trigger' });
+		(bond?.surface(DISCLOSURE) ?? bond)?.close();
+	}, onclick);
 }
 
 export function clickoutDrawer(onclickout?: (ev: PointerEvent, bond?: DrawerBond) => void) {
@@ -44,6 +52,7 @@ export function clickoutDrawer(onclickout?: (ev: PointerEvent, bond?: DrawerBond
 				return;
 			}
 
+			bond.stageOpenChange({ event: ev, reason: 'outside-press' });
 			bond.close();
 		},
 		{

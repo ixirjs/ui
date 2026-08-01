@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { HtmlAtom } from '../atom';
+	import { HtmlAtom } from '$ixirjs/ui/components/atom';
 	import SelectSelection from './select-selection.svelte';
 	import { SelectBond } from './bond.svelte';
 	import type { SelectSelectionsProps } from './types';

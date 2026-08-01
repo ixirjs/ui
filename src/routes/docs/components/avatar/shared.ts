@@ -1,5 +1,5 @@
 const presetCode = `
-import { setPreset } from '@svelte-atoms/core';
+import { setPreset } from '@ixirjs/ui/preset';
 
 const preset = setPreset({
   avatar: () => ({
@@ -67,8 +67,8 @@ export const metadata = {
 		'User profile image with automatic fallback to generated initials and customizable sizes.',
 	componentType: 'simple' as const,
 	status: 'stable' as const,
-	packageName: '@svelte-atoms/core',
-	importCode: "import { Avatar } from '@svelte-atoms/core';",
+	packageName: '@ixirjs/ui',
+	importCode: "import { Avatar } from '@ixirjs/ui';",
 	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Avatar' }],
 	useCases,
 	examples: {

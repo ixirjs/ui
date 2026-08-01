@@ -1,6 +1,6 @@
 import type { Snippet } from 'svelte';
-import type { HtmlAtomProps, Base, SnippetProps } from '$svelte-atoms/core/components/atom';
-import type { Factory } from '$svelte-atoms/core/types';
+import type { HtmlAtomProps, Base, SnippetProps } from '$ixirjs/ui/components/atom';
+import type { Factory } from '$ixirjs/ui/types';
 import type { AlertBond } from './bond.svelte';
 
 // Alert Snippet Props
@@ -15,8 +15,6 @@ export interface AlertRootProps<
 	E extends keyof HTMLElementTagNameMap = 'div',
 	B extends Base = Base
 > extends HtmlAtomProps<E, B, AlertChildren> {
-	dismissible?: boolean;
-	dismissed?: boolean;
 	disabled?: boolean;
 	extend?: Record<string, unknown>;
 	factory?: Factory<AlertBond>;
@@ -56,6 +54,6 @@ export interface AlertActionsProps<
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface AlertCloseButtonProps<
-	E extends keyof HTMLElementTagNameMap = 'div',
+	E extends keyof HTMLElementTagNameMap = 'button',
 	B extends Base = Base
 > extends HtmlAtomProps<E, B, AlertChildren> {}

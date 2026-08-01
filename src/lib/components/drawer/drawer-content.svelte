@@ -1,30 +1,28 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import type { HTMLAttributes } from 'svelte/elements';
-	import { mergeAtomProps, HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
-	import { PortalHost } from '$svelte-atoms/core/components/portal/host';
+	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import { PortalHost } from '$ixirjs/ui/components/portal/instance';
 	import type { SlideoverContentProps } from './types';
 	import { DrawerBond } from './bond.svelte';
-	import { animateDrawerContent, type DrawerSide } from './motion';
-
-	type Element = HTMLElementTagNameMap[E];
-
-	const bond = DrawerBond.getOrThrow('<Drawer.Content /> must be used within a <Drawer.Root />');
-	const isOpen = $derived(bond?.state.props.open);
+	import { animateDrawerContent, type DrawerSide } from './motion.svelte';
+	import { usePart } from '$ixirjs/ui/shared';
 
 	let {
 		class: klass = '',
 		preset = undefined,
 		children = undefined,
-		fallback = {
-			animate: animateDrawerContent({}),
-			initial: animateDrawerContent({ duration: 0 })
-		},
 		...restProps
-	}: SlideoverContentProps<E, B> & HTMLAttributes<Element> & { side?: DrawerSide } = $props();
+	}: SlideoverContentProps<E, B> & { side?: DrawerSide } = $props();
 
-	const atom = bond?.content();
+	const defaults = {
+		animate: animateDrawerContent({}),
+		initial: animateDrawerContent({ duration: 0 })
+	};
 
-	const contentProps = $derived(mergeAtomProps(atom, preset, restProps));
+	const part = usePart(DrawerBond, 'content', () => restProps, {
+		preset: () => preset
+	});
+	const bond = part.bond;
+	const isOpen = $derived(bond.props.open);
 </script>
 
 <HtmlAtom
@@ -34,9 +32,9 @@
 		'$preset',
 		klass
 	]}
-	{bond}
-	{fallback}
-	{...contentProps}
+	{defaults}
+	{...restProps}
+	{part}
 >
 	<PortalHost>
 		{@render children?.({ drawer: bond })}

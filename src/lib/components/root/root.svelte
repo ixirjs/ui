@@ -1,16 +1,15 @@
-<script module lang="ts">
-	export type RootPortals = 'root.l0';
-</script>
-
 <script lang="ts">
-	import { cn, defineState, defineProperty } from '$svelte-atoms/core/utils';
-	import { bindBond } from '$svelte-atoms/core/shared/bond/bind.svelte';
-	import { ActivePortal, Portals } from '$svelte-atoms/core/components/portal';
-	import { PortalHost } from '$svelte-atoms/core/components/portal/host';
-	import { mergePresetProps, HtmlAtom } from '$svelte-atoms/core/components/atom';
-	import { HtmlElement, SvgElement } from '$svelte-atoms/core/components/element';
+	import type { Component } from 'svelte';
+	import { cn, defineState, defineProperty } from '$ixirjs/ui/utils';
+	import { useRoot } from '$ixirjs/ui/shared';
+	import { Portals } from '$ixirjs/ui/components/portal';
+	import { PortalHost } from '$ixirjs/ui/components/portal/instance';
+	import { mergePresetProps } from '$ixirjs/ui/components/atom';
+	import { HtmlElement } from '$ixirjs/ui/components/element';
 	import { RootBond } from './bond.svelte';
 	import type { RootProps } from './types';
+
+	const ID = $props.id();
 
 	let {
 		class: klass = '',
@@ -23,27 +22,18 @@
 
 	const atomProps = $derived(mergePresetProps(preset, 'root', restProps));
 
-	let html: typeof HtmlElement | undefined = $state(HtmlElement);
-	let svg: typeof SvgElement | undefined = $state(undefined);
+	let svg: Component | undefined = $state(undefined);
 
 	type Renderers = {
-		html?: typeof HtmlElement;
-		svg?: typeof SvgElement;
+		html?: Component;
+		svg?: Component;
 	};
 
 	const renderers = defineState<Renderers>([
-		defineProperty('html', () => {
-			if (!html) {
-				import('$svelte-atoms/core/components/element/html-element.svelte').then((mod) => {
-					html = mod.default;
-				});
-			}
-
-			return html;
-		}),
+		defineProperty('html', () => HtmlElement),
 		defineProperty('svg', () => {
 			if (!svg) {
-				import('$svelte-atoms/core/components/element/svg-element.svelte').then((mod) => {
+				import('$ixirjs/ui/components/element/svg-element.svelte').then((mod) => {
 					svg = mod.default;
 				});
 			}
@@ -52,18 +42,23 @@
 		})
 	]);
 
-	const binding = bindBond<RootBond>((props) => new RootBond(props), {
-		renderers: () => renderers
-	});
-	const bond = binding.bond.share();
+	const root = useRoot(
+		RootBond,
+		{
+			renderers: () => renderers
+		},
+		{ atom: false, id: () => ID, factory: (props) => new RootBond(props) }
+	);
+	const bond = root.bond;
 </script>
 
 <Portals id="root">
-	<HtmlAtom
+	<PortalHost
 		{@attach (node: HTMLElement) => {
 			bond.rootElement = node;
 		}}
 		{base}
+		id="root.l0"
 		class={cn(
 			'atom-root bg-background text-foreground relative flex h-full w-full flex-1 flex-col items-start justify-stretch font-sans',
 			'$preset',
@@ -73,13 +68,8 @@
 	>
 		{#if portal}
 			{@render portal?.()}
-			<ActivePortal portal="root.l0">
-				{@render children?.()}
-			</ActivePortal>
-		{:else}
-			<PortalHost id="root.l0" class="flex-1 flex flex-col w-full h-full">
-				{@render children?.()}
-			</PortalHost>
 		{/if}
-	</HtmlAtom>
+
+		{@render children?.()}
+	</PortalHost>
 </Portals>

@@ -1,7 +1,4 @@
 export { default as Root } from './input-root.svelte';
-/** @deprecated Legacy alias of `Input.Control`. Use `Input.Control` (or a typed `Input.XXXControl`) instead. */
-export { default as Value } from './input-control.svelte';
-// @deprecated use Input.XXXControl instead where XXX is the type of input you want to use
 export { default as Control } from './input-control.svelte';
 export { default as NumberControl } from './input-number-control.svelte';
 export { default as TimeControl } from './time/time-control.svelte';

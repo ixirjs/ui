@@ -1,46 +1,44 @@
-# `shared/capability/models` — the concrete capabilities
+# `shared/capability/models`
 
-The library's built-in capabilities. Bond-hosted files mint slot keys, build models with
-`defineCapability`, and expose a `createX` / `xCapability` pair. Components register these onto a
-Bond; Atoms pull them in with `atom.role(...)`. Atom-hosted
-files expose local atom primitives for `createAtomInstance(..., { capabilities })`.
+Built-in capabilities used by component Bonds and runtime Atoms.
 
-| File                                                                 | Slot / exports                                                                                                                                                                                          | Behavior                                                                                                                                         |
-| -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| [`atom.svelte.ts`](./atom.svelte.ts)                                 | `ELEMENT_REF`, `PRESSABLE`, `FOCUSABLE`, `DATA_STATE`, `ARIA_ROLE`, `MOTION`, `elementRef`, `pressable`, `focusable`, `dataState`, `ariaRole`, `motion`                                                 | Atom-hosted primitives for local element refs, activation, focusability, data-state/role projection, and motion hooks.                           |
-| [`disclosure.svelte.ts`](./disclosure.svelte.ts)                     | `DISCLOSURE`, `createDisclosure`, `disclosureCapability`, `disclosureTrigger`, `disclosureClose`, `disclosureToggle`, `Disclosure`                                                                      | Open/close/toggle state and generic activation policies for popovers, dialogs, collapsibles.                                                     |
-| [`disclosure-state.svelte.ts`](./disclosure-state.svelte.ts)         | `DisclosureState` (base class, not barrelled)                                                                                                                                                           | Compatibility helper for open-close components that have not moved this logic fully onto their Bond.                                             |
-| [`selection.svelte.ts`](./selection.svelte.ts)                       | `SELECTION`, `createSelection`, `selectionCapability`, `SelectionModel`                                                                                                                                 | Single/multi selection over a collection.                                                                                                        |
-| [`collection.svelte.ts`](./collection.svelte.ts)                     | `collectionSlot`, `collectionCapability`, `CollectionCapability`                                                                                                                                        | Wraps the [`Collection<T>`](../../bond/collection.svelte.ts) structure as a `collection:<kind>` capability.                                      |
-| [`roving.svelte.ts`](./roving.svelte.ts)                             | `ROVING`, `createRovingFocus`, `rovingCapability`, `RovingFocus`                                                                                                                                        | Roving-tabindex keyboard focus across items.                                                                                                     |
-| [`typeahead.svelte.ts`](./typeahead.svelte.ts)                       | `TYPEAHEAD`, `createTypeahead`, `typeaheadCapability`, `TypeaheadSurface`                                                                                                                               | Buffered printable-key search over a `Collection<T>` that moves a `RovingFocus<T>`.                                                              |
-| [`navigation.svelte.ts`](./navigation.svelte.ts)                     | `navigationCapability`, `NavigationProjectionOptions`                                                                                                                                                   | Arrow-key navigation policy projected onto container/item roles.                                                                                 |
-| [`interaction-policies.svelte.ts`](./interaction-policies.svelte.ts) | `focusTrigger`, `activationPolicy`, `clearPolicy`, `thumbDragPolicy`, `trackPressPolicy`, `resizeHandlePolicy`, `reorderDragPolicy`, `longPressPolicy`, `swipePolicy`                                   | Generic interaction policies for focus, activation, clearing, dragging, resizing, reordering, long press, and swipe gestures.                    |
-| [`input.svelte.ts`](./input.svelte.ts)                               | `INPUT`, `createInput`, `inputCapability`, `InputModel`                                                                                                                                                 | Text-input model (query/value channel) for comboboxes and fields.                                                                                |
-| [`validation.svelte.ts`](./validation.svelte.ts)                     | `VALIDATION`, `createValidation`, `validationCapability`, `ValidationModel`                                                                                                                             | Validation errors, pending state, validate/clear methods, and scoped invalid/pending attrs.                                                      |
-| [`checked.svelte.ts`](./checked.svelte.ts)                           | `CHECKED`, `createChecked`, `checkedCapability`, `CheckedModel`                                                                                                                                         | Checked/unchecked/mixed state and scoped checked-state attrs.                                                                                    |
-| [`pressed.svelte.ts`](./pressed.svelte.ts)                           | `PRESSED`, `createPressed`, `pressedCapability`, `PressedModel`                                                                                                                                         | Pressed/unpressed toggle state and scoped toggle-button attrs.                                                                                   |
-| [`range.svelte.ts`](./range.svelte.ts)                               | `RANGE_VALUE`, `createRangeValue`, `rangeValueCapability`, `RangeValueModel`                                                                                                                            | Numeric range value, bounds, step, percent, and slider-style attrs.                                                                              |
-| [`progress.svelte.ts`](./progress.svelte.ts)                         | `PROGRESS_VALUE`, `createProgressValue`, `progressValueCapability`, `ProgressValueModel`                                                                                                                | Determinate/indeterminate progress value, percent, completion state, and progressbar attrs.                                                      |
-| [`loading.svelte.ts`](./loading.svelte.ts)                           | `LOADING`, `createLoading`, `loadingCapability`, `LoadingModel`                                                                                                                                         | Pending, settled, error, and stale loading state attrs.                                                                                          |
-| [`sort.svelte.ts`](./sort.svelte.ts)                                 | `SORT`, `createSort`, `sortCapability`, `SortModel`                                                                                                                                                     | Sort key/direction/priority state and sortable column projection.                                                                                |
-| [`pagination.svelte.ts`](./pagination.svelte.ts)                     | `PAGINATION`, `createPagination`, `paginationCapability`, `PaginationModel`                                                                                                                             | Page, page size, total, boundaries, and previous/next projections.                                                                               |
-| [`viewport.svelte.ts`](./viewport.svelte.ts)                         | `VIEWPORT`, `createViewport`, `viewportCapability`, `ViewportModel`                                                                                                                                     | Viewport size, scroll position, and visible range projection.                                                                                    |
-| [`geometry.svelte.ts`](./geometry.svelte.ts)                         | `GEOMETRY`, `createGeometry`, `geometryCapability`, `GeometryModel`                                                                                                                                     | Named element rectangles and measured geometry projection.                                                                                       |
-| [`date-selection.svelte.ts`](./date-selection.svelte.ts)             | `DATE_SELECTION`, `createDateSelection`, `dateSelectionCapability`, `DateSelectionModel`                                                                                                                | Single date, range start/end, and visible month state.                                                                                           |
-| [`whole-bond-effects.svelte.ts`](./whole-bond-effects.svelte.ts)     | `outsidePressListener`, `bodyScrollLock`, `inertSiblings`, observer, media-query, modality, scroll, virtual-window, document-drag, and portal-layer effects                                             | Setup-bearing Layer 1 effects for global listeners, document state, observation, modality, measurement, virtualization, drag, and portal layers. |
-| [`role-projections.svelte.ts`](./role-projections.svelte.ts)         | `orientationProjection`, `disabledProjection`, `currentProjection`                                                                                                                                      | Generic orientation, disabled, and current-state role projections.                                                                               |
-| [`status.svelte.ts`](./status.svelte.ts)                             | `STATUS`, `createStatus`, `statusCapability`, `StatusModel`                                                                                                                                             | Scoped boolean status attrs for repeated disabled/readonly/invalid/busy-style projections.                                                       |
-| [`focused.svelte.ts`](./focused.svelte.ts)                           | Layer 2 collection, field, and validated-control focused bundles                                                                                                                                        | Shallow reusable compositions over Layer 1 primitives.                                                                                           |
-| [`archetypes.svelte.ts`](./archetypes.svelte.ts)                     | `listboxCapabilities`, `menuCapabilities`, `tabsCapabilities`, `treeCapabilities`, `gridCapabilities`, `toastCapabilities`, `fieldCapabilities`, `datePickerCapabilities`                               | Layer 3 recipes that choose and compose lower-layer capability bundles.                                                                          |
-| [`relationship.svelte.ts`](./relationship.svelte.ts)                 | `TRIGGER_CONTENT`, `TAB_PANEL`, `ERROR_MESSAGE`, `ROW_COLUMN_CELL`, `TREE_ITEM_GROUP`, `ACTIVE_DESCENDANT`, `MENU_SUBMENU`, `OPTION_COLLECTION`, `HEADING_SECTION`, `LIVE_REGION`, relationship helpers | Cross-slot ARIA wiring for disclosure, fields, tabs, grids, tree item groups, submenus, option collections, sections, and live regions.          |
+## Groups
 
-> **Naming note:** this `collection.svelte.ts` is the _capability_. The `Collection<T>` _data
-> structure_ it wraps lives in [`../../bond/collection.svelte.ts`](../../bond/collection.svelte.ts).
+| Files                                          | Purpose                                                                  |
+| ---------------------------------------------- | ------------------------------------------------------------------------ |
+| `atom.svelte.ts`                               | Atom-local primitives: refs, press/focus, data state, ARIA role, motion. |
+| `disclosure.svelte.ts`, `selection.svelte.ts`  | Common state models for open/close and selection.                        |
+| `collection.svelte.ts`, `roving.svelte.ts`     | Collection registration and roving focus.                                |
+| `typeahead.svelte.ts`, `navigation.svelte.ts`  | Keyboard search and navigation policies.                                 |
+| `input.svelte.ts`, `validation.svelte.ts`      | Input and validation models.                                             |
+| `checked.svelte.ts`, `pressed.svelte.ts`       | Toggle state models.                                                     |
+| `range.svelte.ts`, `progress.svelte.ts`        | Numeric range and progress models.                                       |
+| `relationship.svelte.ts`, `role-projections.*` | Cross-slot ARIA and generic role projections.                            |
+| `bond-effects.svelte.ts`                       | Setup effects for document, observer, modality, and portal behavior.     |
+| `interaction-policies.svelte.ts`               | Pointer, gesture, and activation policies.                               |
 
-## Public surface
+The public surface is re-exported through [`index.ts`](./index.ts). Rendered filtering is
+component-owned: use `filterSelectData` from the `select` subpath to derive a view without
+mutating the source collection.
 
-All of the above (except the `DisclosureState` base class) are re-exported through
-[`index.ts`](./index.ts), which [`../index.ts`](../index.ts) folds into the capability barrel.
+## Boundary with `components/overlay/policies`
 
-See [`../README.md`](../README.md) for how to author a new capability and the override seam.
+`components/overlay/` keeps its own policy layer (escape stack, outside press, backdrop press,
+focus). That is deliberate, not a duplicate of `bond-effects/document.svelte.ts`:
+
+- `outsidePressListener` here is the generic primitive — a document listener with configurable
+  inside/ignored targets that reports the press and nothing more.
+- `outsidePressPolicy` in `overlay/policies/dismiss.svelte.ts` coordinates the overlay stack and
+  decides which overlay dismisses, which the generic primitive has no concept of.
+
+`bodyScrollLock` and `inertSiblings` from this directory _are_ consumed by
+`overlay/capabilities/bundles.svelte.ts`, so the direction of reuse already runs shared → overlay.
+Add new overlay-stack-aware behavior under `overlay/policies`; add stack-agnostic DOM effects here.
+
+## No bundle layer
+
+There is deliberately no "bundle" or "archetype" tier that pre-mixes these into per-widget recipes.
+That layer existed and was removed: eight archetypes had two callers between them, and the six
+unused ones described families (`tabs`, `tree`, `listbox`, `menu`, `grid`, `datePicker`) whose real
+components had each declined the recipe and wired capabilities directly. A Bond composes what it
+needs in its own constructor — that list is short, and reading it tells you what the Bond does.

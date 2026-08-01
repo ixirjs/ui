@@ -1,9 +1,9 @@
 <script module>
 	import { defineMeta } from '@storybook/addon-svelte-csf';
 	import { Field } from '..';
-	import { Input } from '$svelte-atoms/core/components/input';
-	import { Checkbox } from '$svelte-atoms/core/components/checkbox';
-	import FormRoot from '../../form-root.svelte';
+	import { Input } from '$ixirjs/ui/components/input';
+	import { Checkbox } from '$ixirjs/ui/components/checkbox';
+	import FormRoot from '$ixirjs/ui/components/form/form-root.svelte';
 
 	const { Story } = defineMeta({
 		title: 'Atoms/Form/Field',
@@ -29,7 +29,7 @@
 
 <script lang="ts">
 	import { z } from 'zod';
-	import { ZodAdapter } from '../validation-adapters';
+	import { ZodAdapter } from '$ixirjs/ui/components/form/field/validation-adapters';
 
 	const validator = new ZodAdapter();
 
@@ -105,10 +105,7 @@
 </Story>
 
 <Story name="Field Inside Form">
-	<FormRoot
-		class="bg-card border-border flex w-140 flex-col gap-4 rounded-xl border p-5"
-		{validator}
-	>
+	<FormRoot class="flex w-140 flex-col gap-4 p-5" {validator}>
 		<Field.Root
 			disabled={false}
 			readonly={false}

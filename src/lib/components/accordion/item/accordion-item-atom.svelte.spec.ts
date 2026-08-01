@@ -1,7 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
-import Probe, { capturedBond, resetCapturedBond } from './accordion-item-atom-probe.svelte';
-import { Atom } from '$svelte-atoms/core/shared/bond';
+import Probe, {
+	capturedBond,
+	resetCapturedBond
+} from '$ixirjs/ui/test/components/accordion/item/accordion-item-atom-probe.test.svelte';
+import { Atom } from '$ixirjs/ui/shared/bond';
 import {
 	AccordionItemBodyAtom,
 	AccordionItemBond,
@@ -9,7 +12,7 @@ import {
 	AccordionItemIndicatorAtom,
 	AccordionItemRootAtom
 } from './bond.svelte';
-import { AccordionBond } from '../bond.svelte';
+import { AccordionBond } from '$ixirjs/ui/components/accordion/bond.svelte';
 
 describe('AccordionItem component-owned Atoms', () => {
 	beforeEach(resetCapturedBond);
@@ -22,10 +25,10 @@ describe('AccordionItem component-owned Atoms', () => {
 		expect(bond).toBeInstanceOf(AccordionItemBond);
 		expect(bond?.isOpen).toBe(true);
 
-		const root = bond?.node('root');
-		const header = bond?.node('header');
-		const body = bond?.node('body');
-		const indicator = bond?.node('indicator');
+		const root = bond?.nodeByPart('root');
+		const header = bond?.nodeByPart('header');
+		const body = bond?.nodeByPart('body');
+		const indicator = bond?.nodeByPart('indicator');
 
 		expect(root).toBeInstanceOf(AccordionItemRootAtom);
 		expect(header).toBeInstanceOf(AccordionItemHeaderAtom);
@@ -34,20 +37,23 @@ describe('AccordionItem component-owned Atoms', () => {
 		for (const node of [root, header, body, indicator]) {
 			expect(node).toBeInstanceOf(Atom);
 		}
-		expect(bond?.nodes()).toHaveLength(4);
+		expect(bond?.nodesByPart('root')).toEqual([root]);
+		expect(bond?.nodesByPart('header')).toEqual([header]);
+		expect(bond?.nodesByPart('body')).toEqual([body]);
+		expect(bond?.nodesByPart('indicator')).toEqual([indicator]);
 
 		const parent = bond?.parent as AccordionBond | undefined;
 		expect(parent).toBeInstanceOf(AccordionBond);
 		expect(parent?.items.get('one')).toBe(bond);
 
-		expect(header?.describeCapabilities().map((cap) => cap.description)).toContain(
-			'@svelte-atoms/accordion-item:header'
+		expect(header?.capabilities.map((cap) => cap.slot.description)).toContain(
+			'@ixirjs/accordion-item:header'
 		);
-		expect(body?.describeCapabilities().map((cap) => cap.description)).toContain(
-			'@svelte-atoms/accordion-item:body'
+		expect(body?.capabilities.map((cap) => cap.slot.description)).toContain(
+			'@ixirjs/accordion-item:body'
 		);
-		expect(indicator?.describeCapabilities().map((cap) => cap.description)).toContain(
-			'@svelte-atoms/accordion-item:indicator'
+		expect(indicator?.capabilities.map((cap) => cap.slot.description)).toContain(
+			'@ixirjs/accordion-item:indicator'
 		);
 
 		expect(header?.spread['aria-expanded']).toBe(true);
@@ -56,21 +62,24 @@ describe('AccordionItem component-owned Atoms', () => {
 		expect(body?.spread['aria-labelledby']).toBe(header?.id);
 		expect(body?.spread['aria-hidden']).toBe(false);
 
-		expect(typeof bond?.root).toBe('function');
-		expect(typeof bond?.header).toBe('function');
-		expect(typeof bond?.body).toBe('function');
-		expect(typeof bond?.indicator).toBe('function');
-		expect(bond?.root()).toBeInstanceOf(AccordionItemRootAtom);
-		expect(bond?.header()).toBeInstanceOf(AccordionItemHeaderAtom);
-		expect(bond?.body()).toBeInstanceOf(AccordionItemBodyAtom);
-		expect(bond?.indicator()).toBeInstanceOf(AccordionItemIndicatorAtom);
-		for (const node of [bond?.root(), bond?.header(), bond?.body(), bond?.indicator()]) {
+		expect(bond?.nodeByPart('root')).toBeInstanceOf(AccordionItemRootAtom);
+		expect(bond?.nodeByPart('header')).toBeInstanceOf(AccordionItemHeaderAtom);
+		expect(bond?.nodeByPart('body')).toBeInstanceOf(AccordionItemBodyAtom);
+		expect(bond?.nodeByPart('indicator')).toBeInstanceOf(AccordionItemIndicatorAtom);
+		for (const node of [
+			bond?.nodeByPart('root'),
+			bond?.nodeByPart('header'),
+			bond?.nodeByPart('body'),
+			bond?.nodeByPart('indicator')
+		]) {
 			expect(node).toBeInstanceOf(Atom);
 		}
 
 		unmount();
 
-		expect(bond?.nodes()).toEqual([]);
+		for (const part of ['root', 'header', 'body', 'indicator']) {
+			expect(bond?.nodesByPart(part)).toEqual([]);
+		}
 		expect(parent?.items.get('one')).toBeUndefined();
 	});
 });

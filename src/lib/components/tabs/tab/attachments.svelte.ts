@@ -1,4 +1,4 @@
-import { TabsBond } from '../bond.svelte';
+import { TabsBond } from '$ixirjs/ui/components/tabs/bond.svelte';
 import { TabBond } from './bond.svelte';
 
 export function tab(

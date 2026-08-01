@@ -1,20 +1,20 @@
-import { Bond, defineAtom } from '$svelte-atoms/core/shared/bond';
-import { defineBond, type BondSpec } from '$svelte-atoms/core/shared';
+import { defineBond, internCapabilityFactory } from '@ixirjs/ui/shared';
 import {
 	ariaRole,
-	defineAtomCapability,
-	sharedCapabilityKey,
-	type AtomHost
-} from '$svelte-atoms/core/shared/capability';
-import {
 	createDisclosure,
+	defineAtomCapability,
 	disclosureCapability,
 	disclosureTrigger,
-	type Disclosure
-} from '$svelte-atoms/core/shared/capability/models/disclosure.svelte';
-import type { DisclosureStateProps } from '$svelte-atoms/core/shared/capability/models/disclosure-state.svelte';
-import { triggerContentLink } from '$svelte-atoms/core/shared/capability/models/relationship.svelte';
-import { isBrowser } from '$svelte-atoms/core/utils/dom.svelte';
+	sharedCapabilityKey,
+	triggerContentLink,
+	type Disclosure,
+	type DisclosureStateProps
+} from '@ixirjs/ui/shared';
+// Bond, defineAtom and AtomHost are classified experimental (ADR 0008): a bonded family cannot
+// be authored from `/shared` alone. See "Authoring a bonded family" in that ADR.
+import { Bond, defineAtom } from '$ixirjs/ui/shared/bond';
+import type { AtomHost } from '$ixirjs/ui/shared/capability';
+import { isBrowser } from '@ixirjs/ui/utils';
 
 // -----------------------------------------------------------------------------
 // Public types
@@ -42,8 +42,16 @@ type CollapsibleBondView = CollapsibleBondBase;
 // Capability slots and shared helpers
 // -----------------------------------------------------------------------------
 
-const COLLAPSIBLE_HEADER = sharedCapabilityKey<void>('@svelte-atoms/collapsible:header');
-const COLLAPSIBLE_BODY = sharedCapabilityKey<void>('@svelte-atoms/collapsible:body');
+const COLLAPSIBLE_HEADER = sharedCapabilityKey<void>({
+	owner: '@ixirjs/collapsible',
+	name: 'header',
+	version: 1
+});
+const COLLAPSIBLE_BODY = sharedCapabilityKey<void>({
+	owner: '@ixirjs/collapsible',
+	name: 'body',
+	version: 1
+});
 
 // -----------------------------------------------------------------------------
 // Atom definitions
@@ -71,49 +79,47 @@ export type CollapsibleIndicatorAtom = InstanceType<typeof CollapsibleIndicatorA
 // Atom capabilities
 // -----------------------------------------------------------------------------
 
-function collapsibleHeaderPresentation() {
-	return defineAtomCapability<void, AtomHost, CollapsibleBondView>({
-		slot: COLLAPSIBLE_HEADER,
-		meta: {
-			layer: 1,
-			kind: 'projection',
-			projects: ['header'],
-			docs: 'Collapsible header button semantics and disabled projection.'
-		},
-		behavior: {
-			attrs: (node, bond) => {
-				const isDisabled = bond?.state?.props?.disabled ?? false;
-				const isButton = isBrowser() && node.element instanceof HTMLButtonElement;
+const collapsibleHeaderPresentation = internCapabilityFactory(
+	function collapsibleHeaderPresentation() {
+		return defineAtomCapability<void, AtomHost, CollapsibleBondView>({
+			slot: COLLAPSIBLE_HEADER,
+			meta: {
+				projects: ['header'],
+				docs: 'Collapsible header button semantics and disabled projection.'
+			},
+			attach: {
+				attrs: (node, bond) => {
+					const isDisabled = bond?.isDisabled ?? false;
+					const isButton = isBrowser() && node.element instanceof HTMLButtonElement;
 
-				// aria-expanded/aria-controls come from the trigger-content relationship.
-				return {
-					'aria-disabled': isDisabled ? 'true' : 'false',
-					disabled: isButton ? isDisabled : undefined,
-					role: isButton ? undefined : 'button',
-					tabindex: isButton ? undefined : isDisabled ? -1 : 0
-				};
+					// aria-expanded/aria-controls come from the trigger-content relationship.
+					return {
+						'aria-disabled': isDisabled ? 'true' : 'false',
+						disabled: isButton ? isDisabled : undefined,
+						role: isButton ? undefined : 'button',
+						tabindex: isButton ? undefined : isDisabled ? -1 : 0
+					};
+				}
 			}
-		}
-	});
-}
+		});
+	}
+);
 
-function collapsibleBodyPresentation() {
+const collapsibleBodyPresentation = internCapabilityFactory(function collapsibleBodyPresentation() {
 	return defineAtomCapability<void, AtomHost, CollapsibleBondView>({
 		slot: COLLAPSIBLE_BODY,
 		meta: {
-			layer: 1,
-			kind: 'projection',
 			projects: ['body'],
 			docs: 'Collapsible body inert projection while closed.'
 		},
-		behavior: {
+		attach: {
 			attrs: (_node, bond) => ({
 				// aria-labelledby/role=region come from the trigger-content relationship.
-				inert: bond?.state?.props?.open ? undefined : true
+				inert: bond?.isOpen ? undefined : true
 			})
 		}
 	});
-}
+});
 
 // Base captures the parent collapsible from context, enabling nesting.
 
@@ -134,12 +140,16 @@ class CollapsibleBondBase extends Bond<CollapsibleStateProps> {
 		super(props, name);
 		this.#parent = getOptionalParentCollapsible();
 		this.capability(disclosureCapability(this.disclosure));
-		this.capability(triggerContentLink(this.disclosure, { contentRole: 'region' }));
+		this.capability(triggerContentLink({ contentRole: 'region' }));
 		this.capability(disclosureTrigger());
 	}
 
 	get isOpen(): boolean {
 		return this.disclosure.isOpen;
+	}
+
+	get isDisabled(): boolean {
+		return this.props.disabled ?? false;
 	}
 
 	open(): void {
@@ -178,50 +188,14 @@ function getOptionalParentCollapsible(): CollapsibleBond | undefined {
 const collapsibleSpec = {
 	name: 'collapsible',
 	base: CollapsibleBondBase,
-	atomMethods: false,
 	atoms: {
 		root: CollapsibleRootAtom,
 		header: { atom: CollapsibleHeaderAtom, role: 'trigger' },
 		body: { atom: CollapsibleBodyAtom, role: 'content' },
 		indicator: CollapsibleIndicatorAtom
 	}
-} satisfies BondSpec<
-	{
-		root: typeof CollapsibleRootAtom;
-		header: { atom: typeof CollapsibleHeaderAtom; role: 'trigger' };
-		body: { atom: typeof CollapsibleBodyAtom; role: 'content' };
-		indicator: typeof CollapsibleIndicatorAtom;
-	},
-	typeof CollapsibleBondBase
-> & { atomMethods: false };
+};
 
-const CollapsibleBondImpl = defineBond<
-	{
-		root: typeof CollapsibleRootAtom;
-		header: { atom: typeof CollapsibleHeaderAtom; role: 'trigger' };
-		body: { atom: typeof CollapsibleBodyAtom; role: 'content' };
-		indicator: typeof CollapsibleIndicatorAtom;
-	},
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	any,
-	typeof CollapsibleBondBase,
-	Record<never, never>,
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	any,
-	Record<never, never>,
-	false
->(collapsibleSpec);
+export const CollapsibleBond = defineBond(collapsibleSpec);
 
 export type CollapsibleBond = CollapsibleBondBase;
-
-interface CollapsibleBondConstructor {
-	new (props: CollapsibleStateProps): CollapsibleBond;
-	readonly CONTEXT_KEY: string;
-	readonly spec: (typeof CollapsibleBondImpl)['spec'];
-	get(): CollapsibleBond | undefined;
-	getOrThrow(message?: string): CollapsibleBond;
-	set(bond: CollapsibleBond): CollapsibleBond;
-	create(props: CollapsibleStateProps): CollapsibleBond;
-}
-
-export const CollapsibleBond = CollapsibleBondImpl as unknown as CollapsibleBondConstructor;

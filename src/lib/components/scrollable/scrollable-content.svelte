@@ -1,10 +1,8 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
 	import type { ScrollableContentProps } from './types';
 	import { ScrollableBond } from './bond.svelte';
-	import { createAtomInstance } from '$svelte-atoms/core/shared/bond';
-	import { mergeAtomProps, HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
-
-	const bond = ScrollableBond.getOrThrow('ScrollableContent must be used within a ScrollableRoot');
+	import { usePart } from '$ixirjs/ui/shared';
+	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
 
 	let {
 		class: klass = '',
@@ -13,19 +11,16 @@
 		...restProps
 	}: ScrollableContentProps<E, B> = $props();
 
-	const atom = createAtomInstance('content', {
-		bond,
-		factory: (owner) => owner!.content()
+	const part = usePart(ScrollableBond, 'content', () => restProps, {
+		preset: () => preset
 	});
-
-	const contentProps = $derived(mergeAtomProps(atom, preset, restProps));
 </script>
 
 <HtmlAtom
-	{bond}
 	as="div"
 	class={['scrollable-content border-border h-full max-h-full', '$preset', klass]}
-	{...contentProps}
+	{...restProps}
+	{part}
 >
 	{#if children}
 		{@render children()}

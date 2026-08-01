@@ -1,12 +1,30 @@
 import type { Component, Snippet } from 'svelte';
 import type { Placement } from '@floating-ui/dom';
-import type { Factory } from '$svelte-atoms/core/types';
+import type { Factory, StateChangeCallback } from '$ixirjs/ui/types';
 import type { PopoverBond } from './bond.svelte';
-import type { Base, HtmlAtomProps } from '../atom';
-import type { HtmlElementTagName } from '../element';
-import type { LayerInput, LayerRelation, PortalBond, TeleportProps, ZIndexInput } from '../portal';
+import type { PresetLike } from '$ixirjs/ui/preset';
+import type { BondPresetLayers } from '$ixirjs/ui/shared/bond';
+import type { Base, HtmlAtomProps } from '$ixirjs/ui/components/atom';
+import type { HtmlElementTagName } from '$ixirjs/ui/components/element';
+import type {
+	LayerInput,
+	LayerRelation,
+	PortalBond,
+	TeleportProps,
+	ZIndexInput
+} from '$ixirjs/ui/components/portal';
 
 export type PopoverChildren = Snippet<[{ popover: PopoverBond }]>;
+
+/** Per-instance presentation layers for Popover's bonded parts. */
+export interface PopoverPresets extends BondPresetLayers {
+	trigger?: PresetLike;
+	content?: PresetLike;
+	indicator?: PresetLike;
+	tail?: PresetLike;
+	overlay?: PresetLike;
+	'virtual-trigger'?: PresetLike;
+}
 
 export interface PopoverRootProps {
 	open?: boolean;
@@ -17,8 +35,11 @@ export interface PopoverRootProps {
 	/** CSS positioning strategy for the floating content. Defaults to `'absolute'`. */
 	position?: 'fixed' | 'absolute';
 	portal?: string | PortalBond;
+	/** Per-instance presentation overrides for bonded Popover parts. */
+	presets?: PopoverPresets | undefined;
 	extend?: Record<string, unknown>;
 	factory?: Factory<PopoverBond>;
+	onopenchange?: StateChangeCallback<boolean, PopoverBond> | undefined;
 	children?: PopoverChildren;
 }
 
@@ -34,7 +55,7 @@ export interface PopoverOverlayProps<
 	E extends HtmlElementTagName = 'div',
 	B extends Base = Base
 > extends TeleportProps<E, B, PopoverChildren> {
-	portal: string | PortalBond;
+	portal?: string | PortalBond | undefined;
 	/** Semantic z-index layer for the floating content. Defaults to `'popover'`. */
 	layer?: LayerInput | undefined;
 	/**
@@ -109,16 +130,25 @@ export interface PopoverIndicatorProps<
 	B extends Base = Base
 > extends HtmlAtomProps<E, B, PopoverChildren> {}
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface PopoverArrowProps<
+export interface PopoverTailProps<
 	E extends keyof HTMLElementTagNameMap = 'div',
 	B extends Base = Base
-> extends HtmlAtomProps<E, B, PopoverChildren> {}
+> extends HtmlAtomProps<E, B, PopoverChildren> {
+	/** Minimum distance, in px, between the tail wrapper and the content edge. Defaults to `0`. */
+	padding?: number | undefined;
+	/**
+	 * Base thickness of the tail, in px. Drives the whole shape and stays consistent across
+	 * placements. Defaults to the content's shorter side.
+	 */
+	size?: number | undefined;
+}
 
 export interface PopoverTriggerProps<
 	T extends keyof HTMLElementTagNameMap,
 	B extends Base = Base
 > extends HtmlAtomProps<T, B, PopoverChildren> {
-	// Explicit so the trigger can intercept it (HtmlAtomProps' index signature would type it `{}`).
-	onpointerenter?: (event: PointerEvent) => void;
+	// Explicit so the trigger can preserve native handlers before built-in activation.
+	onclick?: ((event: MouseEvent) => void) | undefined;
+	onkeydown?: ((event: KeyboardEvent) => void) | undefined;
+	onpointerenter?: ((event: PointerEvent) => void) | undefined;
 }

@@ -1,17 +1,18 @@
 {
-	"name": "@svelte-atoms/core",
-	"version": "1.0.0-alpha.44",
+	"name": "@ixirjs/ui",
+	"version": "1.0.0-alpha.48",
 	"description": "A modular, accessible, and extensible Svelte UI component library.",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/svelte-atoms/core.git"
+		"url": "git+https://github.com/ixirjs/ui.git"
 	},
-	"homepage": "https://github.com/svelte-atoms/core#readme",
+	"homepage": "https://github.com/ixirjs/ui#readme",
 	"bugs": {
-		"url": "https://github.com/svelte-atoms/core/issues"
+		"url": "https://github.com/ixirjs/ui/issues"
 	},
 	"author": "Abdel <rioman19@gmail.com>",
 	"license": "MIT",
+	"packageManager": "bun@1.3.9",
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build",
@@ -28,7 +29,9 @@
 		"storybook:dev": "storybook dev -p 6006 --no-open",
 		"storybook:build": "storybook build",
 		"storybook:serve": "bun x http-server ./storybook-static",
-		"mcp:inspect": "bun x @modelcontextprotocol/inspector http://localhost:5173/api/sse"
+		"mcp:inspect": "bun x @modelcontextprotocol/inspector http://localhost:5173/api/sse",
+		"bench:ssr": "vite build -c scripts/bench.vite.config.ts && node .bench-out/ssr-bench.js",
+		"scaffold": "node scripts/scaffold.mjs"
 	},
 	"files": [
 		"dist",
@@ -45,7 +48,11 @@
 		"!dist/**/*-test.svelte.d.ts",
 		"!dist/**/probe.svelte",
 		"!dist/**/probe.svelte.d.ts",
-		"!dist/**/*.bench.*"
+		"!dist/**/*.bench.*",
+		"!dist/**/presentation.legacy.*",
+		"!dist/components/virtual/**",
+		"!dist/**/test/**",
+		"!dist/**/*.type-test.*"
 	],
 	"sideEffects": [
 		"**/*.css"
@@ -59,39 +66,40 @@
 			"svelte": "./dist/index.js",
 			"default": "./dist/index.js"
 		},
+		"./components/*": {
+			"types": "./dist/public/components/*.d.ts",
+			"svelte": "./dist/public/components/*.js",
+			"default": "./dist/public/components/*.js"
+		},
+		"./preset": {
+			"types": "./dist/preset/index.d.ts",
+			"svelte": "./dist/preset/index.js",
+			"default": "./dist/preset/index.js"
+		},
 		"./utils": {
-			"types": "./dist/utils/index.d.ts",
-			"svelte": "./dist/utils/index.js",
-			"default": "./dist/utils/index.js"
+			"types": "./dist/public/utils.d.ts",
+			"svelte": "./dist/public/utils.js",
+			"default": "./dist/public/utils.js"
 		},
 		"./shared": {
-			"types": "./dist/shared/index.d.ts",
-			"svelte": "./dist/shared/index.js",
-			"default": "./dist/shared/index.js"
+			"types": "./dist/public/shared.d.ts",
+			"svelte": "./dist/public/shared.js",
+			"default": "./dist/public/shared.js"
 		},
-		"./tw": {
+		"./experimental": {
+			"types": "./dist/public/experimental.d.ts",
+			"svelte": "./dist/public/experimental.js",
+			"default": "./dist/public/experimental.js"
+		},
+		"./styles/root.css": {
+			"style": "./dist/components/root/root.css",
 			"svelte": "./dist/components/root/root.css",
 			"default": "./dist/components/root/root.css"
-		},
-		"./styles/root": {
-			"svelte": "./dist/components/root/root.css",
-			"default": "./dist/components/root/root.css"
-		},
-		"./overlay/policies": null,
-		"./virtual": null,
-		"./*/atoms": {
-			"types": "./dist/components/*/atoms.d.ts",
-			"svelte": "./dist/components/*/atoms.js",
-			"default": "./dist/components/*/atoms.js"
-		},
-		"./*": {
-			"types": "./dist/components/*/index.d.ts",
-			"svelte": "./dist/components/*/index.js",
-			"default": "./dist/components/*/index.js"
 		}
 	},
 	"peerDependencies": {
-		"svelte": "^5.46.4"
+		"svelte": "^5.46.4",
+		"@qrcode-js/browser": "^1.2.0"
 	},
 	"devDependencies": {
 		"@chromatic-com/storybook": "^5.2.1",
@@ -99,6 +107,7 @@
 		"@eslint/js": "^9.39.4",
 		"@modelcontextprotocol/sdk": "^1.29.0",
 		"@playwright/test": "^1.59.1",
+		"@qrcode-js/browser": "^1.2.0",
 		"@storybook/addon-a11y": "^10.4.6",
 		"@storybook/addon-docs": "^10.4.6",
 		"@storybook/addon-svelte-csf": "^5.1.2",
@@ -114,7 +123,6 @@
 		"@testing-library/svelte": "^5.3.1",
 		"@types/node": "^22.19.17",
 		"@vitest/browser": "^3.2.4",
-		"animejs": "^4.3.6",
 		"eslint": "^9.39.4",
 		"eslint-config-prettier": "^10.1.8",
 		"eslint-plugin-storybook": "^10.4.6",
@@ -138,7 +146,6 @@
 		"typescript": "^5.9.3",
 		"typescript-eslint": "^8.58.2",
 		"vite": "^7.3.2",
-		"vite-plugin-devtools-json": "^1.0.0",
 		"vitest": "^3.2.4",
 		"vitest-browser-svelte": "^0.1.0",
 		"zod": "^4.3.6"
@@ -172,13 +179,13 @@
 	},
 	"dependencies": {
 		"@floating-ui/dom": "^1.7.6",
-		"@qrcode-js/browser": "^1.2.0",
 		"clsx": "^2.1.1",
-		"date-fns": "^4.1.0",
 		"esm-env": "^1.2.2",
-		"es-toolkit": "^1.45.1",
-		"motion": "^12.38.0",
-		"nanoid": "^5.1.9",
 		"tailwind-merge": "^3.5.0"
+	},
+	"peerDependenciesMeta": {
+		"@qrcode-js/browser": {
+			"optional": true
+		}
 	}
 }

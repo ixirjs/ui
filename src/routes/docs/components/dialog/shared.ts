@@ -1,5 +1,5 @@
 const presetCode = `
-import { setPreset } from '@svelte-atoms/core';
+import { setPreset } from '@ixirjs/ui/preset';
 
 const preset = setPreset({
   dialog: () => ({
@@ -113,8 +113,8 @@ export const metadata = {
 		'Modal dialog for important user interactions that captures focus and requires user action.',
 	componentType: 'compound' as const,
 	status: 'stable' as const,
-	packageName: '@svelte-atoms/core',
-	importCode: "import { Dialog } from '@svelte-atoms/core';",
+	packageName: '@ixirjs/ui',
+	importCode: "import { Dialog } from '@ixirjs/ui';",
 	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Dialog' }],
 	useCases,
 	componentsSummary,

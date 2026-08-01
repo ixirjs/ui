@@ -1,10 +1,10 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { bindBond } from '$svelte-atoms/core/shared/bond/bind.svelte';
-	import { createAtomInstance } from '$svelte-atoms/core/shared/bond';
-	import { HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
-	import { mergeAtomProps } from '$svelte-atoms/core/components/atom';
-	import { ScrollableBond, type ScrollableRootAtom } from './bond.svelte';
+	import { useRoot } from '$ixirjs/ui/shared';
+	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import { ScrollableBond } from './bond.svelte';
 	import type { ScrollableRootProps } from './types';
+
+	const ID = $props.id();
 
 	let {
 		scrollX = $bindable(0),
@@ -30,8 +30,8 @@
 	let clientHeightState = $derived(clientHeight);
 	let isScrolling = $state(false);
 
-	const binding = bindBond<ScrollableBond>(
-		(props) => factory(props),
+	const root = useRoot(
+		ScrollableBond,
 		{
 			scrollX: [
 				() => scrollXState,
@@ -79,16 +79,9 @@
 			open: [() => open, (v) => (open = v)],
 			isScrolling: [() => isScrolling, (v) => (isScrolling = v ?? false)]
 		},
-		{ preset: () => preset }
+		{ preset: () => preset, id: () => ID, factory: (props) => factory(props) }
 	);
-	const bond: ScrollableBond = binding.bond.share();
-	const rootAtom = createAtomInstance<ScrollableRootAtom, ScrollableBond, HTMLElement>('root', {
-		bond,
-		factory: (owner) => owner!.root() as ScrollableRootAtom
-	});
-	const rootProps = $derived(
-		mergeAtomProps(rootAtom, preset, { ...binding.stateProps, ...restProps })
-	);
+	const bond: ScrollableBond = root.bond;
 
 	export function getBond(): ScrollableBond {
 		return bond;
@@ -98,7 +91,9 @@
 <HtmlAtom
 	as="div"
 	class={['scrollable-root relative box-content overflow-hidden', '$preset', klass]}
-	{...rootProps}
+	{...root.props}
+	{...restProps}
+	part={root}
 >
 	{@render children?.({ scrollable: bond })}
 </HtmlAtom>

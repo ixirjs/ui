@@ -19,11 +19,31 @@ const preview: Preview = {
 			test: 'todo'
 		}
 	},
+	// Global color-scheme toggle in the Storybook toolbar. 'system' follows the OS
+	// preference (colorScheme() rune); 'light'/'dark' force an explicit scheme.
+	initialGlobals: {
+		colorScheme: 'system'
+	},
+	globalTypes: {
+		colorScheme: {
+			description: 'Color scheme',
+			toolbar: {
+				icon: 'circlehollow',
+				items: [
+					{ value: 'system', icon: 'browser', title: 'System' },
+					{ value: 'light', icon: 'sun', title: 'Light' },
+					{ value: 'dark', icon: 'moon', title: 'Dark' }
+				],
+				dynamicTitle: true
+			}
+		}
+	},
 	decorators: [
-		(story) => ({
+		(story, context) => ({
 			Component: StoryRoot,
 			props: {
-				story
+				story,
+				colorScheme: context.globals.colorScheme
 			}
 		})
 	]

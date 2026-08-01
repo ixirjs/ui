@@ -1,10 +1,10 @@
-<script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { bindBond } from '$svelte-atoms/core/shared/bond/bind.svelte';
-	import { type Base } from '$svelte-atoms/core/components/atom';
-	import Teleport from '$svelte-atoms/core/components/portal/teleport.svelte';
+<script lang="ts">
+	import { controlledProp, useRoot } from '$ixirjs/ui/shared';
+	import { PortalSurface } from '$ixirjs/ui/components/portal';
 	import { SidebarBond } from './bond.svelte';
 	import type { SidebarRootProps } from './types';
-	import { ZLayer } from '../portal/zlayer.svelte';
+
+	const ID = $props.id();
 
 	let {
 		open = $bindable(false),
@@ -14,56 +14,43 @@
 		portal = undefined,
 		class: klass = '',
 		factory = (props) => SidebarBond.create(props),
-		children = undefined,
-		...restProps
-	}: SidebarRootProps<E, B> = $props();
+		onopenchange = undefined,
+		children = undefined
+	}: SidebarRootProps = $props();
 
-	let openState = $derived(open);
-
-	// ZLayer only on the teleported path: in-flow has no stacking context to order,
-	// so it carries no layer. `overlay` is structural — read once at mount.
-	// svelte-ignore state_referenced_locally
-	const baseLayer = asOverlay ? new ZLayer('modal', () => 0) : undefined;
-	const layerOffset = $derived(
-		typeof zindex === 'function'
-			? zindex(baseLayer?.value ?? 0) - (baseLayer?.value ?? 0)
-			: typeof zindex === 'number' && Number.isFinite(zindex)
-				? zindex
-				: 0
-	);
-	// svelte-ignore state_referenced_locally
-	const layer = asOverlay ? new ZLayer('modal', () => layerOffset).share() : undefined;
-
-	const binding = bindBond<SidebarBond>((props) => factory(props), {
-		open: [
-			() => openState,
-			(v) => {
-				openState = v;
-				open = openState;
-			}
-		],
-		disabled: () => disabled,
-		// Vestigial: element-less context root, no typed channel to forward restProps.
-		rest: () => restProps
+	const openProp = controlledProp<boolean, SidebarBond>({
+		get: () => open,
+		set: (value) => (open = value),
+		onchange: (value, context) => onopenchange?.(value, context),
+		context: (bond) => bond.takeOpenChangeContext()
 	});
-	const bond = binding.bond.share();
+
+	const root = useRoot(
+		SidebarBond,
+		{
+			open: openProp,
+			disabled: () => disabled
+		},
+		{ atom: false, id: () => ID, factory: (props) => factory(props) }
+	);
+	const bond = root.bond;
 
 	export function getBond() {
 		return bond;
 	}
 </script>
 
-<!-- `layer` is truthy iff `overlay` was set at mount. -->
-{#if layer}
-	<!-- Full-screen pointer-passthrough sink in the root Portal carrying the modal ZLayer;
-	     Sidebar.Content positions itself within it. -->
-	<Teleport
-		portal={portal ?? 'root.l0'}
+<!-- `overlay` is structural — the in-flow path intentionally has no portal or elevation. -->
+{#if asOverlay}
+	<PortalSurface
+		owner={bond}
+		band="modal"
+		{portal}
+		z-index={zindex}
 		class={['pointer-events-none fixed inset-0', klass]}
-		style="z-index: {layer.value};"
 	>
 		{@render children?.({ sidebar: bond })}
-	</Teleport>
+	</PortalSurface>
 {:else}
 	{@render children?.({ sidebar: bond })}
 {/if}

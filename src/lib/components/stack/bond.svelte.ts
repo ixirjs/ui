@@ -1,5 +1,5 @@
-import { Bond, Atom, type BondStateProps } from '$svelte-atoms/core/shared/bond';
-import { defineBond, type BondOf } from '$svelte-atoms/core/shared';
+import { Bond, Atom, type BondStateProps } from '$ixirjs/ui/shared/bond';
+import { defineBond, type BondOf } from '$ixirjs/ui/shared';
 import { tick, untrack } from 'svelte';
 
 // -----------------------------------------------------------------------------
@@ -34,7 +34,7 @@ export class StackRootAtom extends Atom<StackBondView> {
 	override get attrs() {
 		return {
 			...super.attrs,
-			'data-atom': this.bond.id ?? '',
+			'data-atom': this.requireBond().id ?? '',
 			'data-kind': 'stack-root'
 		};
 	}
@@ -51,10 +51,10 @@ export class StackItemAtom extends Atom<StackBondView> {
 	override get attrs() {
 		return {
 			...super.attrs,
-			'data-atom': this.bond.id ?? '',
+			'data-atom': this.requireBond().id ?? '',
 			'data-kind': 'stack-item',
 			'data-stack-item': this.#value,
-			style: `z-index: ${this.bond.getZIndex(this.#value)}`
+			style: `z-index: ${this.requireBond().getZIndex(this.#value)}`
 		};
 	}
 }
@@ -219,28 +219,11 @@ class StackBondBase extends Bond<StackStateProps> {
 // Bond spec and constructor facade
 // -----------------------------------------------------------------------------
 
-const StackBondImpl = defineBond<
-	{ root: typeof StackRootAtom },
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	any,
-	typeof StackBondBase
->({
+export const StackBond = defineBond({
 	name: 'stack',
 	base: StackBondBase,
 	atoms: { root: StackRootAtom }
 });
 
 // Instance type of the stack bond — paired with the `const` above.
-export type StackBond = BondOf<typeof StackBondImpl>;
-
-interface StackBondConstructor {
-	new (props: StackStateProps): StackBond;
-	readonly CONTEXT_KEY: string;
-	readonly spec: (typeof StackBondImpl)['spec'];
-	get(): StackBond | undefined;
-	getOrThrow(message?: string): StackBond;
-	set(bond: StackBond): StackBond;
-	create(props: StackStateProps): StackBond;
-}
-
-export const StackBond = StackBondImpl as unknown as StackBondConstructor;
+export type StackBond = BondOf<typeof StackBond>;

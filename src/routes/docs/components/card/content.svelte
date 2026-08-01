@@ -40,7 +40,7 @@
 	{contentType}
 	{metadata}
 	{frontmatter}
-	prev={{ label: 'Button', href: '/docs/components/button' }}
+	prev={{ label: 'Calendar', href: '/docs/components/calendar' }}
 	next={{ label: 'Checkbox', href: '/docs/components/checkbox' }}
 >
 	{#snippet preset()}

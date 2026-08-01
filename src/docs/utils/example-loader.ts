@@ -4,7 +4,7 @@ export type ExampleLoader = () => Promise<{ default: Component }>;
 
 // Replaces internal $lib paths with the public package name for user-facing code blocks.
 function transformImports(code: string): string {
-	return code.replace(/from\s+'(\$lib\/[^']+)'/g, "from '@svelte-atoms/core'");
+	return code.replace(/from\s+'(\$lib\/[^']+)'/g, "from '@ixirjs/ui'");
 }
 
 // Creates an `ex(src)` helper bound to glob-registered example files.

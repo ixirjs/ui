@@ -4,7 +4,7 @@
 	import { metadata } from './shared';
 
 	const globalPresetCode = `// +layout.svelte (App Root)
-import { setPreset } from '@svelte-atoms/core/context';
+import { setPreset } from '@ixirjs/ui/preset';
 
 setPreset({
   button: () => ({
@@ -37,7 +37,7 @@ setPreset({
 });`;
 
 	const routePresetCode = `// routes/dashboard/+layout.svelte
-import { setPreset } from '@svelte-atoms/core/context';
+import { setPreset } from '@ixirjs/ui/preset';
 
 // Extends and overrides the global preset
 setPreset({
@@ -60,8 +60,8 @@ setPreset({
 
 	const componentPresetCode = `<!-- components/Settings.svelte -->
 <script>
-  import { setPreset } from '@svelte-atoms/core/context';
-  import { Card } from '@svelte-atoms/core';
+  import { setPreset } from '@ixirjs/ui/preset';
+  import { Card } from '@ixirjs/ui';
 
   setPreset({
     'card.title': () => ({
@@ -76,21 +76,18 @@ setPreset({
   </Card.Header>
 </Card.Root>`;
 
-	const dynamicPresetCode = `import { setPreset } from '@svelte-atoms/core/context';
+	const dynamicPresetCode = `import { definePreset, setPreset } from '@ixirjs/ui/preset';
 
-setPreset({
-  // Returning a function makes the preset reactive to Bond values
-  'accordion.item.header': (bond) => {
-    return () => ({
-      class: ['', bond?.state?.isActive ? 'text-foreground/100' : 'text-foreground/50']
-    });
-  },
+setPreset(definePreset({
+  // Reads inside the entry are tracked by the presentation kernel
+  'accordion.item.header': ({ bond }) => ({
+    class: bond?.isActive ? 'text-foreground' : 'text-foreground/50'
+  }),
 
-  // Static preset — no Bond values needed
   'accordion.item.body': () => ({
-    class: 'overflow-hidden mt-2'
+    class: 'mt-2 overflow-hidden'
   })
-});`;
+}));`;
 
 	const compoundPresetCode = `setPreset({
   // Parent component
@@ -115,22 +112,15 @@ setPreset({
   'alert.actions': () => ({ class: 'mt-3 flex items-center gap-2' })
 });`;
 
-	const placeholderCode = `<!-- In your component -->
+	const placeholderCode = `<!-- Preset classes are inserted automatically -->
 <script>
-  import { HtmlAtom } from '@svelte-atoms/core';
+  import { HtmlAtom } from '@ixirjs/ui';
   let { class: klass = '' } = $props();
 <\x2Fscript>
 
-<HtmlAtom
-  preset="button"
-  class={[
-    'my-custom-class',
-    '$preset',  // Replaced with preset classes at this position
-    klass       // User classes come last and override everything
-  ]}
-/>
+<HtmlAtom preset="button" class={['my-component-base', klass]} />
 
-<!-- Result: 'my-custom-class rounded-lg px-4 py-2 font-semibold user-class' -->`;
+<!-- Order: preset classes → component/user classes; the consumer wins conflicts. -->`;
 
 	const extendingCode = `// Base theme (global)
 setPreset({
@@ -168,12 +158,11 @@ setPreset({
 // Result: all variants available (primary, secondary, gradient, outline)
 // All sizes available (sm, md, xl)`;
 
-	const presetEntryTypeCode = `import { setPreset } from '@svelte-atoms/core/context';
+	const presetEntryTypeCode = `import { definePreset, setPreset } from '@ixirjs/ui/preset';
 
-// PresetEntry: (bond: Bond | null) => PresetEntryValue | Array<PresetEntryValue>
-// PresetEntryValue: PresetEntryRecord | (() => PresetEntryRecord)
+// PresetEntry: (context: { bond: Bond | null }) => PresetEntryRecord
 
-setPreset({
+setPreset(definePreset({
   // Static — returns a record directly
   card: () => ({
     class: 'rounded-xl border border-border bg-card',
@@ -186,19 +175,17 @@ setPreset({
     defaults: { size: 'md' }
   }),
 
-  // Reactive — returns a factory so classes recompute with Bond values
-  'accordion.item.header': (bond) => () => ({
-    class: bond?.state?.isActive ? 'text-primary font-semibold' : 'text-muted-foreground'
+  // Reactive reads happen directly inside the entry
+  'accordion.item.header': ({ bond }) => ({
+    class: bond?.isActive ? 'text-primary font-semibold' : 'text-muted-foreground'
   }),
 
-  // Extended attributes — any HTML attribute, not just class
+  // DOM attributes live in their own collision-safe namespace
   button: () => ({
     class: 'rounded-lg px-4 py-2',
-    'data-component': 'button',
-    role: 'button',
-    tabindex: 0
+    attrs: { 'data-component': 'button', role: 'button', tabindex: 0 }
   })
-});`;
+}));`;
 
 	const bestPractices = [
 		{
@@ -227,9 +214,9 @@ setPreset({
 		},
 		{
 			num: '05',
-			title: 'Return a factory for reactive styles',
+			title: 'Read reactive state directly',
 			description:
-				'Returning () => ({...}) instead of a plain object makes the preset recompute when Bond values change.'
+				'Read Bond values inside the entry callback; the presentation kernel tracks them without a second factory layer.'
 		},
 		{
 			num: '06',
@@ -468,9 +455,8 @@ setPreset({
 	</Section.Header>
 
 	<p class="text-muted-foreground mb-6 text-sm leading-relaxed">
-		Preset functions receive the component's bond as a parameter. To make styles reactive, return a <em
-			>factory function</em
-		> instead of a plain object — the factory is re-evaluated whenever Bond values change.
+		Preset entries receive a context record containing the component Bond. Reactive reads made
+		directly inside the entry are tracked by the presentation kernel and update automatically.
 	</p>
 
 	<div class="overflow-hidden rounded-lg mb-6">
@@ -478,42 +464,28 @@ setPreset({
 	</div>
 
 	<div class="border-border bg-card rounded-lg border p-5">
-		<p class="text-foreground mb-3 text-sm font-semibold">Static vs reactive</p>
-		<div class="grid gap-4 sm:grid-cols-2">
-			<div>
-				<p class="text-foreground mb-1.5 text-xs font-semibold">Static preset</p>
-				<p class="text-muted-foreground text-xs leading-relaxed">
-					Return a record directly: <code class="bg-primary/10 text-primary font-mono text-xs"
-						>() => (&lbrace;class: '...'&rbrace;)</code
-					>. Evaluated once at context setup.
-				</p>
-			</div>
-			<div>
-				<p class="text-foreground mb-1.5 text-xs font-semibold">Reactive preset</p>
-				<p class="text-muted-foreground text-xs leading-relaxed">
-					Return a factory: <code class="bg-primary/10 text-primary font-mono text-xs"
-						>(bond) => () => (&lbrace;class: '...'&rbrace;)</code
-					>. Re-evaluated on every render when Bond values change.
-				</p>
-			</div>
-		</div>
+		<p class="text-foreground mb-3 text-sm font-semibold">One entry shape</p>
+		<p class="text-muted-foreground text-xs leading-relaxed">
+			Every entry returns one closed record. Use <code
+				class="bg-primary/10 text-primary font-mono text-xs"
+				>&lbrace; bond &rbrace; =&gt; (&lbrace; class: bond?.isOpen ? 'open' : 'closed' &rbrace;)</code
+			> when styling depends on component state.
+		</p>
 	</div>
 </Section.Root>
 
-<!-- $preset Placeholder -->
+<!-- Automatic class insertion -->
 <Section.Root>
 	<Section.Header>
-		<Section.Title>The $preset placeholder</Section.Title>
+		<Section.Title>Automatic class insertion</Section.Title>
 		<Section.Subtitle
-			>Control exactly where preset classes are inserted in your class list.</Section.Subtitle
+			>Preset classes require no sentinel or template-level protocol.</Section.Subtitle
 		>
 	</Section.Header>
 
 	<p class="text-muted-foreground mb-6 text-sm leading-relaxed">
-		Place the string <code
-			class="bg-primary/10 text-primary rounded px-1.5 py-0.5 font-mono text-xs">'$preset'</code
-		> anywhere in a class array and it will be replaced by the resolved preset classes at that position.
-		This gives you full control over specificity ordering.
+		The presentation kernel inserts preset classes automatically. Component and consumer classes are
+		applied afterward, so local customization wins Tailwind conflicts.
 	</p>
 
 	<div class="overflow-hidden rounded-lg">
@@ -611,16 +583,15 @@ setPreset({
 		<div class="p-5">
 			<div class="mb-3 flex items-center gap-3">
 				<code class="bg-primary/10 text-primary rounded px-2 py-1 font-mono text-sm"
-					>getPreset(key?)</code
+					>definePreset(preset)</code
 				>
 			</div>
 			<p class="text-muted-foreground mb-3 text-sm leading-relaxed">
-				Retrieves preset configuration from context. Pass a key for a specific entry; omit for the
-				full preset map.
+				Checks built-in and application-augmented keys while preserving precise entry inference.
 			</p>
 			<div class="bg-muted/30 rounded-lg p-3">
 				<code class="text-muted-foreground text-xs"
-					>getPreset&lt;K&gt;(key?: K): PresetEntry | Partial&lt;Preset&gt;</code
+					>definePreset&lt;P extends Partial&lt;Preset&gt;&gt;(preset: P): P</code
 				>
 			</div>
 		</div>
@@ -628,21 +599,13 @@ setPreset({
 		<div class="p-5">
 			<div class="mb-3 flex items-center gap-3">
 				<code class="bg-primary/10 text-primary rounded px-2 py-1 font-mono text-sm"
-					>mergePreset(callback)</code
+					>fallbackPreset(...) / mergePresetLayers(...)</code
 				>
 			</div>
 			<p class="text-muted-foreground mb-3 text-sm leading-relaxed">
-				Low-level merge function that receives the current preset and returns the merged result.
-				Used internally by <code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs"
-					>setPreset</code
-				>.
+				Named operations distinguish first-available key fallback from ordered record merging. Plain
+				arrays intentionally have no preset semantics.
 			</p>
-			<div class="bg-muted/30 rounded-lg p-3">
-				<code class="text-muted-foreground text-xs"
-					>mergePreset(callback: (current: Partial&lt;Preset&gt; | undefined) =&gt;
-					Partial&lt;Preset&gt;): void</code
-				>
-			</div>
 		</div>
 
 		<div class="p-5">
@@ -652,13 +615,12 @@ setPreset({
 				>
 			</div>
 			<p class="text-muted-foreground mb-3 text-sm leading-relaxed">
-				The type of each preset value. Receives the component bond and returns either a record
-				(static) or a factory returning a record (reactive).
+				Each entry receives one extensible context record and returns one closed presentation
+				record.
 			</p>
 			<div class="bg-muted/30 rounded-lg p-3">
 				<code class="text-muted-foreground text-xs"
-					>type PresetEntry = (bond: Bond | null) =&gt; PresetEntryRecord | (() =&gt;
-					PresetEntryRecord)</code
+					>type PresetEntry = (context: PresetContext) =&gt; PresetEntryRecord</code
 				>
 			</div>
 		</div>

@@ -1,7 +1,7 @@
 <script module>
 	import { defineMeta } from '@storybook/addon-svelte-csf';
 	import { DatePicker as ADatePicker } from '..';
-	import { Button } from '../../button';
+	import { Button } from '$ixirjs/ui/components/button';
 
 	const { Story } = defineMeta({
 		title: 'Atoms/DatePicker',
@@ -47,13 +47,14 @@
 </script>
 
 <script lang="ts">
-	import { addDays, subDays } from 'date-fns';
+	import { addDays } from '$ixirjs/ui/utils/date';
 
 	let value: Date | undefined = $state(undefined);
 	let rangeStart: Date | undefined = $state(undefined);
 	let rangeEnd: Date | undefined = $state(undefined);
+	let publishDate: Date | undefined = $state(undefined);
 
-	let min = $state(subDays(new Date(), 5));
+	let min = $state(addDays(new Date(), -5));
 	let max = $state(addDays(new Date(), 15));
 </script>
 
@@ -116,6 +117,39 @@
 			</ADatePicker.Trigger>
 			<ADatePicker.Calendar />
 		</ADatePicker.Root>
+	</div>
+</Story>
+
+<Story name="Schedule a Post">
+	<!-- Real-world: a compose card where the publish date is picked inline. -->
+	<div class="flex min-h-screen items-start justify-center pt-24">
+		<div class="bg-card w-96 rounded-xl border p-5 shadow-sm">
+			<h3 class="text-base font-semibold">Schedule a post</h3>
+			<p class="text-muted-foreground mt-1 text-sm">Choose when this update goes live.</p>
+
+			<div class="mt-4 flex flex-col gap-1.5">
+				<span class="text-sm font-medium">Publish date</span>
+				<ADatePicker.Root bind:value={publishDate} format="MM/dd/yyyy" placeholder="Pick a date">
+					<ADatePicker.Trigger base={Button} variant="outline" class="w-full gap-4">
+						{#if publishDate}
+							<div>{publishDate.toDateString()}</div>
+						{:else}
+							<div class="text-muted-foreground">Pick a date</div>
+						{/if}
+						<ADatePicker.Indicator class="ml-auto" />
+					</ADatePicker.Trigger>
+					<ADatePicker.Calendar />
+				</ADatePicker.Root>
+			</div>
+
+			<div class="mt-5 flex items-center justify-between">
+				<!-- Live readout so the reader sees the picked date change. -->
+				<code class="text-muted-foreground font-mono text-xs">
+					{publishDate ? publishDate.toDateString() : 'not scheduled'}
+				</code>
+				<Button variant="primary" disabled={!publishDate}>Schedule</Button>
+			</div>
+		</div>
 	</div>
 </Story>
 

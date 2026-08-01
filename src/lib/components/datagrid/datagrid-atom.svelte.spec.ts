@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { tick } from 'svelte';
-import { Atom } from '$svelte-atoms/core/shared/bond';
+import { Atom } from '$ixirjs/ui/shared/bond';
 import Probe, {
 	capturedBodyRow,
 	capturedColumn,
@@ -9,7 +9,7 @@ import Probe, {
 	capturedGrid,
 	capturedHeaderRow,
 	resetCapturedDatagridBonds
-} from './datagrid-atom-probe.svelte';
+} from '$ixirjs/ui/test/components/datagrid/datagrid-atom-probe.test.svelte';
 import {
 	DataGridBodyAtom,
 	DataGridBond,
@@ -19,6 +19,7 @@ import {
 } from './bond.svelte';
 import { DataGridColumnBond, DataGridColumnRootAtom } from './column/bond.svelte';
 import { DataGridRowBond, DataGridRowRootAtom } from './row/bond.svelte';
+import Body from './datagrid-body.svelte';
 
 describe('DataGrid component-owned Atoms', () => {
 	beforeEach(resetCapturedDatagridBonds);
@@ -38,13 +39,13 @@ describe('DataGrid component-owned Atoms', () => {
 		expect(generatedRow).toBeInstanceOf(DataGridRowBond);
 		expect(column).toBeInstanceOf(DataGridColumnBond);
 
-		const root = grid?.node('root');
-		const header = grid?.node('header');
-		const body = grid?.node('body');
-		const footer = grid?.node('footer');
-		const headerRowRoot = headerRow?.node('root');
-		const bodyRowRoot = bodyRow?.node('root');
-		const columnRoot = column?.node('root');
+		const root = grid?.nodeByPart('root');
+		const header = grid?.nodeByPart('header');
+		const body = grid?.nodeByPart('body');
+		const footer = grid?.nodeByPart('footer');
+		const headerRowRoot = headerRow?.nodeByPart('root');
+		const bodyRowRoot = bodyRow?.nodeByPart('root');
+		const columnRoot = column?.nodeByPart('root');
 
 		expect(root).toBeInstanceOf(DataGridRootAtom);
 		expect(header).toBeInstanceOf(DataGridHeaderAtom);
@@ -57,10 +58,13 @@ describe('DataGrid component-owned Atoms', () => {
 			expect(node).toBeInstanceOf(Atom);
 		}
 
-		expect(grid?.nodes()).toHaveLength(4);
-		expect(headerRow?.nodes()).toHaveLength(1);
-		expect(bodyRow?.nodes()).toHaveLength(1);
-		expect(column?.nodes()).toHaveLength(1);
+		expect(grid?.nodesByPart('root')).toEqual([root]);
+		expect(grid?.nodesByPart('header')).toEqual([header]);
+		expect(grid?.nodesByPart('body')).toEqual([body]);
+		expect(grid?.nodesByPart('footer')).toEqual([footer]);
+		expect(headerRow?.nodesByPart('root')).toEqual([headerRowRoot]);
+		expect(bodyRow?.nodesByPart('root')).toEqual([bodyRowRoot]);
+		expect(column?.nodesByPart('root')).toEqual([columnRoot]);
 		expect(grid?.rows.get('alpha')).toBe(bodyRow);
 		expect(generatedRow?.id).toEqual(expect.any(String));
 		expect(generatedRow?.id).not.toBe('');
@@ -72,33 +76,39 @@ describe('DataGrid component-owned Atoms', () => {
 		expect(column?.isSortable).toBe(true);
 		expect(grid?.template).toBe('1fr');
 
-		expect(grid?.root()).toBeInstanceOf(DataGridRootAtom);
-		expect(grid?.header()).toBeInstanceOf(DataGridHeaderAtom);
-		expect(grid?.body()).toBeInstanceOf(DataGridBodyAtom);
-		expect(grid?.footer()).toBeInstanceOf(DataGridFooterAtom);
-		expect(headerRow?.root()).toBeInstanceOf(DataGridRowRootAtom);
-		expect(bodyRow?.root()).toBeInstanceOf(DataGridRowRootAtom);
-		expect(column?.root()).toBeInstanceOf(DataGridColumnRootAtom);
+		expect(grid?.nodeByPart('root')).toBeInstanceOf(DataGridRootAtom);
+		expect(grid?.nodeByPart('header')).toBeInstanceOf(DataGridHeaderAtom);
+		expect(grid?.nodeByPart('body')).toBeInstanceOf(DataGridBodyAtom);
+		expect(grid?.nodeByPart('footer')).toBeInstanceOf(DataGridFooterAtom);
+		expect(headerRow?.nodeByPart('root')).toBeInstanceOf(DataGridRowRootAtom);
+		expect(bodyRow?.nodeByPart('root')).toBeInstanceOf(DataGridRowRootAtom);
+		expect(column?.nodeByPart('root')).toBeInstanceOf(DataGridColumnRootAtom);
 		for (const node of [
-			grid?.root(),
-			grid?.header(),
-			grid?.body(),
-			grid?.footer(),
-			headerRow?.root(),
-			bodyRow?.root(),
-			column?.root()
+			grid?.nodeByPart('root'),
+			grid?.nodeByPart('header'),
+			grid?.nodeByPart('body'),
+			grid?.nodeByPart('footer'),
+			headerRow?.nodeByPart('root'),
+			bodyRow?.nodeByPart('root'),
+			column?.nodeByPart('root')
 		]) {
 			expect(node).toBeInstanceOf(Atom);
 		}
 
 		unmount();
 
-		expect(grid?.nodes()).toEqual([]);
-		expect(headerRow?.nodes()).toEqual([]);
-		expect(bodyRow?.nodes()).toEqual([]);
-		expect(column?.nodes()).toEqual([]);
+		for (const part of ['root', 'header', 'body', 'footer']) {
+			expect(grid?.nodesByPart(part)).toEqual([]);
+		}
+		expect(headerRow?.nodesByPart('root')).toEqual([]);
+		expect(bodyRow?.nodesByPart('root')).toEqual([]);
+		expect(column?.nodesByPart('root')).toEqual([]);
 		expect(grid?.rows.get('alpha')).toBeUndefined();
 		expect(grid?.rows.get(generatedRow?.id ?? '')).toBeUndefined();
 		expect(grid?.columns.get('name')).toBeUndefined();
+	});
+
+	it('rejects DataGrid.Body outside its root context', () => {
+		expect(() => render(Body)).toThrow('DataGrid.Body must be used within DataGrid.Root.');
 	});
 });

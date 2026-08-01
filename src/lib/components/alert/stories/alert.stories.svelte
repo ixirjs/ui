@@ -1,8 +1,8 @@
 <script module>
 	import { defineMeta } from '@storybook/addon-svelte-csf';
-	import { Alert as AAlert } from '../index';
-	import { Button } from '$svelte-atoms/core/components/button';
-	import { Icon } from '$svelte-atoms/core/components/icon';
+	import { Alert as AAlert } from '$ixirjs/ui/components/alert/index';
+	import { Button } from '$ixirjs/ui/components/button';
+	import { Icon } from '$ixirjs/ui/components/icon';
 
 	const { Story } = defineMeta({
 		title: 'Atoms/Alert',
@@ -33,18 +33,8 @@
 </script>
 
 <script lang="ts">
+	// Drives the dismiss/restore round-trip in the Dismissible story.
 	let dismissedState = $state(false);
-	let autoHideState = $state(false);
-
-	// Auto-hide after 5s once shown.
-	$effect(() => {
-		if (autoHideState) {
-			const timer = setTimeout(() => {
-				autoHideState = false;
-			}, 5000);
-			return () => clearTimeout(timer);
-		}
-	});
 </script>
 
 <Story name="Basic">
@@ -255,23 +245,6 @@
 					</Icon>
 				</AAlert.CloseButton>
 			</AAlert.Root>
-
-			<AAlert.Root variant="success">
-				<AAlert.Icon>
-					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-						<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-						<polyline points="22 4 12 14.01 9 11.01"></polyline>
-					</svg>
-				</AAlert.Icon>
-				<AAlert.Title>Backup Completed</AAlert.Title>
-				<AAlert.Description>
-					All your data has been backed up successfully. Last backup: just now.
-				</AAlert.Description>
-				<AAlert.Actions>
-					<Button variant="outline" size="sm">View Details</Button>
-				</AAlert.Actions>
-				<AAlert.Content></AAlert.Content>
-			</AAlert.Root>
 		</div>
 	</div>
 </Story>
@@ -291,7 +264,6 @@
 
 			<AAlert.Root variant="warning">
 				<AAlert.Content>Your session will expire in 5 minutes.</AAlert.Content>
-				<AAlert.Content></AAlert.Content>
 			</AAlert.Root>
 
 			<AAlert.Root variant="error">
@@ -328,45 +300,6 @@
 						</svg>
 					</Icon>
 				</AAlert.CloseButton>
-			</AAlert.Root>
-
-			<!-- API Rate Limit -->
-			<AAlert.Root variant="warning">
-				<AAlert.Icon>
-					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-						<circle cx="12" cy="12" r="10"></circle>
-						<polyline points="12 6 12 12 16 14"></polyline>
-					</svg>
-				</AAlert.Icon>
-				<AAlert.Title>API Rate Limit Warning</AAlert.Title>
-				<AAlert.Description>
-					You've used 450 of 500 API calls this hour. Rate limit resets in 23 minutes.
-				</AAlert.Description>
-				<AAlert.Content></AAlert.Content>
-				<AAlert.Actions>
-					<Button variant="primary" size="sm">Upgrade Plan</Button>
-					<Button variant="ghost" size="sm">View Usage</Button>
-				</AAlert.Actions>
-			</AAlert.Root>
-
-			<!-- Maintenance Notice -->
-			<AAlert.Root variant="info">
-				<AAlert.Icon>
-					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-						<path
-							d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"
-						></path>
-					</svg>
-				</AAlert.Icon>
-				<AAlert.Title>Scheduled Maintenance</AAlert.Title>
-				<AAlert.Description>
-					Our services will be undergoing maintenance on Dec 15, 2025 from 2:00 AM to 4:00 AM UTC.
-					Some features may be temporarily unavailable.
-				</AAlert.Description>
-				<AAlert.Content></AAlert.Content>
-				<AAlert.Actions>
-					<Button variant="primary" size="sm">Add to Calendar</Button>
-				</AAlert.Actions>
 			</AAlert.Root>
 
 			<!-- Security Alert -->

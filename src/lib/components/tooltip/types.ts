@@ -1,5 +1,8 @@
 import type { Snippet } from 'svelte';
-import type { HtmlAtomProps, Base, SnippetProps } from '$svelte-atoms/core/components/atom';
+import type { HtmlAtomProps, Base, SnippetProps } from '$ixirjs/ui/components/atom';
+import type { PopoverPresets, PopoverRootProps } from '$ixirjs/ui/components/popover';
+import type { StateChangeCallback } from '$ixirjs/ui/types';
+import type { TooltipBond, TooltipBondProps } from './bond.svelte';
 
 // Tooltip Snippet Props
 
@@ -7,6 +10,15 @@ import type { HtmlAtomProps, Base, SnippetProps } from '$svelte-atoms/core/compo
 export interface TooltipSnippetProps extends SnippetProps {}
 
 export type TooltipChildren = Snippet<[TooltipSnippetProps]>;
+
+/** Per-instance presentation layers for Tooltip's Popover-backed parts. */
+export type TooltipPresets = PopoverPresets;
+
+export type TooltipRootProps = Omit<PopoverRootProps, 'factory' | 'onopenchange' | 'presets'> & {
+	presets?: TooltipPresets | undefined;
+	factory?: ((props: TooltipBondProps) => TooltipBond) | undefined;
+	onopenchange?: StateChangeCallback<boolean, TooltipBond> | undefined;
+};
 
 export interface TooltipTriggerProps<
 	E extends keyof HTMLElementTagNameMap = 'div',

@@ -1,6 +1,7 @@
 // Private: Code examples
 const anatomyCode = `<script lang="ts">
-  import { HtmlAtom, defineVariants } from '@svelte-atoms/core';
+  import { HtmlAtom } from '@ixirjs/ui';
+import { defineVariants } from '@ixirjs/ui/utils';
   
 
   let { ...restProps } = $props();
@@ -44,7 +45,8 @@ const anatomyCode = `<script lang="ts">
 <!-- plus configuration defined in the preset, so the output may look different -->`.trim();
 
 const customButtonCode = `<script lang="ts">
-  import { HtmlAtom, defineVariants } from '@svelte-atoms/core';
+  import { HtmlAtom } from '@ixirjs/ui';
+import { defineVariants } from '@ixirjs/ui/utils';
   
   let { 
     variant = 'primary',
@@ -79,7 +81,7 @@ const customButtonCode = `<script lang="ts">
 />`.trim();
 
 const customCardCode = `<script lang="ts">
-  import { HtmlAtom } from '@svelte-atoms/core';
+  import { HtmlAtom } from '@ixirjs/ui';
   
   let { children, ...props } = $props();
 </script>
@@ -93,8 +95,8 @@ const customCardCode = `<script lang="ts">
 </HtmlAtom>`.trim();
 
 const presetUsageCode = `<script lang="ts">
-  import { HtmlAtom } from '@svelte-atoms/core';
-  import { setPreset } from '@svelte-atoms/core/context';
+  import { HtmlAtom } from '@ixirjs/ui';
+  import { setPreset } from '@ixirjs/ui/preset';
   
   // Define global preset
   setPreset({

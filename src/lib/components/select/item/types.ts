@@ -1,7 +1,7 @@
 import type { Snippet } from 'svelte';
-import type { DropdownMenuItemProps } from '$svelte-atoms/core/components/dropdown-menu/item/types';
+import type { DropdownMenuItemProps } from '$ixirjs/ui/components/dropdown-menu/item/types';
 import type { SelectItemController } from './controller.svelte';
-import type { PresetKey } from '$svelte-atoms/core/context/preset.svelte';
+import type { PresetKey } from '$ixirjs/ui/preset';
 
 export interface SelectItemProps<T = unknown> extends Omit<
 	DropdownMenuItemProps,
@@ -10,7 +10,7 @@ export interface SelectItemProps<T = unknown> extends Omit<
 	// Preset key for styling; fallback chain, first registered wins. Default: `'select.item'`.
 	preset?: PresetKey;
 
-	// The value of the select item. Defaults to a nanoid.
+	// The value of the select item.
 	value?: string;
 
 	// Custom data associated with the item.

@@ -1,7 +1,7 @@
 <script module>
 	import { defineMeta } from '@storybook/addon-svelte-csf';
 	import { Toast as Toast_, Toaster } from '..';
-	import { Button } from '../../button';
+	import { Button } from '$ixirjs/ui/components/button';
 
 	const { Story } = defineMeta({
 		title: 'Atoms/Toast',
@@ -51,7 +51,9 @@
 				bind:open={defaultOpen}
 				disabled={args.disabled}
 				duration={args.duration}
-				onclose={() => (defaultOpen = false)}
+				onopenchange={(open) => {
+					if (!open) defaultOpen = false;
+				}}
 			>
 				<Toast_.Title>Notification</Toast_.Title>
 				<Toast_.Description>
@@ -62,6 +64,30 @@
 		</div>
 	{/snippet}
 </Story>
+
+<!--
+	Shared render loop: the Toaster manager owns the list; each item becomes a
+	Toast.Root that dismisses itself on close. Reused by the stories below.
+-->
+{#snippet toastList()}
+	<ol class="fixed bottom-4 right-4 flex flex-col-reverse gap-2" aria-live="polite">
+		{#each toaster.toasts as item (item.id)}
+			{@const data = item.data as ToastData}
+			<Toast_.Root
+				open={true}
+				onopenchange={(open) => {
+					if (!open) toaster.dismiss(item.id);
+				}}
+			>
+				<Toast_.Title>{data.title}</Toast_.Title>
+				{#if data.description}
+					<Toast_.Description>{data.description}</Toast_.Description>
+				{/if}
+				<Toast_.Close />
+			</Toast_.Root>
+		{/each}
+	</ol>
+{/snippet}
 
 <!-- Wires the Toaster manager's item list to Toast.Root. -->
 <Story name="Custom toaster">
@@ -99,18 +125,7 @@
 	</div>
 
 	<!-- Custom toaster: position + render loop are fully in user-land -->
-	<ol class="fixed bottom-4 right-4 flex flex-col-reverse gap-2" aria-live="polite">
-		{#each toaster.toasts as item (item.id)}
-			{@const data = item.data as ToastData}
-			<Toast_.Root open={true} onclose={() => toaster.dismiss(item.id)}>
-				<Toast_.Title>{data.title}</Toast_.Title>
-				{#if data.description}
-					<Toast_.Description>{data.description}</Toast_.Description>
-				{/if}
-				<Toast_.Close />
-			</Toast_.Root>
-		{/each}
-	</ol>
+	{@render toastList()}
 </Story>
 
 <!-- Auto-dismiss: manager removes toasts after the duration. -->
@@ -127,18 +142,7 @@
 		</Button>
 	</div>
 
-	<ol class="fixed bottom-4 right-4 flex flex-col-reverse gap-2" aria-live="polite">
-		{#each toaster.toasts as item (item.id)}
-			{@const data = item.data as ToastData}
-			<Toast_.Root open={true} onclose={() => toaster.dismiss(item.id)}>
-				<Toast_.Title>{data.title}</Toast_.Title>
-				{#if data.description}
-					<Toast_.Description>{data.description}</Toast_.Description>
-				{/if}
-				<Toast_.Close />
-			</Toast_.Root>
-		{/each}
-	</ol>
+	{@render toastList()}
 </Story>
 
 <!-- Declarative: Toast.Root owned by markup, no manager. -->
@@ -160,7 +164,9 @@
 		<Toast_.Root
 			bind:open={autoDismissOpen}
 			duration={3000}
-			onclose={() => (autoDismissOpen = false)}
+			onopenchange={(open) => {
+				if (!open) autoDismissOpen = false;
+			}}
 		>
 			<Toast_.Title>Auto-dismiss</Toast_.Title>
 			<Toast_.Description>Disappears after 3 seconds.</Toast_.Description>

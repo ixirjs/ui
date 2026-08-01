@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Bond, Atom, BondState, bondContextKey, type BondStateProps } from '../../bond';
+import { Bond, Atom, bondContextKey, type BondStateProps } from '$ixirjs/ui/shared/bond';
 import {
 	currentProjection,
 	CURRENT_PROJECTION,
@@ -9,20 +9,16 @@ import {
 	ORIENTATION_PROJECTION
 } from '.';
 
-class TestState extends BondState<BondStateProps> {
+class TestState {
 	orientation = $state<'horizontal' | 'vertical'>('horizontal');
 	disabled = $state(false);
 	current = $state('settings');
-
-	constructor() {
-		super({});
-	}
 }
 
 class TestBond extends Bond<BondStateProps> {
 	static CONTEXT_KEY = bondContextKey('test-role-projections');
-	constructor(state = new TestState()) {
-		super(state, 'test');
+	constructor(readonly state = new TestState()) {
+		super({}, 'test');
 	}
 	addAtom(key: string, role: string, ctx?: unknown) {
 		const atom = new TestAtom(this, key).role(role, ctx);
@@ -44,13 +40,11 @@ describe('role projection primitives', () => {
 		const cap = orientationProjection({
 			orientation: () => state.orientation
 		});
-		bond.state.capability(cap);
+		bond.capability(cap);
 		const container = bond.addAtom('container', 'container');
 
 		expect(cap.slot).toBe(ORIENTATION_PROJECTION);
 		expect(cap.meta).toMatchObject({
-			layer: 1,
-			kind: 'projection',
 			projects: ['container']
 		});
 		expect(container.spread['aria-orientation']).toBe('horizontal');
@@ -69,7 +63,7 @@ describe('role projection primitives', () => {
 			disabled: (ctx) => state.disabled || ctx === 'locked',
 			native: ['control']
 		});
-		bond.state.capability(cap);
+		bond.capability(cap);
 		const control = bond.addAtom('control', 'control');
 		const item = bond.addAtom('item', 'item', 'locked');
 
@@ -91,7 +85,7 @@ describe('role projection primitives', () => {
 		const cap = currentProjection({
 			current: (ctx) => (ctx === state.current ? 'page' : undefined)
 		});
-		bond.state.capability(cap);
+		bond.capability(cap);
 		const home = bond.addAtom('home', 'item', 'home');
 		const settings = bond.addAtom('settings', 'item', 'settings');
 

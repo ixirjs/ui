@@ -1,5 +1,5 @@
 const presetCode = `
-import { setPreset } from '@svelte-atoms/core';
+import { setPreset } from '@ixirjs/ui/preset';
 
 setPreset({
   datagrid: () => ({
@@ -25,9 +25,9 @@ setPreset({
 const accessibilityFeatures = [
 	'CSS subgrid layout keeps columns pixel-perfectly aligned across header and body rows',
 	'Row selection state tracked via bond — no DOM scanning required',
-	'hidden prop on Th automatically hides corresponding Td cells by DOM index',
+	'hidden prop on Column automatically hides corresponding Cell cells by DOM index',
 	'Sort direction exposed as bindable prop for controlled external state management',
-	'header prop on Tr prevents row from being registered in the selection map'
+	'header prop on Row prevents row from being registered in the selection map'
 ];
 
 const useCases = [
@@ -72,12 +72,12 @@ const componentsSummary = [
 	{
 		name: 'DataGrid.Root',
 		description:
-			'Root grid container. Owns the DataGridBond context, manages column template (auto-computed from Th widths) and selection state via bind:values.'
+			'Root grid container. Owns the DataGridBond context, manages column template (auto-computed from Column widths) and selection state via bind:values.'
 	},
 	{
 		name: 'DataGrid.Header',
 		description:
-			'Header section. Sets the header context — all Tr rows inside are treated as header rows and excluded from selection.'
+			'Header section. Sets the header context — all Row rows inside are treated as header rows and excluded from selection.'
 	},
 	{
 		name: 'DataGrid.Body',
@@ -100,7 +100,7 @@ const componentsSummary = [
 	{
 		name: 'DataGrid.Cell',
 		description:
-			'Data cell. Finds its matching Th by DOM index for visibility. Accepts a base prop to render a component (e.g. a dropdown) instead of a plain div.'
+			'Data cell. Finds its matching Column by DOM index for visibility. Accepts a base prop to render a component (e.g. a dropdown) instead of a plain div.'
 	},
 	{
 		name: 'DataGrid.Checkbox',
@@ -118,8 +118,8 @@ export const metadata = {
 		'Grid component for structured data with sortable columns, row selection, custom cell rendering, and responsive columns.',
 	componentType: 'compound' as const,
 	status: 'stable' as const,
-	packageName: '@svelte-atoms/core',
-	importCode: "import { DataGrid } from '@svelte-atoms/core';",
+	packageName: '@ixirjs/ui',
+	importCode: "import { DataGrid } from '@ixirjs/ui';",
 	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'DataGrid' }],
 	useCases,
 	componentsSummary,

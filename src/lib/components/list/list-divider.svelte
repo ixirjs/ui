@@ -1,7 +1,8 @@
-<script lang="ts">
-	import { mergePresetProps } from '$svelte-atoms/core/components/atom';
-	import { Divider } from '$svelte-atoms/core/components/divider';
-	import { cn, toClassValue } from '$svelte-atoms/core/utils';
+<script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
+	import { mergePresetProps, type Base } from '$ixirjs/ui/components/atom';
+	import { Divider } from '$ixirjs/ui/components/divider';
+	import { cn, toClassValue } from '$ixirjs/ui/utils';
+	import type { ListDividerProps } from './types';
 
 	let {
 		class: klass = '',
@@ -11,7 +12,7 @@
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		children = undefined,
 		...restProps
-	} = $props();
+	}: ListDividerProps<E, B> = $props();
 
 	const dividerProps = $derived(mergePresetProps(preset, 'list.divider', restProps));
 </script>

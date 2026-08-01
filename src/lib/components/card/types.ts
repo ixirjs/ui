@@ -1,7 +1,7 @@
 import type { Snippet } from 'svelte';
 import type { CardBond } from './bond.svelte';
-import type { HtmlAtomProps, Base, SnippetProps } from '$svelte-atoms/core/components/atom';
-import type { Factory } from '$svelte-atoms/core/types';
+import type { HtmlAtomProps, Base, SnippetProps } from '$ixirjs/ui/components/atom';
+import type { Factory } from '$ixirjs/ui/types';
 
 // Card Snippet Props
 export interface CardSnippetProps extends SnippetProps {
@@ -16,6 +16,7 @@ export interface CardRootProps<
 	B extends Base = Base
 > extends HtmlAtomProps<E, B, CardChildren> {
 	disabled?: boolean;
+	clickable?: boolean;
 	factory?: Factory<CardBond>;
 	onclick?: (event: MouseEvent) => void;
 	onkeydown?: (event: KeyboardEvent) => void;

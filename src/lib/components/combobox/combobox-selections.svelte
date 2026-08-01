@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { ComboboxBond } from './bond.svelte';
-	import { Selections } from '../select/atoms';
+	import { Selections } from '$ixirjs/ui/components/select/atoms';
 	import type { ComboboxSelectionsProps } from './types';
 
 	const bond = ComboboxBond.getOrThrow('ComboboxSelections must be used within a Combobox');

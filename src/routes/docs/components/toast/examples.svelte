@@ -108,7 +108,9 @@
 			<Toast.Root
 				bind:open={autoDismissOpen}
 				duration={3000}
-				onclose={() => (autoDismissOpen = false)}
+				onopenchange={(open) => {
+					if (!open) autoDismissOpen = false;
+				}}
 				class={[
 					'relative flex w-80 flex-col gap-1 rounded-md border border-border bg-card p-4 pr-8 shadow-md transition-opacity',
 					!autoDismissOpen && 'invisible'
@@ -137,7 +139,9 @@
 		{@const data = item.data as ToastData}
 		<Toast.Root
 			open={true}
-			onclose={() => toaster.dismiss(item.id)}
+			onopenchange={(open) => {
+				if (!open) toaster.dismiss(item.id);
+			}}
 			class="relative flex w-80 flex-col gap-1 rounded-md p-4 pr-8"
 			variant={item.type}
 		>

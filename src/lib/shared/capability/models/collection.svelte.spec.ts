@@ -1,19 +1,18 @@
 import { describe, expect, it } from 'vitest';
 import { flushSync } from 'svelte';
 import { collectionCapability, collectionSlot } from './collection.svelte';
-import { Collection } from '../../bond/collection.svelte';
-import { BondState, type BondStateProps } from '../../bond';
+import { Collection } from '$ixirjs/ui/shared/bond/collection.svelte';
+import { Bond, type BondStateProps } from '$ixirjs/ui/shared/bond';
 
-class TestState extends BondState<BondStateProps> {}
+class TestBond extends Bond<BondStateProps> {}
 
 describe('collectionCapability — identity & surface', () => {
 	it('slots at `collection:<kind>` and surfaces the Collection', () => {
 		const cap = collectionCapability<string>('item');
 		expect(cap.slot).toBe(collectionSlot('item'));
-		expect(cap.slot.description).toBe('@svelte-atoms/cap:collection:item');
+		expect(cap.slot.description).toBe('@ixirjs/cap:collection:item');
 		expect(cap.surface).toBeInstanceOf(Collection);
 		expect(cap.surface.kind).toBe('item');
-		expect(cap.meta).toMatchObject({ layer: 1, kind: 'model' });
 	});
 
 	it('is surface-only by default (no behavior — emits nothing on the seam)', () => {
@@ -22,9 +21,9 @@ describe('collectionCapability — identity & surface', () => {
 	});
 });
 
-describe('BondState.collection — registry unification', () => {
+describe('Bond.collection — registry unification', () => {
 	it('registers the collection as a capability at `collection:<kind>`', () => {
-		const state = new TestState({});
+		const state = new TestBond({});
 		const items = state.collection('item');
 		expect(items).toBeInstanceOf(Collection);
 		// Same instance is reachable through the capability seam — one registry.
@@ -32,14 +31,14 @@ describe('BondState.collection — registry unification', () => {
 	});
 
 	it('caches per kind (same instance on repeat access) and namespaces by kind', () => {
-		const state = new TestState({});
+		const state = new TestBond({});
 		expect(state.collection('item')).toBe(state.collection('item'));
 		expect(state.collection('row')).not.toBe(state.collection('item'));
 		expect(state.collection('row').kind).toBe('row');
 	});
 
 	it('the collection is live: set/cleanup flows through the capability surface', () => {
-		const state = new TestState({});
+		const state = new TestBond({});
 		const items = state.collection<{ id: string }>('item');
 		const a = { id: 'a' };
 		const cleanup = items.set('a', a);
@@ -72,9 +71,7 @@ describe('collectionCapability — positional ARIA (opt-in)', () => {
 	it('projects 1-based posinset + setsize + 0-based data-index on role "item"', () => {
 		const cap = collectionCapability<{ id: string }>('item', { positional: true });
 		expect(cap.meta).toMatchObject({
-			layer: 1,
-			kind: 'projection',
-			projects: ['item', 'container']
+			projects: ['item']
 		});
 		const col = cap.surface;
 		col.set('a', { id: 'a' });
@@ -101,11 +98,11 @@ describe('collectionCapability — positional ARIA (opt-in)', () => {
 		});
 	});
 
-	it('projects setsize on role "container" and nothing on unknown roles', () => {
+	it('keeps positional ARIA on items and emits nothing on the container', () => {
 		const cap = collectionCapability('item', { positional: true });
 		cap.surface.set('a', {});
 		cap.surface.set('b', {});
-		expect(cap.behavior!('container')?.attrs?.({} as never)).toEqual({ 'aria-setsize': 2 });
+		expect(cap.behavior!('container')).toBeUndefined();
 		expect(cap.behavior!('whatever')).toBeUndefined();
 	});
 });

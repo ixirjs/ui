@@ -1,11 +1,8 @@
 <script lang="ts">
-	import { mergeAtomProps } from '$svelte-atoms/core/components/atom';
-	import { SelectBond, SelectQueryAtom } from './bond.svelte';
-	import { Input } from '$svelte-atoms/core/components/input';
+	import { usePart } from '@ixirjs/ui/shared';
+	import { SelectBond } from './bond.svelte';
+	import { Input } from '$ixirjs/ui/components/input';
 	import type { SelectQueryProps } from './types';
-	import { createAtomInstance } from '$svelte-atoms/core/shared/bond';
-
-	const bond = SelectBond.getOrThrow('SelectQuery must be used within a Select');
 
 	let {
 		value = $bindable(),
@@ -14,15 +11,13 @@
 		...restProps
 	}: SelectQueryProps = $props();
 
-	// The `query` atom plays role 'input' (`'query'` target): `atom.spread` carries the
+	// The `query` atom plays role 'input' (`'query'` target): its spread carries the
 	// projected combobox a11y (role, aria-autocomplete/expanded/controls/activedescendant)
 	// and an `oninput` that writes `props.query`.
-	const atom = createAtomInstance<SelectQueryAtom, SelectBond, HTMLInputElement>('query', {
-		bond,
-		factory: (owner) => new SelectQueryAtom(owner as SelectBond)
+	const part = usePart(SelectBond, 'query', () => restProps, {
+		preset: () => preset
 	});
-
-	const queryProps = $derived(mergeAtomProps(atom, preset, restProps));
+	const bond = part.bond;
 </script>
 
 <!-- The control's text IS the bond's `query` (the `'input'` capability's `query` field):
@@ -37,5 +32,5 @@
 		}
 	}
 	class={['inline-flex h-auto w-auto flex-1 py-1', '$preset', klass]}
-	{...queryProps}
+	{...part.props}
 />

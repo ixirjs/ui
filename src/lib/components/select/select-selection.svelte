@@ -1,13 +1,10 @@
 <script lang="ts" generics="T extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { type Base } from '$svelte-atoms/core/components/atom';
+	import { type Base } from '$ixirjs/ui/components/atom';
 	import { SelectBond } from './bond.svelte';
 	import type { SelectSelectionProps } from './types';
-	import { Chip } from '../chip';
-	import { HtmlAtom } from '../atom';
-
-	const bond = SelectBond.getOrThrow('SelectSelection must be used within a Select');
-
-	const isMultiple = $derived(bond.props.multiple);
+	import { Chip } from '$ixirjs/ui/components/chip';
+	import { HtmlAtom } from '$ixirjs/ui/components/atom';
+	import { usePart } from '@ixirjs/ui/shared';
 
 	let {
 		class: klass = '',
@@ -16,18 +13,19 @@
 		preset = undefined,
 		selection,
 		children,
-		onclose,
+		ondismiss,
 		...restProps
 	}: SelectSelectionProps<T, B> = $props();
 
-	const atom = bond.value();
-
-	const presentation = $derived({ preset: preset ?? atom.preset });
-
+	const part = usePart(SelectBond, 'value', () => restProps, {
+		message: 'SelectSelection must be used within a Select',
+		preset: () => preset
+	});
+	const isMultiple = $derived(part.bond.props.multiple);
 	const _base = $derived((base ?? isMultiple) ? Chip : undefined);
 
-	function handleClose(ev: Event) {
-		onclose?.(ev);
+	function handleDismiss(ev: MouseEvent) {
+		ondismiss?.(ev);
 
 		if (ev.defaultPrevented) return;
 
@@ -37,16 +35,15 @@
 
 <HtmlAtom
 	{as}
-	{bond}
 	base={_base}
 	class={[
 		'select-value border-border inline-flex h-6 flex-nowrap items-center gap-1 rounded-sm px-2 whitespace-nowrap',
 		'$preset',
 		klass
 	]}
-	onclose={handleClose}
-	{...presentation}
+	ondismiss={handleDismiss}
 	{...restProps}
+	{part}
 >
 	{#if children}
 		{@render children?.()}

@@ -2,28 +2,35 @@
 	import type { PageContent } from './content-sidebar.svelte';
 	import ContentSidebar from './content-sidebar.svelte';
 	import { animateDrawerContent, Drawer } from '$lib/components/drawer';
-	import { DURATION } from '$svelte-atoms/core';
+	import { DURATION } from '$ixirjs/ui/shared';
 
 	type Props = {
 		data: PageContent[];
 		pathname: string;
 		open?: boolean;
-		onclose?: () => void;
+		ondismiss?: () => void;
 	};
 
-	let { data, pathname, open = $bindable(false), onclose }: Props = $props();
+	let { data, pathname, open = $bindable(false), ondismiss }: Props = $props();
 </script>
 
 <!-- Desktop: always-visible sticky sidebar -->
 <ContentSidebar {data} {pathname} />
 
 <!-- Mobile: Drawer from left -->
-<Drawer.Root bind:open {onclose} side="left" class="lg:hidden">
+<Drawer.Root
+	bind:open
+	onopenchange={(nextOpen) => {
+		if (!nextOpen) ondismiss?.();
+	}}
+	side="left"
+	class="lg:hidden"
+>
 	{#snippet children({ drawer })}
 		<Drawer.Backdrop
 			class={[
 				'duration-75 bg-black/0 transition-[backdrop-filter]',
-				drawer.state.props.open ? 'backdrop-grayscale-100' : ''
+				drawer.props.open ? 'backdrop-grayscale-100' : ''
 			]}
 		/>
 		<Drawer.Content

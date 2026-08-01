@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { mergePresetProps } from '$svelte-atoms/core/components/atom';
-	import { HtmlAtom } from '../atom';
+	import { mergePresetProps } from '$ixirjs/ui/components/atom';
+	import { HtmlAtom } from '$ixirjs/ui/components/atom';
 	import { DatePickerBond } from './bond.svelte';
-	import { CalendarBond } from '../calendar/bond.svelte';
-	import { Icon } from '../icon';
+	import { CalendarBond } from '$ixirjs/ui/components/calendar/bond.svelte';
+	import { Icon } from '$ixirjs/ui/components/icon';
 	import type { DatePickerHeaderProps } from './types';
 
 	const datePickerBond = DatePickerBond.get();
@@ -13,7 +13,7 @@
 
 	const headerProps = $derived(mergePresetProps(preset, 'datepicker.header', restProps));
 
-	const calendarBondProps = $derived(datePickerBond?.state?.props);
+	const calendarBondProps = $derived(datePickerBond?.props);
 
 	const pivote = $derived(calendarBondProps?.pivote ?? new Date());
 

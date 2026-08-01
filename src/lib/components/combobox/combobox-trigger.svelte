@@ -1,19 +1,24 @@
-<script lang="ts">
+<script
+	lang="ts"
+	generics="E extends keyof HTMLElementTagNameMap = 'button', B extends Base = Base"
+>
 	import { ComboboxBond } from './bond.svelte';
-	import { Trigger } from '$svelte-atoms/core/components/select/atoms';
-	import { openOverlay } from '$svelte-atoms/core/components/portal/host/policies/overlay-view';
+	import { Trigger } from '$ixirjs/ui/components/select/atoms';
+	import { mergePresetProps, type Base } from '$ixirjs/ui/components/atom';
+	import type { ComboboxTriggerProps } from './types';
+	import { openOverlay } from '$ixirjs/ui/components/overlay/policies/overlay-view';
 
 	const bond = ComboboxBond.getOrThrow('ComboboxTrigger must be used within a Combobox');
 
 	let {
 		class: klass = '',
-		as = 'button',
+		as = 'button' as E,
 		preset = undefined,
 		children = undefined,
 		...restProps
-	} = $props();
+	}: ComboboxTriggerProps<E, B> = $props();
 
-	const presentation = $derived({ preset: preset ?? 'combobox.trigger' });
+	const presentation = $derived(mergePresetProps(preset, 'combobox.trigger', restProps));
 </script>
 
 <Trigger
@@ -26,7 +31,6 @@
 		openOverlay(bond);
 	}}
 	{...presentation}
-	{...restProps}
 >
-	{@render children?.({ dropdown: bond })}
+	{@render children?.({ combobox: bond })}
 </Trigger>

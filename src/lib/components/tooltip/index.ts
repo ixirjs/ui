@@ -1,2 +1,3 @@
 export * as Tooltip from './atoms';
-export type { TooltipSnippetProps, TooltipChildren } from './types';
+export { TooltipBond, type TooltipBondProps } from './bond.svelte';
+export type { TooltipSnippetProps, TooltipChildren, TooltipRootProps } from './types';

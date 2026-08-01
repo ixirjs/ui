@@ -1,12 +1,12 @@
 <script lang="ts" generics="T extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { Content } from '$svelte-atoms/core/components/popover/atoms';
+	import { Content } from '$ixirjs/ui/components/popover/atoms';
 	import {
 		PopoverBond,
 		type AnchorSize,
 		type PopoverContentProps
-	} from '$svelte-atoms/core/components/popover';
-	import type { Base } from '$svelte-atoms/core/components/atom';
-	import { Root } from '../list/atoms';
+	} from '$ixirjs/ui/components/popover';
+	import type { Base } from '$ixirjs/ui/components/atom';
+	import { Root } from '$ixirjs/ui/components/list/atoms';
 
 	const bond = PopoverBond.getOrThrow(
 		'<DropdownMenu.Content /> must be used within a <DropdownMenu.Root />'

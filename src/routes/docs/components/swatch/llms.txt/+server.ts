@@ -26,7 +26,7 @@ Displays a color value as a small preview square. Shows a checkerboard pattern f
 ## Import
 
 ~~~ts
-import { Swatch } from '@svelte-atoms/core/swatch';
+import { Swatch } from '@ixirjs/ui/components/swatch';
 ~~~
 
 ## Props

@@ -30,16 +30,15 @@
 						</div>
 						<Step.Title class="text-xs">{stepData.header}</Step.Title>
 					</Step.Header>
+					<Step.Body>
+						<p class="text-muted-foreground text-sm">{stepData.body}</p>
+					</Step.Body>
 				</Step.Root>
 			{/each}
 		</Stepper.Header>
 
 		<Stepper.Body class="">
-			{#each previewSteps as stepData, i (i)}
-				<Stepper.Content value={i}>
-					<p class="text-muted-foreground text-sm">{stepData.body}</p>
-				</Stepper.Content>
-			{/each}
+			<Stepper.Content />
 		</Stepper.Body>
 
 		<Stepper.Footer class="flex items-center justify-between gap-2">

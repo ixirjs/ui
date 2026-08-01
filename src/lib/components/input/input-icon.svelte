@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Icon, type IconProps } from '$svelte-atoms/core/components/icon';
+	import { Icon, type IconProps } from '$ixirjs/ui/components/icon';
 
 	let {
 		class: klass = '',
@@ -12,7 +12,7 @@
 <Icon
 	{preset}
 	class={[
-		'flex aspect-square h-full items-center justify-center bg-transparent text-sm leading-0',
+		'flex aspect-square h-full items-center justify-center bg-transparent text-sm leading-0 size-4 p-0',
 		'$preset',
 		klass
 	]}

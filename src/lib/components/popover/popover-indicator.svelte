@@ -1,17 +1,18 @@
 <script lang="ts">
-	import { animate as motion } from 'motion';
-	import { Icon } from '$svelte-atoms/core/components/icon';
-	import IconArrowDown from '$svelte-atoms/core/icons/icon-arrow-down.svelte';
-	import { HtmlAtom } from '$svelte-atoms/core/components/atom';
-	import { createAtomInstance, type Atom } from '$svelte-atoms/core/shared/bond';
-	import { createPopoverAtom, PopoverBond, PopoverIndicatorAtom } from './bond.svelte';
-	import { overlayIsOpen } from '$svelte-atoms/core/components/portal/host/policies/overlay-view';
+	import { animate } from '$ixirjs/ui/shared';
+	import { Icon } from '$ixirjs/ui/components/icon';
+	import IconArrowDown from '$ixirjs/ui/icons/icon-arrow-down.svelte';
+	import { HtmlAtom, mergeAtomProps } from '$ixirjs/ui/components/atom';
+	import type { PresetKey } from '$ixirjs/ui/preset';
+	import { createAtomInstance, type Atom } from '$ixirjs/ui/shared/bond';
+	import { createPopoverAtom, PopoverBond } from './bond.svelte';
+	import { overlayIsOpen } from '$ixirjs/ui/components/overlay/policies/overlay-view';
 
 	const bond = PopoverBond.getOrThrow('<Popover.Indicator /> must be used within a <Popover />');
 
 	let {
 		class: klass = '',
-		preset = undefined as string | string[] | undefined,
+		preset = undefined as PresetKey | undefined,
 		children = undefined
 	} = $props();
 
@@ -19,25 +20,19 @@
 		'indicator',
 		{
 			bond,
-			factory: (owner) =>
-				createPopoverAtom(
-					owner as PopoverBond,
-					'indicator',
-					(popover) => new PopoverIndicatorAtom(popover)
-				)
+			factory: (owner) => createPopoverAtom(owner as PopoverBond, 'indicator')
 		}
 	);
 
 	const isOpen = $derived(overlayIsOpen(bond));
 
-	const presentation = $derived({ preset: preset ?? atom.preset });
+	const indicatorProps = $derived(mergeAtomProps(atom, preset, {}, bond.presetLayer('indicator')));
 </script>
 
 <HtmlAtom
 	{bond}
 	class={['border-border flex h-5 items-center justify-center', '$preset', klass]}
-	{...presentation}
-	{...atom.spread}
+	{...indicatorProps}
 >
 	{#if children}
 		{@render children?.({ popover: bond })}
@@ -45,7 +40,7 @@
 		<Icon
 			class="h-full"
 			src={IconArrowDown}
-			animate={(node) => motion(node, { rotate: 180 * +isOpen }, { duration: 0.2 })}
+			animate={(node) => animate(node, { rotate: 180 * +isOpen }, { duration: 0.2 })}
 		/>
 	{/if}
 </HtmlAtom>

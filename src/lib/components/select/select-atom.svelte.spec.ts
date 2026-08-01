@@ -1,9 +1,17 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
-import { Atom } from '$svelte-atoms/core/shared/bond';
-import { PopoverArrowAtom, PopoverIndicatorAtom, PopoverOverlayAtom } from '../popover/bond.svelte';
+import { Atom } from '$ixirjs/ui/shared/bond';
+import {
+	PopoverTailAtom,
+	PopoverIndicatorAtom,
+	PopoverOverlayAtom
+} from '$ixirjs/ui/components/popover/bond.svelte';
 import { SelectItemAtom } from './item/bond.svelte';
-import Probe, { capturedBond, resetCapturedBond } from './select-atom-probe.svelte';
+import Probe, {
+	capturedBond,
+	resetCapturedBond
+} from '$ixirjs/ui/test/components/select/select-atom-probe.test.svelte';
+import LayerProbe from '$ixirjs/ui/test/components/select/select-preset-probe.test.svelte';
 import { SelectBond, SelectPlaceholderAtom, SelectQueryAtom } from './bond.svelte';
 
 describe('Select component-owned Atoms', () => {
@@ -17,22 +25,22 @@ describe('Select component-owned Atoms', () => {
 		expect(select).toBeInstanceOf(SelectBond);
 		expect(select?.isOpen).toBe(true);
 
-		const trigger = select?.node('trigger');
-		const overlay = select?.node('overlay');
-		const content = select?.node('content');
-		const placeholder = select?.node('placeholder');
-		const query = select?.node('query');
-		const item = select?.node('item');
-		const arrow = select?.node('arrow');
-		const indicator = select?.node('indicator');
+		const trigger = select?.nodeByPart('trigger');
+		const overlay = select?.nodeByPart('overlay');
+		const content = select?.nodeByPart('content');
+		const placeholder = select?.nodeByPart('placeholder');
+		const query = select?.nodeByPart('query');
+		const item = select?.nodeByPart('item');
+		const tail = select?.nodeByPart('tail');
+		const indicator = select?.nodeByPart('indicator');
 
 		expect(overlay).toBeInstanceOf(PopoverOverlayAtom);
 		expect(placeholder).toBeInstanceOf(SelectPlaceholderAtom);
 		expect(query).toBeInstanceOf(SelectQueryAtom);
 		expect(item).toBeInstanceOf(SelectItemAtom);
-		expect(arrow).toBeInstanceOf(PopoverArrowAtom);
+		expect(tail).toBeInstanceOf(PopoverTailAtom);
 		expect(indicator).toBeInstanceOf(PopoverIndicatorAtom);
-		for (const node of [trigger, overlay, content, placeholder, query, item, arrow, indicator]) {
+		for (const node of [trigger, overlay, content, placeholder, query, item, tail, indicator]) {
 			expect(node).toBeInstanceOf(Atom);
 		}
 
@@ -42,30 +50,50 @@ describe('Select component-owned Atoms', () => {
 		expect(item?.spread.role).toBe('option');
 		expect(select?.items.get('alpha')).toBe(item);
 
-		const generated = select as unknown as Record<
-			'trigger' | 'overlay' | 'content' | 'placeholder' | 'query' | 'item' | 'arrow' | 'indicator',
-			() => Atom
-		>;
-		const generatedNodes = [
-			generated.trigger(),
-			generated.overlay(),
-			generated.content(),
-			generated.placeholder(),
-			generated.query(),
-			generated.item(),
-			generated.arrow(),
-			generated.indicator()
-		];
-		expect(generatedNodes[1]).toBeInstanceOf(PopoverOverlayAtom);
-		expect(generatedNodes[3]).toBeInstanceOf(SelectPlaceholderAtom);
-		expect(generatedNodes[4]).toBeInstanceOf(SelectQueryAtom);
-		for (const node of generatedNodes) {
-			expect(node).toBeInstanceOf(Atom);
-		}
-
 		unmount();
 
-		expect(select?.nodes()).toEqual([]);
+		for (const part of [
+			'trigger',
+			'overlay',
+			'content',
+			'placeholder',
+			'query',
+			'item',
+			'tail',
+			'indicator'
+		]) {
+			expect(select?.nodesByPart(part)).toEqual([]);
+		}
 		expect(select?.items.get('alpha')).toBeUndefined();
+	});
+
+	it('applies root-owned layers through composed Popover and Select parts', () => {
+		const { unmount } = render(LayerProbe, {
+			presets: {
+				trigger: { class: 'instance-trigger', attrs: { 'data-instance': 'trigger' } },
+				content: { class: 'instance-content', attrs: { 'data-instance': 'content' } },
+				item: { class: 'instance-item', attrs: { 'data-instance': 'item' } },
+				placeholder: { class: 'instance-placeholder', attrs: { 'data-instance': 'placeholder' } },
+				query: { class: 'instance-query', attrs: { 'data-instance': 'query' } },
+				tail: { class: 'instance-tail', attrs: { 'data-instance': 'tail' } },
+				indicator: { class: 'instance-indicator', attrs: { 'data-instance': 'indicator' } }
+			}
+		});
+
+		for (const value of [
+			'trigger',
+			'content',
+			'item',
+			'placeholder',
+			'query',
+			'tail',
+			'indicator'
+		]) {
+			expect(
+				document.querySelector(`.instance-${value}[data-instance="${value}"]`),
+				value
+			).not.toBeNull();
+		}
+		unmount();
 	});
 });

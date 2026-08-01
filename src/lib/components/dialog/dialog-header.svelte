@@ -1,8 +1,8 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { HtmlAtom, mergeAtomProps, type Base } from '$svelte-atoms/core/components/atom';
-	import { createAtomInstance } from '$svelte-atoms/core/shared/bond';
+	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import { usePart } from '$ixirjs/ui/shared';
 	import type { DialogHeaderProps } from './types';
-	import { DialogBond, DialogHeaderAtom } from './bond.svelte';
+	import { DialogBond } from './bond.svelte';
 
 	let {
 		class: klass = '',
@@ -11,16 +11,12 @@
 		...restProps
 	}: DialogHeaderProps<E, B> = $props();
 
-	const bond = DialogBond.getOrThrow('<Dialog.Header /> must be used within a <Dialog.Root />');
-
-	const atom = createAtomInstance<DialogHeaderAtom, DialogBond, HTMLElement>('header', {
-		bond,
-		factory: (owner) => new DialogHeaderAtom(owner as DialogBond)
+	const part = usePart(DialogBond, 'header', () => restProps, {
+		preset: () => preset
 	});
-
-	const headerProps = $derived(mergeAtomProps(atom, preset, restProps));
+	const bond = part.bond;
 </script>
 
-<HtmlAtom {bond} class={['flex w-full px-4 text-xl', '$preset', klass]} {...headerProps}>
+<HtmlAtom class={['flex w-full px-4 text-xl', '$preset', klass]} {...restProps} {part}>
 	{@render children?.({ dialog: bond })}
 </HtmlAtom>

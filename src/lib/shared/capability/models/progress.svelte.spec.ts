@@ -1,21 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { Bond, Atom, BondState, bondContextKey, type BondStateProps } from '../../bond';
+import { Bond, Atom, bondContextKey, type BondStateProps } from '$ixirjs/ui/shared/bond';
 import { createProgressValue, progressValueCapability, PROGRESS_VALUE } from './progress.svelte';
 
-class TestState extends BondState<BondStateProps> {
+class TestState {
 	value = $state<number | null>(25);
 	min = $state(0);
 	max = $state(100);
-
-	constructor() {
-		super({});
-	}
 }
 
 class TestBond extends Bond<BondStateProps> {
 	static CONTEXT_KEY = bondContextKey('test-progress');
-	constructor(state = new TestState()) {
-		super(state, 'test');
+	constructor(readonly state = new TestState()) {
+		super({}, 'test');
 	}
 	addAtom(key: string, role: string) {
 		const atom = new TestAtom(this, key).role(role);
@@ -40,14 +36,12 @@ describe('progressValueCapability', () => {
 		});
 		const cap = progressValueCapability(progress);
 		const bond = new TestBond(state);
-		bond.state.capability(cap);
+		bond.capability(cap);
 		const bar = bond.addAtom('bar', 'progressbar');
 
 		expect(cap.slot).toBe(PROGRESS_VALUE);
 		expect(cap.surface).toBe(progress);
 		expect(cap.meta).toMatchObject({
-			layer: 1,
-			kind: 'model',
 			projects: ['progressbar']
 		});
 		expect(progress.percent).toBe(25);
@@ -59,10 +53,23 @@ describe('progressValueCapability', () => {
 		expect(bar.spread['data-completed']).toBeUndefined();
 
 		state.value = 125;
+		expect(progress.value).toBe(100);
 		expect(progress.percent).toBe(100);
 		expect(progress.isCompleted).toBe(true);
+		expect(bar.spread['aria-valuenow']).toBe(100);
 		expect(bar.spread['data-percent']).toBe(100);
 		expect(bar.spread['data-completed']).toBe('');
+
+		state.value = Number.NaN;
+		expect(progress.isIndeterminate).toBe(true);
+		expect(bar.spread['aria-valuenow']).toBeUndefined();
+
+		state.min = 100;
+		state.max = 0;
+		state.value = 25;
+		expect(progress.min).toBe(0);
+		expect(progress.max).toBe(100);
+		expect(progress.value).toBe(25);
 	});
 
 	it('omits current value attrs for indeterminate progress', () => {
@@ -73,7 +80,7 @@ describe('progressValueCapability', () => {
 			max: () => state.max
 		});
 		const bond = new TestBond(state);
-		bond.state.capability(progressValueCapability(progress));
+		bond.capability(progressValueCapability(progress));
 		const bar = bond.addAtom('bar', 'progressbar');
 
 		expect(progress.isIndeterminate).toBe(true);

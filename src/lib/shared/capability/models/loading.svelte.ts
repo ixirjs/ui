@@ -1,4 +1,8 @@
-import { defineCapability, sharedCapabilityKey, type Capability } from '../capability';
+import {
+	defineCapability,
+	sharedCapabilityKey,
+	type Capability
+} from '$ixirjs/ui/shared/capability/capability';
 
 export interface LoadingBacking {
 	pending(): boolean;
@@ -14,7 +18,11 @@ export interface LoadingModel {
 	readonly error: unknown;
 }
 
-export const LOADING = sharedCapabilityKey<LoadingModel>('@svelte-atoms/cap:loading');
+export const LOADING = sharedCapabilityKey<LoadingModel>({
+	owner: '@ixirjs/cap',
+	name: 'loading',
+	version: 1
+});
 
 export function createLoading(backing: LoadingBacking): LoadingModel {
 	return {
@@ -50,8 +58,6 @@ export function loadingCapability(
 		slot: LOADING,
 		surface: loading,
 		meta: {
-			layer: 1,
-			kind: 'model',
 			projects: roles,
 			docs: 'Pending, settled, error, and stale loading state projection.'
 		},

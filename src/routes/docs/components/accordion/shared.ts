@@ -1,5 +1,5 @@
 const presetCode = `
-import { setPreset } from '@svelte-atoms/core';
+import { setPreset } from '@ixirjs/ui/preset';
 
 const preset = setPreset({
   accordion: () => ({
@@ -93,8 +93,8 @@ export const metadata = {
 		'Collapsible content sections for FAQs and settings with single/multiple open items and keyboard navigation.',
 	componentType: 'compound' as const,
 	status: 'stable' as const,
-	packageName: '@svelte-atoms/core',
-	importCode: "import { Accordion, AccordionItem } from '@svelte-atoms/core';",
+	packageName: '@ixirjs/ui',
+	importCode: "import { Accordion, AccordionItem } from '@ixirjs/ui';",
 	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Accordion' }],
 	useCases,
 	componentsSummary,

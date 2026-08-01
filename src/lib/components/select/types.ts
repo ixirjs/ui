@@ -1,20 +1,25 @@
 import type { Component, Snippet } from 'svelte';
-import type { HtmlAtomProps, Base, SnippetProps } from '$svelte-atoms/core/components/atom';
-import type { Factory } from '$svelte-atoms/core/types';
+import type { HtmlAtomProps, Base, SnippetProps } from '$ixirjs/ui/components/atom';
+import type { Factory, StateChangeCallback } from '$ixirjs/ui/types';
 import type { SelectBond } from './bond.svelte';
+import type { DropdownMenuPresets } from '$ixirjs/ui/components/dropdown-menu';
+import type { PresetLike } from '$ixirjs/ui/preset';
 import type { ClassValue } from 'svelte/elements';
-import type { SelectItemController } from './item';
-import type { SelectItemAtom } from './item/bond.svelte';
 
 // Snippet props (extensible)
 
 export interface SelectSnippetProps extends SnippetProps {
 	select: SelectBond;
-	/** @deprecated Use `select` instead. */
-	dropdown: SelectBond;
 }
 
 export type SelectChildren = Snippet<[SelectSnippetProps]>;
+
+/** Per-instance presentation layers for Select's bonded and composed parts. */
+export interface SelectPresets extends DropdownMenuPresets {
+	placeholder?: PresetLike;
+	query?: PresetLike;
+	value?: PresetLike;
+}
 
 export interface SelectRootProps<
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -31,11 +36,16 @@ export interface SelectRootProps<
 	placement?: string;
 	offset?: number;
 	keys?: string[];
-	// Two-way-bindable filter text; driven by `createBondFilter`, cleared by Escape (`ClearThenClose`).
+	// Two-way-bindable filter text; read by `filterSelectData`, cleared by Escape (`ClearThenClose`).
 	query?: string;
+	/** Per-instance presentation overrides for bonded Select parts. */
+	presets?: SelectPresets | undefined;
 	factory?: Factory<SelectBond>;
 	children?: SelectChildren;
-	onquerychange?: (query: string) => void;
+	onopenchange?: StateChangeCallback<boolean, SelectBond>;
+	onvaluechange?: StateChangeCallback<T | undefined, SelectBond>;
+	onvalueschange?: StateChangeCallback<T[], SelectBond>;
+	onquerychange?: StateChangeCallback<string, SelectBond>;
 }
 
 // Extends HtmlAtomProps directly (PopoverTriggerProps is itself an empty `HtmlAtomProps<…,
@@ -67,12 +77,20 @@ export interface SelectSelectionProps<
 > extends HtmlAtomProps<E, B> {
 	selection: SelectSelection;
 	children?: Snippet;
-	onclose?: (event: Event) => void;
+	ondismiss?: ((ev: MouseEvent) => void) | undefined;
 }
 
 export interface SelectQueryProps extends HtmlAtomProps<'input'> {
 	value?: string;
 	children?: Snippet;
+}
+
+export interface SelectSelectionHandle {
+	readonly id: string;
+	readonly value: string;
+	readonly label: string;
+	readonly createdAt: Date;
+	unselect(): void;
 }
 
 export interface SelectSelection {
@@ -81,6 +99,5 @@ export interface SelectSelection {
 	readonly label: string;
 	readonly createdAt: Date;
 	unselect: () => void;
-	// The backing item — a `SelectItemAtom` (common) or `SelectItemController` facade.
-	controller?: SelectItemAtom<unknown> | SelectItemController<unknown>;
+	controller?: SelectSelectionHandle;
 }

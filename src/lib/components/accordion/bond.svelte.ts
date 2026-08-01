@@ -1,15 +1,16 @@
-import type { Collection } from '$svelte-atoms/core/shared/bond/collection.svelte';
+import type { Collection } from '$ixirjs/ui/shared/bond/collection.svelte';
+import { internCapabilityFactory } from '$ixirjs/ui/shared/capability/intern';
 import {
 	createSelection,
 	type SelectionModel
-} from '$svelte-atoms/core/shared/capability/models/selection.svelte';
-import { Bond, defineAtom, type BondStateProps } from '$svelte-atoms/core/shared/bond';
-import { defineBond, type BondOf } from '$svelte-atoms/core/shared';
+} from '$ixirjs/ui/shared/capability/models/selection.svelte';
+import { Bond, defineAtom, type BondStateProps } from '$ixirjs/ui/shared/bond';
+import { defineBond, type BondOf } from '$ixirjs/ui/shared';
 import {
 	defineAtomCapability,
 	sharedCapabilityKey,
 	type AtomHost
-} from '$svelte-atoms/core/shared/capability';
+} from '$ixirjs/ui/shared/capability';
 
 // -----------------------------------------------------------------------------
 // Public types
@@ -37,7 +38,11 @@ export type AccordionItemHandle = {
 // Capability slots and shared helpers
 // -----------------------------------------------------------------------------
 
-const ACCORDION_ROOT = sharedCapabilityKey<void>('@svelte-atoms/accordion:root');
+const ACCORDION_ROOT = sharedCapabilityKey<void>({
+	owner: '@ixirjs/accordion',
+	name: 'root',
+	version: 1
+});
 
 // Narrow parent contract an item child depends on; keeps the child→parent seam stub-testable.
 
@@ -136,28 +141,25 @@ export type AccordionRootAtom = InstanceType<typeof AccordionRootAtom>;
 // Atom capabilities
 // -----------------------------------------------------------------------------
 
-function accordionRootPresentation() {
+const accordionRootPresentation = internCapabilityFactory(function accordionRootPresentation() {
 	return defineAtomCapability<void, AtomHost, AccordionBondBase>({
 		slot: ACCORDION_ROOT,
 		meta: {
-			layer: 1,
-			kind: 'projection',
 			projects: ['root'],
 			docs: 'Accordion root open, disabled, and selection-mode projection.'
 		},
-		behavior: {
+		attach: {
 			attrs: (_node, bond) => {
 				const props = bond?.props;
 
 				return {
-					'aria-expand': props?.open ?? false,
 					'aria-disabled': props?.disabled ?? false,
 					'aria-multiselectable': props?.multiple ?? false
 				};
 			}
 		}
 	});
-}
+});
 
 // Selection and item coordination live on the Bond instance.
 
@@ -165,27 +167,10 @@ function accordionRootPresentation() {
 // Bond spec and constructor facade
 // -----------------------------------------------------------------------------
 
-const AccordionBondImpl = defineBond<
-	{ root: typeof AccordionRootAtom },
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	any,
-	typeof AccordionBondBase
->({
+export const AccordionBond = defineBond({
 	name: 'accordion',
 	base: AccordionBondBase,
-	atoms: { root: AccordionRootAtom }
+	atoms: { root: { atom: AccordionRootAtom, selfLayer: true } }
 });
 
-export type AccordionBond = BondOf<typeof AccordionBondImpl>;
-
-interface AccordionBondConstructor {
-	new (props: AccordionBondProps): AccordionBond;
-	readonly CONTEXT_KEY: string;
-	readonly spec: (typeof AccordionBondImpl)['spec'];
-	get(): AccordionBond | undefined;
-	getOrThrow(message?: string): AccordionBond;
-	set(bond: AccordionBond): AccordionBond;
-	create(props: AccordionBondProps): AccordionBond;
-}
-
-export const AccordionBond = AccordionBondImpl as unknown as AccordionBondConstructor;
+export type AccordionBond = BondOf<typeof AccordionBond>;

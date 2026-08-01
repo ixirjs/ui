@@ -1,5 +1,5 @@
 const presetCode = `
-import { setPreset } from '@svelte-atoms/core';
+import { setPreset } from '@ixirjs/ui/preset';
 
 const preset = setPreset({
   combobox: () => ({
@@ -80,25 +80,25 @@ const componentsSummary = [
 	{
 		name: 'Combobox.Content',
 		description:
-			'Dropdown container for the list of items. Positioned relative to the trigger using floating-ui. Can contain search inputs and scrollable lists. Re-exported from Dropdown.'
+			'Dropdown container for the list of items. Positioned relative to the trigger using floating-ui. Can contain search inputs and scrollable lists. Reused from Select.'
 	},
 	{
 		name: 'Combobox.Selection',
-		description: 'Individual selected item badge with a remove button. Re-exported from Dropdown.'
+		description: 'Individual selected item badge with a remove button. Reused from Select.'
 	},
 	{
 		name: 'Combobox.Placeholder',
-		description: 'Placeholder element shown when no item is selected. Re-exported from Dropdown.'
+		description: 'Placeholder element shown when no item is selected. Reused from Select.'
 	},
 	{
-		name: 'Combobox.Arrow / Combobox.Indicator',
+		name: 'Combobox.Tail / Combobox.Indicator',
 		description:
-			'Visual indicator elements for the dropdown trigger (e.g., chevron icon). Re-exported from Dropdown.'
+			'Visual indicator elements for the dropdown trigger (e.g., chevron icon). Reused from Select.'
 	},
 	{
 		name: 'Combobox.Group / Combobox.Title / Combobox.Divider',
 		description:
-			'Grouping helpers for organizing items with titles and separators inside the dropdown content. Re-exported from Dropdown.'
+			'Grouping helpers for organizing items with titles and separators inside the dropdown content. Reused from Select.'
 	}
 ];
 
@@ -111,8 +111,8 @@ export const metadata = {
 		'Flexible combobox with text input, dropdown list, single/multiple selection, filtering, and keyboard navigation.',
 	componentType: 'compound' as const,
 	status: 'stable' as const,
-	packageName: '@svelte-atoms/core',
-	importCode: "import { Combobox } from '@svelte-atoms/core';",
+	packageName: '@ixirjs/ui',
+	importCode: "import { Combobox } from '@ixirjs/ui';",
 	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Combobox' }],
 	useCases,
 	componentsSummary,

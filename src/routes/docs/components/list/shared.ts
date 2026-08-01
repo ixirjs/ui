@@ -1,5 +1,5 @@
 const presetCode = `
-import { setPreset } from '@svelte-atoms/core/context';
+import { setPreset } from '@ixirjs/ui/preset';
 
 // Basic preset configuration
 setPreset({
@@ -97,8 +97,8 @@ export const metadata = {
 		'Structured list component with grouping, ordered/unordered variants, and interactive items.',
 	componentType: 'compound' as const,
 	status: 'stable' as const,
-	packageName: '@svelte-atoms/core',
-	importCode: "import { List } from '@svelte-atoms/core';",
+	packageName: '@ixirjs/ui',
+	importCode: "import { List } from '@ixirjs/ui';",
 	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'List' }],
 	useCases,
 	componentsSummary,

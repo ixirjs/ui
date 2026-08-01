@@ -1,7 +1,18 @@
-import { defineProjectionCapability, sharedCapabilityKey, type Capability } from '../capability';
+import {
+	defineProjectionCapability,
+	sharedCapabilityKey,
+	type Capability,
+	type CapabilityKey
+} from '$ixirjs/ui/shared/capability/capability';
 
 // Surface type travels with the key — capability(ROVING) is typed without a cast.
-export const ROVING = sharedCapabilityKey<RovingFocus>('@svelte-atoms/cap:roving');
+export const ROVING = sharedCapabilityKey<RovingFocus>({
+	owner: '@ixirjs/cap',
+	name: 'roving',
+	version: 1
+});
+
+const rovingSlot = <T>(): CapabilityKey<RovingFocus<T>> => ROVING as CapabilityKey<RovingFocus<T>>;
 
 // RovingFocus — "which item is highlighted": a moving active index with next/previous/first/last/goto.
 // Distinct from SelectionModel (what's committed). Owns its own $state for the index;
@@ -110,7 +121,7 @@ export function rovingCapability<T = unknown>(
 ): Capability<RovingFocus<T>> {
 	const toDomId = options.itemDomId ?? ((id: string) => id);
 	return defineProjectionCapability<RovingFocus<T>>({
-		slot: ROVING,
+		slot: rovingSlot<T>(),
 		surface: roving,
 		meta: {
 			docs: 'Roving focus model surface with active-descendant and highlighted-item projections.'

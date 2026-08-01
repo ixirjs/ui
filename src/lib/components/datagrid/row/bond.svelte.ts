@@ -1,13 +1,10 @@
-import { Bond, defineAtom, type BondStateProps } from '$svelte-atoms/core/shared/bond';
-import { defineBond, type BondOf } from '$svelte-atoms/core/shared';
-import { DataGridBond, type IDataGrid } from '../bond.svelte';
-import { getDatagridHeaderContext } from '../context';
-import { rowColumnCellLink } from '$svelte-atoms/core/shared/capability/models/relationship.svelte';
-import {
-	defineAtomCapability,
-	sharedCapabilityKey,
-	type AtomHost
-} from '$svelte-atoms/core/shared/capability';
+import { Atom, Bond, type BondStateProps } from '$ixirjs/ui/shared/bond';
+import { defineBond, type BondOf } from '@ixirjs/ui/shared';
+import { specializeDefinition } from '$ixirjs/ui/shared/authoring/metadata';
+import { DataGridBond, type IDataGrid } from '$ixirjs/ui/components/datagrid/bond.svelte';
+import { getDatagridHeaderContext } from '$ixirjs/ui/components/datagrid/context';
+import { rowColumnCellLink } from '$ixirjs/ui/shared/capability/models/relationship.svelte';
+import type { StateChangeContext } from '$ixirjs/ui/types';
 
 // -----------------------------------------------------------------------------
 // Public types
@@ -18,10 +15,6 @@ export type DataGridRowBondProps<T = unknown> = BondStateProps & {
 	data?: T;
 };
 
-export type DataGridRowBondElements = {
-	root: HTMLElement;
-};
-
 // -----------------------------------------------------------------------------
 // Internal types
 // -----------------------------------------------------------------------------
@@ -29,43 +22,26 @@ export type DataGridRowBondElements = {
 type DataGridRowBondView = DataGridRowBondBase;
 
 // -----------------------------------------------------------------------------
-// Capability slots and shared helpers
+// Atom definition
 // -----------------------------------------------------------------------------
 
-const DATAGRID_ROW_ROOT = sharedCapabilityKey<void>('@svelte-atoms/datagrid-row:root');
+// Row identity/header attrs are intrinsic to this Atom, not an optional capability. Keeping them
+// here avoids allocating and sorting an Atom capability runtime for every collection row.
+export class DataGridRowRootAtom extends Atom<DataGridRowBondView, HTMLElement> {
+	constructor(bond: DataGridRowBondView) {
+		super(bond, 'root');
+		this.role('row');
+		// Project selection a11y (role:'item') onto data rows only — header rows are not selectable.
+		if (!bond.isHeader) this.role('item', bond.id);
+	}
 
-// -----------------------------------------------------------------------------
-// Atom definitions
-// -----------------------------------------------------------------------------
-
-export const DataGridRowRootAtom = defineAtom<DataGridRowBondView>('root', (atom, bond) => {
-	atom.role('row');
-	// Project selection a11y (role:'item') onto data rows only — header rows are not selectable.
-	if (!bond.isHeader) atom.role('item', bond.id);
-	atom.capability(datagridRowPresentation());
-});
-export type DataGridRowRootAtom = InstanceType<typeof DataGridRowRootAtom>;
-
-// -----------------------------------------------------------------------------
-// Atom capabilities
-// -----------------------------------------------------------------------------
-
-function datagridRowPresentation() {
-	return defineAtomCapability<void, AtomHost, DataGridRowBondView>({
-		slot: DATAGRID_ROW_ROOT,
-		meta: {
-			layer: 1,
-			kind: 'projection',
-			projects: ['root'],
-			docs: 'Datagrid row identity and header-state projection.'
-		},
-		behavior: {
-			attrs: (_node, bond) => ({
-				// aria-selected + data-selected come from the datagrid's selection capability (role:'item').
-				'data-header': bond?.isHeader ? 'true' : undefined
-			})
-		}
-	});
+	override get attrs() {
+		return {
+			...super.attrs,
+			// aria-selected + data-selected come from the datagrid's selection capability (role:'item').
+			'data-header': this.bond?.isHeader ? 'true' : undefined
+		};
+	}
 }
 
 // -----------------------------------------------------------------------------
@@ -111,12 +87,12 @@ class DataGridRowBondBase<T = unknown> extends Bond<DataGridRowBondProps<T>> {
 		return this.#parent.mountRow(this.id, this);
 	}
 
-	select(): void {
-		this.#parent.select([this.id]);
+	select(context?: Pick<StateChangeContext, 'event'>): void {
+		this.#parent.select([this.id], context);
 	}
 
-	unselect(): void {
-		this.#parent.unselect([this.id]);
+	unselect(context?: Pick<StateChangeContext, 'event'>): void {
+		this.#parent.unselect([this.id], context);
 	}
 }
 
@@ -126,12 +102,7 @@ class DataGridRowBondBase<T = unknown> extends Bond<DataGridRowBondProps<T>> {
 // Bond spec and constructor facade
 // -----------------------------------------------------------------------------
 
-const DataGridRowBondImpl = defineBond<
-	{ root: typeof DataGridRowRootAtom },
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	any,
-	typeof DataGridRowBondBase
->({
+const DataGridRowBondDefinition = defineBond({
 	name: 'datagrid-row',
 	base: DataGridRowBondBase,
 	atoms: { root: DataGridRowRootAtom }
@@ -146,15 +117,15 @@ const DataGridRowBondImpl = defineBond<
 export type DataGridRowBond<
 	T = unknown,
 	Props extends DataGridRowBondProps<T> = DataGridRowBondProps<T>
-> = BondOf<typeof DataGridRowBondImpl> & {
+> = BondOf<typeof DataGridRowBondDefinition> & {
 	readonly __props?: Props;
 	readonly props: Props;
 	readonly datagrid: IDataGrid<T>;
 	readonly id: string;
 	readonly isSelected: boolean;
 	readonly isHeader: boolean;
-	select(): void;
-	unselect(): void;
+	select(context?: Pick<StateChangeContext, 'event'>): void;
+	unselect(context?: Pick<StateChangeContext, 'event'>): void;
 };
 
 // Generic-constructor facade over the non-generic impl.
@@ -163,17 +134,25 @@ export type DataGridRowBond<
 // Bond spec and constructor facade
 // -----------------------------------------------------------------------------
 
-interface DataGridRowBondConstructor {
+// TS cannot retain a class value's type parameter through `typeof DataGridRowBondDefinition`; this
+// minimal static facade preserves generic construction and context lookup ergonomics.
+interface DataGridRowBondGenericFacade {
 	new <T = unknown>(props: DataGridRowBondProps<T>): DataGridRowBond<T>;
-	readonly CONTEXT_KEY: string;
 	get<T = unknown>(): DataGridRowBond<T> | undefined;
+	getOrThrow<T = unknown>(message?: string): DataGridRowBond<T>;
+	optional<T = unknown>(): DataGridRowBond<T> | undefined;
+	required<T = unknown>(message?: string): DataGridRowBond<T>;
 	set<T = unknown>(bond: DataGridRowBond<T>): DataGridRowBond<T>;
 	create<T = unknown>(props: DataGridRowBondProps<T>): DataGridRowBond<T>;
 }
 
-export const DataGridRowBond = DataGridRowBondImpl as unknown as DataGridRowBondConstructor;
+// Replace only generic-sensitive signatures. The mapped original retains defineBond's
+// untouched statics and definition phantom metadata while dropping its construct signature.
+type DataGridRowBondConstructor = Omit<
+	typeof DataGridRowBondDefinition,
+	keyof DataGridRowBondGenericFacade
+> &
+	DataGridRowBondGenericFacade;
 
-// Backward-compatible aliases for existing imports.
-export type DataGridTrBondProps<T = unknown> = DataGridRowBondProps<T>;
-export type DataGridTrBondElements = DataGridRowBondElements;
-export { DataGridRowBond as DataGridTrBond };
+export const DataGridRowBond =
+	specializeDefinition<DataGridRowBondConstructor>(DataGridRowBondDefinition);

@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { clickoutDrawer, Drawer } from '$svelte-atoms/core/components/drawer';
-	import { Button } from '$svelte-atoms/core/components/button';
-	import { Badge } from '$svelte-atoms/core/components/badge';
-	import Icon from '$svelte-atoms/core/components/icon/icon.svelte';
-	import CloseIcon from '$svelte-atoms/core/icons/icon-close.svelte';
+	import { clickoutDrawer, Drawer } from '$ixirjs/ui/components/drawer';
+	import { Button } from '$ixirjs/ui/components/button';
+	import { Badge } from '$ixirjs/ui/components/badge';
+	import Icon from '$ixirjs/ui/components/icon/icon.svelte';
+	import CloseIcon from '$ixirjs/ui/icons/icon-close.svelte';
 
 	let open = $state(false);
 

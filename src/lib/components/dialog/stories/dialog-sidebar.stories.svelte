@@ -1,8 +1,8 @@
 <script module>
 	import { defineMeta } from '@storybook/addon-svelte-csf';
 	import { Dialog as ADialog } from '..';
-	import { Sidebar, animateSidebarContent } from '../../sidebar';
-	import { Button } from '../../button';
+	import { Sidebar, animateSidebarContent } from '$ixirjs/ui/components/sidebar';
+	import { Button } from '$ixirjs/ui/components/button';
 	import {
 		LayoutDashboard,
 		Users,
@@ -45,7 +45,7 @@
 						{#snippet children({ sidebar })}
 							{@const isOpen = sidebar.isOpen}
 							<Sidebar.Content
-								class="bg-card border-border flex h-full flex-col border-r whitespace-nowrap"
+								class="flex h-full flex-col"
 								animate={animateSidebarContent({ axis: 'x', 0: '60px', 1: '200px' })}
 								initial={animateSidebarContent({ axis: 'x', 0: '60px', 1: '200px', duration: 0 })}
 							>
@@ -92,7 +92,7 @@
 					</Sidebar.Root>
 
 					<div class="flex min-w-0 flex-1 flex-col">
-						<ADialog.Header class="flex items-center">
+						<ADialog.Header>
 							<ADialog.Title>{active}</ADialog.Title>
 							<ADialog.CloseButton class="ml-auto" />
 						</ADialog.Header>
@@ -102,7 +102,7 @@
 								width animation reflows this body, since the sidebar is part of the dialog's layout.
 							</ADialog.Description>
 						</ADialog.Body>
-						<ADialog.Footer class="flex justify-end gap-2">
+						<ADialog.Footer>
 							<Button variant="outline" onclick={() => (open = false)}>Cancel</Button>
 							<Button variant="primary" onclick={() => (open = false)}>Save</Button>
 						</ADialog.Footer>

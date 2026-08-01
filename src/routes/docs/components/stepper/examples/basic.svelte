@@ -25,16 +25,15 @@
 						</div>
 						<Step.Title class="text-xs">{stepData.header}</Step.Title>
 					</Step.Header>
+					<Step.Body>
+						<p class="text-muted-foreground py-4 text-sm">{stepData.body}</p>
+					</Step.Body>
 				</Step.Root>
 			{/each}
 		</Stepper.Header>
 
 		<Stepper.Body class="mt-4">
-			{#each steps as stepData, i (i)}
-				<Stepper.Content value={i}>
-					<p class="text-muted-foreground py-4 text-sm">{stepData.body}</p>
-				</Stepper.Content>
-			{/each}
+			<Stepper.Content />
 		</Stepper.Body>
 
 		<Stepper.Footer class="mt-4 flex justify-between">

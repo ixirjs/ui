@@ -1,13 +1,10 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { bindBond } from '$svelte-atoms/core/shared/bond/bind.svelte';
-	import { createAtomInstance } from '$svelte-atoms/core/shared/bond';
-	import { HtmlAtom, mergeAtomProps, type Base } from '$svelte-atoms/core/components/atom';
-	import {
-		AccordionItemBond,
-		AccordionItemRootAtom,
-		type AccordionItemBondProps
-	} from './bond.svelte';
+	import { useRoot } from '$ixirjs/ui/shared';
+	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import { AccordionItemBond, type AccordionItemBondProps } from './bond.svelte';
 	import type { AccordionItemRootProps } from './types';
+
+	const ID = $props.id();
 
 	let {
 		class: klass = '',
@@ -17,26 +14,21 @@
 		factory = defaultFactory,
 		children = undefined,
 		preset = undefined,
+		presets = undefined,
 		...restProps
 	}: AccordionItemRootProps<E, B> = $props();
 
-	const binding = bindBond<AccordionItemBond>(
-		(props) => factory(props),
+	const root = useRoot(
+		AccordionItemBond,
 		{
 			data: () => data,
 			disabled: () => disabled,
-			value: () => value
+			value: () => value,
+			presets: () => presets
 		},
-		{ preset: () => preset }
+		{ preset: () => preset, id: () => ID, factory: (props) => factory(props) }
 	);
-	const bond = binding.bond.share();
-	const rootAtom = createAtomInstance<AccordionItemRootAtom, AccordionItemBond>('root', {
-		bond,
-		factory: (owner) => new AccordionItemRootAtom(owner as AccordionItemBond)
-	});
-	const rootProps = $derived(
-		mergeAtomProps(rootAtom, preset, { ...binding.stateProps, ...restProps })
-	);
+	const bond = root.bond;
 
 	function defaultFactory(props: AccordionItemBondProps) {
 		return AccordionItemBond.create(props);
@@ -47,6 +39,6 @@
 	}
 </script>
 
-<HtmlAtom class={['border-border', '$preset', klass]} {...rootProps}>
+<HtmlAtom class={['border-border', '$preset', klass]} {...root.props} {...restProps} part={root}>
 	{@render children?.({ accordionItem: bond })}
 </HtmlAtom>

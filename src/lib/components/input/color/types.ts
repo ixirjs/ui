@@ -1,3 +1,6 @@
+import type { PresetKey } from '$ixirjs/ui/preset';
+import type { StateChangeCallback } from '$ixirjs/ui/types';
+import type { InputBond } from '$ixirjs/ui/components/input/bond.svelte';
 export type ColorFormat =
 	| 'named'
 	| 'hex'
@@ -47,10 +50,13 @@ export interface ColorSegmentProps {
 	disabled?: boolean;
 	readonly?: boolean;
 	class?: string;
-	// Fired on every live change (arrow up/down, typing)
-	onchange?: (value: number | string | undefined) => void;
-	// Fired on blur / Enter (commit)
-	oncommit?: (ev: Event, value: number | string | undefined) => void;
+	// Native contenteditable callbacks remain event-only.
+	onchange?: ((event: Event) => void) | undefined;
+	oninput?: ((event: Event) => void) | undefined;
+	// Fired on every live semantic change (arrow up/down, typing).
+	onvaluechange?: StateChangeCallback<number | string | undefined>;
+	// Fired on blur / Enter after the value commits.
+	oncommit?: StateChangeCallback<number | string | undefined>;
 	onfocusmove?: (dir: 1 | -1) => void;
 }
 
@@ -65,9 +71,10 @@ export interface InputColorControlProps {
 	disabled?: boolean;
 	readonly?: boolean;
 	class?: string;
-	preset?: string;
-	// Fired on every channel edit (live)
-	oninput?: (ev: Event, options: { value: string }) => void;
-	// Fired on blur / Enter (commit)
-	onchange?: (ev: Event, options: { value: string }) => void;
+	preset?: PresetKey;
+	// Native DOM callbacks retain event-only semantics.
+	oninput?: (event: Event) => void;
+	onchange?: (event: Event) => void;
+	// Fired after the color value has committed.
+	onvaluechange?: StateChangeCallback<string, InputBond>;
 }

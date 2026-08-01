@@ -1,5 +1,5 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { mergePresetProps, type Base } from '$svelte-atoms/core/components/atom';
+	import { mergePresetProps, type Base } from '$ixirjs/ui/components/atom';
 	import { TabsBond } from './bond.svelte';
 	import type { TabsContentProps } from './types';
 
@@ -11,6 +11,7 @@
 	const items = $derived(Array.from(bond?.tabContents ?? []));
 
 	const contentProps = $derived(mergePresetProps(preset, 'tabs.content', restProps));
+	const contentLayer = $derived(bond?.presetLayer('content'));
 </script>
 
 {#each items as item (item.value)}
@@ -18,6 +19,7 @@
 		...(item.props ?? {}),
 		...(value === item.value ? {} : { children: undefined }),
 		...contentProps,
-		selected: value === item.value
+		selected: value === item.value,
+		presetLayer: contentLayer
 	})}
 {/each}

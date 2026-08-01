@@ -2,12 +2,13 @@
 	lang="ts"
 	generics="T = unknown, E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base"
 >
-	import { bindBond } from '$svelte-atoms/core/shared/bond/bind.svelte';
-	import { createAtomInstance } from '$svelte-atoms/core/shared/bond';
-	import { HtmlAtom, mergeAtomProps, type Base } from '$svelte-atoms/core/components/atom';
-	import { DataGridBond, DataGridRootAtom, type DataGridBondProps } from './bond.svelte';
+	import { controlledProp, useRoot } from '@ixirjs/ui/shared';
+	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import { DataGridBond, type DataGridBondProps } from './bond.svelte';
 	import type { DatagridRootProps } from './types';
 	import './datagrid.css';
+
+	const ID = $props.id();
 
 	let {
 		class: klass = '',
@@ -16,35 +17,36 @@
 		template = undefined,
 		fallbackTemplate = 'auto',
 		factory = defaultFactory,
+		onvalueschange = undefined,
 		children = undefined,
 		...restProps
 	}: DatagridRootProps<T, E, B> = $props();
 
-	let valuesState = $derived<string[]>(values);
+	function sameValues(left: readonly string[], right: readonly string[]) {
+		return left.length === right.length && left.every((item, index) => item === right[index]);
+	}
 
-	const binding = bindBond<DataGridBond<T>>(
-		(props) => factory(props),
+	const valuesProp = controlledProp<string[] | undefined, DataGridBond<T>>({
+		get: () => values,
+		set: (next) => (values = next ?? []),
+		equals: (left, right) => sameValues(left ?? [], right ?? []),
+		onchange: (next, context) => onvalueschange?.(next ?? [], context),
+		context: (bond) => bond.takeValuesChangeContext()
+	});
+
+	const root = useRoot(
+		DataGridBond,
 		{
 			template: () => template,
-			values: [
-				() => valuesState,
-				(v) => {
-					valuesState = v ?? [];
-					values = valuesState;
-				}
-			]
+			values: valuesProp
 		},
-		{ preset: () => preset }
+		{
+			preset: () => preset,
+			id: () => ID,
+			factory: (props) => factory(props as DataGridBondProps<T>)
+		}
 	);
-	const bond = binding.bond.share();
-	const rootAtom = createAtomInstance<DataGridRootAtom, DataGridBond<T>>('root', {
-		bond,
-		factory: (owner) => new DataGridRootAtom(owner as DataGridBond<T>)
-	});
-	const rootProps = $derived(
-		mergeAtomProps(rootAtom, preset, { ...binding.stateProps, ...restProps })
-	);
-
+	const bond = root.bond as DataGridBond<T>;
 	function defaultFactory(props: DataGridBondProps<T>) {
 		return DataGridBond.create<T>(props);
 	}
@@ -55,9 +57,10 @@
 </script>
 
 <HtmlAtom
+	{...restProps}
+	part={root}
 	class={['datagrid-root w-full gap-x-0 gap-y-0', '$preset', klass]}
 	style="--template-columns:{bond.template || fallbackTemplate}"
-	{...rootProps}
 >
 	{@render children?.({ datagrid: bond })}
 </HtmlAtom>

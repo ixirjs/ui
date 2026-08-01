@@ -21,41 +21,16 @@
 
 <script lang="ts">
 	import { Stack } from '..';
-	import type { StackBond } from '../bond.svelte';
+	import type { StackBond } from '$ixirjs/ui/components/stack/bond.svelte';
 	import { Button } from '$lib/components/button';
 
 	// Photo editing layers scenario
 	const layers = [
-		{
-			id: 'background',
-			label: 'Background',
-			bg: 'bg-gradient-to-br from-sky-300 to-blue-500',
-			emoji: '🌄'
-		},
-		{
-			id: 'shapes',
-			label: 'Shapes',
-			bg: 'bg-gradient-to-br from-pink-400 to-rose-500',
-			emoji: '🔷'
-		},
-		{
-			id: 'text',
-			label: 'Text Layer',
-			bg: 'bg-gradient-to-br from-amber-300 to-orange-500',
-			emoji: '✏️'
-		},
-		{
-			id: 'overlay',
-			label: 'Overlay',
-			bg: 'bg-gradient-to-br from-emerald-400 to-green-600',
-			emoji: '🎨'
-		},
-		{
-			id: 'effects',
-			label: 'Effects',
-			bg: 'bg-gradient-to-br from-violet-400 to-purple-600',
-			emoji: '✨'
-		}
+		{ id: 'background', label: 'Background', bg: 'bg-gradient-to-br from-sky-300 to-blue-500' },
+		{ id: 'shapes', label: 'Shapes', bg: 'bg-gradient-to-br from-pink-400 to-rose-500' },
+		{ id: 'text', label: 'Text Layer', bg: 'bg-gradient-to-br from-amber-300 to-orange-500' },
+		{ id: 'overlay', label: 'Overlay', bg: 'bg-gradient-to-br from-emerald-400 to-green-600' },
+		{ id: 'effects', label: 'Effects', bg: 'bg-gradient-to-br from-violet-400 to-purple-600' }
 	];
 
 	let selected = $state('background');
@@ -66,8 +41,8 @@
 		return layers.find((l) => l.id === id)?.label ?? id;
 	}
 
-	function getEmoji(id: string) {
-		return layers.find((l) => l.id === id)?.emoji ?? '';
+	function getBg(id: string) {
+		return layers.find((l) => l.id === id)?.bg ?? '';
 	}
 </script>
 
@@ -111,7 +86,7 @@
 
 			<!-- Layer list -->
 			<div class="flex flex-1 flex-col gap-1 p-2">
-				{#each [...(bond?.state.items ?? [])].reverse() as item (item.id)}
+				{#each [...(bond?.items ?? [])].reverse() as item (item.id)}
 					<button
 						class={[
 							'flex items-center gap-2 rounded-md px-3 py-2 text-left text-sm transition-all',
@@ -121,9 +96,10 @@
 						]}
 						onclick={() => (selected = item.id)}
 					>
-						<span class="text-base">{getEmoji(item.id)}</span>
+						<!-- Swatch ties the row to its coloured layer on the canvas. -->
+						<span class={['h-4 w-4 shrink-0 rounded', getBg(item.id)]}></span>
 						<span class="flex-1 font-medium">{getLabel(item.id)}</span>
-						<span class="text-muted-foreground tabular-nums text-xs"
+						<span class="text-muted-foreground text-xs tabular-nums"
 							>z{bond?.getZIndex(item.id)}</span
 						>
 					</button>
@@ -135,34 +111,80 @@
 				<Button
 					variant="outline"
 					size="sm"
-					class="flex-1 text-xs"
+					class="flex-1 gap-1 text-xs"
 					onclick={() => bond?.bringToFront(selected)}
 				>
-					⬆ Front
+					<svg
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						class="h-3.5 w-3.5"
+					>
+						<path d="m17 11-5-5-5 5" />
+						<path d="m17 18-5-5-5 5" />
+					</svg>
+					Front
 				</Button>
 				<Button
 					variant="outline"
 					size="sm"
-					class="flex-1 text-xs"
-					onclick={() => bond?.state.bringForward(selected)}
+					class="flex-1 gap-1 text-xs"
+					onclick={() => bond?.bringForward(selected)}
 				>
-					↑ Up
+					<svg
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						class="h-3.5 w-3.5"
+					>
+						<path d="m18 15-6-6-6 6" />
+					</svg>
+					Up
 				</Button>
 				<Button
 					variant="outline"
 					size="sm"
-					class="flex-1 text-xs"
-					onclick={() => bond?.state.sendBackward(selected)}
+					class="flex-1 gap-1 text-xs"
+					onclick={() => bond?.sendBackward(selected)}
 				>
-					↓ Down
+					<svg
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						class="h-3.5 w-3.5"
+					>
+						<path d="m6 9 6 6 6-6" />
+					</svg>
+					Down
 				</Button>
 				<Button
 					variant="outline"
 					size="sm"
-					class="flex-1 text-xs"
+					class="flex-1 gap-1 text-xs"
 					onclick={() => bond?.sendToBack(selected)}
 				>
-					⬇ Back
+					<svg
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						class="h-3.5 w-3.5"
+					>
+						<path d="m7 6 5 5 5-5" />
+						<path d="m7 13 5 5 5-5" />
+					</svg>
+					Back
 				</Button>
 			</div>
 		</div>
@@ -187,8 +209,7 @@
 							style="width: 180px; height: 120px; top: {30 + i * 40}px; left: {40 + i * 60}px;"
 							onclick={() => (selected = layer.id)}
 						>
-							<span class="text-2xl">{layer.emoji}</span>
-							<span class="mt-1 text-sm font-semibold drop-shadow">{layer.label}</span>
+							<span class="text-sm font-semibold drop-shadow">{layer.label}</span>
 						</Stack.Item>
 					{/each}
 				</Stack.Root>
@@ -196,8 +217,8 @@
 
 			<!-- Breadcrumb order -->
 			<div class="text-muted-foreground flex items-center gap-1.5 text-xs">
-				<span class="text-foreground font-medium">Back → Front:</span>
-				{#each bond?.state.items ?? [] as item, i (item.id)}
+				<span class="text-foreground font-medium">Back to front:</span>
+				{#each bond?.items ?? [] as item, i (item.id)}
 					<span
 						class={[
 							'rounded px-2 py-0.5 text-xs font-medium',
@@ -206,8 +227,18 @@
 					>
 						{getLabel(item.id)}
 					</span>
-					{#if i < (bond?.state.items.length ?? 0) - 1}
-						<span class="text-muted-foreground">›</span>
+					{#if i < (bond?.items.length ?? 0) - 1}
+						<svg
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							class="text-muted-foreground h-3 w-3 shrink-0"
+						>
+							<path d="m9 18 6-6-6-6" />
+						</svg>
 					{/if}
 				{/each}
 			</div>

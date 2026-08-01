@@ -1,4 +1,4 @@
-import type { HtmlAtomProps, Base } from '$svelte-atoms/core/components/atom';
+import type { HtmlAtomProps, Base } from '$ixirjs/ui/components/atom';
 
 export interface DividerProps<
 	E extends keyof HTMLElementTagNameMap = 'div',

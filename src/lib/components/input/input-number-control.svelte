@@ -1,28 +1,37 @@
 <script lang="ts">
 	import type { HTMLAttributes } from 'svelte/elements';
 	import { InputBond } from './bond.svelte';
+	import { cn } from '$ixirjs/ui/utils';
+	import { inputChangeContext, resolveControlPreset, writeInputNumber } from './shared';
 	import type { InputNumberControlProps } from './types';
 
 	const bond = InputBond.get();
 
 	let {
 		class: klass = '',
-		number = $bindable(0),
+		number = $bindable<number | undefined>(),
 		min = undefined,
 		max = undefined,
 		step = 1,
 		showControls = true,
 		disabled = false,
 		placeholder = undefined,
-		// swallowed: this control renders a raw <input> (no presentation kernel), so `preset` has no effect here
-		// eslint-disable-next-line @typescript-eslint/no-unused-vars
-		preset = undefined,
+		preset: presetKey = 'input.number',
 		decrement = undefined,
 		increment = undefined,
 		onchange = undefined,
+		oninput = undefined,
+		onnumberchange = undefined,
 		...restProps
 	}: InputNumberControlProps & HTMLAttributes<HTMLDivElement> = $props();
 
+	const presentation = resolveControlPreset(
+		() => presetKey,
+		bond,
+		() => restProps,
+		() => klass,
+		() => ({ disabled, min, max, step })
+	);
 	const numberValue = $derived(number ?? 0);
 
 	const canDecrement = $derived(!disabled && (min === undefined || numberValue - step >= min));
@@ -31,28 +40,38 @@
 	const decrementSnippet = $derived(showControls ? (decrement ?? defaultDecrement) : undefined);
 	const incrementSnippet = $derived(showControls ? (increment ?? defaultIncrement) : undefined);
 
-	function handleDecrement() {
+	function handleDecrement(event?: MouseEvent) {
 		if (!canDecrement) return;
-		number = parseFloat((number - step).toPrecision(10));
-		onchange?.(undefined, { number });
-		if (bond?.state?.props) bond.state.props.value = number;
+		number = parseFloat((numberValue - step).toPrecision(10));
+		writeInputNumber(bond, number);
+		onnumberchange?.(number, inputChangeContext(bond, event, 'decrement'));
 	}
 
-	function handleIncrement() {
+	function handleIncrement(event?: MouseEvent) {
 		if (!canIncrement) return;
-		number = parseFloat((number + step).toPrecision(10));
-		onchange?.(undefined, { number });
-		if (bond?.state?.props) bond.state.props.value = number;
+		number = parseFloat((numberValue + step).toPrecision(10));
+		writeInputNumber(bond, number);
+		onnumberchange?.(number, inputChangeContext(bond, event, 'increment'));
 	}
 
-	function handleInput(ev: Event) {
-		const input = ev.target as HTMLInputElement;
-		const parsed = parseFloat(input.value);
-		if (!isNaN(parsed)) {
-			number = parsed;
-			onchange?.(ev, { number });
-			if (bond?.state?.props) bond.state.props.value = number;
-		}
+	function handleInput(event: Event) {
+		oninput?.(event);
+		if (event.defaultPrevented) return;
+
+		const input = event.currentTarget as HTMLInputElement;
+		number =
+			input.value.trim() === '' || Number.isNaN(input.valueAsNumber)
+				? undefined
+				: input.valueAsNumber;
+		writeInputNumber(bond, number);
+		onnumberchange?.(
+			number,
+			inputChangeContext(bond, event, number === undefined ? 'clear' : 'input')
+		);
+	}
+
+	function handleChange(event: Event) {
+		onchange?.(event);
 	}
 </script>
 
@@ -62,7 +81,7 @@
 	action: dec,
 	disabled: dis
 }: {
-	action: () => void;
+	action: (event?: MouseEvent) => void;
 	disabled: boolean;
 })}
 	<button
@@ -82,7 +101,7 @@
 	action: inc,
 	disabled: dis
 }: {
-	action: () => void;
+	action: (event?: MouseEvent) => void;
 	disabled: boolean;
 })}
 	<button
@@ -104,22 +123,22 @@
 
 <input
 	type="number"
-	bind:value={number}
+	value={number ?? ''}
 	{min}
 	{max}
 	{step}
 	{disabled}
 	{placeholder}
-	oninput={handleInput}
-	class={[
+	class={cn(
 		'input-number-field text-foreground placeholder:text-muted-foreground h-full w-full flex-1 bg-transparent text-center text-sm outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none',
-		'$preset',
-		klass
-	]}
+		presentation.class
+	)}
+	{...presentation.attrs}
+	oninput={handleInput}
+	onchange={handleChange}
 	aria-valuemin={min}
 	aria-valuemax={max}
 	aria-valuenow={number}
-	{...restProps}
 />
 
 {@render incrementSnippet?.({ action: handleIncrement, disabled: !canIncrement })}

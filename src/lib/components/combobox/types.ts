@@ -1,12 +1,14 @@
 import type { Snippet } from 'svelte';
-import type { HtmlAtomProps, Base, SnippetProps } from '$svelte-atoms/core/components/atom';
-import type { Factory } from '$svelte-atoms/core/types';
+import type { HtmlAtomProps, Base, SnippetProps } from '$ixirjs/ui/components/atom';
+import type { Factory, StateChangeCallback } from '$ixirjs/ui/types';
 import type { ComboboxBond } from './bond.svelte';
 import type {
+	SelectPresets,
 	SelectSelectionProps as DropdownSelectionProps,
 	SelectSelectionsProps as DropdownSelectionsProps
-} from '../select';
-import type { InputControlProps } from '../input';
+} from '$ixirjs/ui/components/select';
+import type { PresetLike } from '$ixirjs/ui/preset';
+import type { InputControlProps } from '$ixirjs/ui/components/input';
 
 // Snippet props (extensible)
 
@@ -16,10 +18,12 @@ export interface ComboboxSnippetProps extends SnippetProps {
 
 export type ComboboxChildren = Snippet<[ComboboxSnippetProps]>;
 
-export interface ComboboxRootProps<
-	E extends keyof HTMLElementTagNameMap = 'div',
-	B extends Base = Base
-> extends HtmlAtomProps<E, B, ComboboxChildren> {
+/** Per-instance presentation layers for Combobox's bonded and composed parts. */
+export interface ComboboxPresets extends SelectPresets {
+	control?: PresetLike;
+}
+
+export interface ComboboxRootProps {
 	open?: boolean;
 	value?: unknown;
 	values?: unknown[];
@@ -30,10 +34,35 @@ export interface ComboboxRootProps<
 	placements?: string[];
 	placement?: string;
 	offset?: number;
-	// Two-way-bindable search/filter text (bind:query). Bound by createBondFilter; cleared by Escape (ClearThenClose).
+	keys?: string[];
+	// Two-way-bindable search/filter text (bind:query). Read by filterSelectData; cleared by Escape (ClearThenClose).
 	query?: string;
+	/** Per-instance presentation overrides for bonded Combobox parts. */
+	presets?: ComboboxPresets | undefined;
 	factory?: Factory<ComboboxBond>;
+	children?: ComboboxChildren;
+	onopenchange?: StateChangeCallback<boolean, ComboboxBond>;
+	onvaluechange?: StateChangeCallback<unknown, ComboboxBond>;
+	onvalueschange?: StateChangeCallback<unknown[], ComboboxBond>;
+	onquerychange?: StateChangeCallback<string, ComboboxBond>;
 }
+
+export interface ComboboxItemProps<
+	T = unknown,
+	E extends keyof HTMLElementTagNameMap = 'li',
+	B extends Base = Base
+> extends HtmlAtomProps<E, B, ComboboxChildren> {
+	value?: string;
+	data?: T;
+	disabled?: boolean;
+	children?: ComboboxChildren;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface ComboboxTriggerProps<
+	E extends keyof HTMLElementTagNameMap = 'button',
+	B extends Base = Base
+> extends HtmlAtomProps<E, B, ComboboxChildren> {}
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface ComboboxSelectionsProps extends DropdownSelectionsProps {}

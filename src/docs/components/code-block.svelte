@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { createHighlighter, type BundledLanguage, type BundledTheme } from 'shiki';
+	import type { BundledLanguage, BundledTheme } from 'shiki';
 	import { Theme } from '../../routes/theme.svelte';
 
 	type Props = {
@@ -57,6 +57,7 @@
 	$effect(() => {
 		const resolvedTheme = (theme ?? (isDark ? 'github-dark' : 'vitesse-light')) as BundledTheme;
 		const resolvedLang = normalizeLang(lang);
+		let alive = true;
 		isLoading = true;
 
 		// Merge requested lang into pre-loaded set
@@ -64,12 +65,16 @@
 			? BASE_LANGS
 			: ([...BASE_LANGS, resolvedLang] as BundledLanguage[]);
 
-		createHighlighter({
-			themes: [resolvedTheme],
-			langs
-		})
-			.then((highlighter) =>
-				highlighter.codeToHtml(code, {
+		import('shiki')
+			.then(({ createHighlighter }) =>
+				createHighlighter({
+					themes: [resolvedTheme],
+					langs
+				})
+			)
+			.then((highlighter) => {
+				if (!alive) return '';
+				return highlighter.codeToHtml(code, {
 					lang: resolvedLang,
 					theme: resolvedTheme,
 					transformers: showLineNumbers
@@ -82,17 +87,23 @@
 								}
 							]
 						: []
-				})
-			)
+				});
+			})
 			.then((html) => {
+				if (!alive) return;
 				highlightedCode = html;
 				isLoading = false;
 			})
 			.catch((err) => {
+				if (!alive) return;
 				console.error('Syntax highlighting error:', err);
 				highlightedCode = `<pre><code>${code}</code></pre>`;
 				isLoading = false;
 			});
+
+		return () => {
+			alive = false;
+		};
 	});
 </script>
 

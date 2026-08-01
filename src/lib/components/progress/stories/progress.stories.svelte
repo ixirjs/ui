@@ -78,7 +78,8 @@
 	</div>
 </Story>
 
-<Story name="Linear">
+<!-- Basic: the plainest usable progress bar, driven by the `value`/`max` args. -->
+<Story name="Basic">
 	{#snippet template(args)}
 		<div class="flex w-72 flex-col gap-4">
 			<ProgressLinear {...args} />

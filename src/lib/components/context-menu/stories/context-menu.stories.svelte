@@ -1,14 +1,14 @@
 <script module>
 	import { defineMeta } from '@storybook/addon-svelte-csf';
 	import { ContextMenu as AContextMenu } from '..';
-	import { Button } from '../../button';
-	import { Avatar } from '../../avatar';
-	import { DataGrid as ADataGrid } from '../../datagrid';
-	import CopyIcon from '$svelte-atoms/core/icons/icon-copy.svelte';
-	import CloseIcon from '$svelte-atoms/core/icons/icon-close.svelte';
-	import MoreIcon from '$svelte-atoms/core/icons/icon-more-vert.svelte';
-	import ArrowIcon from '$svelte-atoms/core/icons/icon-arrow-down.svelte';
-	import { Icon } from '../../icon';
+	import { Button } from '$ixirjs/ui/components/button';
+	import { Avatar } from '$ixirjs/ui/components/avatar';
+	import { DataGrid as ADataGrid } from '$ixirjs/ui/components/datagrid';
+	import CopyIcon from '$ixirjs/ui/icons/icon-copy.svelte';
+	import CloseIcon from '$ixirjs/ui/icons/icon-close.svelte';
+	import MoreIcon from '$ixirjs/ui/icons/icon-more-vert.svelte';
+	import ArrowIcon from '$ixirjs/ui/icons/icon-arrow-down.svelte';
+	import { Icon } from '$ixirjs/ui/components/icon';
 
 	const { Story } = defineMeta({
 		title: 'Atoms/ContextMenu',
@@ -74,7 +74,7 @@
 		{ id: 4, name: 'Dana White', role: 'Marketing', email: 'dana@example.com' },
 		{ id: 5, name: 'Eve Johnson', role: 'Sales', email: 'eve@example.com' }
 	]);
-	let contextRow = $state('');
+	let rowAction = $state('');
 
 	// Image story state
 	const images = $state([
@@ -103,10 +103,7 @@
 						Right-click to open the context menu
 					</div>
 				</AContextMenu.Trigger>
-				<AContextMenu.Content
-					preset="context-menu.content"
-					class="min-w-48 rounded-lg border bg-popover shadow-sm"
-				>
+				<AContextMenu.Content preset="context-menu.content" variant="soft" class="min-w-48">
 					<AContextMenu.Item
 						preset="context-menu.item"
 						class="flex items-center gap-2 border-none"
@@ -152,10 +149,7 @@
 					Right-click to open the context menu
 				</div>
 			</AContextMenu.Trigger>
-			<AContextMenu.Content
-				preset="context-menu.content"
-				class="min-w-48 rounded-lg border bg-popover shadow-sm"
-			>
+			<AContextMenu.Content preset="context-menu.content" variant="soft" class="min-w-48">
 				<AContextMenu.Item
 					preset="context-menu.item"
 					class="border-none"
@@ -189,10 +183,7 @@
 				<Icon src={ArrowIcon} class="size-4" />
 			</AContextMenu.Trigger>
 
-			<AContextMenu.Content
-				preset="context-menu.content"
-				class="min-w-44 rounded-lg border bg-popover shadow-sm"
-			>
+			<AContextMenu.Content preset="context-menu.content" variant="soft" class="min-w-44">
 				<AContextMenu.Item
 					preset="context-menu.item"
 					class="flex items-center gap-2 border-none"
@@ -241,10 +232,7 @@
 				/>
 			</AContextMenu.Trigger>
 
-			<AContextMenu.Content
-				preset="context-menu.content"
-				class="min-w-44 rounded-lg border bg-popover shadow-sm"
-			>
+			<AContextMenu.Content preset="context-menu.content" variant="soft" class="min-w-44">
 				<AContextMenu.Item
 					preset="context-menu.item"
 					class="flex items-center gap-2 border-none"
@@ -307,10 +295,7 @@
 						</div>
 					</AContextMenu.Trigger>
 
-					<AContextMenu.Content
-						preset="context-menu.content"
-						class="min-w-44 rounded-lg border bg-popover shadow-sm"
-					>
+					<AContextMenu.Content preset="context-menu.content" variant="soft" class="min-w-44">
 						<div class="border-b px-3 py-2">
 							<p class="text-sm font-semibold">{user.name}</p>
 							<p class="text-xs text-muted-foreground">{user.role}</p>
@@ -356,7 +341,7 @@
 	<div class="w-full max-w-2xl">
 		<p class="mb-4 text-sm text-muted-foreground">Right-click any row for row-level actions</p>
 
-		<ADataGrid.Root class="w-full rounded-lg border">
+		<ADataGrid.Root class="w-full">
 			<ADataGrid.Header>
 				<ADataGrid.Row header>
 					<ADataGrid.Column>Name</ADataGrid.Column>
@@ -377,10 +362,7 @@
 							<ADataGrid.Cell class="text-muted-foreground">{row.email}</ADataGrid.Cell>
 						</AContextMenu.Trigger>
 
-						<AContextMenu.Content
-							preset="context-menu.content"
-							class="min-w-44 rounded-lg border bg-popover shadow-sm p-0"
-						>
+						<AContextMenu.Content preset="context-menu.content" variant="soft" class="min-w-44 p-0">
 							<div class="border-b border-border px-3 py-2">
 								<p class="text-xs font-semibold text-muted-foreground">
 									Row #{row.id} — {row.name}
@@ -389,7 +371,7 @@
 							<AContextMenu.Item
 								preset="context-menu.item"
 								class="flex items-center gap-2 border-none"
-								onclick={() => console.log('Edit', row)}
+								onclick={() => (rowAction = `Edit ${row.name}`)}
 							>
 								<Icon src={ArrowIcon} class="size-4 text-muted-foreground" />
 								Edit row
@@ -397,7 +379,10 @@
 							<AContextMenu.Item
 								preset="context-menu.item"
 								class="flex items-center gap-2 border-none"
-								onclick={() => navigator.clipboard?.writeText(row.email)}
+								onclick={() => {
+									navigator.clipboard?.writeText(row.email);
+									rowAction = `Copied ${row.email}`;
+								}}
 							>
 								<Icon src={CopyIcon} class="size-4 text-muted-foreground" />
 								Copy email
@@ -408,7 +393,7 @@
 								class="flex items-center gap-2 border-none text-destructive"
 								onclick={() => {
 									rows = rows.filter((r) => r.id !== row.id);
-									contextRow = row.name;
+									rowAction = `Deleted ${row.name}`;
 								}}
 							>
 								<Icon src={CloseIcon} class="size-4" />
@@ -420,8 +405,8 @@
 			</ADataGrid.Body>
 		</ADataGrid.Root>
 
-		{#if contextRow}
-			<p class="mt-3 text-sm text-muted-foreground">Last deleted: <strong>{contextRow}</strong></p>
+		{#if rowAction}
+			<p class="mt-3 text-sm text-muted-foreground">Last action: <strong>{rowAction}</strong></p>
 		{/if}
 	</div>
 </Story>
@@ -453,7 +438,8 @@
 
 					<AContextMenu.Content
 						preset="context-menu.content"
-						class="min-w-44 rounded-lg border bg-popover/70 shadow-sm backdrop-blur-xs"
+						variant="soft"
+						class="min-w-44 bg-popover/70 backdrop-blur-xs"
 					>
 						<AContextMenu.Item
 							preset="context-menu.item"

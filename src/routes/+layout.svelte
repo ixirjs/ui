@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { Root, setPreset } from '$lib';
+	import { Root } from '$lib';
+	import { setPreset } from '$lib/preset';
 	import { Theme } from './theme.svelte';
 	import Header from './header.svelte';
 	import Footer from './footer.svelte';

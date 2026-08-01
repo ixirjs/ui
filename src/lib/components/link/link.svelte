@@ -4,7 +4,7 @@
 		HtmlAtom,
 		type HtmlAtomProps,
 		type Base
-	} from '$svelte-atoms/core/components/atom';
+	} from '$ixirjs/ui/components/atom';
 
 	let {
 		class: klass = '',

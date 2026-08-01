@@ -1,10 +1,17 @@
 <script lang="ts">
-	import { resolveControlPreset } from '../shared';
-	import { cn, toClassValue } from '$svelte-atoms/core/utils';
-	import { clamp } from '$svelte-atoms/core/utils/math';
+	import {
+		inputChangeContext,
+		resolveControlPreset,
+		writeInputValue
+	} from '$ixirjs/ui/components/input/shared';
+	import { cn, toClassValue } from '$ixirjs/ui/utils';
+	import { clamp } from '$ixirjs/ui/utils/math';
 	import { untrack } from 'svelte';
-	import { InputBond } from '../bond.svelte';
-	import type { InputDateTimeControlProps, InputDateControlProps } from '../types';
+	import { InputBond } from '$ixirjs/ui/components/input/bond.svelte';
+	import type {
+		InputDateTimeControlProps,
+		InputDateControlProps
+	} from '$ixirjs/ui/components/input/types';
 	import Segment from './segment.svelte';
 	import {
 		parseDateTimeString,
@@ -29,13 +36,19 @@
 		preset: presetKey = undefined,
 		onchange = undefined,
 		oninput = undefined,
+		onvaluechange = undefined,
 		...restProps
 	}: InputDateTimeControlProps | InputDateControlProps = $props();
 
 	const isDateOnly = $derived(mode === 'date');
 	const resolvedPresetKey = $derived(presetKey ?? (isDateOnly ? 'input.date' : 'input.datetime'));
 
-	const preset = resolveControlPreset(() => resolvedPresetKey, bond);
+	const preset = resolveControlPreset(
+		() => resolvedPresetKey,
+		bond,
+		() => restProps,
+		() => toClassValue(klass, bond)
+	);
 
 	const parsedParts = $derived(isDateOnly ? parseDateString(value) : parseDateTimeString(value));
 
@@ -82,11 +95,9 @@
 		value = v;
 		date = new Date(isDateOnly ? v + 'T00:00:00' : v);
 		if (isNaN(date.getTime())) date = null;
-		if (bond) bond.state.props.value = value;
+		writeInputValue(bond, value);
 
-		const detail = { value, date };
-		if (ev) onchange?.(ev, detail);
-		else oninput?.(undefined as unknown as Event, detail);
+		onvaluechange?.(value, inputChangeContext(bond, ev, 'input', { date }));
 	}
 
 	function moveFocus(from: number, dir: -1 | 1) {
@@ -132,11 +143,12 @@
 	class={cn(
 		'flex h-full items-center gap-0 px-2 font-mono',
 		disabled && 'cursor-not-allowed opacity-50',
-		preset?.class,
-		toClassValue(klass, bond)
+		preset.class
 	)}
+	{...preset.attrs}
 	onpaste={handlePaste}
-	{...restProps}
+	{oninput}
+	{onchange}
 >
 	<!-- Date: MM / DD / YYYY -->
 	<Segment
@@ -148,17 +160,17 @@
 		placeholder="MM"
 		{disabled}
 		{readonly}
-		onchange={(v) => {
+		onvaluechange={(v, context) => {
 			const o: DateTimeParts = {};
 			if (v !== undefined) o.month = v;
-			emit(undefined, o);
+			emit(context.event, o);
 		}}
 		onfocusmove={(dir) => moveFocus(0, dir)}
-		onrollover={(dir) => {
+		onrollover={(dir, context) => {
 			// month rollover advances/retreats year
 			const nextYear = (year ?? new Date().getFullYear()) + dir;
 			const nextMonth = dir === 1 ? 1 : 12;
-			emit(undefined, { year: nextYear, month: nextMonth });
+			emit(context.event, { year: nextYear, month: nextMonth });
 		}}
 	/>
 	<span class="text-muted-foreground select-none">/</span>
@@ -171,13 +183,13 @@
 		placeholder="DD"
 		{disabled}
 		{readonly}
-		onchange={(v) => {
+		onvaluechange={(v, context) => {
 			const o: DateTimeParts = {};
 			if (v !== undefined) o.day = v;
-			emit(undefined, o);
+			emit(context.event, o);
 		}}
 		onfocusmove={(dir) => moveFocus(1, dir)}
-		onrollover={(dir) => {
+		onrollover={(dir, context) => {
 			// day rollover advances/retreats month (and year if needed)
 			const curMonth = month ?? 1;
 			const curYear = year ?? new Date().getFullYear();
@@ -192,7 +204,7 @@
 				nextYear--;
 			}
 			const nextDay = dir === 1 ? 1 : maxDaysInMonth(nextMonth, nextYear);
-			emit(undefined, { year: nextYear, month: nextMonth, day: nextDay });
+			emit(context.event, { year: nextYear, month: nextMonth, day: nextDay });
 		}}
 	/>
 	<span class="text-muted-foreground select-none">/</span>
@@ -205,10 +217,10 @@
 		placeholder="YYYY"
 		{disabled}
 		{readonly}
-		onchange={(v) => {
+		onvaluechange={(v, context) => {
 			const o: DateTimeParts = {};
 			if (v !== undefined) o.year = v;
-			emit(undefined, o);
+			emit(context.event, o);
 		}}
 		onfocusmove={(dir) => moveFocus(2, dir)}
 	/>
@@ -228,13 +240,13 @@
 			placeholder="HH"
 			{disabled}
 			{readonly}
-			onchange={(v) => {
+			onvaluechange={(v, context) => {
 				const o: DateTimeParts = {};
 				if (v !== undefined) o.hours = v;
-				emit(undefined, o);
+				emit(context.event, o);
 			}}
 			onfocusmove={(dir) => moveFocus(3, dir)}
-			onrollover={(dir) => {
+			onrollover={(dir, context) => {
 				// hours rollover advances/retreats day
 				const curDay = day ?? 1;
 				const curMonth = month ?? 1;
@@ -259,7 +271,7 @@
 					nextMonth = 12;
 					nextYear--;
 				}
-				emit(undefined, {
+				emit(context.event, {
 					year: nextYear,
 					month: nextMonth,
 					day: nextDay,
@@ -277,13 +289,13 @@
 			placeholder="MM"
 			{disabled}
 			{readonly}
-			onchange={(v) => {
+			onvaluechange={(v, context) => {
 				const o: DateTimeParts = {};
 				if (v !== undefined) o.minutes = v;
-				emit(undefined, o);
+				emit(context.event, o);
 			}}
 			onfocusmove={(dir) => moveFocus(4, dir)}
-			onrollover={(dir) => {
+			onrollover={(dir, context) => {
 				// minutes rollover advances/retreats hours
 				const nextHH =
 					dir === 1
@@ -323,7 +335,7 @@
 					override.month = nextMonth;
 					override.year = nextYear;
 				}
-				emit(undefined, override);
+				emit(context.event, override);
 			}}
 		/>
 		{#if withSeconds}
@@ -337,13 +349,13 @@
 				placeholder="SS"
 				{disabled}
 				{readonly}
-				onchange={(v) => {
+				onvaluechange={(v, context) => {
 					const o: DateTimeParts = {};
 					if (v !== undefined) o.seconds = v;
-					emit(undefined, o);
+					emit(context.event, o);
 				}}
 				onfocusmove={(dir) => moveFocus(5, dir)}
-				onrollover={(dir) => {
+				onrollover={(dir, context) => {
 					// seconds rollover advances/retreats minutes (batched)
 					const nextMM =
 						dir === 1
@@ -366,7 +378,7 @@
 									: (hours ?? 23) - 1;
 						override.hours = nextHH;
 					}
-					emit(undefined, override);
+					emit(context.event, override);
 				}}
 			/>
 		{/if}

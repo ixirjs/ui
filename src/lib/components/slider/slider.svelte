@@ -1,8 +1,13 @@
 <script lang="ts">
-	import type { HTMLAttributes } from 'svelte/elements';
-	import { mergePresetProps, HtmlAtom } from '$svelte-atoms/core/components/atom';
-	import { clamp } from '$svelte-atoms/core/utils/math';
-	import type { SliderChangeDetails, SliderProps } from './types';
+	import { mergePresetProps, HtmlAtom } from '$ixirjs/ui/components/atom';
+	import { createPresentation } from '$ixirjs/ui/components/atom/presentation.svelte';
+	import { clamp } from '$ixirjs/ui/utils/math';
+	import type {
+		SliderProps,
+		SliderValueChangeDetails,
+		SliderResolvedPartProps,
+		SliderTrackContentProps
+	} from './types';
 
 	let {
 		class: klass = '',
@@ -17,11 +22,13 @@
 		preset = undefined,
 		thumbContent = undefined,
 		trackContent = undefined,
+		presets = undefined,
 		onchange = undefined,
 		oninput = undefined,
+		onvaluechange = undefined,
 		children = undefined,
 		...restProps
-	}: SliderProps & HTMLAttributes<HTMLDivElement> = $props();
+	}: SliderProps = $props();
 
 	const sliderProps = $derived(mergePresetProps(preset, 'slider', restProps));
 
@@ -42,19 +49,69 @@
 		return ((normalizedValue - normalizedMin) / range) * 100;
 	});
 
+	const trackPresentation = createPresentation({
+		preset: () => 'slider.track',
+		instance: () => presets?.track,
+		class: () => [
+			'slider-track bg-input border-border relative overflow-hidden rounded-full',
+			isVertical ? 'h-full w-2' : 'h-2 w-full'
+		],
+		variantProps: () => ({ orientation, disabled }),
+		restProps: () => ({})
+	});
+	const trackProps = $derived({
+		class: trackPresentation.class,
+		...trackPresentation.attrs
+	} as SliderResolvedPartProps);
+	const fillPresentation = createPresentation({
+		preset: () => 'slider.fill',
+		instance: () => presets?.fill,
+		class: () => [
+			'slider-fill bg-foreground absolute rounded-full',
+			isVertical ? 'bottom-0 left-0 w-full' : 'left-0 top-0 h-full'
+		],
+		variantProps: () => ({ orientation, disabled }),
+		restProps: () => ({})
+	});
+	const fillProps = $derived({
+		class: fillPresentation.class,
+		...fillPresentation.attrs,
+		style: isVertical ? `height: ${percent}%` : `width: ${percent}%`
+	} as SliderResolvedPartProps);
+	const thumbPresentation = createPresentation({
+		preset: () => 'slider.thumb',
+		instance: () => presets?.thumb,
+		class: () => [
+			'slider-thumb pointer-events-none absolute h-5 w-5',
+			isVertical
+				? 'left-1/2 -translate-x-1/2 translate-y-1/2'
+				: 'top-1/2 -translate-x-1/2 -translate-y-1/2'
+		],
+		variantProps: () => ({ orientation, disabled }),
+		restProps: () => ({})
+	});
+	const thumbProps = $derived({
+		class: thumbPresentation.class,
+		...thumbPresentation.attrs,
+		style: isVertical ? `bottom: ${percent}%` : `left: ${percent}%`
+	} as SliderResolvedPartProps);
+
+	let hasInitialized = false;
+
 	$effect(() => {
 		const nextValue = clampNumber(value, normalizedMin, normalizedMax);
 		if (nextValue !== value) {
 			value = nextValue;
+			if (hasInitialized) onvaluechange?.(nextValue, createDetails(nextValue));
 		}
+		hasInitialized = true;
 	});
 
-	function createDetails(currentValue: number): SliderChangeDetails {
+	function createDetails(currentValue: number): SliderValueChangeDetails {
 		const range = normalizedMax - normalizedMin;
 		const currentPercent = range <= 0 ? 0 : ((currentValue - normalizedMin) / range) * 100;
 
 		return {
-			value: currentValue,
 			percent: currentPercent,
 			min: normalizedMin,
 			max: normalizedMax,
@@ -63,42 +120,37 @@
 		};
 	}
 
-	function handleInput(ev: Event) {
-		const input = ev.currentTarget as HTMLInputElement;
-		const nextValue = clampNumber(Number(input.value), normalizedMin, normalizedMax);
+	function commitValue(
+		nextValue: number,
+		event: Event,
+		nativeCallback: ((event: Event) => void) | undefined
+	) {
+		const changed = value !== nextValue;
 		value = nextValue;
-		oninput?.(ev, createDetails(nextValue));
+		nativeCallback?.(event);
+
+		if (changed) {
+			onvaluechange?.(nextValue, { event, ...createDetails(nextValue) });
+		}
 	}
 
-	function handleChange(ev: Event) {
-		const input = ev.currentTarget as HTMLInputElement;
+	function handleInput(event: Event) {
+		const input = event.currentTarget as HTMLInputElement;
 		const nextValue = clampNumber(Number(input.value), normalizedMin, normalizedMax);
-		value = nextValue;
-		onchange?.(ev, createDetails(nextValue));
+		commitValue(nextValue, event, oninput);
+	}
+
+	function handleChange(event: Event) {
+		const input = event.currentTarget as HTMLInputElement;
+		const nextValue = clampNumber(Number(input.value), normalizedMin, normalizedMax);
+		commitValue(nextValue, event, onchange);
 	}
 </script>
 
-{#snippet defaultTrack()}
-	<HtmlAtom
-		preset="slider.track"
-		as="div"
-		class={[
-			'slider-track bg-input border-border relative overflow-hidden rounded-full',
-			isVertical ? 'h-full w-2' : 'h-2 w-full',
-			'$preset'
-		]}
-	>
-		<HtmlAtom
-			preset="slider.fill"
-			as="div"
-			class={[
-				'slider-fill bg-foreground absolute rounded-full',
-				isVertical ? 'bottom-0 left-0 w-full' : 'left-0 top-0 h-full',
-				'$preset'
-			]}
-			style={isVertical ? `height: ${percent}%` : `width: ${percent}%`}
-		/>
-	</HtmlAtom>
+{#snippet defaultTrack({ props }: SliderTrackContentProps)}
+	<div {...props}>
+		<div {...fillProps}></div>
+	</div>
 {/snippet}
 
 {#snippet defaultThumb()}
@@ -108,20 +160,13 @@
 {/snippet}
 
 {#snippet thumbWrapper()}
-	<HtmlAtom
-		preset="slider.thumb"
-		as="div"
-		class={[
-			'slider-thumb pointer-events-none absolute h-5 w-5',
-			isVertical
-				? 'left-1/2 -translate-x-1/2 translate-y-1/2'
-				: 'top-1/2 -translate-x-1/2 -translate-y-1/2',
-			'$preset'
-		]}
-		style={isVertical ? `bottom: ${percent}%` : `left: ${percent}%`}
-	>
-		{@render (thumbContent ?? defaultThumb)({ value: normalizedValue, percent })}
-	</HtmlAtom>
+	<div {...thumbProps}>
+		{@render (thumbContent ?? defaultThumb)({
+			value: normalizedValue,
+			percent,
+			props: thumbProps
+		})}
+	</div>
 {/snippet}
 
 <HtmlAtom
@@ -140,7 +185,8 @@
 		value: normalizedValue,
 		percent,
 		min: normalizedMin,
-		max: normalizedMax
+		max: normalizedMax,
+		props: trackProps
 	})}
 
 	<!-- Native range input — invisible, full coverage, handles all a11y + keyboard -->

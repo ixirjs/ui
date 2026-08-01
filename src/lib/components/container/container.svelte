@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { mergePresetProps, HtmlAtom } from '$svelte-atoms/core/components/atom';
-	import { resizeObserver } from '$svelte-atoms/core/attachments/resize-observer.svelte';
+	import { mergePresetProps, HtmlAtom } from '$ixirjs/ui/components/atom';
+	import { resizeObserver } from '$ixirjs/ui/attachments/resize-observer.svelte';
 	import type { ContainerProps } from './types';
 
 	let {

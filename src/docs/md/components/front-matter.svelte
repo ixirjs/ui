@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Frontmatter } from '$docs/md/frontmatter';
-	import { newLine } from '../template';
+	import { newLine } from '$docs/md/template';
 
 	let { frontmatter }: { frontmatter: Frontmatter } = $props();
 

@@ -1,7 +1,10 @@
-<script lang="ts">
-	import { setRadioGroupContext, type RadioGroupContext } from './context';
-	import { mergePresetProps, HtmlAtom } from '$svelte-atoms/core/components/atom';
-	import { defineProperty, defineState } from '$svelte-atoms/core/utils';
+<script lang="ts" generics="T = string">
+	import { mergePresetProps, HtmlAtom } from '$ixirjs/ui/components/atom';
+	import { controlledProp, useRoot } from '$ixirjs/ui/shared';
+	import { RadioGroupBond } from './bond.svelte';
+	import type { RadioGroupProps } from './types';
+
+	const ID = $props.id();
 
 	let {
 		class: klass = '',
@@ -12,33 +15,36 @@
 		name = undefined,
 		value = $bindable(),
 		children,
-		oninput = undefined,
+		onvaluechange = undefined,
 		...restProps
-	} = $props();
+	}: RadioGroupProps<T> = $props();
 
+	const valueProp = controlledProp<T | undefined, RadioGroupBond<T>>({
+		get: () => value,
+		set: (next) => (value = next)
+	});
+	// Explicit Bond type argument: this family is generic in `T`, and inferring the Bond from the
+	// definition alone collapses it to `RadioGroupBond<unknown>`.
+	const root = useRoot<typeof RadioGroupBond, RadioGroupBond<T>>(
+		RadioGroupBond,
+		{
+			value: valueProp,
+			disabled: () => disabled,
+			readonly: () => readonly,
+			required: () => required,
+			name: () => name,
+			onvaluechange: () => onvaluechange
+		},
+		{ atom: false, id: () => ID, factory: (props) => new RadioGroupBond<T>(props) }
+	);
+	const bond = root.bond;
 	const groupProps = $derived(mergePresetProps(preset, 'radio.group', restProps));
 
-	const context = defineState<RadioGroupContext>([
-		defineProperty('disabled', () => disabled ?? false),
-		defineProperty('name', () => name),
-		defineProperty('readonly', () => readonly ?? false),
-		defineProperty('required', () => required ?? false),
-		defineProperty(
-			'value',
-			() => value,
-			(v) => (value = v)
-		)
-	]);
-
-	setRadioGroupContext(context);
-
-	$effect(() => {
-		oninput?.(new CustomEvent('change'), {
-			value
-		});
-	});
+	export function getBond(): RadioGroupBond<T> {
+		return bond;
+	}
 </script>
 
 <HtmlAtom class={['flex flex-col gap-1', '$preset', klass]} {...groupProps}>
-	{@render children?.()}
+	{@render children?.({})}
 </HtmlAtom>

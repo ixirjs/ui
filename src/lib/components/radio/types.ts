@@ -1,5 +1,6 @@
 import { type Component, type Snippet } from 'svelte';
-import { type HtmlAtomProps, type SnippetProps } from '$svelte-atoms/core/components/atom';
+import { type HtmlAtomProps, type SnippetProps } from '$ixirjs/ui/components/atom';
+import type { StateChangeCallback } from '$ixirjs/ui/types';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface RadioSnippetProps extends SnippetProps {}
@@ -17,8 +18,11 @@ export interface RadioProps<T = string> extends HtmlAtomProps<'label', never, Ra
 	readonly?: boolean;
 	// Custom content shown when the radio is checked.
 	checkedContent?: Component | Snippet;
-	onchange?: (ev: Event, options?: { checked: boolean; value: boolean; type: 'boolean' }) => void;
-	oninput?: (ev: Event, options?: { checked: boolean; value: boolean; type: 'boolean' }) => void;
+	// Semantic item-state callback; runs after this item's checked state commits.
+	oncheckedchange?: StateChangeCallback<boolean>;
+	// Native DOM callbacks retain their event-only signatures.
+	onchange?: (event: Event) => void;
+	oninput?: (event: Event) => void;
 }
 
 export interface RadioGroupProps<T = string> extends HtmlAtomProps<'div', never, RadioChildren> {
@@ -28,6 +32,9 @@ export interface RadioGroupProps<T = string> extends HtmlAtomProps<'div', never,
 	readonly?: boolean;
 	// Name attribute shared by all radio buttons in the group.
 	name?: string;
-	// Fired when the selected value changes.
-	oninput?: (ev: CustomEvent, options?: { value: T }) => void;
+	// Semantic group-state callback; runs after the selected value commits.
+	onvaluechange?: StateChangeCallback<T>;
+	// Native DOM callbacks receive bubbling item events only.
+	onchange?: (event: Event) => void;
+	oninput?: (event: Event) => void;
 }

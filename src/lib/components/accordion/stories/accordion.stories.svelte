@@ -36,7 +36,7 @@
 			<AccordionItem.Root>
 				<AccordionItem.Header>
 					<div>Getting Started</div>
-					<AccordionItem.Indicator class="ml-auto" />
+					<AccordionItem.Indicator />
 				</AccordionItem.Header>
 
 				<AccordionItem.Body>
@@ -50,7 +50,7 @@
 			<AccordionItem.Root>
 				<AccordionItem.Header>
 					<div>Configuration</div>
-					<AccordionItem.Indicator class="ml-auto" />
+					<AccordionItem.Indicator />
 				</AccordionItem.Header>
 
 				<AccordionItem.Body>
@@ -64,7 +64,7 @@
 			<AccordionItem.Root>
 				<AccordionItem.Header>
 					<div>Advanced Usage</div>
-					<AccordionItem.Indicator class="ml-auto" />
+					<AccordionItem.Indicator />
 				</AccordionItem.Header>
 
 				<AccordionItem.Body>
@@ -80,44 +80,27 @@
 
 <Story name="Multiple">
 	{#snippet template(args)}
+		<!-- multiple + collapsible: any number of items (including none) can be open at once -->
 		<AAccordion class="w-96" multiple collapsible {...args}>
 			<AccordionItem.Root>
 				<AccordionItem.Header>
 					<div>Section One</div>
-					<AccordionItem.Indicator class="ml-auto" />
+					<AccordionItem.Indicator />
 				</AccordionItem.Header>
 
 				<AccordionItem.Body>
-					<div class="p-3 text-sm">
-						Multiple items can be expanded simultaneously. Toggle any header to expand or collapse.
-					</div>
+					<div class="p-3 text-sm">Toggle any header to expand or collapse this section.</div>
 				</AccordionItem.Body>
 			</AccordionItem.Root>
 
 			<AccordionItem.Root>
 				<AccordionItem.Header>
 					<div>Section Two</div>
-					<AccordionItem.Indicator class="ml-auto" />
+					<AccordionItem.Indicator />
 				</AccordionItem.Header>
 
 				<AccordionItem.Body>
-					<div class="p-3 text-sm">
-						This item can be open alongside Section One. The collapsible flag also allows both to be
-						closed.
-					</div>
-				</AccordionItem.Body>
-			</AccordionItem.Root>
-
-			<AccordionItem.Root>
-				<AccordionItem.Header>
-					<div>Section Three</div>
-					<AccordionItem.Indicator class="ml-auto" />
-				</AccordionItem.Header>
-
-				<AccordionItem.Body>
-					<div class="p-3 text-sm">
-						A third independent section. Expand all three at once to verify multi-open behaviour.
-					</div>
+					<div class="p-3 text-sm">This item can stay open alongside Section One.</div>
 				</AccordionItem.Body>
 			</AccordionItem.Root>
 		</AAccordion>
@@ -130,20 +113,7 @@
 			<AccordionItem.Root>
 				<AccordionItem.Header>
 					<div>Unavailable Section</div>
-					<AccordionItem.Indicator class="ml-auto" />
-				</AccordionItem.Header>
-
-				<AccordionItem.Body>
-					<div class="p-3 text-sm">
-						This content is not reachable while the accordion is disabled.
-					</div>
-				</AccordionItem.Body>
-			</AccordionItem.Root>
-
-			<AccordionItem.Root>
-				<AccordionItem.Header>
-					<div>Another Locked Section</div>
-					<AccordionItem.Indicator class="ml-auto" />
+					<AccordionItem.Indicator />
 				</AccordionItem.Header>
 
 				<AccordionItem.Body>
@@ -154,4 +124,51 @@
 			</AccordionItem.Root>
 		</AAccordion>
 	{/snippet}
+</Story>
+
+<Story name="FAQ">
+	<!-- Real-world use case: a product help / FAQ panel -->
+	<div class="w-md">
+		<h2 class="mb-3 text-lg font-semibold">Frequently asked questions</h2>
+		<AAccordion class="w-full" collapsible>
+			<AccordionItem.Root>
+				<AccordionItem.Header>
+					<div>How do I upgrade my plan?</div>
+					<AccordionItem.Indicator />
+				</AccordionItem.Header>
+				<AccordionItem.Body>
+					<div class="text-muted-foreground p-3 text-sm">
+						Open Settings, select Billing, then choose the plan that fits your team. Changes take
+						effect immediately and are prorated for the current cycle.
+					</div>
+				</AccordionItem.Body>
+			</AccordionItem.Root>
+
+			<AccordionItem.Root>
+				<AccordionItem.Header>
+					<div>Can I invite teammates?</div>
+					<AccordionItem.Indicator />
+				</AccordionItem.Header>
+				<AccordionItem.Body>
+					<div class="text-muted-foreground p-3 text-sm">
+						Yes. Go to Members and send an invite by email. Seats are billed only when an invite is
+						accepted.
+					</div>
+				</AccordionItem.Body>
+			</AccordionItem.Root>
+
+			<AccordionItem.Root>
+				<AccordionItem.Header>
+					<div>How do I cancel?</div>
+					<AccordionItem.Indicator />
+				</AccordionItem.Header>
+				<AccordionItem.Body>
+					<div class="text-muted-foreground p-3 text-sm">
+						You can cancel anytime from Billing. Your workspace stays active until the end of the
+						paid period.
+					</div>
+				</AccordionItem.Body>
+			</AccordionItem.Root>
+		</AAccordion>
+	</div>
 </Story>

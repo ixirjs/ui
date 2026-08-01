@@ -1,36 +1,19 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import type { HTMLAttributes } from 'svelte/elements';
-	import { createAtomInstance } from '$svelte-atoms/core/shared/bond';
-	import { InputBond, InputPlaceholderAtom } from './bond.svelte';
-	import {
-		HtmlAtom,
-		type ElementType,
-		type HtmlAtomProps,
-		type Base
-	} from '$svelte-atoms/core/components/atom';
-
-	type Element = ElementType<E>;
-
-	const bond = InputBond.get();
+	import { usePart } from '$ixirjs/ui/shared';
+	import { InputBond } from './bond.svelte';
+	import { HtmlAtom, type HtmlAtomProps, type Base } from '$ixirjs/ui/components/atom';
 
 	let {
 		class: klass = '',
 		children = undefined,
 		preset = undefined,
 		...restProps
-	}: HtmlAtomProps<E, B> & HTMLAttributes<Element> = $props();
-	const atom = bond
-		? createAtomInstance<InputPlaceholderAtom, InputBond>('placeholder', {
-				bond,
-				factory: (owner) => new InputPlaceholderAtom(owner!)
-			})
-		: undefined;
-
-	const placeholderProps = $derived({
-		preset: preset ?? atom?.preset ?? 'input.placeholder',
-		...(atom?.spread ?? {}),
-		...restProps
+	}: HtmlAtomProps<E, B> = $props();
+	const part = usePart(InputBond, 'placeholder', () => restProps, {
+		context: 'optional',
+		preset: () => preset
 	});
+	const bond = part.bond;
 
 	const shouldShowPlaceholder = $derived.by(() => {
 		const type = (bond?.elements?.input as HTMLInputElement | undefined)?.type ?? '';
@@ -40,10 +23,10 @@
 		}
 
 		if (['files'].includes(type)) {
-			return !bond?.state.props.files?.length;
+			return !bond?.props.files?.length;
 		}
 
-		return !bond?.state.props.value;
+		return !bond?.props.value;
 	});
 </script>
 
@@ -55,7 +38,8 @@
 			klass
 		]}
 		style="left:{(bond?.elements?.input as HTMLInputElement | undefined)?.offsetLeft ?? 0}px"
-		{...placeholderProps}
+		{...restProps}
+		{part}
 	>
 		{@render children?.()}
 	</HtmlAtom>

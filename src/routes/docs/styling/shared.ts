@@ -51,7 +51,7 @@ export const metadata = {
 		'Conditional class application',
 		'Variant system with compounds',
 		'Reactive variants based on component state',
-		'$preset placeholder for fine-grained control',
+		'Automatic preset class insertion with consumer-last precedence',
 		'Full TypeScript support'
 	],
 	colorTokens: [

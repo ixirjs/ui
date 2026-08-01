@@ -1,9 +1,8 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { mergePresetProps, HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
+	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import { usePart } from '$ixirjs/ui/shared';
 	import { CardBond } from './bond.svelte';
 	import type { CardMediaProps } from './types';
-
-	const bond = CardBond.get();
 
 	let {
 		class: klass = '',
@@ -13,16 +12,17 @@
 		...restProps
 	}: CardMediaProps<E, B> = $props();
 
-	const mediaProps = $derived(
-		mergePresetProps(preset, 'card.media', { ...bond?.media(), ...restProps })
-	);
+	const part = usePart(CardBond, 'media', () => restProps, {
+		context: 'optional',
+		preset: () => preset
+	});
 </script>
 
 <HtmlAtom
+	{...restProps}
 	{as}
-	{bond}
+	{part}
 	class={['card-media border-border overflow-hidden', '$preset', klass]}
-	{...mediaProps}
 >
 	{@render children?.()}
 </HtmlAtom>

@@ -31,7 +31,7 @@
 
 {codeBlock(
 	`<script lang="ts">
-  import { HtmlAtom } from '@svelte-atoms/core';
+  import { HtmlAtom } from '@ixirjs/ui';
   import { fade, slide } from 'svelte/transition';
 
   let open = $state(true);
@@ -52,7 +52,7 @@
 
 {codeBlock(
 	`<script lang="ts">
-  import { HtmlAtom } from '@svelte-atoms/core';
+  import { HtmlAtom } from '@ixirjs/ui';
   import gsap from 'gsap';
 
   let open = $state(false);

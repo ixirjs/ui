@@ -1,6 +1,6 @@
 <script module>
 	import { defineMeta } from '@storybook/addon-svelte-csf';
-	import QrCodeComponent from '../qr-code.svelte';
+	import QrCodeComponent from '$ixirjs/ui/components/qr-code/qr-code.svelte';
 
 	const { Story } = defineMeta({
 		title: 'Atoms/QR Code',
@@ -54,30 +54,44 @@
 	</div>
 </Story>
 
-<Story name="URL">
-	<QrCodeComponent
-		class="text-primary-foreground bg-primary size-64 rounded-2xl p-1"
-		value="https://svelte.dev"
-	/>
+<!-- Real-world: a guest WiFi card. The value is a standard WIFI: connection string. -->
+<Story name="Guest WiFi">
+	<div class="border-border bg-card w-72 rounded-2xl border p-6 text-center shadow-sm">
+		<h3 class="text-foreground text-base font-semibold">Guest WiFi</h3>
+		<p class="text-muted-foreground mt-1 text-sm">Scan with your camera to connect</p>
+		<QrCodeComponent
+			class="text-foreground bg-card mx-auto my-5 size-44"
+			value="WIFI:S:AtomsCafe;T:WPA;P:welcome123;;"
+		/>
+		<dl class="text-muted-foreground space-y-1 text-xs">
+			<div class="flex justify-between">
+				<dt>Network</dt>
+				<dd class="text-foreground font-medium">AtomsCafe</dd>
+			</div>
+			<div class="flex justify-between">
+				<dt>Password</dt>
+				<dd class="text-foreground font-medium">welcome123</dd>
+			</div>
+		</dl>
+	</div>
 </Story>
 
-<Story name="Plain Text">
-	<QrCodeComponent
-		class="text-primary-foreground bg-primary size-64 rounded-2xl p-1"
-		value="Hello World 123"
-	/>
-</Story>
-
-<Story name="Neutral">
-	<QrCodeComponent
-		class="text-foreground bg-card size-64 rounded-2xl p-1 border"
-		value="https://example.com"
-	/>
-</Story>
-
-<Story name="Large">
-	<QrCodeComponent
-		class="text-primary-foreground bg-primary size-96 rounded-2xl p-2"
-		value="https://example.com"
-	/>
+<!-- The same component encodes any string — a URL or arbitrary text. -->
+<Story name="Content">
+	<div class="flex flex-wrap items-start justify-center gap-6">
+		<div class="flex flex-col items-center gap-2">
+			<QrCodeComponent
+				class="text-primary-foreground bg-primary size-48 rounded-2xl p-1"
+				value="https://svelte.dev"
+			/>
+			<code class="text-muted-foreground text-xs font-mono">URL</code>
+		</div>
+		<div class="flex flex-col items-center gap-2">
+			<QrCodeComponent
+				class="text-foreground bg-card size-48 rounded-2xl border p-1"
+				value="Hello World 123"
+			/>
+			<code class="text-muted-foreground text-xs font-mono">Plain text</code>
+		</div>
+	</div>
 </Story>

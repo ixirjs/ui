@@ -25,10 +25,10 @@ generated atom factories, or `bond.state` as the main public API. ## Current Ter
 New: Bond owns public shared state and mutations.
 
 Old: Bond creates each Atom for rendered parts.
-New: Atom Components create their own Atoms with createAtomInstance(...).
+New: Atom Components create their own Atoms with createAtomInstance(...); ordinary fixed descendants use usePart(...).
 
 Old: bond.trigger(), bond.content(), or bond.atom(...) are the main lookup API.
-New: bond.node(...) and bond.nodes(...) read rendered registered Atoms.`,
+New: bond.nodeByPart(...), bond.nodesByPart(...), and bond.nodeByRole(...) read rendered registered Atoms.`,
 	'text'
 )}
 
@@ -51,7 +51,7 @@ New: bond.node(...) and bond.nodes(...) read rendered registered Atoms.`,
 
 {codeBlock(
 	`const trigger = createAtomInstance('trigger', {
-  bond: () => DialogBond.required(),
+  resolveBond: () => DialogBond.getOrThrow(),
   capabilities: [elementRef(), pressable(), ariaRole('button')]
 });`,
 	'typescript'
@@ -60,20 +60,22 @@ New: bond.node(...) and bond.nodes(...) read rendered registered Atoms.`,
 ## Use Registry Lookup
 
 {codeBlock(
-	`const trigger = bond.node('trigger');
+	`const trigger = bond.nodeByPart('trigger');
 trigger?.element?.focus();
 
-const items = bond.nodes('item');`,
+const items = bond.nodesByPart('item');`,
 	'typescript'
 )}
 
 ## Checklist
 
 {list([
-	'Replace public BondState wording with Bond.',
+	'Replace BondState hosts with a Bond subclass, passed to defineBond as its base.',
 	'Move shared getters and mutation methods onto the Bond.',
 	'Create runtime Atoms in rendered Svelte parts with createAtomInstance.',
-	'Use bond.node and bond.nodes for rendered Atom lookup.',
+	'Use nodeByPart, nodesByPart, and nodeByRole for rendered Atom lookup.',
+	'Use canonical component names: Input.Control, Combobox.Control, DataGrid.Row/Column/Cell, and DropdownMenu.Content.',
+	'Use filterSelectData instead of the removed dropdown/filter aliases.',
 	'Move repeated behavior into Bond or Atom capabilities.',
-	'Keep generated part methods only as compatibility adapters.'
+	'Remove generated part methods; they are no longer compatibility adapters.'
 ])}

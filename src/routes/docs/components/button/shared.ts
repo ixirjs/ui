@@ -1,4 +1,4 @@
-const presetCode = `import { setPreset } from '@svelte-atoms/core';
+const presetCode = `import { setPreset } from '@ixirjs/ui/preset';
 
 const preset = setPreset({
   button: () => ({
@@ -66,8 +66,8 @@ export const metadata = {
 		'Versatile button with full HTML support, preset styling, disabled states, and icon content.',
 	componentType: 'simple' as const,
 	status: 'stable' as const,
-	packageName: '@svelte-atoms/core',
-	importCode: "import { Button } from '@svelte-atoms/core';",
+	packageName: '@ixirjs/ui',
+	importCode: "import { Button } from '@ixirjs/ui';",
 	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Button' }],
 	useCases,
 	examples: {

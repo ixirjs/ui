@@ -13,6 +13,12 @@ export const treeRootProps: PropDefinition[] = [
 		description: 'Controls whether the tree is expanded (bindable)'
 	},
 	{
+		name: 'onopenchange',
+		type: 'StateChangeCallback<boolean, TreeBond> | undefined',
+		default: 'undefined',
+		description: 'Called after a real open-state transition commits.'
+	},
+	{
 		name: 'disabled',
 		type: 'boolean',
 		default: 'false',

@@ -1,6 +1,6 @@
-import { Bond, Atom, type BondStateProps } from '$svelte-atoms/core/shared/bond';
-import { defineBond, type BondOf } from '$svelte-atoms/core/shared';
-import { clamp } from '$svelte-atoms/core/utils/math';
+import { Bond, Atom, type BondStateProps } from '$ixirjs/ui/shared/bond';
+import { defineBond, type BondOf } from '$ixirjs/ui/shared';
+import { clamp } from '$ixirjs/ui/utils/math';
 
 // -----------------------------------------------------------------------------
 // Public types
@@ -39,7 +39,7 @@ export class ScrollableRootAtom extends Atom<ScrollableBondBase> {
 	}
 
 	override get attrs() {
-		const props = this.bond.state.props;
+		const props = this.requireBond().props;
 
 		return {
 			...super.attrs,
@@ -57,7 +57,7 @@ export class ScrollableContainerAtom extends Atom<ScrollableBondBase> {
 	override get handlers() {
 		return {
 			onscroll: () => {
-				this.bond.updateScrollState();
+				this.requireBond().updateScrollState();
 			}
 		};
 	}
@@ -65,7 +65,7 @@ export class ScrollableContainerAtom extends Atom<ScrollableBondBase> {
 	override onmount() {
 		let mounted = true;
 		queueMicrotask(() => {
-			if (mounted) this.bond.updateScrollState();
+			if (mounted) this.requireBond().updateScrollState();
 		});
 		return () => {
 			mounted = false;
@@ -89,7 +89,8 @@ export class ScrollableTrackAtom extends Atom<ScrollableBondBase> {
 	}
 
 	override get attrs() {
-		const canScroll = this.#axis === 'x' ? this.bond.canScrollX : this.bond.canScrollY;
+		const canScroll =
+			this.#axis === 'x' ? this.requireBond().canScrollX : this.requireBond().canScrollY;
 
 		return {
 			...super.attrs,
@@ -101,7 +102,7 @@ export class ScrollableTrackAtom extends Atom<ScrollableBondBase> {
 	override get handlers() {
 		return {
 			onclick: (e: MouseEvent) => {
-				this.bond.handleTrackClick(e, this.#axis);
+				this.requireBond().handleTrackClick(e, this.#axis);
 			}
 		};
 	}
@@ -118,8 +119,11 @@ export class ScrollableThumbAtom extends Atom<ScrollableBondBase> {
 
 	override get attrs() {
 		const position =
-			this.#axis === 'x' ? this.bond.getThumbXPosition() : this.bond.getThumbYPosition();
-		const size = this.#axis === 'x' ? this.bond.getThumbXSize() : this.bond.getThumbYSize();
+			this.#axis === 'x'
+				? this.requireBond().getThumbXPosition()
+				: this.requireBond().getThumbYPosition();
+		const size =
+			this.#axis === 'x' ? this.requireBond().getThumbXSize() : this.requireBond().getThumbYSize();
 
 		const styleProperty = this.#axis === 'x' ? 'left' : 'top';
 		const sizeProperty = this.#axis === 'x' ? 'width' : 'height';
@@ -134,7 +138,7 @@ export class ScrollableThumbAtom extends Atom<ScrollableBondBase> {
 	override get handlers() {
 		return {
 			onmousedown: (e: MouseEvent) => {
-				this.bond.handleThumbDrag(e, this.#axis);
+				this.requireBond().handleThumbDrag(e, this.#axis);
 			}
 		};
 	}
@@ -212,16 +216,16 @@ class ScrollableBondBase extends Bond<ScrollableBondProps> {
 		const container = this.elements.container;
 		if (!container) return;
 
-		this.state.props.scrollX = container.scrollLeft;
-		this.state.props.scrollY = container.scrollTop;
-		this.state.props.scrollWidth = container.scrollWidth;
-		this.state.props.scrollHeight = container.scrollHeight;
-		this.state.props.clientWidth = container.clientWidth;
-		this.state.props.clientHeight = container.clientHeight;
+		this.props.scrollX = container.scrollLeft;
+		this.props.scrollY = container.scrollTop;
+		this.props.scrollWidth = container.scrollWidth;
+		this.props.scrollHeight = container.scrollHeight;
+		this.props.clientWidth = container.clientWidth;
+		this.props.clientHeight = container.clientHeight;
 	}
 
 	getThumbXPosition(): number {
-		const { scrollX, clientWidth, scrollWidth } = this.state.props;
+		const { scrollX, clientWidth, scrollWidth } = this.props;
 		if (scrollWidth <= clientWidth) return 0;
 		const thumbSize = this.getThumbXSize();
 		const maxPosition = 100 - thumbSize;
@@ -230,7 +234,7 @@ class ScrollableBondBase extends Bond<ScrollableBondProps> {
 	}
 
 	getThumbYPosition(): number {
-		const { scrollY, clientHeight, scrollHeight } = this.state.props;
+		const { scrollY, clientHeight, scrollHeight } = this.props;
 		if (scrollHeight <= clientHeight) return 0;
 		const thumbSize = this.getThumbYSize();
 		const maxPosition = 100 - thumbSize;
@@ -239,24 +243,24 @@ class ScrollableBondBase extends Bond<ScrollableBondProps> {
 	}
 
 	getThumbXSize(): number {
-		const { clientWidth, scrollWidth } = this.state.props;
+		const { clientWidth, scrollWidth } = this.props;
 		if (scrollWidth <= clientWidth) return 100;
 		return (clientWidth / scrollWidth) * 100;
 	}
 
 	getThumbYSize(): number {
-		const { clientHeight, scrollHeight } = this.state.props;
+		const { clientHeight, scrollHeight } = this.props;
 		if (scrollHeight <= clientHeight) return 100;
 		return (clientHeight / scrollHeight) * 100;
 	}
 
 	get canScrollX(): boolean {
-		const { scrollWidth, clientWidth } = this.state.props;
+		const { scrollWidth, clientWidth } = this.props;
 		return scrollWidth > clientWidth;
 	}
 
 	get canScrollY(): boolean {
-		const { scrollHeight, clientHeight } = this.state.props;
+		const { scrollHeight, clientHeight } = this.props;
 		return scrollHeight > clientHeight;
 	}
 
@@ -281,7 +285,7 @@ class ScrollableBondBase extends Bond<ScrollableBondProps> {
 
 	handleThumbDrag(e: MouseEvent, axis: 'x' | 'y') {
 		e.preventDefault();
-		this.state.props.isScrolling = true;
+		this.props.isScrolling = true;
 
 		const container = this.elements.container;
 		const track = axis === 'x' ? this.elements.trackX : this.elements.trackY;
@@ -308,7 +312,7 @@ class ScrollableBondBase extends Bond<ScrollableBondProps> {
 		};
 
 		const onMouseUp = () => {
-			this.state.props.isScrolling = false;
+			this.props.isScrolling = false;
 			document.removeEventListener('mousemove', onMouseMove);
 			document.removeEventListener('mouseup', onMouseUp);
 		};
@@ -324,20 +328,7 @@ class ScrollableBondBase extends Bond<ScrollableBondProps> {
 // Bond spec and constructor facade
 // -----------------------------------------------------------------------------
 
-const ScrollableBondImpl = defineBond<
-	{
-		root: typeof ScrollableRootAtom;
-		container: typeof ScrollableContainerAtom;
-		content: typeof ScrollableContentAtom;
-		trackX: typeof ScrollableTrackXAtom;
-		trackY: typeof ScrollableTrackYAtom;
-		thumbX: typeof ScrollableThumbXAtom;
-		thumbY: typeof ScrollableThumbYAtom;
-	},
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	any,
-	typeof ScrollableBondBase
->({
+export const ScrollableBond = defineBond({
 	name: 'scrollable',
 	base: ScrollableBondBase,
 	atoms: {
@@ -351,16 +342,4 @@ const ScrollableBondImpl = defineBond<
 	}
 });
 
-export type ScrollableBond = BondOf<typeof ScrollableBondImpl>;
-
-interface ScrollableBondConstructor {
-	new (props: ScrollableBondProps): ScrollableBond;
-	readonly CONTEXT_KEY: string;
-	readonly spec: (typeof ScrollableBondImpl)['spec'];
-	get(): ScrollableBond | undefined;
-	getOrThrow(message?: string): ScrollableBond;
-	set(bond: ScrollableBond): ScrollableBond;
-	create(props: ScrollableBondProps): ScrollableBond;
-}
-
-export const ScrollableBond = ScrollableBondImpl as unknown as ScrollableBondConstructor;
+export type ScrollableBond = BondOf<typeof ScrollableBond>;

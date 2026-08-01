@@ -1,8 +1,8 @@
 import type { Snippet } from 'svelte';
-import type { Factory } from '$svelte-atoms/core/types';
+import type { Factory, StateChangeCallback } from '$ixirjs/ui/types';
 import type { SidebarBond } from './bond.svelte';
-import type { Base, HtmlAtomProps, SnippetProps } from '../atom';
-import type { ZIndexInput } from '../portal';
+import type { Base, HtmlAtomProps, SnippetProps } from '$ixirjs/ui/components/atom';
+import type { PortalBond, ZIndexInput } from '$ixirjs/ui/components/portal';
 
 // Sidebar Snippet Props
 
@@ -12,22 +12,22 @@ export interface SidebarSnippetProps extends SnippetProps {
 
 export type SidebarChildren = Snippet<[SidebarSnippetProps]>;
 
-export type SidebarRootProps<
-	E extends keyof HTMLElementTagNameMap = 'div',
-	B extends Base = Base
-> = HtmlAtomProps<E, B, SidebarChildren> & {
+export type SidebarRootProps = {
+	class?: string;
 	'z-index'?: ZIndexInput;
 	open?: boolean;
 	disabled?: boolean;
 	width?: string | number;
 	/**
-	 * Render as a teleported overlay carrying `ZLayer('modal')` instead of an in-flow rail.
+	 * Render as a portal-owned modal surface instead of an in-flow rail.
 	 * Structural — read once at mount, not toggled at runtime.
 	 */
 	overlay?: boolean;
-	/** Teleport target when `overlay` is set (defaults to the root portal `'root.l0'`). */
-	portal?: string;
+	/** Portal target when `overlay` is set; defaults through explicit → ambient → root. */
+	portal?: string | PortalBond;
 	factory?: Factory<SidebarBond>;
+	onopenchange?: StateChangeCallback<boolean, SidebarBond> | undefined;
+	children?: SidebarChildren;
 };
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type

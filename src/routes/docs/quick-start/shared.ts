@@ -8,8 +8,14 @@ export const metadata = {
 	requirements: [
 		{
 			requirement: 'Svelte 5',
-			version: '^5.0.0',
-			description: 'Svelte Atoms is built for Svelte 5 and uses runes extensively'
+			version: '^5.46.4',
+			description: 'Ixir UI uses Svelte 5 runes and snippets'
+		},
+		{
+			requirement: 'Tailwind CSS',
+			version: '^4.0.0',
+			description:
+				'The documented styling setup uses Tailwind v4 CSS-first configuration and @source'
 		},
 		{
 			requirement: 'Node.js',
@@ -25,24 +31,19 @@ export const metadata = {
 	installationSteps: [
 		{
 			step: 1,
-			title: 'Install Package',
+			title: 'Import foundation styles',
 			description:
-				'Install @svelte-atoms/core using your preferred package manager (npm, pnpm, yarn, or bun)'
+				'Import the public stylesheet before your application stylesheet in the root layout'
 		},
 		{
 			step: 2,
-			title: 'Import Internal Styles',
-			description: 'Import the internal style file in your root layout (src/routes/+layout.svelte)'
+			title: 'Configure Tailwind v4',
+			description: 'Use @source in app.css so Tailwind scans Ixir UI utility classes'
 		},
 		{
 			step: 3,
-			title: 'Setup App CSS',
-			description: 'Configure Tailwind CSS and CSS variables in your app.css file'
-		},
-		{
-			step: 4,
-			title: 'Configure Preset',
-			description: 'Set up global component presets for consistent theming'
+			title: 'Configure presets',
+			description: 'Install the default preset and add your application presentation entries'
 		}
 	],
 	nextSteps: [

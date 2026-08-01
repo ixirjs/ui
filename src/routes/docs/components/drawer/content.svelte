@@ -1,6 +1,12 @@
 <script lang="ts">
 	import { createExampleLoader } from '$docs/utils/example-loader';
-	import { DocComponentPage, DocExample, DocCode, DocPropsTabs } from '$docs/components';
+	import {
+		DocComponentPage,
+		DocExample,
+		DocCode,
+		DocPropsTabs,
+		DocSection
+	} from '$docs/components';
 	import type { PropsSection } from '$docs/components';
 	import {
 		slideoverRootProps,
@@ -62,6 +68,14 @@
 			description="Left-side drawer used as a mobile nav menu."
 			{...ex('./examples/navigation.svelte')}
 		/>
+	{/snippet}
+
+	{#snippet extra()}
+		<DocSection title="Portal containment">
+			Drawer content resolves an explicit <code>portal</code>, then an ambient portal, then
+			<code>root.l0</code>. The chosen portal supplies the containment and stacking boundary for the
+			drawer and nested overlays.
+		</DocSection>
 	{/snippet}
 
 	{#snippet apiReference()}

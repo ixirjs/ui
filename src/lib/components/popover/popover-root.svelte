@@ -1,11 +1,12 @@
 <script lang="ts">
 	import { PopoverBond, type PopoverBondProps } from './bond.svelte';
-	import { OverlayBond } from '$svelte-atoms/core/components/portal/host';
-	import { useCapabilities } from '$svelte-atoms/core/shared/capability/use.svelte';
-	import { bindBond } from '$svelte-atoms/core/shared/bond/bind.svelte';
+	import { OverlayBond } from '$ixirjs/ui/components/overlay';
+	import { controlledProp, useRoot } from '$ixirjs/ui/shared';
 	import type { PopoverRootProps } from './types';
 
 	const owner = OverlayBond.get() ?? null;
+
+	const ID = $props.id();
 
 	let {
 		open = $bindable(false),
@@ -15,42 +16,46 @@
 		offset = 2,
 		position = 'absolute',
 		portal = undefined,
+		presets = undefined,
 		factory = defaultFactory,
-		children = undefined,
-		...restProps
+		onopenchange = undefined,
+		children = undefined
 	}: PopoverRootProps = $props();
 
 	function defaultFactory(props: PopoverBondProps): PopoverBond {
 		return PopoverBond.create(props);
 	}
 
-	let openState = $derived(open);
-
-	const binding = bindBond<PopoverBond>((props) => factory(props), {
-		open: [
-			() => openState && (owner?.isOpen ?? true),
-			(v) => {
-				openState = v;
-				open = openState;
-			}
-		],
-		disabled: () => disabled,
-		placement: () => placement,
-		offset: () => offset,
-		position: () => position,
-		placements: () => placements ?? [],
-		portal: () => portal,
-		// Vestigial: this element-less context root has no typed channel to forward restProps
-		// (its rest type doesn't overlap bond state props). Kept to consume restProps; see note.
-		rest: () => restProps
+	const openProp = controlledProp<boolean, PopoverBond>({
+		get: () => open,
+		set: (value) => (open = value),
+		onchange: (value, context) => onopenchange?.(value, context),
+		context: (bond) => bond.takeOpenChangeContext()
 	});
-	const bond = binding.bond.share();
 
-	// Activate the bond's capability setups: the focus capability captures activeElement on open
-	// and restores it on close (so every overlay rendering via this Root gets it automatically),
-	// and the escape capability enrolls this overlay in the topmost-open-overlay stack so only
-	// the frontmost surface acts on Escape.
-	useCapabilities(bond);
+	const root = useRoot(
+		PopoverBond,
+		{
+			// Composed, not the controlled prop itself: an owning overlay gates this popover's open
+			// state. Because the spec entry is a derived tuple rather than the `ControlledProp`, it
+			// carries no adoption of its own and this root declares `connect` explicitly.
+			open: [() => openProp.value && (owner?.isOpen ?? true), openProp[1]],
+			disabled: () => disabled,
+			placement: () => placement,
+			offset: () => offset,
+			position: () => position,
+			placements: () => placements ?? [],
+			portal: () => portal,
+			presets: () => presets
+		},
+		{
+			atom: false,
+			id: () => ID,
+			factory: (props) => factory(props),
+			connect: (bond) => void openProp.connect(bond)
+		}
+	);
+	const bond = root.bond;
 
 	export function getBond() {
 		return bond;

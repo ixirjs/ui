@@ -1,5 +1,5 @@
 const presetCode = `
-import { setPreset } from '@svelte-atoms/core';
+import { setPreset } from '@ixirjs/ui/preset';
 
 const preset = setPreset({
   drawer: () => ({
@@ -106,8 +106,8 @@ export const metadata = {
 		'Side panel that slides in from screen edge, perfect for navigation menus and contextual content.',
 	componentType: 'compound' as const,
 	status: 'stable' as const,
-	packageName: '@svelte-atoms/core',
-	importCode: "import { Drawer } from '@svelte-atoms/core';",
+	packageName: '@ixirjs/ui',
+	importCode: "import { Drawer } from '@ixirjs/ui';",
 	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Drawer' }],
 	useCases,
 	componentsSummary,

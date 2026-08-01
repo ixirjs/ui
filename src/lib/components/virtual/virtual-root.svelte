@@ -1,6 +1,5 @@
 <script lang="ts" generics="T">
 	import type { VirtualListViewportProps } from './types';
-	import { throttle } from 'es-toolkit';
 	import { onMount, tick, untrack } from 'svelte';
 	import { twMerge } from 'tailwind-merge';
 
@@ -64,6 +63,27 @@
 			scrollToItem(scrollToIndex);
 		}
 	});
+
+	function throttle(callback: () => void | Promise<void>, wait: number) {
+		let last = 0;
+		let timer: ReturnType<typeof setTimeout> | undefined;
+		return () => {
+			const remaining = wait - (performance.now() - last);
+			if (remaining <= 0) {
+				if (timer) clearTimeout(timer);
+				timer = undefined;
+				last = performance.now();
+				void callback();
+				return;
+			}
+			if (timer) return;
+			timer = setTimeout(() => {
+				timer = undefined;
+				last = performance.now();
+				void callback();
+			}, remaining);
+		};
+	}
 
 	const handleScroll = throttle(async () => {
 		if (!viewportElement) return;

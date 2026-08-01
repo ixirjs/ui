@@ -4,8 +4,14 @@ import {
 	createSelection,
 	selectionCapability,
 	type SelectionBacking,
-	type SelectionModel
+	type SelectionModel,
+	type SelectionProjectionOptions
 } from './selection.svelte';
+
+// Non-string selections cannot reinterpret the string item-role context as their domain value.
+// @ts-expect-error a number selection must supply itemValue.
+const _missingItemMapper: SelectionProjectionOptions<number> = {};
+void _missingItemMapper;
 
 // Reactive backing store standing in for a bond's bindable props.
 // `values` is the array store; `mode` flips single/multiple.
@@ -50,6 +56,29 @@ describe('SelectionModel<T> — multiple mode (accordion / select / datagrid)', 
 		const { backing, read } = makeBacking<string>(['a']);
 		createSelection(backing).select(['b', 'c', 'a']);
 		expect(read()).toEqual(['a', 'b', 'c']);
+	});
+
+	it('preserves Set membership semantics for signed zero', () => {
+		const { backing, read } = makeBacking<number>([]);
+		const selection = createSelection(backing);
+		selection.select(0);
+		selection.select(-0);
+		expect(read()).toHaveLength(1);
+		expect(selection.isSelected(-0)).toBe(true);
+	});
+
+	it('supports array-valued items when the backing supplies a discriminator', () => {
+		const { backing, read } = makeBacking<string[]>([]);
+		backing.isValue = Array.isArray;
+		backing.equals = (left, right) =>
+			left.length === right.length && left.every((item, index) => item === right[index]);
+		const selection = createSelection(backing);
+		const value = ['a', 'b'];
+
+		selection.select(value);
+		expect(read()).toEqual([value]);
+		selection.deselect(value);
+		expect(read()).toEqual([]);
 	});
 
 	it('deselect removes one or many', () => {
@@ -144,6 +173,23 @@ describe('SelectionModel<T> — reactivity', () => {
 		expect(count).toBeGreaterThan(initial);
 		dispose();
 	});
+
+	it('selectedness tracks in-place mutations to a reactive backing array', () => {
+		const { backing, read } = makeBacking<string>([]);
+		const sel = createSelection(backing);
+		let selected = false;
+		const dispose = $effect.root(() => {
+			$effect(() => {
+				selected = sel.isSelected('b');
+			});
+		});
+		flushSync();
+
+		read().push('b');
+		flushSync();
+		expect(selected).toBe(true);
+		dispose();
+	});
 });
 
 describe('SelectionModel<T> — iterable protocol (#4)', () => {
@@ -171,8 +217,6 @@ describe('selectionCapability', () => {
 	it('is annotated as a Layer 1 projection over the selection model surface', () => {
 		const cap = selectionCapability(createSelection(makeBacking<string>().backing));
 		expect(cap.meta).toMatchObject({
-			layer: 1,
-			kind: 'projection',
 			projects: ['item', 'container']
 		});
 	});

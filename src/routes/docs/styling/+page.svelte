@@ -17,7 +17,7 @@
 <!-- With opacity modifier -->
 <div class="bg-foreground/10">Subtle background</div>`;
 
-	const cnExample = `import { cn } from '@svelte-atoms/core/utils';
+	const cnExample = `import { cn } from '@ixirjs/ui/utils';
 
 // Resolves Tailwind conflicts — last one wins
 cn('px-2 py-1', 'px-4');
@@ -78,8 +78,8 @@ ${'<'}Button
 ${'<'}/Button>`;
 
 	const variantBasicExample = `${'<'}script lang="ts">
-  import { defineVariants } from '@svelte-atoms/core/utils';
-  import { HtmlAtom } from '@svelte-atoms/core';
+  import { defineVariants } from '@ixirjs/ui/utils';
+  import { HtmlAtom } from '@ixirjs/ui';
 
   const buttonVariants = defineVariants({
     class: 'inline-flex items-center justify-center rounded-md font-medium',
@@ -136,9 +136,9 @@ const accordionVariants = defineVariants((bond) => ({
   variants: {
     state: {
       open: {
-        class: bond?.state?.isOpen ? 'bg-primary/5 border-primary' : 'bg-card',
-        'aria-expanded': bond?.state?.isOpen,
-        'data-state': bond?.state?.isOpen ? 'open' : 'closed'
+        class: bond?.isOpen ? 'bg-primary/5 border-primary' : 'bg-card',
+        'aria-expanded': bond?.isOpen,
+        'data-state': bond?.isOpen ? 'open' : 'closed'
       }
     }
   }
@@ -164,21 +164,9 @@ ${'<'}div style="padding: 16px; background: blue;">
   Use class="p-4 bg-blue-500" instead
 ${'<'}/div>`;
 
-	const presetPlaceholderExample = `<!-- In your component -->
-<HtmlAtom
-  preset="button"
-  class={[
-    'component-defaults',
-    '$preset',  // Replaced with preset classes at this exact position
-    klass       // User classes come last and override preset
-  ]}
-/>
+	const presetPlaceholderExample = `<!-- Preset classes are inserted automatically -->
+<HtmlAtom preset="button" class={['component-classes', klass]} />
 
-<!-- Without $preset — preset is prepended automatically -->
-<HtmlAtom
-  preset="button"
-  class={['component-classes', klass]}
-/>
 <!-- Result order: preset-classes component-classes user-classes -->`;
 
 	const classPropFormats = [
@@ -560,20 +548,18 @@ ${'<'}/div>`;
 	</div>
 </Section.Root>
 
-<!-- Preset Placeholder -->
+<!-- Preset class order -->
 <Section.Root>
 	<Section.Header>
-		<Section.Title>The $preset placeholder</Section.Title>
-		<Section.Subtitle>
-			Control exactly where preset classes are inserted relative to your component's own classes.
-		</Section.Subtitle>
+		<Section.Title>Preset class order</Section.Title>
+		<Section.Subtitle
+			>Preset classes are inserted automatically; no sentinel is public.</Section.Subtitle
+		>
 	</Section.Header>
 
 	<p class="text-muted-foreground mb-6 text-sm leading-relaxed">
-		Place the string <code
-			class="bg-primary/10 text-primary rounded px-1.5 py-0.5 font-mono text-xs">'$preset'</code
-		> anywhere in a class array and it is replaced by resolved preset classes. Without it, preset classes
-		are prepended automatically, which means your component defaults come after the preset baseline.
+		Preset classes form the baseline. Component defaults and consumer classes follow, so local
+		customization wins Tailwind conflicts.
 	</p>
 
 	<div class="overflow-hidden rounded-lg">

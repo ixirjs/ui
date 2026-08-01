@@ -1,14 +1,17 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { bindBond } from '$svelte-atoms/core/shared';
-	import { mergePresetProps, HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
+	import { useRoot } from '$ixirjs/ui/shared';
+	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
 	import { CardBond } from './bond.svelte';
 	import type { CardRootProps } from './types';
 	import './card.css';
+
+	const ID = $props.id();
 
 	let {
 		class: klass = '',
 		preset = undefined,
 		disabled = false,
+		clickable = undefined,
 		factory = (props) => new CardBond(props),
 		children = undefined,
 		onclick = undefined,
@@ -16,19 +19,22 @@
 		...restProps
 	}: CardRootProps<E, B> = $props();
 
-	const binding = bindBond<CardBond>((props) => factory(props), {
-		disabled: [
-			() => disabled,
-			(v) => {
-				disabled = v ?? false;
-			}
-		]
-	});
-	const bond = binding.bond.share();
+	const root = useRoot(
+		CardBond,
+		{
+			disabled: [
+				() => disabled,
+				(v) => {
+					disabled = v ?? false;
+				}
+			],
+			clickable: () => clickable ?? Boolean(onclick)
+		},
+		{ id: () => ID, preset: () => preset, factory: (props) => factory(props) }
+	);
+	const bond = root.bond;
 
 	const disabledStyles = $derived(disabled ? 'opacity-50 cursor-not-allowed' : '');
-
-	const rootProps = $derived(mergePresetProps(preset, 'card', { ...bond?.root(), ...restProps }));
 
 	function handleClick(event: MouseEvent) {
 		if (disabled) return;
@@ -56,10 +62,10 @@
 		'$preset',
 		klass
 	]}
-	{bond}
 	onclick={handleClick}
 	onkeydown={handleKeydown}
-	{...rootProps}
+	{...restProps}
+	part={root}
 >
 	{@render children?.({ card: bond })}
 </HtmlAtom>

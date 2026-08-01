@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { flushSync } from 'svelte';
-import { Bond, BondState, Atom, bondContextKey, type BondStateProps } from '../../bond';
+import { Bond, Atom, bondContextKey, type BondStateProps } from '$ixirjs/ui/shared/bond';
 import { createDisclosure, disclosureCapability, DISCLOSURE } from './disclosure.svelte';
 import {
 	triggerContentLink,
@@ -26,7 +26,7 @@ import {
 	LIVE_REGION
 } from './relationship.svelte';
 
-class TestState extends BondState<BondStateProps> {
+class TestState {
 	open = $state(false);
 	selected = $state(false);
 	invalid = $state(false);
@@ -35,25 +35,21 @@ class TestState extends BondState<BondStateProps> {
 		get: () => this.open,
 		set: (v) => (this.open = v)
 	});
-	constructor() {
-		super({});
-	}
 }
 
 class TestBond extends Bond<BondStateProps> {
 	static CONTEXT_KEY = bondContextKey('test-relationship');
-	constructor(state: TestState) {
-		super(state, 'test');
-	}
+	readonly model: TestState;
 
-	override get state(): TestState {
-		return super.state as TestState;
+	constructor(readonly state: TestState) {
+		super({}, 'test');
+		this.model = state;
 	}
 
 	// Register a TestAtom under `key` playing `role` via the production registry path.
-	addAtom(key: string, role: string, ctx?: unknown) {
+	addAtom(key: string, role: string, ctx?: unknown, cardinality: 'single' | 'many' = 'single') {
 		const atom = new TestAtom(this, key).role(role, ctx);
-		this.register(atom, { key });
+		this.register(atom, { key, cardinality });
 		return atom;
 	}
 }
@@ -66,27 +62,23 @@ class TestAtom extends Atom<TestBond> {
 
 function makeBond() {
 	const bond = new TestBond(new TestState());
-	bond.state.capability(disclosureCapability(bond.state.disclosure));
-	bond.state.capability(triggerContentLink(bond.state.disclosure, { contentRole: 'region' }));
+	bond.capability(disclosureCapability(bond.model.disclosure));
+	bond.capability(triggerContentLink({ contentRole: 'region' }));
 	return bond;
 }
 
 describe('triggerContentLink — reusable trigger ↔ content a11y linkage', () => {
 	it('is annotated as a Layer 1 relationship between trigger and content roles', () => {
-		const bond = new TestBond(new TestState());
-		const cap = triggerContentLink(bond.state.disclosure);
+		const cap = triggerContentLink();
 		expect(cap.meta).toMatchObject({
-			layer: 1,
-			kind: 'relationship',
-			projects: ['trigger', 'content'],
-			requiresRoles: ['trigger', 'content']
+			projects: ['trigger', 'content']
 		});
 		expect(cap.slot).toBe(TRIGGER_CONTENT);
 		expect(cap.requires).toEqual([DISCLOSURE]);
 		expect(cap.surface).toBeUndefined();
 	});
 
-	it('cross-references ids both ways via atomByRole', () => {
+	it('cross-references ids both ways via nodeByRole', () => {
 		const bond = makeBond();
 		const trigger = bond.addAtom('trigger-btn', 'trigger');
 		const content = bond.addAtom('panel', 'content');
@@ -97,13 +89,25 @@ describe('triggerContentLink — reusable trigger ↔ content a11y linkage', () 
 		expect(content.spread.id).not.toBe(trigger.spread.id); // distinct atoms
 	});
 
+	it('projects data-state onto both trigger and content — the CSS-animation hook', () => {
+		const bond = makeBond();
+		const trigger = bond.addAtom('trigger-btn', 'trigger');
+		const content = bond.addAtom('panel', 'content');
+
+		expect(trigger.spread['data-state']).toBe('closed');
+		expect(content.spread['data-state']).toBe('closed');
+		bond.model.disclosure.open();
+		expect(trigger.spread['data-state']).toBe('open');
+		expect(content.spread['data-state']).toBe('open');
+	});
+
 	it('projects aria-expanded from the disclosure, reactively', () => {
 		const bond = makeBond();
 		const trigger = bond.addAtom('trigger-btn', 'trigger');
 		bond.addAtom('panel', 'content');
 
 		expect(trigger.spread['aria-expanded']).toBe(false);
-		bond.state.disclosure.open();
+		bond.model.disclosure.open();
 		expect(trigger.spread['aria-expanded']).toBe(true);
 
 		// reactive: a $derived over the spread recomputes on toggle
@@ -114,7 +118,7 @@ describe('triggerContentLink — reusable trigger ↔ content a11y linkage', () 
 			});
 		});
 		flushSync();
-		bond.state.disclosure.close();
+		bond.model.disclosure.close();
 		flushSync();
 		expect(expanded).toBe(false);
 		dispose();
@@ -122,10 +126,8 @@ describe('triggerContentLink — reusable trigger ↔ content a11y linkage', () 
 
 	it('applies options (contentRole, haspopup)', () => {
 		const bond = new TestBond(new TestState());
-		bond.state.capability(disclosureCapability(bond.state.disclosure));
-		bond.state.capability(
-			triggerContentLink(bond.state.disclosure, { haspopup: 'menu', contentRole: 'region' })
-		);
+		bond.capability(disclosureCapability(bond.model.disclosure));
+		bond.capability(triggerContentLink({ haspopup: 'menu', contentRole: 'region' }));
 		const trigger = bond.addAtom('trigger-btn', 'trigger');
 		const content = bond.addAtom('panel', 'content');
 		expect(trigger.spread['aria-haspopup']).toBe('menu');
@@ -147,17 +149,14 @@ describe('tabPanelLink — tab ↔ tabpanel linkage', () => {
 		const cap = tabPanelLink();
 		expect(cap.slot).toBe(TAB_PANEL);
 		expect(cap.meta).toMatchObject({
-			layer: 1,
-			kind: 'relationship',
-			projects: ['tab', 'tabpanel'],
-			requiresRoles: ['tab', 'tabpanel']
+			projects: ['tab', 'tabpanel']
 		});
 	});
 
 	it('cross-references ids and reflects active panel state', () => {
 		const state = new TestState();
 		const bond = new TestBond(state);
-		bond.state.capability(tabPanelLink({ selected: (bond) => (bond.state as TestState).selected }));
+		bond.capability(tabPanelLink({ selected: () => state.selected }));
 		const tab = bond.addAtom('tab', 'tab');
 		const panel = bond.addAtom('panel', 'tabpanel');
 
@@ -181,19 +180,14 @@ describe('errorMessageLink — error message ↔ control linkage', () => {
 		const cap = errorMessageLink();
 		expect(cap.slot).toBe(ERROR_MESSAGE);
 		expect(cap.meta).toMatchObject({
-			layer: 1,
-			kind: 'relationship',
-			projects: ['control', 'error'],
-			requiresRoles: ['control', 'error']
+			projects: ['control', 'error']
 		});
 	});
 
 	it('emits errormessage only while invalid and can mark the message as live', () => {
 		const state = new TestState();
 		const bond = new TestBond(state);
-		bond.state.capability(
-			errorMessageLink({ invalid: (bond) => (bond.state as TestState).invalid, live: true })
-		);
+		bond.capability(errorMessageLink({ invalid: () => state.invalid, live: true }));
 		const control = bond.addAtom('ctl', 'control');
 		const error = bond.addAtom('err', 'error');
 
@@ -212,16 +206,13 @@ describe('rowColumnCellLink — row/column/cell grid linkage', () => {
 		const cap = rowColumnCellLink();
 		expect(cap.slot).toBe(ROW_COLUMN_CELL);
 		expect(cap.meta).toMatchObject({
-			layer: 1,
-			kind: 'relationship',
-			projects: ['row', 'column', 'cell'],
-			requiresRoles: ['row', 'column', 'cell']
+			projects: ['row', 'column', 'cell']
 		});
 	});
 
 	it('labels a cell from row and column headers', () => {
 		const bond = new TestBond(new TestState());
-		bond.state.capability(rowColumnCellLink());
+		bond.capability(rowColumnCellLink());
 		const row = bond.addAtom('row', 'row');
 		const column = bond.addAtom('column', 'column');
 		const cell = bond.addAtom('cell', 'cell');
@@ -229,29 +220,26 @@ describe('rowColumnCellLink — row/column/cell grid linkage', () => {
 		expect(row.spread.role).toBe('row');
 		expect(column.spread.role).toBe('columnheader');
 		expect(cell.spread.role).toBe('gridcell');
-		expect(cell.spread.headers).toBe(`${row.spread.id} ${column.spread.id}`);
+		expect(cell.spread['aria-labelledby']).toBe(`${row.spread.id} ${column.spread.id}`);
+		expect(cell.spread.headers).toBeUndefined();
 	});
 });
 
 describe('treeItemGroupLink — treeitem ↔ child group linkage', () => {
 	it('is annotated as a Layer 1 relationship between treeitem and treegroup roles', () => {
-		const state = new TestState();
-		const cap = treeItemGroupLink(state.disclosure);
+		const cap = treeItemGroupLink();
 		expect(cap.slot).toBe(TREE_ITEM_GROUP);
 		expect(cap.requires).toEqual([DISCLOSURE]);
 		expect(cap.meta).toMatchObject({
-			layer: 1,
-			kind: 'relationship',
-			projects: ['treeitem', 'treegroup'],
-			requiresRoles: ['treeitem', 'treegroup']
+			projects: ['treeitem', 'treegroup']
 		});
 	});
 
 	it('cross-references ids and reflects disclosure expansion', () => {
 		const state = new TestState();
 		const bond = new TestBond(state);
-		bond.state.capability(disclosureCapability(state.disclosure));
-		bond.state.capability(treeItemGroupLink(state.disclosure));
+		bond.capability(disclosureCapability(state.disclosure));
+		bond.capability(treeItemGroupLink());
 		const item = bond.addAtom('item', 'treeitem');
 		const group = bond.addAtom('group', 'treegroup');
 
@@ -271,21 +259,20 @@ describe('activeDescendantLink — control/container → active item linkage', (
 		const cap = activeDescendantLink();
 		expect(cap.slot).toBe(ACTIVE_DESCENDANT);
 		expect(cap.meta).toMatchObject({
-			layer: 1,
-			kind: 'relationship',
-			projects: ['control', 'container', 'item'],
-			requiresRoles: ['control', 'container', 'item']
+			projects: ['control', 'container', 'item']
 		});
 	});
 
 	it('points control and container roles at the active item id', () => {
 		const state = new TestState();
 		const bond = new TestBond(state);
-		bond.state.capability(activeDescendantLink({ activeId: () => state.activeId }));
+		bond.capability(activeDescendantLink({ activeId: () => state.activeId }));
 		const control = bond.addAtom('control', 'control');
 		const container = bond.addAtom('container', 'container');
 		const item = bond.addAtom('item', 'item', 'item-a');
 
+		expect(control.spread['aria-activedescendant']).toBeUndefined();
+		expect(container.spread['aria-activedescendant']).toBeUndefined();
 		state.activeId = item.spread.id as string;
 		expect(control.spread['aria-activedescendant']).toBe(item.spread.id);
 		expect(container.spread['aria-activedescendant']).toBe(item.spread.id);
@@ -297,14 +284,12 @@ describe('menuSubmenuRelationship — menuitem ↔ submenu linkage', () => {
 		const state = new TestState();
 		const bond = new TestBond(state);
 		const cap = menuSubmenuRelationship({ expanded: () => state.open });
-		bond.state.capability(cap);
+		bond.capability(cap);
 		const item = bond.addAtom('item', 'menuitem');
 		const submenu = bond.addAtom('submenu', 'submenu');
 
 		expect(cap.slot).toBe(MENU_SUBMENU);
 		expect(cap.meta).toMatchObject({
-			layer: 1,
-			kind: 'relationship',
 			projects: ['menuitem', 'submenu']
 		});
 		expect(item.spread.role).toBe('menuitem');
@@ -327,19 +312,27 @@ describe('optionCollectionRelationship — option ↔ collection linkage', () =>
 			optionRole: 'radio',
 			optionIds: () => ['one', 'two']
 		});
-		bond.state.capability(cap);
+		bond.capability(cap);
 		const collection = bond.addAtom('collection', 'collection');
 		const option = bond.addAtom('option', 'option');
 
 		expect(cap.slot).toBe(OPTION_COLLECTION);
 		expect(cap.meta).toMatchObject({
-			layer: 1,
-			kind: 'relationship',
 			projects: ['collection', 'option']
 		});
 		expect(collection.spread.role).toBe('radiogroup');
 		expect(collection.spread['aria-owns']).toBe('one two');
 		expect(option.spread.role).toBe('radio');
+	});
+
+	it('owns every registered option when explicit ids are omitted', () => {
+		const bond = new TestBond(new TestState());
+		bond.capability(optionCollectionRelationship());
+		const collection = bond.addAtom('collection', 'collection');
+		const first = bond.addAtom('option', 'option', undefined, 'many');
+		const second = bond.addAtom('option', 'option', undefined, 'many');
+
+		expect(collection.spread['aria-owns']).toBe(`${first.spread.id} ${second.spread.id}`);
 	});
 });
 
@@ -347,7 +340,7 @@ describe('headingSectionRelationship — heading/description → section linkage
 	it('labels section and surface roles from heading and description ids', () => {
 		const bond = new TestBond(new TestState());
 		const cap = headingSectionRelationship({ targetRole: 'region' });
-		bond.state.capability(cap);
+		bond.capability(cap);
 		const heading = bond.addAtom('heading', 'heading');
 		const description = bond.addAtom('description', 'description');
 		const section = bond.addAtom('section', 'section');
@@ -355,8 +348,6 @@ describe('headingSectionRelationship — heading/description → section linkage
 
 		expect(cap.slot).toBe(HEADING_SECTION);
 		expect(cap.meta).toMatchObject({
-			layer: 1,
-			kind: 'relationship',
 			projects: ['section', 'surface', 'heading', 'description']
 		});
 		expect(section.spread.role).toBe('region');
@@ -370,7 +361,7 @@ describe('liveRegionRelationship — labelled live region linkage', () => {
 	it('labels a live region and configures announcement attrs', () => {
 		const bond = new TestBond(new TestState());
 		const cap = liveRegionRelationship({ politeness: 'assertive', relevant: 'additions text' });
-		bond.state.capability(cap);
+		bond.capability(cap);
 		const title = bond.addAtom('title', 'title');
 		const description = bond.addAtom('description', 'description');
 		const live = bond.addAtom('live', 'live');
@@ -378,8 +369,6 @@ describe('liveRegionRelationship — labelled live region linkage', () => {
 
 		expect(cap.slot).toBe(LIVE_REGION);
 		expect(cap.meta).toMatchObject({
-			layer: 1,
-			kind: 'relationship',
 			projects: ['live', 'title', 'description', 'content']
 		});
 		expect(live.spread.role).toBe('status');
@@ -394,16 +383,13 @@ describe('liveRegionRelationship — labelled live region linkage', () => {
 describe('labelledControl — label/description → control (field pattern)', () => {
 	function fieldBond(opts = {}) {
 		const bond = new TestBond(new TestState());
-		bond.state.capability(labelledControl(opts));
+		bond.capability(labelledControl(opts));
 		return bond;
 	}
 
 	it('is annotated as a Layer 1 relationship for control labelling', () => {
 		expect(labelledControl().meta).toMatchObject({
-			layer: 1,
-			kind: 'relationship',
-			projects: ['control', 'description'],
-			requiresRoles: ['control', 'label']
+			projects: ['control', 'label', 'description']
 		});
 		expect(labelledControl({ nativeFor: true }).meta).toMatchObject({
 			projects: ['control', 'label', 'description']

@@ -1,5 +1,5 @@
 const presetCode = `
-import { setPreset } from '@svelte-atoms/core';
+import { setPreset } from '@ixirjs/ui/preset';
 
 const preset = setPreset({
   stepper: () => ({
@@ -111,8 +111,8 @@ export const metadata = {
 		'Multi-step workflow component with linear/free navigation and animated transitions.',
 	componentType: 'compound' as const,
 	status: 'stable' as const,
-	packageName: '@svelte-atoms/core',
-	importCode: "import { Stepper } from '@svelte-atoms/core';",
+	packageName: '@ixirjs/ui',
+	importCode: "import { Stepper } from '@ixirjs/ui';",
 	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Stepper' }],
 	useCases,
 	componentsSummary,

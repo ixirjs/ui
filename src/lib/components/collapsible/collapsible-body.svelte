@@ -1,34 +1,26 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { mergeAtomProps, HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
-	import { createAtomInstance } from '$svelte-atoms/core/shared/bond';
-	import { CollapsibleBodyAtom, CollapsibleBond } from './bond.svelte';
-	import { animateCollapsibleBody } from './motion.svelte';
+	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import { usePart } from '@ixirjs/ui/shared';
+	import { CollapsibleBond } from './bond.svelte';
+	import { attachCollapsibleBodyMotion } from './motion.svelte';
 	import type { CollapsibleBodyProps } from './types';
-
-	const bond = CollapsibleBond.getOrThrow(
-		'<Collapsible.Body /> must be used within a <Collapsible.Root />'
-	);
 
 	let {
 		class: klass = '',
 		preset = undefined,
 		children = undefined,
-		fallback = {
-			animate: animateCollapsibleBody(),
-			initial: animateCollapsibleBody({ duration: 0 })
-		},
 		...restProps
 	}: CollapsibleBodyProps<E, B> = $props();
 
-	const atom = createAtomInstance<CollapsibleBodyAtom, CollapsibleBond>('body', {
-		bond,
-		required: true,
-		factory: (owner) => new CollapsibleBodyAtom(owner as CollapsibleBond).role('content')
-	});
+	// An attachment rather than a `defaults` motion phase: identical behavior, but it keeps this
+	// part on HtmlAtom's native renderer instead of the HtmlElement adapter. See the motion module.
+	const motion = attachCollapsibleBodyMotion();
 
-	const bodyProps = $derived(mergeAtomProps(atom, preset, restProps));
+	const part = usePart(CollapsibleBond, 'body', () => restProps, {
+		preset: () => preset
+	});
 </script>
 
-<HtmlAtom {bond} class={['border-border', '$preset', klass]} {fallback} {...bodyProps}>
-	{@render children?.({ collapsible: bond })}
+<HtmlAtom class={['border-border', '$preset', klass]} {@attach motion} {...restProps} {part}>
+	{@render children?.({ collapsible: part.bond })}
 </HtmlAtom>

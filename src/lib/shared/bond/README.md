@@ -1,74 +1,51 @@
-# `shared/bond` — the bond runtime core
+# `shared/bond`
 
-The brain of every component. A **bond** owns a component family's logic, shared state,
-context, and registered runtime atoms. **Atoms** project per-slot DOM attributes,
-handlers, attachments, and lifecycle. [`index.ts`](./index.ts) is the public import surface;
-the state, atom, diagnostic, and identity implementations live in focused sibling modules.
+Runtime core for component families.
 
-See [`CONTEXT.md`](../../../../CONTEXT.md) for the vocabulary and [`docs/adr/`](../../../../docs/adr)
-for historical binding decisions.
+A **Bond** owns shared props/state, context, registered runtime Atoms, collections, and capability
+lookup. An **Atom** owns one rendered part's attrs, handlers, attachments, lifecycle, and local
+capabilities.
 
 ## Files
 
-| File                                             | What it is                                                                                                            |
-| ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
-| [`bond.svelte.ts`](./bond.svelte.ts)             | `Bond` only — the runtime coordinator for state, context, registered Atoms, and capability lookup.                    |
-| [`index.ts`](./index.ts)                         | Internal re-export surface for `Bond`, `Atom`, capability types, bond types, and the internal state helper.           |
-| [`state.svelte.ts`](./state.svelte.ts)           | Internal `BondState` helper — capability registry, lazy collections, dependency validation, and role projection.      |
-| [`atom.svelte.ts`](./atom.svelte.ts)             | `Atom` — DOM identity, atom capabilities, projected behaviors, attachments, and spread composition.                   |
-| [`merge.ts`](./merge.ts)                         | Deterministic spread composition: attrs, handlers, attachment ordering, and conflict diagnostics.                     |
-| [`use-atom.svelte.ts`](./use-atom.svelte.ts)     | `createAtomInstance` — Svelte lifecycle helper for component-owned atoms and Bond registration.                       |
-| [`diagnostics.ts`](./diagnostics.ts)             | Introspection helpers for explaining projected role behavior without growing the core `Bond` implementation.          |
-| [`identity.ts`](./identity.ts)                   | Cross-copy bond branding and `instanceof` helper logic.                                                               |
-| [`types.ts`](./types.ts)                         | Core type aliases: `BondStateProps`, `BondClass`, `BondElements`, `BondVirtualElement`, and node registration types.  |
-| [`context.ts`](./context.ts)                     | `bondContextKey(...segments)` — canonical Svelte-context key (`@svelte-atoms/context/<segments>`).                    |
-| [`factory.ts`](./factory.ts)                     | `bondFactory(State, Bond)` — the default-factory SSOT used by most roots.                                             |
-| [`bind.svelte.ts`](./bind.svelte.ts)             | `bindBond` / `BondBinding` — wires a bond's reactive prop cells to a component's `$bindable`s (ADR 0002).             |
-| [`collection.svelte.ts`](./collection.svelte.ts) | `Collection<T>` — the reactive, ordered children data structure backing `Bond.collection()`.                          |
-| [`staged-map.svelte.ts`](./staged-map.svelte.ts) | `StagedMap` — microtask-deferred reactive map (avoids `state_unsafe_mutation` in `$derived`). Internal; not exported. |
+| File                         | Purpose                                                  |
+| ---------------------------- | -------------------------------------------------------- |
+| `bond.svelte.ts`             | `Bond` runtime host.                                     |
+| `node-registry.svelte.ts`    | Indexed registry with batched reactive publication.      |
+| `atom.svelte.ts`             | `Atom` runtime object and spread composition.            |
+| `use-atom.svelte.ts`         | `createAtomInstance(...)` lifecycle/registration helper. |
+| `collection.svelte.ts`       | Ordered reactive child collection.                       |
+| `bind.svelte.ts`             | Wires Bond prop cells to `$bindable` props.              |
+| `context.ts`, `identity.ts`  | Context keys and cross-copy identity.                    |
+| `merge.ts`, `diagnostics.ts` | Spread merge rules and role/capability diagnostics.      |
+| `index.ts`                   | Public barrel for this layer.                            |
 
-## Public surface
+## Usage Notes
 
-Re-exported through the shared public barrel: `Bond`, `Atom`, `createAtomInstance`,
-`bondContextKey`, `bindBond`, `BondBinding`, `bondFactory`, `Collection`,
-`explainBondRole`, and the [`types.ts`](./types.ts) aliases.
+- Rendered parts create Atoms with `createAtomInstance(...)`; ordinary `defineBond` slots can use the higher-level `usePart(...)` authoring helper.
+- `defineAtom('key')` keeps a Bond-required constructor; `defineAtom({ key, namespace, preset, id, bond? })` creates an optionally bonded class with standalone identity fallbacks.
+- Read rendered atoms with `bond.nodeByPart(...)`, `bond.nodesByPart(...)`, or `bond.nodeByRole(...)`. These lookups never create detached runtime objects.
+- A single part rejects duplicate registration; mark repeated parts `{ cardinality: 'many' }`.
+- Definitions do not expose Atom factory methods. Rendered parts use `createAtomInstance(...)` or `usePart(...)`; mounted consumers query `nodeByPart(...)` or `nodeByRole(...)`.
 
-New runtime code should use `Atom` plus `bond.register(node)` / `bond.node(key)` so the
-component that renders an atom owns its runtime atom.
+## Lifecycle
 
-Generated part methods such as `bond.root()` and `bond.trigger()` remain direct constructor
-adapters for compatibility. Rendered Svelte parts should create stable Atoms with
-`createAtomInstance(...)` and read rendered nodes through `bond.node(...)` / `bond.nodes(...)`.
+Normal roots use `useRoot` (over the experimental `bindBond` primitive): construct/register Bond capabilities → share context → activate capabilities.
+Rendered parts use `createAtomInstance`: resolve its explicitly named one-shot inputs → construct Atom →
+register Atom → activate Atom capabilities → mount. Teardown reverses that order: Atom capabilities,
+unregister, then Bond capabilities when the root is destroyed. Capability activation has one owner and is
+transactional; a failed setup rolls back successfully initialized capabilities.
 
-`Atom` also hosts atom-local capabilities: `node.capability(...)`, `node.get(key)`,
-`node.require(key)`, and `node.describeCapabilities()`. Use these for local presentation and DOM
-behavior such as `elementRef`, `pressable`, `focusable`, `dataState`, `ariaRole`, and `motion`.
+- New shared behavior should be a capability, not a root-level `$effect`.
 
-## Merge Rules
+## Identity
 
-`merge.ts` owns the runtime spread contract used by `Atom.spread` and `mergeAtomProps(...)`:
+The binding's `id` option carries the Bond's identity seed, always `$props.id()` from the owning
+root, so server renders are reproducible and hydration adopts the server's ids. It is defined
+non-enumerable on the props object: `bond.id` reads it, but `binding.stateProps` and
+`{ ...bond.props }` spreads never forward it to the DOM. Atoms turn the seed into element ids
+through `getElementId(bond.id, kind)`; a root that declares `id` in its own props spec keeps that
+and the option is ignored. `generateId()` is the fallback for Bonds and Atoms built without a
+component scope.
 
-- `id` has one generated owner; internal behavior cannot replace it, while explicit user props can.
-- `class` values merge; `style` declarations merge by CSS property with the later property winning.
-- `data-*`, unsafe `aria-*`, and `role` conflicts warn in dev; safe ARIA token lists such as
-  `aria-labelledby` merge by unique token.
-- `disabled`, `inert`, and `hidden` are true-wins attributes.
-- Event handlers run user/base first, then internal/later handlers only if the event is not
-  `defaultPrevented`.
-- Attachments mount base first and clean up in reverse order, so element capture mounts before user
-  attachments and cleans up last.
-
-## Rules of thumb
-
-- New authoring can put props, derived values, mutation methods, and capability lookup directly on
-  `Bond`. The internal state holder remains only to support older component internals.
-- Component-owned `Atom`s registered with `bond.register(node)` are the source of truth for
-  rendered runtime atoms.
-- Never call `createAttachmentKey()` inside `Atom.spread` or any `$derived` — mint keys once
-  per atom (see `spread-attachment-key-invariant`).
-- Cross-cutting behavior (focus, escape, disclosure) is a **capability**, not a per-root `$effect`.
-  Register/read capabilities through `bond`; see [`../capability`](../capability).
-- If a Bond can write a root `$bindable` prop, back the bond prop cell with a local writable
-  `$derived` (or `$state`) and use the `$bindable` variable only as the parent communication
-  conduit. Uncontrolled bindables do not reliably invalidate downstream derived consumers when
-  mutated directly from Bond code.
+See [`CONTEXT.md`](../../../../CONTEXT.md) for vocabulary.

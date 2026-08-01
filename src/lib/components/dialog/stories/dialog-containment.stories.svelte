@@ -1,7 +1,7 @@
 <script module>
 	import { defineMeta } from '@storybook/addon-svelte-csf';
 	import { Dialog as ADialog } from '..';
-	import { Button } from '../../button';
+	import { Button } from '$ixirjs/ui/components/button';
 
 	// A Portal is a containment scope. The Popover opened inside the
 	// Dialog resolves to the Dialog's own Portal, whose container is the Dialog card.
@@ -41,7 +41,7 @@
 
 			<ADialog.Root class="bg-neutral-900/20" z-index={10} bind:open {...args}>
 				<ADialog.Content class="max-w-120">
-					<ADialog.Header class="flex items-center">
+					<ADialog.Header>
 						<ADialog.Title>Dialog title</ADialog.Title>
 						<ADialog.CloseButton class="ml-auto" />
 					</ADialog.Header>

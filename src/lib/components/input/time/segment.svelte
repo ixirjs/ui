@@ -4,11 +4,11 @@
 	// caret position on every keystroke. The no-dom-manipulating rule doesn't fit this pattern.
 	/* eslint-disable svelte/no-dom-manipulating */
 	import { untrack } from 'svelte';
-	import { clamp as clampRange } from '$svelte-atoms/core/utils/math';
+	import { clamp as clampRange } from '$ixirjs/ui/utils/math';
 	import type { SegmentProps } from './shared';
 
 	let {
-		value = undefined,
+		value = $bindable<number | undefined>(undefined),
 		min,
 		max,
 		digits = 2,
@@ -17,6 +17,8 @@
 		readonly = false,
 		class: klass = '',
 		onchange,
+		oninput,
+		onvaluechange,
 		onfocusmove,
 		onrollover
 	}: SegmentProps = $props();
@@ -64,9 +66,12 @@
 
 	const clamp = (v: number) => clampRange(v, min, max);
 
-	function commitBuffer(buf: string, andAdvance: boolean) {
+	function commitBuffer(buf: string, andAdvance: boolean, event: Event) {
 		const n = parseInt(buf, 10);
-		if (!isNaN(n)) onchange?.(clamp(n));
+		if (!isNaN(n)) {
+			value = clamp(n);
+			onvaluechange?.(value, { event, reason: 'input' });
+		}
 		buffer = '';
 		if (andAdvance) onfocusmove?.(1);
 	}
@@ -82,30 +87,38 @@
 			if (next.length === 1 && nextNum > max) return;
 
 			if (next.length === digits) {
-				commitBuffer(nextNum <= max ? next : String(max), true);
+				commitBuffer(nextNum <= max ? next : String(max), true, ev);
 				return;
 			}
 
 			buffer = next;
 
 			const minCompletion = parseInt(next + '0'.repeat(digits - next.length), 10);
-			if (minCompletion > max) commitBuffer(next, true);
+			if (minCompletion > max) commitBuffer(next, true, ev);
 		} else if (ev.key === 'ArrowUp') {
 			ev.preventDefault();
 			buffer = '';
 			const cur = value ?? min;
 			if (cur >= max) {
-				onchange?.(min);
-				onrollover?.(1);
-			} else onchange?.(cur + 1);
+				value = min;
+				onvaluechange?.(value, { event: ev, reason: 'step' });
+				onrollover?.(1, { event: ev, reason: 'rollover' });
+			} else {
+				value = cur + 1;
+				onvaluechange?.(value, { event: ev, reason: 'step' });
+			}
 		} else if (ev.key === 'ArrowDown') {
 			ev.preventDefault();
 			buffer = '';
 			const cur = value ?? max;
 			if (cur <= min) {
-				onchange?.(max);
-				onrollover?.(-1);
-			} else onchange?.(cur - 1);
+				value = max;
+				onvaluechange?.(value, { event: ev, reason: 'step' });
+				onrollover?.(-1, { event: ev, reason: 'rollover' });
+			} else {
+				value = cur - 1;
+				onvaluechange?.(value, { event: ev, reason: 'step' });
+			}
 		} else if (ev.key === 'ArrowLeft') {
 			ev.preventDefault();
 			if (buffer) buffer = '';
@@ -116,7 +129,10 @@
 		} else if (ev.key === 'Backspace' || ev.key === 'Delete') {
 			ev.preventDefault();
 			if (buffer) buffer = buffer.slice(0, -1);
-			else onchange?.(undefined);
+			else {
+				value = undefined;
+				onvaluechange?.(value, { event: ev, reason: 'clear' });
+			}
 		} else if (ev.key === 'Tab') {
 			buffer = '';
 		} else if (!ev.ctrlKey && !ev.metaKey && !ev.altKey) {
@@ -147,9 +163,11 @@
 	]
 		.filter(Boolean)
 		.join(' ')}
+	oninput={(event) => oninput?.(event)}
+	onchange={(event) => onchange?.(event)}
 	onkeydown={handleKeydown}
 	onpaste={(ev) => ev.preventDefault()}
-	onblur={() => {
-		if (buffer) commitBuffer(buffer, false);
+	onblur={(event) => {
+		if (buffer) commitBuffer(buffer, false, event);
 	}}>{displayPlaceholder}</span
 >

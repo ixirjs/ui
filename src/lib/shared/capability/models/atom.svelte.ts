@@ -3,19 +3,44 @@ import {
 	sharedCapabilityKey,
 	type AtomCapability,
 	type AtomHost
-} from '../capability';
-import type { Bond, BondVirtualElement } from '../../bond';
+} from '$ixirjs/ui/shared/capability/capability';
+import { internCapabilityFactory } from '$ixirjs/ui/shared/capability/intern';
+import type { Bond, BondVirtualElement } from '$ixirjs/ui/shared/bond';
 
 export type AtomValue<T> = T | ((node: AtomHost, bond: Bond | undefined) => T);
 export type AtomElement = Element | BondVirtualElement;
 export type AtomTeardown = Disposable | (() => void) | void;
 
-export const ELEMENT_REF = sharedCapabilityKey<void>('@svelte-atoms/atom:element-ref');
-export const PRESSABLE = sharedCapabilityKey<void>('@svelte-atoms/atom:pressable');
-export const FOCUSABLE = sharedCapabilityKey<void>('@svelte-atoms/atom:focusable');
-export const DATA_STATE = sharedCapabilityKey<void>('@svelte-atoms/atom:data-state');
-export const ARIA_ROLE = sharedCapabilityKey<void>('@svelte-atoms/atom:aria-role');
-export const MOTION = sharedCapabilityKey<void>('@svelte-atoms/atom:motion');
+export const ELEMENT_REF = sharedCapabilityKey<void>({
+	owner: '@ixirjs/atom',
+	name: 'element-ref',
+	version: 1
+});
+export const PRESSABLE = sharedCapabilityKey<void>({
+	owner: '@ixirjs/atom',
+	name: 'pressable',
+	version: 1
+});
+export const FOCUSABLE = sharedCapabilityKey<void>({
+	owner: '@ixirjs/atom',
+	name: 'focusable',
+	version: 1
+});
+export const DATA_STATE = sharedCapabilityKey<void>({
+	owner: '@ixirjs/atom',
+	name: 'data-state',
+	version: 1
+});
+export const ARIA_ROLE = sharedCapabilityKey<void>({
+	owner: '@ixirjs/atom',
+	name: 'aria-role',
+	version: 1
+});
+export const MOTION = sharedCapabilityKey<void>({
+	owner: '@ixirjs/atom',
+	name: 'motion',
+	version: 1
+});
 
 export type ElementRefCallback = (
 	element: AtomElement | undefined,
@@ -34,13 +59,11 @@ export function elementRef(
 	return defineAtomCapability<void>({
 		slot: ELEMENT_REF,
 		meta: {
-			layer: 1,
-			kind: 'projection',
 			docs: 'Atom-local mounted element reference callback.'
 		},
 		...(ref
 			? {
-					behavior: {
+					attach: {
 						onmount(element, node, bond) {
 							ref(element, node, bond);
 							return () => ref(undefined, node, bond);
@@ -61,17 +84,17 @@ export interface PressableOptions {
 	onPress?(event: MouseEvent | KeyboardEvent, node: AtomHost, bond: Bond | undefined): void;
 }
 
-export function pressable(options: PressableOptions = {}): AtomCapability<void> {
+export const pressable = internCapabilityFactory(function pressable(
+	options: PressableOptions = {}
+): AtomCapability<void> {
 	const keys = options.keys ?? ['Enter', ' '];
 	return defineAtomCapability<void>({
 		slot: PRESSABLE,
 		meta: {
-			layer: 1,
-			kind: 'policy',
 			projects: ['press'],
 			docs: 'Atom-local press activation behavior for button-like parts.'
 		},
-		behavior: {
+		attach: {
 			attrs: (node, bond) => {
 				const disabled = Boolean(readNodeValue(options.disabled, node, bond));
 				const role = readNodeValue(options.role ?? 'button', node, bond);
@@ -104,7 +127,7 @@ export function pressable(options: PressableOptions = {}): AtomCapability<void> 
 			})
 		}
 	});
-}
+});
 
 export interface FocusableOptions {
 	disabled?: AtomValue<boolean | undefined>;
@@ -113,16 +136,16 @@ export interface FocusableOptions {
 	onBlur?(event: FocusEvent, node: AtomHost, bond: Bond | undefined): void;
 }
 
-export function focusable(options: FocusableOptions = {}): AtomCapability<void> {
+export const focusable = internCapabilityFactory(function focusable(
+	options: FocusableOptions = {}
+): AtomCapability<void> {
 	return defineAtomCapability<void>({
 		slot: FOCUSABLE,
 		meta: {
-			layer: 1,
-			kind: 'projection',
 			projects: ['focus'],
 			docs: 'Atom-local focusability projection and focus/blur hooks.'
 		},
-		behavior: {
+		attach: {
 			attrs: (node, bond) => {
 				const disabled = Boolean(readNodeValue(options.disabled, node, bond));
 				const tabindex = readNodeValue(options.tabindex ?? 0, node, bond);
@@ -142,13 +165,13 @@ export function focusable(options: FocusableOptions = {}): AtomCapability<void> 
 			})
 		}
 	});
-}
+});
 
 export interface DataStateOptions {
 	attr?: `data-${string}`;
 }
 
-export function dataState(
+export const dataState = internCapabilityFactory(function dataState(
 	state: AtomValue<string | boolean | null | undefined>,
 	options: DataStateOptions = {}
 ): AtomCapability<void> {
@@ -156,31 +179,29 @@ export function dataState(
 	return defineAtomCapability<void>({
 		slot: DATA_STATE,
 		meta: {
-			layer: 1,
-			kind: 'projection',
 			projects: [attr],
 			docs: 'Atom-local data state projection for styling and CSS animation hooks.'
 		},
-		behavior: {
+		attach: {
 			attrs: (node, bond) => ({ [attr]: normalizeDataValue(readNodeValue(state, node, bond)) })
 		}
 	});
-}
+});
 
-export function ariaRole(role: AtomValue<string | null | undefined>): AtomCapability<void> {
+export const ariaRole = internCapabilityFactory(function ariaRole(
+	role: AtomValue<string | null | undefined>
+): AtomCapability<void> {
 	return defineAtomCapability<void>({
 		slot: ARIA_ROLE,
 		meta: {
-			layer: 1,
-			kind: 'projection',
 			projects: ['role'],
 			docs: 'Atom-local ARIA role projection.'
 		},
-		behavior: {
+		attach: {
 			attrs: (node, bond) => ({ role: readNodeValue(role, node, bond) ?? undefined })
 		}
 	});
-}
+});
 
 export interface MotionOptions {
 	name?: AtomValue<string | null | undefined>;
@@ -192,12 +213,10 @@ export function motion(options: MotionOptions = {}): AtomCapability<void> {
 	return defineAtomCapability<void>({
 		slot: MOTION,
 		meta: {
-			layer: 1,
-			kind: 'effect',
 			projects: ['motion'],
 			docs: 'Atom-local motion hook and data attributes for animation hosts.'
 		},
-		behavior: {
+		attach: {
 			attrs: (node, bond) => {
 				const name = readNodeValue(options.name, node, bond);
 				const state = readNodeValue(options.state, node, bond);
@@ -240,7 +259,8 @@ function shouldSkipPress(
 	options: PressableOptions
 ): boolean {
 	if (event.defaultPrevented) return true;
-	if ('button' in event && event.button === 2) return true;
+	if ('repeat' in event && event.repeat) return true;
+	if ('button' in event && event.button > 0) return true;
 	return Boolean(readNodeValue(options.disabled, node, bond));
 }
 

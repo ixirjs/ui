@@ -1,13 +1,15 @@
-import type { Direction, SortableType } from '$svelte-atoms/core/types';
-import { DataGridBond, type IDataGrid } from '../bond.svelte';
-import { Bond, defineAtom, type BondStateProps } from '$svelte-atoms/core/shared/bond';
-import { defineBond, type BondOf } from '$svelte-atoms/core/shared';
-import { rowColumnCellLink } from '$svelte-atoms/core/shared/capability/models/relationship.svelte';
+import type { Direction, SortableType } from '$ixirjs/ui/types';
+import { internCapabilityFactory } from '$ixirjs/ui/shared/capability/intern';
+import { DataGridBond, type IDataGrid } from '$ixirjs/ui/components/datagrid/bond.svelte';
+import { Bond, defineAtom, type BondStateProps } from '$ixirjs/ui/shared/bond';
+import { defineBond, type BondOf } from '@ixirjs/ui/shared';
+import { specializeDefinition } from '$ixirjs/ui/shared/authoring/metadata';
+import { rowColumnCellLink } from '$ixirjs/ui/shared/capability/models/relationship.svelte';
 import {
 	defineAtomCapability,
 	sharedCapabilityKey,
 	type AtomHost
-} from '$svelte-atoms/core/shared/capability';
+} from '$ixirjs/ui/shared/capability';
 
 // -----------------------------------------------------------------------------
 // Public types
@@ -22,10 +24,6 @@ export type DataGridColumnBondProps = BondStateProps & {
 	direction: Direction;
 };
 
-export type DataGridColumnElements = {
-	root: HTMLElement;
-};
-
 // -----------------------------------------------------------------------------
 // Internal types
 // -----------------------------------------------------------------------------
@@ -36,7 +34,11 @@ type DataGridColumnBondView = DataGridColumnBondBase;
 // Capability slots and shared helpers
 // -----------------------------------------------------------------------------
 
-const DATAGRID_COLUMN_ROOT = sharedCapabilityKey<void>('@svelte-atoms/datagrid-column:root');
+const DATAGRID_COLUMN_ROOT = sharedCapabilityKey<void>({
+	owner: '@ixirjs/datagrid-column',
+	name: 'root',
+	version: 1
+});
 
 // -----------------------------------------------------------------------------
 // Atom definitions
@@ -52,16 +54,14 @@ export type DataGridColumnRootAtom = InstanceType<typeof DataGridColumnRootAtom>
 // Atom capabilities
 // -----------------------------------------------------------------------------
 
-function datagridColumnPresentation() {
+const datagridColumnPresentation = internCapabilityFactory(function datagridColumnPresentation() {
 	return defineAtomCapability<void, AtomHost, DataGridColumnBondView>({
 		slot: DATAGRID_COLUMN_ROOT,
 		meta: {
-			layer: 1,
-			kind: 'projection',
 			projects: ['root'],
 			docs: 'Datagrid column identity, sortable, and direction projection.'
 		},
-		behavior: {
+		attach: {
 			attrs: (_node, bond) => {
 				const props = bond?.props;
 
@@ -72,7 +72,7 @@ function datagridColumnPresentation() {
 			}
 		}
 	});
-}
+});
 
 // -----------------------------------------------------------------------------
 // Bond implementation
@@ -143,12 +143,7 @@ class DataGridColumnBondBase<T = unknown> extends Bond<DataGridColumnBondProps> 
 // Bond spec and constructor facade
 // -----------------------------------------------------------------------------
 
-const DataGridColumnBondImpl = defineBond<
-	{ root: typeof DataGridColumnRootAtom },
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	any,
-	typeof DataGridColumnBondBase
->({
+const DataGridColumnBondDefinition = defineBond({
 	name: 'datagrid-column',
 	base: DataGridColumnBondBase,
 	atoms: { root: DataGridColumnRootAtom }
@@ -160,7 +155,7 @@ const DataGridColumnBondImpl = defineBond<
 // Public types
 // -----------------------------------------------------------------------------
 
-export type DataGridColumnBond<T = unknown> = BondOf<typeof DataGridColumnBondImpl> & {
+export type DataGridColumnBond<T = unknown> = BondOf<typeof DataGridColumnBondDefinition> & {
 	readonly __props?: DataGridColumnBondProps;
 	readonly datagrid: IDataGrid<T>;
 	readonly id: string;
@@ -175,18 +170,26 @@ export type DataGridColumnBond<T = unknown> = BondOf<typeof DataGridColumnBondIm
 // Bond spec and constructor facade
 // -----------------------------------------------------------------------------
 
-interface DataGridColumnBondConstructor {
+// TS cannot retain a class value's type parameter through `typeof DataGridColumnBondDefinition`; this
+// minimal static facade preserves generic construction and context lookup ergonomics.
+interface DataGridColumnBondGenericFacade {
 	new <T = unknown>(props: DataGridColumnBondProps): DataGridColumnBond<T>;
-	readonly CONTEXT_KEY: string;
 	get<T = unknown>(): DataGridColumnBond<T> | undefined;
+	getOrThrow<T = unknown>(message?: string): DataGridColumnBond<T>;
+	optional<T = unknown>(): DataGridColumnBond<T> | undefined;
+	required<T = unknown>(message?: string): DataGridColumnBond<T>;
 	set<T = unknown>(bond: DataGridColumnBond<T>): DataGridColumnBond<T>;
 	create<T = unknown>(props: DataGridColumnBondProps): DataGridColumnBond<T>;
 }
 
-export const DataGridColumnBond =
-	DataGridColumnBondImpl as unknown as DataGridColumnBondConstructor;
+// Replace only generic-sensitive signatures. The mapped original retains defineBond's
+// untouched statics and definition phantom metadata while dropping its construct signature.
+type DataGridColumnBondConstructor = Omit<
+	typeof DataGridColumnBondDefinition,
+	keyof DataGridColumnBondGenericFacade
+> &
+	DataGridColumnBondGenericFacade;
 
-// Backward-compatible aliases for existing imports.
-export type DataGridThBondProps = DataGridColumnBondProps;
-export type DataGridThElements = DataGridColumnElements;
-export { DataGridColumnBond as DataGridThBond };
+export const DataGridColumnBond = specializeDefinition<DataGridColumnBondConstructor>(
+	DataGridColumnBondDefinition
+);

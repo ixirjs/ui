@@ -1,7 +1,8 @@
-import { Atom } from '$svelte-atoms/core/shared/bond';
-import { defineBond, type BondOf } from '$svelte-atoms/core/shared';
-import { OverlayBond } from '$svelte-atoms/core/components/portal/host';
-import type { DisclosureStateProps } from '$svelte-atoms/core/shared/capability/models/disclosure-state.svelte';
+import { Atom } from '$ixirjs/ui/shared/bond';
+import { defineBond, type BondOf } from '$ixirjs/ui/shared';
+import { OverlayBond } from '$ixirjs/ui/components/overlay';
+import type { DisclosureStateProps } from '$ixirjs/ui/shared/capability/models/disclosure-state.svelte';
+import type { StateChangeContext } from '$ixirjs/ui/types';
 
 // -----------------------------------------------------------------------------
 // Public types
@@ -31,7 +32,7 @@ export class SidebarContentAtom extends Atom<SidebarBondView, HTMLElement> {
 		super(bond, 'content');
 	}
 	override get attrs() {
-		const props = this.bond.state.props;
+		const props = this.requireBond().props;
 		const isOpen = props?.open ?? false;
 		const isDisabled = props?.disabled ?? false;
 
@@ -48,8 +49,23 @@ export class SidebarContentAtom extends Atom<SidebarBondView, HTMLElement> {
 // -----------------------------------------------------------------------------
 
 class SidebarBondBase extends OverlayBond<SidebarBondProps> {
+	#openChangeContext: Pick<StateChangeContext, 'event' | 'reason'> | undefined;
+
 	constructor(props: SidebarBondProps, name = 'sidebar') {
 		super(props, name);
+	}
+
+	stageOpenChange(context: Pick<StateChangeContext, 'event' | 'reason'>): void {
+		this.#openChangeContext = context;
+		queueMicrotask(() => {
+			if (this.#openChangeContext === context) this.#openChangeContext = undefined;
+		});
+	}
+
+	takeOpenChangeContext(): Pick<StateChangeContext, 'event' | 'reason'> {
+		const context = this.#openChangeContext ?? {};
+		this.#openChangeContext = undefined;
+		return context;
 	}
 }
 
@@ -59,27 +75,10 @@ class SidebarBondBase extends OverlayBond<SidebarBondProps> {
 // Bond spec and constructor facade
 // -----------------------------------------------------------------------------
 
-const SidebarBondImpl = defineBond<
-	{ content: typeof SidebarContentAtom },
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	any,
-	typeof SidebarBondBase
->({
+export const SidebarBond = defineBond({
 	name: 'sidebar',
 	base: SidebarBondBase,
 	atoms: { content: SidebarContentAtom }
 });
 
-export type SidebarBond = BondOf<typeof SidebarBondImpl>;
-
-interface SidebarBondConstructor {
-	new (props: SidebarBondProps): SidebarBond;
-	readonly CONTEXT_KEY: string;
-	readonly spec: (typeof SidebarBondImpl)['spec'];
-	get(): SidebarBond | undefined;
-	getOrThrow(message?: string): SidebarBond;
-	set(bond: SidebarBond): SidebarBond;
-	create(props: SidebarBondProps): SidebarBond;
-}
-
-export const SidebarBond = SidebarBondImpl as unknown as SidebarBondConstructor;
+export type SidebarBond = BondOf<typeof SidebarBond>;

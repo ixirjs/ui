@@ -1,5 +1,5 @@
 const presetCode = `
-import { setPreset } from '@svelte-atoms/core';
+import { setPreset } from '@ixirjs/ui/preset';
 
 setPreset({
   'progress.linear': () => ({
@@ -60,8 +60,8 @@ export const metadata = {
 		'Progress indicators inform users about the status of ongoing operations. Available in linear and circular variants with support for indeterminate animations.',
 	componentType: 'simple' as const,
 	status: 'stable' as const,
-	packageName: '@svelte-atoms/core',
-	importCode: "import { ProgressLinear, ProgressCircular } from '@svelte-atoms/core/progress';",
+	packageName: '@ixirjs/ui',
+	importCode: "import { ProgressLinear, ProgressCircular } from '@ixirjs/ui/components/progress';",
 	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Progress' }],
 	useCases,
 	examples: {

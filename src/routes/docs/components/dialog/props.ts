@@ -13,6 +13,13 @@ export const dialogProps: PropDefinition[] = [
 		description: 'Controls whether the dialog is visible. Bind this prop for controlled usage.'
 	},
 	{
+		name: 'onopenchange',
+		type: 'StateChangeCallback<boolean, DialogBond> | undefined',
+		default: 'undefined',
+		description:
+			'Called after a real open-state transition commits; dismissal events and reasons are included when available.'
+	},
+	{
 		name: 'disabled',
 		type: 'boolean | undefined',
 		default: 'false',
@@ -21,9 +28,9 @@ export const dialogProps: PropDefinition[] = [
 	{
 		name: 'portal',
 		type: 'string | PortalBond | undefined',
-		default: "''",
+		default: 'ambient portal → root.l0',
 		description:
-			'Portal target selector or PortalBond instance. Teleports dialog content to a different DOM node (e.g., document.body).'
+			"Portal target selector or PortalBond instance. Resolution is explicit target → ambient portal → root.l0; dialog content remains within that portal's containment scope."
 	},
 	{
 		name: 'factory',

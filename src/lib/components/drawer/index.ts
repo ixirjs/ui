@@ -10,6 +10,6 @@ export { DrawerBond, type DrawerBondElements, type DrawerBondProps } from './bon
 
 export * from './attachments.svelte';
 
-export * from './motion';
+export * from './motion.svelte';
 
 export * from './types';

@@ -1,6 +1,6 @@
 import type { Snippet } from 'svelte';
-import type { HtmlAtomProps, Base, SnippetProps } from '$svelte-atoms/core/components/atom';
-import type { Factory } from '$svelte-atoms/core/types';
+import type { HtmlAtomProps, Base, SnippetProps } from '$ixirjs/ui/components/atom';
+import type { Factory, StateChangeCallback } from '$ixirjs/ui/types';
 import type { StepperBond } from './bond.svelte';
 
 // Snippet props
@@ -28,6 +28,9 @@ export interface StepperRootProps<
 
 	// Custom factory for creating the stepper bond.
 	factory?: Factory<StepperBond>;
+
+	// Semantic callback; runs after the active step commits.
+	onstepchange?: StateChangeCallback<number, StepperBond> | undefined;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type

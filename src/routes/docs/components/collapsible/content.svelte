@@ -37,7 +37,7 @@
 	{contentType}
 	{metadata}
 	{frontmatter}
-	prev={{ label: 'Checkbox', href: '/docs/components/checkbox' }}
+	prev={{ label: 'Chip', href: '/docs/components/chip' }}
 	next={{ label: 'Combobox', href: '/docs/components/combobox' }}
 >
 	{#snippet preset()}

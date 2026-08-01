@@ -75,16 +75,23 @@ export const sliderProps: PropDefinition[] = [
 			'Optional content rendered after the slider root, for labels, helper text, or value output.'
 	},
 	{
-		name: 'oninput',
-		type: '((ev?: Event, options?: SliderChangeDetails) => void) | undefined',
+		name: 'onvaluechange',
+		type: 'SliderValueChangeCallback | undefined',
 		default: 'undefined',
-		description: 'Called continuously while the thumb is dragged.'
+		description:
+			'Semantic callback fired after each value commit. Receives `(value, { event, percent, min, max, step, type })`.'
+	},
+	{
+		name: 'oninput',
+		type: '((event: Event) => void) | undefined',
+		default: 'undefined',
+		description: 'Native input-event callback. Receives only the DOM event.'
 	},
 	{
 		name: 'onchange',
-		type: '((ev?: Event, options?: SliderChangeDetails) => void) | undefined',
+		type: '((event: Event) => void) | undefined',
 		default: 'undefined',
-		description: 'Called after a value change is committed.'
+		description: 'Native change-event callback. Receives only the DOM event.'
 	},
 	{
 		name: '...atomProps',

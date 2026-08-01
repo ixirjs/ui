@@ -1,4 +1,9 @@
-import { defineCapability, sharedCapabilityKey, type Capability } from '../capability';
+import { SvelteMap } from 'svelte/reactivity';
+import {
+	defineCapability,
+	sharedCapabilityKey,
+	type Capability
+} from '$ixirjs/ui/shared/capability/capability';
 
 export interface GeometryRect {
 	x: number;
@@ -28,28 +33,31 @@ export interface GeometryProjectionContext {
 	key?: string | undefined;
 }
 
-export const GEOMETRY = sharedCapabilityKey<GeometryModel>('@svelte-atoms/cap:geometry');
+export const GEOMETRY = sharedCapabilityKey<GeometryModel>({
+	owner: '@ixirjs/cap',
+	name: 'geometry',
+	version: 1
+});
 
 export function createGeometry(backing?: Partial<GeometryBacking>): GeometryModel {
-	const rects = new Map<string, GeometryRect>();
+	const rects = new SvelteMap<string, GeometryRect>();
 
 	return {
 		rect(key) {
 			return backing?.rect?.(key) ?? rects.get(key);
 		},
 		setRect(key, rect) {
-			if (backing?.setRect) {
-				backing.setRect(key, rect);
-				return;
-			}
+			// Keep a local mirror even with a partial backing: `rect` and `setRect` are
+			// independently optional extension seams.
 			if (rect) rects.set(key, rect);
 			else rects.delete(key);
+			backing?.setRect?.(key, rect);
 		},
 		clear(key) {
 			this.setRect(key, undefined);
 		},
 		keys() {
-			return backing?.keys?.() ?? [...rects.keys()];
+			return [...new Set([...(backing?.keys?.() ?? []), ...rects.keys()])];
 		}
 	};
 }
@@ -68,8 +76,6 @@ export function geometryCapability(
 		slot: GEOMETRY,
 		surface: geometry,
 		meta: {
-			layer: 1,
-			kind: 'model',
 			projects: roles,
 			docs: 'Named element rectangles and measured geometry projection.'
 		},

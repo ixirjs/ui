@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { delay } from 'es-toolkit';
 	import { copy } from '$docs/utils/clipboard.svelte';
 
 	let { code, restProps } = $props();
@@ -11,7 +10,7 @@
 
 		isCopied = true;
 
-		await delay(2000);
+		await new Promise((resolve) => setTimeout(resolve, 2000));
 
 		isCopied = undefined;
 	}

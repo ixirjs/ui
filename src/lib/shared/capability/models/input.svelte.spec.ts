@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { createInput, inputCapability, INPUT } from './input.svelte';
 import { ROVING } from './roving.svelte';
 
@@ -16,9 +16,33 @@ describe('inputCapability', () => {
 		expect(cap.surface).toBe(model);
 		expect(cap.requires).toEqual([ROVING]);
 		expect(cap.meta).toMatchObject({
-			layer: 1,
-			kind: 'projection',
 			projects: ['input']
 		});
+	});
+
+	it('uses own field keys and prevents disabled input writes', () => {
+		const set = vi.fn();
+		const model = createInput({
+			query: { get: () => '', set }
+		});
+		const cap = inputCapability(model, { disabled: () => true });
+		const project = cap.behavior;
+		expect(project).toBeDefined();
+		const behavior = project!('input', 'query')!;
+		const bond = {
+			requireSurface: () => ({ activeId: null }),
+			nodeByRole: () => undefined
+		};
+
+		expect(model.get('toString')).toBe('');
+		expect(behavior.attrs?.(bond as never)).toMatchObject({
+			'aria-disabled': true,
+			disabled: true,
+			tabindex: -1
+		});
+		(behavior.handlers?.(bond as never).oninput as (event: Event) => void)({
+			currentTarget: { value: 'ignored' }
+		} as unknown as Event);
+		expect(set).not.toHaveBeenCalled();
 	});
 });

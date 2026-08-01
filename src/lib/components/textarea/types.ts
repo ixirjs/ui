@@ -1,4 +1,4 @@
-import type { HtmlAtomProps, Base, SnippetProps } from '$svelte-atoms/core/components/atom';
+import type { HtmlAtomProps, Base, SnippetProps } from '$ixirjs/ui/components/atom';
 import type { Snippet } from 'svelte';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
@@ -14,6 +14,7 @@ export interface TextareaRootProps<
 
 export interface TextareaInputProps {
 	value?: string;
+	autoResize?: boolean;
 	placeholder?: string;
 	disabled?: boolean;
 	readonly?: boolean;

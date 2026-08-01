@@ -1,18 +1,18 @@
 <script lang="ts">
-	import { mergePresetProps } from '$svelte-atoms/core/components/atom';
-	import { animate } from 'motion';
-	import { getYear, setYear } from 'date-fns';
-	import { cn } from '$svelte-atoms/core/utils';
+	import { mergePresetProps } from '$ixirjs/ui/components/atom';
+	import { animate } from '$ixirjs/ui/shared';
+	import { getYear, setYear } from '$ixirjs/ui/utils/date';
+	import { cn } from '$ixirjs/ui/utils';
 	import { DatePickerBond } from './bond.svelte';
 	import type { DatePickerYearsProps } from './types';
-	import { HtmlAtom } from '../atom';
-	import { Icon } from '../icon';
+	import { HtmlAtom } from '$ixirjs/ui/components/atom';
+	import { Icon } from '$ixirjs/ui/components/icon';
 
 	const datePicker = DatePickerBond.getOrThrow(
 		'<DatePicker.Years /> must be used within a <DatePicker.Root />'
 	);
 
-	const pivote = $derived(datePicker?.state.props.pivote ?? new Date());
+	const pivote = $derived(datePicker?.props.pivote ?? new Date());
 
 	let pivoteYear = $derived(pivote.getFullYear());
 
@@ -69,9 +69,9 @@
 	}
 
 	function handleYearSelect(year: number) {
-		if (!datePicker?.state.props.pivote) return;
-		const current = datePicker.state.props.pivote;
-		datePicker.state.props.pivote = setYear(current, year);
+		if (!datePicker?.props.pivote) return;
+		const current = datePicker.props.pivote;
+		datePicker.props.pivote = setYear(current, year);
 
 		datePicker.closeYearsPicker();
 	}

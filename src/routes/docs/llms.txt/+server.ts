@@ -7,7 +7,7 @@ import type { RequestHandler } from './$types';
 
 const frontmatter: Frontmatter = {
 	id: 'docs-index',
-	title: '@svelte-atoms/core Documentation',
+	title: '@ixirjs/ui Documentation',
 	category: 'getting-started',
 	depth: 'beginner',
 	prerequisites: [],

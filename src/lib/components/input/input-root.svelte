@@ -1,11 +1,11 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
 	import { InputBond, type InputStateProps } from './bond.svelte';
-	import { bindBond } from '$svelte-atoms/core/shared/bond/bind.svelte';
-	import { createAtomInstance } from '$svelte-atoms/core/shared/bond';
-	import { HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
-	import { mergeAtomProps } from '$svelte-atoms/core/components/atom';
-	import type { Factory } from '$svelte-atoms/core/types';
+	import { useRoot } from '$ixirjs/ui/shared';
+	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import type { Factory } from '$ixirjs/ui/types';
 	import type { InputRootProps } from './types';
+
+	const ID = $props.id();
 
 	let {
 		class: klass = '',
@@ -18,8 +18,8 @@
 		...restProps
 	}: InputRootProps<E, B> = $props();
 
-	const binding = bindBond<InputBond>(
-		(props) => (factory as Factory<InputBond>)(props),
+	const root = useRoot(
+		InputBond,
 		{
 			// Bridge HTML-input prop shapes to the bond's domain props (was loose `defineProperty`).
 			value: [
@@ -41,16 +41,13 @@
 				}
 			]
 		},
-		{ preset: () => preset }
+		{
+			preset: () => preset,
+			id: () => ID,
+			factory: (props) => (factory as Factory<InputBond>)(props)
+		}
 	);
-	const bond = binding.bond.share();
-	const rootAtom = createAtomInstance('root', {
-		bond,
-		factory: (owner) => owner!.root()
-	});
-	const rootProps = $derived(
-		mergeAtomProps(rootAtom, preset, { ...binding.stateProps, ...restProps })
-	);
+	const bond = root.bond;
 
 	export function getBond() {
 		return bond;
@@ -63,7 +60,9 @@
 		'$preset',
 		klass
 	]}
-	{...rootProps}
+	{...root.props}
+	{...restProps}
+	part={root}
 >
 	{@render children?.({ input: bond })}
 </HtmlAtom>

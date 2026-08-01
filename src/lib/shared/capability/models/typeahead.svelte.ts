@@ -1,9 +1,17 @@
-import { definePolicyCapability, sharedCapabilityKey, type Capability } from '../capability';
-import { Collection } from '../../bond/collection.svelte';
+import {
+	defineCapability,
+	sharedCapabilityKey,
+	type Capability
+} from '$ixirjs/ui/shared/capability/capability';
+import { Collection } from '$ixirjs/ui/shared/bond/collection.svelte';
 import { collectionSlot } from './collection.svelte';
 import { ROVING, type RovingFocus } from './roving.svelte';
 
-export const TYPEAHEAD = sharedCapabilityKey<TypeaheadSurface>('@svelte-atoms/cap:typeahead');
+export const TYPEAHEAD = sharedCapabilityKey<TypeaheadSurface>({
+	owner: '@ixirjs/cap',
+	name: 'typeahead',
+	version: 1
+});
 
 export interface TypeaheadOptions<T = unknown> {
 	// Roles that receive printable-key search. Default ['container'].
@@ -127,7 +135,7 @@ export function typeaheadCapability<T>(
 	const roles = options.roles ?? ['container'];
 	const surface = createTypeahead(collection, roving, options);
 
-	return definePolicyCapability<TypeaheadSurface>({
+	return defineCapability<TypeaheadSurface>({
 		slot: TYPEAHEAD,
 		surface,
 		requires: [collectionSlot(collection.kind), ROVING],
@@ -188,8 +196,9 @@ function defaultDisabled<T>(item: T): boolean {
 
 	const getAttribute = readFunction(element, 'getAttribute');
 	if (!getAttribute) return false;
+	const disabled = getAttribute.call(element, 'disabled');
 	return (
-		Boolean(getAttribute.call(element, 'disabled')) ||
+		(disabled !== null && disabled !== undefined) ||
 		getAttribute.call(element, 'aria-disabled') === 'true'
 	);
 }

@@ -1,10 +1,9 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { mergeAtomProps, HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
-	import { createAtomInstance } from '$svelte-atoms/core/shared/bond';
+	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import { animate as runAnimation, usePart } from '$ixirjs/ui/shared';
+	import { stopMotion } from '$ixirjs/ui/components/element/motion-host';
 	import { TreeBond } from './bond.svelte';
 	import type { TreeIndicatorProps } from './types';
-
-	const bond = TreeBond.getOrThrow('<Tree.Indicator /> must be used within a <Tree.Root />');
 
 	let {
 		open = $bindable(false),
@@ -14,14 +13,24 @@
 		...restProps
 	}: TreeIndicatorProps<E, B> = $props();
 
-	const atom = createAtomInstance('indicator', {
-		bond,
-		factory: (owner) => owner!.indicator()
+	const part = usePart(TreeBond, 'indicator', () => restProps, {
+		preset: () => preset
 	});
+	const isOpen = $derived(part.bond.isOpen);
 
-	const indicatorProps = $derived(mergeAtomProps(atom, preset, restProps));
+	// An attachment rather than a `defaults` motion phase — see `attachTreeBodyMotion`. There is no
+	// `initial` phase here, so the rotation simply runs on mount and again on every toggle, exactly
+	// as the adapter drove it.
+	function motion(node: HTMLElement) {
+		const controller = runAnimation(
+			node,
+			{ rotate: 90 * +isOpen },
+			{ duration: 0.18, ease: 'circOut' }
+		);
+		return () => stopMotion(controller, node);
+	}
 </script>
 
-<HtmlAtom {bond} class={['aspect-square h-fit', '$preset', klass]} {...indicatorProps}>
-	{@render children?.({ tree: bond })}
+<HtmlAtom class={['aspect-square h-fit', '$preset', klass]} {@attach motion} {...restProps} {part}>
+	{@render children?.({ tree: part.bond })}
 </HtmlAtom>

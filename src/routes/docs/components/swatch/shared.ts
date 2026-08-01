@@ -12,8 +12,8 @@ export const metadata = {
 		'Displays a color value as a small preview square. Shows a checkerboard pattern for transparent or empty colors.',
 	componentType: 'simple' as const,
 	status: 'stable' as const,
-	packageName: '@svelte-atoms/core',
-	importCode: "import { Swatch } from '@svelte-atoms/core/swatch';",
+	packageName: '@ixirjs/ui',
+	importCode: "import { Swatch } from '@ixirjs/ui/components/swatch';",
 	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Swatch' }],
 	examples: {},
 	accessibility: accessibilityFeatures

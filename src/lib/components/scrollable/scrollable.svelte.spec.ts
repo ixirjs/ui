@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { page } from '@vitest/browser/context';
-import ScrollableTest from './scrollable-test.svelte';
+import ScrollableTest from '$ixirjs/ui/test/components/scrollable/scrollable.test.svelte';
 
 async function nextFrame() {
 	await new Promise((resolve) => requestAnimationFrame(resolve));

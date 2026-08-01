@@ -2,7 +2,8 @@
 
 ## Status
 
-Accepted
+Superseded by ADR 0009 for renderer construction and snapshot granularity; resolver precedence and
+render-target compatibility remain accepted.
 
 ## Date
 

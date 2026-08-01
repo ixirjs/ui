@@ -2,7 +2,8 @@
 	import { Section, CodeBlock, DocCallout } from '$docs/components';
 
 	// ── Extend an existing component ───────────────────────────────────────────
-	const extendCode = `import { defineBond, DropdownMenuBond } from '@svelte-atoms/core';
+	const extendCode = `import { DropdownMenuBond } from '@ixirjs/ui/experimental';
+import { defineBond } from '@ixirjs/ui/shared';
 
 // A command-palette flavour of dropdown-menu.
 // parts: reuses the parent Bond's atoms, capabilities, and behavior.
@@ -15,15 +16,36 @@ export const CommandMenuBond = defineBond({
 
 export type CommandMenuBond = InstanceType<typeof CommandMenuBond>;`;
 
-	// ── Fuse two components into one ───────────────────────────────────────────
-	const fuseCode = `import { fuse, PopoverBond, DialogBond, PopoverTriggerAtom } from '@svelte-atoms/core';
+	// ── Type your own props (variant, size, …) ─────────────────────────────────
+	const augmentInterfaceCode = `// A preset is swappable, so the library cannot know which values yours defines.
+// You declare them — and get autocomplete plus a compile error on a bad value.
+declare module '@ixirjs/ui/components/button' {
+  interface ButtonProps {
+    variant?: 'primary' | 'destructive' | 'app-brand';
+    size?: 'sm' | 'md' | 'lg';
+  }
+}
 
-// PopoverDialog — a Popover trigger that opens Dialog's MODAL content.
-// \`fuse\` is the closure property of the composition model: bond + bond = bond.
+<Button variant="app-brand" />   // ✅
+<Button variant="app-brnad" />   // ❌ Type '"app-brnad"' is not assignable`;
+
+	const augmentAliasCode = `// Some families declare their props as a type alias, which TypeScript cannot merge.
+// Those expose an \`*ExtendProps\` interface instead — augment that.
+declare module '@ixirjs/ui/components/tree' {
+  interface TreeRootExtendProps {
+    variant?: 'compact' | 'comfortable';
+  }
+}`;
+
+	// ── Fuse two components into one ───────────────────────────────────────────
+	const fuseCode = `import { DialogBond, PopoverBond } from '@ixirjs/ui/experimental';
+import { fuse } from '@ixirjs/ui/shared';
+
+// PopoverDialog — a new family composed from two existing definitions.
 export const PopoverDialogBond = fuse({
-  name: 'popover-dialog',                    // rebrand: fresh namespace / preset / context key
-  parts: [PopoverBond, DialogBond],          // atoms UNION, capabilities CONCAT (last-wins per slot)
-  atoms: { trigger: PopoverTriggerAtom },    // curate the union — keep Popover's richer trigger
+  name: 'popover-dialog',
+  parts: [PopoverBond, DialogBond], // ordered union; later slots win
+  atoms: {}
 });
 export type PopoverDialogBond = InstanceType<typeof PopoverDialogBond>;`;
 
@@ -40,62 +62,50 @@ export type PopoverDialogBond = InstanceType<typeof PopoverDialogBond>;`;
 </PopoverDialog.Root>`;
 
 	// ── Author a brand-new bond ────────────────────────────────────────────────
-	const defineBondCode = `import {
-  Bond,
-  Atom,
+	const defineBondCode = `import { Bond, defineAtom } from '@ixirjs/ui/experimental';
+import {
   createAtomInstance,
   defineAtomCapability,
-  bondContextKey
-} from '@svelte-atoms/core';
-import { getContext, setContext } from 'svelte';
+  defineBond,
+  roles
+} from '@ixirjs/ui/shared';
 
 export type TilesBondProps = { id?: string; value?: string };
 
-export class TilesBond extends Bond<TilesBondProps> {
-  static CONTEXT_KEY = bondContextKey('tiles');
-
-  constructor(props: TilesBondProps) {
-    super(props, 'tiles');
-  }
-
-  select(value: string) {
-    this.props.value = value;
-  }
-
-  static required() {
-    const bond = getContext<TilesBond | undefined>(TilesBond.CONTEXT_KEY);
-    if (!bond) throw new Error('Tiles parts must be rendered inside <Tiles.Root>.');
-    return bond;
-  }
-
-  share(): this {
-    return setContext(TilesBond.CONTEXT_KEY, this);
-  }
+class TilesBondBase extends Bond<TilesBondProps> {
+  select(value: string) { this.props.value = value; }
 }
 
-export class TileItemAtom extends Atom<TilesBond, HTMLButtonElement> {
-  constructor(bond: TilesBond | undefined) {
-    super(bond, 'item');
-  }
-}
+const TilesRootAtom = defineAtom('root');
+const TileItemAtom = defineAtom('item');
 
-const optionRole = defineAtomCapability({
-  behavior: () => ({ attrs: () => ({ role: 'option' }) })
+export const TilesBond = defineBond({
+  name: 'tiles',
+  base: TilesBondBase,
+  atoms: {
+    root: TilesRootAtom,
+    item: { atom: TileItemAtom, role: roles.item }
+  }
 });
 
-// In Tile.Item.svelte:
+const optionPresentation = defineAtomCapability({
+  attach: { attrs: () => ({ role: 'option' }) }
+});
+
+// In Tile.Item.svelte — creation and lookup are explicit:
+const bond = TilesBond.getOrThrow();
 const item = createAtomInstance('item', {
-  bond: () => TilesBond.required(),
+  bond,
   register: { cardinality: 'many' },
-  factory: (bond) => new TileItemAtom(bond),
-  capabilities: [optionRole]
+  factory: (owner) => new TileItemAtom(owner!),
+  capabilities: [optionPresentation]
 });`;
 
 	// ── Use the built-in stateful capabilities ─────────────────────────────────
 	const builtinsCode = `import {
   createRovingFocus, rovingCapability,
   createSelection, selectionCapability,
-} from '@svelte-atoms/core';
+} from '@ixirjs/ui/shared';
 
 // "Which item is highlighted" (keyboard nav) — owns its own active index;
 // the item list + id→item resolution are injected.
@@ -120,11 +130,13 @@ capabilities: () => [
 	// ── Write your own capability ──────────────────────────────────────────────
 	const capabilityCode = `import {
   capabilityKey,
+  customRole,
   defineBondCapability,
   defineAtomCapability
-} from '@svelte-atoms/core';
+} from '@ixirjs/ui/shared';
 
 export const BUSY = capabilityKey<{ readonly busy: boolean }>('@acme/cap:busy');
+const status = customRole<'status', void>({ owner: '@acme/widgets', name: 'status' });
 
 // Bond capability: shared state, cross-node coordination, or whole-bond effects.
 export function busyCapability(isBusy: () => boolean) {
@@ -132,20 +144,20 @@ export function busyCapability(isBusy: () => boolean) {
     slot: BUSY,
     surface: { get busy() { return isBusy(); } },
     roles: {
-      status: () => ({ attrs: () => ({ 'aria-busy': isBusy() }) })
+      [status]: () => ({ attrs: () => ({ 'aria-busy': isBusy() }) })
     }
   });
 }
 
 // Atom capability: one node's local presentation, DOM behavior, or lifecycle.
-export const statusRole = defineAtomCapability({
-  behavior: (node) => ({
-    attrs: () => ({ role: 'status', 'data-atom': node.name })
-  })
+export const statusPresentation = defineAtomCapability({
+  attach: {
+    attrs: (node) => ({ role: 'status', 'data-atom': node.name })
+  }
 });
 
 // register on a Bond:     this.capability(busyCapability(() => this.props.loading))
-// register on an Atom: createAtomInstance('status', { capabilities: [statusRole] })`;
+// register on an Atom: createAtomInstance('status', { capabilities: [statusPresentation] })`;
 </script>
 
 <svelte:head>
@@ -163,7 +175,11 @@ export const statusRole = defineAtomCapability({
 			Every compound component has a <strong>Bond</strong> that coordinates rendered
 			<strong>Atoms</strong> and shared <strong>capabilities</strong>. Because a bond spec is data,
 			the set of bonds is closed under combination: you can extend one, fuse two, author a new one,
-			and project shared behavior as a capability over the same public seam.
+			and project shared behavior as a capability over the same public seam. Concrete component Bond
+			definitions are expert APIs imported from
+			<code class="bg-muted text-foreground rounded px-1.5 py-0.5 text-xs"
+				>@ixirjs/ui/experimental</code
+			>.
 		</Section.Subtitle>
 	</Section.Header>
 
@@ -308,6 +324,33 @@ export const statusRole = defineAtomCapability({
 		Atom folds into its spread, with no identity. Use a capability when two parts must resolve to
 		one (focus, selection, roving); use a one-off behavior for an ad-hoc, single-node decoration via
 		<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">node.behavior(...)</code>.
+	</DocCallout>
+</Section.Root>
+
+<Section.Root>
+	<Section.Header>
+		<Section.Title>Type your own props</Section.Title>
+		<Section.Subtitle>
+			Preset-driven props like
+			<code class="bg-muted text-foreground rounded px-1.5 py-0.5 text-xs">variant</code> and
+			<code class="bg-muted text-foreground rounded px-1.5 py-0.5 text-xs">size</code> are yours to declare.
+			Because a preset is swappable, only your application knows which values it defines — so the library
+			ships the seam, not the union.
+		</Section.Subtitle>
+	</Section.Header>
+
+	<div class="overflow-hidden rounded-lg">
+		<CodeBlock lang="typescript" code={augmentInterfaceCode} />
+	</div>
+
+	<div class="overflow-hidden rounded-lg">
+		<CodeBlock lang="typescript" code={augmentAliasCode} />
+	</div>
+
+	<DocCallout variant="warning" title="Declare the values you use">
+		Until you augment, a variant is accepted but unchecked. A misspelt <em>value</em> —
+		<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">variant="destrucive"</code> — silently
+		renders with no variant classes at all. Declaring the union turns that into a compile error.
 	</DocCallout>
 </Section.Root>
 

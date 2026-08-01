@@ -17,19 +17,26 @@ export const datagridRootProps: PropDefinition[] = [
 		type: 'string | undefined',
 		default: 'undefined',
 		description:
-			'Explicit CSS grid-template-columns value. When omitted, auto-computed from Th widths.'
+			'Explicit CSS grid-template-columns value. When omitted, auto-computed from Column widths.'
 	},
 	{
 		name: 'fallbackTemplate',
 		type: 'string',
 		default: "'auto'",
-		description: 'Fallback column template used when no template and no Th columns are mounted yet.'
+		description:
+			'Fallback column template used when no template and no Column columns are mounted yet.'
 	},
 	{
 		name: 'values',
 		type: 'string[]',
 		default: '[]',
 		description: 'Bindable array of selected row IDs. Use bind:values for two-way binding.'
+	},
+	{
+		name: 'onvalueschange',
+		type: 'StateChangeCallback<string[], DataGridBond<T>> | undefined',
+		default: 'undefined',
+		description: 'Semantic callback fired after selected row IDs commit.'
 	},
 	{
 		name: 'factory',
@@ -101,8 +108,9 @@ export const datagridTrProps: PropDefinition[] = [
 	{
 		name: 'value',
 		type: 'string',
-		default: 'nanoid()',
-		description: 'Row identifier used for selection tracking. Auto-generated if omitted.'
+		default: 'undefined',
+		description:
+			'Row identifier used for selection tracking. Rows without a value are not selectable.'
 	},
 	{
 		name: 'rows',
@@ -131,9 +139,9 @@ export const datagridTrProps: PropDefinition[] = [
 	},
 	{
 		name: 'onclick',
-		type: '((ev: Event, options: { row?: DataGridRowBond<T> }) => void) | undefined',
+		type: '((event: MouseEvent) => void) | undefined',
 		default: 'undefined',
-		description: 'Click handler for the row. Receives the event and the row bond.'
+		description: 'Native click callback. Receives only the DOM event.'
 	},
 	{
 		name: 'children',
@@ -147,9 +155,9 @@ export const datagridThProps: PropDefinition[] = [
 	{
 		name: 'id',
 		type: 'string',
-		default: 'nanoid()',
+		default: '$props.id()',
 		description:
-			'Unique column identifier. Auto-generated if omitted. Used to associate Td cells with their column.'
+			'Unique column identifier. Defaults to a hydration-stable generated id. Used to associate Cell cells with their column.'
 	},
 	{
 		name: 'class',
@@ -180,14 +188,13 @@ export const datagridThProps: PropDefinition[] = [
 		name: 'sortable',
 		type: 'boolean | SortableType | undefined',
 		default: 'undefined',
-		description:
-			'Enables click-to-sort on this column. Pass a string to identify the sort field in onsort.'
+		description: 'Enables click-to-sort on this column. Pass a string to set the sort `by` field.'
 	},
 	{
 		name: 'hidden',
 		type: 'boolean',
 		default: 'false',
-		description: 'Hides this column and its corresponding Td cells from the grid layout.'
+		description: 'Hides this column and its corresponding Cell cells from the grid layout.'
 	},
 	{
 		name: 'factory',
@@ -196,11 +203,17 @@ export const datagridThProps: PropDefinition[] = [
 		description: 'Custom factory to create the DataGridColumnBond instance for this column.'
 	},
 	{
+		name: 'onclick',
+		type: '((event: MouseEvent) => void) | undefined',
+		default: 'undefined',
+		description: 'Native click callback. Call `event.preventDefault()` to cancel sorting.'
+	},
+	{
 		name: 'onsort',
-		type: '((event: CustomEvent, options: { field?: SortableType; direction: Direction }) => void) | undefined',
+		type: 'StateChangeCallback<SortBy, DataGridColumnBond<T>, MouseEvent> | undefined',
 		default: 'undefined',
 		description:
-			'Callback fired after sort direction changes. Receives the new direction and field identifier.'
+			'Fired after sorting commits. Receives `(sort, { event, bond, reason })`; `sort` contains `id`, optional `by`, and `direction`.'
 	},
 	{
 		name: 'children',
@@ -219,9 +232,9 @@ export const datagridTdProps: PropDefinition[] = [
 	},
 	{
 		name: 'onclick',
-		type: '((ev: Event, options: { cell?: DataGridBond<T> }) => void) | undefined',
+		type: '((event: MouseEvent) => void) | undefined',
 		default: 'undefined',
-		description: 'Click handler for the cell. Receives the event and the datagrid bond.'
+		description: 'Native click callback. Receives only the DOM event.'
 	},
 	{
 		name: 'children',
@@ -253,10 +266,21 @@ export const datagridCheckboxProps: PropDefinition[] = [
 			'Bindable checked state. Automatically derived from selection state unless overridden.'
 	},
 	{
-		name: 'onchange',
-		type: '((ev: Event, options: { checked?: boolean }) => void) | undefined',
+		name: 'onclick',
+		type: '((event: MouseEvent) => void) | undefined',
 		default: 'undefined',
-		description:
-			'Change handler. In header rows, triggers select/deselect all. In body rows, toggles the row.'
+		description: 'Native click callback. Receives only the DOM event.'
+	},
+	{
+		name: 'oninput',
+		type: '((event: Event) => void) | undefined',
+		default: 'undefined',
+		description: 'Event-only checkbox callback. Call `event.preventDefault()` to cancel selection.'
+	},
+	{
+		name: 'onchange',
+		type: '((event: Event) => void) | undefined',
+		default: 'undefined',
+		description: 'Event-only checkbox callback. Call `event.preventDefault()` to cancel selection.'
 	}
 ];

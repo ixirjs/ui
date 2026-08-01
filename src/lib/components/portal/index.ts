@@ -1,24 +1,17 @@
 export * from './types';
-export * as Portal from './atoms';
+export * as Portal from './instance/atoms';
 export {
 	PortalBond,
 	PortalBondBase,
 	PortalInnerAtom,
 	PortalRootAtom,
 	type PortalBondProps,
+	type PortalElevationEntry,
 	type PortalStateProps
-} from './bond.svelte';
-export { port } from './port';
-export {
-	ZLayer,
-	LAYER_BASE,
-	type LayerName,
-	type LayerInput,
-	type LayerRelation,
-	type ZIndexInput
-} from './zlayer.svelte';
-
-export { default as ActivePortal } from './active-portal.svelte';
-export { default as Teleport } from './teleport.svelte';
-
-export * from './portals';
+} from './instance/bond.svelte';
+export { default as ActivePortal } from './mounting/active-portal.svelte';
+export { port } from './mounting/port';
+export { default as Teleport } from './mounting/teleport.svelte';
+export { PortalSurface } from './surface';
+export * from './layering';
+export * from './registry';

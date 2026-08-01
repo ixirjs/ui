@@ -1,7 +1,7 @@
 <script module>
 	import { defineMeta } from '@storybook/addon-svelte-csf';
 	import { Dialog as ADialog } from '..';
-	import { Button } from '../../button';
+	import { Button } from '$ixirjs/ui/components/button';
 
 	// https://storybook.js.org/docs/writing-stories
 	const { Story } = defineMeta({
@@ -36,7 +36,7 @@
 						undone.
 					</p>
 				</ADialog.Body>
-				<ADialog.Footer class="flex justify-end gap-2">
+				<ADialog.Footer>
 					<Button
 						variant="outline"
 						onclick={() => {

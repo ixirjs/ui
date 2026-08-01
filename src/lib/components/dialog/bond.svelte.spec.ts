@@ -1,18 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { Atom } from '$svelte-atoms/core/shared/bond';
-import {
-	DialogBodyAtom,
-	DialogBond,
-	DialogCloseAtom,
-	DialogContentAtom,
-	DialogDescriptionAtom,
-	DialogFooterAtom,
-	DialogHeaderAtom,
-	DialogRootAtom,
-	DialogTitleAtom,
-	type DialogBondProps
-} from './bond.svelte';
-import { ignoreEscape, FOCUS } from '$svelte-atoms/core/components/portal/host';
+import { DialogBond, DialogRootAtom, type DialogBondProps } from './bond.svelte';
+import { ignoreEscape, FOCUS } from '$ixirjs/ui/components/overlay';
 
 // Bond-seam specs: assert atom.spread, state methods, atom identity, strategy substitution. No DOM rendering.
 
@@ -53,35 +41,6 @@ describe('DialogBond overlay lifecycle methods', () => {
 	});
 });
 
-describe('DialogBond generated atom methods', () => {
-	it('return Dialog Atoms', () => {
-		const { bond } = makeBond();
-		const nodes = [
-			bond.root(),
-			bond.content(),
-			bond.header(),
-			bond.title(),
-			bond.description(),
-			bond.body(),
-			bond.footer(),
-			bond.closeButton()
-		];
-
-		expect(nodes[0]).toBeInstanceOf(DialogRootAtom);
-		expect(nodes[1]).toBeInstanceOf(DialogContentAtom);
-		expect(nodes[2]).toBeInstanceOf(DialogHeaderAtom);
-		expect(nodes[3]).toBeInstanceOf(DialogTitleAtom);
-		expect(nodes[4]).toBeInstanceOf(DialogDescriptionAtom);
-		expect(nodes[5]).toBeInstanceOf(DialogBodyAtom);
-		expect(nodes[6]).toBeInstanceOf(DialogFooterAtom);
-		expect(nodes[7]).toBeInstanceOf(DialogCloseAtom);
-
-		for (const node of nodes) {
-			expect(node).toBeInstanceOf(Atom);
-		}
-	});
-});
-
 describe('Strategy substitution via capabilities (slot resolution)', () => {
 	it('overriding the escape capability with IgnoreEscape: Escape does not close', () => {
 		const props = $state<DialogBondProps>({ open: true, disabled: false });
@@ -89,7 +48,7 @@ describe('Strategy substitution via capabilities (slot resolution)', () => {
 		// last-wins-per-slot replaces the bundle's CloseOnEscape (before the root atom is built)
 		bond.capability(ignoreEscape);
 
-		const onkeydown = bond.root().spread.onkeydown as (ev: KeyboardEvent) => void;
+		const onkeydown = new DialogRootAtom(bond).spread.onkeydown as (ev: KeyboardEvent) => void;
 		onkeydown({ key: 'Escape', preventDefault: () => undefined } as KeyboardEvent);
 		expect(props.open).toBe(true); // would be false with CloseOnEscape
 	});
@@ -99,5 +58,17 @@ describe('Strategy substitution via capabilities (slot resolution)', () => {
 		const focus = bond.capability(FOCUS)?.surface;
 		expect(focus?.restoreFocus).toBe('previous');
 		expect(focus?.captureFocusOnOpen).toBe(true);
+	});
+
+	it('uses modal behavior by default and suppresses modal ARIA/inert when modal is false', () => {
+		const { bond: modal } = makeBond({ open: false });
+		const { bond: nonModal } = makeBond({ open: false, modal: false });
+
+		expect(modal.modal).toBe(true);
+		expect(new DialogRootAtom(modal).spread['aria-modal']).toBe(true);
+		expect(new DialogRootAtom(modal).spread.inert).toBe(true);
+		expect(nonModal.modal).toBe(false);
+		expect(new DialogRootAtom(nonModal).spread['aria-modal']).toBeUndefined();
+		expect(new DialogRootAtom(nonModal).spread.inert).toBeUndefined();
 	});
 });

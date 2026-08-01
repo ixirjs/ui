@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { Bond, Atom, BondState, bondContextKey, type BondStateProps } from '../../bond';
+import { Bond, Atom, bondContextKey, type BondStateProps } from '$ixirjs/ui/shared/bond';
 import {
 	createValidation,
 	validationCapability,
@@ -8,16 +8,12 @@ import {
 	type ValidationResult
 } from './validation.svelte';
 
-class TestState extends BondState<BondStateProps> {
-	constructor() {
-		super({});
-	}
-}
+class TestState {}
 
 class TestBond extends Bond<BondStateProps> {
 	static CONTEXT_KEY = bondContextKey('test-validation');
-	constructor(state = new TestState()) {
-		super(state, 'test');
+	constructor(readonly state = new TestState()) {
+		super({}, 'test');
 	}
 	addAtom(key: string, role: string) {
 		const atom = new TestAtom(this, key).role(role);
@@ -72,6 +68,30 @@ describe('createValidation', () => {
 		expect(validation.isValidating).toBe(false);
 		expect(validation.errors).toEqual([error]);
 	});
+
+	it('keeps the latest async result and pending state when validations settle out of order', async () => {
+		const resolvers: Array<(result: ValidationResult) => void> = [];
+		const validation = createValidation({
+			validateAsync: () =>
+				new Promise<ValidationResult>((done) => {
+					resolvers.push(done);
+				})
+		});
+
+		const first = validation.validateAsync();
+		const second = validation.validateAsync();
+		expect(validation.isValidating).toBe(true);
+
+		resolvers[0]!({ success: false, errors: [error] });
+		await first;
+		expect(validation.isValidating).toBe(true);
+		expect(validation.errors).toEqual([]);
+
+		resolvers[1]!({ success: true, errors: [] });
+		await second;
+		expect(validation.isValidating).toBe(false);
+		expect(validation.errors).toEqual([]);
+	});
 });
 
 describe('validationCapability', () => {
@@ -84,14 +104,12 @@ describe('validationCapability', () => {
 		});
 		const cap = validationCapability(validation);
 		const bond = new TestBond();
-		bond.state.capability(cap);
+		bond.capability(cap);
 		const control = bond.addAtom('control', 'control');
 
 		expect(cap.slot).toBe(VALIDATION);
 		expect(cap.surface).toBe(validation);
 		expect(cap.meta).toMatchObject({
-			layer: 1,
-			kind: 'model',
 			projects: ['control', 'error']
 		});
 		expect(control.spread['aria-invalid']).toBe('false');

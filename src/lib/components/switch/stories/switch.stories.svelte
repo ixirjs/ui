@@ -1,6 +1,6 @@
 <script module>
 	import { defineMeta } from '@storybook/addon-svelte-csf';
-	import { default as SwitchCmp } from '../switch.svelte';
+	import { default as SwitchCmp } from '$ixirjs/ui/components/switch/switch.svelte';
 
 	const { Story } = defineMeta({
 		title: 'Atoms/Switch',
@@ -25,10 +25,17 @@
 
 	function logChange(_ev?: Event, detail?: { checked: boolean }) {
 		changeLog = [
-			{ id: nextId++, text: `onchange → checked: ${detail?.checked}` },
+			{ id: nextId++, text: `onchange fired — checked: ${detail?.checked}` },
 			...changeLog
 		].slice(0, 4);
 	}
+
+	// Real-world: a small account-settings surface driven by bound switches.
+	let settings = $state({
+		emailDigest: true,
+		productUpdates: false,
+		twoFactor: true
+	});
 </script>
 
 <Story name="Basic">
@@ -100,6 +107,53 @@
 			<div class="flex items-center gap-3">
 				<SwitchCmp checked={true} disabled />
 				<span class="text-muted-foreground text-sm">Disabled on</span>
+			</div>
+		</div>
+	{/snippet}
+</Story>
+
+<!--
+	Real-world: an account settings card. Each row binds a switch to a field on
+	`settings`, and the summary line reads the same state back.
+-->
+<Story name="Settings Panel">
+	{#snippet template()}
+		{@const rows = [
+			{
+				key: 'emailDigest',
+				title: 'Weekly email digest',
+				desc: 'A summary of activity every Monday.'
+			},
+			{
+				key: 'productUpdates',
+				title: 'Product updates',
+				desc: 'News about features and releases.'
+			},
+			{ key: 'twoFactor', title: 'Two-factor authentication', desc: 'Require a code at sign-in.' }
+		] as const}
+		<div class="w-80 rounded-xl border">
+			<div class="border-b px-4 py-3">
+				<h3 class="text-sm font-semibold">Notifications & security</h3>
+				<p class="text-muted-foreground text-xs">Manage how your account behaves.</p>
+			</div>
+			<div class="divide-y">
+				{#each rows as row (row.key)}
+					<div class="flex items-center justify-between gap-4 px-4 py-3">
+						<div class="flex flex-col">
+							<span class="text-sm font-medium">{row.title}</span>
+							<span class="text-muted-foreground text-xs">{row.desc}</span>
+						</div>
+						<SwitchCmp bind:checked={settings[row.key]} />
+					</div>
+				{/each}
+			</div>
+			<div class="bg-muted/40 text-muted-foreground rounded-b-xl px-4 py-2 text-xs">
+				<code class="font-mono">
+					enabled: {Object.entries(settings)
+						.filter(([, on]) => on)
+						.map(([k]) => k)
+						.join(', ') || '—'}
+				</code>
 			</div>
 		</div>
 	{/snippet}

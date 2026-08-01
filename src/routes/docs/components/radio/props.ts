@@ -63,16 +63,23 @@ export const radioProps: PropDefinition[] = [
 		description: 'Label text or content displayed alongside the radio input.'
 	},
 	{
-		name: 'onchange',
-		type: '((ev: Event, options?: { checked: boolean; value: boolean; type: "boolean" }) => void) | undefined',
+		name: 'oncheckedchange',
+		type: 'StateChangeCallback<boolean> | undefined',
 		default: 'undefined',
-		description: 'Handler called when the radio selection changes.'
+		description:
+			'Semantic callback fired after this item’s checked state commits for both selection and deselection. The context includes `event` when the native event is available.'
 	},
 	{
 		name: 'oninput',
-		type: '((ev: Event, options?: { checked: boolean; value: boolean; type: "boolean" }) => void) | undefined',
+		type: '((event: Event) => void) | undefined',
 		default: 'undefined',
-		description: 'Handler called on every input event for the radio element.'
+		description: 'Native input-event callback. Receives only the DOM event.'
+	},
+	{
+		name: 'onchange',
+		type: '((event: Event) => void) | undefined',
+		default: 'undefined',
+		description: 'Native change-event callback. Receives only the DOM event.'
 	},
 	{
 		name: '...atomProps',
@@ -121,10 +128,23 @@ export const radioGroupProps: PropDefinition[] = [
 		description: 'Radio buttons and other content to render inside the group container.'
 	},
 	{
-		name: 'oninput',
-		type: '((ev: CustomEvent, options?: { value: T }) => void) | undefined',
+		name: 'onvaluechange',
+		type: 'StateChangeCallback<T> | undefined',
 		default: 'undefined',
-		description: 'Handler called when the selected value changes within the group.'
+		description:
+			'Semantic callback fired after the selected group value commits. Receives `(value, { event })` with the native item event.'
+	},
+	{
+		name: 'oninput',
+		type: '((event: Event) => void) | undefined',
+		default: 'undefined',
+		description: 'Native callback for input events bubbling from radio items.'
+	},
+	{
+		name: 'onchange',
+		type: '((event: Event) => void) | undefined',
+		default: 'undefined',
+		description: 'Native callback for change events bubbling from radio items.'
 	},
 	{
 		name: '...atomProps',

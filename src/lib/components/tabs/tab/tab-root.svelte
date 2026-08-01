@@ -1,33 +1,34 @@
 <script lang="ts">
-	import { bindBond } from '$svelte-atoms/core/shared/bond/bind.svelte';
+	import { useRoot } from '$ixirjs/ui/shared';
 	import { TabBond, type TabBondProps } from './bond.svelte';
-	import { TabsBond } from '../bond.svelte';
-	import { type Snippet } from 'svelte';
+	import { TabsBond } from '$ixirjs/ui/components/tabs/bond.svelte';
+	import type { TabRootProps } from '$ixirjs/ui/components/tabs/types';
 
 	// Assert we're inside a <Tabs> (throws otherwise); the bond itself isn't needed here.
 	TabsBond.getOrThrow('TabRoot must be used within a Tabs component.');
 
+	const ID = $props.id();
+
 	let {
 		value,
 		disabled = false,
-		data = undefined as unknown,
+		data = undefined,
 		factory = defaultFactory,
+		presets = undefined,
 		children
-	}: {
-		// Required: it's the tab's selection key (the bond uses it directly in mountItem/select).
-		value: string;
-		disabled?: boolean;
-		data?: unknown;
-		factory?: typeof defaultFactory;
-		children?: Snippet<[{ tab: TabBond }]>;
-	} = $props();
+	}: TabRootProps = $props();
 
-	const binding = bindBond<TabBond>((props) => factory(props), {
-		value: () => value,
-		disabled: () => disabled,
-		data: () => data
-	});
-	const bond = binding.bond.share();
+	const root = useRoot(
+		TabBond,
+		{
+			value: () => value,
+			disabled: () => disabled,
+			data: () => data,
+			presets: () => presets
+		},
+		{ atom: false, id: () => ID, factory: (props) => factory(props) }
+	);
+	const bond = root.bond;
 
 	const unmount = bond.mount();
 	$effect.pre(() => unmount);

@@ -1,5 +1,5 @@
 const presetCode = `
-import { setPreset } from '@svelte-atoms/core';
+import { setPreset } from '@ixirjs/ui/preset';
 
 const preset = setPreset({
   checkbox: () => ({
@@ -63,8 +63,8 @@ export const metadata = {
 		'Custom checkbox with checked, unchecked, and indeterminate states, group binding, and form compatibility.',
 	componentType: 'simple' as const,
 	status: 'stable' as const,
-	packageName: '@svelte-atoms/core',
-	importCode: "import { Checkbox } from '@svelte-atoms/core';",
+	packageName: '@ixirjs/ui',
+	importCode: "import { Checkbox } from '@ixirjs/ui';",
 	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Checkbox' }],
 	useCases,
 	examples: {

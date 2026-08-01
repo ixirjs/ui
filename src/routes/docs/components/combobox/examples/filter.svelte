@@ -2,7 +2,7 @@
 	import { Combobox } from '$lib/components/combobox';
 	import { Input } from '$lib/components/input';
 	import { Divider } from '$lib/components/divider';
-	import { filterDropdownData } from '$lib/components/dropdown';
+	import { filterSelectData } from '$lib/components/select';
 
 	const currencies = [
 		{ value: 'usd', label: 'US Dollar' },
@@ -14,7 +14,7 @@
 	let currencyValue = $state('');
 	let currencyLabel = $state('');
 
-	const filteredCurrencies = filterDropdownData(
+	const filteredCurrencies = filterSelectData(
 		() => currencies,
 		(query, item) => item.label.toLowerCase().includes(query.toLowerCase())
 	);

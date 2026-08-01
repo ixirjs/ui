@@ -1,5 +1,5 @@
 const presetCode = `
-import { setPreset } from '@svelte-atoms/core';
+import { setPreset } from '@ixirjs/ui/preset';
 
 const preset = setPreset({
   link: () => ({
@@ -62,8 +62,8 @@ export const metadata = {
 		'Styled anchor element with consistent hover/active states and preset-based variants.',
 	componentType: 'simple' as const,
 	status: 'stable' as const,
-	packageName: '@svelte-atoms/core',
-	importCode: "import { Link } from '@svelte-atoms/core';",
+	packageName: '@ixirjs/ui',
+	importCode: "import { Link } from '@ixirjs/ui';",
 	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Link' }],
 	useCases,
 	examples: {

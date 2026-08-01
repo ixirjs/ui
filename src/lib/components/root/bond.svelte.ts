@@ -1,4 +1,4 @@
-import { bondContextKey, Bond, type BondStateProps } from '$svelte-atoms/core/shared/bond';
+import { bondContextKey, Bond, type BondStateProps } from '$ixirjs/ui/shared/bond';
 import type { Component } from 'svelte';
 
 // -----------------------------------------------------------------------------

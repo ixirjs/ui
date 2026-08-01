@@ -63,7 +63,13 @@
 
 	<!-- Preview -->
 	{#if activeTab === 'preview'}
-		<div class="bg-dot-grid relative min-h-32 p-8">
+		<!--
+			`data-example-preview` is a stable hook for e2e: the docs shell's own chrome (the sidebar
+			tree, the mode toggles) uses the same roles and ARIA attributes as the components being
+			demonstrated, so an unscoped `getByRole` matches the navigation before the example. Scoping
+			to this attribute keeps those tests pinned to the demo without depending on layout classes.
+		-->
+		<div data-example-preview class="bg-dot-grid relative min-h-32 p-8">
 			<div class="flex items-center justify-center">
 				{#if component}
 					{#await component()}

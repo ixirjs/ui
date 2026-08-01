@@ -1,16 +1,11 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { animate as motion } from 'motion';
-	import { Icon } from '$svelte-atoms/core/components/icon';
-	import { mergeAtomProps, HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
-	import { createAtomInstance } from '$svelte-atoms/core/shared/bond';
-	import IconArrowDown from '$svelte-atoms/core/icons/icon-arrow-down.svelte';
-	import { CollapsibleBond, CollapsibleIndicatorAtom } from './bond.svelte';
+	import { animate as runAnimation } from '@ixirjs/ui/shared';
+	import { Icon } from '$ixirjs/ui/components/icon';
+	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import { usePart } from '@ixirjs/ui/shared';
+	import IconArrowDown from '$ixirjs/ui/icons/icon-arrow-down.svelte';
+	import { CollapsibleBond } from './bond.svelte';
 	import type { CollapsibleIndicatorProps } from './types';
-
-	const bond = CollapsibleBond.getOrThrow(
-		'<Collapsible.Indicator /> must be used within a <Collapsible.Root />'
-	);
-	const isOpen = $derived(bond?.state.props.open ?? false);
 
 	let {
 		class: klass = '',
@@ -19,27 +14,24 @@
 		children = undefined,
 		...restProps
 	}: CollapsibleIndicatorProps<E, B> = $props();
-	const atom = createAtomInstance<CollapsibleIndicatorAtom, CollapsibleBond>('indicator', {
-		bond,
-		required: true,
-		factory: (owner) => new CollapsibleIndicatorAtom(owner as CollapsibleBond)
+	const part = usePart(CollapsibleBond, 'indicator', () => restProps, {
+		preset: () => preset
 	});
-
-	const indicatorProps = $derived(mergeAtomProps(atom, preset, restProps));
+	const isOpen = $derived(part.bond.isOpen);
 
 	function defaultAnimate(node: HTMLElement) {
-		motion(node, { rotate: 180 * +isOpen }, { duration: 0.3, ease: 'anticipate' });
+		runAnimation(node, { rotate: 180 * +isOpen }, { duration: 0.3, ease: 'anticipate' });
 	}
 </script>
 
 <HtmlAtom
-	{bond}
 	{animate}
 	class={['border-border flex size-4 items-center justify-center', '$preset', klass]}
-	{...indicatorProps}
+	{...restProps}
+	{part}
 >
 	{#if children}
-		{@render children?.({ collapsible: bond })}
+		{@render children?.({ collapsible: part.bond })}
 	{:else}
 		<Icon src={IconArrowDown} />
 	{/if}

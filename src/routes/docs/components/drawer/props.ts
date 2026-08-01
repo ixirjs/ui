@@ -28,16 +28,16 @@ export const slideoverRootProps: PropDefinition[] = [
 	{
 		name: 'portal',
 		type: 'string | PortalBond | undefined',
-		default: "'root.l0'",
+		default: 'ambient portal → root.l0',
 		description:
-			'Portal target selector or PortalBond instance. Teleports drawer content to a different DOM node. Defaults to L0 z-layer.'
+			"Portal target selector or PortalBond instance. Resolution is explicit target → ambient portal → root.l0; the drawer stays within that portal's containment scope."
 	},
 	{
-		name: 'onclose',
-		type: '((event: Event, bond: DrawerBond<...>) => void) | undefined',
+		name: 'onopenchange',
+		type: 'StateChangeCallback<boolean, DrawerBond> | undefined',
 		default: 'undefined',
 		description:
-			'Callback fired when the drawer is closed. Receives the closing event and DrawerBond instance.'
+			'Called after a real open-state transition commits; dismissal events and reasons are included when available.'
 	},
 	{
 		name: 'factory',

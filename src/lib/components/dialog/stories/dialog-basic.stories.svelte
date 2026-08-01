@@ -1,7 +1,7 @@
 <script module>
 	import { defineMeta } from '@storybook/addon-svelte-csf';
 	import { Dialog as ADialog } from '..';
-	import { Button } from '../../button';
+	import { Button } from '$ixirjs/ui/components/button';
 
 	// https://storybook.js.org/docs/writing-stories
 	const { Story } = defineMeta({
@@ -42,7 +42,7 @@
 	{#snippet template(args)}
 		<div class="flex flex-col items-start gap-3 p-8">
 			<Button variant="primary" onclick={() => (isDialogOpen = true)}>Open dialog</Button>
-			<code class="text-muted-foreground text-xs font-mono">bind:open → {isDialogOpen}</code>
+			<code class="text-muted-foreground text-xs font-mono">open: {isDialogOpen}</code>
 
 			<ADialog.Root
 				class="bg-neutral-900/40"
@@ -64,7 +64,7 @@
 						</ADialog.Description>
 					</ADialog.Body>
 
-					<ADialog.Footer class="gap-2">
+					<ADialog.Footer>
 						<Button variant="primary" onclick={() => (isDialogOpen = false)}>Done</Button>
 					</ADialog.Footer>
 				</ADialog.Content>

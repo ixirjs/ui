@@ -1,8 +1,4 @@
-import { clickoutDrawer, clickoutPopover, Input } from '$lib';
-import { closeOverlay } from '$lib/components/portal/host/policies/overlay-view';
-import type { PopoverBond } from '$lib/components/popover';
 import type { Preset } from '$lib/context';
-import { createAttachmentKey } from 'svelte/attachments';
 
 /**
  * Minimalist preset for Storybook stories.
@@ -28,7 +24,7 @@ import { createAttachmentKey } from 'svelte/attachments';
 
 /** A floating surface: menu / popover / dropdown / select content panels. */
 const SURFACE =
-	'z-50 overflow-hidden rounded-lg border border-border bg-popover text-popover-foreground shadow-md outline-none ring-1 ring-foreground/5 backdrop-blur-sm';
+	'rounded-lg border border-border bg-popover text-popover-foreground shadow-md outline-none';
 
 /** A compact command surface for menus and searchable option lists. */
 const MENU_SURFACE = `${SURFACE} min-w-44 p-1`;
@@ -45,18 +41,18 @@ export const storiesPreset: Partial<Preset> = {
 	// Accordion — one unified card, items separated by hairline dividers (root base
 	// already supplies `bg-card flex list-none flex-col`). -----------------------------
 	accordion: () => ({
-		as: 'ul',
+		render: { as: 'ul' },
 		class: 'w-full max-w-md divide-y divide-border overflow-hidden rounded-lg border'
 	}),
-	'accordion.item': () => ({ as: 'li' }),
-	'accordion.item.header': (bond) => {
+	'accordion.item': () => ({ render: { as: 'li' } }),
+	'accordion.item.header': ({ bond }) => {
 		const itemBond = bond as { isActive?: boolean } | undefined;
-		return () => ({
+		return {
 			class: [
 				'justify-between gap-3 px-3 py-3 text-sm font-medium transition-colors hover:bg-foreground/5',
 				itemBond?.isActive ? 'text-foreground' : 'text-muted-foreground'
 			]
-		});
+		};
 	},
 	'accordion.item.body': () => ({
 		class: 'overflow-hidden text-sm text-muted-foreground'
@@ -104,6 +100,26 @@ export const storiesPreset: Partial<Preset> = {
 		class: 'inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium'
 	}),
 
+	// Input — the root is the bordered field shell (root base already supplies
+	// `flex h-10 items-center rounded-md border bg-input`). Give it the minimalist border,
+	// `text-sm` (cascades to every control type + the placeholder), and a focus-within ring so
+	// keyboard focus reads on the whole field; dim when the inner control is disabled. The
+	// specialized controls (text/email/otp/color/…) merge their own `input.<type>` preset over
+	// the shared field base, so they inherit this shell without needing per-type story presets.
+	input: () => ({
+		class:
+			'px-2 border-border bg-background text-sm transition-colors focus-within:border-ring focus-within:ring-1 focus-within:ring-ring has-[input:disabled]:cursor-not-allowed has-[input:disabled]:opacity-50'
+	}),
+	// The root now owns the horizontal inset (`px-2`); drop the field's own `px-2` (from
+	// `INPUT_FIELD_CLASS`) so the text and icon share one gutter instead of doubling it.
+	'input.control': () => ({ class: 'px-0' }),
+	'input.icon': () => ({ class: 'text-muted-foreground' }),
+	'input.placeholder': () => ({ class: 'text-muted-foreground' }),
+
+	// Form — the root's own base atom is just `$preset`, so the whole card-shell surface lives
+	// here; stories keep only per-instance layout (flex/gap/width/padding).
+	form: () => ({ class: 'bg-card border-border rounded-xl border' }),
+
 	// Card --------------------------------------------------------------------------
 	card: () => ({ class: 'rounded-lg border border-border bg-card' }),
 	'card.header': () => ({ class: 'flex flex-col gap-1 border-b border-border px-4 py-3' }),
@@ -124,7 +140,15 @@ export const storiesPreset: Partial<Preset> = {
 		class:
 			'h-10 items-center px-3 text-xs font-medium tracking-wide text-muted-foreground uppercase'
 	}),
-	'datagrid.cell': () => ({ class: 'px-3' }),
+	'datagrid.cell': () => ({
+		class: 'px-3',
+		variants: {
+			variant: {
+				// Monospace primary-colour SKU/code cell.
+				code: { class: 'font-mono text-xs font-semibold text-primary' }
+			}
+		}
+	}),
 
 	// Collapsible — a single bordered card; header/body fill to the edges (root base
 	// already supplies `flex w-full flex-col overflow-hidden`). ------------------------
@@ -136,30 +160,67 @@ export const storiesPreset: Partial<Preset> = {
 	'collapsible.body': () => ({ class: 'text-sm text-muted-foreground' }),
 	'collapsible.indicator': () => ({ class: 'size-4 shrink-0 text-muted-foreground' }),
 
-	// Popover / menu / dropdown surfaces + items ------------------------------------
-	'popover.content': (bond) => {
-		const isAutoClosable = (bond as unknown as PopoverBond)?.state?.props?.rest?.autoClose ?? false;
-		return {
-			class: `${SURFACE} max-w-sm p-3 text-sm leading-relaxed`,
-			[createAttachmentKey()]: (node: HTMLElement) => {
-				if (!isAutoClosable) return;
-				return clickoutPopover((_, atom) => {
-					closeOverlay(atom);
-				})(node);
-			}
-		};
-	},
-	'popover.arrow': () => ({ class: 'text-popover drop-shadow-sm' }),
-	'popover.indicator': () => ({ class: 'size-4 shrink-0 text-muted-foreground' }),
-	'menu.content': () => ({
-		class: MENU_SURFACE,
-		[createAttachmentKey()]: clickoutPopover((_, atom) => {
-			closeOverlay(atom);
-		})
+	// Tree — indented disclosure rows: a hoverable row, a left guide-line on the child group,
+	// and a muted chevron (base atoms supply cursor-pointer / pl-4 indent / aspect-square).
+	'tree.header': () => ({
+		class: 'flex items-center gap-2 rounded px-2 py-1 hover:bg-foreground/5'
 	}),
-	'dropdown.trigger': () => ({ base: Input.Root }),
-	'dropdown.item': () => ({ class: ITEM }),
-	'combobox.item': () => ({ class: ITEM }),
+	'tree.body': () => ({ class: 'border-l border-l-border' }),
+	'tree.indicator': () => ({ class: 'text-muted-foreground' }),
+
+	// Popover / menu / dropdown surfaces + items ------------------------------------
+	// Content defaults to a prose panel (`p-3`, relaxed leading). The `menu` variant retightens
+	// it to a command surface (`p-1`) for a list of rows — stories pick the min-width per case.
+	'popover.content': () => ({
+		class: `${SURFACE} max-w-sm p-3 text-sm leading-relaxed`,
+		variants: {
+			variant: {
+				menu: { class: 'p-1' }
+			}
+		}
+	}),
+	// Trigger looks live here as named variants so stories select one with `variant="…"` instead of
+	// re-spelling the surface look inline. The trigger base already ships `flex w-fit rounded-md p-2`;
+	// each variant overrides shape/padding/colour and stories append only per-instance layout
+	// (`w-full`, `justify-between`, the row-hover reveal, …).
+	'popover.trigger': () => ({
+		variants: {
+			variant: {
+				// Rounded identity chip: avatar + label pill (Basic account menu).
+				chip: {
+					class:
+						'items-center gap-3 rounded-full border border-border bg-card py-1.5 pl-1.5 pr-4 text-sm transition-colors hover:border-foreground/40'
+				},
+				// Bordered select-style button (Category filter, Sort control).
+				field: {
+					class:
+						'gap-2 rounded-lg border border-border px-3 py-2 text-sm font-normal transition-colors hover:border-foreground/40'
+				},
+				// Transparent full-width row (Sidebar account footer).
+				ghost: {
+					class: 'gap-2.5 rounded-md text-sm font-normal transition-colors hover:bg-muted'
+				},
+				// Compact muted icon button (row-action kebabs).
+				'ghost-icon': {
+					class:
+						'rounded-md p-1.5 text-muted-foreground transition hover:bg-muted hover:text-foreground'
+				}
+			}
+		}
+	}),
+	'popover.tail': () => ({ class: 'text-border' }),
+	'popover.indicator': () => ({ class: 'size-4 shrink-0 text-muted-foreground' }),
+	'combobox.item': () => ({
+		class: ITEM,
+		variants: {
+			variant: {
+				flat: {
+					class:
+						'flex cursor-pointer items-center gap-2 px-3 py-2 text-sm text-foreground transition-colors hover:bg-foreground/5 data-[highlighted=true]:bg-foreground/5 data-[selected]:bg-primary/10 data-[selected]:font-medium data-[selected]:text-primary'
+				}
+			}
+		}
+	}),
 	'list.item': () => ({ class: ITEM }),
 	// A visible separator line between menu sections (the part only ships `my-1` spacing).
 	'list.divider': () => ({ class: 'h-px bg-border' }),
@@ -169,11 +230,58 @@ export const storiesPreset: Partial<Preset> = {
 	// would otherwise render surface-less — give them the shared minimalist surface + row style.
 	'dropdown-menu.content': () => ({ class: MENU_SURFACE }),
 	'dropdown-menu.item': () => ({ class: ITEM }),
-	'context-menu.content': () => ({ class: MENU_SURFACE }),
+	'context-menu.content': () => ({
+		class: MENU_SURFACE,
+		variants: {
+			variant: {
+				// Softer shadow used by the ContextMenu stories (shadow-md → shadow-sm).
+				soft: { class: 'shadow-sm' }
+			}
+		}
+	}),
 	'context-menu.item': () => ({ class: ITEM }),
-	'select.content': () => ({ class: `${MENU_SURFACE} max-h-72 overflow-y-auto` }),
-	'select.item': () => ({ class: ITEM }),
-	'combobox.content': () => ({ class: `${MENU_SURFACE} max-h-72 overflow-y-auto` }),
+	// Select/combobox triggers are bordered field buttons; the `flat` content/item variants give
+	// the softer panel + roomier rows the select & combobox stories use (vs the default menu look).
+	'select.trigger': () => ({
+		variants: {
+			variant: {
+				// Bordered field button (Basic/Single/Searchable/Grouped/Multiple).
+				field: {
+					class: 'rounded-lg border border-border transition-colors hover:border-foreground/30'
+				},
+				// Non-interactive locked field (Disabled story): dimmed, no hover affordance.
+				locked: { class: 'rounded-lg border border-border opacity-60' }
+			}
+		}
+	}),
+	'combobox.trigger': () => ({ class: 'rounded-lg border border-border' }),
+	'select.content': () => ({
+		class: `${MENU_SURFACE} max-h-72 overflow-y-auto`,
+		variants: {
+			variant: {
+				flat: { class: 'rounded-lg border border-border bg-popover shadow-sm' }
+			}
+		}
+	}),
+	'select.item': () => ({
+		class: ITEM,
+		variants: {
+			variant: {
+				flat: {
+					class:
+						'flex cursor-pointer items-center gap-2 px-3 py-2 text-sm text-foreground transition-colors hover:bg-foreground/5 data-[highlighted=true]:bg-foreground/5 data-[selected]:bg-primary/10 data-[selected]:font-medium data-[selected]:text-primary'
+				}
+			}
+		}
+	}),
+	'combobox.content': () => ({
+		class: `${MENU_SURFACE} max-h-72 overflow-y-auto`,
+		variants: {
+			variant: {
+				flat: { class: 'rounded-lg border border-border bg-popover shadow-lg' }
+			}
+		}
+	}),
 
 	// Dialog ------------------------------------------------------------------------
 	'dialog.content': () => ({
@@ -185,18 +293,28 @@ export const storiesPreset: Partial<Preset> = {
 	'dialog.footer': () => ({ class: 'flex justify-end gap-2 border-t border-border px-5 py-4' }),
 
 	// Drawer ------------------------------------------------------------------------
-	'drawer.content': () => ({
-		class: 'border-border bg-card',
-		[createAttachmentKey()]: clickoutDrawer((_, bond) => {
-			bond?.state?.close?.();
-		})
-	}),
+	'drawer.content': () => ({ class: 'border-border bg-card shadow-xl' }),
+	// Header defaults to a bordered strip; the `plain` variant drops the rule for headers that
+	// manage their own spacing (Top/Bottom drawers).
 	'drawer.header': () => ({
-		class: 'flex items-center justify-between border-b border-border px-6 py-4'
+		class: 'flex items-center justify-between',
+		variants: {
+			variant: {
+				bordered: { class: 'border-b border-border px-4 py-4' },
+				plain: { class: '' }
+			}
+		},
+		defaults: { variant: 'bordered' }
 	}),
-	'drawer.title': () => ({ class: 'text-base font-semibold text-foreground' }),
-	'drawer.description': () => ({ class: 'text-sm text-muted-foreground' }),
-	'drawer.footer': () => ({ class: 'border-t border-border px-6 py-4' }),
+	'drawer.title': () => ({ class: 'text-sm font-semibold text-foreground' }),
+	'drawer.description': () => ({ class: 'text-xs text-muted-foreground' }),
+	'drawer.footer': () => ({ class: 'border-t border-border p-3' }),
+	// Base atom already supplies `absolute inset-0 bg-black/30`; deepen the tint + add blur.
+	'drawer.backdrop': () => ({ class: 'bg-black/40 backdrop-blur-sm' }),
+
+	// Sidebar — the panel edge + no-wrap so labels don't reflow while the width animates
+	// (base atom/PortalHost already supplies `bg-card max-h-screen overflow-visible`).
+	'sidebar.content': () => ({ class: 'border-border border-r whitespace-nowrap' }),
 
 	// Alert — soft full-colour variant surfaces (the original story look). The parts are
 	// flat children carrying named CSS `grid-area`s (see alert.css), so the root drives a
@@ -237,10 +355,26 @@ export const storiesPreset: Partial<Preset> = {
 	'alert.title': () => ({ class: 'text-md font-semibold leading-tight' }),
 	'alert.description': () => ({ class: 'text-sm leading-relaxed opacity-90' }),
 	'alert.actions': () => ({ class: 'mt-3 flex items-center gap-2' }),
-	'alert.close-button': () => ({
+	'alert.close': () => ({
 		class:
 			'size-6 justify-self-end rounded-md p-0.5 opacity-70 transition-all hover:bg-black/10 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-offset-1 dark:hover:bg-white/10'
 	}),
+
+	// Tabs — the header strip's bottom rule (base atom is just `relative flex min-w-full`).
+	'tabs.header': () => ({ class: 'border-b' }),
+
+	// Scrollable — custom scrollbar look; width/positioning stay per-instance in stories.
+	'scrollable.track': () => ({ class: 'rounded-md' }),
+	'scrollable.thumb': () => ({
+		class: 'bg-foreground/20 hover:bg-foreground/30 rounded-full transition-colors'
+	}),
+
+	// Tooltip -------------------------------------------------------------------------
+	'tooltip.content': () => ({
+		class:
+			'border-none rounded-md bg-foreground px-2.5 py-1.5 text-xs font-medium text-background shadow-sm'
+	}),
+	'tooltip.tail': () => ({ class: 'text-border' }),
 
 	// Toast -------------------------------------------------------------------------
 	toast: () => ({

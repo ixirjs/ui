@@ -2,66 +2,46 @@
 	import { Section, CodeBlock, DocCallout } from '$docs/components';
 	import { Button } from '$lib/components/button';
 
-	const bondCode = `import { Bond, bondContextKey } from '@svelte-atoms/core';
-import { getContext, setContext } from 'svelte';
+	const bondCode = `import { Bond, defineAtom } from '@ixirjs/ui/experimental';
+import { defineBond, roles } from '@ixirjs/ui/shared';
 
-export type TilesBondProps = {
-  id?: string;
-  value?: string;
-  disabled?: boolean;
-};
+export type TilesBondProps = { id?: string; value?: string; disabled?: boolean };
 
-export class TilesBond extends Bond<TilesBondProps> {
-  static CONTEXT_KEY = bondContextKey('tiles');
-
-  constructor(props: TilesBondProps) {
-    super(props, 'tiles');
-  }
-
-  get selectedValue() {
-    return this.props.value;
-  }
-
+class TilesBondBase extends Bond<TilesBondProps> {
+  get selectedValue() { return this.props.value; }
   select(value: string) {
     if (!this.props.disabled) this.props.value = value;
   }
+}
 
-  share(): this {
-    return setContext(TilesBond.CONTEXT_KEY, this);
-  }
+const RootAtom = defineAtom('root');
+const ItemAtom = defineAtom('item');
 
-  static optional(): TilesBond | undefined {
-    return getContext(TilesBond.CONTEXT_KEY);
+export const TilesBond = defineBond({
+  name: 'tiles',
+  base: TilesBondBase,
+  atoms: {
+    root: RootAtom,
+    item: { atom: ItemAtom, role: roles.item }
   }
-
-  static required(): TilesBond {
-    const bond = TilesBond.optional();
-    if (!bond) throw new Error('Tiles parts must be rendered inside <Tiles.Root>.');
-    return bond;
-  }
-}`;
+});`;
 
 	const rootCode = `<script lang="ts">
-  import { defineProperty, defineState } from '@svelte-atoms/core';
-  import { TilesBond, type TilesBondProps } from './bond.svelte';
+  import { bindBond } from '@ixirjs/ui/shared';
+  import { TilesBond } from './bond.svelte';
 
   let { value = $bindable(), disabled = false, children } = $props();
-
-  const props = defineState<TilesBondProps>([
-    defineProperty('value', () => value, (next) => { value = next; }),
-    defineProperty('disabled', () => disabled)
-  ]);
-
-  const bond = new TilesBond(props).share();
-
-  export function getBond() {
-    return bond;
-  }
+  const binding = bindBond(
+    (props) => new TilesBond(props),
+    {
+      value: [() => value, (next) => { value = next; }],
+      disabled: () => disabled
+    }
+  );
+  const bond = binding.bond.share(); // shared, activated, and destroyed by bindBond
 </scr${'ipt'}>
 
-<div data-bond={bond.name}>
-  {@render children?.({ bond })}
-</div>`;
+<div data-bond={bond.name}>{@render children?.({ bond })}</div>`;
 
 	const atomCode = `<script lang="ts">
   import {
@@ -70,13 +50,13 @@ export class TilesBond extends Bond<TilesBondProps> {
     pressable,
     dataState,
     ariaRole
-  } from '@svelte-atoms/core';
+  } from '@ixirjs/ui/shared';
   import { TilesBond } from './bond.svelte';
 
   let { value, children, ...props } = $props();
 
   const node = createAtomInstance('item', {
-    bond: () => TilesBond.required(),
+    bond: TilesBond.getOrThrow(),
     register: { cardinality: 'many' },
     capabilities: [
       elementRef(),
@@ -87,7 +67,7 @@ export class TilesBond extends Bond<TilesBondProps> {
   });
 
   function select() {
-    TilesBond.required().select(value);
+    TilesBond.getOrThrow().select(value);
   }
 </scr${'ipt'}>
 
@@ -95,23 +75,26 @@ export class TilesBond extends Bond<TilesBondProps> {
   {@render children?.()}
 </button>`;
 
-	const registryCode = `const trigger = bond.node('trigger');
+	const registryCode = `const trigger = bond.nodeByPart('trigger');
 trigger?.element?.focus();
 
-const items = bond.nodes('item');
+const items = bond.nodesByPart('item');
 const selected = items.find((node) => node.get(SELECTED)?.value);
 
 // Many registrations are explicit:
 createAtomInstance('item', {
-  bond: () => TilesBond.required(),
+  bond: TilesBond.getOrThrow(),
   register: { cardinality: 'many' }
 });`;
 
 	const capabilityCode = `import {
   capabilityKey,
+  customRole,
   defineBondCapability,
   defineAtomCapability
-} from '@svelte-atoms/core';
+} from '@ixirjs/ui/shared';
+
+const item = customRole<'item', string>({ owner: '@acme/tiles', name: 'item' });
 
 export const SELECTION = capabilityKey<{ select(value: string): void }>(
   '@acme/tiles/selection'
@@ -122,23 +105,19 @@ export const selectionCapability = (select: (value: string) => void) =>
     slot: SELECTION,
     surface: { select },
     roles: {
-      item: (bond, value: string) => ({
-        attrs: () => ({
-          'aria-selected': bond.props.value === value
-        }),
-        handlers: () => ({
-          onclick: () => select(value)
-        })
+      [item]: (value) => ({
+        attrs: (bond) => ({ 'aria-selected': bond.props.value === value }),
+        handlers: () => ({ onclick: () => select(value) })
       })
     }
   });
 
 export const selectedDataState = defineAtomCapability({
-  behavior: (node, bond) => ({
-    attrs: () => ({
-      'data-state': bond?.node(node.name) === node ? 'active' : 'idle'
+  attach: {
+    attrs: (node, bond) => ({
+      'data-state': bond?.nodeByPart(node.name) === node ? 'active' : 'idle'
     })
-  })
+  }
 });`;
 
 	const beforeAfterCode = `// Before: the Bond created and cached every part Atom.
@@ -150,13 +129,13 @@ class TriggerAtom extends Atom<TilesBond> {
 
 class TilesBond extends Bond<TilesProps> {
   trigger() {
-    return this.node('trigger');
+    return this.nodeByPart('trigger');
   }
 }
 
 // After: the component that renders the part owns its Atom.
 const trigger = createAtomInstance('trigger', {
-  bond: () => TilesBond.required(),
+  bond: TilesBond.getOrThrow(),
   factory: (bond) => new TriggerAtom(bond),
   capabilities: [pressable(), ariaRole('button')]
 });`;
@@ -310,8 +289,12 @@ const trigger = createAtomInstance('trigger', {
 	<Section.Header>
 		<Section.Title>Registry lookup</Section.Title>
 		<Section.Subtitle>
-			Use <code class="bg-muted text-foreground rounded px-1.5 py-0.5 text-xs">bond.node()</code>
-			and <code class="bg-muted text-foreground rounded px-1.5 py-0.5 text-xs">bond.nodes()</code>
+			Use <code class="bg-muted text-foreground rounded px-1.5 py-0.5 text-xs"
+				>bond.nodeByPart()</code
+			>,
+			<code class="bg-muted text-foreground rounded px-1.5 py-0.5 text-xs">bond.nodesByPart()</code
+			>, or
+			<code class="bg-muted text-foreground rounded px-1.5 py-0.5 text-xs">bond.nodeByRole()</code>
 			for rendered nodes.
 		</Section.Subtitle>
 	</Section.Header>
@@ -323,9 +306,9 @@ const trigger = createAtomInstance('trigger', {
 	<DocCallout variant="info" title="Rendered nodes">
 		<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">createAtomInstance</code>
 		creates and registers the node where the DOM is rendered.
-		<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">bond.node(key)</code>
+		<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">bond.nodeByPart(key)</code>
 		and
-		<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">bond.nodes(key)</code>
+		<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">bond.nodesByPart(key)</code>
 		read that registry.
 	</DocCallout>
 </Section.Root>
@@ -380,11 +363,16 @@ const trigger = createAtomInstance('trigger', {
 		<CodeBlock lang="typescript" code={beforeAfterCode} />
 	</div>
 
-	<DocCallout variant="info" title="Current authoring names">
-		The public shared runtime now centers on
-		<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">Bond</code>,
-		<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">Atom</code>, and
+	<DocCallout variant="info" title="Stable and experimental authoring">
+		The stable
+		<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">shared</code> entry centers
+		on factories such as
+		<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">defineBond</code> and
 		<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">createAtomInstance</code>.
-		The old state and atom compatibility classes are internal implementation details.
+		Concrete
+		<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">Bond</code> and
+		<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">Atom</code> classes are
+		expert escape hatches from
+		<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">experimental</code>.
 	</DocCallout>
 </Section.Root>

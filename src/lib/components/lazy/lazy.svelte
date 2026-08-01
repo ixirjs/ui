@@ -1,10 +1,10 @@
-<script lang="ts">
+<script lang="ts" generics="Props extends LazyComponentProps = Record<string, unknown>">
 	import { untrack, type Component } from 'svelte';
-	import type { LazyProps } from './types';
+	import type { LazyComponentProps, LazyProps } from './types';
 
-	let { promise, children, loading, error, ...restProps }: LazyProps = $props();
+	let { promise, loading, error, ...loadedProps }: LazyProps<Props> = $props();
 
-	let Lazy: Component | null = $state(null);
+	let Lazy: Component<Props> | null = $state(null);
 
 	let err = $state();
 
@@ -19,9 +19,7 @@
 	);
 </script>
 
-<Lazy {...restProps}>
-	{@render children?.()}
-</Lazy>
+<Lazy {...loadedProps as unknown as Props} />
 
 {#if err && error}
 	{@render error?.(err)}

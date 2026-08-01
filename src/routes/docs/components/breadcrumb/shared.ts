@@ -1,5 +1,5 @@
 const presetCode = `
-import { setPreset } from '@svelte-atoms/core';
+import { setPreset } from '@ixirjs/ui/preset';
 
 const preset = setPreset({
   breadcrumb: () => ({
@@ -80,8 +80,8 @@ export const metadata = {
 		'Navigational breadcrumb showing current location with customizable separators and styling.',
 	componentType: 'compound' as const,
 	status: 'stable' as const,
-	packageName: '@svelte-atoms/core',
-	importCode: "import { Breadcrumb } from '@svelte-atoms/core';",
+	packageName: '@ixirjs/ui',
+	importCode: "import { Breadcrumb } from '@ixirjs/ui';",
 	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Breadcrumb' }],
 	useCases,
 	componentsSummary,

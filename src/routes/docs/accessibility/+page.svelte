@@ -222,10 +222,9 @@
 
 	<div class="space-y-3 mb-8">
 		<p class="text-muted-foreground leading-relaxed">
-			<strong>@svelte-atoms/core</strong> follows the WAI-ARIA Authoring Practices Guide (APG) to ensure
-			components are accessible to assistive technology users. Every component includes proper ARIA attributes,
-			keyboard navigation, focus management, and semantic HTML by default — you do not need to add these
-			manually.
+			<strong>@ixirjs/ui</strong> follows the WAI-ARIA Authoring Practices Guide (APG) to ensure components
+			are accessible to assistive technology users. Every component includes proper ARIA attributes, keyboard
+			navigation, focus management, and semantic HTML by default — you do not need to add these manually.
 		</p>
 	</div>
 
@@ -552,7 +551,7 @@
 	<Section.Header>
 		<Section.Title>Best practices</Section.Title>
 		<Section.Subtitle>
-			Guidelines for building accessible applications with @svelte-atoms/core.
+			Guidelines for building accessible applications with @ixirjs/ui.
 		</Section.Subtitle>
 	</Section.Header>
 

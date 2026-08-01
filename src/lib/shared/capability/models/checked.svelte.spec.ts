@@ -1,20 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { Bond, Atom, BondState, bondContextKey, type BondStateProps } from '../../bond';
+import { Bond, Atom, bondContextKey, type BondStateProps } from '$ixirjs/ui/shared/bond';
 import { checkedCapability, CHECKED, createChecked, type CheckedState } from './checked.svelte';
 
-class TestState extends BondState<BondStateProps> {
+class TestState {
 	value = $state<CheckedState>(false);
 	disabled = $state(false);
-
-	constructor() {
-		super({});
-	}
 }
 
 class TestBond extends Bond<BondStateProps> {
 	static CONTEXT_KEY = bondContextKey('test-checked');
-	constructor(state = new TestState()) {
-		super(state, 'test');
+	constructor(readonly state = new TestState()) {
+		super({}, 'test');
 	}
 	addAtom(key: string, role: string) {
 		const atom = new TestAtom(this, key).role(role);
@@ -39,14 +35,12 @@ describe('checkedCapability', () => {
 		});
 		const cap = checkedCapability(checked);
 		const bond = new TestBond(state);
-		bond.state.capability(cap);
+		bond.capability(cap);
 		const control = bond.addAtom('control', 'control');
 
 		expect(cap.slot).toBe(CHECKED);
 		expect(cap.surface).toBe(checked);
 		expect(cap.meta).toMatchObject({
-			layer: 1,
-			kind: 'model',
 			projects: ['control']
 		});
 		expect(control.spread['aria-checked']).toBe('false');
@@ -71,7 +65,7 @@ describe('checkedCapability', () => {
 			disabled: () => state.disabled
 		});
 		const bond = new TestBond(state);
-		bond.state.capability(checkedCapability(checked));
+		bond.capability(checkedCapability(checked));
 		const control = bond.addAtom('control', 'control');
 
 		(control.spread.onclick as () => void)();

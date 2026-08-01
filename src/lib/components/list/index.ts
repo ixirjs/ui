@@ -1,2 +1,2 @@
 export * as List from './atoms';
-export type { ListSnippetProps, ListChildren } from './types';
+export type * from './types';

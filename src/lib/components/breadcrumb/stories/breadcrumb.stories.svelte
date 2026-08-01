@@ -18,6 +18,20 @@
 	});
 </script>
 
+{#snippet chevron()}
+	<svg
+		viewBox="0 0 24 24"
+		fill="none"
+		stroke="currentColor"
+		stroke-width="2"
+		stroke-linecap="round"
+		stroke-linejoin="round"
+		class="size-3.5"
+	>
+		<path d="m9 18 6-6-6-6" />
+	</svg>
+{/snippet}
+
 <Story name="Basic">
 	{#snippet template(args)}
 		<BreadcrumbModule.Root>
@@ -30,6 +44,24 @@
 	{/snippet}
 </Story>
 
+<!-- Real-world scene: breadcrumb trail sitting above a page title, the way it
+     appears in an app header. The last item is the current page (no href). -->
+<Story name="Page Header">
+	<div class="w-96 space-y-3">
+		<BreadcrumbModule.Root>
+			<BreadcrumbModule.Item href="/">Dashboard</BreadcrumbModule.Item>
+			<BreadcrumbModule.Separator>{@render chevron()}</BreadcrumbModule.Separator>
+			<BreadcrumbModule.Item href="/team">Team</BreadcrumbModule.Item>
+			<BreadcrumbModule.Separator>{@render chevron()}</BreadcrumbModule.Separator>
+			<BreadcrumbModule.Item>Members</BreadcrumbModule.Item>
+		</BreadcrumbModule.Root>
+		<div>
+			<h1 class="text-foreground text-xl font-semibold">Members</h1>
+			<p class="text-muted-foreground text-sm">Manage who has access to this workspace.</p>
+		</div>
+	</div>
+</Story>
+
 <Story name="Short">
 	<BreadcrumbModule.Root>
 		<BreadcrumbModule.Item href="/">Home</BreadcrumbModule.Item>
@@ -38,26 +70,14 @@
 	</BreadcrumbModule.Root>
 </Story>
 
-<Story name="Deep Navigation">
-	<BreadcrumbModule.Root>
-		<BreadcrumbModule.Item href="/">Home</BreadcrumbModule.Item>
-		<BreadcrumbModule.Separator />
-		<BreadcrumbModule.Item href="/docs">Documentation</BreadcrumbModule.Item>
-		<BreadcrumbModule.Separator />
-		<BreadcrumbModule.Item href="/docs/components">Components</BreadcrumbModule.Item>
-		<BreadcrumbModule.Separator />
-		<BreadcrumbModule.Item href="/docs/components/breadcrumb">Breadcrumb</BreadcrumbModule.Item>
-	</BreadcrumbModule.Root>
-</Story>
-
 <Story name="Chevron Separator">
 	<BreadcrumbModule.Root>
 		<BreadcrumbModule.Item href="/">Home</BreadcrumbModule.Item>
-		<BreadcrumbModule.Separator>›</BreadcrumbModule.Separator>
+		<BreadcrumbModule.Separator>{@render chevron()}</BreadcrumbModule.Separator>
 		<BreadcrumbModule.Item href="/products">Products</BreadcrumbModule.Item>
-		<BreadcrumbModule.Separator>›</BreadcrumbModule.Separator>
+		<BreadcrumbModule.Separator>{@render chevron()}</BreadcrumbModule.Separator>
 		<BreadcrumbModule.Item href="/products/electronics">Electronics</BreadcrumbModule.Item>
-		<BreadcrumbModule.Separator>›</BreadcrumbModule.Separator>
+		<BreadcrumbModule.Separator>{@render chevron()}</BreadcrumbModule.Separator>
 		<BreadcrumbModule.Item href="/products/electronics/laptops">Laptops</BreadcrumbModule.Item>
 	</BreadcrumbModule.Root>
 </Story>

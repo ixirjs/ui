@@ -15,10 +15,15 @@
 		preset: presetKey = 'input.email',
 		onchange = undefined,
 		oninput = undefined,
+		onvaluechange = undefined,
 		...restProps
 	}: InputEmailControlProps = $props();
 
-	const preset = resolveControlPreset(() => presetKey, bond);
+	const preset = resolveControlPreset(
+		() => presetKey,
+		bond,
+		() => restProps
+	);
 
 	// Parse email into segments
 	type Segment = { text: string; kind: 'local' | 'at' | 'domain' | 'tld' | 'plain' };
@@ -74,5 +79,6 @@
 	{bond}
 	{onchange}
 	{oninput}
+	{onvaluechange}
 	{...restProps}
 />

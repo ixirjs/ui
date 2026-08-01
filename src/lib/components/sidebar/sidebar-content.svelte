@@ -1,37 +1,33 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { mergeAtomProps, type Base } from '$svelte-atoms/core/components/atom';
-	import { PortalHost } from '$svelte-atoms/core/components/portal/host';
-	import { createAtomInstance } from '$svelte-atoms/core/shared/bond';
+	import type { Base } from '$ixirjs/ui/components/atom';
+	import { PortalHost } from '$ixirjs/ui/components/portal/instance';
+	import { usePart } from '$ixirjs/ui/shared';
 	import { SidebarBond } from './bond.svelte';
 	import { animateSidebarContent } from './motion.svelte';
-	import type { SidebarRootProps } from './types';
-
-	const bond = SidebarBond.getOrThrow('<Sidebar.Content /> must be used within a <Sidebar.Root />');
+	import type { SidebarContentProps } from './types';
 
 	let {
 		class: klass = '',
 		preset = undefined,
 		children = undefined,
-		fallback = {
-			animate: animateSidebarContent({ '0': '0px', '1': 'auto' }),
-			initial: animateSidebarContent({ '0': '0px', '1': 'auto', duration: 0 })
-		},
 		...restProps
-	}: SidebarRootProps<E, B> = $props();
+	}: SidebarContentProps<E, B> = $props();
 
-	const atom = createAtomInstance('content', {
-		bond,
-		factory: (owner) => owner!.content()
+	const defaults = {
+		animate: animateSidebarContent({ '0': '0px', '1': 'auto' }),
+		initial: animateSidebarContent({ '0': '0px', '1': 'auto', duration: 0 })
+	};
+
+	const part = usePart(SidebarBond, 'content', () => restProps, {
+		preset: () => preset
 	});
-
-	const contentProps = $derived(mergeAtomProps(atom, preset, restProps));
 </script>
 
 <PortalHost
-	{bond}
+	bond={part.bond}
 	class={['bg-card max-h-screen overflow-visible', '$preset', klass]}
-	{fallback}
-	{...contentProps}
+	{defaults}
+	{...part.props}
 >
-	{@render children?.({ sidebar: bond })}
+	{@render children?.({ sidebar: part.bond })}
 </PortalHost>

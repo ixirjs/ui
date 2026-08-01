@@ -1,6 +1,6 @@
 <script module>
 	import { defineMeta } from '@storybook/addon-svelte-csf';
-	import { default as RadioModule } from '../radio.svelte';
+	import { default as RadioModule } from '$ixirjs/ui/components/radio/radio.svelte';
 
 	const { Story } = defineMeta({
 		title: 'Atoms/Radio',
@@ -21,6 +21,13 @@
 <script lang="ts">
 	let value = $state<string | undefined>(undefined);
 	let groupValue = $state<string | undefined>(undefined);
+	let shippingValue = $state('standard');
+
+	const shipping = [
+		{ value: 'standard', label: 'Standard', eta: '5–7 business days', price: 'Free' },
+		{ value: 'express', label: 'Express', eta: '2–3 business days', price: '$9.00' },
+		{ value: 'overnight', label: 'Overnight', eta: 'Next business day', price: '$24.00' }
+	];
 </script>
 
 <Story name="Basic">
@@ -47,6 +54,28 @@
 			<RadioModule class="size-5" value="b" group="a" disabled />
 		</div>
 	</div>
+</Story>
+
+<!-- Real-world: a shipping picker. Each row binds to a shared `group` value. -->
+<Story name="Shipping Method">
+	<fieldset class="border-border bg-card w-80 rounded-xl border p-4">
+		<legend class="text-foreground px-1 text-sm font-semibold">Shipping method</legend>
+		<div class="mt-1 flex flex-col gap-1">
+			{#each shipping as opt (opt.value)}
+				<label class="hover:bg-muted flex cursor-pointer items-center gap-3 rounded-lg p-3">
+					<RadioModule class="size-5" value={opt.value} bind:group={shippingValue} />
+					<div class="flex-1">
+						<p class="text-foreground text-sm font-medium">{opt.label}</p>
+						<p class="text-muted-foreground text-xs">{opt.eta}</p>
+					</div>
+					<span class="text-foreground text-sm font-medium">{opt.price}</span>
+				</label>
+			{/each}
+		</div>
+		<p class="text-muted-foreground mt-2 px-1 text-xs">
+			Selected: <strong>{shippingValue}</strong>
+		</p>
+	</fieldset>
 </Story>
 
 <Story name="Sizes">

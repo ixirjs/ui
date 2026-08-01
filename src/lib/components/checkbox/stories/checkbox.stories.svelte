@@ -1,6 +1,6 @@
 <script module>
 	import { defineMeta } from '@storybook/addon-svelte-csf';
-	import { default as CheckboxCmp } from '../checkbox.svelte';
+	import { default as CheckboxCmp } from '$ixirjs/ui/components/checkbox/checkbox.svelte';
 
 	const { Story } = defineMeta({
 		title: 'Atoms/Checkbox',

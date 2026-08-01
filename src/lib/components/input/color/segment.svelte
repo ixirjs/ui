@@ -4,16 +4,18 @@
 	// caret position on every keystroke. The no-dom-manipulating rule doesn't fit this pattern.
 	/* eslint-disable svelte/no-dom-manipulating */
 	import { untrack } from 'svelte';
-	import { clamp as clampRange } from '$svelte-atoms/core/utils/math';
+	import { clamp as clampRange } from '$ixirjs/ui/utils/math';
 	import type { ColorSegmentProps } from './types';
 
 	let {
-		value = undefined,
+		value = $bindable<number | string | undefined>(undefined),
 		channel,
 		disabled = false,
 		readonly = false,
 		class: klass = '',
 		onchange,
+		oninput,
+		onvaluechange,
 		oncommit,
 		onfocusmove
 	}: ColorSegmentProps = $props();
@@ -76,33 +78,31 @@
 		return isNaN(n) ? undefined : clamp(n);
 	}
 
-	function commit(ev: Event | null, andAdvance = false) {
-		const parsed = parseContent();
-		if (ev) {
-			onchange?.(parsed);
-			oncommit?.(ev, parsed);
-		} else {
-			onchange?.(parsed);
-		}
+	function commit(event: Event, andAdvance = false) {
+		value = parseContent();
+		const context = { event, reason: 'commit' };
+		onvaluechange?.(value, context);
+		oncommit?.(value, context);
 		if (andAdvance) onfocusmove?.(1);
 	}
 
-	function step(dir: 1 | -1, multiplier = 1) {
+	function step(event: KeyboardEvent, dir: 1 | -1, multiplier = 1) {
+		let next: number | string;
 		if (isHex) {
 			const cur =
 				typeof value === 'string' ? parseInt(value, 16) : ((value as number | undefined) ?? 0);
-			onchange?.(
-				clamp(cur + dir * multiplier)
-					.toString(16)
-					.padStart(2, '0')
-					.toUpperCase()
-			);
+			next = clamp(cur + dir * multiplier)
+				.toString(16)
+				.padStart(2, '0')
+				.toUpperCase();
 		} else {
 			const cur = typeof value === 'number' ? value : parseFloat(String(value ?? channel.min));
 			const prec = channel.precision ?? 0;
 			const inc = prec > 0 ? Math.pow(10, -prec) : 1;
-			onchange?.(clamp(parseFloat((cur + dir * inc * multiplier).toFixed(prec + 1))));
+			next = clamp(parseFloat((cur + dir * inc * multiplier).toFixed(prec + 1)));
 		}
+		value = next;
+		onvaluechange?.(value, { event, reason: 'step' });
 	}
 
 	function handleFocus() {
@@ -147,7 +147,7 @@
 			ev.preventDefault();
 			const dir = key === 'ArrowUp' ? 1 : -1;
 			const multiplier = ev.shiftKey ? 10 : ev.altKey ? 0.1 : 1;
-			step(dir, multiplier);
+			step(ev, dir, multiplier);
 			requestAnimationFrame(() => {
 				if (el && isFocused) el.textContent = formatValue(value);
 			});
@@ -193,7 +193,8 @@
 
 		if ((key === 'Backspace' || key === 'Delete') && !el?.textContent?.trim()) {
 			ev.preventDefault();
-			onchange?.(undefined);
+			value = undefined;
+			onvaluechange?.(value, { event: ev, reason: 'clear' });
 		}
 	}
 
@@ -247,9 +248,8 @@
 		.join(' ')}
 	onfocus={handleFocus}
 	onblur={handleBlur}
-	oninput={() => {
-		/* filtered in keydown; DOM read on commit */
-	}}
+	oninput={(event) => oninput?.(event)}
+	onchange={(event) => onchange?.(event)}
 	onkeydown={handleKeydown}
 	onpaste={handlePaste}>{displayText}</span
 >

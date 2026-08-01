@@ -1,7 +1,7 @@
 import type { StepBond } from './step/bond.svelte';
-import { Bond, defineAtom, type BondStateProps } from '$svelte-atoms/core/shared/bond';
-import { defineBond, type BondOf } from '$svelte-atoms/core/shared';
-import { ariaRole } from '$svelte-atoms/core/shared/capability';
+import { Bond, defineAtom, type BondStateProps } from '$ixirjs/ui/shared/bond';
+import { defineBond, type BondOf } from '$ixirjs/ui/shared';
+import { ariaRole } from '$ixirjs/ui/shared/capability';
 import type { Snippet } from 'svelte';
 
 // -----------------------------------------------------------------------------
@@ -160,27 +160,10 @@ class StepperBondBase extends Bond<StepperBondProps> implements IStepper {
 // Bond spec and constructor facade
 // -----------------------------------------------------------------------------
 
-const StepperBondImpl = defineBond<
-	{ root: typeof StepperRootAtom },
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	any,
-	typeof StepperBondBase
->({
+export const StepperBond = defineBond({
 	name: 'stepper',
 	base: StepperBondBase,
 	atoms: { root: StepperRootAtom }
 });
 
-export type StepperBond = BondOf<typeof StepperBondImpl>;
-
-interface StepperBondConstructor {
-	new (props: StepperBondProps): StepperBond;
-	readonly CONTEXT_KEY: string;
-	readonly spec: (typeof StepperBondImpl)['spec'];
-	get(): StepperBond | undefined;
-	getOrThrow(message?: string): StepperBond;
-	set(bond: StepperBond): StepperBond;
-	create(props: StepperBondProps): StepperBond;
-}
-
-export const StepperBond = StepperBondImpl as unknown as StepperBondConstructor;
+export type StepperBond = BondOf<typeof StepperBond>;

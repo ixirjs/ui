@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { Dialog } from '$svelte-atoms/core/components/dialog';
-	import { Button } from '$svelte-atoms/core/components/button';
-	import { Input } from '$svelte-atoms/core/components/input';
+	import { Dialog } from '$ixirjs/ui/components/dialog';
+	import { Button } from '$ixirjs/ui/components/button';
+	import { Input } from '$ixirjs/ui/components/input';
 
 	let open = $state(false);
 	let teamName = $state('');

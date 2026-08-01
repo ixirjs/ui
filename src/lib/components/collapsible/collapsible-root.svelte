@@ -1,9 +1,10 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { bindBond } from '$svelte-atoms/core/shared/bond/bind.svelte';
-	import { createAtomInstance } from '$svelte-atoms/core/shared/bond';
-	import { HtmlAtom, mergeAtomProps, type Base } from '$svelte-atoms/core/components/atom';
-	import { CollapsibleBond, CollapsibleRootAtom, type CollapsibleStateProps } from './bond.svelte';
+	import { controlledProp, useRoot } from '@ixirjs/ui/shared';
+	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import { CollapsibleBond, type CollapsibleStateProps } from './bond.svelte';
 	import type { CollapsibleRootProps } from './types';
+
+	const ID = $props.id();
 
 	let {
 		open = $bindable(false),
@@ -13,36 +14,32 @@
 		data = undefined,
 		disabled = false,
 		factory = defaultFactory,
+		onopenchange = undefined,
 		children = undefined,
 		...restProps
 	}: CollapsibleRootProps<E, B> = $props();
 
-	let openState = $derived(open);
+	const openProp = controlledProp<boolean, CollapsibleBond>({
+		get: () => open,
+		set: (value) => (open = value),
+		onchange: (value, context) => onopenchange?.(value, context)
+	});
 
-	const binding = bindBond<CollapsibleBond>(
-		(props) => factory(props),
+	const root = useRoot(
+		CollapsibleBond,
 		{
-			open: [
-				() => openState,
-				(v) => {
-					openState = v;
-					open = openState;
-				}
-			],
+			open: openProp,
 			data: () => data,
 			disabled: () => disabled,
 			value: () => value
 		},
-		{ preset: () => preset }
+		{
+			preset: () => preset,
+			id: () => ID,
+			factory: (props) => factory(props)
+		}
 	);
-	const bond = binding.bond.share();
-	const rootAtom = createAtomInstance<CollapsibleRootAtom, CollapsibleBond>('root', {
-		bond,
-		factory: (owner) => new CollapsibleRootAtom(owner as CollapsibleBond)
-	});
-	const rootProps = $derived(
-		mergeAtomProps(rootAtom, preset, { ...binding.stateProps, ...restProps })
-	);
+	const bond = root.bond;
 
 	function defaultFactory(props: CollapsibleStateProps) {
 		return CollapsibleBond.create(props);
@@ -55,7 +52,9 @@
 
 <HtmlAtom
 	class={['border-border flex w-full flex-col overflow-hidden', '$preset', klass]}
-	{...rootProps}
+	{...root.props}
+	{...restProps}
+	part={root}
 >
 	{@render children?.({ collapsible: bond })}
 </HtmlAtom>

@@ -5,13 +5,28 @@
 		addDays,
 		addMonths,
 		differenceInCalendarDays,
-		endOfWeek,
-		format,
 		startOfDay,
-		startOfWeek,
 		subMonths
-	} from 'date-fns';
-	import type { CalendarRange, Day } from '../types';
+	} from '$ixirjs/ui/utils/date';
+	import type { CalendarRange, Day } from '$ixirjs/ui/components/calendar/types';
+
+	// Display formatting is Intl's job — the library's own `format` is a closed token set for the
+	// four patterns the Calendar renders, deliberately not a general pattern parser.
+	const monthYear = (d: Date) => d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+	const shortDay = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+	const mediumDay = (d: Date) =>
+		d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+	const fullDay = (d: Date) =>
+		d.toLocaleDateString('en-US', {
+			weekday: 'long',
+			month: 'long',
+			day: 'numeric',
+			year: 'numeric'
+		});
+
+	// Sunday-based week bounds — the only two calls, so no weekStartsOn option.
+	const startOfWeek = (d: Date) => addDays(startOfDay(d), -d.getDay());
+	const endOfWeek = (d: Date) => addDays(startOfWeek(d), 6);
 
 	const { Story } = defineMeta({
 		title: 'Atoms/Calendar',
@@ -179,7 +194,7 @@
 				><path d="M15 18l-6-6 6-6" stroke-linecap="round" stroke-linejoin="round" /></svg
 			>
 		</button>
-		<span class="text-sm font-semibold">{format(pivote, 'MMMM yyyy')}</span>
+		<span class="text-sm font-semibold">{monthYear(pivote)}</span>
 		<button
 			aria-label="Next month"
 			class="flex items-center justify-center w-7 h-7 rounded-md hover:bg-accent transition-colors text-muted-foreground hover:text-foreground"
@@ -189,6 +204,43 @@
 				><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round" /></svg
 			>
 		</button>
+	</div>
+{/snippet}
+
+<!--
+	Shared start-to-end readout. Reused by every range story so each one shows
+	its live selection without repeating ~30 lines of near-identical markup.
+-->
+{#snippet rangeReadout(range: CalendarRange)}
+	<div class="flex items-center gap-2 text-sm">
+		<div class="flex flex-col items-center gap-1">
+			<span class="text-[10px] text-muted-foreground uppercase tracking-widest font-medium"
+				>Start</span
+			>
+			<span
+				class="px-4 py-2 rounded-lg border border-border bg-muted/50 font-medium min-w-32 text-center"
+			>
+				{range[0] ? mediumDay(range[0]) : '—'}
+			</span>
+		</div>
+		<svg
+			viewBox="0 0 24 24"
+			class="w-4 h-4 text-muted-foreground mt-5"
+			fill="none"
+			stroke="currentColor"
+			stroke-width="2"
+			><path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" /></svg
+		>
+		<div class="flex flex-col items-center gap-1">
+			<span class="text-[10px] text-muted-foreground uppercase tracking-widest font-medium"
+				>End</span
+			>
+			<span
+				class="px-4 py-2 rounded-lg border border-border bg-muted/50 font-medium min-w-32 text-center"
+			>
+				{range[1] ? mediumDay(range[1]) : '—'}
+			</span>
+		</div>
 	</div>
 {/snippet}
 
@@ -212,36 +264,7 @@
 				</CalendarModule.Root>
 			</div>
 			{#if args.type === 'range'}
-				<div class="flex items-center gap-2 text-sm mt-4">
-					<div class="flex flex-col items-center gap-1">
-						<span class="text-[10px] text-muted-foreground uppercase tracking-widest font-medium"
-							>Start</span
-						>
-						<span
-							class="px-4 py-2 rounded-lg border border-border bg-muted/50 font-medium min-w-32 text-center"
-						>
-							{defaultRange[0] ? format(defaultRange[0], 'MMM d, yyyy') : '—'}
-						</span>
-					</div>
-					<svg
-						viewBox="0 0 24 24"
-						class="w-4 h-4 text-muted-foreground mt-5"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="2"
-						><path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" /></svg
-					>
-					<div class="flex flex-col items-center gap-1">
-						<span class="text-[10px] text-muted-foreground uppercase tracking-widest font-medium"
-							>End</span
-						>
-						<span
-							class="px-4 py-2 rounded-lg border border-border bg-muted/50 font-medium min-w-32 text-center"
-						>
-							{defaultRange[1] ? format(defaultRange[1], 'MMM d, yyyy') : '—'}
-						</span>
-					</div>
-				</div>
+				<div class="mt-4">{@render rangeReadout(defaultRange)}</div>
 			{/if}
 		</div>
 	{/snippet}
@@ -266,36 +289,7 @@
 			</CalendarModule.Root>
 		</div>
 
-		<div class="flex items-center gap-2 text-sm">
-			<div class="flex flex-col items-center gap-1">
-				<span class="text-[10px] text-muted-foreground uppercase tracking-widest font-medium"
-					>Start</span
-				>
-				<span
-					class="px-4 py-2 rounded-lg border border-border bg-muted/50 font-medium min-w-32 text-center"
-				>
-					{rangePicker[0] ? format(rangePicker[0], 'MMM d, yyyy') : '—'}
-				</span>
-			</div>
-			<svg
-				viewBox="0 0 24 24"
-				class="w-4 h-4 text-muted-foreground mt-5"
-				fill="none"
-				stroke="currentColor"
-				stroke-width="2"
-				><path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" /></svg
-			>
-			<div class="flex flex-col items-center gap-1">
-				<span class="text-[10px] text-muted-foreground uppercase tracking-widest font-medium"
-					>End</span
-				>
-				<span
-					class="px-4 py-2 rounded-lg border border-border bg-muted/50 font-medium min-w-32 text-center"
-				>
-					{rangePicker[1] ? format(rangePicker[1], 'MMM d, yyyy') : '—'}
-				</span>
-			</div>
-		</div>
+		{@render rangeReadout(rangePicker)}
 
 		{#if rangePicker[0] && rangePicker[1]}
 			<div class="flex items-center gap-2">
@@ -345,7 +339,7 @@
 				stroke-width="2"
 				><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /></svg
 			>
-			<span>Selectable: {format(minDate, 'MMM d')} – {format(maxDate, 'MMM d, yyyy')}</span>
+			<span>Selectable: {shortDay(minDate)} – {mediumDay(maxDate)}</span>
 		</div>
 	</div>
 </Story>
@@ -366,7 +360,7 @@
 						<CalendarModule.Day {day}>
 							{#snippet children({ calendar })}
 								<div class="flex items-center justify-center size-full">
-									{#if eventDays.has(startOfDay(day.date).getTime()) && !calendar.state.isDaySelected(day)}
+									{#if eventDays.has(startOfDay(day.date).getTime()) && !calendar.isDaySelected(day)}
 										<span
 											class="text-[0.82em] leading-none underline underline-offset-2 decoration-primary/70 decoration-[1.5px]"
 											>{day.dayOfMonth}</span
@@ -410,13 +404,9 @@
 						><path d="M15 18l-6-6 6-6" stroke-linecap="round" stroke-linejoin="round" /></svg
 					>
 				</button>
-				<span class="text-sm font-semibold flex-1 text-center"
-					>{format(twoMonthPivote, 'MMMM yyyy')}</span
-				>
+				<span class="text-sm font-semibold flex-1 text-center">{monthYear(twoMonthPivote)}</span>
 				<div class="w-px h-4 bg-border"></div>
-				<span class="text-sm font-semibold flex-1 text-center"
-					>{format(twoMonthPivote2, 'MMMM yyyy')}</span
-				>
+				<span class="text-sm font-semibold flex-1 text-center">{monthYear(twoMonthPivote2)}</span>
 				<button
 					aria-label="Next month"
 					class="flex items-center justify-center w-7 h-7 rounded-md hover:bg-accent transition-colors text-muted-foreground hover:text-foreground"
@@ -457,34 +447,7 @@
 		</div>
 
 		<div class="flex items-center gap-2 text-sm">
-			<div class="flex flex-col items-center gap-1">
-				<span class="text-[10px] text-muted-foreground uppercase tracking-widest font-medium"
-					>Start</span
-				>
-				<span
-					class="px-4 py-2 rounded-lg border border-border bg-muted/50 font-medium min-w-32 text-center"
-				>
-					{twoMonthRange[0] ? format(twoMonthRange[0], 'MMM d, yyyy') : '—'}
-				</span>
-			</div>
-			<svg
-				viewBox="0 0 24 24"
-				class="w-4 h-4 text-muted-foreground mt-5"
-				fill="none"
-				stroke="currentColor"
-				stroke-width="2"
-				><path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" /></svg
-			>
-			<div class="flex flex-col items-center gap-1">
-				<span class="text-[10px] text-muted-foreground uppercase tracking-widest font-medium"
-					>End</span
-				>
-				<span
-					class="px-4 py-2 rounded-lg border border-border bg-muted/50 font-medium min-w-32 text-center"
-				>
-					{twoMonthRange[1] ? format(twoMonthRange[1], 'MMM d, yyyy') : '—'}
-				</span>
-			</div>
+			{@render rangeReadout(twoMonthRange)}
 			{#if twoMonthRange[0] && twoMonthRange[1]}
 				<div class="flex flex-col items-center gap-1">
 					<span class="text-[10px] text-muted-foreground uppercase tracking-widest font-medium"
@@ -559,7 +522,7 @@
 							Check-in
 						</div>
 						<div class="text-sm font-semibold">
-							{bookingRange[0] ? format(bookingRange[0], 'MMM d') : '—'}
+							{bookingRange[0] ? shortDay(bookingRange[0]) : '—'}
 						</div>
 					</div>
 					<div class="flex-1 rounded-lg border border-border px-3 py-2.5">
@@ -569,7 +532,7 @@
 							Check-out
 						</div>
 						<div class="text-sm font-semibold">
-							{bookingRange[1] ? format(bookingRange[1], 'MMM d') : '—'}
+							{bookingRange[1] ? shortDay(bookingRange[1]) : '—'}
 						</div>
 					</div>
 				</div>
@@ -595,7 +558,7 @@
 						class="flex-1 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-40"
 						disabled={!bookingRange[0] || !bookingRange[1]}
 					>
-						Reserve →
+						Reserve
 					</button>
 				</div>
 			</div>
@@ -688,7 +651,7 @@
 									{#snippet children({ calendar })}
 										<div class="flex flex-col items-center justify-center size-full gap-0.5">
 											<span class="text-[0.75em] leading-none">{day.dayOfMonth}</span>
-											{#if eventDays.has(startOfDay(day.date).getTime()) && !calendar.state.isDaySelected(day)}
+											{#if eventDays.has(startOfDay(day.date).getTime()) && !calendar.isDaySelected(day)}
 												<span class="w-1 h-1 rounded-full bg-primary/70"></span>
 											{:else}
 												<span class="w-1 h-1"></span>
@@ -729,7 +692,7 @@
 						/></svg
 					>
 					{#if inputPickerDate}
-						<span class="text-sm flex-1">{format(inputPickerDate, 'EEEE, MMMM d, yyyy')}</span>
+						<span class="text-sm flex-1">{fullDay(inputPickerDate)}</span>
 						<button
 							class="text-muted-foreground hover:text-foreground transition-colors ml-auto"
 							aria-label="Clear date"
@@ -801,10 +764,7 @@
 						<CalendarModule.Day
 							{day}
 							onclick={() => {
-								weekRange = [
-									startOfWeek(day.date, { weekStartsOn: 0 }),
-									endOfWeek(day.date, { weekStartsOn: 0 })
-								];
+								weekRange = [startOfWeek(day.date), endOfWeek(day.date)];
 							}}
 						/>
 					{/snippet}
@@ -817,7 +777,7 @@
 				<span
 					class="px-3 py-1.5 rounded-lg bg-primary/10 text-primary text-sm font-medium border border-primary/20"
 				>
-					{format(weekRange[0], 'MMM d')} – {format(weekRange[1], 'MMM d, yyyy')}
+					{shortDay(weekRange[0])} – {mediumDay(weekRange[1])}
 				</span>
 				<button
 					class="text-xs text-muted-foreground hover:text-foreground transition-colors"
@@ -856,7 +816,7 @@
 						{@const avail = day.offmonth || day.disabled ? undefined : availabilityData.get(ts)}
 						<CalendarModule.Day {day} class={avail === 'full' ? 'pointer-events-none' : ''}>
 							{#snippet children({ calendar })}
-								{@const selected = calendar.state.isDaySelected(day)}
+								{@const selected = calendar.isDaySelected(day)}
 								<div class="flex flex-col items-center justify-center size-full gap-px">
 									<span
 										class={[
@@ -900,7 +860,7 @@
 
 		{#if availabilityRange[0]}
 			<div class="flex items-center gap-3 text-sm">
-				<span class="font-medium">{format(availabilityRange[0], 'EEEE, MMMM d, yyyy')}</span>
+				<span class="font-medium">{fullDay(availabilityRange[0])}</span>
 				<button
 					class="text-xs text-muted-foreground hover:text-foreground transition-colors"
 					onclick={() => {
@@ -938,7 +898,7 @@
 				class="aspect-auto h-full flex p-0 hover:bg-transparent hover:text-foreground/80"
 			>
 				{#snippet children({ calendar })}
-					{@const selected = calendar.state.isDaySelected(day)}
+					{@const selected = calendar.isDaySelected(day)}
 					{@const events = plannerEvents.get(startOfDay(day.date).getTime()) ?? []}
 					<div
 						class={[
@@ -1012,14 +972,14 @@
 					</button>
 				</div>
 
-				<h1 class="text-xl font-semibold tracking-tight">{format(pivotePlanner, 'MMMM yyyy')}</h1>
+				<h1 class="text-xl font-semibold tracking-tight">{monthYear(pivotePlanner)}</h1>
 
 				<div class="flex items-center gap-3">
 					{#if args.type === 'range' && plannerRange[0]}
 						<span class="text-sm text-muted-foreground">
-							{format(plannerRange[0], 'MMM d')}
+							{shortDay(plannerRange[0])}
 							{#if plannerRange[1]}
-								→ {format(plannerRange[1], 'MMM d')} · {differenceInCalendarDays(
+								– {shortDay(plannerRange[1])} · {differenceInCalendarDays(
 									plannerRange[1],
 									plannerRange[0]
 								)}d

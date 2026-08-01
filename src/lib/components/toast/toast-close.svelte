@@ -2,11 +2,12 @@
 	lang="ts"
 	generics="E extends keyof HTMLElementTagNameMap = 'button', B extends Base = Base"
 >
-	import { Icon } from '$svelte-atoms/core/components/icon';
-	import Close from '$svelte-atoms/core/icons/icon-close.svelte';
-	import { mergeAtomProps, HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
+	import { Icon } from '$ixirjs/ui/components/icon';
+	import Close from '$ixirjs/ui/icons/icon-close.svelte';
+	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
 	import { ToastBond } from './bond.svelte';
 	import type { ToastCloseProps } from './types';
+	import { usePart } from '$ixirjs/ui/shared';
 
 	let {
 		class: klass = '',
@@ -14,28 +15,48 @@
 		preset = undefined,
 		children = undefined,
 		onclick = undefined,
+		onkeydown = undefined,
 		...restProps
 	}: ToastCloseProps<E, B> = $props();
 
-	const bond = ToastBond.get();
+	const part = usePart(ToastBond, 'dismiss', () => restProps, {
+		message: '<Toast.Close /> must be used within a <Toast.Root />',
+		preset: () => preset
+	});
+	const bond = part.bond;
 
-	const atom = bond?.dismiss();
+	const defaults = $derived({
+		type: as === 'button' ? 'button' : undefined,
+		role: as === 'button' ? undefined : 'button',
+		tabindex: as === 'button' ? undefined : 0
+	});
 
-	const closeProps = $derived(mergeAtomProps(atom, preset, restProps));
+	// These run before the atom's own dismiss handler and stage the reason for it. The seam composes
+	// the two — consumer handler first, then the atom's, skipped when default is prevented — so
+	// neither needs to invoke the atom handler by hand.
+	function onclick_(event: MouseEvent) {
+		onclick?.(event);
+		if (event.defaultPrevented) return;
+		bond.stageOpenChange({ event, reason: 'close-button' });
+	}
 
-	function onclick_(ev: MouseEvent) {
-		(onclick as ((ev: MouseEvent) => void) | undefined)?.(ev);
-		if (ev.defaultPrevented) return;
-		(closeProps.onclick as ((ev: MouseEvent) => void) | undefined)?.(ev);
+	function onkeydown_(event: KeyboardEvent) {
+		onkeydown?.(event);
+		if (event.defaultPrevented) return;
+		if (event.key === 'Enter' || event.key === ' ') {
+			bond.stageOpenChange({ event, reason: 'close-button' });
+		}
 	}
 </script>
 
 <HtmlAtom
 	{as}
-	{bond}
+	{defaults}
 	class={['cursor-pointer text-current h-6', '$preset', klass]}
-	{...closeProps}
+	{...restProps}
+	{part}
 	onclick={onclick_}
+	onkeydown={onkeydown_}
 >
 	{#if children}
 		{@render children({ toast: bond })}

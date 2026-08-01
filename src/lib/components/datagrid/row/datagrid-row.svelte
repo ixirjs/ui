@@ -3,12 +3,15 @@
 	generics="T = unknown, E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base"
 >
 	import { untrack } from 'svelte';
-	import { bindBond } from '$svelte-atoms/core/shared/bond/bind.svelte';
-	import { createAtomInstance } from '$svelte-atoms/core/shared/bond';
-	import { HtmlAtom, mergeAtomProps, type Base } from '$svelte-atoms/core/components/atom';
-	import { DataGridRowBond, DataGridRowRootAtom, type DataGridRowBondProps } from './bond.svelte';
-	import type { DatagridRowProps } from '../types';
+	import { useRoot } from '@ixirjs/ui/shared';
+	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import { DataGridRowBond, type DataGridRowBondProps } from './bond.svelte';
+	import type { DataGridBond } from '$ixirjs/ui/components/datagrid/bond.svelte';
+	import { setDatagridRowRenderContext } from '$ixirjs/ui/components/datagrid/context';
+	import type { DatagridRowProps } from '$ixirjs/ui/components/datagrid/types';
 	import './datagrid-row.css';
+
+	const ID = $props.id();
 
 	let {
 		class: klass = '',
@@ -22,23 +25,29 @@
 		...restProps
 	}: DatagridRowProps<T, E, B> = $props();
 
-	const binding = bindBond<DataGridRowBond<T>>(
-		(props) => factory(props),
+	let nextCellIndex = 0;
+
+	const root = useRoot(
+		DataGridRowBond,
 		{
 			data: () => data,
 			value: () => value
 		},
-		{ preset: () => preset }
+		{
+			preset: () => preset,
+			id: () => ID,
+			factory: (props) => factory(props as DataGridRowBondProps<T>),
+			// Cells claim their index and the grid Bond from this context; publish it before the row
+			// Atom is created so the render order the cells observe is unchanged. The row Bond already
+			// resolved the grid, so cells read it from here instead of walking context again.
+			connect: (owner) =>
+				setDatagridRowRenderContext({
+					claimCellIndex: () => nextCellIndex++,
+					datagrid: (owner as DataGridRowBond<T>).datagrid as DataGridBond
+				})
+		}
 	);
-	const bond = binding.bond.share();
-	const rootAtom = createAtomInstance<DataGridRowRootAtom, DataGridRowBond<T>>('root', {
-		bond,
-		factory: (owner) => new DataGridRowRootAtom(owner as DataGridRowBond<T>)
-	});
-	const rowProps = $derived(
-		mergeAtomProps(rootAtom, preset, { ...binding.stateProps, ...restProps })
-	);
-
+	const bond = root.bond as DataGridRowBond<T>;
 	const isHeader = $derived(bond.isHeader);
 	const isSelected = $derived(bond.isSelected);
 
@@ -49,12 +58,15 @@
 		return DataGridRowBond.create<T>(props);
 	}
 
-	function handleClick(ev: Event) {
-		onclick?.(ev, { row: bond });
+	function handleClick(event: MouseEvent) {
+		const onClick = onclick as ((event: MouseEvent) => void) | undefined;
+		onClick?.(event);
 	}
 </script>
 
 <HtmlAtom
+	{...restProps}
+	part={root}
 	class={[
 		'datagrid-row items-center border-b bg-transparent',
 		!isHeader && 'hover:bg-foreground/2 active:bg-foreground/4 transition-colors duration-100',
@@ -65,7 +77,6 @@
 	]}
 	style="--rows:{rows}"
 	onclick={handleClick}
-	{...rowProps}
 >
 	{@render children?.({ row: bond })}
 </HtmlAtom>

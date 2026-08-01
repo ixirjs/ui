@@ -1,14 +1,6 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'label', B extends Base = Base">
-	import type { HTMLAttributes } from 'svelte/elements';
-	import {
-		mergePresetProps,
-		HtmlAtom,
-		type ElementType,
-		type Base
-	} from '$svelte-atoms/core/components/atom';
+	import { mergePresetProps, HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
 	import type { LabelProps } from './types';
-
-	type Element = ElementType<E>;
 
 	let {
 		class: klass = '',
@@ -17,11 +9,11 @@
 		for: labelfor = null,
 		children,
 		...restProps
-	}: LabelProps<E, B> & HTMLAttributes<Element> = $props();
+	}: LabelProps<E, B> = $props();
 
 	const labelProps = $derived(mergePresetProps(preset, 'label', restProps));
 </script>
 
 <HtmlAtom {as} class={['font-medium', '$preset', klass]} for={labelfor} {...labelProps}>
-	{@render children?.()}
+	{@render children?.({})}
 </HtmlAtom>

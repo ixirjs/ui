@@ -1,27 +1,43 @@
 // Public surface of the bond runtime core.
 export { Bond } from './bond.svelte';
-export { BondState } from './state.svelte';
 export { Atom, defineAtom } from './atom.svelte';
-export type { DefineAtomSetup, AtomOptions } from './atom.svelte';
+export type {
+	DefineAtomSetup,
+	DefineAtomOptions,
+	DefinedAtomClass,
+	AtomOptions
+} from './atom.svelte';
 export { bondContextKey } from './context';
+export { generateId } from './identity';
 export type {
 	BondClass,
+	BondHandle,
+	AtomHandle,
 	BondElements,
+	BondPresetLayers,
 	BondStateProps,
 	BondVirtualElement,
 	NodeCardinality,
 	NodeRegistrationOptions,
 	NodeRegistration
 } from './types';
-export { bindBond, BondBinding, type BondBindingOptions } from './bind.svelte';
-export { bondFactory } from './factory';
+export {
+	bindBond,
+	BondBinding,
+	controlledProp,
+	type BondBindingOptions,
+	type ControlledPropOptions,
+	type ControlledPropContext,
+	type ControlledProp,
+	type PropCell,
+	type PropsSpec
+} from './bind.svelte';
 export {
 	createAtomInstance,
 	type AtomCapabilityEntry,
 	type CreateAtomInstanceOptions
 } from './use-atom.svelte';
 export { Collection } from './collection.svelte';
-export { explainBondRole } from './diagnostics';
 export {
 	composeAttachments,
 	composeHandlers,
@@ -37,45 +53,26 @@ export {
 	defineCapability,
 	defineBondCapability,
 	defineAtomCapability,
-	defineModelCapability,
 	defineProjectionCapability,
-	defineRelationshipCapability,
-	definePolicyCapability,
-	defineEffectCapability,
-	defineFocusedCapability,
-	defineArchetypeCapabilities,
-	decorateCapability,
 	type AtomBehavior,
 	type AtomCapability,
 	type AtomCapabilityConfig,
-	type AtomCapabilityInfo,
 	type AtomHost,
 	type Behavior,
 	type BondCapability,
 	type BondCapabilityConfig,
 	type CapabilityKey,
 	type SurfaceOf,
-	type RoleContexts,
-	type KnownRole,
 	type RoleCtxArgs,
 	type Capability,
+	type CapabilityEnvelope,
+	type CapabilitySetupResult,
 	type RoleCtx,
 	type CapabilityRoleMap,
 	type CapabilityConfig,
-	type CapabilityLayer,
-	type CapabilityKind,
 	type CapabilityMetadata,
-	type ModelCapabilityConfig,
-	type ProjectionCapabilityConfig,
-	type RelationshipCapabilityConfig,
-	type PolicyCapabilityConfig,
-	type EffectCapabilityConfig,
-	type FocusedCapabilityConfig,
-	type ArchetypeCapabilities,
-	type CapabilityInfo,
-	type RoleProjectionInfo,
-	type CapabilityDecoration
-} from '../capability/capability';
+	type ProjectionCapabilityConfig
+} from '$ixirjs/ui/shared/capability/capability';
 export {
 	elementRef,
 	pressable,
@@ -98,4 +95,4 @@ export {
 	type FocusableOptions,
 	type DataStateOptions,
 	type MotionOptions
-} from '../capability/models/atom.svelte';
+} from '$ixirjs/ui/shared/capability/models/atom.svelte';

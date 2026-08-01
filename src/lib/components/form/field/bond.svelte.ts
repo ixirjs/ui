@@ -1,25 +1,19 @@
-import { Bond, defineAtom, type BondStateProps } from '$svelte-atoms/core/shared/bond';
-import { defineBond, type BondOf } from '$svelte-atoms/core/shared';
+import { Bond, defineAtom, type BondStateProps } from '$ixirjs/ui/shared/bond';
+import { internCapabilityFactory } from '$ixirjs/ui/shared/capability/intern';
+import { defineBond, type BondOf } from '$ixirjs/ui/shared';
 import {
 	defineAtomCapability,
 	sharedCapabilityKey,
 	type AtomHost
-} from '$svelte-atoms/core/shared/capability';
-import {
-	errorMessageLink,
-	labelledControl
-} from '$svelte-atoms/core/shared/capability/models/relationship.svelte';
+} from '$ixirjs/ui/shared/capability';
+import { fieldCapabilities } from '$ixirjs/ui/shared/capability/models/archetypes.svelte';
 import {
 	createValidation,
-	validationCapability,
 	type ValidationError,
 	type ValidationModel,
 	type ValidationResult
-} from '$svelte-atoms/core/shared/capability/models/validation.svelte';
-import {
-	createStatus,
-	statusCapability
-} from '$svelte-atoms/core/shared/capability/models/status.svelte';
+} from '$ixirjs/ui/shared/capability/models/validation.svelte';
+import { createStatus } from '$ixirjs/ui/shared/capability/models/status.svelte';
 
 // -----------------------------------------------------------------------------
 // Public types
@@ -154,11 +148,14 @@ export class FieldBondBase<Props extends FieldStateProps = FieldStateProps> exte
 
 	constructor(props: Props, name = 'field') {
 		super(props, name);
-		// label ↔ control a11y linkage: control gets aria-labelledby, label gets `for`.
-		this.capability(labelledControl({ nativeFor: true }));
-		this.capability(validationCapability(this.validation));
-		this.capability(errorMessageLink({ invalid: () => this.validation.isInvalid }));
-		this.capability(statusCapability(this.status, { roles: ['control'] }));
+		this.registerCapabilities(
+			fieldCapabilities({
+				validation: this.validation,
+				labelled: { nativeFor: true },
+				status: this.status,
+				statusOptions: { roles: ['control'] }
+			})
+		);
 	}
 
 	get value() {
@@ -253,7 +250,7 @@ type FieldBondView = FieldBondBase;
 // Capability slots and shared helpers
 // -----------------------------------------------------------------------------
 
-const FIELD_ROOT = sharedCapabilityKey<void>('@svelte-atoms/field:root');
+const FIELD_ROOT = sharedCapabilityKey<void>({ owner: '@ixirjs/field', name: 'root', version: 1 });
 
 // -----------------------------------------------------------------------------
 // Atom definitions
@@ -280,30 +277,28 @@ export type FieldDescriptionAtom = InstanceType<typeof FieldDescriptionAtom>;
 // Atom capabilities
 // -----------------------------------------------------------------------------
 
-function fieldRootPresentation() {
+const fieldRootPresentation = internCapabilityFactory(function fieldRootPresentation() {
 	return defineAtomCapability<void, AtomHost, FieldBondView>({
 		slot: FIELD_ROOT,
 		meta: {
-			layer: 1,
-			kind: 'projection',
 			projects: ['root'],
 			docs: 'Field root group labelling and validation state projection.'
 		},
-		behavior: {
+		attach: {
 			attrs: (_node, bond) => {
 				const hasErrors = (bond?.errors.length ?? 0) > 0;
-				const description = bond?.atomByRole(hasErrors ? 'error' : 'description')?.id;
+				const description = bond?.nodeByRole(hasErrors ? 'error' : 'description')?.id;
 
 				return {
 					role: 'group',
-					'aria-labelledby': bond?.atomByRole('label')?.id,
+					'aria-labelledby': bond?.nodeByRole('label')?.id,
 					'aria-describedby': description,
 					'aria-invalid': `${hasErrors}`
 				};
 			}
 		}
 	});
-}
+});
 
 // FieldBond — label/control fold in the labelled-control link via their roles; validation lives on the Bond.
 
@@ -311,17 +306,7 @@ function fieldRootPresentation() {
 // Bond spec and constructor facade
 // -----------------------------------------------------------------------------
 
-const FieldBondImpl = defineBond<
-	{
-		root: typeof FieldRootAtom;
-		label: { atom: typeof FieldLabelAtom; role: 'label' };
-		control: { atom: typeof FieldControlAtom; role: 'control' };
-		description: { atom: typeof FieldDescriptionAtom; role: 'description' };
-	},
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	any,
-	typeof FieldBondBase
->({
+export const FieldBond = defineBond({
 	name: 'field',
 	base: FieldBondBase,
 	atoms: {
@@ -333,16 +318,4 @@ const FieldBondImpl = defineBond<
 });
 
 // Instance type — paired with the const above.
-export type FieldBond = BondOf<typeof FieldBondImpl>;
-
-interface FieldBondConstructor {
-	new (props: FieldStateProps): FieldBond;
-	readonly CONTEXT_KEY: string;
-	readonly spec: (typeof FieldBondImpl)['spec'];
-	get(): FieldBond | undefined;
-	getOrThrow(message?: string): FieldBond;
-	set(bond: FieldBond): FieldBond;
-	create(props: FieldStateProps): FieldBond;
-}
-
-export const FieldBond = FieldBondImpl as unknown as FieldBondConstructor;
+export type FieldBond = BondOf<typeof FieldBond>;

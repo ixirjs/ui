@@ -1,4 +1,8 @@
-import { defineCapability, sharedCapabilityKey, type Capability } from '../capability';
+import {
+	defineCapability,
+	sharedCapabilityKey,
+	type Capability
+} from '$ixirjs/ui/shared/capability/capability';
 
 export interface PressedBacking {
 	get(): boolean;
@@ -13,7 +17,11 @@ export interface PressedModel {
 	toggle(): void;
 }
 
-export const PRESSED = sharedCapabilityKey<PressedModel>('@svelte-atoms/cap:pressed');
+export const PRESSED = sharedCapabilityKey<PressedModel>({
+	owner: '@ixirjs/cap',
+	name: 'pressed',
+	version: 1
+});
 
 export function createPressed(backing: PressedBacking): PressedModel {
 	return {
@@ -50,8 +58,6 @@ export function pressedCapability(
 		slot: PRESSED,
 		surface: pressed,
 		meta: {
-			layer: 1,
-			kind: 'model',
 			projects: roles,
 			docs: 'Pressed/unpressed toggle state with scoped toggle-button projection.'
 		},

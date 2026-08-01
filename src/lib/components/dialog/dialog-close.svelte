@@ -2,14 +2,12 @@
 	lang="ts"
 	generics="E extends keyof HTMLElementTagNameMap = 'button', B extends Base = Base"
 >
-	import { Icon } from '$svelte-atoms/core/components/icon';
-	import Close from '$svelte-atoms/core/icons/icon-close.svelte';
-	import { mergeAtomProps, HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
-	import { createAtomInstance } from '$svelte-atoms/core/shared/bond';
-	import { DialogBond, DialogCloseAtom } from './bond.svelte';
+	import { Icon } from '$ixirjs/ui/components/icon';
+	import Close from '$ixirjs/ui/icons/icon-close.svelte';
+	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import { usePart } from '$ixirjs/ui/shared';
+	import { DialogBond } from './bond.svelte';
 	import type { DialogCloseButtonProps } from './types';
-
-	const bond = DialogBond.getOrThrow('<Dialog.Close /> must be used within a <Dialog.Root />');
 
 	let {
 		class: klass = '',
@@ -17,30 +15,49 @@
 		as = 'button' as E,
 		children = undefined,
 		onclick = undefined,
+		onkeydown = undefined,
 		...restProps
 	}: DialogCloseButtonProps<E, B> = $props();
 
-	const atom = createAtomInstance<DialogCloseAtom, DialogBond, HTMLElement>('close', {
-		bond,
-		factory: (owner) => new DialogCloseAtom(owner as DialogBond)
+	const part = usePart(DialogBond, 'closeButton', () => restProps, {
+		message: '<Dialog.Close /> must be used within a <Dialog.Root />',
+		preset: () => preset
+	});
+	const bond = part.bond;
+	const defaults = $derived({
+		type: as === 'button' ? 'button' : undefined,
+		role: as === 'button' ? undefined : 'button',
+		tabindex: as === 'button' ? undefined : 0
 	});
 
-	const closeProps = $derived(mergeAtomProps(atom, preset ?? 'dialog.close-button', restProps));
+	// These run before the atom's own close handler and stage the reason for it. The seam composes
+	// the two — consumer handler first, then the atom's, skipped when default is prevented — so
+	// neither needs to invoke the atom handler by hand.
+	function onclick_(event: MouseEvent) {
+		onclick?.(event);
+		if (event.defaultPrevented) return;
 
-	function onclick_(ev: MouseEvent) {
-		onclick?.(ev);
-		if (ev.defaultPrevented) return;
+		bond.stageOpenChange({ event, reason: 'close-button' });
+	}
 
-		(closeProps.onclick as ((ev: MouseEvent) => void) | undefined)?.(ev);
+	function onkeydown_(event: KeyboardEvent) {
+		onkeydown?.(event);
+		if (event.defaultPrevented) return;
+
+		if (event.key === 'Enter' || event.key === ' ') {
+			bond.stageOpenChange({ event, reason: 'close-button' });
+		}
 	}
 </script>
 
 <HtmlAtom
 	{as}
-	{bond}
+	{defaults}
 	class={['cursor-pointer', '$preset', klass]}
-	{...closeProps}
+	{...restProps}
+	{part}
 	onclick={onclick_}
+	onkeydown={onkeydown_}
 >
 	{#if children}
 		{@render children?.({ dialog: bond })}

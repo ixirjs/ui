@@ -1,12 +1,9 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { mergeAtomProps, type Base } from '$svelte-atoms/core/components/atom';
-	import { createAtomInstance } from '$svelte-atoms/core/shared/bond';
-	import { Stack } from '../stack';
-	import { TabsBodyAtom, TabsBond } from './bond.svelte';
+	import { type Base } from '$ixirjs/ui/components/atom';
+	import { usePart } from '$ixirjs/ui/shared';
+	import { Stack } from '$ixirjs/ui/components/stack';
+	import { TabsBond } from './bond.svelte';
 	import type { TabsBodyProps } from './types';
-
-	const bond = TabsBond.getOrThrow('Tabs.Body must be used within a Tabs.Root component.');
-	const value = $derived(bond.props.value);
 
 	let {
 		class: klass = '',
@@ -16,20 +13,18 @@
 		...restProps
 	}: TabsBodyProps<E, B> = $props();
 
-	const atom = createAtomInstance<TabsBodyAtom, TabsBond>('body', {
-		bond,
-		factory: (owner) => new TabsBodyAtom(owner as TabsBond)
+	const part = usePart(TabsBond, 'body', () => restProps, {
+		preset: () => preset
 	});
-
-	const bodyProps = $derived(mergeAtomProps(atom, preset, restProps));
+	const value = $derived(part.bond.props.value);
 </script>
 
 <Stack.Root
 	{value}
-	{bond}
+	bond={part.bond}
 	{as}
 	class={['tabs-body relative flex-1 flex flex-col', '$preset', klass]}
-	{...bodyProps}
+	{...part.props}
 >
-	{@render children?.({ tabs: bond })}
+	{@render children?.({ tabs: part.bond })}
 </Stack.Root>

@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { resolveControlPreset, writeInputValue } from './shared';
-	import { cn, toClassValue } from '$svelte-atoms/core/utils';
-	import { clamp as clampRange } from '$svelte-atoms/core/utils/math';
+	import { inputChangeContext, resolveControlPreset, writeInputValue } from './shared';
+	import { cn, toClassValue } from '$ixirjs/ui/utils';
+	import { clamp as clampRange } from '$ixirjs/ui/utils/math';
 	import { untrack } from 'svelte';
 	import { InputBond } from './bond.svelte';
 	import type { InputCurrencyControlProps } from './types';
@@ -24,10 +24,16 @@
 		preset: presetKey = 'input.currency',
 		onchange = undefined,
 		oninput = undefined,
+		onvaluechange = undefined,
 		...restProps
 	}: InputCurrencyControlProps = $props();
 
-	const preset = resolveControlPreset(() => presetKey, bond);
+	const preset = resolveControlPreset(
+		() => presetKey,
+		bond,
+		() => restProps,
+		() => toClassValue(klass, bond)
+	);
 
 	let inputEl = $state<HTMLInputElement>();
 	let isFocused = $state(false);
@@ -71,6 +77,14 @@
 		writeInputValue(bond, value);
 	}
 
+	function commitAndNotify(n: number | undefined, event: Event, reason: string) {
+		const previousValue = value;
+		commit(n);
+		if (Object.is(previousValue, value)) return;
+
+		onvaluechange?.(value, inputChangeContext(bond, event, reason, { amount }));
+	}
+
 	// Seed `amount` from the `value` string when the parent supplies only `value`.
 	$effect(() => {
 		untrack(() => {
@@ -96,17 +110,15 @@
 		if (inputEl) inputEl.value = amount !== undefined ? toEditString(amount) : '';
 	}
 
-	function handleBlur(ev: FocusEvent) {
+	function handleBlur(event: FocusEvent) {
 		if (readonly) return;
 		isFocused = false;
-		commit(parseRaw(inputEl?.value ?? ''));
-		onchange?.(ev, { value, amount });
+		commitAndNotify(parseRaw(inputEl?.value ?? ''), event, 'blur');
 	}
 
-	function handleInput(ev: Event) {
-		// Don't touch state mid-typing — only notify.
-		const raw = (ev.currentTarget as HTMLInputElement).value;
-		oninput?.(ev, { value: raw, amount: parseRaw(raw) });
+	function handleInput(event: Event) {
+		// Currency commits on blur or an explicit keyboard/paste operation.
+		oninput?.(event);
 	}
 
 	function handleKeydown(ev: KeyboardEvent) {
@@ -115,7 +127,7 @@
 		ev.preventDefault();
 		const dir = ev.key === 'ArrowUp' ? 1 : -1;
 		const multiplier = ev.shiftKey ? 10 : ev.altKey ? 0.1 : 1;
-		commit((amount ?? 0) + dir * stepSize * multiplier);
+		commitAndNotify((amount ?? 0) + dir * stepSize * multiplier, ev, 'step');
 		if (inputEl && amount !== undefined) inputEl.value = toEditString(amount);
 	}
 
@@ -125,7 +137,7 @@
 		if (parsed === undefined) return;
 		const str = toEditString(parsed);
 		if (inputEl) inputEl.value = str;
-		oninput?.(ev, { value: str, amount: parsed });
+		commitAndNotify(parsed, ev, 'paste');
 	}
 </script>
 
@@ -173,14 +185,14 @@
 				? 'text-foreground placeholder:text-muted-foreground'
 				: 'text-transparent placeholder:text-transparent',
 			disabled && 'cursor-not-allowed opacity-50',
-			preset?.class,
-			toClassValue(klass, bond)
+			preset.class
 		)}
+		{...preset.attrs}
 		oninput={handleInput}
+		{onchange}
 		onfocus={handleFocus}
 		onblur={handleBlur}
 		onkeydown={handleKeydown}
 		onpaste={handlePaste}
-		{...restProps}
 	/>
 </span>

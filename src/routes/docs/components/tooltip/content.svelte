@@ -56,9 +56,9 @@
 			{...ex('./examples/placement.svelte')}
 		/>
 		<DocExample
-			title="Tooltip with Arrow"
-			description="Tooltip with a directional arrow pointing at the trigger."
-			{...ex('./examples/arrow.svelte')}
+			title="Tooltip with Tail"
+			description="Tooltip with a directional tail pointing at the trigger."
+			{...ex('./examples/tail.svelte')}
 		/>
 	{/snippet}
 

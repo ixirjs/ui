@@ -59,7 +59,7 @@
 							{#snippet children()}
 								<Field.Label class="mb-1 block text-sm font-medium text-gray-700">Name</Field.Label>
 								<Field.Control type="text" placeholder="Enter your name" component={Input.Root}>
-									<Input.Value />
+									<Input.Control />
 								</Field.Control>
 							{/snippet}
 						</Field.Root>
@@ -70,7 +70,7 @@
 									Email
 								</Field.Label>
 								<Field.Control type="email" placeholder="Enter your email" component={Input.Root}>
-									<Input.Value />
+									<Input.Control />
 								</Field.Control>
 							{/snippet}
 						</Field.Root>
@@ -81,7 +81,7 @@
 									Message
 								</Field.Label>
 								<Field.Control placeholder="Enter your message" rows="3" component={Input.Root}>
-									<Input.Value />
+									<Input.Control />
 								</Field.Control>
 							{/snippet}
 						</Field.Root>
@@ -94,7 +94,7 @@
 										class="border-border rounded text-purple-600 focus:ring-purple-500 disabled:opacity-50"
 										component={Input.Root}
 									>
-										<Input.Value />
+										<Input.Control />
 									</Field.Control>
 									<Field.Label class="text-sm text-gray-700">Subscribe to newsletter</Field.Label>
 								</div>

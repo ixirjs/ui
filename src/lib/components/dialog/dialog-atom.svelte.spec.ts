@@ -1,7 +1,11 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
-import Probe, { capturedBond, resetCapturedBond } from './dialog-atom-probe.svelte';
-import { Atom } from '$svelte-atoms/core/shared/bond';
+import Probe, {
+	capturedBond,
+	resetCapturedBond
+} from '$ixirjs/ui/test/components/dialog/dialog-atom-probe.test.svelte';
+import LayerProbe from '$ixirjs/ui/test/components/dialog/dialog-preset-probe.test.svelte';
+import { Atom } from '$ixirjs/ui/shared/bond';
 import {
 	DialogBodyAtom,
 	DialogBond,
@@ -25,14 +29,14 @@ describe('Dialog component-owned Atoms', () => {
 		expect(dialog).toBeInstanceOf(DialogBond);
 		expect(dialog?.isOpen).toBe(true);
 
-		const root = dialog?.node('root');
-		const content = dialog?.node('content');
-		const header = dialog?.node('header');
-		const title = dialog?.node('title');
-		const description = dialog?.node('description');
-		const body = dialog?.node('body');
-		const footer = dialog?.node('footer');
-		const close = dialog?.node('close');
+		const root = dialog?.nodeByPart('root');
+		const content = dialog?.nodeByPart('content');
+		const header = dialog?.nodeByPart('header');
+		const title = dialog?.nodeByPart('title');
+		const description = dialog?.nodeByPart('description');
+		const body = dialog?.nodeByPart('body');
+		const footer = dialog?.nodeByPart('footer');
+		const close = dialog?.nodeByPart('close');
 
 		expect(root).toBeInstanceOf(DialogRootAtom);
 		expect(content).toBeInstanceOf(DialogContentAtom);
@@ -45,7 +49,18 @@ describe('Dialog component-owned Atoms', () => {
 		for (const node of [root, content, header, title, description, body, footer, close]) {
 			expect(node).toBeInstanceOf(Atom);
 		}
-		expect(dialog?.nodes()).toHaveLength(8);
+		for (const [part, node] of [
+			['root', root],
+			['content', content],
+			['header', header],
+			['title', title],
+			['description', description],
+			['body', body],
+			['footer', footer],
+			['close', close]
+		] as const) {
+			expect(dialog?.nodesByPart(part)).toEqual([node]);
+		}
 
 		expect(root?.spread.role).toBe('dialog');
 		expect(root?.spread['aria-modal']).toBe(true);
@@ -58,29 +73,51 @@ describe('Dialog component-owned Atoms', () => {
 		expect(body?.spread.role).toBe('region');
 		expect(footer?.spread.role).toBe('contentinfo');
 
-		expect(typeof dialog?.root).toBe('function');
-		expect(typeof dialog?.content).toBe('function');
-		expect(typeof dialog?.close).toBe('function');
-		expect(typeof dialog?.closeButton).toBe('function');
-		const legacyNodes = [
-			dialog?.root(),
-			dialog?.content(),
-			dialog?.header(),
-			dialog?.title(),
-			dialog?.description(),
-			dialog?.body(),
-			dialog?.footer(),
-			dialog?.closeButton()
-		];
-		for (const node of legacyNodes) {
-			expect(node).toBeInstanceOf(Atom);
-		}
-		expect(legacyNodes[0]).toBeInstanceOf(DialogRootAtom);
-		expect(legacyNodes[1]).toBeInstanceOf(DialogContentAtom);
-		expect(legacyNodes[7]).toBeInstanceOf(DialogCloseAtom);
-
 		unmount();
 
-		expect(dialog?.nodes()).toEqual([]);
+		for (const part of [
+			'root',
+			'content',
+			'header',
+			'title',
+			'description',
+			'body',
+			'footer',
+			'close'
+		]) {
+			expect(dialog?.nodesByPart(part)).toEqual([]);
+		}
+	});
+
+	it('applies root-owned layers to every bonded Dialog part', () => {
+		const { unmount } = render(LayerProbe, {
+			presets: {
+				root: { class: 'instance-root', attrs: { 'data-instance': 'root' } },
+				content: { class: 'instance-content', attrs: { 'data-instance': 'content' } },
+				header: { class: 'instance-header', attrs: { 'data-instance': 'header' } },
+				title: { class: 'instance-title', attrs: { 'data-instance': 'title' } },
+				description: { class: 'instance-description', attrs: { 'data-instance': 'description' } },
+				body: { class: 'instance-body', attrs: { 'data-instance': 'body' } },
+				footer: { class: 'instance-footer', attrs: { 'data-instance': 'footer' } },
+				closeButton: { class: 'instance-close', attrs: { 'data-instance': 'close' } }
+			}
+		});
+
+		expect(document.querySelector('[data-instance="root"]')?.hasAttribute('presets')).toBe(false);
+
+		for (const value of [
+			'root',
+			'content',
+			'header',
+			'title',
+			'description',
+			'body',
+			'footer',
+			'close'
+		]) {
+			expect(document.querySelector(`[data-instance="${value}"]`), value).not.toBeNull();
+		}
+
+		unmount();
 	});
 });

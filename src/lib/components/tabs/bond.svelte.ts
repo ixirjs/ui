@@ -1,24 +1,20 @@
 import type { Snippet } from 'svelte';
-import {
-	Bond,
-	defineAtom,
-	type BondStateProps,
-	type Capability
-} from '$svelte-atoms/core/shared/bond';
-import { defineBond, type BondOf } from '$svelte-atoms/core/shared';
+import { internCapabilityFactory } from '$ixirjs/ui/shared/capability/intern';
+import { Bond, defineAtom, type BondStateProps, type Capability } from '$ixirjs/ui/shared/bond';
+import { defineBond, type BondOf } from '$ixirjs/ui/shared';
 import {
 	ariaRole,
 	defineAtomCapability,
 	sharedCapabilityKey,
 	type AtomHost
-} from '$svelte-atoms/core/shared/capability';
+} from '$ixirjs/ui/shared/capability';
 import {
 	createSelection,
 	selectionCapability,
 	SELECTION,
 	type SelectionModel
-} from '$svelte-atoms/core/shared/capability/models/selection.svelte';
-import type { Collection } from '$svelte-atoms/core/shared/bond/collection.svelte';
+} from '$ixirjs/ui/shared/capability/models/selection.svelte';
+import type { Collection } from '$ixirjs/ui/shared/bond/collection.svelte';
 import type { TabBond } from './tab/bond.svelte';
 
 // -----------------------------------------------------------------------------
@@ -65,7 +61,7 @@ type TabsBondView = TabsBondBase;
 // Capability slots and shared helpers
 // -----------------------------------------------------------------------------
 
-const TABS_ROOT = sharedCapabilityKey<void>('@svelte-atoms/tabs:root');
+const TABS_ROOT = sharedCapabilityKey<void>({ owner: '@ixirjs/tabs', name: 'root', version: 1 });
 
 // -----------------------------------------------------------------------------
 // Atom definitions
@@ -90,22 +86,20 @@ export type TabsBodyAtom = InstanceType<typeof TabsBodyAtom>;
 // Atom capabilities
 // -----------------------------------------------------------------------------
 
-function tabsRootPresentation() {
+const tabsRootPresentation = internCapabilityFactory(function tabsRootPresentation() {
 	return defineAtomCapability<void, AtomHost, TabsBondView>({
 		slot: TABS_ROOT,
 		meta: {
-			layer: 1,
-			kind: 'projection',
 			projects: ['root'],
 			docs: 'Tabs root orientation projection.'
 		},
-		behavior: {
+		attach: {
 			attrs: () => ({
 				'aria-orientation': 'horizontal' as const
 			})
 		}
 	});
-}
+});
 
 // Hand-written base for TabsBond. Parent selection, mounted tab/content collections,
 // and child coordination live on the Bond instance.
@@ -145,7 +139,7 @@ class TabsBondBase extends Bond<TabsBondProps> implements ITabs {
 	}
 
 	get headerElement() {
-		return this.node('header')?.element as HTMLElement | undefined;
+		return this.nodeByPart('header')?.element as HTMLElement | undefined;
 	}
 
 	selectionCapability(): Capability | undefined {
@@ -223,22 +217,21 @@ class TabsBondBase extends Bond<TabsBondProps> implements ITabs {
 // Bond spec and constructor facade
 // -----------------------------------------------------------------------------
 
-const TabsBondImpl = defineBond<
-	{ root: typeof TabsRootAtom; header: typeof TabsHeaderAtom; body: typeof TabsBodyAtom },
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	any,
-	typeof TabsBondBase
->({
+export const TabsBond = defineBond({
 	name: 'tabs',
 	base: TabsBondBase,
-	atoms: { root: TabsRootAtom, header: TabsHeaderAtom, body: TabsBodyAtom }
+	atoms: {
+		root: { atom: TabsRootAtom, selfLayer: true },
+		header: TabsHeaderAtom,
+		body: TabsBodyAtom
+	}
 });
 
 // -----------------------------------------------------------------------------
 // Public types
 // -----------------------------------------------------------------------------
 
-export type TabsBond<T = unknown> = BondOf<typeof TabsBondImpl> & {
+export type TabsBond<T = unknown> = BondOf<typeof TabsBond> & {
 	readonly items: Collection<TabBond<T>>;
 	readonly selectedItem: TabBond<T> | undefined;
 	mountItem<I extends T>(id: string, item: TabBond<I>): () => void;
@@ -248,14 +241,3 @@ export type TabsBond<T = unknown> = BondOf<typeof TabsBondImpl> & {
 // -----------------------------------------------------------------------------
 // Bond spec and constructor facade
 // -----------------------------------------------------------------------------
-
-interface TabsBondConstructor {
-	new <T = unknown>(props: TabsBondProps): TabsBond<T>;
-	readonly CONTEXT_KEY: string;
-	get<T = unknown>(): TabsBond<T> | undefined;
-	getOrThrow<T = unknown>(message?: string): TabsBond<T>;
-	set<T = unknown>(bond: TabsBond<T>): TabsBond<T>;
-	create<T = unknown>(props: TabsBondProps): TabsBond<T>;
-}
-
-export const TabsBond = TabsBondImpl as unknown as TabsBondConstructor;

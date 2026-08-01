@@ -1,9 +1,8 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { mergePresetProps, HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
+	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import { usePart } from '$ixirjs/ui/shared';
 	import { CardBond } from './bond.svelte';
 	import type { CardSubtitleProps } from './types';
-
-	const bond = CardBond.get();
 
 	let {
 		class: klass = '',
@@ -13,16 +12,17 @@
 		...restProps
 	}: CardSubtitleProps<E, B> = $props();
 
-	const subtitleProps = $derived(
-		mergePresetProps(preset, 'card.subtitle', { ...bond?.subtitle(), ...restProps })
-	);
+	const part = usePart(CardBond, 'subtitle', () => restProps, {
+		context: 'optional',
+		preset: () => preset
+	});
 </script>
 
 <HtmlAtom
+	{...restProps}
 	{as}
-	{bond}
+	{part}
 	class={['card-subtitle border-border text-sm font-medium text-gray-600', '$preset', klass]}
-	{...subtitleProps}
 >
 	{@render children?.()}
 </HtmlAtom>

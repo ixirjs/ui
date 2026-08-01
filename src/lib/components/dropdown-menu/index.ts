@@ -6,12 +6,12 @@ export {
 	type PopoverParams,
 	type PopoverStateProps,
 	type TriggerParams
-} from '../popover';
+} from '$ixirjs/ui/components/popover';
 
 export type {
 	AnimatePopoverContentParams as AnimateDropdownMenuContentParams,
 	animatePopoverContent as animateDropdownMenuContent
-} from '../popover/motion.svelte';
+} from '$ixirjs/ui/components/popover/motion.svelte';
 
 export * from './item';
 export { dropdownMenu } from './attachments.svelte';

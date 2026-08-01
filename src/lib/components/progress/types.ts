@@ -1,4 +1,4 @@
-import type { HtmlAtomProps } from '$svelte-atoms/core/components/atom';
+import type { HtmlAtomProps } from '$ixirjs/ui/components/atom';
 
 interface ProgressSharedProps {
 	// 0–max; null = indeterminate (default: null).

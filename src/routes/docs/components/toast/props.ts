@@ -31,10 +31,11 @@ export const toastRootProps: PropDefinition[] = [
 		description: 'Auto-dismiss delay in milliseconds. Set to 0 to disable auto-dismiss.'
 	},
 	{
-		name: 'onclose',
-		type: '(() => void) | undefined',
+		name: 'onopenchange',
+		type: 'StateChangeCallback<boolean, ToastBond> | undefined',
 		default: 'undefined',
-		description: 'Called when the toast closes.'
+		description:
+			'Called after a real open-state transition commits; close reasons are included when available.'
 	},
 	{
 		name: 'factory',

@@ -1,6 +1,6 @@
 <script module>
 	import { defineMeta } from '@storybook/addon-svelte-csf';
-	import Link from '../link.svelte';
+	import Link from '$ixirjs/ui/components/link/link.svelte';
 
 	const { Story } = defineMeta({
 		title: 'Atoms/Link',
@@ -41,8 +41,23 @@
 -->
 <Story name="External">
 	<div class="flex flex-col gap-2">
-		<Link href="https://example.com" target="_blank" rel="noopener noreferrer">
-			Open in new tab ↗
+		<Link
+			href="https://example.com"
+			target="_blank"
+			rel="noopener noreferrer"
+			class="inline-flex items-center gap-1"
+		>
+			Open in new tab
+			<svg
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+				class="h-3.5 w-3.5"
+			>
+				<line x1="7" y1="17" x2="17" y2="7"></line>
+				<polyline points="7 7 17 7 17 17"></polyline>
+			</svg>
 		</Link>
 		<code class="bg-muted/50 text-muted-foreground rounded-md border px-2 py-1 text-xs font-mono">
 			target="_blank" rel="noopener noreferrer"

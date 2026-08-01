@@ -4,7 +4,7 @@
 
 	const bondCode =
 		`<script>
-  import { Accordion, AccordionItem } from '@svelte-atoms/core';
+  import { Accordion, AccordionItem } from '@ixirjs/ui';
 
   // Surface the Bond's shared value through a bindable prop
   let activeItem = $state('getting-started');
@@ -19,7 +19,7 @@
       Getting Started
       <AccordionItem.Indicator />
     </AccordionItem.Header>
-    <AccordionItem.Body>Install with: npm install @svelte-atoms/core</AccordionItem.Body>
+    <AccordionItem.Body>Install with: npm install @ixirjs/ui</AccordionItem.Body>
   </AccordionItem.Root>
 
   <AccordionItem.Root value="configuration">

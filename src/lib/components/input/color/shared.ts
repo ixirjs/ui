@@ -1,17 +1,5 @@
 import type { ColorFormat, ChannelDef, ChannelValues } from './types';
 
-// Color spaces valid inside the CSS color() function.
-export const COLOR_FN_SPACES: ColorFormat[] = [
-	'display-p3',
-	'srgb',
-	'srgb-linear',
-	'a98-rgb',
-	'prophoto-rgb',
-	'rec2020',
-	'xyz-d50',
-	'xyz-d65'
-];
-
 export interface FormatDef {
 	format: ColorFormat;
 	// CSS function name, e.g. 'rgb', 'hsl', 'color'
@@ -309,11 +297,13 @@ function parseChannelArgs(body: string, spaceSep: boolean): Array<number | undef
 		alphaStr = body.slice(slashIdx + 1).trim();
 	}
 
-	const tokens = main
-		.split(spaceSep ? /\s+/ : /[\s,]+/)
-		.map((t) => t.trim())
-		.filter(Boolean)
-		.map(parseChannelValue);
+	// One pass over the split result: trim/filter/map chained three more arrays onto it, each read
+	// once and dropped.
+	const tokens: (number | undefined)[] = [];
+	for (const raw of main.split(spaceSep ? /\s+/ : /[\s,]+/)) {
+		const token = raw.trim();
+		if (token) tokens.push(parseChannelValue(token));
+	}
 
 	if (alphaStr !== undefined) tokens.push(parseChannelValue(alphaStr));
 	return tokens;

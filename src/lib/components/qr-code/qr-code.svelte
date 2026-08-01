@@ -1,12 +1,13 @@
 <script lang="ts">
 	import type { QRCodeBrowser } from '@qrcode-js/browser';
-	import { HtmlAtom } from '../atom';
+	import { HtmlAtom, mergePresetProps } from '$ixirjs/ui/components/atom';
 	import type { QRCodeProps } from './types';
 
 	type Render = typeof QRCodeBrowser;
 
 	let {
 		class: klass = '',
+		preset = undefined,
 		value = '',
 		finder = {
 			round: 0.5
@@ -29,6 +30,8 @@
 	let isReady = $state(false);
 	let render: Render | undefined = $state();
 	let computedColor = $state('black');
+
+	const qrCodeProps = $derived(mergePresetProps(preset, 'qr-code', restProps));
 
 	import('@qrcode-js/browser').then((result) => {
 		render = result.QRCodeBrowser;
@@ -60,7 +63,7 @@
 	});
 </script>
 
-<HtmlAtom class={[klass]} {...restProps}>
+<HtmlAtom class={['$preset', klass]} {...qrCodeProps}>
 	<div bind:clientWidth class="size-full">
 		<canvas
 			{@attach (node) => {

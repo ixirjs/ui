@@ -13,20 +13,17 @@ const config = {
 		alias: {
 			$docs: 'src/docs',
 			'$docs/*': 'src/docs/*',
-			'$svelte-atoms/core': 'src/lib',
-			'$svelte-atoms/core/*': 'src/lib/*',
-			'@svelte-atoms/core': 'src/lib',
-			'@svelte-atoms/core/attachments/*': 'src/lib/attachments/*',
-			'@svelte-atoms/core/components/*': 'src/lib/components/*',
-			'@svelte-atoms/core/context': 'src/lib/context',
-			'@svelte-atoms/core/context/*': 'src/lib/context/*',
-			'@svelte-atoms/core/shared': 'src/lib/shared',
-			'@svelte-atoms/core/shared/*': 'src/lib/shared/*',
-			'@svelte-atoms/core/types': 'src/lib/types',
-			'@svelte-atoms/core/types/*': 'src/lib/types/*',
-			'@svelte-atoms/core/utils': 'src/lib/utils',
-			'@svelte-atoms/core/utils/*': 'src/lib/utils/*',
-			'@svelte-atoms/core/*': 'src/lib/components/*'
+			'$ixirjs/ui': 'src/lib',
+			'$ixirjs/ui/*': 'src/lib/*',
+			// The published entry points must precede the catch-all: Vite resolves aliases in order,
+			// so `'@ixirjs/ui': 'src/lib'` listed first made `@ixirjs/ui/shared` resolve to the
+			// internal barrel at runtime while TypeScript resolved it to `public/shared.ts`.
+			'@ixirjs/ui/preset': 'src/lib/preset',
+			'@ixirjs/ui/shared': 'src/lib/public/shared',
+			'@ixirjs/ui/experimental': 'src/lib/public/experimental',
+			'@ixirjs/ui/utils': 'src/lib/public/utils',
+			'@ixirjs/ui/components/*': 'src/lib/public/components/*',
+			'@ixirjs/ui': 'src/lib'
 		}
 	},
 	extensions: ['.svelte', '.svx'],

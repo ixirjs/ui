@@ -1,13 +1,14 @@
-import { TabsBond, type ITabs } from '../bond.svelte';
-import { portal } from '$svelte-atoms/core/attachments/portal.svelte';
-import { Bond, defineAtom, type BondStateProps } from '$svelte-atoms/core/shared/bond';
-import { defineBond, type BondOf } from '$svelte-atoms/core/shared';
+import { TabsBond, type ITabs } from '$ixirjs/ui/components/tabs/bond.svelte';
+import { internCapabilityFactory } from '$ixirjs/ui/shared/capability/intern';
+import { portal } from '$ixirjs/ui/attachments/portal.svelte';
+import { Bond, defineAtom, type BondStateProps } from '$ixirjs/ui/shared/bond';
+import { defineBond, type BondOf } from '$ixirjs/ui/shared';
 import {
 	defineAtomCapability,
 	sharedCapabilityKey,
 	type AtomHost
-} from '$svelte-atoms/core/shared/capability';
-import { tabPanelLink } from '$svelte-atoms/core/shared/capability/models/relationship.svelte';
+} from '$ixirjs/ui/shared/capability';
+import { tabPanelLink } from '$ixirjs/ui/shared/capability/models/relationship.svelte';
 
 // -----------------------------------------------------------------------------
 // Public types
@@ -33,8 +34,8 @@ export type TabBondElement = {
 // Capability slots and shared helpers
 // -----------------------------------------------------------------------------
 
-const TAB_HEADER = sharedCapabilityKey<void>('@svelte-atoms/tab:header');
-const TAB_BODY = sharedCapabilityKey<void>('@svelte-atoms/tab:body');
+const TAB_HEADER = sharedCapabilityKey<void>({ owner: '@ixirjs/tab', name: 'header', version: 1 });
+const TAB_BODY = sharedCapabilityKey<void>({ owner: '@ixirjs/tab', name: 'body', version: 1 });
 
 // Atoms type `this.bond` against TabBondBase to break the atom<->bond cycle.
 
@@ -63,16 +64,14 @@ export type TabDescriptionAtom = InstanceType<typeof TabDescriptionAtom>;
 // Atom capabilities
 // -----------------------------------------------------------------------------
 
-function tabHeaderPresentation() {
+const tabHeaderPresentation = internCapabilityFactory(function tabHeaderPresentation() {
 	return defineAtomCapability<void, AtomHost, TabBondBase>({
 		slot: TAB_HEADER,
 		meta: {
-			layer: 1,
-			kind: 'projection',
 			projects: ['header'],
 			docs: 'Tab header selected/disabled projection, activation, and header portal.'
 		},
-		behavior: {
+		attach: {
 			attrs: (_node, bond) => ({
 				'aria-disabled': bond?.props.disabled ?? false,
 				'data-controler-id': bond?.tabs?.id,
@@ -98,24 +97,22 @@ function tabHeaderPresentation() {
 			}
 		}
 	});
-}
+});
 
-function tabBodyPresentation() {
+const tabBodyPresentation = internCapabilityFactory(function tabBodyPresentation() {
 	return defineAtomCapability<void, AtomHost, TabBondBase>({
 		slot: TAB_BODY,
 		meta: {
-			layer: 1,
-			kind: 'projection',
 			projects: ['body'],
 			docs: 'Tab body active-state projection.'
 		},
-		behavior: {
+		attach: {
 			attrs: (_node, bond) => ({
 				'data-active': bond?.isActive
 			})
 		}
 	});
-}
+});
 
 // Hand-written base for TabBond. Parent-tabs capture, selection projection,
 // and value/text/mount helpers live on the Bond instance.
@@ -181,16 +178,7 @@ class TabBondBase extends Bond<TabBondProps<unknown>> {
 // Bond spec and constructor facade
 // -----------------------------------------------------------------------------
 
-const TabBondImpl = defineBond<
-	{
-		header: typeof TabHeaderAtom;
-		body: typeof TabBodyAtom;
-		description: typeof TabDescriptionAtom;
-	},
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	any,
-	typeof TabBondBase
->({
+export const TabBond = defineBond({
 	name: 'tab',
 	base: TabBondBase,
 	atoms: {
@@ -204,7 +192,7 @@ const TabBondImpl = defineBond<
 // Public types
 // -----------------------------------------------------------------------------
 
-export type TabBond<T = unknown> = BondOf<typeof TabBondImpl> & {
+export type TabBond<T = unknown> = BondOf<typeof TabBond> & {
 	readonly props: TabBondProps<T>;
 	readonly tabs: ITabs<T> | undefined;
 };
@@ -212,14 +200,3 @@ export type TabBond<T = unknown> = BondOf<typeof TabBondImpl> & {
 // -----------------------------------------------------------------------------
 // Bond spec and constructor facade
 // -----------------------------------------------------------------------------
-
-interface TabBondConstructor {
-	new <T = unknown>(props: TabBondProps<T>): TabBond<T>;
-	readonly CONTEXT_KEY: string;
-	get<T = unknown>(): TabBond<T> | undefined;
-	getOrThrow<T = unknown>(message?: string): TabBond<T>;
-	set<T = unknown>(bond: TabBond<T>): TabBond<T>;
-	create<T = unknown>(props: TabBondProps<T>): TabBond<T>;
-}
-
-export const TabBond = TabBondImpl as unknown as TabBondConstructor;

@@ -6,8 +6,9 @@
   `parseSegments`-derived `segments` and per-kind `kindStyle`.
 -->
 <script lang="ts">
-	import { cn, toClassValue, type ClassValue } from '$svelte-atoms/core/utils';
-	import { writeInputValue } from './shared';
+	import { cn, toClassValue, type ClassValue } from '$ixirjs/ui/utils';
+	import type { PresentationView } from '$ixirjs/ui/components/atom/presentation.svelte';
+	import { inputChangeContext, writeInputValue } from './shared';
 	import type { InputBond } from './bond.svelte';
 
 	type Segment = { text: string; kind: string };
@@ -25,6 +26,7 @@
 		bond = undefined,
 		onchange = undefined,
 		oninput = undefined,
+		onvaluechange = undefined,
 		...restProps
 	}: {
 		value?: string;
@@ -35,10 +37,11 @@
 		disabled?: boolean;
 		readonly?: boolean;
 		class?: ClassValue;
-		preset?: { class?: ClassValue } | undefined;
+		preset?: PresentationView | undefined;
 		bond?: InputBond | undefined;
-		onchange?: ((ev: Event, detail: { value: string }) => void) | undefined;
-		oninput?: ((ev: Event, detail: { value: string }) => void) | undefined;
+		onchange?: ((event: Event) => void) | undefined;
+		oninput?: ((event: Event) => void) | undefined;
+		onvaluechange?: import('$ixirjs/ui/types').StateChangeCallback<string, InputBond> | undefined;
 		[key: string]: unknown;
 	} = $props();
 
@@ -50,16 +53,18 @@
 		scrollLeft = inputEl?.scrollLeft ?? 0;
 	}
 
-	function handleInput(ev: Event) {
-		const input = ev.currentTarget as HTMLInputElement;
-		value = input.value;
+	function handleInput(event: Event) {
+		oninput?.(event);
+		if (event.defaultPrevented) return;
+
+		value = (event.currentTarget as HTMLInputElement).value;
 		writeInputValue(bond, value);
 		syncScroll();
-		oninput?.(ev, { value });
+		onvaluechange?.(value, inputChangeContext(bond, event, 'input'));
 	}
 
-	function handleChange(ev: Event) {
-		onchange?.(ev, { value });
+	function handleChange(event: Event) {
+		onchange?.(event);
 	}
 </script>
 
@@ -99,9 +104,10 @@
 			preset?.class,
 			toClassValue(klass, bond)
 		)}
+		{...preset?.attrs}
+		{...restProps}
 		oninput={handleInput}
 		onchange={handleChange}
 		onscroll={syncScroll}
-		{...restProps}
 	/>
 </span>

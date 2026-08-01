@@ -1,5 +1,5 @@
 const presetCode = `
-import { setPreset } from '@svelte-atoms/core';
+import { setPreset } from '@ixirjs/ui/preset';
 
 setPreset({
   kbd: () => ({
@@ -45,8 +45,8 @@ export const metadata = {
 		'Semantic keyboard key and shortcut components. Use Kbd for individual keys and Shortcut to compose multi-key combinations.',
 	componentType: 'simple' as const,
 	status: 'stable' as const,
-	packageName: '@svelte-atoms/core',
-	importCode: "import { Kbd, Shortcut } from '@svelte-atoms/core';",
+	packageName: '@ixirjs/ui',
+	importCode: "import { Kbd, Shortcut } from '@ixirjs/ui';",
 	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Kbd' }],
 	useCases,
 	examples: {

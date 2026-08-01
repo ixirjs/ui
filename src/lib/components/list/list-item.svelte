@@ -1,10 +1,6 @@
 <script lang="ts" generics="T extends keyof HTMLElementTagNameMap = 'li', B extends Base = Base">
-	import {
-		mergePresetProps,
-		HtmlAtom,
-		type Base,
-		type HtmlAtomProps
-	} from '$svelte-atoms/core/components/atom';
+	import { mergePresetProps, HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import type { ListItemProps } from './types';
 
 	let {
 		class: klass = '',
@@ -12,7 +8,7 @@
 		preset = undefined,
 		children = undefined,
 		...restProps
-	}: HtmlAtomProps<T, B> = $props();
+	}: ListItemProps<T, B> = $props();
 
 	const itemProps = $derived(mergePresetProps(preset, 'list.item', restProps));
 </script>

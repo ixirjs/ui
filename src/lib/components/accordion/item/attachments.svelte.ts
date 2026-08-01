@@ -1,5 +1,5 @@
-import { createBondTupleAttachment } from '$svelte-atoms/core/components/internal/attachments.svelte';
-import { AccordionBond } from '../bond.svelte';
+import { createBondTupleAttachment } from '$ixirjs/ui/components/internal/attachments.svelte';
+import { AccordionBond } from '$ixirjs/ui/components/accordion/bond.svelte';
 import { AccordionItemBond } from './bond.svelte';
 
 const accordionItemAttachment = createBondTupleAttachment([AccordionItemBond, AccordionBond]);

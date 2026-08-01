@@ -15,10 +15,15 @@
 		preset: presetKey = 'input.url',
 		onchange = undefined,
 		oninput = undefined,
+		onvaluechange = undefined,
 		...restProps
 	}: InputUrlControlProps = $props();
 
-	const preset = resolveControlPreset(() => presetKey, bond);
+	const preset = resolveControlPreset(
+		() => presetKey,
+		bond,
+		() => restProps
+	);
 
 	// Parse URL into segments
 	type Segment = {
@@ -158,5 +163,6 @@
 	{bond}
 	{onchange}
 	{oninput}
+	{onvaluechange}
 	{...restProps}
 />

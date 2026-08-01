@@ -1,5 +1,5 @@
 const presetCode = `
-import { setPreset } from '@svelte-atoms/core';
+import { setPreset } from '@ixirjs/ui/preset';
 
 const preset = setPreset({
   textarea: () => ({
@@ -65,8 +65,8 @@ export const metadata = {
 		'Multi-line text input with character limits, validation, and configurable dimensions.',
 	componentType: 'compound' as const,
 	status: 'stable' as const,
-	packageName: '@svelte-atoms/core',
-	importCode: "import { Textarea } from '@svelte-atoms/core';",
+	packageName: '@ixirjs/ui',
+	importCode: "import { Textarea } from '@ixirjs/ui';",
 	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Textarea' }],
 	useCases,
 	componentsSummary,

@@ -1,4 +1,4 @@
-import { colorScheme, type ColorScheme } from '$lib';
+import { colorScheme, type ColorScheme } from '$lib/runes';
 import { createContext } from 'svelte';
 
 const [get, set] = createContext<Theme>();

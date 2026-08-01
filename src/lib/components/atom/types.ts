@@ -1,11 +1,11 @@
 import type { Component, Snippet } from 'svelte';
-import type { HtmlElementTagName } from '$svelte-atoms/core/components/element';
-import type { HtmlElementProps, ElementType } from '../element/types';
-import type { PresetKey } from '$svelte-atoms/core/context/preset.svelte';
-import type { Bond } from '$svelte-atoms/core/shared';
-import type { VariantDefinition } from '$svelte-atoms/core/utils';
-import type { LifecycleAttachment } from './lifecycle.svelte';
-import type { ExplicitBase } from './render-target';
+import type { HtmlElementTagName } from '$ixirjs/ui/components/element';
+import type { HtmlElementProps, ElementType } from '$ixirjs/ui/components/element/types';
+import type { PresetKey, PresetLike } from '$ixirjs/ui/preset';
+import type { Bond } from '$ixirjs/ui/shared';
+import type { VariantDefinition } from '$ixirjs/ui/utils';
+import type { LifecycleAttachment } from './render/lifecycle.svelte';
+import type { ExplicitBase } from './render/render-target';
 
 // Base component/snippet types
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -58,13 +58,16 @@ export interface HtmlAtomProps<
 	// Includes `undefined` explicitly: preset is legitimately absent when the atom is optional.
 	preset?: PresetKey | undefined;
 
+	/**
+	 * A per-instance presentation layer for compound parts. Its `class`, `attrs`, and `motion`
+	 * fields apply after variants and before consumer attributes; structural `render` fields and
+	 * variant definitions remain owned by the primary preset. Factories receive the same `{ bond }`
+	 * context as registered presets.
+	 */
+	presetLayer?: PresetLike | undefined;
+
 	// Variant definition (static VariantDefinition or dynamic function receiving bond + props).
 	variants?: Variants;
-
-	// Fallback props applied before the preset so user/preset config overrides them.
-	// Merge order (last wins): fallback → preset → variants → restProps.
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	fallback?: Record<string, any> | undefined;
 
 	// SSR-capable init hook. Unlike symbol-keyed lifecycle keys (which Svelte's server
 	// rest_props drops), this string-keyed prop survives SSR, so it fires synchronously on the

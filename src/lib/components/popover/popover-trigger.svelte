@@ -1,12 +1,7 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { HtmlAtom, mergeAtomProps, type Base } from '$svelte-atoms/core/components/atom';
-	import { createAtomInstance, type Atom } from '$svelte-atoms/core/shared/bond';
-	import {
-		createPopoverAtom,
-		PopoverBond,
-		PopoverTriggerAtom,
-		setPopoverTracking
-	} from './bond.svelte';
+	import { HtmlAtom, mergeAtomProps, type Base } from '$ixirjs/ui/components/atom';
+	import { createAtomInstance, type Atom } from '$ixirjs/ui/shared/bond';
+	import { createPopoverAtom, PopoverBond, setPopoverTracking } from './bond.svelte';
 	import type { PopoverTriggerProps } from './types';
 
 	const bond = PopoverBond.getOrThrow('<PopoverTrigger /> must be used within a <Popover />');
@@ -16,6 +11,8 @@
 		as = 'button' as E,
 		preset = undefined,
 		children = undefined,
+		onclick = undefined,
+		onkeydown = undefined,
 		onpointerenter = undefined,
 		...restProps
 	}: PopoverTriggerProps<E, B> = $props();
@@ -24,16 +21,31 @@
 		'trigger',
 		{
 			bond,
-			factory: (owner) =>
-				createPopoverAtom(
-					owner as PopoverBond,
-					'trigger',
-					(popover) => new PopoverTriggerAtom(popover)
-				)
+			factory: (owner) => createPopoverAtom(owner as PopoverBond, 'trigger')
 		}
 	);
 
-	const triggerProps = $derived(mergeAtomProps(atom, preset, restProps));
+	const triggerProps = $derived(
+		mergeAtomProps(atom, preset, restProps, bond.presetLayer('trigger'))
+	);
+
+	function handleClick(event: MouseEvent) {
+		onclick?.(event);
+		if (event.defaultPrevented || event.button === 2) return;
+
+		bond.stageOpenChange({ event, reason: 'trigger' });
+		(triggerProps.onclick as ((event: MouseEvent) => void) | undefined)?.(event);
+	}
+
+	function handleKeydown(event: KeyboardEvent) {
+		onkeydown?.(event);
+		if (event.defaultPrevented) return;
+
+		if (event.key === 'Enter' || event.key === ' ') {
+			bond.stageOpenChange({ event, reason: 'trigger' });
+		}
+		(triggerProps.onkeydown as ((event: KeyboardEvent) => void) | undefined)?.(event);
+	}
 
 	function handlePointerEnter(event: PointerEvent) {
 		onpointerenter?.(event);
@@ -48,8 +60,10 @@
 	{bond}
 	class={['flex w-fit cursor-pointer rounded-md p-2', '$preset', klass]}
 	type={as === 'button' ? 'button' : undefined}
-	onpointerenter={handlePointerEnter}
 	{...triggerProps}
+	onclick={handleClick}
+	onkeydown={handleKeydown}
+	onpointerenter={handlePointerEnter}
 >
 	{@render children?.({ popover: bond })}
 </HtmlAtom>

@@ -20,8 +20,16 @@ export class Collection<T> {
 		return this.#items.size;
 	}
 
+	// `values` is read once per rendered child (a datagrid cell resolves its column through it), so
+	// allocating the array per read made an R×C grid O(R·C²). Plain cache, cleared by every mutator
+	// — the same shape `#indexes` uses, and unlike a `$derived` it is also correct on the server,
+	// where there is no effect graph and columns register while cells are already reading.
+	#values: readonly T[] | undefined;
+
 	get values(): readonly T[] {
-		return Array.from(this.#items.values());
+		// Registers the SvelteMap dependency for reactive reads; the cache serves the array.
+		void this.#items.size;
+		return (this.#values ??= Array.from(this.#items.values()));
 	}
 
 	get keys(): readonly string[] {
@@ -45,7 +53,10 @@ export class Collection<T> {
 	}
 
 	delete(id: string): void {
-		if (this.#items.delete(id)) this.#indexesDirty = true;
+		if (this.#items.delete(id)) {
+			this.#indexesDirty = true;
+			this.#values = undefined;
+		}
 	}
 
 	indexOf(id: string): number {
@@ -64,7 +75,9 @@ export class Collection<T> {
 		}
 		const had = untrack(() => this.#items.has(id));
 		this.#items.set(id, value);
+		// Dirty on replacement too: the values cache holds the value, not just the ordering.
 		if (!had) this.#indexesDirty = true;
+		this.#values = undefined;
 		return () => {
 			// Only delete if our value is still registered — guards re-mounts that overwrote it.
 			if (untrack(() => this.#items.get(id)) === value) this.delete(id);
@@ -74,6 +87,7 @@ export class Collection<T> {
 	clear(): void {
 		this.#items.clear();
 		this.#indexes.clear();
+		this.#values = undefined;
 		this.#indexesDirty = true;
 	}
 

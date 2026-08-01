@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.9
+
+      - run: bun install --frozen-lockfile
+
+      - name: Lint
+        run: bun run lint
+
+      - name: Typecheck
+        run: bun run check
+
+      # Browser specs run in Chromium via the vitest client project.
+      - name: Install Chromium
+        run: bunx playwright install --with-deps chromium
+
+      - name: Unit and browser tests
+        run: bun run test:unit -- --run
+
+      - name: End-to-end tests
+        run: bun run test:e2e
+
+      - name: Package exports
+        run: bun run prepack
+
+      - name: Storybook build
+        run: bun run storybook:build
+
+  # The SSR cost budget is machine-specific: `ssr-baseline.json` records the microsecond floor of
+  # the machine that wrote it, and a shared runner is not that machine. `--no-gate` therefore drops
+  # the µs and GC budgets but KEEPS the output-fingerprint check, which is machine-independent —
+  # a markup change is a real failure anywhere. See src/lib/test/perf/ssr-bench.ts.
+  bench:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.9
+
+      - run: bun install --frozen-lockfile
+
+      - name: SSR fingerprint and cost report
+        run: bun run bench:ssr -- --no-gate

@@ -1,11 +1,7 @@
 <script lang="ts">
-	import { mergePresetProps } from '$svelte-atoms/core/components/atom';
-	import { PopoverBond } from '$svelte-atoms/core/components/popover/bond.svelte';
-	import { Trigger } from '$svelte-atoms/core/components/popover/atoms';
-	import {
-		closeOverlay,
-		openOverlay
-	} from '$svelte-atoms/core/components/portal/host/policies/overlay-view';
+	import { mergePresetProps } from '$ixirjs/ui/components/atom';
+	import { PopoverBond } from '$ixirjs/ui/components/popover/bond.svelte';
+	import { Trigger } from '$ixirjs/ui/components/popover/atoms';
 
 	const popoverBond = PopoverBond.get();
 
@@ -20,14 +16,19 @@
 	const triggerProps = $derived(mergePresetProps(preset, 'tooltip.trigger', restProps));
 
 	function tooltip(node: HTMLElement) {
-		const onpointerenter = async () => {
+		const onpointerenter = (event: PointerEvent) => {
 			requestAnimationFrame(() => {
-				if (popoverBond) openOverlay(popoverBond);
+				if (!popoverBond) return;
+				popoverBond.stageOpenChange({ event, reason: 'pointer-enter' });
+				popoverBond.open();
 			});
 			node.addEventListener('pointerleave', onpointerleave);
 		};
-		const onpointerleave = () => {
-			if (popoverBond) closeOverlay(popoverBond);
+		const onpointerleave = (event: PointerEvent) => {
+			if (popoverBond) {
+				popoverBond.stageOpenChange({ event, reason: 'pointer-leave' });
+				popoverBond.close();
+			}
 			node.removeEventListener('pointerleave', onpointerleave);
 		};
 

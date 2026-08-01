@@ -1,4 +1,8 @@
-import { defineCapability, sharedCapabilityKey, type Capability } from '../capability';
+import {
+	defineCapability,
+	sharedCapabilityKey,
+	type Capability
+} from '$ixirjs/ui/shared/capability/capability';
 
 export type SortDirection = 'asc' | 'desc';
 export type SortDirectionState = SortDirection | undefined;
@@ -28,7 +32,11 @@ export interface SortModelOptions {
 	cycle?: readonly SortDirectionState[];
 }
 
-export const SORT = sharedCapabilityKey<SortModel>('@svelte-atoms/cap:sort');
+export const SORT = sharedCapabilityKey<SortModel>({
+	owner: '@ixirjs/cap',
+	name: 'sort',
+	version: 1
+});
 
 export function createSort(backing: SortBacking, options: SortModelOptions = {}): SortModel {
 	const cycle = options.cycle ?? ['asc', 'desc', undefined];
@@ -82,8 +90,6 @@ export function sortCapability(
 		slot: SORT,
 		surface: sort,
 		meta: {
-			layer: 1,
-			kind: 'model',
 			projects: roles,
 			docs: 'Sort key, direction, and priority model with scoped sortable-column projection.'
 		},
@@ -91,11 +97,12 @@ export function sortCapability(
 			if (!roles.includes(role)) return undefined;
 			const field = sortField(ctx);
 			return {
-				attrs: () => sortAttrs(sort, field),
+				attrs: () => sortAttrs(sort, field, interactive),
 				handlers: () =>
 					interactive && field
 						? {
-								onclick: () => sort.toggle(field)
+								onclick: () => sort.toggle(field),
+								onkeydown: (event: KeyboardEvent) => handleSortKey(event, sort, field)
 							}
 						: {}
 			};
@@ -120,13 +127,25 @@ function sortField(ctx: unknown): string | undefined {
 	return undefined;
 }
 
-function sortAttrs(sort: SortModel, field: string | undefined): Record<string, unknown> {
+function sortAttrs(
+	sort: SortModel,
+	field: string | undefined,
+	interactive: boolean
+): Record<string, unknown> {
 	const direction = field ? sort.directionFor(field) : undefined;
 	return {
 		role: 'columnheader',
-		'aria-sort': direction === 'asc' ? 'ascending' : direction === 'desc' ? 'descending' : 'none',
+		'aria-sort':
+			direction === 'asc' ? 'ascending' : direction === 'desc' ? 'descending' : undefined,
+		tabindex: interactive && field ? 0 : undefined,
 		'data-sort': direction,
 		'data-sort-field': field,
 		'data-sort-priority': direction ? sort.priority : undefined
 	};
+}
+
+function handleSortKey(event: KeyboardEvent, sort: SortModel, field: string): void {
+	if (event.repeat || (event.key !== 'Enter' && event.key !== ' ')) return;
+	event.preventDefault();
+	sort.toggle(field);
 }

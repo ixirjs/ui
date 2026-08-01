@@ -1,9 +1,8 @@
 <script lang="ts">
-	import type { HTMLAttributes } from 'svelte/elements';
-	import { mergePresetProps, HtmlAtom } from '$svelte-atoms/core/components/atom';
-	import { clamp } from '$svelte-atoms/core/utils/math';
+	import { mergePresetProps, HtmlAtom } from '$ixirjs/ui/components/atom';
+	import { clamp } from '$ixirjs/ui/utils/math';
 	import type { ProgressCircularProps } from './types';
-	import { SvgElement } from '../element';
+	import { SvgElement } from '$ixirjs/ui/components/element';
 
 	let {
 		class: klass = '',
@@ -11,7 +10,7 @@
 		max = 100,
 		preset = undefined,
 		...restProps
-	}: ProgressCircularProps & HTMLAttributes<HTMLDivElement> = $props();
+	}: ProgressCircularProps = $props();
 
 	const circularProps = $derived(mergePresetProps(preset, 'progress.circular', restProps));
 

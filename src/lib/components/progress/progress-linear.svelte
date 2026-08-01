@@ -1,9 +1,8 @@
 <script lang="ts">
-	import type { HTMLAttributes } from 'svelte/elements';
-	import { mergePresetProps, HtmlAtom } from '$svelte-atoms/core/components/atom';
-	import { clamp } from '$svelte-atoms/core/utils/math';
+	import { mergePresetProps, HtmlAtom } from '$ixirjs/ui/components/atom';
+	import { clamp } from '$ixirjs/ui/utils/math';
 	import type { ProgressLinearProps } from './types';
-	import { HtmlElement } from '../element';
+	import { HtmlElement } from '$ixirjs/ui/components/element';
 
 	let {
 		class: klass = '',
@@ -11,7 +10,7 @@
 		max = 100,
 		preset = undefined,
 		...restProps
-	}: ProgressLinearProps & HTMLAttributes<HTMLDivElement> = $props();
+	}: ProgressLinearProps = $props();
 
 	const linearProps = $derived(mergePresetProps(preset, 'progress.linear', restProps));
 
@@ -25,8 +24,7 @@
 		as="div"
 		class={[
 			'progress-fill bg-foreground h-full rounded-full transition-[width] duration-300',
-			isIndeterminate && 'animate-progress-indeterminate w-1/3',
-			'$preset'
+			isIndeterminate && 'animate-progress-indeterminate w-1/3'
 		]}
 		style={p !== null ? `width: ${p}%` : undefined}
 	/>
@@ -49,7 +47,7 @@
 	<HtmlElement
 		preset="progress.linear.track"
 		as="div"
-		class="progress-track bg-input border-none p-0.5 h-2 w-full overflow-hidden rounded-full border $preset"
+		class="progress-track bg-input border-none p-0.5 h-2 w-full overflow-hidden rounded-full border"
 	>
 		{@render defaultLinearFill({ percent })}
 	</HtmlElement>

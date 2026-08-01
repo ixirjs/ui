@@ -1,4 +1,8 @@
-import { defineCapability, sharedCapabilityKey, type Capability } from '../capability';
+import {
+	defineCapability,
+	sharedCapabilityKey,
+	type Capability
+} from '$ixirjs/ui/shared/capability/capability';
 
 export interface ViewportSize {
 	width: number;
@@ -29,7 +33,11 @@ export interface ViewportModel {
 	readonly visibleRange: ViewportRange | undefined;
 }
 
-export const VIEWPORT = sharedCapabilityKey<ViewportModel>('@svelte-atoms/cap:viewport');
+export const VIEWPORT = sharedCapabilityKey<ViewportModel>({
+	owner: '@ixirjs/cap',
+	name: 'viewport',
+	version: 1
+});
 
 export function createViewport(backing: ViewportBacking): ViewportModel {
 	return {
@@ -65,8 +73,6 @@ export function viewportCapability(
 		slot: VIEWPORT,
 		surface: viewport,
 		meta: {
-			layer: 1,
-			kind: 'model',
 			projects: roles,
 			docs: 'Viewport size, scroll position, and visible range model.'
 		},

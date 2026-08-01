@@ -1,6 +1,6 @@
-import { animate, type Easing } from 'motion';
-import { DURATION } from '$svelte-atoms/core/shared';
-import { SidebarBond } from '.';
+import { animate, type Easing } from '$ixirjs/ui/shared';
+import { DURATION } from '$ixirjs/ui/shared';
+import { SidebarBond } from './bond.svelte';
 
 type AnimateSidebarContentParams = {
 	duration?: number;
@@ -23,7 +23,7 @@ export function animateSidebarContent(params: AnimateSidebarContentParams) {
 	const bond = SidebarBond.get();
 
 	return (node: HTMLElement) => {
-		const isOpen = bond?.state.props.open ?? false;
+		const isOpen = bond?.props.open ?? false;
 
 		const collapsedProp = axis === 'x' ? 'min-width' : 'min-height';
 		const prop = axis === 'x' ? 'width' : 'height';

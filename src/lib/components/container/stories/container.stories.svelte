@@ -1,6 +1,6 @@
 <script module>
 	import { defineMeta } from '@storybook/addon-svelte-csf';
-	import ContainerCmp from '../container.svelte';
+	import ContainerCmp from '$ixirjs/ui/components/container/container.svelte';
 
 	const { Story } = defineMeta({
 		title: 'Atoms/Container',

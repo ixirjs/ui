@@ -1,5 +1,5 @@
-import { clickoutDrawer, Input, type Preset } from '$svelte-atoms/core';
-import { createAttachmentKey } from 'svelte/attachments';
+import { Input } from '$ixirjs/ui';
+import type { Preset } from '$ixirjs/ui/preset';
 
 const buttonVariants = () => ({
 	variant: {
@@ -28,18 +28,18 @@ export const preset: Partial<Preset> = {
 		class: 'flex flex-col items-center justify-center p-4'
 	}),
 	accordion: () => ({
-		as: 'ul',
+		render: { as: 'ul' },
 		class: 'w-full max-w-md rounded-md p-4 accordion-preset'
 	}),
 	'accordion.item': () => ({
-		as: 'li',
+		render: { as: 'li' },
 		class: 'mb-2 last:mb-0 rounded-md border border-border bg-popover px-2 py-2'
 	}),
-	'accordion.item.header': (bond) => {
+	'accordion.item.header': ({ bond }) => {
 		const itemBond = bond as { isActive?: boolean } | undefined;
-		return () => ({
+		return {
 			class: ['', itemBond?.isActive ? 'text-foreground/100' : 'text-foreground/50']
-		});
+		};
 	},
 	'accordion.item.body': () => ({
 		class: 'overflow-hidden mt-2'
@@ -75,16 +75,15 @@ export const preset: Partial<Preset> = {
 	'datagrid.header': () => ({
 		class: 'bg-background/25 py-0'
 	}),
-	'datagrid.row': (bond) => {
+	'datagrid.row': ({ bond }) => {
 		const row = bond as
 			| {
 					isSelected?: boolean;
 					isHeader?: boolean;
-					state?: { isSelected?: boolean; isHeader?: boolean };
 			  }
 			| undefined;
-		const isSelected = row?.isSelected ?? row?.state?.isSelected ?? false;
-		const isHeader = row?.isHeader ?? row?.state?.isHeader ?? false;
+		const isSelected = row?.isSelected ?? false;
+		const isHeader = row?.isHeader ?? false;
 
 		return {
 			class: [
@@ -119,12 +118,7 @@ export const preset: Partial<Preset> = {
 	'dialog.body': () => ({
 		class: 'px-6 py-4'
 	}),
-	'drawer.content': () => ({
-		class: 'z-20',
-		[createAttachmentKey()]: clickoutDrawer((_, bond) => {
-			bond?.close?.();
-		})
-	}),
+	'drawer.content': () => ({ class: 'z-20' }),
 	'drawer.backdrop': () => ({
 		class: 'z-20'
 	}),
@@ -205,12 +199,9 @@ export const preset: Partial<Preset> = {
 	'alert.actions': () => ({
 		class: 'mt-3 flex items-center gap-2'
 	}),
-	'alert.close-button': () => ({
+	'alert.close': () => ({
 		class:
 			'rounded-md p-0.5 size-6 opacity-70 transition-all hover:opacity-100 hover:bg-black/10 dark:hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-offset-1'
-	}),
-	'menu.list': () => ({
-		class: 'bg-card'
 	}),
 	'tab.header': () => ({
 		class:
@@ -241,11 +232,7 @@ export const preset: Partial<Preset> = {
 		class: 'rounded-md overflow-hidden'
 	}),
 	'select.trigger': () => ({
-		base: Input.Root,
-		class: ''
-	}),
-	'dropdown.trigger': () => ({
-		base: Input.Root,
+		render: { base: Input.Root },
 		class: ''
 	}),
 	toast: () => ({

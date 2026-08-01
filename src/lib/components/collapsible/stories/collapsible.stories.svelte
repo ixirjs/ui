@@ -2,8 +2,6 @@
 	import { defineMeta } from '@storybook/addon-svelte-csf';
 	import { Collapsible as ACollapsible } from '..';
 
-	import { animate as motion } from 'motion';
-
 	// https://storybook.js.org/docs/writing-stories
 	const { Story } = defineMeta({
 		title: 'Atoms/Collapsible',
@@ -30,41 +28,71 @@
 			{#snippet children({ collapsible })}
 				{@const isOpen = collapsible.isOpen}
 
-				<ACollapsible.Header class="flex items-center justify-between p-3">
-					<div class="font-medium">What is svelte-atoms?</div>
+				<ACollapsible.Header>
+					<div class="font-medium">What is ixirjs?</div>
 					<ACollapsible.Indicator />
 				</ACollapsible.Header>
 
 				<ACollapsible.Body
 					class={['pointer-events-none h-0 opacity-0', isOpen && 'pointer-events-auto']}
-					enter={(node) => {
-						motion(
-							node,
-							{ opacity: +isOpen, height: isOpen ? 'auto' : 0 },
-							{ duration: 0.2, ease: 'linear' }
-						);
-						return { duration: 0.2 };
-					}}
-					exit={(node) => {
-						motion(node, { opacity: 0, height: 0 }, { duration: 0.2, ease: 'linear' });
-						return { duration: 0.2 };
-					}}
-					animate={(node) => {
-						motion(
-							node,
-							{ opacity: +isOpen, height: isOpen ? 'auto' : 0 },
-							{ duration: 0.2, ease: 'linear' }
-						);
-					}}
 				>
 					<div class="px-3 pb-3 text-sm text-muted-foreground">
-						svelte-atoms is a headless component library built on Svelte 5 runes, providing
-						accessible, composable primitives you can style to match your design system.
+						ixirjs is a headless component library built on Svelte 5 runes, providing accessible,
+						composable primitives you can style to match your design system.
 					</div>
 				</ACollapsible.Body>
 			{/snippet}
 		</ACollapsible.Root>
 	{/snippet}
+</Story>
+
+<!-- Real-world scene: a help-center FAQ where each question expands to reveal
+     its answer. The header is the question, the body is the answer. -->
+<Story name="FAQ" args={{}}>
+	<div class="w-96">
+		<h3 class="text-foreground mb-2 text-base font-semibold">Frequently asked questions</h3>
+		<div class="flex flex-col gap-2">
+			<ACollapsible.Root>
+				{#snippet children({ collapsible })}
+					{@const isOpen = collapsible.isOpen}
+
+					<ACollapsible.Header>
+						<div class="font-medium">Does it work with SvelteKit?</div>
+						<ACollapsible.Indicator />
+					</ACollapsible.Header>
+
+					<ACollapsible.Body
+						class={['pointer-events-none h-0 opacity-0', isOpen && 'pointer-events-auto']}
+					>
+						<div class="px-3 pb-3 text-sm text-muted-foreground">
+							Yes. Components are SSR-safe and hydrate cleanly, so they drop into any SvelteKit
+							route without extra configuration.
+						</div>
+					</ACollapsible.Body>
+				{/snippet}
+			</ACollapsible.Root>
+
+			<ACollapsible.Root>
+				{#snippet children({ collapsible })}
+					{@const isOpen = collapsible.isOpen}
+
+					<ACollapsible.Header>
+						<div class="font-medium">Is it accessible?</div>
+						<ACollapsible.Indicator />
+					</ACollapsible.Header>
+
+					<ACollapsible.Body
+						class={['pointer-events-none h-0 opacity-0', isOpen && 'pointer-events-auto']}
+					>
+						<div class="px-3 pb-3 text-sm text-muted-foreground">
+							ARIA roles and keyboard interaction are wired through capabilities, so disclosure,
+							focus, and escape handling come for free.
+						</div>
+					</ACollapsible.Body>
+				{/snippet}
+			</ACollapsible.Root>
+		</div>
+	</div>
 </Story>
 
 <Story name="Multiple" args={{}}>
@@ -73,32 +101,13 @@
 			{#snippet children({ collapsible })}
 				{@const isOpen = collapsible.isOpen}
 
-				<ACollapsible.Header class="flex items-center justify-between p-3">
+				<ACollapsible.Header>
 					<div class="font-medium">Getting Started</div>
 					<ACollapsible.Indicator />
 				</ACollapsible.Header>
 
 				<ACollapsible.Body
 					class={['pointer-events-none h-0 opacity-0', isOpen && 'pointer-events-auto']}
-					enter={(node) => {
-						motion(
-							node,
-							{ opacity: +isOpen, height: isOpen ? 'auto' : 0 },
-							{ duration: 0.2, ease: 'linear' }
-						);
-						return { duration: 0.2 };
-					}}
-					exit={(node) => {
-						motion(node, { opacity: 0, height: 0 }, { duration: 0.2, ease: 'linear' });
-						return { duration: 0.2 };
-					}}
-					animate={(node) => {
-						motion(
-							node,
-							{ opacity: +isOpen, height: isOpen ? 'auto' : 0 },
-							{ duration: 0.2, ease: 'linear' }
-						);
-					}}
 				>
 					<div class="px-3 pb-3 text-sm text-muted-foreground">
 						Install via your package manager and import the components you need. No global
@@ -112,32 +121,13 @@
 			{#snippet children({ collapsible })}
 				{@const isOpen = collapsible.isOpen}
 
-				<ACollapsible.Header class="flex items-center justify-between p-3">
+				<ACollapsible.Header>
 					<div class="font-medium">Styling & Theming</div>
 					<ACollapsible.Indicator />
 				</ACollapsible.Header>
 
 				<ACollapsible.Body
 					class={['pointer-events-none h-0 opacity-0', isOpen && 'pointer-events-auto']}
-					enter={(node) => {
-						motion(
-							node,
-							{ opacity: +isOpen, height: isOpen ? 'auto' : 0 },
-							{ duration: 0.2, ease: 'linear' }
-						);
-						return { duration: 0.2 };
-					}}
-					exit={(node) => {
-						motion(node, { opacity: 0, height: 0 }, { duration: 0.2, ease: 'linear' });
-						return { duration: 0.2 };
-					}}
-					animate={(node) => {
-						motion(
-							node,
-							{ opacity: +isOpen, height: isOpen ? 'auto' : 0 },
-							{ duration: 0.2, ease: 'linear' }
-						);
-					}}
 				>
 					<div class="px-3 pb-3 text-sm text-muted-foreground">
 						Components are headless by default. Use the preset prop or add Tailwind classes directly
@@ -151,32 +141,13 @@
 			{#snippet children({ collapsible })}
 				{@const isOpen = collapsible.isOpen}
 
-				<ACollapsible.Header class="flex items-center justify-between p-3">
+				<ACollapsible.Header>
 					<div class="font-medium">Advanced Patterns</div>
 					<ACollapsible.Indicator />
 				</ACollapsible.Header>
 
 				<ACollapsible.Body
 					class={['pointer-events-none h-0 opacity-0', isOpen && 'pointer-events-auto']}
-					enter={(node) => {
-						motion(
-							node,
-							{ opacity: +isOpen, height: isOpen ? 'auto' : 0 },
-							{ duration: 0.2, ease: 'linear' }
-						);
-						return { duration: 0.2 };
-					}}
-					exit={(node) => {
-						motion(node, { opacity: 0, height: 0 }, { duration: 0.2, ease: 'linear' });
-						return { duration: 0.2 };
-					}}
-					animate={(node) => {
-						motion(
-							node,
-							{ opacity: +isOpen, height: isOpen ? 'auto' : 0 },
-							{ duration: 0.2, ease: 'linear' }
-						);
-					}}
 				>
 					<div class="px-3 pb-3 text-sm text-muted-foreground">
 						Nest collapsibles, bind the open state externally, or supply a custom factory to extend
@@ -193,32 +164,13 @@
 		{#snippet children({ collapsible })}
 			{@const isOpen = collapsible.isOpen}
 
-			<ACollapsible.Header class="flex items-center justify-between p-3 opacity-50">
+			<ACollapsible.Header class="opacity-50">
 				<div class="font-medium">This section is disabled</div>
 				<ACollapsible.Indicator />
 			</ACollapsible.Header>
 
 			<ACollapsible.Body
 				class={['pointer-events-none h-0 opacity-0', isOpen && 'pointer-events-auto']}
-				enter={(node) => {
-					motion(
-						node,
-						{ opacity: +isOpen, height: isOpen ? 'auto' : 0 },
-						{ duration: 0.2, ease: 'linear' }
-					);
-					return { duration: 0.2 };
-				}}
-				exit={(node) => {
-					motion(node, { opacity: 0, height: 0 }, { duration: 0.2, ease: 'linear' });
-					return { duration: 0.2 };
-				}}
-				animate={(node) => {
-					motion(
-						node,
-						{ opacity: +isOpen, height: isOpen ? 'auto' : 0 },
-						{ duration: 0.2, ease: 'linear' }
-					);
-				}}
 			>
 				<div class="px-3 pb-3 text-sm text-muted-foreground">
 					This content is not reachable while the collapsible is disabled.
@@ -233,32 +185,13 @@
 		{#snippet children({ collapsible })}
 			{@const isOpen = collapsible.isOpen}
 
-			<ACollapsible.Header class="flex items-center justify-between p-3">
+			<ACollapsible.Header>
 				<div class="font-medium">Open by default</div>
 				<ACollapsible.Indicator />
 			</ACollapsible.Header>
 
 			<ACollapsible.Body
 				class={['pointer-events-none h-0 opacity-0', isOpen && 'pointer-events-auto']}
-				enter={(node) => {
-					motion(
-						node,
-						{ opacity: +isOpen, height: isOpen ? 'auto' : 0 },
-						{ duration: 0.2, ease: 'linear' }
-					);
-					return { duration: 0.2 };
-				}}
-				exit={(node) => {
-					motion(node, { opacity: 0, height: 0 }, { duration: 0.2, ease: 'linear' });
-					return { duration: 0.2 };
-				}}
-				animate={(node) => {
-					motion(
-						node,
-						{ opacity: +isOpen, height: isOpen ? 'auto' : 0 },
-						{ duration: 0.2, ease: 'linear' }
-					);
-				}}
 			>
 				<div class="px-3 pb-3 text-sm text-muted-foreground">
 					This collapsible starts in the open state. Pass <code>open</code> to control initial visibility

@@ -1,13 +1,18 @@
 <script lang="ts">
-	import { resolveControlPreset } from '../shared';
-	import { cn, toClassValue } from '$svelte-atoms/core/utils';
+	import {
+		inputChangeContext,
+		resolveControlPreset,
+		writeInputValue
+	} from '$ixirjs/ui/components/input/shared';
+	import { cn, toClassValue } from '$ixirjs/ui/utils';
 	import { untrack } from 'svelte';
-	import { InputBond } from '../bond.svelte';
+	import { InputBond } from '$ixirjs/ui/components/input/bond.svelte';
+	import type { StateChangeContext } from '$ixirjs/ui/types';
 	import type {
 		InputTimeControlProps,
 		InputNumber24HourControlProps,
 		InputNumber12HourControlProps
-	} from '../types';
+	} from '$ixirjs/ui/components/input/types';
 	import Segment from './segment.svelte';
 	import {
 		parseTimeString,
@@ -34,11 +39,17 @@
 		preset: presetKey = 'input.time',
 		onchange = undefined,
 		oninput = undefined,
+		onvaluechange = undefined,
 		...restProps
 	}: InputTimeControlProps &
 		(InputNumber24HourControlProps | InputNumber12HourControlProps) = $props();
 
-	const preset = resolveControlPreset(() => presetKey, bond);
+	const preset = resolveControlPreset(
+		() => presetKey,
+		bond,
+		() => restProps,
+		() => toClassValue(klass, bond)
+	);
 
 	// External value always wins over local edits.
 	const parts = $derived(
@@ -74,41 +85,39 @@
 		if (raw === value) return;
 
 		value = raw;
-		if (bond) bond.state.props.value = value;
+		writeInputValue(bond, value);
 
-		const detail = { value: raw };
-		if (ev) onchange?.(ev, detail);
-		else oninput?.(undefined as unknown as Event, detail);
+		onvaluechange?.(value, inputChangeContext(bond, ev, 'input', { date }));
 	}
 
 	// Convert display hours to internal 24h before emitting.
-	function handleHoursChange(displayH: number | undefined) {
+	function handleHoursChange(displayH: number | undefined, context: StateChangeContext) {
 		if (displayH === undefined) {
-			emit(undefined);
+			emit(context.event);
 			return;
 		}
 		const internal = hourFormat === 12 ? displayToInternal(displayH, p ?? 'AM') : displayH;
-		emit(undefined, { hh: internal });
+		emit(context.event, { hh: internal });
 	}
 
-	function togglePeriod() {
+	function togglePeriod(event?: MouseEvent | KeyboardEvent) {
 		if (disabled || readonly || hh === undefined) return;
 		const newPeriod = p === 'AM' ? 'PM' : 'AM';
 		const newHH = displayToInternal(displayHours ?? 12, newPeriod);
-		emit(undefined, { hh: newHH, period: newPeriod });
+		emit(event, { hh: newHH, period: newPeriod });
 	}
 
 	function handlePeriodKey(ev: KeyboardEvent) {
 		const { key } = ev;
 		if (key.toLowerCase() === 'a') {
 			const newHH = displayToInternal(displayHours ?? 12, 'AM');
-			emit(undefined, { hh: newHH, period: 'AM' });
+			emit(ev, { hh: newHH, period: 'AM' });
 		} else if (key.toLowerCase() === 'p') {
 			const newHH = displayToInternal(displayHours ?? 12, 'PM');
-			emit(undefined, { hh: newHH, period: 'PM' });
+			emit(ev, { hh: newHH, period: 'PM' });
 		} else if (['ArrowUp', 'ArrowDown', ' ', 'Enter'].includes(key)) {
 			ev.preventDefault();
-			togglePeriod();
+			togglePeriod(ev);
 		} else if (key === 'ArrowLeft') {
 			ev.preventDefault();
 			(withSeconds ? segSeconds : segMinutes)?.focus();
@@ -149,11 +158,12 @@
 	class={cn(
 		'inline-flex h-full flex-1 items-center gap-0 px-2 font-mono',
 		disabled && 'cursor-not-allowed opacity-50',
-		preset?.class,
-		toClassValue(klass, bond)
+		preset.class
 	)}
+	{...preset.attrs}
 	onpaste={handlePaste}
-	{...restProps}
+	{oninput}
+	{onchange}
 >
 	<Segment
 		bind:this={segHours}
@@ -164,7 +174,7 @@
 		placeholder="HH"
 		{disabled}
 		{readonly}
-		onchange={handleHoursChange}
+		onvaluechange={handleHoursChange}
 		onfocusmove={(dir) => (dir === 1 ? segMinutes?.focus() : undefined)}
 	/>
 
@@ -179,10 +189,10 @@
 		placeholder="MM"
 		{disabled}
 		{readonly}
-		onchange={(v) => {
+		onvaluechange={(v, context) => {
 			const o: TimeParts = {};
 			if (v !== undefined) o.mm = v;
-			emit(undefined, o);
+			emit(context.event, o);
 		}}
 		onfocusmove={(dir) => {
 			if (dir === 1 && withSeconds) segSeconds?.focus();
@@ -190,7 +200,7 @@
 				/* AM/PM is reached via Tab, not arrow */
 			} else if (dir === -1) segHours?.focus();
 		}}
-		onrollover={(dir) => {
+		onrollover={(dir, context) => {
 			if (displayHours === undefined) return;
 			const maxH = hourFormat === 12 ? 12 : 23;
 			const minH = hourFormat === 12 ? 1 : 0;
@@ -202,7 +212,7 @@
 					: displayHours <= minH
 						? maxH
 						: displayHours - 1;
-			handleHoursChange(nextDisplayH);
+			handleHoursChange(nextDisplayH, context);
 		}}
 	/>
 
@@ -217,13 +227,13 @@
 			placeholder="SS"
 			{disabled}
 			{readonly}
-			onchange={(v) => {
+			onvaluechange={(v, context) => {
 				const o: TimeParts = {};
 				if (v !== undefined) o.ss = v;
-				emit(undefined, o);
+				emit(context.event, o);
 			}}
 			onfocusmove={(dir) => (dir === -1 ? segMinutes?.focus() : undefined)}
-			onrollover={(dir) => {
+			onrollover={(dir, context) => {
 				const nextMM =
 					dir === 1
 						? mm !== undefined && mm >= 59
@@ -248,7 +258,7 @@
 					override.hh =
 						hourFormat === 12 ? displayToInternal(nextDisplayH, p ?? 'AM') : nextDisplayH;
 				}
-				emit(undefined, override);
+				emit(context.event, override);
 			}}
 		/>
 	{/if}

@@ -1,8 +1,10 @@
-import type { Base, HtmlAtomProps, SnippetProps } from '../atom';
+import type { Base, HtmlAtomProps, SnippetProps } from '$ixirjs/ui/components/atom';
 import type { Snippet } from 'svelte';
-import type { Override } from '$svelte-atoms/core/types';
-import type { ClassValue } from '$svelte-atoms/core/utils';
-import type { InputBond } from './bond.svelte';
+import type { Override, StateChangeCallback } from '$ixirjs/ui/types';
+import type { ClassValue } from '$ixirjs/ui/utils';
+import type { Factory } from '$ixirjs/ui/types';
+import type { InputBond, InputStateProps } from './bond.svelte';
+import type { PresetKey } from '$ixirjs/ui/preset';
 
 // Input Snippet Props
 
@@ -44,19 +46,27 @@ export interface InputRootProps<
 	value?: string | number | string[] | null;
 	checked?: boolean;
 	files?: File[] | null;
+	// Mirrors `FieldRootProps.factory`: the bond is constructed from the input's state props.
+	factory?: ((props: InputStateProps) => InputBond) | Factory<InputBond>;
 }
 
-// Detail payload forwarded as the 2nd arg of `Input.Control`'s change/input handlers — a snapshot
-// of the parsed bindable values plus the originating DOM event.
-export interface InputControlDetail {
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	value?: any;
-	// `| undefined` (not just `?:`): these snapshot the bindable values, which are present-but-undefined.
+// Derive richer input contexts from the package-wide callback contract while retaining
+// type-specific parsed data that previously lived in native callback detail arguments.
+export type InputStateChangeCallback<
+	Value,
+	Details extends object = Record<never, never>,
+	E extends Event = Event
+> = (
+	value: Value,
+	context: Parameters<StateChangeCallback<Value, InputBond, E>>[1] & Details
+) => void;
+
+export interface InputControlChangeDetails {
+	value?: unknown;
 	files?: File[] | undefined;
 	date?: Date | null | undefined;
 	number?: number | undefined;
 	checked?: boolean | undefined;
-	event?: Event;
 }
 
 interface InputControlBaseProps {
@@ -69,10 +79,14 @@ interface InputControlBaseProps {
 	class?: ClassValue | ClassValue[];
 	type?: InputControlType | null;
 	children?: InputChildren;
-	// Declared here (the Override's `U` side) so they win over the native `<input>` handlers that
-	// `Override`'s Omit would otherwise collapse to `{}` via HtmlAtomProps' index signature.
-	onchange?: (event: Event, detail?: InputControlDetail) => void;
-	oninput?: (event: Event, detail?: InputControlDetail) => void;
+	// Native DOM callbacks remain event-only. Parsed state is reported through semantic callbacks.
+	onchange?: (event: Event) => void;
+	oninput?: (event: Event) => void;
+	onvaluechange?: InputStateChangeCallback<unknown, InputControlChangeDetails>;
+	onnumberchange?: InputStateChangeCallback<number | undefined, InputControlChangeDetails>;
+	onfileschange?: InputStateChangeCallback<File[], InputControlChangeDetails>;
+	ondatechange?: InputStateChangeCallback<Date | null, InputControlChangeDetails>;
+	oncheckedchange?: InputStateChangeCallback<boolean, InputControlChangeDetails>;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
@@ -103,11 +117,13 @@ export interface InputNumberControlProps {
 	step?: number;
 	disabled?: boolean;
 	placeholder?: string;
-	preset?: string;
+	preset?: PresetKey;
 	showControls?: boolean;
-	decrement?: Snippet<[{ action: () => void; disabled: boolean }]>;
-	increment?: Snippet<[{ action: () => void; disabled: boolean }]>;
-	onchange?: (ev?: Event, options?: { number: number }) => void;
+	decrement?: Snippet<[{ action: (event?: MouseEvent) => void; disabled: boolean }]>;
+	increment?: Snippet<[{ action: (event?: MouseEvent) => void; disabled: boolean }]>;
+	onchange?: (event: Event) => void;
+	oninput?: (event: Event) => void;
+	onnumberchange?: StateChangeCallback<number | undefined, InputBond>;
 }
 
 // Time Control
@@ -127,9 +143,10 @@ export interface InputTimeControlProps {
 	disabled?: boolean;
 	readonly?: boolean;
 	class?: string;
-	preset?: string;
-	onchange?: (ev: Event, options: { value: string }) => void;
-	oninput?: (ev: Event, options: { value: string }) => void;
+	preset?: PresetKey;
+	onchange?: (event: Event) => void;
+	oninput?: (event: Event) => void;
+	onvaluechange?: InputStateChangeCallback<string, { date: Date | undefined }>;
 }
 
 export interface InputDateTimeControlProps {
@@ -144,9 +161,10 @@ export interface InputDateTimeControlProps {
 	disabled?: boolean;
 	readonly?: boolean;
 	class?: string;
-	preset?: string;
-	onchange?: (ev: Event, options: { value: string; date: Date | null }) => void;
-	oninput?: (ev: Event, options: { value: string; date: Date | null }) => void;
+	preset?: PresetKey;
+	onchange?: (event: Event) => void;
+	oninput?: (event: Event) => void;
+	onvaluechange?: InputStateChangeCallback<string, { date: Date | null }>;
 }
 
 export interface InputDateControlProps {
@@ -161,9 +179,10 @@ export interface InputDateControlProps {
 	disabled?: boolean;
 	readonly?: boolean;
 	class?: string;
-	preset?: string;
-	onchange?: (ev: Event, options: { value: string; date: Date | null }) => void;
-	oninput?: (ev: Event, options: { value: string; date: Date | null }) => void;
+	preset?: PresetKey;
+	onchange?: (event: Event) => void;
+	oninput?: (event: Event) => void;
+	onvaluechange?: InputStateChangeCallback<string, { date: Date | null }>;
 }
 
 export interface InputFileControlProps {
@@ -175,24 +194,25 @@ export interface InputFileControlProps {
 	disabled?: boolean;
 	placeholder?: string;
 	class?: string;
-	preset?: string;
+	preset?: PresetKey;
 	triggerContent?: Snippet<[{ files: File[]; hasFiles: boolean; open: () => void }]>;
-	onchange?: (ev: Event, options: { files: File[] }) => void;
+	onchange?: (event: Event) => void;
+	oninput?: (event: Event) => void;
+	onfileschange?: StateChangeCallback<File[], InputBond>;
 }
 
-// Single source of truth for the shared string-value text-control prop shape: the bindable
-// string `value`, the standard field flags, and the `{ value }` change/input handlers. The
-// plain string controls (url/email/text/password) extend this; controls with a richer detail
-// payload (currency, location, …) stay bespoke.
+// Single source of truth for shared string-value text controls. Native callbacks receive only
+// their DOM event; semantic value notifications use the package-wide state callback contract.
 export interface TextControlPropsBase {
 	value?: string;
 	placeholder?: string;
 	disabled?: boolean;
 	readonly?: boolean;
 	class?: string;
-	preset?: string;
-	onchange?: (ev: Event, options: { value: string }) => void;
-	oninput?: (ev: Event, options: { value: string }) => void;
+	preset?: PresetKey;
+	onchange?: (event: Event) => void;
+	oninput?: (event: Event) => void;
+	onvaluechange?: StateChangeCallback<string, InputBond>;
 }
 
 export type InputUrlControlProps = TextControlPropsBase;
@@ -208,7 +228,10 @@ export interface InputPasswordControlProps extends TextControlPropsBase {
 	// show/hide toggle state (bindable)
 	visible?: boolean;
 	// custom show/hide toggle button content
-	toggleContent?: Snippet<[{ visible: boolean; toggle: () => void; disabled: boolean }]>;
+	toggleContent?: Snippet<
+		[{ visible: boolean; toggle: (event?: MouseEvent) => void; disabled: boolean }]
+	>;
+	onvisiblechange?: InputStateChangeCallback<boolean, { value: string }, MouseEvent>;
 }
 
 export interface InputLocationControlProps {
@@ -222,21 +245,17 @@ export interface InputLocationControlProps {
 	format?: 'dd' | 'dms';
 	// decimal places in 'dd' mode (default 6)
 	precision?: number;
-	// crosshair "locate me" button via navigator.geolocation (default true)
-	locate?: boolean;
 	placeholder?: string;
 	disabled?: boolean;
 	readonly?: boolean;
 	class?: string;
-	preset?: string;
-	onchange?: (
-		ev: Event,
-		options: { lat: number | undefined; lng: number | undefined; value: string }
-	) => void;
-	oninput?: (
-		ev: Event,
-		options: { lat: number | undefined; lng: number | undefined; value: string }
-	) => void;
+	preset?: PresetKey;
+	onchange?: (event: Event) => void;
+	oninput?: (event: Event) => void;
+	onvaluechange?: InputStateChangeCallback<
+		string,
+		{ lat: number | undefined; lng: number | undefined }
+	>;
 }
 
 // One overlay span rendered by the phone control's `span` snippet.
@@ -259,9 +278,10 @@ export interface InputPhoneControlProps {
 	disabled?: boolean;
 	readonly?: boolean;
 	class?: string;
-	preset?: string;
-	onchange?: (ev: Event, options: { value: string }) => void;
-	oninput?: (ev: Event, options: { value: string }) => void;
+	preset?: PresetKey;
+	onchange?: (event: Event) => void;
+	oninput?: (event: Event) => void;
+	onvaluechange?: StateChangeCallback<string, InputBond>;
 	// renders each overlay span (text, class, type)
 	span?: Snippet<[PhoneSpan]>;
 }
@@ -285,9 +305,10 @@ export interface InputCurrencyControlProps {
 	disabled?: boolean;
 	readonly?: boolean;
 	class?: string;
-	preset?: string;
-	onchange?: (ev: Event, options: { value: string; amount: number | undefined }) => void;
-	oninput?: (ev: Event, options: { value: string; amount: number | undefined }) => void;
+	preset?: PresetKey;
+	onchange?: (event: Event) => void;
+	oninput?: (event: Event) => void;
+	onvaluechange?: InputStateChangeCallback<string, { amount: number | undefined }>;
 }
 
 // Color Control — types live in ./color/types.ts
@@ -307,9 +328,10 @@ export interface InputOtpControlProps {
 	disabled?: boolean;
 	readonly?: boolean;
 	class?: string;
-	preset?: string;
-	onchange?: (ev: Event, options: { value: string }) => void;
-	oninput?: (ev: Event, options: { value: string }) => void;
+	preset?: PresetKey;
+	onchange?: (event: Event) => void;
+	oninput?: (event: Event) => void;
+	onvaluechange?: StateChangeCallback<string, InputBond>;
 	// fires when all slots are filled
 	oncomplete?: (value: string) => void;
 }

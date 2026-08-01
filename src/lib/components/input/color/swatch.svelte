@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { cn } from '$svelte-atoms/core/utils';
-	import { InputBond } from '../bond.svelte';
-	import { Swatch } from '$svelte-atoms/core/components/swatch';
+	import { cn } from '$ixirjs/ui/utils';
+	import { InputBond } from '$ixirjs/ui/components/input/bond.svelte';
+	import { Swatch as SwatchComponent } from '$ixirjs/ui/components/swatch';
 
 	const bond = InputBond.get();
 
@@ -13,10 +13,10 @@
 		[key: string]: unknown;
 	} = $props();
 
-	const colorValue = $derived(String(bond?.state?.props?.value ?? ''));
+	const colorValue = $derived(String(bond?.props?.value ?? ''));
 </script>
 
-<Swatch
+<SwatchComponent
 	color={colorValue}
 	class={cn('my-1 h-[calc(100%-8px)] max-h-6 aspect-square rounded-sm', klass)}
 	{...restProps}
