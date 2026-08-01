@@ -255,7 +255,7 @@ export type PopoverTriggerAtom = InstanceType<typeof PopoverTriggerAtom>;
 // Bond spec and constructor facade
 // -----------------------------------------------------------------------------
 
-// Fusion spec (§9.4.1): exposes popover's atoms + capabilities to fuse() without
+// Fusion spec (§9.4.1): exposes popover's atoms + capabilities to `parts:` without
 // converting the generic PopoverBond to a defineBond. Pass as `{ spec: popoverSpec }`.
 export const popoverSpec = {
 	name: 'popover',

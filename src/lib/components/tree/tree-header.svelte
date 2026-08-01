@@ -1,5 +1,6 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import { type Base } from '$ixirjs/ui/components/atom';
+	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
 	import { usePart } from '$ixirjs/ui/shared';
 	import { TreeBond } from './bond.svelte';
 	import type { TreeHeaderProps } from './types';
@@ -39,14 +40,17 @@
 			part.bond.stageOpenChange({ event, reason: 'trigger' });
 		}
 	}
+
+	const el = usePartElement(part, () => ({
+		class: ['cursor-pointer', '$preset', klass],
+		...restProps,
+		onpointerdown: handlePointerDown,
+		onkeydown: handleKeydown
+	}));
 </script>
 
-<HtmlAtom
-	class={['cursor-pointer', '$preset', klass]}
-	{...restProps}
-	{part}
-	onpointerdown={handlePointerDown}
-	onkeydown={handleKeydown}
->
+{#snippet body()}
 	{@render children?.({ tree: part.bond })}
-</HtmlAtom>
+{/snippet}
+
+{@render partElement(el, body)}

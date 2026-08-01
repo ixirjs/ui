@@ -1,5 +1,9 @@
 import { Bond, Atom, type BondStateProps } from '$ixirjs/ui/shared/bond';
 import { defineBond, type BondOf } from '$ixirjs/ui/shared';
+import {
+	thumbDragPolicy,
+	trackPressPolicy
+} from '$ixirjs/ui/shared/capability/models/interaction-policies/pointer.svelte';
 import { clamp } from '$ixirjs/ui/utils/math';
 
 // -----------------------------------------------------------------------------
@@ -86,6 +90,8 @@ export class ScrollableTrackAtom extends Atom<ScrollableBondBase> {
 	constructor(bond: ScrollableBondBase, axis: 'x' | 'y') {
 		super(bond, axis === 'x' ? 'trackX' : 'trackY');
 		this.#axis = axis;
+		// The axis is the role context: one trackPressPolicy serves both scrollbars.
+		this.role('track', axis);
 	}
 
 	override get attrs() {
@@ -98,14 +104,6 @@ export class ScrollableTrackAtom extends Atom<ScrollableBondBase> {
 			'data-direction': this.#axis === 'x' ? 'horizontal' : 'vertical'
 		};
 	}
-
-	override get handlers() {
-		return {
-			onclick: (e: MouseEvent) => {
-				this.requireBond().handleTrackClick(e, this.#axis);
-			}
-		};
-	}
 }
 
 // Thumb atom; axis fixed at construction.
@@ -115,6 +113,7 @@ export class ScrollableThumbAtom extends Atom<ScrollableBondBase> {
 	constructor(bond: ScrollableBondBase, axis: 'x' | 'y') {
 		super(bond, axis === 'x' ? 'thumbX' : 'thumbY');
 		this.#axis = axis;
+		this.role('thumb', axis);
 	}
 
 	override get attrs() {
@@ -132,14 +131,6 @@ export class ScrollableThumbAtom extends Atom<ScrollableBondBase> {
 			...super.attrs,
 			'data-direction': this.#axis === 'x' ? 'horizontal' : 'vertical',
 			style: `${styleProperty}: ${position}%; ${sizeProperty}: ${size}%;`
-		};
-	}
-
-	override get handlers() {
-		return {
-			onmousedown: (e: MouseEvent) => {
-				this.requireBond().handleThumbDrag(e, this.#axis);
-			}
 		};
 	}
 }
@@ -174,10 +165,38 @@ class ScrollableThumbYAtom extends ScrollableThumbAtom {
 
 class ScrollableBondBase extends Bond<ScrollableBondProps> {
 	#parent: ScrollableBond | undefined;
+	#dragOrigin = 0;
 
 	constructor(props: ScrollableBondProps, name = 'scrollable') {
 		super(props, name);
 		this.#parent = ScrollableBond.get();
+
+		// Both scrollbars project the same role with their axis as context, so one descriptor per
+		// slot serves both. Pointer events (not mouse) come with capture and cancel handling, which
+		// the previous hand-rolled document listeners had neither of.
+		this.registerCapabilities([
+			trackPressPolicy({
+				disabled: (bond) => (bond as ScrollableBondBase).props.disabled,
+				onPress: (detail, bond, _event, axis) => {
+					const owner = bond as ScrollableBondBase;
+					owner.scrollToTrackFraction(
+						axis as 'x' | 'y',
+						axis === 'x' ? detail.percentX : detail.percentY
+					);
+				}
+			}),
+			thumbDragPolicy({
+				disabled: (bond) => (bond as ScrollableBondBase).props.disabled,
+				onStart: (_detail, bond, _event, axis) =>
+					(bond as ScrollableBondBase).beginThumbDrag(axis as 'x' | 'y'),
+				onDrag: (detail, bond, _event, axis) =>
+					(bond as ScrollableBondBase).dragThumbBy(
+						axis as 'x' | 'y',
+						axis === 'x' ? detail.deltaX : detail.deltaY
+					),
+				onEnd: (_detail, bond) => (bond as ScrollableBondBase).endThumbDrag()
+			})
+		]);
 	}
 
 	get parent() {
@@ -264,61 +283,50 @@ class ScrollableBondBase extends Bond<ScrollableBondProps> {
 		return scrollHeight > clientHeight;
 	}
 
-	handleTrackClick(e: MouseEvent, axis: 'x' | 'y') {
+	/** Max scroll distance on one axis; 0 when that axis does not overflow. */
+	#maxScroll(axis: 'x' | 'y'): number {
 		const container = this.elements.container;
-		const track = axis === 'x' ? this.elements.trackX : this.elements.trackY;
-		if (!container || !track) return;
-
-		const rect = track.getBoundingClientRect();
-		const clickPosition = axis === 'x' ? e.clientX - rect.left : e.clientY - rect.top;
-		const trackSize = axis === 'x' ? rect.width : rect.height;
-		const percentage = clickPosition / trackSize;
-
-		if (axis === 'x') {
-			const maxScrollX = container.scrollWidth - container.clientWidth;
-			container.scrollLeft = percentage * maxScrollX;
-		} else {
-			const maxScrollY = container.scrollHeight - container.clientHeight;
-			container.scrollTop = percentage * maxScrollY;
-		}
+		if (!container) return 0;
+		return axis === 'x'
+			? container.scrollWidth - container.clientWidth
+			: container.scrollHeight - container.clientHeight;
 	}
 
-	handleThumbDrag(e: MouseEvent, axis: 'x' | 'y') {
-		e.preventDefault();
-		this.props.isScrolling = true;
+	/** Jump to the pressed fraction of the track. `percent` comes from the track press policy. */
+	scrollToTrackFraction(axis: 'x' | 'y', percent: number) {
+		const container = this.elements.container;
+		if (!container) return;
+		const target = (percent / 100) * this.#maxScroll(axis);
+		if (axis === 'x') container.scrollLeft = target;
+		else container.scrollTop = target;
+	}
 
+	beginThumbDrag(axis: 'x' | 'y') {
+		const container = this.elements.container;
+		// Stage `isScrolling` only once the drag can actually run, so a press with no container
+		// cannot leave the scrollbars pinned visible.
+		if (!container) return;
+		this.#dragOrigin = axis === 'x' ? container.scrollLeft : container.scrollTop;
+		this.props.isScrolling = true;
+	}
+
+	dragThumbBy(axis: 'x' | 'y', delta: number) {
 		const container = this.elements.container;
 		const track = axis === 'x' ? this.elements.trackX : this.elements.trackY;
-		if (!container || !track) return;
+		if (!container || !track || !this.props.isScrolling) return;
 
-		const trackRect = track.getBoundingClientRect();
-		const startPos = axis === 'x' ? e.clientX : e.clientY;
-		const startScroll = axis === 'x' ? container.scrollLeft : container.scrollTop;
+		const rect = track.getBoundingClientRect();
+		const trackSize = axis === 'x' ? rect.width : rect.height;
+		if (trackSize <= 0) return;
 
-		const onMouseMove = (moveE: MouseEvent) => {
-			const currentPos = axis === 'x' ? moveE.clientX : moveE.clientY;
-			const delta = currentPos - startPos;
-			const trackSize = axis === 'x' ? trackRect.width : trackRect.height;
+		const maxScroll = this.#maxScroll(axis);
+		const next = clamp(this.#dragOrigin + (delta / trackSize) * maxScroll, 0, maxScroll);
+		if (axis === 'x') container.scrollLeft = next;
+		else container.scrollTop = next;
+	}
 
-			if (axis === 'x') {
-				const maxScrollX = container.scrollWidth - container.clientWidth;
-				const scrollDelta = (delta / trackSize) * maxScrollX;
-				container.scrollLeft = clamp(startScroll + scrollDelta, 0, maxScrollX);
-			} else {
-				const maxScrollY = container.scrollHeight - container.clientHeight;
-				const scrollDelta = (delta / trackSize) * maxScrollY;
-				container.scrollTop = clamp(startScroll + scrollDelta, 0, maxScrollY);
-			}
-		};
-
-		const onMouseUp = () => {
-			this.props.isScrolling = false;
-			document.removeEventListener('mousemove', onMouseMove);
-			document.removeEventListener('mouseup', onMouseUp);
-		};
-
-		document.addEventListener('mousemove', onMouseMove);
-		document.addEventListener('mouseup', onMouseUp);
+	endThumbDrag() {
+		this.props.isScrolling = false;
 	}
 }
 

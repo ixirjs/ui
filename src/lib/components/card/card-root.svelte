@@ -1,6 +1,7 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
 	import { useRoot } from '$ixirjs/ui/shared';
-	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import { type Base } from '$ixirjs/ui/components/atom';
+	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
 	import { CardBond } from './bond.svelte';
 	import type { CardRootProps } from './types';
 	import './card.css';
@@ -12,7 +13,7 @@
 		preset = undefined,
 		disabled = false,
 		clickable = undefined,
-		factory = (props) => new CardBond(props),
+		factory = undefined,
 		children = undefined,
 		onclick = undefined,
 		onkeydown = undefined,
@@ -30,7 +31,7 @@
 			],
 			clickable: () => clickable ?? Boolean(onclick)
 		},
-		{ id: () => ID, preset: () => preset, factory: (props) => factory(props) }
+		{ id: () => ID, preset: () => preset, factory: () => factory }
 	);
 	const bond = root.bond;
 
@@ -53,19 +54,22 @@
 	export function getBond() {
 		return bond;
 	}
+
+	const el = usePartElement(root, () => ({
+		class: [
+			'card bg-card border-border flex flex-col overflow-clip rounded-lg border shadow-sm',
+			disabledStyles,
+			'$preset',
+			klass
+		],
+		onclick: handleClick,
+		onkeydown: handleKeydown,
+		...restProps
+	}));
 </script>
 
-<HtmlAtom
-	class={[
-		'card bg-card border-border flex flex-col overflow-clip rounded-lg border shadow-sm',
-		disabledStyles,
-		'$preset',
-		klass
-	]}
-	onclick={handleClick}
-	onkeydown={handleKeydown}
-	{...restProps}
-	part={root}
->
+{#snippet body()}
 	{@render children?.({ card: bond })}
-</HtmlAtom>
+{/snippet}
+
+{@render partElement(el, body)}

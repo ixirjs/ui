@@ -27,7 +27,7 @@ export const TilesBond = defineBond({
 });`;
 
 	const rootCode = `<script lang="ts">
-  import { bindBond } from '@ixirjs/ui/shared';
+  import { bindBond } from '@ixirjs/ui/experimental';
   import { TilesBond } from './bond.svelte';
 
   let { value = $bindable(), disabled = false, children } = $props();

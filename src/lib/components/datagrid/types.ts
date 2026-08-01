@@ -93,7 +93,8 @@ export interface DatagridColumnProps<
 	sortable?: boolean | SortableType;
 	hidden?: boolean;
 	factory?: Factory<DataGridColumnBond<T>>;
-	onsort?: StateChangeCallback<SortBy, DataGridColumnBond<T>, MouseEvent>;
+	// Keyboard activation (Enter/Space on a sortable header) reports the KeyboardEvent.
+	onsort?: StateChangeCallback<SortBy, DataGridColumnBond<T>, MouseEvent | KeyboardEvent>;
 	// Re-declared because `Override` collapses it into HtmlAtomProps' index signature.
 	preset?: PresetKey;
 }

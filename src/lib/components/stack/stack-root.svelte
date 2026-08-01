@@ -1,7 +1,8 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import { type Base } from '$ixirjs/ui/components/atom';
+	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
 	import { controlledProp, useRoot } from '$ixirjs/ui/shared';
-	import { StackBond, type StackStateProps } from './bond.svelte';
+	import { StackBond } from './bond.svelte';
 	import type { StackRootProps } from './types';
 	import './stack.css';
 
@@ -11,7 +12,7 @@
 		value = $bindable<string | undefined>(undefined),
 		class: klass = '',
 		preset = undefined,
-		factory = defaultFactory,
+		factory = undefined,
 		onvaluechange = undefined,
 		children,
 		...restProps
@@ -32,20 +33,24 @@
 			// `stack.root` is the fallback preset key, not `atom.preset` — keep the existing selection.
 			preset: () => preset ?? 'stack.root',
 			id: () => ID,
-			factory: (props) => factory(props)
+			factory: () => factory
 		}
 	);
 	const bond = root.bond;
 
-	function defaultFactory(props: StackStateProps) {
-		return StackBond.create(props);
-	}
-
 	export function getBond() {
 		return bond;
 	}
+
+	const el = usePartElement(root, () => ({
+		class: ['stack-root', '$preset', klass],
+		...root.props,
+		...restProps
+	}));
 </script>
 
-<HtmlAtom class={['stack-root', '$preset', klass]} {...root.props} {...restProps} part={root}>
+{#snippet body()}
 	{@render children?.({})}
-</HtmlAtom>
+{/snippet}
+
+{@render partElement(el, body)}

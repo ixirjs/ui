@@ -1,23 +1,19 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
 	import type { PortalOuterProps } from '$ixirjs/ui/components/portal/types';
 	import { PortalsBond, PortalBond, ZLayer } from '..';
-	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import { type Base } from '$ixirjs/ui/components/atom';
+	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
 	import { useRoot } from '$ixirjs/ui/shared';
 	import type { Factory } from '$ixirjs/ui/types';
-	import type { PortalBondProps } from './bond.svelte';
 
 	let {
 		class: klass = '',
 		preset = undefined,
 		id,
-		factory = defaultFactory,
+		factory = undefined,
 		children = undefined,
 		...restProps
 	}: PortalOuterProps<E, B> = $props();
-
-	function defaultFactory(props: PortalBondProps): PortalBond {
-		return PortalBond.create(props);
-	}
 
 	const portalsBond = PortalsBond.get();
 
@@ -36,7 +32,7 @@
 		{
 			id: () => id ?? ID
 		},
-		{ preset: () => preset, factory: (props) => (factory as Factory<PortalBond>)(props) }
+		{ preset: () => preset, factory: () => factory as Factory<PortalBond> | undefined }
 	);
 	const bond = root.bond;
 
@@ -50,6 +46,12 @@
 	export function getBond() {
 		return bond;
 	}
+
+	const el = usePartElement(root, () => ({
+		class: ['portal-root pointer-events-none absolute inset-0', '$preset', klass],
+		...root.props,
+		...restProps
+	}));
 </script>
 
 <!--
@@ -57,11 +59,4 @@
 	scrolls and stacks with the host. `pointer-events-none` lets page clicks through (overlays opt
 	back in).
 -->
-<HtmlAtom
-	class={['portal-root pointer-events-none absolute inset-0', '$preset', klass]}
-	{...root.props}
-	{...restProps}
-	part={root}
->
-	{@render children?.()}
-</HtmlAtom>
+{@render partElement(el, children)}

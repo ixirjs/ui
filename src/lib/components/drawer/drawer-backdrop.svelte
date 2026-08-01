@@ -1,6 +1,7 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
 	import type { SlideoverBackdropProps } from './types';
-	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import { type Base } from '$ixirjs/ui/components/atom';
+	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
 	import { usePart } from '$ixirjs/ui/shared';
 	import { DrawerBond } from './bond.svelte';
 
@@ -13,10 +14,11 @@
 	const part = usePart(DrawerBond, 'backdrop', () => restProps, {
 		preset: () => preset
 	});
+
+	const el = usePartElement(part, () => ({
+		class: ['border-border absolute inset-0 bg-black/30', '$preset', klass],
+		...restProps
+	}));
 </script>
 
-<HtmlAtom
-	class={['border-border absolute inset-0 bg-black/30', '$preset', klass]}
-	{...restProps}
-	{part}
-/>
+{@render partElement(el)}

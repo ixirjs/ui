@@ -47,7 +47,7 @@ export const TilesBond = defineBond({
 ## Bind the root
 
 {codeBlock(
-	`import { bindBond } from '@ixirjs/ui/shared';
+	`import { bindBond } from '@ixirjs/ui/experimental';
 
 const binding = bindBond(
   (props) => new TilesBond(props),

@@ -1,7 +1,8 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap='div', B extends Base = Base">
 	import type { SlideoverFooterProps } from './types';
 	import { DrawerBond } from './bond.svelte';
-	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import { type Base } from '$ixirjs/ui/components/atom';
+	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
 	import { usePart } from '$ixirjs/ui/shared';
 
 	let {
@@ -14,8 +15,16 @@
 		preset: () => preset
 	});
 	const bond = part.bond;
+
+	const el = usePartElement(part, () => ({
+		// This part declares no base classes; `''` is exactly HtmlAtom's own `class` default.
+		class: '',
+		...restProps
+	}));
 </script>
 
-<HtmlAtom {...restProps} {part}>
+{#snippet body()}
 	{@render children?.({ drawer: bond })}
-</HtmlAtom>
+{/snippet}
+
+{@render partElement(el, body)}

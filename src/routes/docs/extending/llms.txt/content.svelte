@@ -35,9 +35,9 @@ export const CommandMenuBond = defineBond({
 
 {codeBlock(
 	`import { DialogBond, PopoverBond } from '@ixirjs/ui/experimental';
-import { fuse } from '@ixirjs/ui/shared';
+import { defineBond } from '@ixirjs/ui/shared';
 
-export const PopoverDialogBond = fuse({
+export const PopoverDialogBond = defineBond({
   name: 'popover-dialog',
   parts: [PopoverBond, DialogBond],
   atoms: {}

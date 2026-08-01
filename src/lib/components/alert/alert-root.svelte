@@ -1,6 +1,7 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
 	import { useRoot } from '$ixirjs/ui/shared';
-	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import { type Base } from '$ixirjs/ui/components/atom';
+	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
 	import { AlertBond } from './bond.svelte';
 	import type { AlertRootProps } from './types';
 	import './alert.css';
@@ -12,7 +13,7 @@
 		preset = undefined,
 		disabled = false,
 		extend = {},
-		factory = (props) => new AlertBond(props),
+		factory = undefined,
 		children,
 		...restProps
 	}: AlertRootProps<E, B> = $props();
@@ -23,27 +24,30 @@
 			disabled: () => disabled,
 			extend: () => extend
 		},
-		{ id: () => ID, preset: () => preset, factory: (props) => factory(props) }
+		{ id: () => ID, preset: () => preset, factory: () => factory }
 	);
 	const bond = root.bond;
 
 	export function getBond() {
 		return bond;
 	}
+
+	const el = usePartElement(root, () => ({
+		class: [
+			'alert border-border relative flex gap-1 rounded-md border p-4 transition-all duration-200',
+			'bg-background text-foreground',
+			{
+				'pointer-events-none opacity-50': disabled
+			},
+			'$preset',
+			klass
+		],
+		...restProps
+	}));
 </script>
 
-<HtmlAtom
-	class={[
-		'alert border-border relative flex gap-1 rounded-md border p-4 transition-all duration-200',
-		'bg-background text-foreground',
-		{
-			'pointer-events-none opacity-50': disabled
-		},
-		'$preset',
-		klass
-	]}
-	{...restProps}
-	part={root}
->
+{#snippet body()}
 	{@render children?.({ alert: bond })}
-</HtmlAtom>
+{/snippet}
+
+{@render partElement(el, body)}

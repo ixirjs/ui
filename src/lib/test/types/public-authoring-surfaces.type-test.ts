@@ -73,7 +73,6 @@ export type ExperimentalDefinitionAndProtocolTypesArePublic = [
 	Experimental.PartsOf<Experimental.BondSpec>,
 	Experimental.SpecOf<Experimental.DefinedBondClass<Experimental.BondSpec>>,
 	Experimental.AtomsOfPart<Experimental.DefinedBondClass<Experimental.BondSpec>>,
-	Experimental.FuseSpec,
 	Experimental.MergeAtoms<[]>,
 	Experimental.AtomBehavior,
 	Experimental.AtomHost,
@@ -147,8 +146,6 @@ export type StableDoesNotExposeStateOf = Shared.StateOf<never>;
 export type StableDoesNotExposeViewOf = Shared.ViewOf<never>;
 // @ts-expect-error Raw composition records are experimental-only.
 export type StableDoesNotExposeAtomsOfPart = Shared.AtomsOfPart<never>;
-// @ts-expect-error Raw composition records are experimental-only.
-export type StableDoesNotExposeFuseSpec = Shared.FuseSpec;
 // @ts-expect-error Raw composition records are experimental-only.
 export type StableDoesNotExposeMergeAtoms = Shared.MergeAtoms<[]>;
 // @ts-expect-error Registries are not part of stable authoring.

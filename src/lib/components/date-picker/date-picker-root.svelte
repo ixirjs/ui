@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { CalendarRange } from '$ixirjs/ui/components/calendar/types';
-	import { DatePickerBond, type DatePickerBondProps } from './bond.svelte';
+	import { DatePickerBond } from './bond.svelte';
 	import type { DatePickerRootProps } from './types';
 	import { useRoot } from '$ixirjs/ui/shared';
 	import { untrack } from 'svelte';
@@ -24,7 +24,7 @@
 		placeholder = 'Select a date',
 		format = 'MM/dd/yyyy',
 		presets = undefined,
-		factory = (props: DatePickerBondProps) => DatePickerBond.create(props),
+		factory = undefined,
 		children,
 		onopenchange = undefined,
 		onvaluechange = undefined,
@@ -121,7 +121,7 @@
 			format: () => format,
 			presets: () => presets
 		},
-		{ atom: false, id: () => ID, factory: (props) => factory(props) }
+		{ atom: false, id: () => ID, factory: () => factory }
 	);
 	// useRoot publishes through the flat-composition share override, making this bond available
 	// under both the date-picker and popover context keys.

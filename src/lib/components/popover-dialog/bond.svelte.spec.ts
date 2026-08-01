@@ -18,7 +18,7 @@ function makeBond(initial: Partial<PopoverDialogBondProps> = {}) {
 	return new PopoverDialogBond(props);
 }
 
-describe('PopoverDialogBond — fuse(Popover, Dialog) (§9.4.1)', () => {
+describe('PopoverDialogBond — parts: [Popover, Dialog] (§9.4.1)', () => {
 	it('rebrands identity to popover-dialog', () => {
 		expect(makeBond().namespace).toBe('popover-dialog');
 		expect(PopoverDialogBond.CONTEXT_KEY).toContain('popover-dialog');
@@ -81,7 +81,7 @@ describe('PopoverDialogBond — fuse(Popover, Dialog) (§9.4.1)', () => {
 
 	it('root/content/title come from dialog — the modal presentation (part-2 wins)', () => {
 		const bond = makeBond();
-		// `!`: root/title come from the Dialog part; fuse()'s type doesn't surface every part-2 slot
+		// `!`: root/title come from the Dialog part; the composition's type doesn't surface every part-2 slot
 		// accessor as non-undefined (composed-parts typing gap), but they exist at runtime.
 		expect(new DialogRootAtom(bond)).toBeInstanceOf(DialogRootAtom);
 		expect(new DialogContentAtom(bond)).toBeInstanceOf(DialogContentAtom);

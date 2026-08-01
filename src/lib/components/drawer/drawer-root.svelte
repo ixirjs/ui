@@ -29,7 +29,7 @@
 		defaults: _defaults = undefined,
 		// swallowed: old fallback prop is removed; keep it off the DOM spread.
 		fallback: _fallback = undefined,
-		factory = (props) => DrawerBond.create(props),
+		factory = undefined,
 		...restProps
 		// Omit `children` from HTMLAttributes: it declares `children?: Snippet` (0-arg), which would
 		// intersect with SlideoverRootProps' 1-arg `DrawerChildren` into an unsatisfiable type.
@@ -53,7 +53,7 @@
 		{
 			preset: () => preset,
 			id: () => ID,
-			factory: (props) => factory(props)
+			factory: () => factory
 		}
 	);
 	const bond = root.bond;

@@ -105,7 +105,7 @@ export const metadata = {
 			{
 				title: 'Extending & Fusing',
 				href: '/docs/extending/llms.txt',
-				description: 'Extend, fuse, and author components with defineBond, fuse, and capabilities'
+				description: 'Extend, compose, and author components with defineBond and capabilities'
 			},
 			{
 				title: 'Motion',

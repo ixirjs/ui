@@ -31,7 +31,8 @@
 		"storybook:serve": "bun x http-server ./storybook-static",
 		"mcp:inspect": "bun x @modelcontextprotocol/inspector http://localhost:5173/api/sse",
 		"bench:ssr": "vite build -c scripts/bench.vite.config.ts && node .bench-out/ssr-bench.js",
-		"scaffold": "node scripts/scaffold.mjs"
+		"scaffold": "node scripts/scaffold.mjs",
+		"archive:surface": "node scripts/archive-surface.mjs"
 	},
 	"files": [
 		"dist",

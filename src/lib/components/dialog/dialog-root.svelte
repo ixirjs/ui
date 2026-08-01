@@ -2,7 +2,7 @@
 	import { ActivePortal, PortalSurface } from '$ixirjs/ui/components/portal';
 	import type { Base } from '$ixirjs/ui/components/atom';
 	import { mergeAtomProps } from '$ixirjs/ui/components/atom';
-	import { DialogBond, type DialogBondProps } from './bond.svelte';
+	import { DialogBond } from './bond.svelte';
 	import type { DialogProps } from './types';
 	import { controlledProp, useRoot } from '$ixirjs/ui/shared';
 	import { BACKDROP_PRESS } from '$ixirjs/ui/components/overlay';
@@ -20,7 +20,7 @@
 		order = undefined,
 		portal = undefined,
 		presets = undefined,
-		factory = defaultFactory,
+		factory = undefined,
 		children = undefined,
 		onopenchange = undefined,
 		onclick = undefined,
@@ -45,7 +45,7 @@
 		{
 			preset: () => preset,
 			id: () => ID,
-			factory: (props) => factory(props)
+			factory: () => factory
 		}
 	);
 	const bond = root.bond;
@@ -56,10 +56,6 @@
 		mergeAtomProps(root.atom, preset, { ...root.props, ...restProps }, root.presetLayer)
 	);
 	const backdropPress = $derived(bond.surface(BACKDROP_PRESS));
-
-	function defaultFactory(props: DialogBondProps) {
-		return DialogBond.create(props);
-	}
 
 	function onclickDialogElement(event: MouseEvent) {
 		onclick?.(event);

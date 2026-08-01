@@ -73,8 +73,14 @@
 
 		<DocExample
 			title="Sortable Columns"
-			description="DataGrid with click-to-sort column headers"
+			description="Sort from a click or Enter/Space; the grid holds one sort and projects aria-sort"
 			{...ex('./examples/sortable.svelte')}
+		/>
+
+		<DocExample
+			title="Paginated"
+			description="Compose the standalone Pagination family into the grid footer"
+			{...ex('./examples/paginated.svelte')}
 		/>
 
 		<DocExample

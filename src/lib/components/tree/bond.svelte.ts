@@ -164,7 +164,7 @@ export const TreeBond = defineBond({
 	name: 'tree',
 	base: TreeBondBase,
 	atoms: {
-		root: { atom: TreeRootAtom, selfLayer: true },
+		root: { atom: TreeRootAtom },
 		header: { atom: TreeHeaderAtom, role: 'trigger' },
 		body: { atom: TreeBodyAtom, role: 'content' },
 		indicator: TreeIndicatorAtom

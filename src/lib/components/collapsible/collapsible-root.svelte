@@ -1,7 +1,8 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
 	import { controlledProp, useRoot } from '@ixirjs/ui/shared';
-	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
-	import { CollapsibleBond, type CollapsibleStateProps } from './bond.svelte';
+	import { type Base } from '$ixirjs/ui/components/atom';
+	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
+	import { CollapsibleBond } from './bond.svelte';
 	import type { CollapsibleRootProps } from './types';
 
 	const ID = $props.id();
@@ -13,7 +14,7 @@
 		value,
 		data = undefined,
 		disabled = false,
-		factory = defaultFactory,
+		factory = undefined,
 		onopenchange = undefined,
 		children = undefined,
 		...restProps
@@ -36,25 +37,24 @@
 		{
 			preset: () => preset,
 			id: () => ID,
-			factory: (props) => factory(props)
+			factory: () => factory
 		}
 	);
 	const bond = root.bond;
 
-	function defaultFactory(props: CollapsibleStateProps) {
-		return CollapsibleBond.create(props);
-	}
-
 	export function getBond() {
 		return bond;
 	}
+
+	const el = usePartElement(root, () => ({
+		class: ['border-border flex w-full flex-col overflow-hidden', '$preset', klass],
+		...root.props,
+		...restProps
+	}));
 </script>
 
-<HtmlAtom
-	class={['border-border flex w-full flex-col overflow-hidden', '$preset', klass]}
-	{...root.props}
-	{...restProps}
-	part={root}
->
+{#snippet body()}
 	{@render children?.({ collapsible: bond })}
-</HtmlAtom>
+{/snippet}
+
+{@render partElement(el, body)}

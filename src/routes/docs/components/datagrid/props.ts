@@ -176,7 +176,8 @@ export const datagridThProps: PropDefinition[] = [
 		name: 'direction',
 		type: "'asc' | 'desc'",
 		default: "'asc'",
-		description: 'Bindable current sort direction. Toggles on click when sortable is set.'
+		description:
+			'Current sort direction for this column. Toggles on click or Enter/Space when sortable is set. Only one column holds the grid sort at a time — aria-sort is present on that column alone.'
 	},
 	{
 		name: 'screen',
@@ -206,14 +207,15 @@ export const datagridThProps: PropDefinition[] = [
 		name: 'onclick',
 		type: '((event: MouseEvent) => void) | undefined',
 		default: 'undefined',
-		description: 'Native click callback. Call `event.preventDefault()` to cancel sorting.'
+		description:
+			'Native click callback, invoked before the sort commits. Call `event.preventDefault()` to cancel sorting.'
 	},
 	{
 		name: 'onsort',
-		type: 'StateChangeCallback<SortBy, DataGridColumnBond<T>, MouseEvent> | undefined',
+		type: 'StateChangeCallback<SortBy, DataGridColumnBond<T>, MouseEvent | KeyboardEvent> | undefined',
 		default: 'undefined',
 		description:
-			'Fired after sorting commits. Receives `(sort, { event, bond, reason })`; `sort` contains `id`, optional `by`, and `direction`.'
+			'Fired after sorting commits, from a click or from Enter/Space on the focused header. Receives `(sort, { event, bond, reason })` where `reason` is `click` or `keyboard`; `sort` contains `id`, optional `by`, and `direction`.'
 	},
 	{
 		name: 'children',

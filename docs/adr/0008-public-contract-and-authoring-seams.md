@@ -76,7 +76,7 @@ The contract includes:
 ### Authoring
 
 - Static modules use the shared presentation helpers or lightweight adapter.
-- Bonded roots use `bindBond` and `createAtomInstance`.
+- Bonded roots use `useRoot` and `createAtomInstance`.
 - Ordinary declared descendants use `usePart`.
 - Repeated/data-driven parts use direct `createAtomInstance` with explicit cardinality.
 - Cross-part behavior is a Bond capability, not a root-level effect or hand-wired relationship.
@@ -130,7 +130,7 @@ target seam, not a promise that every current export is already in its final loc
 
 ### Stable `/shared` target
 
-- **Authoring:** `bindBond`, `createAtomInstance`, `defineBond`, `fuse`, `usePart`, `useRoot`, `BondOf`,
+- **Authoring:** `createAtomInstance`, `defineBond`, `usePart`, `useRoot`, `BondOf`,
   `PropsOf`, `UsedPart`, `UsePartOptions`, `internCapabilityFactory`.
 - **Motion primitives:** `animate`, `DURATION`, `Easing`.
 - **Capability construction:** `capabilityKey`, `sharedCapabilityKey`, `CapabilityKey`, `SurfaceOf`,
@@ -170,14 +170,14 @@ in `collapsible/bond.svelte.ts`.
 
 ### Experimental or compatibility target
 
-- **Concrete runtime classes:** `Bond`, `BondState`, `Atom`, `Collection`, `BondBinding`.
+- **Concrete runtime classes:** `Bond`, `BondState`, `Atom`, `Collection`, `BondBinding`, `bindBond`.
 - **Concrete/runtime plumbing:** `bondContextKey`, `BondStateProps`, `BondVirtualElement`,
   `NodeCardinality`, `NodeRegistrationOptions`, `BondFactory`, `BondBindingOptions`, `CellConfig`,
   `PropCell`, `PropsSpec`, `AtomOptions`, `DefineAtomOptions`, `DefinedAtomClass`, `DefineAtomSetup`,
   `defineAtom`.
 - **Raw definition and composition records:** `AtomConstructor`, `AtomSpec`, `AtomsOf`,
   `BondBaseClass`, `BondSpec`, `DefinedBond`, `DefinedBondClass`, `FusablePart`, `MethodsOf`, `PartsOf`,
-  `SpecOf`, `StateOf`, `ViewOf`, `AtomsOfPart`, `FuseSpec`, `MergeAtoms`.
+  `SpecOf`, `StateOf`, `ViewOf`, `AtomsOfPart`, `MergeAtoms`.
 - **Low-level protocol/diagnostic records:** `CAPABILITY_PROTOCOL_VERSION`,
   `SharedCapabilityKeyOptions`,
   `AtomBehavior`, `Behavior`, `AtomHost`, `RoleCtx`, `RoleCtxArgs`.

@@ -68,28 +68,27 @@ function assertGenericFacadePrecision(
 	const createdDrawer: DrawerBond = DrawerBond.create(drawerProps);
 
 	const grid: DataGridBond<RowData> = new DataGridBond<RowData>(gridProps);
-	const optionalGrid: DataGridBond<RowData> | undefined = DataGridBond.optional<RowData>();
-	const requiredGrid: DataGridBond<RowData> = DataGridBond.required<RowData>();
+	const optionalGrid: DataGridBond<RowData> | undefined = DataGridBond.get<RowData>();
+	const requiredGrid: DataGridBond<RowData> = DataGridBond.getOrThrow<RowData>();
 	const createdGrid: DataGridBond<RowData> = DataGridBond.create<RowData>(gridProps);
 	const selectedRows: readonly IDataGridRow<RowData>[] = grid.selectedRows;
 
 	const row: DataGridRowBond<RowData> = new DataGridRowBond<RowData>(rowProps);
-	const optionalRow: DataGridRowBond<RowData> | undefined = DataGridRowBond.optional<RowData>();
-	const requiredRow: DataGridRowBond<RowData> = DataGridRowBond.required<RowData>();
+	const optionalRow: DataGridRowBond<RowData> | undefined = DataGridRowBond.get<RowData>();
+	const requiredRow: DataGridRowBond<RowData> = DataGridRowBond.getOrThrow<RowData>();
 	const createdRow: DataGridRowBond<RowData> = DataGridRowBond.create<RowData>(rowProps);
 	const rowData: RowData | undefined = row.props.data;
 
 	const column: DataGridColumnBond<RowData> = new DataGridColumnBond<RowData>(columnProps);
-	const optionalColumn: DataGridColumnBond<RowData> | undefined =
-		DataGridColumnBond.optional<RowData>();
-	const requiredColumn: DataGridColumnBond<RowData> = DataGridColumnBond.required<RowData>();
+	const optionalColumn: DataGridColumnBond<RowData> | undefined = DataGridColumnBond.get<RowData>();
+	const requiredColumn: DataGridColumnBond<RowData> = DataGridColumnBond.getOrThrow<RowData>();
 	const createdColumn: DataGridColumnBond<RowData> =
 		DataGridColumnBond.create<RowData>(columnProps);
 	const columnGrid: IDataGrid<RowData> = column.datagrid;
 
 	const cell: DataGridCellBond<RowData> = new DataGridCellBond<RowData>(cellProps);
-	const optionalCell: DataGridCellBond<RowData> | undefined = DataGridCellBond.optional<RowData>();
-	const requiredCell: DataGridCellBond<RowData> = DataGridCellBond.required<RowData>();
+	const optionalCell: DataGridCellBond<RowData> | undefined = DataGridCellBond.get<RowData>();
+	const requiredCell: DataGridCellBond<RowData> = DataGridCellBond.getOrThrow<RowData>();
 	const createdCell: DataGridCellBond<RowData> = DataGridCellBond.create<RowData>(cellProps);
 	const cellGrid: IDataGrid<RowData> | undefined = cell.datagrid;
 

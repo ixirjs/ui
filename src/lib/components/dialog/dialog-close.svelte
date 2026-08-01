@@ -4,7 +4,8 @@
 >
 	import { Icon } from '$ixirjs/ui/components/icon';
 	import Close from '$ixirjs/ui/icons/icon-close.svelte';
-	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import { type Base } from '$ixirjs/ui/components/atom';
+	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
 	import { usePart } from '$ixirjs/ui/shared';
 	import { DialogBond } from './bond.svelte';
 	import type { DialogCloseButtonProps } from './types';
@@ -48,17 +49,18 @@
 			bond.stageOpenChange({ event, reason: 'close-button' });
 		}
 	}
+
+	const el = usePartElement(part, () => ({
+		as,
+		class: ['cursor-pointer', '$preset', klass],
+		defaults,
+		...restProps,
+		onclick: onclick_,
+		onkeydown: onkeydown_
+	}));
 </script>
 
-<HtmlAtom
-	{as}
-	{defaults}
-	class={['cursor-pointer', '$preset', klass]}
-	{...restProps}
-	{part}
-	onclick={onclick_}
-	onkeydown={onkeydown_}
->
+{#snippet body()}
 	{#if children}
 		{@render children?.({ dialog: bond })}
 	{:else}
@@ -66,4 +68,6 @@
 			<Close />
 		</Icon>
 	{/if}
-</HtmlAtom>
+{/snippet}
+
+{@render partElement(el, body)}

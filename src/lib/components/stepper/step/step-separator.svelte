@@ -1,5 +1,6 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import { type Base } from '$ixirjs/ui/components/atom';
+	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
 	import { usePart } from '$ixirjs/ui/shared';
 	import { StepBond } from './bond.svelte';
 	import { StepperBond } from '$ixirjs/ui/components/stepper/bond.svelte';
@@ -20,18 +21,21 @@
 	);
 
 	const isVertical = $derived(stepperBond?.props?.orientation === 'vertical');
+
+	const el = usePartElement(part, () => ({
+		class: [
+			'flex-1 data-[active=true]:bg-primary data-[completed=true]:bg-primary/70',
+			isVertical ? 'h-8 w-0.5 mx-auto' : 'h-0.5 w-full my-auto',
+			'bg-border',
+			'$preset',
+			klass
+		],
+		...restProps
+	}));
 </script>
 
-<HtmlAtom
-	class={[
-		'flex-1 data-[active=true]:bg-primary data-[completed=true]:bg-primary/70',
-		isVertical ? 'h-8 w-0.5 mx-auto' : 'h-0.5 w-full my-auto',
-		'bg-border',
-		'$preset',
-		klass
-	]}
-	{...restProps}
-	{part}
->
+{#snippet body()}
 	{@render children?.({ step: part.bond })}
-</HtmlAtom>
+{/snippet}
+
+{@render partElement(el, body)}

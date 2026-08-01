@@ -1,5 +1,6 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'p', B extends Base = Base">
-	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import { type Base } from '$ixirjs/ui/components/atom';
+	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
 	import { usePart } from '$ixirjs/ui/shared';
 	import { FieldBond } from './bond.svelte';
 	import type { FieldTextProps } from '$ixirjs/ui/components/form/types';
@@ -17,13 +18,16 @@
 		preset: () => preset ?? 'field.helper-text'
 	});
 	const bond = part.bond;
+
+	const el = usePartElement(part, () => ({
+		as,
+		class: ['text-muted-foreground mt-1 text-xs', '$preset', klass],
+		...restProps
+	}));
 </script>
 
-<HtmlAtom
-	{as}
-	class={['text-muted-foreground mt-1 text-xs', '$preset', klass]}
-	{...restProps}
-	{part}
->
+{#snippet body()}
 	{@render children?.({ field: bond })}
-</HtmlAtom>
+{/snippet}
+
+{@render partElement(el, body)}

@@ -161,6 +161,17 @@ const styledEntries = {
 	'datagrid.row': entry('border-b border-border last:border-0'),
 	'datagrid.column': entry('px-4 py-3 text-left text-sm font-medium'),
 	'datagrid.cell': entry('px-4 py-3 text-sm'),
+	pagination: entry(layout.cluster),
+	'pagination.previous': entry(
+		interaction.focus,
+		'rounded-md px-3 py-1.5 text-sm',
+		'aria-disabled:pointer-events-none aria-disabled:opacity-50'
+	),
+	'pagination.next': entry(
+		interaction.focus,
+		'rounded-md px-3 py-1.5 text-sm',
+		'aria-disabled:pointer-events-none aria-disabled:opacity-50'
+	),
 	dialog: entry('fixed inset-0 flex items-center justify-center p-4'),
 	'dialog.content': entry(surface.floating, 'w-full max-w-lg'),
 	'dialog.header': entry('border-b border-border px-6 py-4'),

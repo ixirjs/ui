@@ -199,7 +199,7 @@ const DrawerBondDefinition = defineBond({
 		})
 	],
 	atoms: {
-		root: { atom: DrawerRootAtom, selfLayer: true },
+		root: { atom: DrawerRootAtom },
 		content: DrawerContentAtom,
 		header: { atom: DrawerHeaderAtom, cardinality: 'many' },
 		title: DrawerTitleAtom,

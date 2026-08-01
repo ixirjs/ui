@@ -1,14 +1,13 @@
 export { default as HtmlAtom } from './html-atom.svelte';
 export * as Atom from './atoms';
 export * from './types';
-export { componentBase, snippetBase, type ExplicitBase } from './render/render-target';
+export { componentBase, type ExplicitBase } from './render/render-target';
 export { resolvePreset, mergeAtomProps, mergePresetProps } from './resolve';
 export {
 	createLifecycleKey,
 	isLifecycleKey,
 	lifecycleType,
 	getLifecycleProps,
-	getLifecyclePropsByType,
 	runLifecycle,
 	type LifecycleType,
 	type LifecycleAttachment,

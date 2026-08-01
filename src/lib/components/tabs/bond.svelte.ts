@@ -221,7 +221,7 @@ export const TabsBond = defineBond({
 	name: 'tabs',
 	base: TabsBondBase,
 	atoms: {
-		root: { atom: TabsRootAtom, selfLayer: true },
+		root: { atom: TabsRootAtom },
 		header: TabsHeaderAtom,
 		body: TabsBodyAtom
 	}

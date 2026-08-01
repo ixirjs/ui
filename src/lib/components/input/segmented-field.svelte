@@ -7,7 +7,7 @@
 -->
 <script lang="ts">
 	import { cn, toClassValue, type ClassValue } from '$ixirjs/ui/utils';
-	import type { PresentationView } from '$ixirjs/ui/components/atom/presentation.svelte';
+	import type { PresentationSnapshot } from '$ixirjs/ui/components/atom/presentation.svelte';
 	import { inputChangeContext, writeInputValue } from './shared';
 	import type { InputBond } from './bond.svelte';
 
@@ -37,7 +37,7 @@
 		disabled?: boolean;
 		readonly?: boolean;
 		class?: ClassValue;
-		preset?: PresentationView | undefined;
+		preset?: PresentationSnapshot | undefined;
 		bond?: InputBond | undefined;
 		onchange?: ((event: Event) => void) | undefined;
 		oninput?: ((event: Event) => void) | undefined;

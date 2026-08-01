@@ -34,12 +34,11 @@
 	});
 	export type RootProbeBondInstance = InstanceType<typeof RootProbeBond>;
 
-	// Declares that its root resolves `presets.root` for itself. The six families that do this
-	// stated it at every render of their root component; it belongs to the definition instead.
+	// Supplies a `presets` map so the root's own layer resolution is observable.
 	export const SelfLayerProbeBond = defineBond({
 		name: 'self-layer-probe',
 		base: RootProbeBase,
-		atoms: { root: { atom: RootProbeRootAtom, selfLayer: true } }
+		atoms: { root: RootProbeRootAtom }
 	});
 
 	// No authoring metadata: exercises the `options.atom` escape hatch and the `new Ctor(props)`

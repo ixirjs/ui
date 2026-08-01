@@ -1,5 +1,7 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import { createAttachmentKey } from 'svelte/attachments';
+	import { type Base } from '$ixirjs/ui/components/atom';
+	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
 	import { animate as runAnimation, usePart } from '$ixirjs/ui/shared';
 	import { stopMotion } from '$ixirjs/ui/components/element/motion-host';
 	import { TreeBond } from './bond.svelte';
@@ -20,7 +22,7 @@
 
 	// An attachment rather than a `defaults` motion phase — see `attachTreeBodyMotion`. There is no
 	// `initial` phase here, so the rotation simply runs on mount and again on every toggle, exactly
-	// as the adapter drove it.
+	// as the adapter drove it. Key minted once at init.
 	function motion(node: HTMLElement) {
 		const controller = runAnimation(
 			node,
@@ -29,8 +31,17 @@
 		);
 		return () => stopMotion(controller, node);
 	}
+	const motionKey = createAttachmentKey();
+
+	const el = usePartElement(part, () => ({
+		class: ['aspect-square h-fit', '$preset', klass],
+		[motionKey]: motion,
+		...restProps
+	}));
 </script>
 
-<HtmlAtom class={['aspect-square h-fit', '$preset', klass]} {@attach motion} {...restProps} {part}>
+{#snippet body()}
 	{@render children?.({ tree: part.bond })}
-</HtmlAtom>
+{/snippet}
+
+{@render partElement(el, body)}

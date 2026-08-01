@@ -1,5 +1,6 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import { type Base } from '$ixirjs/ui/components/atom';
+	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
 	import { usePart } from '$ixirjs/ui/shared';
 	import { DialogBond } from './bond.svelte';
 	import type { DialogFooterProps } from './types';
@@ -15,8 +16,15 @@
 		preset: () => preset
 	});
 	const bond = part.bond;
+
+	const el = usePartElement(part, () => ({
+		class: ['flex px-4', '$preset', klass],
+		...restProps
+	}));
 </script>
 
-<HtmlAtom class={['flex px-4', '$preset', klass]} {...restProps} {part}>
+{#snippet body()}
 	{@render children?.({ dialog: bond })}
-</HtmlAtom>
+{/snippet}
+
+{@render partElement(el, body)}

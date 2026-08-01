@@ -1,5 +1,4 @@
 import { defineCapability, sharedCapabilityKey, type Capability } from '$ixirjs/ui/shared/bond';
-import { getElementId } from '$ixirjs/ui/utils/dom.svelte';
 import type { OverlayView, OverlayKnobs } from '$ixirjs/ui/components/overlay/types';
 import {
 	closeOverlay,
@@ -24,14 +23,21 @@ type TriggerOptions = {
 };
 
 // ARIA disclosure attrs shared by all trigger policies.
+//
+// `aria-controls` resolves the content Atom through the node registry rather than rebuilding its
+// id from the `<namespace>-content-<bond id>` convention. The rebuilt id matched only by
+// coincidence: an Atom's rendered id is whatever `bindId` resolved, so a consumer passing their own
+// `id` to the content part — which wins on the element it is passed to — left every overlay trigger
+// pointing `aria-controls` at an element that does not exist. It is also omitted rather than
+// dangling while the content is unmounted, which is what the attribute means.
 function triggerAttrs(o: OverlayView, ariaHasPopup: OverlayKnobs['ariaHasPopup'] = 'dialog') {
-	const contentId = getElementId(o.id, `${o.namespace}-content`);
+	const contentId = o.nodeByPart('content')?.id;
 	const isDisabled = overlayIsDisabled(o);
 	return {
 		'aria-expanded': overlayIsOpen(o),
 		'aria-disabled': isDisabled,
 		'aria-haspopup': ariaHasPopup,
-		'aria-controls': contentId,
+		...(contentId ? { 'aria-controls': contentId } : {}),
 		tabindex: isDisabled ? -1 : 0
 	};
 }

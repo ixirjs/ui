@@ -1,7 +1,8 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
 	import { usePart } from '$ixirjs/ui/shared';
 	import { InputBond } from './bond.svelte';
-	import { HtmlAtom, type HtmlAtomProps, type Base } from '$ixirjs/ui/components/atom';
+	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
+	import type { HtmlAtomProps, Base } from '$ixirjs/ui/components/atom';
 
 	let {
 		class: klass = '',
@@ -28,19 +29,18 @@
 
 		return !bond?.props.value;
 	});
-</script>
 
-{#if shouldShowPlaceholder}
-	<HtmlAtom
-		class={[
+	const el = usePartElement(part, () => ({
+		class: [
 			'text-muted-foreground pointer-events-none absolute inset-0 flex h-full w-full items-center px-1 leading-1 outline-none',
 			'$preset',
 			klass
-		]}
-		style="left:{(bond?.elements?.input as HTMLInputElement | undefined)?.offsetLeft ?? 0}px"
-		{...restProps}
-		{part}
-	>
-		{@render children?.()}
-	</HtmlAtom>
+		],
+		style: `left:${(bond?.elements?.input as HTMLInputElement | undefined)?.offsetLeft ?? 0}px`,
+		...restProps
+	}));
+</script>
+
+{#if shouldShowPlaceholder}
+	{@render partElement(el, children)}
 {/if}

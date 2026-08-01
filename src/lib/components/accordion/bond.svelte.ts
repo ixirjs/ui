@@ -170,7 +170,7 @@ const accordionRootPresentation = internCapabilityFactory(function accordionRoot
 export const AccordionBond = defineBond({
 	name: 'accordion',
 	base: AccordionBondBase,
-	atoms: { root: { atom: AccordionRootAtom, selfLayer: true } }
+	atoms: { root: AccordionRootAtom }
 });
 
 export type AccordionBond = BondOf<typeof AccordionBond>;

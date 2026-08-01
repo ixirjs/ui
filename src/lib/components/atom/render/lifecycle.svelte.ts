@@ -117,14 +117,6 @@ export function getLifecycleProps<B extends Bond = Bond>(
 	return phases;
 }
 
-// Pick one phase's callbacks out of a grouped LifecycleProps.
-export function getLifecyclePropsByType<B extends Bond = Bond>(
-	type: LifecycleType,
-	props: LifecycleProps<B>
-): LifecycleAttachment<B>[] {
-	return props[type];
-}
-
 // Bond-level counterpart of `svelte/attachments`. Fires the bond lifecycle callbacks by phase.
 // Lifecycle keys are symbol-keyed (description ≠ '@attach'), so Svelte ignores them on a DOM
 // spread and SSR drops them entirely — nothing to strip; the live props flow on untouched.

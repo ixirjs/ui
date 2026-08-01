@@ -3,9 +3,11 @@
 	generics="T = unknown, E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base"
 >
 	import { useRoot } from '@ixirjs/ui/shared';
-	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
-	import { DataGridColumnBond, type DataGridColumnBondProps } from './bond.svelte';
-	import type { DatagridColumnProps, SortBy } from '$ixirjs/ui/components/datagrid/types';
+	import { type Base } from '$ixirjs/ui/components/atom';
+	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
+	import { DataGridColumnBond } from './bond.svelte';
+	import type { DatagridColumnProps } from '$ixirjs/ui/components/datagrid/types';
+	import type { Direction } from '$ixirjs/ui/types';
 
 	const ID = $props.id();
 
@@ -17,7 +19,7 @@
 		direction = 'asc',
 		hidden = false,
 		sortable = undefined,
-		factory = defaultFactory,
+		factory = undefined,
 		children = undefined,
 		onclick = undefined,
 		onsort = undefined,
@@ -31,49 +33,71 @@
 			width: () => width,
 			sortable: () => sortable,
 			hidden: () => hidden,
-			direction: () => direction
+			// Two-way: the sort capability commits the toggled direction back through this cell, and
+			// `bond.asc()` / `bond.desc()` write it too. As a read-only getter both threw.
+			direction: [() => direction, (v: Direction | undefined) => (direction = v ?? 'asc')]
 		},
-		{ preset: () => preset, factory: (props) => factory(props as DataGridColumnBondProps) }
+		{ preset: () => preset, factory: () => factory as never }
 	);
 	const bond = root.bond as DataGridColumnBond<T>;
 
 	const isSortable = $derived(bond.isSortable);
+
+	// The sort capability owns the toggle, so the committed state arrives here rather than being
+	// computed at the click site. `direction` is written before this runs.
+	bond.onSortCommit = (column) => {
+		const activation = column.takeSortActivation();
+		onsort?.(
+			{
+				id: column.id,
+				direction: column.props.direction,
+				...(typeof sortable === 'string' ? { by: sortable } : {})
+			},
+			{
+				bond,
+				event: activation.event as MouseEvent | KeyboardEvent,
+				...(activation.reason ? { reason: activation.reason } : {})
+			}
+		);
+	};
+
 	const unmount = bond.mount();
 
 	$effect(() => unmount);
 
-	function defaultFactory(props: DataGridColumnBondProps): DataGridColumnBond<T> {
-		return DataGridColumnBond.create<T>(props);
-	}
-
+	// Both handlers run before the capability's (the seam composes consumer-first), so they stage
+	// the activation and let the capability perform the toggle. A consumer calling preventDefault
+	// stops the capability's handler outright, which is how sort cancellation still works.
 	function handleClick(event: MouseEvent) {
 		const onClick = onclick as ((event: MouseEvent) => void) | undefined;
 		onClick?.(event);
 		if (event.defaultPrevented || !isSortable) return;
-
-		direction = direction === 'asc' ? 'desc' : 'asc';
-
-		const sort: SortBy = {
-			id: bond.id,
-			direction,
-			...(typeof sortable === 'string' ? { by: sortable } : {})
-		};
-		onsort?.(sort, { bond, event, reason: 'click' });
+		bond.beginSort(event, 'click');
 	}
-</script>
 
-{#if !hidden}
-	<HtmlAtom
-		{...restProps}
-		part={root}
-		class={[
+	function handleKeydown(event: KeyboardEvent) {
+		if (event.defaultPrevented || !isSortable) return;
+		if (event.key !== 'Enter' && event.key !== ' ') return;
+		bond.beginSort(event, 'keyboard');
+	}
+
+	const el = usePartElement(root, () => ({
+		...restProps,
+		class: [
 			'flex cursor-pointer py-1 font-medium select-none',
 			!!sortable && 'sortable',
 			'$preset',
 			klass
-		]}
-		onclick={handleClick}
-	>
+		],
+		onclick: handleClick,
+		onkeydown: handleKeydown
+	}));
+</script>
+
+{#if !hidden}
+	{#snippet body()}
 		{@render children?.({ column: bond })}
-	</HtmlAtom>
+	{/snippet}
+
+	{@render partElement(el, body)}
 {/if}

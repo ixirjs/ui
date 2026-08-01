@@ -19,7 +19,7 @@
 		keys = [],
 		query = $bindable(''),
 		presets = undefined,
-		factory = defaultFactory,
+		factory = undefined,
 		children = undefined,
 		onopenchange = undefined,
 		onvaluechange = undefined,
@@ -83,13 +83,9 @@
 			query: queryProp,
 			presets: () => presets
 		},
-		{ atom: false, id: () => ID, factory: (props) => factory(props) }
+		{ atom: false, id: () => ID, factory: () => factory }
 	);
 	const bond = root.bond;
-
-	function defaultFactory(props: ComboboxBondProps) {
-		return ComboboxBond.create(props);
-	}
 
 	export function getBond() {
 		return bond;

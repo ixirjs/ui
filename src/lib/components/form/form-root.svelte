@@ -1,7 +1,7 @@
 <script lang="ts" generics="B extends Base = Base">
 	import { mergePresetProps, HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
 	import { useRoot } from '$ixirjs/ui/shared';
-	import { FormBond, type FormProps } from './bond.svelte';
+	import { FormBond } from './bond.svelte';
 	import type { FormRootProps } from './types';
 
 	const ID = $props.id();
@@ -10,7 +10,7 @@
 		class: klass = '',
 		renderless = false,
 		validator = undefined,
-		factory = defaultFactory,
+		factory = undefined,
 		children = undefined,
 		preset = undefined,
 		...restProps
@@ -24,7 +24,7 @@
 			renderless: () => renderless,
 			validator: () => validator
 		},
-		{ atom: false, id: () => ID, factory: (props) => factory(props) }
+		{ atom: false, id: () => ID, factory: () => factory }
 	);
 	const bond = root.bond;
 
@@ -33,10 +33,6 @@
 	}
 
 	const content = $derived(renderless ? children : renderfull);
-
-	function defaultFactory(props: FormProps) {
-		return new FormBond(props);
-	}
 </script>
 
 {#snippet renderfull({ form }: { form: FormBond })}

@@ -1,5 +1,6 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import { type Base } from '$ixirjs/ui/components/atom';
+	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
 	import { usePart } from '$ixirjs/ui/shared';
 	import { CardBond } from './bond.svelte';
 	import type { CardTitleProps } from './types';
@@ -16,17 +17,15 @@
 		context: 'optional',
 		preset: () => preset
 	});
+	const el = usePartElement(part, () => ({
+		as,
+		class: [
+			'card-title border-border text-lg leading-none font-semibold tracking-tight',
+			'$preset',
+			klass
+		],
+		...restProps
+	}));
 </script>
 
-<HtmlAtom
-	{...restProps}
-	{as}
-	{part}
-	class={[
-		'card-title border-border text-lg leading-none font-semibold tracking-tight',
-		'$preset',
-		klass
-	]}
->
-	{@render children?.()}
-</HtmlAtom>
+{@render partElement(el, children)}

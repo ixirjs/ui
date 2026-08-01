@@ -90,7 +90,7 @@ uses `useRoot(...)`, which owns props assembly, capability activation and teardo
 publication, controlled-prop adoption, and the root Atom. A root that renders no element of its own
 (`Select.Root`, `Popover.Root`, `Form.Root`) passes `atom: false` and gets back the Bond, its props
 and the binding — one seam, one option, rather than two functions split by a prose rule.
-`bindBond(...)` remains the underlying primitive and stays exported; `useRoot` delegates to it.
+`bindBond(...)` remains the underlying primitive, exported from `@ixirjs/ui/experimental`; `useRoot` delegates to it.
 Open/close components use `createDisclosure(...)` + `disclosureCapability(...)`.
 
 Never sprinkle per-root `$effect`s in `*-root.svelte` for focus, escape, or animation — that
@@ -144,16 +144,21 @@ Fold props into one `$derived` in the script, then spread it. Helpers live in
 `src/lib/shared/bond/presentation-props.ts` (re-exported from `$ixirjs/ui/components/atom`):
 
 - **Bonded descendant** → `usePart(Bond, slot, () => restProps, { preset: () => preset })`, then
-  pass the part itself. `usePart` already owns the Atom, the Bond, the slot name, the preset key,
-  and the per-slot layer, so `{part}` carries all four across the seam and the slot string exists in
-  exactly one place. See `collapsible-header.svelte`:
+  render it with `usePartElement`. `usePart` already owns the Atom, the Bond, the slot name, the
+  preset key, and the per-slot layer, so handing it to the seam carries all five and the slot string
+  exists in exactly one place. See `card-title.svelte`:
 
 ```svelte
 const part = usePart(CardBond, 'title', () => restProps, { preset: () => preset });
+const el = usePartElement(part, () => ({
+	as,
+	class: ['card-title …', '$preset', klass],
+	...restProps
+}));
 ```
 
 ```svelte
-<HtmlAtom {...restProps} {as} {part} class={['card-title …', '$preset', klass]}>
+{@render partElement(el, children)}
 ```
 
 Never re-derive the slot: `presetLayer={bond.presetLayer('title')}` duplicates a string `usePart`
@@ -170,10 +175,11 @@ const root = useRoot(CardBond, { disabled: [() => disabled, (v) => (disabled = v
 	preset: () => preset,
 	factory
 });
-```
-
-```svelte
-<HtmlAtom class={['card …', '$preset', klass]} {...root.props} {...restProps} part={root}>
+const el = usePartElement(root, () => ({
+	class: ['card …', '$preset', klass],
+	...root.props,
+	...restProps
+}));
 ```
 
 Spread `root.props` before `restProps` when the Bond's props select preset variants. Pass
@@ -191,6 +197,34 @@ itself remains for any other late wiring — `calendar-root.svelte` binds a call
 A root that owns a Bond but **no** root Atom (`Select.Root`, `Form.Root`, `Popover.Root`, …) passes
 `atom: false` to the same `useRoot`.
 
+### `usePartElement` — the element seam
+
+`usePartElement(partOrRoot, () => props)` + `{@render partElement(el, body)}` renders the element
+**without** an `HtmlAtom` component boundary. That second boundary — renderer traversal,
+`spread_props`, a context scope, ondestroy collection — was ~a quarter of SSR cost and bought
+nothing on the common path; removing it took Card from 45 µs to 29 µs per card. It lives in
+`src/lib/components/atom/use-part-element.svelte.ts` and is a library authoring internal, never
+exported from the barrel.
+
+**The config thunk returns an `HtmlAtom` props object.** Named props (`class`, `as`, `base`,
+`defaults`, `variants`, `motion`, `oninit`, `preset`, `presetLayer`, `bond`, `atom`, `part`) are
+interpreted; everything else is an element attribute. Precedence is therefore plain object-literal
+order — write the keys in the order the markup had them and the output is unchanged. Do not
+reintroduce per-axis thunks; one object is the contract.
+
+`native()` decides per render. Anything `HtmlAtom` treats specially — `base`, `oninit`, consumer or
+preset motion, symbol lifecycle callbacks, a Root-installed renderer, lifecycle attrs — routes the
+part to the real `<HtmlAtom>` with the same object, so **`HtmlAtom` remains the single lifecycle
+handler**. A part that always trips that check should just keep using `<HtmlAtom>` directly; the
+seam would only add indirection. Every bonded part that can take the seam already does, so the
+remaining direct users are exactly the ones with a reason visible in the file: a declared `base`
+(`alert-icon`, `field-control`), motion (`collapsible-indicator`, `accordion-item-indicator`,
+`accordion-item-body`, `drawer-content`, `select-selection`), an inline `{@attach}`
+(`scrollable-container`), or no Atom to hand the seam (`form-root`). Adding a tenth means naming
+which of those it is. Static components with no Bond (Button, Badge, Icon, …) are not in this set —
+they have no part and `<HtmlAtom>` is their normal shape. Motion supplied as an attachment stays on the fast path: mint the key
+once at init (`createAttachmentKey()`) and put it in the returned object.
+
 The individual `atom`/`bond`/`preset`/`presetLayer` props remain accepted as an escape hatch, and
 explicit props win over `part`. A root that hands its props to **another component** rather than to
 `HtmlAtom` (`Dialog.Root` → `PortalSurface`) still builds the packet with
@@ -204,9 +238,9 @@ every named prop to the index signature. `html-atom.svelte` uses a homomorphic m
 `as` clause instead. Removing that index signature is roadmap item 1.7.
 
 `{...part.props}` is the shape for handing a part's props to **another component** — `Input.Control`,
-`PortalHost`, `Stack.Root` — which has no renderer seam to pass `part` through. Rendering an
-`<HtmlAtom>` always uses `{part}`; the packet allocates a merged object and a signal that the seam
-avoids.
+`PortalHost`, `Stack.Root` — which has no renderer seam to pass the part through. Rendering an
+element uses `usePartElement`, and a part still on `<HtmlAtom>` passes `{part}`; the packet
+allocates a merged object and a signal that both seams avoid.
 
 Do not re-invoke a merged handler by hand. The seam composes the consumer's handler and the atom's
 (consumer first, atom skipped when default is prevented), so a part that stages state before the

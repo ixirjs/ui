@@ -1,5 +1,6 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import { type Base } from '$ixirjs/ui/components/atom';
+	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
 	import { usePart } from '$ixirjs/ui/shared';
 	import { StepBond } from './bond.svelte';
 	import type { StepIndicatorProps } from './types';
@@ -16,23 +17,24 @@
 	});
 
 	const index = $derived(part.bond.props.index);
+
+	const el = usePartElement(part, () => ({
+		class: [
+			'flex h-8 w-8 items-center justify-center border-border rounded-full border-2 transition-colors',
+			'transition-all',
+			part.bond.isActive
+				? 'bg-primary border-primary text-primary-foreground font-bold'
+				: part.bond.isCompleted
+					? 'bg-primary border-primary text-primary-foreground'
+					: 'border-border bg-background',
+			'$preset',
+			klass
+		],
+		...restProps
+	}));
 </script>
 
-<HtmlAtom
-	class={[
-		'flex h-8 w-8 items-center justify-center border-border rounded-full border-2 transition-colors',
-		'transition-all',
-		part.bond.isActive
-			? 'bg-primary border-primary text-primary-foreground font-bold'
-			: part.bond.isCompleted
-				? 'bg-primary border-primary text-primary-foreground'
-				: 'border-border bg-background',
-		'$preset',
-		klass
-	]}
-	{...restProps}
-	{part}
->
+{#snippet body()}
 	{#if children}
 		{@render children?.({ step: part.bond })}
 	{:else if part.bond.isCompleted}
@@ -42,4 +44,6 @@
 	{:else}
 		{index + 1}
 	{/if}
-</HtmlAtom>
+{/snippet}
+
+{@render partElement(el, body)}

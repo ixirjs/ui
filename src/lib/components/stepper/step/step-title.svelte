@@ -1,5 +1,6 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import { type Base } from '$ixirjs/ui/components/atom';
+	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
 	import { usePart } from '$ixirjs/ui/shared';
 	import { StepBond } from './bond.svelte';
 	import type { StepTitleProps } from './types';
@@ -14,8 +15,16 @@
 	const part = usePart(StepBond, 'title', () => restProps, {
 		preset: () => preset
 	});
+
+	const el = usePartElement(part, () => ({
+		as: 'div',
+		class: ['font-medium text-sm', '$preset', klass],
+		...restProps
+	}));
 </script>
 
-<HtmlAtom as="div" class={['font-medium text-sm', '$preset', klass]} {...restProps} {part}>
+{#snippet body()}
 	{@render children?.({ step: part.bond })}
-</HtmlAtom>
+{/snippet}
+
+{@render partElement(el, body)}

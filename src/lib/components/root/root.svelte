@@ -47,7 +47,7 @@
 		{
 			renderers: () => renderers
 		},
-		{ atom: false, id: () => ID, factory: (props) => new RootBond(props) }
+		{ atom: false, id: () => ID }
 	);
 	const bond = root.bond;
 </script>

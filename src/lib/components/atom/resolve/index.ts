@@ -1,5 +1,4 @@
 export { resolvePreset } from './preset';
-export { stabilizePresetRecord, structurallyEqual } from './stable';
 export { isSnippetBase } from '$ixirjs/ui/components/atom/render/render-target';
 export { mergeClassesWithPreset } from './classes';
 export {

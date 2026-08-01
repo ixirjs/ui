@@ -2,7 +2,8 @@
 	lang="ts"
 	generics="E extends keyof HTMLElementTagNameMap = 'button', B extends Base = Base"
 >
-	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import { type Base } from '$ixirjs/ui/components/atom';
+	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
 	import { usePart } from '$ixirjs/ui/shared';
 	import { AlertBond } from './bond.svelte';
 	import type { AlertCloseButtonProps } from './types';
@@ -27,19 +28,20 @@
 		role: as === 'button' ? undefined : 'button',
 		tabindex: as === 'button' ? undefined : 0
 	});
+
+	const el = usePartElement(part, () => ({
+		as,
+		defaults,
+		class: [
+			'alert-close-button border-border flex size-6 items-center justify-center rounded p-0.5 transition-colors hover:bg-black/10 dark:hover:bg-white/10',
+			'$preset',
+			klass
+		],
+		...restProps
+	}));
 </script>
 
-<HtmlAtom
-	{as}
-	{defaults}
-	class={[
-		'alert-close-button border-border flex size-6 items-center justify-center rounded p-0.5 transition-colors hover:bg-black/10 dark:hover:bg-white/10',
-		'$preset',
-		klass
-	]}
-	{...restProps}
-	{part}
->
+{#snippet body()}
 	{#if children}
 		{@render children({ alert: bond! })}
 	{:else}
@@ -54,4 +56,6 @@
 			</svg>
 		</Icon>
 	{/if}
-</HtmlAtom>
+{/snippet}
+
+{@render partElement(el, body)}

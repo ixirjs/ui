@@ -4,8 +4,7 @@ import {
 	createLifecycleKey,
 	isLifecycleKey,
 	lifecycleType,
-	getLifecycleProps,
-	getLifecyclePropsByType
+	getLifecycleProps
 } from './lifecycle.svelte';
 
 describe('createLifecycleKey', () => {
@@ -78,26 +77,5 @@ describe('getLifecycleProps (all phases, grouped)', () => {
 	it('skips non-function values under a lifecycle key', () => {
 		const key = createLifecycleKey('mount');
 		expect(getLifecycleProps({ [key]: 'not-a-fn' }).mount).toEqual([]);
-	});
-});
-
-describe('getLifecyclePropsByType (one phase of the grouped result)', () => {
-	it('slices a single phase out of getLifecycleProps', () => {
-		const mount = createLifecycleKey('mount');
-		const mount2 = createLifecycleKey('mount');
-		const destroy = createLifecycleKey('destroy');
-		const mountFn = () => 'm';
-		const mount2Fn = () => 'm2';
-		const destroyFn = () => 'd';
-		const grouped = getLifecycleProps({
-			[mount]: mountFn,
-			[mount2]: mount2Fn,
-			[destroy]: destroyFn,
-			class: 'ignored',
-			[createAttachmentKey()]: () => {}
-		});
-
-		expect(getLifecyclePropsByType('mount', grouped)).toEqual([mountFn, mount2Fn]);
-		expect(getLifecyclePropsByType('destroy', grouped)).toEqual([destroyFn]);
 	});
 });

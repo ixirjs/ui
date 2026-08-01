@@ -1,7 +1,7 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
 	import { useRoot } from '$ixirjs/ui/shared';
 	import { type Base } from '$ixirjs/ui/components/atom';
-	import { StepBond, type StepBondProps } from './bond.svelte';
+	import { StepBond } from './bond.svelte';
 	import type { StepRootProps } from './types';
 	import { onDestroy } from 'svelte';
 
@@ -16,7 +16,7 @@
 		completed = false,
 		optional = false,
 		children = undefined,
-		factory = defaultFactory
+		factory = undefined
 	}: StepRootProps<E, B> = $props();
 
 	const bond = useRoot(
@@ -27,7 +27,10 @@
 			completed: () => completed,
 			optional: () => optional
 		},
-		{ id: () => ID, factory: (props) => factory(props) }
+		// Renderless: Step.Root owns the Bond and renders `children` only, so it declares no root
+		// Atom. It previously created one whose attrs — role="group", the label linkage, the status
+		// data attributes — had no element to land on and were never emitted.
+		{ id: () => ID, factory: () => factory, atom: false }
 	).bond;
 
 	const unmountStep = bond.mount(bond);
@@ -35,10 +38,6 @@
 	onDestroy(() => {
 		unmountStep?.();
 	});
-
-	function defaultFactory(props: StepBondProps) {
-		return StepBond.create(props);
-	}
 
 	export function getBond() {
 		return bond;

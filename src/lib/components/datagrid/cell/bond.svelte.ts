@@ -75,9 +75,6 @@ interface DataGridCellBondGenericFacade {
 	new <T = unknown>(props: DataGridCellBondProps<T>): DataGridCellBond<T>;
 	get<T = unknown>(): DataGridCellBond<T> | undefined;
 	getOrThrow<T = unknown>(message?: string): DataGridCellBond<T>;
-	optional<T = unknown>(): DataGridCellBond<T> | undefined;
-	required<T = unknown>(message?: string): DataGridCellBond<T>;
-	set<T = unknown>(bond: DataGridCellBond<T>): DataGridCellBond<T>;
 	create<T = unknown>(props: DataGridCellBondProps<T>): DataGridCellBond<T>;
 }
 

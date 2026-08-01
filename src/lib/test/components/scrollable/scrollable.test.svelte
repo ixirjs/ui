@@ -10,7 +10,7 @@
 	bind:scrollY
 	bind:scrollHeight
 	bind:clientHeight
-	style="height: 100px; width: 200px;"
+	style="position: relative; height: 100px; width: 200px;"
 >
 	{#snippet children({ scrollable })}
 		<Scrollable.Container
@@ -21,8 +21,12 @@
 				<div style="height: 600px; width: 180px;">Scrollable body</div>
 			</Scrollable.Content>
 		</Scrollable.Container>
-		<Scrollable.Track orientation="vertical" data-testid="track">
-			<Scrollable.Thumb orientation="vertical" data-testid="thumb" />
+		<Scrollable.Track
+			orientation="vertical"
+			data-testid="track"
+			style="position: absolute; top: 0; right: 0; width: 8px; height: 100px;"
+		>
+			<Scrollable.Thumb orientation="vertical" data-testid="thumb" style="width: 8px;" />
 		</Scrollable.Track>
 
 		<output data-testid="bond-scroll-y">{scrollable.props.scrollY}</output>

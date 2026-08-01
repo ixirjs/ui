@@ -35,7 +35,7 @@
 			name: () => name,
 			onvaluechange: () => onvaluechange
 		},
-		{ atom: false, id: () => ID, factory: (props) => new RadioGroupBond<T>(props) }
+		{ atom: false, id: () => ID, factory: () => (props) => new RadioGroupBond<T>(props) }
 	);
 	const bond = root.bond;
 	const groupProps = $derived(mergePresetProps(preset, 'radio.group', restProps));

@@ -38,12 +38,7 @@ export function resolvePreset(
 
 function resolveEntry(entry: PresetEntry, bond: Bond | undefined): PresetEntryRecord | undefined {
 	if (typeof entry !== 'function') return utils.resolvePreset(entry);
-	const fresh = utils.resolvePreset(entry({ bond })) as PresetEntryRecord | undefined;
-	if (!fresh) return undefined;
-	// Stabilization owns its own identity fast path; deciding here on frozenness would skip it for
-	// factories that freeze a newly built record per call, losing the identity stability downstream
-	// memoization depends on.
-	return utils.stabilizePresetRecord(entry, bond, fresh);
+	return utils.resolvePreset(entry({ bond })) as PresetEntryRecord | undefined;
 }
 
 let warnedPresetKeys: Set<string> | undefined;

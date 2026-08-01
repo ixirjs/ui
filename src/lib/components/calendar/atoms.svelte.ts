@@ -34,11 +34,17 @@ export class CalendarBodyAtom extends Atom<CalendarBondView> {
 
 	override get attrs() {
 		// Preserves the historic ids (`calendar-month-*`), distinct from the natural `calendar-body`.
+		//
+		// The grid is named with `aria-label` rather than `aria-labelledby`. It referenced
+		// `calendar-month-label-<id>`, an element this family has never rendered — no part sets that
+		// id — so the grid had a dangling reference and therefore no accessible name at all. The
+		// month name is on the Bond, so name the grid directly instead of inventing a label part.
+		const month = this.requireBond().props.currentMonth;
 		return {
 			...super.attrs,
 			id: getElementId(this.requireBond().id, 'calendar-month'),
 			role: 'grid',
-			'aria-labelledby': getElementId(this.requireBond().id, 'calendar-month-label')
+			...(month?.fullname ? { 'aria-label': month.fullname } : {})
 		};
 	}
 

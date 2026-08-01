@@ -2,14 +2,20 @@ import { describe, expect, it, vi } from 'vitest';
 import { clickTrigger, TRIGGER } from '$ixirjs/ui/components/overlay/policies/trigger.svelte';
 import type { OverlayView } from '$ixirjs/ui/components/overlay/types';
 
-// Minimal Overlay-ish stub: what the trigger policy reads.
-function fakeBond(isOpen = false, isDisabled = false) {
+// Minimal Overlay-ish stub: what the trigger policy reads. `nodeByPart` stands in for the node
+// registry — the policy resolves the content id through it rather than rebuilding the id string.
+function fakeBond(
+	isOpen = false,
+	isDisabled = false,
+	contentId: string | undefined = 'content-b1'
+) {
 	return {
 		id: 'b1',
 		namespace: 'popover',
 		isOpen,
 		isDisabled,
-		toggle: vi.fn()
+		toggle: vi.fn(),
+		nodeByPart: (part: string) => (part === 'content' && contentId ? { id: contentId } : undefined)
 	} as unknown as OverlayView;
 }
 
@@ -29,6 +35,7 @@ describe('clickTrigger — trigger policy', () => {
 		const attrs = b.attrs!(fakeBond(true, false));
 		expect(attrs['aria-expanded']).toBe(true);
 		expect(attrs['aria-haspopup']).toBe('menu');
+		expect(attrs['aria-controls']).toBe('content-b1');
 		expect(attrs['aria-controls']).toContain('content');
 		expect(attrs['tabindex']).toBe(0);
 		expect(typeof b.handlers).toBe('function');

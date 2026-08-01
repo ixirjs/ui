@@ -7,13 +7,10 @@ import {
 } from '$ixirjs/ui/components/overlay';
 
 describe('dismissPolicy', () => {
-	it('composes Escape, outside press, and backdrop press as a Layer 2 focused bundle', () => {
+	it('composes Escape, outside press, and backdrop press', () => {
 		const caps = dismissPolicy();
 		const slots = caps.map((cap) => cap.slot);
 
-		expect(caps.meta).toMatchObject({
-			projects: ['surface', 'backdrop']
-		});
 		expect(slots).toContain(ESCAPE);
 		expect(slots).toContain(OUTSIDE_PRESS);
 		expect(slots).toContain(BACKDROP_PRESS);

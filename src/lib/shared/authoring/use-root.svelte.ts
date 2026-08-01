@@ -70,10 +70,13 @@ export type UseRootOptions<B extends Bond, N extends Atom> = {
 	slot?: string;
 	/**
 	 * Bond construction. Defaults to the definition's own static `create(props)` — every
-	 * `defineBond` result has one — falling back to `new Definition(props)`. This is what a root's
-	 * consumer-facing `factory` prop should be forwarded to.
+	 * `defineBond` result has one — falling back to `new Definition(props)`.
+	 *
+	 * A getter, like `preset` and `id`, so a root forwards its consumer-facing `factory` prop as
+	 * `factory: () => factory` — no local default to declare (the fallback below already is one) and
+	 * no `state_referenced_locally` warning from reading a prop outside a closure.
 	 */
-	factory?: BondFactory<B>;
+	factory?: () => BondFactory<B> | undefined;
 	/**
 	 * The component's `preset` prop. Wins over `atom.preset`, exactly as for a part. Typed as
 	 * `unknown` to match `UsePartOptions.preset`: a consumer may name a preset this build does not
@@ -168,7 +171,7 @@ export function useRoot(
 	if (options.id) bindingOptions.id = options.id;
 
 	const binding = bindBond<Bond>(
-		options.factory ?? defaultBondFactory(definition),
+		options.factory?.() ?? defaultBondFactory(definition),
 		props as PropsSpec<Parameters<BondFactory<Bond>>[0]>,
 		bindingOptions
 	);

@@ -6,14 +6,18 @@ import {
 	sharedCapabilityKey,
 	type AtomHost
 } from '$ixirjs/ui/shared/capability';
-import { fieldCapabilities } from '$ixirjs/ui/shared/capability/models/archetypes.svelte';
+import {
+	labelledControl,
+	errorMessageLink
+} from '$ixirjs/ui/shared/capability/models/relationship.svelte';
 import {
 	createValidation,
+	validationCapability,
 	type ValidationError,
 	type ValidationModel,
 	type ValidationResult
 } from '$ixirjs/ui/shared/capability/models/validation.svelte';
-import { createStatus } from '$ixirjs/ui/shared/capability/models/status.svelte';
+import { createStatus, statusCapability } from '$ixirjs/ui/shared/capability/models/status.svelte';
 
 // -----------------------------------------------------------------------------
 // Public types
@@ -148,14 +152,14 @@ export class FieldBondBase<Props extends FieldStateProps = FieldStateProps> exte
 
 	constructor(props: Props, name = 'field') {
 		super(props, name);
-		this.registerCapabilities(
-			fieldCapabilities({
-				validation: this.validation,
-				labelled: { nativeFor: true },
-				status: this.status,
-				statusOptions: { roles: ['control'] }
-			})
-		);
+		// A labelled, validated field. Declared here rather than behind a recipe: field is the only
+		// caller, and the recipe's own status default was already overridden by `status` below.
+		this.registerCapabilities([
+			labelledControl({ nativeFor: true }),
+			statusCapability(this.status, { roles: ['control'] }),
+			validationCapability(this.validation),
+			errorMessageLink({ invalid: () => this.validation.isInvalid })
+		]);
 	}
 
 	get value() {

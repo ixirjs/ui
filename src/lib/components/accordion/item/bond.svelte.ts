@@ -270,7 +270,7 @@ export const AccordionItemBond = defineBond({
 	preset: 'accordion.item',
 	base: AccordionItemBondBase,
 	atoms: {
-		root: { atom: AccordionItemRootAtom, selfLayer: true },
+		root: { atom: AccordionItemRootAtom },
 		header: { atom: AccordionItemHeaderAtom, role: 'trigger' },
 		body: { atom: AccordionItemBodyAtom, role: 'content' },
 		indicator: AccordionItemIndicatorAtom

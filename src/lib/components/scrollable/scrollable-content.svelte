@@ -2,7 +2,8 @@
 	import type { ScrollableContentProps } from './types';
 	import { ScrollableBond } from './bond.svelte';
 	import { usePart } from '$ixirjs/ui/shared';
-	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import { type Base } from '$ixirjs/ui/components/atom';
+	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
 
 	let {
 		class: klass = '',
@@ -14,15 +15,12 @@
 	const part = usePart(ScrollableBond, 'content', () => restProps, {
 		preset: () => preset
 	});
+
+	const el = usePartElement(part, () => ({
+		as: 'div',
+		class: ['scrollable-content border-border h-full max-h-full', '$preset', klass],
+		...restProps
+	}));
 </script>
 
-<HtmlAtom
-	as="div"
-	class={['scrollable-content border-border h-full max-h-full', '$preset', klass]}
-	{...restProps}
-	{part}
->
-	{#if children}
-		{@render children()}
-	{/if}
-</HtmlAtom>
+{@render partElement(el, children)}

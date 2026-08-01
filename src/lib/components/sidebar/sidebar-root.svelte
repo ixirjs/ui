@@ -13,7 +13,7 @@
 		overlay: asOverlay = false,
 		portal = undefined,
 		class: klass = '',
-		factory = (props) => SidebarBond.create(props),
+		factory = undefined,
 		onopenchange = undefined,
 		children = undefined
 	}: SidebarRootProps = $props();
@@ -31,7 +31,7 @@
 			open: openProp,
 			disabled: () => disabled
 		},
-		{ atom: false, id: () => ID, factory: (props) => factory(props) }
+		{ atom: false, id: () => ID, factory: () => factory }
 	);
 	const bond = root.bond;
 

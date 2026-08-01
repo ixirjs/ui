@@ -140,9 +140,6 @@ interface DataGridRowBondGenericFacade {
 	new <T = unknown>(props: DataGridRowBondProps<T>): DataGridRowBond<T>;
 	get<T = unknown>(): DataGridRowBond<T> | undefined;
 	getOrThrow<T = unknown>(message?: string): DataGridRowBond<T>;
-	optional<T = unknown>(): DataGridRowBond<T> | undefined;
-	required<T = unknown>(message?: string): DataGridRowBond<T>;
-	set<T = unknown>(bond: DataGridRowBond<T>): DataGridRowBond<T>;
 	create<T = unknown>(props: DataGridRowBondProps<T>): DataGridRowBond<T>;
 }
 

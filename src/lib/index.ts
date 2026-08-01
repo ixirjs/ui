@@ -30,6 +30,7 @@ export { Label } from './components/label';
 export { Lazy } from './components/lazy';
 export { Link } from './components/link';
 export { List } from './components/list';
+export { Pagination } from './components/pagination';
 export { Popover } from './components/popover';
 export { PopoverDialog } from './components/popover-dialog';
 export { Portal, PortalSurface, Teleport, ZLayer } from './components/portal';

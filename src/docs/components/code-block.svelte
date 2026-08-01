@@ -22,7 +22,14 @@
 		transparent = true
 	}: Props = $props();
 
-	const appTheme = Theme.get();
+	// The llms.txt endpoints render docs standalone — no +layout runs, so no Theme context
+	// exists and `Theme.get()` throws. Highlighting theme is irrelevant to that text output.
+	let appTheme: Theme | undefined;
+	try {
+		appTheme = Theme.get();
+	} catch {
+		appTheme = undefined;
+	}
 
 	let isDark = $derived(appTheme ? appTheme.colorScheme === 'dark' : true);
 	let highlightedCode = $state('');

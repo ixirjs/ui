@@ -34,7 +34,7 @@
 			disabled: () => disabled,
 			presets: () => presets
 		},
-		{ atom: false, id: () => ID, factory: (props) => new PopoverDialogBond(props) }
+		{ atom: false, id: () => ID }
 	);
 	const bond = root.bond;
 

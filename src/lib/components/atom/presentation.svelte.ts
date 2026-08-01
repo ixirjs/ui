@@ -49,8 +49,6 @@ export type PresentationSnapshot<E extends Element = Element> = {
 	readonly base: unknown;
 };
 
-export type PresentationView<E extends Element = Element> = PresentationSnapshot<E>;
-
 type PresetRegistry = {
 	get(key: PresetModuleName): PresetEntry | undefined;
 	keys(): readonly string[];
@@ -132,7 +130,7 @@ function resolvePresentationSnapshot<E extends Element = Element>(
 
 export function createPresentation<E extends Element = Element>(
 	options: PresentationOptions<E>
-): PresentationView<E> {
+): PresentationSnapshot<E> {
 	// Preset installation is initialization-scoped. Capture the registry once; reactive variation
 	// belongs inside entry factories and is still tracked while the snapshot evaluates.
 	const registry = presetRegistry(getPreset());

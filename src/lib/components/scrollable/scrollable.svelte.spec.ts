@@ -37,4 +37,54 @@ describe('Scrollable', () => {
 		expect(thumb).toBeInstanceOf(HTMLElement);
 		expect(thumb!.style.top).not.toBe('0%');
 	});
+
+	it('scrolls from a track press and a thumb drag through the pointer policies', async () => {
+		render(ScrollableTest);
+		await settleLayout();
+
+		const viewport = document.querySelector<HTMLElement>('[data-testid="viewport"]')!;
+		const track = document.querySelector<HTMLElement>('[data-testid="track"]')!;
+		const thumb = document.querySelector<HTMLElement>('[data-testid="thumb"]')!;
+		const maxScroll = viewport.scrollHeight - viewport.clientHeight;
+		expect(maxScroll).toBeGreaterThan(0);
+
+		// Track press: half way down the track jumps to half the scrollable distance.
+		const trackRect = track.getBoundingClientRect();
+		track.dispatchEvent(
+			pointerEvent('pointerdown', {
+				clientX: trackRect.left + trackRect.width / 2,
+				clientY: trackRect.top + trackRect.height / 2
+			})
+		);
+		await settleLayout();
+		expect(viewport.scrollTop).toBeCloseTo(maxScroll / 2, 0);
+
+		// Thumb drag: dragging down the full track height travels the full scroll distance.
+		viewport.scrollTop = 0;
+		viewport.dispatchEvent(new Event('scroll', { bubbles: true }));
+		await settleLayout();
+
+		thumb.dispatchEvent(pointerEvent('pointerdown', { clientX: 0, clientY: 0 }));
+		thumb.dispatchEvent(pointerEvent('pointermove', { clientX: 0, clientY: trackRect.height }));
+		await settleLayout();
+		expect(viewport.scrollTop).toBe(maxScroll);
+
+		// A cancelled drag releases `isScrolling`; without that the scrollbars stay pinned open.
+		thumb.dispatchEvent(pointerEvent('pointercancel', { clientX: 0, clientY: trackRect.height }));
+		await settleLayout();
+		thumb.dispatchEvent(pointerEvent('pointermove', { clientX: 0, clientY: 0 }));
+		await settleLayout();
+		expect(viewport.scrollTop).toBe(maxScroll);
+	});
 });
+
+function pointerEvent(type: string, init: { clientX: number; clientY: number }): PointerEvent {
+	return new PointerEvent(type, {
+		bubbles: true,
+		cancelable: true,
+		pointerId: 1,
+		isPrimary: true,
+		button: 0,
+		...init
+	});
+}

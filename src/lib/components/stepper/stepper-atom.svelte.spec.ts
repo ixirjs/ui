@@ -13,7 +13,6 @@ import {
 	StepDescriptionAtom,
 	StepHeaderAtom,
 	StepIndicatorAtom,
-	StepRootAtom,
 	StepSeparatorAtom,
 	StepTitleAtom
 } from './step/bond.svelte';
@@ -34,7 +33,6 @@ describe('Stepper component-owned Atoms', () => {
 		expect(step?.props.index).toBe(0);
 
 		const stepperRoot = stepper?.nodeByPart('root');
-		const stepRoot = step?.nodeByPart('root');
 		const indicator = step?.nodeByPart('indicator');
 		const header = step?.nodeByPart('header');
 		const title = step?.nodeByPart('title');
@@ -43,27 +41,18 @@ describe('Stepper component-owned Atoms', () => {
 		const body = step?.nodeByPart('body');
 
 		expect(stepperRoot).toBeInstanceOf(StepperRootAtom);
-		expect(stepRoot).toBeInstanceOf(StepRootAtom);
 		expect(indicator).toBeInstanceOf(StepIndicatorAtom);
 		expect(header).toBeInstanceOf(StepHeaderAtom);
 		expect(title).toBeInstanceOf(StepTitleAtom);
 		expect(description).toBeInstanceOf(StepDescriptionAtom);
 		expect(separator).toBeInstanceOf(StepSeparatorAtom);
 		expect(body).toBeInstanceOf(StepBodyAtom);
-		for (const node of [
-			stepperRoot,
-			stepRoot,
-			indicator,
-			header,
-			title,
-			description,
-			separator,
-			body
-		]) {
+		for (const node of [stepperRoot, indicator, header, title, description, separator, body]) {
 			expect(node).toBeInstanceOf(Atom);
 		}
 		expect(stepper?.nodesByPart('root')).toEqual([stepperRoot]);
-		expect(step?.nodesByPart('root')).toEqual([stepRoot]);
+		// Step.Root is renderless and declares `atom: false`; it registers no root node.
+		expect(step?.nodesByPart('root')).toEqual([]);
 		expect(step?.nodesByPart('indicator')).toEqual([indicator]);
 		expect(step?.nodesByPart('header')).toEqual([header]);
 		expect(step?.nodesByPart('title')).toEqual([title]);
@@ -73,9 +62,12 @@ describe('Stepper component-owned Atoms', () => {
 		expect(stepper?.steps.get('0')).toBe(step);
 
 		expect(stepperRoot?.spread.role).toBe('group');
-		expect(stepRoot?.spread.role).toBe('group');
-		expect(stepRoot?.spread['data-stepper']).toBe(stepper?.id);
-		expect(stepRoot?.spread['data-active']).toBe(true);
+		// Asserted on the rendered element, not just the Atom's spread: these attributes were
+		// declared on Step.Root for a component that renders no element, so a spread-only
+		// assertion passed while nothing reached the DOM.
+		const headerElement = header?.element as HTMLElement | undefined;
+		expect(headerElement?.getAttribute('role')).toBe('group');
+		expect(headerElement?.getAttribute('data-active')).toBe('true');
 		expect(indicator?.spread.role).toBe('presentation');
 		expect(indicator?.spread['aria-current']).toBe('step');
 		expect(header?.spread['data-active']).toBe(true);
@@ -84,7 +76,7 @@ describe('Stepper component-owned Atoms', () => {
 		expect(separator?.spread['aria-hidden']).toBe('true');
 
 		expect(stepper?.nodeByPart('root')).toBeInstanceOf(StepperRootAtom);
-		expect(step?.nodeByPart('root')).toBeInstanceOf(StepRootAtom);
+		expect(step?.nodeByPart('root')).toBeUndefined();
 		expect(step?.nodeByPart('indicator')).toBeInstanceOf(StepIndicatorAtom);
 		expect(step?.nodeByPart('header')).toBeInstanceOf(StepHeaderAtom);
 		expect(step?.nodeByPart('title')).toBeInstanceOf(StepTitleAtom);
@@ -93,7 +85,6 @@ describe('Stepper component-owned Atoms', () => {
 		expect(step?.nodeByPart('separator')).toBeInstanceOf(StepSeparatorAtom);
 		for (const node of [
 			stepper?.nodeByPart('root'),
-			step?.nodeByPart('root'),
 			step?.nodeByPart('indicator'),
 			step?.nodeByPart('header'),
 			step?.nodeByPart('title'),

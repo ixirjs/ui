@@ -230,7 +230,9 @@ export type ${n.Pascal}Bond = ${n.Pascal}BondBase;
 function rootFile(n) {
 	return `<script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
 	import { useRoot } from '$ixirjs/ui/shared';
-	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import { type Base } from '$ixirjs/ui/components/atom';
+	import { usePartElement } from '$ixirjs/ui/components/atom/use-part-element.svelte';
+	import { partElement } from '$ixirjs/ui/components/atom/part-element.svelte';
 	import { ${n.Pascal}Bond, type ${n.Pascal}StateProps } from './bond.svelte';
 	import type { ${n.Pascal}RootProps } from './types';
 
@@ -265,17 +267,27 @@ function rootFile(n) {
 	export function getBond() {
 		return bond;
 	}
+
+	const el = usePartElement(root, () => ({
+		class: ['${n.kebab}', '$preset', klass],
+		...root.props,
+		...restProps
+	}));
 </script>
 
-<HtmlAtom class={['${n.kebab}', '$preset', klass]} {...root.props} {...restProps} part={root}>
+{#snippet body()}
 	{@render children?.({ ${n.camel}: bond })}
-</HtmlAtom>
+{/snippet}
+
+{@render partElement(el, body)}
 `;
 }
 
 function partFile(n, slot) {
 	return `<script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import { type Base } from '$ixirjs/ui/components/atom';
+	import { usePartElement } from '$ixirjs/ui/components/atom/use-part-element.svelte';
+	import { partElement } from '$ixirjs/ui/components/atom/part-element.svelte';
 	import { usePart } from '$ixirjs/ui/shared';
 	import { ${n.Pascal}Bond } from './bond.svelte';
 	import type { ${n.Pascal}${pascal(slot)}Props } from './types';
@@ -290,11 +302,17 @@ function partFile(n, slot) {
 	const part = usePart(${n.Pascal}Bond, '${slot}', () => restProps, {
 		preset: () => preset
 	});
+	const el = usePartElement(part, () => ({
+		class: ['${n.kebab}-${slot}', '$preset', klass],
+		...restProps
+	}));
 </script>
 
-<HtmlAtom class={['${n.kebab}-${slot}', '$preset', klass]} {...restProps} {part}>
+{#snippet body()}
 	{@render children?.({ ${n.camel}: part.bond })}
-</HtmlAtom>
+{/snippet}
+
+{@render partElement(el, body)}
 `;
 }
 

@@ -1,7 +1,8 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
 	import { InputBond, type InputStateProps } from './bond.svelte';
 	import { useRoot } from '$ixirjs/ui/shared';
-	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import { type Base } from '$ixirjs/ui/components/atom';
+	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
 	import type { Factory } from '$ixirjs/ui/types';
 	import type { InputRootProps } from './types';
 
@@ -44,7 +45,7 @@
 		{
 			preset: () => preset,
 			id: () => ID,
-			factory: (props) => (factory as Factory<InputBond>)(props)
+			factory: () => factory as Factory<InputBond>
 		}
 	);
 	const bond = root.bond;
@@ -52,17 +53,20 @@
 	export function getBond() {
 		return bond;
 	}
+
+	const el = usePartElement(root, () => ({
+		class: [
+			'text-foreground bg-input relative flex h-10 w-auto items-center overflow-hidden rounded-md border',
+			'$preset',
+			klass
+		],
+		...root.props,
+		...restProps
+	}));
 </script>
 
-<HtmlAtom
-	class={[
-		'text-foreground bg-input relative flex h-10 w-auto items-center overflow-hidden rounded-md border',
-		'$preset',
-		klass
-	]}
-	{...root.props}
-	{...restProps}
-	part={root}
->
+{#snippet body()}
 	{@render children?.({ input: bond })}
-</HtmlAtom>
+{/snippet}
+
+{@render partElement(el, body)}

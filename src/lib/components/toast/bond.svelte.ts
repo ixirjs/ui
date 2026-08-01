@@ -3,10 +3,12 @@ import { defineBond, type BondOf } from '$ixirjs/ui/shared/authoring/define.svel
 import { capabilityKey, defineCapability } from '$ixirjs/ui/shared/capability/capability';
 import {
 	createDisclosure,
+	disclosureCapability,
+	disclosureClose,
 	type Disclosure
 } from '$ixirjs/ui/shared/capability/models/disclosure.svelte';
 import type { DisclosureStateProps } from '$ixirjs/ui/shared/capability/models/disclosure-state.svelte';
-import { toastCapabilities } from '$ixirjs/ui/shared/capability/models/archetypes.svelte';
+import { labelledControl } from '$ixirjs/ui/shared/capability/models/relationship.svelte';
 import type { StateChangeContext } from '$ixirjs/ui/types';
 
 // -----------------------------------------------------------------------------
@@ -120,15 +122,16 @@ class ToastBondBase extends Bond<ToastBondProps> {
 
 	constructor(props: ToastBondProps, name = 'toast') {
 		super(props, name);
-		this.registerCapabilities(
-			toastCapabilities({
-				disclosure: this.disclosure,
-				close: {
-					disabled: (bond) => (bond as ToastBondBase).props.dismissible === false,
-					stopPropagation: true
-				}
+		// Live-region labelling, dismiss activation. Declared here rather than behind a recipe:
+		// toast is the only caller, so the recipe only hid which three capabilities are in play.
+		this.registerCapabilities([
+			disclosureCapability(this.disclosure),
+			labelledControl(),
+			disclosureClose({
+				disabled: (bond) => (bond as ToastBondBase).props.dismissible === false,
+				stopPropagation: true
 			})
-		);
+		]);
 		this.capability(toastTimeoutCapability);
 	}
 

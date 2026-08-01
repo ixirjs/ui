@@ -3,8 +3,9 @@
 	generics="T = unknown, E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base"
 >
 	import { controlledProp, useRoot } from '@ixirjs/ui/shared';
-	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
-	import { DataGridBond, type DataGridBondProps } from './bond.svelte';
+	import { type Base } from '$ixirjs/ui/components/atom';
+	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
+	import { DataGridBond } from './bond.svelte';
 	import type { DatagridRootProps } from './types';
 	import './datagrid.css';
 
@@ -16,7 +17,7 @@
 		values = $bindable([]),
 		template = undefined,
 		fallbackTemplate = 'auto',
-		factory = defaultFactory,
+		factory = undefined,
 		onvalueschange = undefined,
 		children = undefined,
 		...restProps
@@ -43,24 +44,25 @@
 		{
 			preset: () => preset,
 			id: () => ID,
-			factory: (props) => factory(props as DataGridBondProps<T>)
+			factory: () => factory as never
 		}
 	);
 	const bond = root.bond as DataGridBond<T>;
-	function defaultFactory(props: DataGridBondProps<T>) {
-		return DataGridBond.create<T>(props);
-	}
 
 	export function getBond() {
 		return bond;
 	}
+
+	const el = usePartElement(root, () => ({
+		class: ['datagrid-root w-full gap-x-0 gap-y-0', '$preset', klass],
+		// `style` was an explicit attribute after the rest spread on HtmlAtom, so it still wins.
+		...restProps,
+		style: `--template-columns:${bond.template || fallbackTemplate}`
+	}));
 </script>
 
-<HtmlAtom
-	{...restProps}
-	part={root}
-	class={['datagrid-root w-full gap-x-0 gap-y-0', '$preset', klass]}
-	style="--template-columns:{bond.template || fallbackTemplate}"
->
+{#snippet body()}
 	{@render children?.({ datagrid: bond })}
-</HtmlAtom>
+{/snippet}
+
+{@render partElement(el, body)}

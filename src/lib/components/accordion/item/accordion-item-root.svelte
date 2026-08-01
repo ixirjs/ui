@@ -1,7 +1,8 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
 	import { useRoot } from '$ixirjs/ui/shared';
-	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
-	import { AccordionItemBond, type AccordionItemBondProps } from './bond.svelte';
+	import { type Base } from '$ixirjs/ui/components/atom';
+	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
+	import { AccordionItemBond } from './bond.svelte';
 	import type { AccordionItemRootProps } from './types';
 
 	const ID = $props.id();
@@ -11,7 +12,7 @@
 		value,
 		data = undefined,
 		disabled = false,
-		factory = defaultFactory,
+		factory = undefined,
 		children = undefined,
 		preset = undefined,
 		presets = undefined,
@@ -26,19 +27,23 @@
 			value: () => value,
 			presets: () => presets
 		},
-		{ preset: () => preset, id: () => ID, factory: (props) => factory(props) }
+		{ preset: () => preset, id: () => ID, factory: () => factory }
 	);
 	const bond = root.bond;
-
-	function defaultFactory(props: AccordionItemBondProps) {
-		return AccordionItemBond.create(props);
-	}
 
 	export function getBond() {
 		return bond;
 	}
+
+	const el = usePartElement(root, () => ({
+		class: ['border-border', '$preset', klass],
+		...root.props,
+		...restProps
+	}));
 </script>
 
-<HtmlAtom class={['border-border', '$preset', klass]} {...root.props} {...restProps} part={root}>
+{#snippet body()}
 	{@render children?.({ accordionItem: bond })}
-</HtmlAtom>
+{/snippet}
+
+{@render partElement(el, body)}

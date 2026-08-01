@@ -1,6 +1,6 @@
 import {
 	createPresentation,
-	type PresentationView
+	type PresentationSnapshot
 } from '$ixirjs/ui/components/atom/presentation.svelte';
 import type { ClassValue } from 'svelte/elements';
 import type { PresetKey, PresetLike } from '$ixirjs/ui/preset';
@@ -15,7 +15,7 @@ export function resolveControlPreset(
 	klass?: () => ClassValue | null | undefined,
 	variantProps?: () => Record<string, unknown>,
 	instance?: () => PresetLike | undefined
-): PresentationView {
+): PresentationSnapshot {
 	return createPresentation({
 		preset: () => presetKey() as PresetKey | undefined,
 		bond: () => bond,

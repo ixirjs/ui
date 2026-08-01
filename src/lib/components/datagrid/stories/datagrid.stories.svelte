@@ -275,9 +275,12 @@
 	{/snippet}
 </Story>
 
-<!-- Sortable columns: `sortable="<field>"` marks a column clickable; clicking toggles its
-     `direction` and fires `onsort` with `{ id, by, direction }` plus the real click event in
-     callback context. The story owns the ordering and never mutates source rows. -->
+<!-- Sortable columns: `sortable="<field>"` marks a column sortable. Activating it — by click or by
+     Enter/Space on the focused header — toggles the grid's single sort and fires `onsort` with
+     `{ id, by, direction }` plus the real event and a `click`/`keyboard` reason. Only one column
+     holds the sort, so `aria-sort` is present on that column alone; role="columnheader",
+     aria-sort and focusability all come from the grid's sortCapability rather than this markup.
+     The story owns the ordering and never mutates source rows. -->
 <Story name="Sortable Columns">
 	<div class="flex w-lg flex-col gap-2">
 		{#snippet sortIcon(field: SortField)}

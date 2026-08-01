@@ -1,6 +1,7 @@
 import { StepperBond, type IStepper } from '$ixirjs/ui/components/stepper/bond.svelte';
 import { internCapabilityFactory } from '$ixirjs/ui/shared/capability/intern';
 import { Bond, defineAtom, type BondStateProps } from '$ixirjs/ui/shared/bond';
+import { labelledControl } from '$ixirjs/ui/shared/capability/models/relationship.svelte';
 import { defineBond, type BondOf } from '$ixirjs/ui/shared';
 import {
 	defineAtomCapability,
@@ -41,7 +42,11 @@ export type StepBondElements = {
 // Capability slots and shared helpers
 // -----------------------------------------------------------------------------
 
-const STEP_ROOT = sharedCapabilityKey<void>({ owner: '@ixirjs/step', name: 'root', version: 1 });
+const STEP_HEADER_GROUP = sharedCapabilityKey<void>({
+	owner: '@ixirjs/step',
+	name: 'header-group',
+	version: 1
+});
 const STEP_INDICATOR = sharedCapabilityKey<void>({
 	owner: '@ixirjs/step',
 	name: 'indicator',
@@ -63,18 +68,17 @@ const STEP_SEPARATOR = sharedCapabilityKey<void>({
 // Atom definitions
 // -----------------------------------------------------------------------------
 
-export const StepRootAtom = defineAtom<StepBondView>('root', (atom) => {
-	atom.capability(stepRootPresentation());
-});
-export type StepRootAtom = InstanceType<typeof StepRootAtom>;
-
 export const StepIndicatorAtom = defineAtom<StepBondView>('indicator', (atom) => {
 	atom.capability(stepIndicatorPresentation());
 });
 export type StepIndicatorAtom = InstanceType<typeof StepIndicatorAtom>;
 
+// The header is the step's rendered container, so the group semantics and the label linkage live
+// here. They were declared on Step.Root, which renders no element of its own — see the note on
+// `atom: false` in step-root.svelte.
 export const StepHeaderAtom = defineAtom<StepBondView>('header', (atom) => {
 	atom.capability(stepStatusPresentation(STEP_HEADER, 'header'));
+	atom.capability(stepHeaderGrouping());
 });
 export type StepHeaderAtom = InstanceType<typeof StepHeaderAtom>;
 
@@ -98,22 +102,19 @@ export type StepSeparatorAtom = InstanceType<typeof StepSeparatorAtom>;
 // Atom capabilities
 // -----------------------------------------------------------------------------
 
-const stepRootPresentation = internCapabilityFactory(function stepRootPresentation() {
+const stepHeaderGrouping = internCapabilityFactory(function stepHeaderGrouping() {
 	return defineAtomCapability<void, AtomHost, StepBondView>({
-		slot: STEP_ROOT,
+		slot: STEP_HEADER_GROUP,
 		meta: {
-			projects: ['root'],
-			docs: 'Step root status and ARIA grouping projection.'
+			projects: ['header'],
+			docs: 'Step header grouping and disabled projection.'
 		},
 		attach: {
+			// aria-labelledby / aria-describedby are NOT written here: labelledControl projects them
+			// onto role:'control' from the node registry, so a consumer id on Step.Title is followed.
 			attrs: (_node, bond) => ({
-				'data-stepper': bond?.parent?.id ?? '',
-				'data-index': bond?.props.index ?? 0,
-				...stepStatusAttrs(bond),
-				'aria-disabled': bond?.isDisabled,
-				'aria-describedby': bond ? `step-description-${bond.id}` : undefined,
-				'aria-labelledby': bond ? `step-title-${bond.id}` : undefined,
-				role: 'group' as const
+				role: 'group' as const,
+				'aria-disabled': bond?.isDisabled
 			})
 		}
 	});
@@ -191,6 +192,8 @@ class StepBondBase extends Bond<StepBondProps> {
 			throw new Error('Step must be used within a Stepper context.');
 		}
 		this.#parent = stepperBond;
+		// Labels the step group from its own title and description atoms.
+		this.capability(labelledControl());
 	}
 
 	get isActive() {
@@ -239,11 +242,10 @@ export const StepBond = defineBond({
 	preset: 'stepper.step',
 	base: StepBondBase,
 	atoms: {
-		root: StepRootAtom,
 		indicator: StepIndicatorAtom,
-		header: StepHeaderAtom,
-		title: StepTitleAtom,
-		description: StepDescriptionAtom,
+		header: { atom: StepHeaderAtom, role: 'control' },
+		title: { atom: StepTitleAtom, role: 'label' },
+		description: { atom: StepDescriptionAtom, role: 'description' },
 		body: StepBodyAtom,
 		separator: StepSeparatorAtom
 	}

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { PopoverBond, type PopoverBondProps } from './bond.svelte';
+	import { PopoverBond } from './bond.svelte';
 	import { OverlayBond } from '$ixirjs/ui/components/overlay';
 	import { controlledProp, useRoot } from '$ixirjs/ui/shared';
 	import type { PopoverRootProps } from './types';
@@ -17,14 +17,10 @@
 		position = 'absolute',
 		portal = undefined,
 		presets = undefined,
-		factory = defaultFactory,
+		factory = undefined,
 		onopenchange = undefined,
 		children = undefined
 	}: PopoverRootProps = $props();
-
-	function defaultFactory(props: PopoverBondProps): PopoverBond {
-		return PopoverBond.create(props);
-	}
 
 	const openProp = controlledProp<boolean, PopoverBond>({
 		get: () => open,
@@ -51,7 +47,7 @@
 		{
 			atom: false,
 			id: () => ID,
-			factory: (props) => factory(props),
+			factory: () => factory,
 			connect: (bond) => void openProp.connect(bond)
 		}
 	);

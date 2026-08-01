@@ -172,8 +172,8 @@ now asks that module to resolve three things:
   adapter)
 - the renderer props (`class`, `as`, folded attrs, and `snippet` only for snippet targets)
 
-The legacy snippet heuristic remains for compatibility. New code can use explicit `componentBase`
-and `snippetBase` helpers when function shape is ambiguous.
+The legacy snippet heuristic remains for compatibility. New code can use `componentBase` when an
+arrow component is ambiguous, or an explicit `{ kind: 'snippet', snippet }` target for a named snippet.
 
 ## Migration Plan
 

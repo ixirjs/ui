@@ -76,9 +76,16 @@ describe('scaffold — bonded family', () => {
 		}
 	});
 
-	it('passes the part across the seam rather than spreading a merged packet', () => {
-		expect(files['date-picker-header.svelte']).toContain('{part}');
-		expect(files['date-picker-root.svelte']).toContain('part={root}');
+	it('renders through the part-element seam rather than spreading a merged packet', () => {
+		// `usePartElement` takes the part/root handle directly and the snippet renders the element
+		// without an HtmlAtom component boundary. Spreading `part.props` would materialize the
+		// compatibility packet the seam exists to avoid.
+		expect(files['date-picker-header.svelte']).toContain('usePartElement(part, () => ({');
+		expect(files['date-picker-root.svelte']).toContain('usePartElement(root, () => ({');
+		for (const file of ['date-picker-root.svelte', 'date-picker-header.svelte']) {
+			expect(files[file]).toContain('{@render partElement(el, body)}');
+			expect(files[file]).not.toContain('...part.props');
+		}
 	});
 
 	it('declares roles in the atom map so relationships can respond to them', () => {

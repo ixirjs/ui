@@ -1,5 +1,6 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import { type Base } from '$ixirjs/ui/components/atom';
+	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
 	import { usePart } from '$ixirjs/ui/shared';
 	import { AlertBond } from './bond.svelte';
 	import type { AlertActionsProps } from './types';
@@ -16,12 +17,15 @@
 		preset: () => preset
 	});
 	const bond = part.bond;
+
+	const el = usePartElement(part, () => ({
+		class: ['alert-actions border-border mt-3 flex items-center gap-2', '$preset', klass],
+		...restProps
+	}));
 </script>
 
-<HtmlAtom
-	class={['alert-actions border-border mt-3 flex items-center gap-2', '$preset', klass]}
-	{...restProps}
-	{part}
->
+{#snippet body()}
 	{@render children?.({ alert: bond! })}
-</HtmlAtom>
+{/snippet}
+
+{@render partElement(el, body)}

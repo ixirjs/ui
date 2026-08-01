@@ -20,7 +20,7 @@
 		query = $bindable(''),
 		presets = undefined,
 		// Arrow wrapper keeps the constructor facade bound when passed as a default factory.
-		factory = (props: SelectStateProps) => SelectBond.create(props),
+		factory = undefined,
 		children = undefined,
 		onopenchange = undefined,
 		onvaluechange = undefined,
@@ -88,7 +88,7 @@
 			query: queryProp,
 			presets: () => presets
 		},
-		{ atom: false, id: () => ID, factory: (props) => factory(props) }
+		{ atom: false, id: () => ID, factory: () => factory }
 	);
 
 	const bond = root.bond;

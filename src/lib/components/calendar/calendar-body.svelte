@@ -1,7 +1,7 @@
 <script lang="ts">
 	import CalendarDay from './calendar-day.svelte';
 	import { CalendarBond } from './bond.svelte';
-	import { HtmlAtom } from '$ixirjs/ui/components/atom';
+	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
 	import { usePart } from '$ixirjs/ui/shared';
 
 	let {
@@ -38,13 +38,14 @@
 		}
 		return weeks.filter((week) => week.some((day) => !day.offmonth)).flat();
 	});
+
+	const el = usePartElement(part, () => ({
+		class: ['col-span-full grid w-full grid-cols-subgrid', '$preset', klass],
+		...restProps
+	}));
 </script>
 
-<HtmlAtom
-	class={['col-span-full grid w-full grid-cols-subgrid', '$preset', klass]}
-	{...restProps}
-	{part}
->
+{#snippet body()}
 	{#each visibleDays as day (day.id)}
 		{#if !outsideDays && day.offmonth}
 			<div aria-hidden="true"></div>
@@ -59,4 +60,6 @@
 			/>
 		{/if}
 	{/each}
-</HtmlAtom>
+{/snippet}
+
+{@render partElement(el, body)}

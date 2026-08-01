@@ -2,7 +2,7 @@
 	import { addMonths, format, isToday, startOfDay, subMonths } from '$ixirjs/ui/utils/date';
 	import type { CalendarRange, CalendarRootProps, Day, Month } from './types';
 	import { CalendarBond } from './bond.svelte';
-	import { HtmlAtom } from '$ixirjs/ui/components/atom';
+	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
 
 	import './calendar.css';
 	import { useRoot } from '$ixirjs/ui/shared';
@@ -26,7 +26,7 @@
 		onvaluechange = undefined,
 		onrangechange = undefined,
 		onpivotechange = undefined,
-		factory = (props) => CalendarBond.create(props),
+		factory = undefined,
 		children = undefined,
 		...restProps
 	}: CalendarRootProps = $props();
@@ -189,7 +189,7 @@
 		{
 			preset: () => preset ?? 'calendar',
 			id: () => ID,
-			factory: (props) => factory(props),
+			factory: () => factory,
 			// The callback bond must be live before the root Atom's capabilities can fire a change.
 			connect: (owner) => (callbackState.bond = owner)
 		}
@@ -199,13 +199,16 @@
 	export function getBond() {
 		return bond;
 	}
+
+	const el = usePartElement(root, () => ({
+		class: ['h-fit w-full gap-px', '$preset', klass],
+		'data-atom': 'calendar-root',
+		...restProps
+	}));
 </script>
 
-<HtmlAtom
-	class={['h-fit w-full gap-px', '$preset', klass]}
-	data-atom="calendar-root"
-	{...restProps}
-	part={root}
->
+{#snippet body()}
 	{@render children?.({ calendar: bond })}
-</HtmlAtom>
+{/snippet}
+
+{@render partElement(el, body)}

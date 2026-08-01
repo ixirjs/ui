@@ -4,8 +4,9 @@
 >
 	import { untrack } from 'svelte';
 	import { useRoot } from '@ixirjs/ui/shared';
-	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
-	import { DataGridRowBond, type DataGridRowBondProps } from './bond.svelte';
+	import { type Base } from '$ixirjs/ui/components/atom';
+	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
+	import { DataGridRowBond } from './bond.svelte';
 	import type { DataGridBond } from '$ixirjs/ui/components/datagrid/bond.svelte';
 	import { setDatagridRowRenderContext } from '$ixirjs/ui/components/datagrid/context';
 	import type { DatagridRowProps } from '$ixirjs/ui/components/datagrid/types';
@@ -19,7 +20,7 @@
 		value,
 		rows = 'auto',
 		data = undefined,
-		factory = defaultFactory,
+		factory = undefined,
 		children = undefined,
 		onclick = undefined,
 		...restProps
@@ -36,7 +37,7 @@
 		{
 			preset: () => preset,
 			id: () => ID,
-			factory: (props) => factory(props as DataGridRowBondProps<T>),
+			factory: () => factory as never,
 			// Cells claim their index and the grid Bond from this context; publish it before the row
 			// Atom is created so the render order the cells observe is unchanged. The row Bond already
 			// resolved the grid, so cells read it from here instead of walking context again.
@@ -54,29 +55,28 @@
 	const unmount = untrack(() => (isHeader ? undefined : bond.mount()));
 	$effect(() => unmount);
 
-	function defaultFactory(props: DataGridRowBondProps<T>) {
-		return DataGridRowBond.create<T>(props);
-	}
-
 	function handleClick(event: MouseEvent) {
 		const onClick = onclick as ((event: MouseEvent) => void) | undefined;
 		onClick?.(event);
 	}
+
+	const el = usePartElement(root, () => ({
+		class: [
+			'datagrid-row items-center border-b bg-transparent',
+			!isHeader && 'hover:bg-foreground/2 active:bg-foreground/4 transition-colors duration-100',
+			isHeader && 'header-tr',
+			isSelected && 'bg-primary/2 hover:bg-primary/4 active:bg-primary/6',
+			'$preset',
+			klass
+		],
+		...restProps,
+		style: `--rows:${rows}`,
+		onclick: handleClick
+	}));
 </script>
 
-<HtmlAtom
-	{...restProps}
-	part={root}
-	class={[
-		'datagrid-row items-center border-b bg-transparent',
-		!isHeader && 'hover:bg-foreground/2 active:bg-foreground/4 transition-colors duration-100',
-		isHeader && 'header-tr',
-		isSelected && 'bg-primary/2 hover:bg-primary/4 active:bg-primary/6',
-		'$preset',
-		klass
-	]}
-	style="--rows:{rows}"
-	onclick={handleClick}
->
+{#snippet body()}
 	{@render children?.({ row: bond })}
-</HtmlAtom>
+{/snippet}
+
+{@render partElement(el, body)}

@@ -1,9 +1,4 @@
-import {
-	defineFocusedCapability,
-	sharedCapabilityKey,
-	type Capability,
-	type CapabilityMetadata
-} from '$ixirjs/ui/shared/bond';
+import { type Capability } from '$ixirjs/ui/shared/bond';
 import {
 	closeOnEscape,
 	type EscapeHandler
@@ -15,41 +10,26 @@ import {
 	type OutsidePressOptions
 } from '$ixirjs/ui/components/overlay/policies/dismiss.svelte';
 
-export type DismissibleSurfaceCapabilityBundle = readonly Capability[] & {
-	readonly meta: CapabilityMetadata;
-};
-
-const DISMISSIBLE_SURFACE = sharedCapabilityKey<readonly Capability[]>({
-	owner: '@ixirjs/cap',
-	name: 'focused:dismissible-surface',
-	version: 1
-});
-
 export interface DismissibleSurfaceCapabilityOptions {
 	escape?: Capability<EscapeHandler> | false;
 	outsidePress?: OutsidePressOptions | false;
 	backdropPress?: DismissHandlerOptions | false;
 }
 
+/**
+ * Escape, outside-press, and backdrop-press dismissal, as a plain list to spread into a Bond.
+ *
+ * This used to also register a marker capability holding a frozen copy of the list. Nothing read
+ * that copy — the registry is the source of truth — so it cost one slot and one descriptor per
+ * overlay to describe what spreading the array already says.
+ */
 export function dismissPolicy(
 	options: DismissibleSurfaceCapabilityOptions = {}
-): DismissibleSurfaceCapabilityBundle {
+): readonly Capability[] {
 	const capabilities: Capability[] = [];
 	if (options.escape !== false) capabilities.push(options.escape ?? closeOnEscape);
 	if (options.outsidePress !== false) capabilities.push(outsidePressPolicy(options.outsidePress));
 	if (options.backdropPress !== false)
 		capabilities.push(backdropPressPolicy(options.backdropPress));
-
-	const marker = defineFocusedCapability({
-		slot: DISMISSIBLE_SURFACE,
-		capabilities,
-		meta: {
-			projects: ['surface', 'backdrop'],
-			docs: 'Layer 2 bundle for Escape, outside-press, and backdrop-press dismissal.'
-		}
-	});
-
-	return Object.assign([marker, ...capabilities], {
-		meta: marker.meta
-	}) as DismissibleSurfaceCapabilityBundle;
+	return capabilities;
 }

@@ -1,6 +1,7 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'p', B extends Base = Base">
 	import type { TabDescriptionProps } from '$ixirjs/ui/components/tabs/types';
-	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import { type Base } from '$ixirjs/ui/components/atom';
+	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
 	import { usePart } from '$ixirjs/ui/shared';
 	import { TabBond } from './bond.svelte';
 
@@ -14,8 +15,17 @@
 	const part = usePart(TabBond, 'description', () => restProps, {
 		preset: () => preset
 	});
+
+	const el = usePartElement(part, () => ({
+		as,
+		// This part declares no base classes; `''` is exactly HtmlAtom's own `class` default.
+		class: '',
+		...restProps
+	}));
 </script>
 
-<HtmlAtom {as} {...restProps} {part}>
+{#snippet body()}
 	{@render children?.({ tab: part.bond })}
-</HtmlAtom>
+{/snippet}
+
+{@render partElement(el, body)}

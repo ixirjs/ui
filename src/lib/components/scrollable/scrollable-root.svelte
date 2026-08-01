@@ -1,6 +1,7 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
 	import { useRoot } from '$ixirjs/ui/shared';
-	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import { type Base } from '$ixirjs/ui/components/atom';
+	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
 	import { ScrollableBond } from './bond.svelte';
 	import type { ScrollableRootProps } from './types';
 
@@ -17,7 +18,7 @@
 		preset = undefined,
 		disabled = false,
 		open = true,
-		factory = (props) => ScrollableBond.create(props),
+		factory = undefined,
 		children,
 		...restProps
 	}: ScrollableRootProps<E, B> = $props();
@@ -79,21 +80,24 @@
 			open: [() => open, (v) => (open = v)],
 			isScrolling: [() => isScrolling, (v) => (isScrolling = v ?? false)]
 		},
-		{ preset: () => preset, id: () => ID, factory: (props) => factory(props) }
+		{ preset: () => preset, id: () => ID, factory: () => factory }
 	);
 	const bond: ScrollableBond = root.bond;
 
 	export function getBond(): ScrollableBond {
 		return bond;
 	}
+
+	const el = usePartElement(root, () => ({
+		as: 'div',
+		class: ['scrollable-root relative box-content overflow-hidden', '$preset', klass],
+		...root.props,
+		...restProps
+	}));
 </script>
 
-<HtmlAtom
-	as="div"
-	class={['scrollable-root relative box-content overflow-hidden', '$preset', klass]}
-	{...root.props}
-	{...restProps}
-	part={root}
->
+{#snippet body()}
 	{@render children?.({ scrollable: bond })}
-</HtmlAtom>
+{/snippet}
+
+{@render partElement(el, body)}

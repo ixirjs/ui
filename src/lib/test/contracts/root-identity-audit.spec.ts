@@ -28,10 +28,10 @@ const BINDING_SEAMS = ['bindBond', 'useRoot'];
 
 /**
  * Authoring exports that are deliberately not Bond-binding seams. `usePart` binds a *descendant*
- * to a Bond its root already owns and seeded; `fuse`/`defineBond` are declaration-time and render
+ * to a Bond its root already owns and seeded; `defineBond` is declaration-time and render
  * nothing. Anything not listed in either set is unclassified and fails.
  */
-const NON_BINDING_EXPORTS = ['usePart', 'fuse', 'defineBond'];
+const NON_BINDING_EXPORTS = ['usePart', 'defineBond'];
 
 const AUTHORING_BARREL = join(process.cwd(), 'src/lib/shared/authoring/index.ts');
 const COMPONENTS = join(process.cwd(), 'src/lib/components');
@@ -78,11 +78,12 @@ describe('bond root identity seeding', () => {
 	it('declares only seam names the library still exports', () => {
 		// Guards the other direction: a renamed seam would stop matching any source and silently
 		// audit nothing. Existence is checked against the exports rather than against current root
-		// usage — every root binds through `useRoot` today, but `bindBond` remains the public
+		// usage — every root binds through `useRoot` today, but `bindBond` remains the experimental
 		// primitive, and it must stay listed so a root that reaches for it directly is still audited.
 		const exported = [
 			readFileSync(AUTHORING_BARREL, 'utf8'),
-			readFileSync(join(process.cwd(), 'src/lib/public/shared.ts'), 'utf8')
+			readFileSync(join(process.cwd(), 'src/lib/public/shared.ts'), 'utf8'),
+			readFileSync(join(process.cwd(), 'src/lib/public/experimental.ts'), 'utf8')
 		].join('\n');
 		const missing = BINDING_SEAMS.filter((seam) => !exported.includes(seam));
 		expect(missing).toEqual([]);
@@ -102,7 +103,7 @@ describe('bond root identity seeding', () => {
 	 * One seam, enforced rather than observed.
 	 *
 	 * `useRoot` is the seam every root binds through — with `atom: false` for a root that renders no
-	 * element of its own. `bindBond` remains the exported primitive `useRoot` delegates to, and stays
+	 * element of its own. `bindBond` is the experimental primitive `useRoot` delegates to, and stays
 	 * listed in BINDING_SEAMS so that a root reaching for it directly is still identity-audited. But
 	 * a root reaching for it directly is exactly what this rule exists to prevent: it re-splits the
 	 * root story into two shapes and re-opens the hand-written share/adopt sequence that

@@ -17,4 +17,4 @@ export const PRESET_SKIP = new Set([
 	...MOTION_KEYS
 ]);
 
-export const VARIANTS_SKIP = new Set(PRESET_SKIP);
+export const VARIANTS_SKIP = PRESET_SKIP;

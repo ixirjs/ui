@@ -8,7 +8,6 @@ import {
 } from '$ixirjs/ui/components/popover/bond.svelte';
 import { Atom } from '$ixirjs/ui/shared/bond';
 import { defineBond, type BondOf } from '$ixirjs/ui/shared';
-import { getElementId } from '$ixirjs/ui/utils/dom.svelte';
 import type { CalendarBondProps } from '$ixirjs/ui/components/calendar/bond.svelte';
 
 // -----------------------------------------------------------------------------
@@ -172,22 +171,18 @@ export class DatePickerTriggerAtom extends PopoverTriggerAtom<DatePickerBondView
 	override get attrs() {
 		const isDisabled = this.requireBond().props.disabled ?? false;
 		const placeholder = this.requireBond().props.placeholder ?? 'Select a date';
-		const contentId = getElementId(
-			this.requireBond().id,
-			`${this.requireBond().namespace}-content`
-		);
 
+		// aria-expanded, aria-controls, aria-disabled and tabindex come from the overlay trigger
+		// policy via role:'trigger' (see super.attrs). They were restated here, and the restated
+		// aria-controls rebuilt the content id from the naming convention rather than resolving the
+		// registered content Atom.
 		return {
 			...super.attrs,
 			role: 'combobox',
-			'aria-expanded': this.requireBond().isOpen,
-			'aria-controls': contentId,
 			'aria-label': 'Date picker',
-			'aria-disabled': isDisabled,
 			placeholder,
 			disabled: isDisabled,
-			readonly: true,
-			tabindex: isDisabled ? -1 : 0
+			readonly: true
 		};
 	}
 }

@@ -1,6 +1,7 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
 	import { controlledProp, useRoot } from '$ixirjs/ui/shared';
-	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import { type Base } from '$ixirjs/ui/components/atom';
+	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
 	import { TreeBond } from './bond.svelte';
 	import type { TreeRootProps } from './types';
 
@@ -13,7 +14,7 @@
 		preset = undefined,
 		presets = undefined,
 		children = undefined,
-		factory = (props) => TreeBond.create(props),
+		factory = undefined,
 		onopenchange = undefined,
 		...restProps
 	}: TreeRootProps<E, B> = $props();
@@ -35,7 +36,7 @@
 		{
 			preset: () => preset,
 			id: () => ID,
-			factory: (props) => factory(props)
+			factory: () => factory
 		}
 	);
 	const bond: TreeBond = root.bond;
@@ -43,8 +44,16 @@
 	export function getBond(): TreeBond {
 		return bond;
 	}
+
+	const el = usePartElement(root, () => ({
+		class: ['flex flex-col', '$preset', klass],
+		...root.props,
+		...restProps
+	}));
 </script>
 
-<HtmlAtom class={['flex flex-col', '$preset', klass]} {...root.props} {...restProps} part={root}>
+{#snippet body()}
 	{@render children?.({ tree: bond })}
-</HtmlAtom>
+{/snippet}
+
+{@render partElement(el, body)}

@@ -4,7 +4,7 @@ import {
 	sharedCapabilityKey,
 	type AtomHost
 } from '$ixirjs/ui/shared/capability';
-import { focus, getElementId, isBrowser } from '$ixirjs/ui/utils/dom.svelte';
+import { focus, isBrowser } from '$ixirjs/ui/utils/dom.svelte';
 import type { OverlayView } from '$ixirjs/ui/components/overlay';
 import {
 	closeOverlay,
@@ -461,7 +461,9 @@ export function popoverOverlayPresentation<B extends OverlayView>() {
 		attach: {
 			attrs: (_node, bond) => {
 				if (!bond) return {};
-				const triggerId = getElementId(bond.id, `${bond.namespace}-trigger`);
+				// Resolved through the node registry, not rebuilt from the id convention: a consumer
+				// id on the trigger wins on that element, which left this pointing at nothing.
+				const triggerId = bond.nodeByPart('trigger')?.id;
 				const isOpen = overlayIsOpen(bond);
 				const isDisabled = overlayIsDisabled(bond);
 				const isActive = isOpen && !isDisabled;
@@ -469,7 +471,7 @@ export function popoverOverlayPresentation<B extends OverlayView>() {
 				return {
 					role: 'dialog',
 					'aria-modal': false,
-					'aria-labelledby': triggerId,
+					...(triggerId ? { 'aria-labelledby': triggerId } : {}),
 					inert: !isActive ? true : undefined,
 					tabindex: -1,
 					'data-active': isActive,

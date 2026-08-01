@@ -121,7 +121,7 @@ identity; reminting a symbol on every spread read would rerun mount/cleanup and
 break lifecycle locality.
 
 **Share** — the low-level operation that sets a Bond into Svelte context. Roots use `useRoot(...)`,
-which constructs, activates, publishes and destroys the Bond (delegating to `bindBond(...)`, still
+which constructs, activates, publishes and destroys the Bond (delegating to the experimental `bindBond(...)`, still
 the exported primitive, for the construction and lifecycle half). A root that renders no element of
 its own passes `atom: false`. Sub-components retrieve via `FooBond.get()` or `usePart(...)`.
 See §"Bond context plumbing".
@@ -140,6 +140,12 @@ resolver pipeline lives in `atom/resolvers.ts` (`resolvePreset`, `resolveLocalVa
 native path directly; only custom renderers, snippets, motion, or renderer lifecycle hooks enter
 the richer `HtmlElement` adapter. Current binding notes live in `src/lib/shared/README.md` and child
 READMEs.
+
+**Part element seam** — `usePartElement(...)` + the `partElement` snippet render a bonded part's
+element without an `HtmlAtom` component boundary, running the same presentation cascade inside the
+part's own init. Its config thunk returns an `HtmlAtom` props object, so precedence stays ordinary
+object-literal order. Parts needing the rich path (`base`, motion, lifecycle hooks) route back to
+`<HtmlAtom>`, which remains the single lifecycle handler. See AGENTS.md → "the element seam".
 
 **`Bond.namespace` vs `Bond.preset`** — two _distinct_ identities, kept
 separate on purpose:

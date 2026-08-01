@@ -39,10 +39,10 @@ declare module '@ixirjs/ui/components/tree' {
 
 	// ── Fuse two components into one ───────────────────────────────────────────
 	const fuseCode = `import { DialogBond, PopoverBond } from '@ixirjs/ui/experimental';
-import { fuse } from '@ixirjs/ui/shared';
+import { defineBond } from '@ixirjs/ui/shared';
 
 // PopoverDialog — a new family composed from two existing definitions.
-export const PopoverDialogBond = fuse({
+export const PopoverDialogBond = defineBond({
   name: 'popover-dialog',
   parts: [PopoverBond, DialogBond], // ordered union; later slots win
   atoms: {}
@@ -164,7 +164,7 @@ export const statusPresentation = defineAtomCapability({
 	<title>Extending & Fusing — Svelte Atoms</title>
 	<meta
 		name="description"
-		content="Extend, fuse, and author components with defineBond, fuse, and capabilities."
+		content="Extend, compose, and author components with defineBond and capabilities."
 	/>
 </svelte:head>
 
@@ -174,9 +174,9 @@ export const statusPresentation = defineAtomCapability({
 		<Section.Subtitle>
 			Every compound component has a <strong>Bond</strong> that coordinates rendered
 			<strong>Atoms</strong> and shared <strong>capabilities</strong>. Because a bond spec is data,
-			the set of bonds is closed under combination: you can extend one, fuse two, author a new one,
-			and project shared behavior as a capability over the same public seam. Concrete component Bond
-			definitions are expert APIs imported from
+			the set of bonds is closed under combination: you can extend one, compose two, author a new
+			one, and project shared behavior as a capability over the same public seam. Concrete component
+			Bond definitions are expert APIs imported from
 			<code class="bg-muted text-foreground rounded px-1.5 py-0.5 text-xs"
 				>@ixirjs/ui/experimental</code
 			>.
@@ -194,7 +194,7 @@ export const statusPresentation = defineAtomCapability({
 			</li>
 			<li>
 				<strong>Fuse</strong> — combine two bonds into a new one (<code
-					class="bg-muted text-foreground rounded px-1.5 py-0.5 text-xs">fuse(...)</code
+					class="bg-muted text-foreground rounded px-1.5 py-0.5 text-xs">defineBond parts:</code
 				>)
 			</li>
 			<li>
@@ -234,9 +234,9 @@ export const statusPresentation = defineAtomCapability({
 	<Section.Header>
 		<Section.Title>Fuse two components</Section.Title>
 		<Section.Subtitle>
-			<code class="bg-muted text-foreground rounded px-1.5 py-0.5 text-xs">fuse</code> unions the parts'
+			<code class="bg-muted text-foreground rounded px-1.5 py-0.5 text-xs">parts:</code> unions the parts'
 			Atoms and concatenates their capabilities, then resolves each slot last-wins. The result is a first-class
-			bond you can fuse again.
+			bond you can compose again.
 		</Section.Subtitle>
 	</Section.Header>
 
@@ -366,9 +366,7 @@ export const statusPresentation = defineAtomCapability({
 			class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">preset</code
 		>
 		— no new bond needed. Reach for
-		<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">parts</code>/<code
-			class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">fuse</code
-		>
+		<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">parts</code>
 		only when you need new
 		<em>behavior</em> (a new Atom slot, a different capability, or two components' behavior in one).
 	</DocCallout>

@@ -4,8 +4,7 @@ import {
 	componentBase,
 	resolveRenderTarget,
 	resolveRendererComponent,
-	resolveRendererProps,
-	snippetBase
+	resolveRendererProps
 } from './render-target';
 
 function FallbackRenderer() {}
@@ -44,7 +43,7 @@ describe('render target normalization', () => {
 	it('lets callers mark a function as a snippet base explicitly', () => {
 		function namedSnippet() {}
 		const snippet = namedSnippet as unknown as Snippet;
-		const target = resolveRenderTarget(snippetBase(snippet), fallbackRenderer);
+		const target = resolveRenderTarget({ kind: 'snippet', snippet }, fallbackRenderer);
 
 		expect(target).toEqual({ kind: 'snippet', snippet });
 	});

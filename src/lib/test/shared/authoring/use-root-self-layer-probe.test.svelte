@@ -6,8 +6,7 @@
 	const ID = $props.id();
 	const DECLARED_LAYER: PresetEntryRecord = { class: 'declared-layer' };
 
-	// No `presetLayer` option is passed. The layer must come from the definition's
-	// `atoms: { root: { atom, selfLayer: true } }` alone.
+	// No `presetLayer` option is passed: the root resolves `presets.root` on its own.
 	const root = useRoot(
 		SelfLayerProbeBond,
 		{ presets: () => ({ root: DECLARED_LAYER }) },

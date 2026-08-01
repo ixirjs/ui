@@ -33,7 +33,9 @@
 		...restProps
 	}: Props<T> = $props();
 
-	const bond = DataGridBond.required<T>('DataGrid.VirtualBody must be used within DataGrid.Root.');
+	const bond = DataGridBond.getOrThrow<T>(
+		'DataGrid.VirtualBody must be used within DataGrid.Root.'
+	);
 	// Key-addressed cache survives reorder and invalidates naturally when a key changes.
 	// eslint-disable-next-line svelte/prefer-svelte-reactivity
 	const measurements = new Map<string, number>();
@@ -100,15 +102,30 @@
 		return () => observer.disconnect();
 	}
 
-	function observeRow(node: HTMLDivElement, key: string) {
-		const commit = () => {
-			const next = node.getBoundingClientRect().height;
-			if (!next || Object.is(measurements.get(key), next)) return;
-			measurements.set(key, next);
+	// One revision bump per turn. Each mounted row used to bump on its own, and `layout` rebuilds
+	// every entry — so mounting a window of R rows cost R full O(items) passes.
+	let bumpScheduled = false;
+	function bumpMeasurements() {
+		if (bumpScheduled) return;
+		bumpScheduled = true;
+		queueMicrotask(() => {
+			bumpScheduled = false;
 			measurementRevision += 1;
-		};
-		commit();
-		const observer = new ResizeObserver(commit);
+		});
+	}
+
+	// Stable function, and the key comes off the element: an inline `(node) => observeRow(node, key)`
+	// is a new identity on every re-render, so Svelte tore down and rebuilt every row's
+	// ResizeObserver each time the layout changed — which the observers themselves triggered.
+	// ResizeObserver reports the initial size on observe, so no eager measuring read is needed.
+	function observeRow(node: HTMLDivElement) {
+		const observer = new ResizeObserver(([entry]) => {
+			const key = node.dataset.key;
+			const next = entry?.borderBoxSize?.[0]?.blockSize ?? node.offsetHeight;
+			if (!key || !next || Object.is(measurements.get(key), next)) return;
+			measurements.set(key, next);
+			bumpMeasurements();
+		});
 		observer.observe(node);
 		return () => observer.disconnect();
 	}
@@ -137,7 +154,7 @@
 				data-key={entry.key}
 				data-active={entry.key === activeKey ? 'true' : undefined}
 				style={`position:absolute;inset-inline:0;transform:translateY(${entry.start}px);`}
-				{@attach (node) => observeRow(node, entry.key)}
+				{@attach observeRow}
 			>
 				{@render children({
 					item: entry.item,

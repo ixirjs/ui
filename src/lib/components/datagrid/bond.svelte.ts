@@ -8,7 +8,14 @@ import {
 	SELECTION,
 	type SelectionModel
 } from '$ixirjs/ui/shared/capability/models/selection.svelte';
-import type { StateChangeContext } from '$ixirjs/ui/types';
+import {
+	createSort,
+	sortCapability,
+	SORT,
+	type SortModel,
+	type SortState
+} from '$ixirjs/ui/shared/capability/models/sort.svelte';
+import type { Direction, StateChangeContext } from '$ixirjs/ui/types';
 
 // -----------------------------------------------------------------------------
 // Public types
@@ -48,6 +55,10 @@ export interface IDataGrid<T = unknown> {
 	mountRow(id: string, row: IDataGridRow<T>): () => void;
 	mountColumn(id: string, col: IDataGridColumn): () => void;
 	selectionCapability(): Capability | undefined;
+	sortCapability(): Capability | undefined;
+	readonly sort: SortModel;
+	seedSort(field: string, direction: Direction): void;
+	onSortCommit(id: string, listener: (state: SortState) => void): () => void;
 	takeValuesChangeContext(): Pick<StateChangeContext, 'event'>;
 }
 
@@ -80,6 +91,27 @@ export type DataGridFooterAtom = InstanceType<typeof DataGridFooterAtom>;
 class DataGridBondBase<T = unknown> extends Bond<DataGridBondProps<T>> implements IDataGrid<T> {
 	#valuesChangeContext: Pick<StateChangeContext, 'event'> | undefined;
 
+	// One sort state for the whole grid. Previously each column owned its own `direction` and
+	// flipped it locally, so clicking column B left column A still reporting itself as sorted.
+	#sortState = $state<SortState>({});
+
+	// Plain Map: per-column commit listeners, registration bookkeeping rather than reactive state.
+	// eslint-disable-next-line svelte/prefer-svelte-reactivity
+	#sortListeners = new Map<string, (state: SortState) => void>();
+
+	// Two-state cycle, matching the previous asc/desc toggle. The model's default cycle adds an
+	// unsorted third step, which would be a behavior change for existing grids.
+	readonly sort: SortModel = createSort(
+		{
+			get: () => this.#sortState,
+			set: (state) => {
+				this.#sortState = state;
+				for (const listener of this.#sortListeners.values()) listener(state);
+			}
+		},
+		{ cycle: ['asc', 'desc'] }
+	);
+
 	// Row-selection over props.values; mode fixed to 'multiple' to preserve legacy accumulation behaviour.
 	#selection: SelectionModel<string> = createSelection<string>({
 		get: () => this.props.values ?? [],
@@ -110,6 +142,10 @@ class DataGridBondBase<T = unknown> extends Bond<DataGridBondProps<T>> implement
 		super(props, 'datagrid');
 		// Projects aria-selected/data-selected via role:'item'; interactive:false — selection driven by row/checkbox.
 		this.capability(selectionCapability(this.#selection, { interactive: false }));
+		// Projects role="columnheader" + aria-sort + focusability onto columns via role:'column'.
+		// Registered here so every column shares one model; each column bond re-registers this same
+		// descriptor, exactly as rows re-register the selection capability.
+		this.capability(sortCapability(this.sort, { roles: ['column'] }));
 		// Eagerly create owned collections outside derived reads; collection() registers a capability.
 		void this.rows;
 		void this.columns;
@@ -180,6 +216,24 @@ class DataGridBondBase<T = unknown> extends Bond<DataGridBondProps<T>> implement
 	selectionCapability(): Capability | undefined {
 		return this.capability(SELECTION);
 	}
+
+	sortCapability(): Capability | undefined {
+		return this.capability(SORT);
+	}
+
+	/**
+	 * Point the shared sort at one column without notifying, so the capability's own toggle
+	 * continues from the direction that column is currently showing rather than restarting the
+	 * cycle. Called by a column the moment it is activated, before the toggle runs.
+	 */
+	seedSort(field: string, direction: Direction): void {
+		this.#sortState = { field, direction };
+	}
+
+	onSortCommit(id: string, listener: (state: SortState) => void): () => void {
+		this.#sortListeners.set(id, listener);
+		return () => this.#sortListeners.delete(id);
+	}
 }
 
 // -----------------------------------------------------------------------------
@@ -221,9 +275,6 @@ interface DataGridBondGenericFacade {
 	new <T = unknown>(props: DataGridBondProps<T>): DataGridBond<T>;
 	get<T = unknown>(): DataGridBond<T> | undefined;
 	getOrThrow<T = unknown>(message?: string): DataGridBond<T>;
-	optional<T = unknown>(): DataGridBond<T> | undefined;
-	required<T = unknown>(message?: string): DataGridBond<T>;
-	set<T = unknown>(bond: DataGridBond<T>): DataGridBond<T>;
 	create<T = unknown>(props: DataGridBondProps<T>): DataGridBond<T>;
 }
 

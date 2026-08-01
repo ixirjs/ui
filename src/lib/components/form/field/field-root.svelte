@@ -1,7 +1,8 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
 	import { onDestroy } from 'svelte';
 	import { useRoot } from '$ixirjs/ui/shared';
-	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import { type Base } from '$ixirjs/ui/components/atom';
+	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
 	import { FieldBond, type FieldStateProps } from './bond.svelte';
 	import type { FieldRootProps } from '$ixirjs/ui/components/form/types';
 	import { FormBond } from '$ixirjs/ui/components/form/bond.svelte';
@@ -20,7 +21,7 @@
 		schema = undefined,
 		validator = undefined,
 		extend = {},
-		factory = defaultFactory,
+		factory = undefined,
 		children = undefined,
 		...restProps
 	}: FieldRootProps<E, B> = $props();
@@ -48,22 +49,26 @@
 						?.validator) as FieldStateProps['validator'],
 			extend: () => extend
 		},
-		{ preset: () => preset, id: () => ID, factory: (props) => factory(props) }
+		{ preset: () => preset, id: () => ID, factory: () => factory }
 	);
 	const bond = root.bond;
 
 	const unmount = formBond?.mountField(bond.id, bond) ?? (() => {});
 	onDestroy(() => unmount());
 
-	function defaultFactory(props: FieldStateProps) {
-		return FieldBond.create(props);
-	}
-
 	export function getBond() {
 		return bond;
 	}
+
+	const el = usePartElement(root, () => ({
+		class: ['flex flex-col', '$preset', klass],
+		...root.props,
+		...restProps
+	}));
 </script>
 
-<HtmlAtom class={['flex flex-col', '$preset', klass]} {...root.props} {...restProps} part={root}>
+{#snippet body()}
 	{@render children?.({ field: bond })}
-</HtmlAtom>
+{/snippet}
+
+{@render partElement(el, body)}

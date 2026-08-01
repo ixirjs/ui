@@ -5,7 +5,8 @@
 	import type { TabHeaderProps } from '$ixirjs/ui/components/tabs/types';
 	import { usePart } from '$ixirjs/ui/shared';
 	import { TabBond } from './bond.svelte';
-	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import { type Base } from '$ixirjs/ui/components/atom';
+	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
 
 	let {
 		class: klass = '',
@@ -20,21 +21,24 @@
 	const bond = part.bond;
 	const isActive = $derived(bond.isActive);
 	const isDisabled = $derived(bond.props.disabled);
+
+	const el = usePartElement(part, () => ({
+		as: 'button',
+		class: [
+			'text-foreground/50 bg-foreground/0 hover:bg-foreground/5 active:bg-foreground/10 flex cursor-pointer items-center px-2 py-2 text-sm font-medium transition-colors duration-100',
+			isActive && 'text-primary bg-primary/5 hover:bg-primary/10 active:bg-primary/15',
+			isDisabled && 'opacity-50',
+			'$preset',
+			klass
+		],
+		type: 'button',
+		disabled: isDisabled,
+		...restProps
+	}));
 </script>
 
-<HtmlAtom
-	as="button"
-	class={[
-		'text-foreground/50 bg-foreground/0 hover:bg-foreground/5 active:bg-foreground/10 flex cursor-pointer items-center px-2 py-2 text-sm font-medium transition-colors duration-100',
-		isActive && 'text-primary bg-primary/5 hover:bg-primary/10 active:bg-primary/15',
-		isDisabled && 'opacity-50',
-		'$preset',
-		klass
-	]}
-	type="button"
-	disabled={isDisabled}
-	{...restProps}
-	{part}
->
+{#snippet body()}
 	{@render children?.({ tab: bond })}
-</HtmlAtom>
+{/snippet}
+
+{@render partElement(el, body)}

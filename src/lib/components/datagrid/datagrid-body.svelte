@@ -3,7 +3,8 @@
 	generics="T = unknown, E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base"
 >
 	import { DataGridBond } from './bond.svelte';
-	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import { type Base } from '$ixirjs/ui/components/atom';
+	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
 	import { usePart } from '@ixirjs/ui/shared';
 	import type { DatagridBodyProps } from './types';
 
@@ -19,8 +20,16 @@
 		preset: () => preset
 	});
 	const bond = part.bond as DataGridBond<T>;
+
+	// The explicit `bond` prop HtmlAtom took is exactly `part.bond`, which the seam already carries.
+	const el = usePartElement(part, () => ({
+		class: ['contents', '$preset', klass],
+		...restProps
+	}));
 </script>
 
-<HtmlAtom {...restProps} {bond} {part} class={['contents', '$preset', klass]}>
+{#snippet body()}
 	{@render children?.({ datagrid: bond })}
-</HtmlAtom>
+{/snippet}
+
+{@render partElement(el, body)}

@@ -27,10 +27,6 @@ export function componentBase(component: ComponentBaseValue): ExplicitComponentB
 	return { kind: 'component', component };
 }
 
-export function snippetBase(snippet: SnippetBaseValue): ExplicitSnippetBase {
-	return { kind: 'snippet', snippet };
-}
-
 function isExplicitBase(base: unknown): base is ExplicitBase {
 	if (!base || typeof base !== 'object') return false;
 	const value = base as Partial<ExplicitBase>;

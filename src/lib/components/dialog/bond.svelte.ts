@@ -185,7 +185,7 @@ export const DialogBond = defineBond({
 		})
 	],
 	atoms: {
-		root: { atom: DialogRootAtom, selfLayer: true },
+		root: { atom: DialogRootAtom },
 		content: DialogContentAtom,
 		header: { atom: DialogHeaderAtom, cardinality: 'many' },
 		title: DialogTitleAtom,

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { useRoot } from '$ixirjs/ui/shared';
-	import { TabBond, type TabBondProps } from './bond.svelte';
+	import { TabBond } from './bond.svelte';
 	import { TabsBond } from '$ixirjs/ui/components/tabs/bond.svelte';
 	import type { TabRootProps } from '$ixirjs/ui/components/tabs/types';
 
@@ -13,7 +13,7 @@
 		value,
 		disabled = false,
 		data = undefined,
-		factory = defaultFactory,
+		factory = undefined,
 		presets = undefined,
 		children
 	}: TabRootProps = $props();
@@ -26,16 +26,12 @@
 			data: () => data,
 			presets: () => presets
 		},
-		{ atom: false, id: () => ID, factory: (props) => factory(props) }
+		{ atom: false, id: () => ID, factory: () => factory }
 	);
 	const bond = root.bond;
 
 	const unmount = bond.mount();
 	$effect.pre(() => unmount);
-
-	function defaultFactory(props: TabBondProps<unknown>) {
-		return TabBond.create(props);
-	}
 
 	export function getBond() {
 		return bond;

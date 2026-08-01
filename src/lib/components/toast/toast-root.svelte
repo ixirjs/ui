@@ -1,5 +1,6 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import { type Base } from '$ixirjs/ui/components/atom';
+	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
 	import { ToastBond } from './bond.svelte';
 	import type { ToastRootProps } from './types';
 	import { controlledProp, useRoot } from '$ixirjs/ui/shared';
@@ -12,7 +13,7 @@
 		duration = 0,
 		dismissible = true,
 		preset = undefined,
-		factory = (props) => ToastBond.create(props),
+		factory = undefined,
 		children = undefined,
 		onopenchange = undefined,
 		...restProps
@@ -36,7 +37,7 @@
 		{
 			preset: () => preset,
 			id: () => ID,
-			factory: (props) => factory(props)
+			factory: () => factory
 		}
 	);
 	const bond = root.bond;
@@ -44,8 +45,17 @@
 	export function getBond() {
 		return bond;
 	}
+
+	const el = usePartElement(root, () => ({
+		// This part declares no base classes; `''` is exactly HtmlAtom's own `class` default.
+		class: '',
+		...root.props,
+		...restProps
+	}));
 </script>
 
-<HtmlAtom {...root.props} {...restProps} part={root}>
+{#snippet body()}
 	{@render children?.({ toast: bond })}
-</HtmlAtom>
+{/snippet}
+
+{@render partElement(el, body)}

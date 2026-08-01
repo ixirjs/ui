@@ -44,8 +44,10 @@ const DATAGRID_COLUMN_ROOT = sharedCapabilityKey<void>({
 // Atom definitions
 // -----------------------------------------------------------------------------
 
-export const DataGridColumnRootAtom = defineAtom<DataGridColumnBondView>('root', (atom) => {
-	atom.role('column');
+export const DataGridColumnRootAtom = defineAtom<DataGridColumnBondView>('root', (atom, bond) => {
+	// The column id is the sort field, carried as the role's projection context so one shared
+	// sortCapability can serve every column from a single slot.
+	atom.role('column', bond?.props.id);
 	atom.capability(datagridColumnPresentation());
 });
 export type DataGridColumnRootAtom = InstanceType<typeof DataGridColumnRootAtom>;
@@ -80,6 +82,8 @@ const datagridColumnPresentation = internCapabilityFactory(function datagridColu
 
 class DataGridColumnBondBase<T = unknown> extends Bond<DataGridColumnBondProps> {
 	readonly #parent: IDataGrid<T>;
+	#sortActivation: { event: Event; reason: 'click' | 'keyboard' } | undefined;
+	#onSortCommit: ((column: DataGridColumnBondBase<T>) => void) | undefined;
 
 	constructor(props: DataGridColumnBondProps) {
 		super(props, 'datagrid-column');
@@ -89,6 +93,26 @@ class DataGridColumnBondBase<T = unknown> extends Bond<DataGridColumnBondProps> 
 		}
 		this.#parent = datagrid;
 		this.capability(rowColumnCellLink());
+		// Re-register the grid's own sort descriptor so this column's atoms project against the one
+		// shared model — the same pattern rows use for the grid's selection capability.
+		const sort = datagrid.sortCapability();
+		if (sort) this.capability(sort);
+	}
+
+	/**
+	 * Stage an activation, then point the shared sort at this column so the capability's toggle
+	 * continues from the direction this column is showing. The capability's own handler runs next
+	 * and performs the toggle; the commit comes back through {@link mount}'s listener.
+	 */
+	beginSort(event: Event, reason: 'click' | 'keyboard'): void {
+		this.#sortActivation = { event, reason };
+		this.#parent.seedSort(this.id, this.props.direction);
+	}
+
+	takeSortActivation(): { event?: Event; reason?: 'click' | 'keyboard' } {
+		const activation = this.#sortActivation ?? {};
+		this.#sortActivation = undefined;
+		return activation;
 	}
 
 	// Preset namespace is datagrid.column (not the hyphenated DOM name datagrid-column).
@@ -124,16 +148,34 @@ class DataGridColumnBondBase<T = unknown> extends Bond<DataGridColumnBondProps> 
 		return this.props.sortable;
 	}
 
+	/** Called by the column component to receive sort commits for this column. */
+	set onSortCommit(listener: ((column: DataGridColumnBondBase<T>) => void) | undefined) {
+		this.#onSortCommit = listener;
+	}
+
 	mount(): () => void {
-		return this.#parent.mountColumn(this.id, this);
+		const unmountColumn = this.#parent.mountColumn(this.id, this);
+		const unlisten = this.#parent.onSortCommit(this.id, (state) => {
+			// Only the column that now owns the sort commits and reports; the others simply stop
+			// being the sorted column, which `aria-sort` already reflects through the shared model.
+			if (state.field !== this.id || !state.direction) return;
+			this.props.direction = state.direction;
+			this.#onSortCommit?.(this);
+		});
+		return () => {
+			unlisten();
+			unmountColumn();
+		};
 	}
 
 	asc(): void {
 		this.props.direction = 'asc';
+		this.#parent.seedSort(this.id, 'asc');
 	}
 
 	desc(): void {
 		this.props.direction = 'desc';
+		this.#parent.seedSort(this.id, 'desc');
 	}
 }
 
@@ -176,9 +218,6 @@ interface DataGridColumnBondGenericFacade {
 	new <T = unknown>(props: DataGridColumnBondProps): DataGridColumnBond<T>;
 	get<T = unknown>(): DataGridColumnBond<T> | undefined;
 	getOrThrow<T = unknown>(message?: string): DataGridColumnBond<T>;
-	optional<T = unknown>(): DataGridColumnBond<T> | undefined;
-	required<T = unknown>(message?: string): DataGridColumnBond<T>;
-	set<T = unknown>(bond: DataGridColumnBond<T>): DataGridColumnBond<T>;
 	create<T = unknown>(props: DataGridColumnBondProps): DataGridColumnBond<T>;
 }
 

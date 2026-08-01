@@ -1,7 +1,8 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import { type Base } from '$ixirjs/ui/components/atom';
+	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
 	import { controlledProp, useRoot } from '$ixirjs/ui/shared';
-	import { AccordionBond, type AccordionBondProps } from './bond.svelte';
+	import { AccordionBond } from './bond.svelte';
 	import type { AccordionRootProps } from './types';
 
 	const ID = $props.id();
@@ -17,7 +18,7 @@
 		onvaluechange = undefined,
 		onvalueschange = undefined,
 		children = undefined,
-		factory = defaultFactory,
+		factory = undefined,
 		preset = undefined,
 		presets = undefined,
 		...restProps
@@ -49,7 +50,7 @@
 		{
 			preset: () => preset,
 			id: () => ID,
-			factory: (props) => factory(props)
+			factory: () => factory
 		}
 	);
 	const bond = root.bond;
@@ -58,20 +59,19 @@
 		return left.length === right.length && left.every((item, index) => item === right[index]);
 	}
 
-	function defaultFactory(props: AccordionBondProps) {
-		return AccordionBond.create(props);
-	}
-
 	export function getBond() {
 		return bond;
 	}
+
+	const el = usePartElement(root, () => ({
+		class: ['bg-card border-border flex list-none flex-col', '$preset', klass],
+		...root.props,
+		...restProps
+	}));
 </script>
 
-<HtmlAtom
-	class={['bg-card border-border flex list-none flex-col', '$preset', klass]}
-	{...root.props}
-	{...restProps}
-	part={root}
->
+{#snippet body()}
 	{@render children?.({ accordion: bond })}
-</HtmlAtom>
+{/snippet}
+
+{@render partElement(el, body)}
