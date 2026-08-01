@@ -21,11 +21,15 @@
 	const apiSections: PropsSection[] = [
 		{ label: 'Tree.Root', presetKey: 'tree', props: treeRootProps },
 		{ label: 'Tree.Header', presetKey: 'tree.header', props: treeHeaderProps },
-		{ label: 'Tree.Body', presetKey: 'tree.body', props: treeBodyProps },
+		{ label: 'Tree.Body', presetKey: 'tree.body', props: treeBodyProps }
 	];
 
 	const _loaders = import.meta.glob('./examples/*.svelte');
-	const _sources = import.meta.glob('./examples/*.svelte', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+	const _sources = import.meta.glob('./examples/*.svelte', {
+		query: '?raw',
+		import: 'default',
+		eager: true
+	}) as Record<string, string>;
 	const ex = createExampleLoader(_loaders, _sources);
 </script>
 
@@ -41,7 +45,11 @@
 	{/snippet}
 
 	{#snippet examples()}
-		<DocExample title="File Tree" description="Nested Tree.Root components — each node is a Tree.Root with Header + Body." {...ex('./examples/file-tree.svelte')} />
+		<DocExample
+			title="File Tree"
+			description="Nested Tree.Root components — each node is a Tree.Root with Header + Body."
+			{...ex('./examples/file-tree.svelte')}
+		/>
 	{/snippet}
 
 	{#snippet apiReference()}

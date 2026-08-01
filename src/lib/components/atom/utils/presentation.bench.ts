@@ -3,10 +3,7 @@ import { type ClassValue } from '$svelte-atoms/core/utils';
 import { mergeClassesWithPreset } from './classes';
 import { extractRestProps } from './props';
 import type { ResolvedProps } from './cache';
-import {
-	legacyMergeClassesWithPreset,
-	legacyExtractRestProps
-} from './presentation.legacy';
+import { legacyMergeClassesWithPreset, legacyExtractRestProps } from './presentation.legacy';
 
 // Fixtures — real component-root shape: class={['<fallback>', '$preset', klass]}
 // with a class-only preset + resolved variants (see accordion-root.svelte).

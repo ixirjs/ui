@@ -30,7 +30,7 @@
 
 		oninput?.(ev, { value });
 
-		if(ev.defaultPrevented) {
+		if (ev.defaultPrevented) {
 			return;
 		}
 
@@ -46,15 +46,11 @@
 			writeInputValue(bond, v);
 		}
 	}
-	type='text'
+	type="text"
 	{placeholder}
 	{disabled}
 	{readonly}
-	class={cn(
-		INPUT_FIELD_CLASS,
-		preset?.class,
-		toClassValue(klass, bond)
-	)}
+	class={cn(INPUT_FIELD_CLASS, preset?.class, toClassValue(klass, bond))}
 	onchange={handleChange}
 	oninput={handleInput}
 	{...restProps}

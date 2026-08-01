@@ -20,7 +20,7 @@ const preset = setPreset({
 
 const accessibilityFeatures = [
 	'Use meaningful link text',
-	'Add rel=\'noopener noreferrer\' for external links',
+	"Add rel='noopener noreferrer' for external links",
 	'Ensure sufficient color contrast',
 	'Make focused links clearly visible',
 	'Screen reader friendly navigation'
@@ -29,23 +29,28 @@ const accessibilityFeatures = [
 const useCases = [
 	{
 		title: 'Internal Navigation',
-		description: 'Link to pages within your application with consistent, styled anchor elements that match your design system.'
+		description:
+			'Link to pages within your application with consistent, styled anchor elements that match your design system.'
 	},
 	{
 		title: 'External Links',
-		description: 'Link to external websites with target="_blank" and rel="noopener noreferrer" for security and UX best practices.'
+		description:
+			'Link to external websites with target="_blank" and rel="noopener noreferrer" for security and UX best practices.'
 	},
 	{
 		title: 'Inline Text Links',
-		description: 'Embed contextual links within paragraphs or body text with underline styling to signal clickability.'
+		description:
+			'Embed contextual links within paragraphs or body text with underline styling to signal clickability.'
 	},
 	{
 		title: 'Navigation Menus',
-		description: 'Build navigation bars, sidebars, and breadcrumbs using consistently styled link components.'
+		description:
+			'Build navigation bars, sidebars, and breadcrumbs using consistently styled link components.'
 	},
 	{
 		title: 'Call to Action',
-		description: 'Use styled link variants to create muted or destructive contextual links for secondary or dangerous actions.'
+		description:
+			'Use styled link variants to create muted or destructive contextual links for secondary or dangerous actions.'
 	}
 ];
 

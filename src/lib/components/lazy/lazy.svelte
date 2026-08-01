@@ -8,14 +8,15 @@
 
 	let err = $state();
 
-	untrack(() => promise
-		.then((c) => {
-			Lazy = c;
-		})
-		.catch((r) => {
-			err = r;
-		}
-	));
+	untrack(() =>
+		promise
+			.then((c) => {
+				Lazy = c;
+			})
+			.catch((r) => {
+				err = r;
+			})
+	);
 </script>
 
 <Lazy {...restProps}>

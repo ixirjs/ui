@@ -15,10 +15,6 @@
 	const headerProps = $derived(mergePresetProps(preset, 'stepper.header', restProps));
 </script>
 
-<HtmlAtom
-	{bond}
-	class={['stepper-header w-full', '$preset', klass]}
-	{...headerProps}
->
+<HtmlAtom {bond} class={['stepper-header w-full', '$preset', klass]} {...headerProps}>
 	{@render children?.({ stepper: bond })}
 </HtmlAtom>

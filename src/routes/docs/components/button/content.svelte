@@ -15,16 +15,18 @@
 		category: 'components',
 		depth: 'beginner',
 		prerequisites: ['atoms', 'styling'],
-		related: ['variants', 'preset'],
+		related: ['variants', 'preset']
 	};
 
 	const apiSections: PropsSection[] = [
-		{ label: 'Button', presetKey: 'button', props: buttonProps },
+		{ label: 'Button', presetKey: 'button', props: buttonProps }
 	];
 
 	const _loaders = import.meta.glob('./examples/*.svelte');
 	const _sources = import.meta.glob('./examples/*.svelte', {
-		query: '?raw', import: 'default', eager: true
+		query: '?raw',
+		import: 'default',
+		eager: true
 	}) as Record<string, string>;
 	const ex = createExampleLoader(_loaders, _sources);
 </script>
@@ -46,13 +48,29 @@
 	{/snippet}
 
 	{#snippet examples()}
-		<DocExample title="Basic Button" description="Simple button with default styling." {...ex('./examples/basic.svelte')} />
+		<DocExample
+			title="Basic Button"
+			description="Simple button with default styling."
+			{...ex('./examples/basic.svelte')}
+		/>
 
-		<DocExample title="Button Variants" description="Different visual styles for various contexts." {...ex('./examples/variants.svelte')} />
+		<DocExample
+			title="Button Variants"
+			description="Different visual styles for various contexts."
+			{...ex('./examples/variants.svelte')}
+		/>
 
-		<DocExample title="Button Sizes" description="Different sizes for various use cases." {...ex('./examples/sizes.svelte')} />
+		<DocExample
+			title="Button Sizes"
+			description="Different sizes for various use cases."
+			{...ex('./examples/sizes.svelte')}
+		/>
 
-		<DocExample title="Disabled State" description="Disabled buttons are non-interactive." {...ex('./examples/disabled.svelte')} />
+		<DocExample
+			title="Disabled State"
+			description="Disabled buttons are non-interactive."
+			{...ex('./examples/disabled.svelte')}
+		/>
 	{/snippet}
 
 	{#snippet apiReference()}

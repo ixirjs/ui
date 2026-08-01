@@ -6,7 +6,7 @@
 
 	type Element = HTMLElementTagNameMap[E];
 
-	const bond = DrawerBond.get();
+	const bond = DrawerBond.getOrThrow('<Drawer.Header /> must be used within a <Drawer.Root />');
 
 	let {
 		preset = undefined,
@@ -19,9 +19,6 @@
 	const headerProps = $derived(mergeAtomProps(atom, preset, restProps));
 </script>
 
-<HtmlAtom
-	{bond}
-	{...headerProps}
->
+<HtmlAtom {bond} {...headerProps}>
 	{@render children?.({ drawer: bond })}
 </HtmlAtom>

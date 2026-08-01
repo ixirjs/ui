@@ -1,6 +1,8 @@
 // @deprecated Import from `select/item` instead.
 export {
+	/** @deprecated Use `SelectItemController` instead. */
 	SelectItemController as DropdownItemController,
+	/** @deprecated Use `SelectItemProps` instead. */
 	type SelectItemProps as DropdownItemProps
 } from '../../select/item/controller.svelte';
 

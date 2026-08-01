@@ -12,9 +12,9 @@ export interface PresetEntryRecord {
 	class?: ClassValue;
 	as?: string;
 	base?: Base;
-	variants?: Record<string, Record<string, any>>;
-	compounds?: Array<Record<string, any>>;
-	defaults?: Record<string, any>;
+	variants?: Record<string, Record<string, unknown>>;
+	compounds?: Array<Record<string, unknown>>;
+	defaults?: Record<string, unknown>;
 	attachments?: Attachment[];
 }
 
@@ -25,6 +25,7 @@ export type PresetEntryValue = PresetEntryRecord | (() => PresetEntryRecord);
 // Arrays are merged in order (later entries win), enabling layered overrides.
 export type PresetEntry = (
 	bond: Bond | undefined | null,
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- public extension point: forwarded args are opaque
 	...args: any[]
 ) => PresetEntryValue | Array<PresetEntryValue>;
 
@@ -61,6 +62,7 @@ export interface PresetModuleMap {
 	'combobox.content': PresetEntry;
 	'select.content': PresetEntry;
 	'select.item': PresetEntry;
+	'select.trigger': PresetEntry;
 	'dropdown-menu.content': PresetEntry;
 	'dropdown-menu.item': PresetEntry;
 	'context-menu.content': PresetEntry;
@@ -99,6 +101,7 @@ export interface PresetModuleMap {
 	'list.group': PresetEntry;
 	'list.item': PresetEntry;
 	'menu.content': PresetEntry;
+	'menu.list': PresetEntry;
 	'popover.arrow': PresetEntry;
 	'popover.indicator': PresetEntry;
 	'popover.content': PresetEntry;

@@ -33,11 +33,15 @@
 		{ label: 'Tabs.Content', props: tabsContentProps },
 		{ label: 'Tab.Header', props: tabHeaderProps },
 		{ label: 'Tab.Body', props: tabBodyProps },
-		{ label: 'Tab.Description', props: tabDescriptionProps },
+		{ label: 'Tab.Description', props: tabDescriptionProps }
 	];
 
 	const _loaders = import.meta.glob('./examples/*.svelte');
-	const _sources = import.meta.glob('./examples/*.svelte', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+	const _sources = import.meta.glob('./examples/*.svelte', {
+		query: '?raw',
+		import: 'default',
+		eager: true
+	}) as Record<string, string>;
 	const ex = createExampleLoader(_loaders, _sources);
 </script>
 
@@ -53,7 +57,11 @@
 	{/snippet}
 
 	{#snippet examples()}
-		<DocExample title="Basic Tabs" description="Standard tabbed navigation." {...ex('./examples/basic.svelte')} />
+		<DocExample
+			title="Basic Tabs"
+			description="Standard tabbed navigation."
+			{...ex('./examples/basic.svelte')}
+		/>
 	{/snippet}
 
 	{#snippet apiReference()}

@@ -1,7 +1,13 @@
 <script lang="ts">
 	import { mergePresetProps, HtmlAtom } from '$svelte-atoms/core/components/atom';
 
-	let { class: klass = '', as = 'span', preset = undefined, children = undefined, ...restProps } = $props();
+	let {
+		class: klass = '',
+		as = 'span',
+		preset = undefined,
+		children = undefined,
+		...restProps
+	} = $props();
 
 	const separatorProps = $derived(mergePresetProps(preset, 'breadcrumb.separator', restProps));
 </script>

@@ -3,7 +3,15 @@
 	import { Divider } from '$svelte-atoms/core/components/divider';
 	import { cn, toClassValue } from '$svelte-atoms/core/utils';
 
-	let { class: klass = '', preset = undefined, vertical = false, children = undefined, ...restProps } = $props();
+	let {
+		class: klass = '',
+		preset = undefined,
+		vertical = false,
+		// swallowed: a divider has no children slot; kept out of the props spread
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
+		children = undefined,
+		...restProps
+	} = $props();
 
 	const dividerProps = $derived(mergePresetProps(preset, 'list.divider', restProps));
 </script>

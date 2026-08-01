@@ -8,7 +8,7 @@ export function portal(target: HTMLElement = document.body) {
 }
 
 /**
- * Register the attached element as a named ZLayer z-anchor (ADR 0008 D3) for its lifetime,
+ * Register the attached element as a named ZLayer z-anchor for its lifetime,
  * so overlays can order themselves relative to it (e.g. a popover sitting `{ below }` a
  * sticky header). `value` is the anchor's z — pass a number, a getter (for a z that changes
  * as the element pins/unpins), or omit it to read the element's computed `z-index` on attach.
@@ -25,8 +25,7 @@ export function zAnchor(name: string, value?: number | (() => number)) {
 			typeof value === 'function'
 				? value
 				: (() => {
-						const fixed =
-							value ?? (parseInt(getComputedStyle(node).zIndex, 10) || 0);
+						const fixed = value ?? (parseInt(getComputedStyle(node).zIndex, 10) || 0);
 						return () => fixed;
 					})();
 		return ZLayer.anchor(name, getter);

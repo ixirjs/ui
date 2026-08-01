@@ -30,7 +30,7 @@
 						<div class="h-1.5 rounded bg-muted w-1/2"></div>
 					</div>
 					<button
-						onclick={() => sidebar?.state.toggle?.()}
+						onclick={() => sidebar?.toggle?.()}
 						class="text-xs text-primary hover:underline text-left"
 					>
 						{sidebarOpen ? '← Collapse' : '→ Expand'}

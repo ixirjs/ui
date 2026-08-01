@@ -2,7 +2,13 @@
 	import { createExampleLoader } from '$docs/utils/example-loader';
 	import { DocComponentPage, DocExample, DocCode, DocPropsTabs } from '$docs/components';
 	import type { PropsSection } from '$docs/components';
-	import { formRootProps, fieldRootProps, fieldLabelProps, fieldControlProps, fieldHelperTextProps } from './props';
+	import {
+		formRootProps,
+		fieldRootProps,
+		fieldLabelProps,
+		fieldControlProps,
+		fieldHelperTextProps
+	} from './props';
 	import { metadata } from './shared';
 	import type { DocMode } from '$docs/context/doc-mode.svelte';
 	import type { Frontmatter } from '$docs/md/frontmatter';
@@ -15,7 +21,7 @@
 		category: 'components',
 		depth: 'intermediate',
 		prerequisites: [],
-		related: [],
+		related: []
 	};
 
 	const apiSections: PropsSection[] = [
@@ -23,11 +29,15 @@
 		{ label: 'Field.Root', presetKey: 'field', props: fieldRootProps },
 		{ label: 'Field.Label', presetKey: 'field.label', props: fieldLabelProps },
 		{ label: 'Field.Control', presetKey: 'field.control', props: fieldControlProps },
-		{ label: 'Field.HelperText', presetKey: 'field.helper-text', props: fieldHelperTextProps },
+		{ label: 'Field.HelperText', presetKey: 'field.helper-text', props: fieldHelperTextProps }
 	];
 
 	const _loaders = import.meta.glob('./examples/*.svelte');
-	const _sources = import.meta.glob('./examples/*.svelte', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+	const _sources = import.meta.glob('./examples/*.svelte', {
+		query: '?raw',
+		import: 'default',
+		eager: true
+	}) as Record<string, string>;
 	const ex = createExampleLoader(_loaders, _sources);
 </script>
 
@@ -43,9 +53,17 @@
 	{/snippet}
 
 	{#snippet examples()}
-		<DocExample title="Basic Form" description="Simple form with labeled fields." {...ex('./examples/basic.svelte')} />
+		<DocExample
+			title="Basic Form"
+			description="Simple form with labeled fields."
+			{...ex('./examples/basic.svelte')}
+		/>
 
-		<DocExample title="Form with Validation Errors" description="Field with inline error messages." {...ex('./examples/validated.svelte')} />
+		<DocExample
+			title="Form with Validation Errors"
+			description="Field with inline error messages."
+			{...ex('./examples/validated.svelte')}
+		/>
 	{/snippet}
 
 	{#snippet apiReference()}

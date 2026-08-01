@@ -25,7 +25,7 @@ export function promiseToState<T>(promise: Promise<T> | (() => Promise<T>)) {
 
 export function promiseWithResolvers<T>() {
 	let resolve: ((value: T) => void) | null = null;
-	let reject: ((reason?: any) => void) | null = null;
+	let reject: ((reason?: unknown) => void) | null = null;
 
 	const promise = new Promise<T>((res, rej) => {
 		resolve = res;

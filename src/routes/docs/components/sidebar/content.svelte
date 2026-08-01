@@ -15,16 +15,20 @@
 		category: 'components',
 		depth: 'intermediate',
 		prerequisites: [],
-		related: [],
+		related: []
 	};
 
 	const apiSections: PropsSection[] = [
 		{ label: 'Sidebar.Root', presetKey: 'sidebar', props: sidebarRootProps },
-		{ label: 'Sidebar.Content', presetKey: 'sidebar.content', props: sidebarContentProps },
+		{ label: 'Sidebar.Content', presetKey: 'sidebar.content', props: sidebarContentProps }
 	];
 
 	const _loaders = import.meta.glob('./examples/*.svelte');
-	const _sources = import.meta.glob('./examples/*.svelte', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+	const _sources = import.meta.glob('./examples/*.svelte', {
+		query: '?raw',
+		import: 'default',
+		eager: true
+	}) as Record<string, string>;
 	const ex = createExampleLoader(_loaders, _sources);
 </script>
 
@@ -40,7 +44,11 @@
 	{/snippet}
 
 	{#snippet examples()}
-		<DocExample title="Basic Sidebar" description="Collapsible sidebar with icon + text navigation. Collapses to icon-only mode." {...ex('./examples/basic.svelte')} />
+		<DocExample
+			title="Basic Sidebar"
+			description="Collapsible sidebar with icon + text navigation. Collapses to icon-only mode."
+			{...ex('./examples/basic.svelte')}
+		/>
 	{/snippet}
 
 	{#snippet apiReference()}

@@ -50,7 +50,7 @@
 		node = n;
 	};
 
-	const finalKlass = $derived(cn('border-border',toClassValue(klass)));
+	const finalKlass = $derived(cn('border-border', toClassValue(klass)));
 	const hasTransitions = $derived(!!(enter ?? exit));
 	const transitionSnippet = $derived(
 		!hasTransitions ? bareElement : global ? globalTransition : localTransition
@@ -63,6 +63,7 @@
 			base.onintroend = handleIntroEnd;
 			base.onoutroend = handleExitEnd;
 		}
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any -- loose passthrough spread onto a polymorphic element; `unknown` values can't satisfy attribute types
 		return base as Record<string, any>;
 	});
 
@@ -93,19 +94,41 @@
 </script>
 
 {#snippet bareElement()}
-	<svelte:element this={as} {@attach applyInitial} {@attach attachFunction} class={finalKlass} {...elementProps}>
+	<svelte:element
+		this={as}
+		{@attach applyInitial}
+		{@attach attachFunction}
+		class={finalKlass}
+		{...elementProps}
+	>
 		{@render children?.()}
 	</svelte:element>
 {/snippet}
 
 {#snippet globalTransition()}
-	<svelte:element this={as} {@attach applyInitial} {@attach attachFunction} class={finalKlass} in:enterTransition|global out:exitTransition|global {...elementProps}>
+	<svelte:element
+		this={as}
+		{@attach applyInitial}
+		{@attach attachFunction}
+		class={finalKlass}
+		in:enterTransition|global
+		out:exitTransition|global
+		{...elementProps}
+	>
 		{@render children?.()}
 	</svelte:element>
 {/snippet}
 
 {#snippet localTransition()}
-	<svelte:element this={as} {@attach applyInitial} {@attach attachFunction} class={finalKlass} in:enterTransition out:exitTransition {...elementProps}>
+	<svelte:element
+		this={as}
+		{@attach applyInitial}
+		{@attach attachFunction}
+		class={finalKlass}
+		in:enterTransition
+		out:exitTransition
+		{...elementProps}
+	>
 		{@render children?.()}
 	</svelte:element>
 {/snippet}

@@ -1,22 +1,22 @@
 .scrollable-container {
-    scrollbar-width: none;
-    /* Firefox */
-    -ms-overflow-style: none;
-    /* Internet Explorer 10+ */
+	scrollbar-width: none;
+	/* Firefox */
+	-ms-overflow-style: none;
+	/* Internet Explorer 10+ */
 }
 
 .scrollable-container::-webkit-scrollbar {
-    display: none;
-    /* WebKit */
+	display: none;
+	/* WebKit */
 }
 
 .scrollable-container[data-hide-scrollbar='true'] {
-    --scrollbar-width: 0px;
+	--scrollbar-width: 0px;
 }
 
 .scrollable-container[data-hide-scrollbar='false'] {
-    --scrollbar-width: 16px;
-    /* margin-right: calc(-1 * var(--scrollbar-width, 16px));
+	--scrollbar-width: 16px;
+	/* margin-right: calc(-1 * var(--scrollbar-width, 16px));
 	margin-bottom: calc(-1 * var(--scrollbar-width, 16px));
 	padding-right: var(--scrollbar-width, 16px);
 	padding-bottom: var(--scrollbar-width, 16px); */

@@ -25,7 +25,7 @@ const useCases = [
 	{
 		title: 'Multi-level Navigation',
 		description:
-			'Show the user\'s current position within a nested site structure, such as product categories or documentation sections.'
+			"Show the user's current position within a nested site structure, such as product categories or documentation sections."
 	},
 	{
 		title: 'E-commerce Category Paths',
@@ -74,7 +74,7 @@ const componentsSummary = [
 
 export const metadata = {
 	title: 'Breadcrumb - Svelte Atoms',
-	description: 'Navigation component showing the user\'s location within a site hierarchy.',
+	description: "Navigation component showing the user's location within a site hierarchy.",
 	componentTitle: 'Breadcrumb',
 	componentDescription:
 		'Navigational breadcrumb showing current location with customizable separators and styling.',

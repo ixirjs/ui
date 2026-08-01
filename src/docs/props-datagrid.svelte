@@ -5,10 +5,13 @@
 </script>
 
 <div class="border-border overflow-x-auto max-w-full flex-1 bg-card rounded-lg border">
-	<DataGrid.Root class="min-w-max overflow-hidden" fallbackTemplate="auto auto auto minmax(auto, 1fr)">
+	<DataGrid.Root
+		class="min-w-max overflow-hidden"
+		fallbackTemplate="auto auto auto minmax(auto, 1fr)"
+	>
 		<DataGrid.Header class="bg-muted">
 			<DataGrid.Row class="border-border border-b">
-				<DataGrid.Column 
+				<DataGrid.Column
 					width="auto"
 					class="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase"
 					>Prop</DataGrid.Column

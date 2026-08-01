@@ -1,27 +1,30 @@
 <!doctype html>
 <html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" href="%sveltekit.assets%/favicon.png" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+			rel="stylesheet"
+		/>
+		%sveltekit.head%
+	</head>
 
-<head>
-	<meta charset="utf-8" />
-	<link rel="icon" href="%sveltekit.assets%/favicon.png" />
-	<meta name="viewport" content="width=device-width, initial-scale=1" />
-	<link rel="preconnect" href="https://fonts.googleapis.com" />
-	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
-	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-	%sveltekit.head%
-</head>
+	<script>
+		const stored = localStorage.getItem('color-scheme');
+		const dark = stored
+			? stored === 'dark'
+			: window.matchMedia('(prefers-color-scheme: dark)').matches;
 
-<script>
-	const stored = localStorage.getItem('color-scheme');
-	const dark = stored ? stored === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+		localStorage.setItem('color-scheme', dark ? 'dark' : 'light');
 
-	localStorage.setItem('color-scheme', dark ? 'dark' : 'light');
+		if (dark) document.documentElement.classList.add('dark');
+	</script>
 
-	if (dark) document.documentElement.classList.add('dark');
-</script>
-
-<body data-sveltekit-preload-data="hover">
-	<div>%sveltekit.body%</div>
-</body>
-
+	<body data-sveltekit-preload-data="hover">
+		<div>%sveltekit.body%</div>
+	</body>
 </html>

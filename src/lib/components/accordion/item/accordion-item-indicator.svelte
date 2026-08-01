@@ -3,11 +3,12 @@
 	import { Icon } from '$svelte-atoms/core/components/icon';
 	import IconArrowDown from '$svelte-atoms/core/icons/icon-arrow-down.svelte';
 	import { mergeAtomProps, HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
-	import { AccordionItemBond } from './bond.svelte';
+	import { createAtomInstance } from '$svelte-atoms/core/shared/bond';
+	import { AccordionItemBond, AccordionItemIndicatorAtom } from './bond.svelte';
 	import type { AccordionItemIndicatorProps } from './types';
 
 	const bond = AccordionItemBond.get();
-	const isOpen = $derived(bond?.state?.isOpen ?? false);
+	const isOpen = $derived(bond?.isOpen ?? false);
 
 	let {
 		class: klass = '',
@@ -16,7 +17,12 @@
 		...restProps
 	}: AccordionItemIndicatorProps<E, B> = $props();
 
-	const atom = bond?.atom('indicator');
+	const atom = bond
+		? createAtomInstance<AccordionItemIndicatorAtom, AccordionItemBond>('indicator', {
+				bond,
+				factory: (owner) => new AccordionItemIndicatorAtom(owner as AccordionItemBond)
+			})
+		: undefined;
 
 	const indicatorProps = $derived(mergeAtomProps(atom, preset, restProps));
 

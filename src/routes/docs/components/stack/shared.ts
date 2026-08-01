@@ -1,4 +1,3 @@
-
 const presetCode = `
 import { setPreset } from '@svelte-atoms/core';
 
@@ -32,19 +31,23 @@ const componentsSummary = [
 const useCases = [
 	{
 		title: 'Image Overlays',
-		description: 'Layer captions, gradients, or badges directly over images without absolute positioning.'
+		description:
+			'Layer captions, gradients, or badges directly over images without absolute positioning.'
 	},
 	{
 		title: 'Loading States',
-		description: 'Overlay a spinner or skeleton over content while preserving the original layout dimensions.'
+		description:
+			'Overlay a spinner or skeleton over content while preserving the original layout dimensions.'
 	},
 	{
 		title: 'Notification Badges',
-		description: 'Position a badge counter over a button or avatar while keeping both in document flow.'
+		description:
+			'Position a badge counter over a button or avatar while keeping both in document flow.'
 	},
 	{
 		title: 'Layer Panels',
-		description: 'Build interactive layer managers (like in design tools) using bond.state z-order methods.'
+		description:
+			'Build interactive layer managers (like in design tools) using Bond z-order methods.'
 	},
 	{
 		title: 'Card Stacks',
@@ -54,7 +57,8 @@ const useCases = [
 
 export const metadata = {
 	title: 'Stack - Svelte Atoms',
-	description: 'Layout component for layering elements in the same visual space using CSS Grid. Keeps elements in document flow so the parent sizes to its largest child.',
+	description:
+		'Layout component for layering elements in the same visual space using CSS Grid. Keeps elements in document flow so the parent sizes to its largest child.',
 	componentTitle: 'Stack',
 	componentDescription:
 		'Layers multiple elements in the same visual space using CSS Grid with natural parent sizing and z-order control.',

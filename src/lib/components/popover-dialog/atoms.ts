@@ -1,5 +1,5 @@
 // Reuses the constituents' own atom components — the fused bond is shared under their
-// context keys (shared/fuse.svelte.ts), so `<Popover.Trigger>`/`<Dialog.*>` resolve it via
+// context keys (shared/authoring/fuse.svelte.ts), so `<Popover.Trigger>`/`<Dialog.*>` resolve it via
 // PopoverBond.get()/DialogBond.get(). Only Root (bond + context) and Content (self-portals
 // the modal backdrop) are PopoverDialog-specific.
 export { default as Root } from './popover-dialog-root.svelte';

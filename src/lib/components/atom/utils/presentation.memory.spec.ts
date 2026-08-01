@@ -3,10 +3,7 @@ import type { ClassValue } from '$svelte-atoms/core/utils';
 import { mergeClassesWithPreset } from './classes';
 import { extractRestProps } from './props';
 import type { ResolvedProps } from './cache';
-import {
-	legacyMergeClassesWithPreset,
-	legacyExtractRestProps
-} from './presentation.legacy';
+import { legacyMergeClassesWithPreset, legacyExtractRestProps } from './presentation.legacy';
 
 // Memory companion to presentation.bench.ts: measures allocation pressure (transient bytes/op)
 // and cn memo retained footprint against the frozen legacy baseline.

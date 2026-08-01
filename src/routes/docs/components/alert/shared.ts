@@ -72,23 +72,19 @@ const componentsSummary = [
 	},
 	{
 		name: 'Alert.Title',
-		description:
-			'Heading element for the alert message, typically bold or emphasized text.'
+		description: 'Heading element for the alert message, typically bold or emphasized text.'
 	},
 	{
 		name: 'Alert.Description',
-		description:
-			'Body text container providing detailed information about the alert message.'
+		description: 'Body text container providing detailed information about the alert message.'
 	},
 	{
 		name: 'Alert.CloseButton',
-		description:
-			'Optional dismissal button that allows users to close or hide the alert.'
+		description: 'Optional dismissal button that allows users to close or hide the alert.'
 	},
 	{
 		name: 'Alert.Actions',
-		description:
-			'Container for action buttons or interactive elements related to the alert.'
+		description: 'Container for action buttons or interactive elements related to the alert.'
 	}
 ];
 

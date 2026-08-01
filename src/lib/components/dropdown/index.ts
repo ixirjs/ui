@@ -8,8 +8,6 @@ export {
 export {
 	/** @deprecated Use `SelectBond` instead. */
 	SelectBond as DropdownBond,
-	/** @deprecated Use `SelectBondState` instead. */
-	SelectBondState as DropdownBondState,
 	/** @deprecated Use `SelectBondElements` instead. */
 	type SelectBondElements as DropdownBondElements,
 	/** @deprecated Use `SelectStateProps` instead. */
@@ -24,8 +22,10 @@ export {
 	/** @deprecated Use `filterSelectData` instead. */
 	filterSelectData as filterDropdownData
 } from '../select/runes.svelte';
-// @deprecated Use `filterSelectData` instead.
-export { filterSelectData as filter } from '../select/runes.svelte';
+export {
+	/** @deprecated Use `filterSelectData` instead. */
+	filterSelectData as filter
+} from '../select/runes.svelte';
 
 // Types
 export type {

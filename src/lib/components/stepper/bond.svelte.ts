@@ -1,9 +1,14 @@
 import type { StepBond } from './step/bond.svelte';
-import { BondState, BondAtom, type BondStateProps } from '$svelte-atoms/core/shared/bond.svelte';
-import { defineBond, type BondOf, type ViewOf } from '$svelte-atoms/core/shared';
+import { Bond, defineAtom, type BondStateProps } from '$svelte-atoms/core/shared/bond';
+import { defineBond, type BondOf } from '$svelte-atoms/core/shared';
+import { ariaRole } from '$svelte-atoms/core/shared/capability';
 import type { Snippet } from 'svelte';
 
-export type StepperStateProps = BondStateProps & {
+// -----------------------------------------------------------------------------
+// Public types
+// -----------------------------------------------------------------------------
+
+export type StepperBondProps = BondStateProps & {
 	step: number;
 	linear?: boolean;
 	disabled?: boolean;
@@ -19,46 +24,45 @@ export type StepContentSnippet = {
 	children: Snippet<[{ step: StepBond }]>;
 };
 
-// Narrow parent contract a StepBond child depends on — not the whole StepperState.
-// StepperState implements IStepper; the child holds this interface (stubbable, locality-preserving).
+// Narrow parent contract a StepBond child depends on, not the whole StepperBond.
 export interface IStepper {
-	// The parent stepper's id (for `data-stepper` cross-reference).
 	readonly id: string;
-	// The active step index (`props.step`).
 	readonly activeStep: number;
-	// Linear mode — only adjacent forward navigation is allowed.
 	readonly linear: boolean;
 	mountStep(index: number, step: StepBond): () => void;
 	unmountStep(index: number): void;
 	goto(index: number): void;
 }
 
-// Bond shape the stepper atoms type `this.bond` against — breaks the atom↔bond cycle.
-type StepperBondView = ViewOf<StepperState>;
+// -----------------------------------------------------------------------------
+// Internal types
+// -----------------------------------------------------------------------------
 
-export class StepperRootAtom extends BondAtom<StepperBondView> {
-	constructor(bond: StepperBondView) {
-		super(bond, 'root');
-	}
-	override get attrs() {
-		return {
-			...super.attrs,
-			role: 'group' as const
-		};
-	}
-}
+type StepperBondView = StepperBondBase;
 
-// StepperBond — `defineBond` (§6). Step orchestration lives on {@link StepperState}.
-export const StepperBond = defineBond<{ root: typeof StepperRootAtom }, StepperState>({
-	name: 'stepper',
-	atoms: { root: StepperRootAtom }
+// -----------------------------------------------------------------------------
+// Atom definitions
+// -----------------------------------------------------------------------------
+
+export const StepperRootAtom = defineAtom<StepperBondView>('root', (atom) => {
+	atom.capability(ariaRole('group'));
 });
+export type StepperRootAtom = InstanceType<typeof StepperRootAtom>;
 
-// Instance type of the stepper bond — paired with the `const` above.
-export type StepperBond = BondOf<typeof StepperBond>;
+// Stepper orchestration lives on the Bond instance.
 
-export class StepperState extends BondState<StepperStateProps> implements IStepper {
-	// Kind-cached Collections keyed by String(index). `totalSteps` = collection size (reactive).
+// -----------------------------------------------------------------------------
+// Bond implementation
+// -----------------------------------------------------------------------------
+
+class StepperBondBase extends Bond<StepperBondProps> implements IStepper {
+	constructor(props: StepperBondProps, name = 'stepper') {
+		super(props, name);
+		// Eagerly create owned collections outside derived reads; collection() registers a capability.
+		void this.steps;
+		void this.stepContents;
+	}
+
 	get steps() {
 		return this.collection<StepBond>('step');
 	}
@@ -70,15 +74,10 @@ export class StepperState extends BondState<StepperStateProps> implements IStepp
 		}>('content');
 	}
 
-	constructor(props: StepperStateProps) {
-		super(props);
-	}
-
 	get activeStep() {
 		return this.props.step;
 	}
 
-	// Linear mode — part of the {@link IStepper} child contract.
 	get linear() {
 		return this.props.linear ?? false;
 	}
@@ -116,7 +115,6 @@ export class StepperState extends BondState<StepperStateProps> implements IStepp
 			},
 			goto: (step: number) => {
 				if (step >= 0 && step < this.totalSteps) {
-					// Linear mode: only backward or the next immediate step.
 					if (this.props.linear) {
 						if (step <= this.props.step + 1) {
 							this.props.step = step;
@@ -129,13 +127,12 @@ export class StepperState extends BondState<StepperStateProps> implements IStepp
 		};
 	}
 
-	// Flat alias of `navigation.goto` — the {@link IStepper} child contract.
 	goto(index: number) {
 		this.navigation.goto(index);
 	}
 
 	mountStep(index: number, step: StepBond) {
-		return this.steps.attach(String(index), step);
+		return this.steps.set(String(index), step);
 	}
 
 	unmountStep(index: number) {
@@ -151,10 +148,39 @@ export class StepperState extends BondState<StepperStateProps> implements IStepp
 		props: Record<string, unknown>,
 		children: Snippet<[{ step: StepBond }]>
 	) {
-		return this.stepContents.attach(String(index), { props, children });
+		return this.stepContents.set(String(index), { props, children });
 	}
 
 	unregisterStepContent(index: number) {
 		this.stepContents.delete(String(index));
 	}
 }
+
+// -----------------------------------------------------------------------------
+// Bond spec and constructor facade
+// -----------------------------------------------------------------------------
+
+const StepperBondImpl = defineBond<
+	{ root: typeof StepperRootAtom },
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	any,
+	typeof StepperBondBase
+>({
+	name: 'stepper',
+	base: StepperBondBase,
+	atoms: { root: StepperRootAtom }
+});
+
+export type StepperBond = BondOf<typeof StepperBondImpl>;
+
+interface StepperBondConstructor {
+	new (props: StepperBondProps): StepperBond;
+	readonly CONTEXT_KEY: string;
+	readonly spec: (typeof StepperBondImpl)['spec'];
+	get(): StepperBond | undefined;
+	getOrThrow(message?: string): StepperBond;
+	set(bond: StepperBond): StepperBond;
+	create(props: StepperBondProps): StepperBond;
+}
+
+export const StepperBond = StepperBondImpl as unknown as StepperBondConstructor;

@@ -19,11 +19,15 @@
 	};
 
 	const apiSections: PropsSection[] = [
-		{ label: 'Avatar', presetKey: 'avatar', props: avatarProps },
+		{ label: 'Avatar', presetKey: 'avatar', props: avatarProps }
 	];
 
 	const _loaders = import.meta.glob('./examples/*.svelte');
-	const _sources = import.meta.glob('./examples/*.svelte', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+	const _sources = import.meta.glob('./examples/*.svelte', {
+		query: '?raw',
+		import: 'default',
+		eager: true
+	}) as Record<string, string>;
 	const ex = createExampleLoader(_loaders, _sources);
 </script>
 
@@ -39,10 +43,26 @@
 	{/snippet}
 
 	{#snippet examples()}
-		<DocExample title="Basic Avatar" description="Simple avatar with image" {...ex('./examples/basic.svelte')} />
-		<DocExample title="Avatar Sizes" description="Different sizes for various contexts" {...ex('./examples/sizes.svelte')} />
-		<DocExample title="Fallback Initials" description="Automatic initials when no image is provided" {...ex('./examples/fallback.svelte')} />
-		<DocExample title="Avatar Group" description="Display multiple avatars in a group" {...ex('./examples/group.svelte')} />
+		<DocExample
+			title="Basic Avatar"
+			description="Simple avatar with image"
+			{...ex('./examples/basic.svelte')}
+		/>
+		<DocExample
+			title="Avatar Sizes"
+			description="Different sizes for various contexts"
+			{...ex('./examples/sizes.svelte')}
+		/>
+		<DocExample
+			title="Fallback Initials"
+			description="Automatic initials when no image is provided"
+			{...ex('./examples/fallback.svelte')}
+		/>
+		<DocExample
+			title="Avatar Group"
+			description="Display multiple avatars in a group"
+			{...ex('./examples/group.svelte')}
+		/>
 	{/snippet}
 
 	{#snippet apiReference()}

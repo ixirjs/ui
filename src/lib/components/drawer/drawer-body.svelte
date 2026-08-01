@@ -12,16 +12,13 @@
 		...restProps
 	}: DrawerBodyProps<E, B> & HTMLAttributes<Element> = $props();
 
-	const bond = DrawerBond.get();
+	const bond = DrawerBond.getOrThrow('<Drawer.Body /> must be used within a <Drawer.Root />');
 
 	const atom = bond?.body();
 
 	const bodyProps = $derived(mergeAtomProps(atom, preset, restProps));
 </script>
 
-<HtmlAtom
-	{bond}
-	{...bodyProps}
->
+<HtmlAtom {bond} {...bodyProps}>
 	{@render children?.({ drawer: bond })}
 </HtmlAtom>

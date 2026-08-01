@@ -21,7 +21,9 @@
 			</svg>
 		</Collapsible.Header>
 		<Collapsible.Body>
-			<p class="px-3 py-2 text-xs text-muted-foreground bg-muted/20 rounded-b-lg border border-t-0 border-border">
+			<p
+				class="px-3 py-2 text-xs text-muted-foreground bg-muted/20 rounded-b-lg border border-t-0 border-border"
+			>
 				Hidden content with smooth height animation.
 			</p>
 		</Collapsible.Body>

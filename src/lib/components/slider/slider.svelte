@@ -102,7 +102,9 @@
 {/snippet}
 
 {#snippet defaultThumb()}
-	<div class="bg-foreground border-border h-full w-full rounded-full shadow-sm shadow-black/50"></div>
+	<div
+		class="bg-foreground border-border h-full w-full rounded-full shadow-sm shadow-black/50"
+	></div>
 {/snippet}
 
 {#snippet thumbWrapper()}
@@ -134,7 +136,12 @@
 	aria-orientation={orientation}
 	{...sliderProps}
 >
-	{@render (trackContent ?? defaultTrack)({ value: normalizedValue, percent, min: normalizedMin, max: normalizedMax })}
+	{@render (trackContent ?? defaultTrack)({
+		value: normalizedValue,
+		percent,
+		min: normalizedMin,
+		max: normalizedMax
+	})}
 
 	<!-- Native range input — invisible, full coverage, handles all a11y + keyboard -->
 	<input
@@ -152,7 +159,9 @@
 			'slider-input absolute inset-0 h-full w-full cursor-pointer opacity-0',
 			disabled && 'cursor-not-allowed'
 		]}
-		style={isVertical ? 'writing-mode: vertical-lr; direction: rtl; touch-action: none;' : undefined}
+		style={isVertical
+			? 'writing-mode: vertical-lr; direction: rtl; touch-action: none;'
+			: undefined}
 		aria-valuemin={normalizedMin}
 		aria-valuemax={normalizedMax}
 		aria-valuenow={normalizedValue}

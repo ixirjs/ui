@@ -21,11 +21,15 @@
 	const apiSections: PropsSection[] = [
 		{ label: 'Collapsible.Root', presetKey: 'collapsible', props: collapsibleRootProps },
 		{ label: 'Collapsible.Header', presetKey: 'collapsible.header', props: collapsibleHeaderProps },
-		{ label: 'Collapsible.Body', presetKey: 'collapsible.body', props: collapsibleBodyProps },
+		{ label: 'Collapsible.Body', presetKey: 'collapsible.body', props: collapsibleBodyProps }
 	];
 
 	const _loaders = import.meta.glob('./examples/*.svelte');
-	const _sources = import.meta.glob('./examples/*.svelte', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+	const _sources = import.meta.glob('./examples/*.svelte', {
+		query: '?raw',
+		import: 'default',
+		eager: true
+	}) as Record<string, string>;
 	const ex = createExampleLoader(_loaders, _sources);
 </script>
 
@@ -41,8 +45,16 @@
 	{/snippet}
 
 	{#snippet examples()}
-		<DocExample title="Basic Collapsible" description="Simple collapsible section" {...ex('./examples/basic.svelte')} />
-		<DocExample title="Controlled Collapsible" description="Externally controlled open state" {...ex('./examples/controlled.svelte')} />
+		<DocExample
+			title="Basic Collapsible"
+			description="Simple collapsible section"
+			{...ex('./examples/basic.svelte')}
+		/>
+		<DocExample
+			title="Controlled Collapsible"
+			description="Externally controlled open state"
+			{...ex('./examples/controlled.svelte')}
+		/>
 	{/snippet}
 
 	{#snippet apiReference()}

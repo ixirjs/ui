@@ -4,7 +4,7 @@ import { page } from '@vitest/browser/context';
 import ComboboxTest from './combobox-test.svelte';
 
 // Regression: item click must commit a selection. The old combobox-item preventDefaulted the
-// click and toggled a never-set controller; it now commits via bond.state.select/unselect.
+// click and toggled a never-set controller; it now commits via the combobox bond.
 describe('Combobox — item click commits a selection', () => {
 	it('renders a chip after clicking an item (multi-select)', async () => {
 		render(ComboboxTest, { multiple: true });

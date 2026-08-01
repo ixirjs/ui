@@ -1,16 +1,19 @@
 import { getElementId } from '$svelte-atoms/core/utils/dom.svelte';
-import { BondAtom, defineBond, type BondOf } from '$svelte-atoms/core/shared';
+import { Atom, defineBond, type BondOf } from '$svelte-atoms/core/shared';
 import {
 	ModalRootAtom,
 	ModalContentAtom,
-	OverlayState,
 	OverlayBond,
 	modalCapabilities,
 	TRIGGER,
 	type ModalOverlayElements,
 	type OverlayStateProps,
 	type OverlayView
-} from '$svelte-atoms/core/components/overlay';
+} from '$svelte-atoms/core/components/portal/host';
+
+// -----------------------------------------------------------------------------
+// Public types
+// -----------------------------------------------------------------------------
 
 export type DrawerBondProps<T extends Record<string, unknown> = Record<string, unknown>> =
 	OverlayStateProps & {
@@ -27,14 +30,24 @@ export type DrawerBondElements = ModalOverlayElements & {
 	backdrop?: HTMLElement;
 };
 
-// Narrow view type breaks the atom↔bond cycle through defineBond (§13).
-type DrawerBondView = OverlayView & { state: DrawerBondState };
+// Narrow view type breaks the atom↔bond cycle through defineBond.
+
+// -----------------------------------------------------------------------------
+// Internal types
+// -----------------------------------------------------------------------------
+
+type DrawerBondView = OverlayView & OverlayBond<DrawerBondProps>;
 
 // Overlays aria-hidden and data-active on the modal ARIA contract.
+
+// -----------------------------------------------------------------------------
+// Atom definitions
+// -----------------------------------------------------------------------------
+
 export class DrawerRootAtom extends ModalRootAtom<DrawerBondView> {
 	override get attrs() {
-		const isOpen = this.bond.state.isOpen;
-		const isDisabled = this.bond.state.isDisabled;
+		const isOpen = this.bond.isOpen;
+		const isDisabled = this.bond.isDisabled;
 		const isActive = isOpen && !isDisabled;
 		return {
 			...super.attrs,
@@ -53,7 +66,7 @@ export class DrawerContentAtom extends ModalContentAtom<DrawerBondView> {
 	}
 }
 
-export class DrawerHeaderAtom extends BondAtom<DrawerBondView> {
+export class DrawerHeaderAtom extends Atom<DrawerBondView> {
 	constructor(bond: DrawerBondView) {
 		super(bond, 'header');
 	}
@@ -65,7 +78,7 @@ export class DrawerHeaderAtom extends BondAtom<DrawerBondView> {
 	}
 }
 
-export class DrawerTitleAtom extends BondAtom<DrawerBondView> {
+export class DrawerTitleAtom extends Atom<DrawerBondView> {
 	constructor(bond: DrawerBondView) {
 		super(bond, 'title');
 	}
@@ -79,7 +92,7 @@ export class DrawerTitleAtom extends BondAtom<DrawerBondView> {
 	}
 }
 
-export class DrawerDescriptionAtom extends BondAtom<DrawerBondView> {
+export class DrawerDescriptionAtom extends Atom<DrawerBondView> {
 	constructor(bond: DrawerBondView) {
 		super(bond, 'description');
 	}
@@ -91,7 +104,7 @@ export class DrawerDescriptionAtom extends BondAtom<DrawerBondView> {
 	}
 }
 
-export class DrawerBodyAtom extends BondAtom<DrawerBondView> {
+export class DrawerBodyAtom extends Atom<DrawerBondView> {
 	constructor(bond: DrawerBondView) {
 		super(bond, 'body');
 	}
@@ -103,7 +116,7 @@ export class DrawerBodyAtom extends BondAtom<DrawerBondView> {
 	}
 }
 
-export class DrawerFooterAtom extends BondAtom<DrawerBondView> {
+export class DrawerFooterAtom extends Atom<DrawerBondView> {
 	constructor(bond: DrawerBondView) {
 		super(bond, 'footer');
 	}
@@ -116,9 +129,10 @@ export class DrawerFooterAtom extends BondAtom<DrawerBondView> {
 }
 
 // Clicking the backdrop closes the drawer (gated by disabled).
-export class DrawerBackdropAtom extends BondAtom<DrawerBondView> {
+export class DrawerBackdropAtom extends Atom<DrawerBondView> {
 	constructor(bond: DrawerBondView) {
 		super(bond, 'backdrop');
+		this.role('backdrop');
 	}
 	override get attrs() {
 		return {
@@ -127,21 +141,15 @@ export class DrawerBackdropAtom extends BondAtom<DrawerBondView> {
 			'aria-hidden': true
 		};
 	}
-	override get handlers() {
-		return {
-			onclick: () => {
-				if (!this.bond.state.isDisabled) this.bond.state.close();
-			}
-		};
-	}
 }
 
-export class DrawerBondState<
-	Props extends DrawerBondProps = DrawerBondProps
-> extends OverlayState<Props> {}
-
 // Controlled slide-out modal (no trigger — use PopoverDialog for that); modalCapabilities() minus trigger.
-export const DrawerBond = defineBond<
+
+// -----------------------------------------------------------------------------
+// Bond spec and constructor facade
+// -----------------------------------------------------------------------------
+
+const DrawerBondImpl = defineBond<
 	{
 		root: typeof DrawerRootAtom;
 		content: typeof DrawerContentAtom;
@@ -152,7 +160,8 @@ export const DrawerBond = defineBond<
 		footer: typeof DrawerFooterAtom;
 		backdrop: typeof DrawerBackdropAtom;
 	},
-	DrawerBondState,
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	any,
 	typeof OverlayBond
 >({
 	name: 'drawer',
@@ -170,4 +179,16 @@ export const DrawerBond = defineBond<
 	}
 });
 
-export type DrawerBond = BondOf<typeof DrawerBond>;
+export type DrawerBond = BondOf<typeof DrawerBondImpl> & OverlayBond<DrawerBondProps>;
+
+interface DrawerBondConstructor {
+	new (props: DrawerBondProps): DrawerBond;
+	readonly CONTEXT_KEY: string;
+	readonly spec: (typeof DrawerBondImpl)['spec'];
+	get(): DrawerBond | undefined;
+	getOrThrow(message?: string): DrawerBond;
+	set(bond: DrawerBond): DrawerBond;
+	create(props: DrawerBondProps): DrawerBond;
+}
+
+export const DrawerBond = DrawerBondImpl as unknown as DrawerBondConstructor;

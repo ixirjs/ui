@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { DEV } from 'esm-env';
 	import type { ActivePortalProps } from './types';
 	import { PortalsBond, resolvePortal } from './portals';
 
@@ -10,21 +11,25 @@
 
 	// Warn (in an effect, after registration settles) when a string id never resolves.
 	$effect(() => {
-		if (import.meta.env?.DEV && typeof portal === 'string' && !activePortal) {
+		if (DEV && typeof portal === 'string' && !activePortal) {
 			console.warn(
 				`[svelte-atoms] <ActivePortal portal="${portal}">: no portal registered with this id; rendering nothing.`
 			);
 		}
 	});
 
-	// Snippet-or-undefined: shares the portal into context from inside the rendered block, so local
-	// enter/exit transitions still play.
-	const content = $derived(activePortal ? proxy : undefined);
-
-	function proxy(...args: unknown[]) {
+	function proxy(...args: []): ReturnType<NonNullable<typeof children>> | undefined {
 		activePortal?.share();
 		return children?.(...args);
 	}
 </script>
 
-{@render content?.()}
+<!-- Snippet-or-undefined: shares the portal into context from inside the rendered block, so local
+     enter/exit transitions still play. {#snippet} is a proper Snippet type (no casting needed),
+     and {void share()} fires it synchronously before children render without emitting DOM text. -->
+<!-- {#snippet proxy()}
+	{void }
+	{@render children?.()}
+{/snippet} -->
+
+{@render (activePortal ? proxy : undefined)?.()}

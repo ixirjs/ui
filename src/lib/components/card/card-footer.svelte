@@ -13,7 +13,9 @@
 		...restProps
 	}: CardFooterProps<E, B> = $props();
 
-	const footerProps = $derived(mergePresetProps(preset, 'card.footer', { ...bond?.footer(), ...restProps }));
+	const footerProps = $derived(
+		mergePresetProps(preset, 'card.footer', { ...bond?.footer(), ...restProps })
+	);
 </script>
 
 <HtmlAtom

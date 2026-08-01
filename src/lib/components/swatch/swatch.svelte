@@ -24,7 +24,8 @@
 >
 	<span aria-hidden="true" class="checkerboard absolute inset-[0.5px] rounded-inherit"></span>
 	{#if !isEmpty}
-		<span aria-hidden="true" class="fill absolute -inset-px" style="background-color: {color};"></span>
+		<span aria-hidden="true" class="fill absolute -inset-px" style="background-color: {color};"
+		></span>
 	{/if}
 </span>
 
@@ -49,8 +50,12 @@
 				color-mix(in oklch, var(--foreground) 100%, transparent) 0% 25%,
 				transparent 0% 50%
 			);
-		background-size: 8px 8px, 8px 8px;
-		background-position: 0 0, 4px 4px;
+		background-size:
+			8px 8px,
+			8px 8px;
+		background-position:
+			0 0,
+			4px 4px;
 		mask-image: radial-gradient(ellipse 85% 85% at 50% 50%, black 40%, transparent 100%);
 		-webkit-mask-image: radial-gradient(ellipse 85% 85% at 50% 50%, black 40%, transparent 100%);
 	}

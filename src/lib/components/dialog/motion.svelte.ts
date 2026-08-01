@@ -1,11 +1,11 @@
 import { DURATION } from '$svelte-atoms/core/shared';
-import { animate, easeInOut } from 'motion';
+import { animate, easeInOut, type Easing } from 'motion';
 import { DialogBond } from './bond.svelte';
 
 type AnimateDialogContentParams = {
 	duration?: number;
 	delay?: number;
-	ease?: string;
+	ease?: Easing | Easing[];
 };
 
 export function animateDialogContent(params: AnimateDialogContentParams = {}) {
@@ -55,7 +55,7 @@ export function animateDialogContent(params: AnimateDialogContentParams = {}) {
 				},
 				{
 					duration: duration * +mounted,
-					easing: ease,
+					ease,
 					delay
 				}
 			);
@@ -67,7 +67,7 @@ export function animateDialogContent(params: AnimateDialogContentParams = {}) {
 				{ scale: 0.9 + 0.1 * +isOpen, opacity: +isOpen },
 				{
 					duration,
-					easing: ease,
+					ease,
 					delay
 				}
 			);

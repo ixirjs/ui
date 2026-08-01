@@ -6,7 +6,7 @@
 
 	type Element = HTMLElementTagNameMap[E];
 
-	const bond = DrawerBond.get();
+	const bond = DrawerBond.getOrThrow('<Drawer.Title /> must be used within a <Drawer.Root />');
 
 	let {
 		preset = undefined,
@@ -20,10 +20,6 @@
 	const titleProps = $derived(mergeAtomProps(atom, preset, restProps));
 </script>
 
-<HtmlAtom
-	{as}
-	{bond}
-	{...titleProps}
->
+<HtmlAtom {as} {bond} {...titleProps}>
 	{@render children?.({ drawer: bond })}
 </HtmlAtom>

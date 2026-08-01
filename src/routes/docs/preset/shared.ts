@@ -9,7 +9,7 @@ export const metadata = {
 		'The preset system lets you define component styling globally and override it at any level. Set defaults once, customize anywhere.',
 	keyFeatures: [
 		'Hierarchical preset system (global → route → component)',
-		'Dynamic presets with reactive bond state',
+		'Dynamic presets with reactive Bond values',
 		'Compound component support with dot notation',
 		'$preset placeholder for controlled insertion',
 		'Automatic class merging and conflict resolution',
@@ -53,9 +53,9 @@ export const metadata = {
 	advancedFeatures: [
 		{
 			feature: 'Reactive Presets',
-			description: 'Access component bond state for dynamic styling based on component state',
+			description: 'Access component Bond values for dynamic styling based on component state',
 			example:
-				"Change styles based on isOpen, isActive, or any bond state property using the bond parameter in preset functions"
+				'Change styles based on isOpen, isActive, or any Bond property using the bond parameter in preset functions'
 		},
 		{
 			feature: '$preset Placeholder',

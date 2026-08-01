@@ -20,65 +20,78 @@ const specializedControls = [
 	{
 		name: 'Text',
 		preset: 'input.text',
-		description: '`type="text"` specific control. Use instead of `Input.Control` for plain text — `Input.Control` will eventually route to specialized controls by type.',
+		description:
+			'`type="text"` specific control. Use instead of `Input.Control` for plain text — `Input.Control` will eventually route to specialized controls by type.',
 		code: `<Input.Root>\n  <Input.TextControl bind:value={text} placeholder="Enter text..." />\n</Input.Root>`,
 		props: '`value` (bindable), `placeholder`, `disabled`, `readonly`, `onchange`, `oninput`.'
 	},
 	{
 		name: 'File',
 		preset: 'input.file',
-		description: 'File picker with `accept` filter, `multiple` support, and a customisable `triggerContent` snippet.',
+		description:
+			'File picker with `accept` filter, `multiple` support, and a customisable `triggerContent` snippet.',
 		code: `<Input.Root>\n  <Input.FileControl bind:files accept="image/*" multiple />\n</Input.Root>`,
-		props: '`files` (bindable `File[]`), `accept`, `multiple`, `disabled`, `placeholder`, `triggerContent` snippet, `onchange`.'
+		props:
+			'`files` (bindable `File[]`), `accept`, `multiple`, `disabled`, `placeholder`, `triggerContent` snippet, `onchange`.'
 	},
 	{
 		name: 'Number',
 		preset: 'input.number',
 		description: 'Numeric input with increment/decrement buttons.',
 		code: `<Input.Root>\n  <Input.NumberControl bind:number={value} step={1} />\n</Input.Root>`,
-		props: '`number` (bindable), `step` (default 1), `min`, `max`, `disabled`, `placeholder`, `decrementContent`, `incrementContent`, `onchange`.'
+		props:
+			'`number` (bindable), `step` (default 1), `min`, `max`, `disabled`, `placeholder`, `decrementContent`, `incrementContent`, `onchange`.'
 	},
 	{
 		name: 'URL',
 		preset: 'input.url',
-		description: 'URL input with syntax-highlighted overlay. Segments colored via `--input-hl-*` CSS variables.',
+		description:
+			'URL input with syntax-highlighted overlay. Segments colored via `--input-hl-*` CSS variables.',
 		code: `<Input.Root>\n  <Input.UrlControl bind:value={url} placeholder="https://example.com" />\n</Input.Root>`,
 		props: '`value` (bindable), `placeholder`, `disabled`, `readonly`, `onchange`, `oninput`.'
 	},
 	{
 		name: 'Email',
 		preset: 'input.email',
-		description: 'Email input with local/`@`/domain/TLD segment coloring via `--input-hl-*` CSS variables.',
+		description:
+			'Email input with local/`@`/domain/TLD segment coloring via `--input-hl-*` CSS variables.',
 		code: `<Input.Root>\n  <Input.EmailControl bind:value={email} />\n</Input.Root>`,
 		props: '`value` (bindable), `placeholder`, `disabled`, `readonly`, `onchange`, `oninput`.'
 	},
 	{
 		name: 'Location',
 		preset: 'input.location',
-		description: 'Coordinate input (lat, lng). Displays in decimal degrees (`"dd"`) or DMS (`"dms"`) format with an optional geolocation button.',
+		description:
+			'Coordinate input (lat, lng). Displays in decimal degrees (`"dd"`) or DMS (`"dms"`) format with an optional geolocation button.',
 		code: `<Input.Root>\n  <Input.LocationControl bind:value={coords} format="dd" />\n</Input.Root>`,
-		props: '`value` (bindable `"lat, lng"` string), `lat` (bindable), `lng` (bindable), `format` (`"dd"` | `"dms"`), `precision` (default 6), `locate` (geolocation button, default true), `disabled`, `readonly`, `onchange`, `oninput`.'
+		props:
+			'`value` (bindable `"lat, lng"` string), `lat` (bindable), `lng` (bindable), `format` (`"dd"` | `"dms"`), `precision` (default 6), `locate` (geolocation button, default true), `disabled`, `readonly`, `onchange`, `oninput`.'
 	},
 	{
 		name: 'Phone',
 		preset: 'input.phone',
-		description: 'Phone number input with mask format. `#` = required digit, `[#]` = optional. Supports per-segment color mapping.',
+		description:
+			'Phone number input with mask format. `#` = required digit, `[#]` = optional. Supports per-segment color mapping.',
 		code: `<Input.Root>\n  <Input.PhoneControl bind:value={phone} format="(###) ###-####" />\n</Input.Root>`,
-		props: '`value` (bindable digits only), `format` (mask string), `segments` (color map), `placeholder`, `disabled`, `readonly`.'
+		props:
+			'`value` (bindable digits only), `format` (mask string), `segments` (color map), `placeholder`, `disabled`, `readonly`.'
 	},
 	{
 		name: 'Time',
 		preset: 'input.time',
-		description: 'Segment-based time picker. Supports 12/24h format, optional seconds, and rollover between segments.',
+		description:
+			'Segment-based time picker. Supports 12/24h format, optional seconds, and rollover between segments.',
 		code: `<Input.Root>\n  <Input.TimeControl bind:value={time} hourFormat={12} />\n</Input.Root>`,
-		props: '`value` (bindable HH:MM or HH:MM:SS), `hourFormat` (`12` | `24`, default 24), `seconds` (boolean), `date` (bindable Date).'
+		props:
+			'`value` (bindable HH:MM or HH:MM:SS), `hourFormat` (`12` | `24`, default 24), `seconds` (boolean), `date` (bindable Date).'
 	},
 	{
 		name: 'DateTime',
 		preset: 'input.datetime',
 		description: 'Combined date + time picker with full rollover cascade across all segments.',
 		code: `<Input.Root>\n  <Input.DateTimeControl bind:value={datetime} />\n</Input.Root>`,
-		props: '`value` (bindable ISO datetime string), `hourFormat` (`12` | `24`), `seconds` (boolean), `date` (bindable Date).'
+		props:
+			'`value` (bindable ISO datetime string), `hourFormat` (`12` | `24`), `seconds` (boolean), `date` (bindable Date).'
 	},
 	{
 		name: 'Date',
@@ -90,23 +103,29 @@ const specializedControls = [
 	{
 		name: 'OTP',
 		preset: 'input.otp',
-		description: 'One-time password input with individual character slots, keyboard navigation, and paste support.',
+		description:
+			'One-time password input with individual character slots, keyboard navigation, and paste support.',
 		code: `<Input.Root>\n  <Input.OtpControl length={6} type="numeric" oncomplete={(code) => verify(code)} />\n</Input.Root>`,
-		props: '`value` (bindable string), `length` (default 6), `type` (`"numeric"` | `"alpha"` | `"alphanumeric"`), `oncomplete` (fires once when fully filled).'
+		props:
+			'`value` (bindable string), `length` (default 6), `type` (`"numeric"` | `"alpha"` | `"alphanumeric"`), `oncomplete` (fires once when fully filled).'
 	},
 	{
 		name: 'Color',
 		preset: 'input.color',
-		description: 'Segmented CSS color editor. Auto-detects format from the value string. Use `Input.ColorSwatch` alongside it to show a live preview.',
+		description:
+			'Segmented CSS color editor. Auto-detects format from the value string. Use `Input.ColorSwatch` alongside it to show a live preview.',
 		code: `<Input.Root>\n  <Input.ColorSwatch />\n  <Input.ColorControl bind:value={color} />\n</Input.Root>`,
-		props: '`value` (bindable CSS color string), `format` (override auto-detect), `alpha` (force-show alpha segment), `oninput` (every change), `onchange` (on commit/blur).\n\nSupported formats: `named`, `hex`, `rgb`, `rgba`, `hsl`, `hsla`, `hwb`, `lab`, `lch`, `oklab`, `oklch`, `display-p3`, `srgb`, `srgb-linear`, `a98-rgb`, `prophoto-rgb`, `rec2020`, `xyz-d50`, `xyz-d65`.'
+		props:
+			'`value` (bindable CSS color string), `format` (override auto-detect), `alpha` (force-show alpha segment), `oninput` (every change), `onchange` (on commit/blur).\n\nSupported formats: `named`, `hex`, `rgb`, `rgba`, `hsl`, `hsla`, `hwb`, `lab`, `lch`, `oklab`, `oklch`, `display-p3`, `srgb`, `srgb-linear`, `a98-rgb`, `prophoto-rgb`, `rec2020`, `xyz-d50`, `xyz-d65`.'
 	},
 	{
 		name: 'Currency',
 		preset: 'input.currency',
-		description: 'Locale-aware currency input with `Intl.NumberFormat` formatted overlay. Arrow Up/Down to increment, Shift×10, Alt×0.1. Blur clamps to `min`/`max`.',
+		description:
+			'Locale-aware currency input with `Intl.NumberFormat` formatted overlay. Arrow Up/Down to increment, Shift×10, Alt×0.1. Blur clamps to `min`/`max`.',
 		code: `<Input.Root>\n  <Input.CurrencyControl currency="USD" locale="en-US" min={0} />\n</Input.Root>`,
-		props: '`value` (bindable string), `amount` (bindable number), `currency` (ISO 4217, default `"USD"`), `locale` (default `"en-US"`), `precision` (default 2), `min`, `max`, `step`.'
+		props:
+			'`value` (bindable string), `amount` (bindable number), `currency` (ISO 4217, default `"USD"`), `locale` (default `"en-US"`), `precision` (default 2), `min`, `max`, `step`.'
 	}
 ];
 
@@ -215,7 +234,7 @@ const componentsSummary = [
 	{
 		name: 'Input.ColorSwatch',
 		description:
-			'Color swatch preview inside an Input.Root, reads the current color value from bond state.'
+			'Color swatch preview inside an Input.Root, reads the current color value from the Bond.'
 	},
 	{
 		name: 'Input.CurrencyControl',
@@ -226,7 +245,8 @@ const componentsSummary = [
 
 export const metadata = {
 	title: 'Input - Svelte Atoms',
-	description: 'Compound input component for forms and data entry, supporting icons, placeholder, and all HTML input types.',
+	description:
+		'Compound input component for forms and data entry, supporting icons, placeholder, and all HTML input types.',
 	componentTitle: 'Input',
 	componentDescription:
 		'Flexible input component with icons, placeholders, and all HTML input types.',

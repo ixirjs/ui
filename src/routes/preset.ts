@@ -36,8 +36,9 @@ export const preset: Partial<Preset> = {
 		class: 'mb-2 last:mb-0 rounded-md border border-border bg-popover px-2 py-2'
 	}),
 	'accordion.item.header': (bond) => {
+		const itemBond = bond as { isActive?: boolean } | undefined;
 		return () => ({
-			class: ['', bond?.state?.isActive ? 'text-foreground/100' : 'text-foreground/50']
+			class: ['', itemBond?.isActive ? 'text-foreground/100' : 'text-foreground/50']
 		});
 	},
 	'accordion.item.body': () => ({
@@ -75,8 +76,15 @@ export const preset: Partial<Preset> = {
 		class: 'bg-background/25 py-0'
 	}),
 	'datagrid.row': (bond) => {
-		const isSelected = bond?.state?.isSelected ?? false;
-		const isHeader = bond?.state?.isHeader ?? false;
+		const row = bond as
+			| {
+					isSelected?: boolean;
+					isHeader?: boolean;
+					state?: { isSelected?: boolean; isHeader?: boolean };
+			  }
+			| undefined;
+		const isSelected = row?.isSelected ?? row?.state?.isSelected ?? false;
+		const isHeader = row?.isHeader ?? row?.state?.isHeader ?? false;
 
 		return {
 			class: [
@@ -97,7 +105,7 @@ export const preset: Partial<Preset> = {
 		};
 	},
 	'datagrid.footer': () => ({}),
-	'datagrid.column-sort-icon': () => ({}),
+	'datagrid.sort-icon': () => ({}),
 	'dialog.content': () => ({
 		class:
 			'bg-card rounded-lg shadow-lg border border-border max-w-3xl w-full max-w-[calc(100svw-8px)] md:max-w-3xl lg:max-w-4xl xl:max-w-[50svw] p-0'
@@ -114,7 +122,7 @@ export const preset: Partial<Preset> = {
 	'drawer.content': () => ({
 		class: 'z-20',
 		[createAttachmentKey()]: clickoutDrawer((_, bond) => {
-			bond?.state.close?.();
+			bond?.close?.();
 		})
 	}),
 	'drawer.backdrop': () => ({
@@ -162,16 +170,19 @@ export const preset: Partial<Preset> = {
 					class: 'bg-transparent hover:bg-accent/90 active:bg-accent/100 text-accent-foreground'
 				},
 				warning: {
-					class: 'bg-warning/5 text-warning border-warning/50 border hover:bg-warning/8 active:bg-warning/10'
+					class:
+						'bg-warning/5 text-warning border-warning/50 border hover:bg-warning/8 active:bg-warning/10'
 				},
 				info: {
 					class: 'bg-info/5 text-info border-info/50 border hover:bg-info/8 active:bg-info/10'
 				},
 				success: {
-					class: 'bg-success/5 text-success border-success/50 border hover:bg-success/8 active:bg-success/10'
+					class:
+						'bg-success/5 text-success border-success/50 border hover:bg-success/8 active:bg-success/10'
 				},
 				error: {
-					class: 'bg-destructive/5 text-destructive border-destructive/50 border hover:bg-destructive/8 active:bg-destructive/10'
+					class:
+						'bg-destructive/5 text-destructive border-destructive/50 border hover:bg-destructive/8 active:bg-destructive/10'
 				}
 			}
 		},
@@ -197,9 +208,6 @@ export const preset: Partial<Preset> = {
 	'alert.close-button': () => ({
 		class:
 			'rounded-md p-0.5 size-6 opacity-70 transition-all hover:opacity-100 hover:bg-black/10 dark:hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-offset-1'
-	}),
-	'dropdown-menu.list': () => ({
-		class: 'bg-card'
 	}),
 	'menu.list': () => ({
 		class: 'bg-card'

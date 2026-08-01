@@ -8,7 +8,6 @@
 
 <FrontMatter {frontmatter} />
 
-
 # {metadata.pageTitle}
 
 {metadata.pageDescription}
@@ -17,38 +16,28 @@
 
 {metadata.overview}
 
-The preset system is a powerful theming mechanism that allows you to:
-- Define component styles once and apply them everywhere
-- Override styles at different levels (global, route, component)
-- Create dynamic styles based on component state
-- Maintain consistency across your application
-- Support multiple themes or design variations
-
-## Key Features
+The preset system is a powerful theming mechanism that allows you to: - Define component styles once
+and apply them everywhere - Override styles at different levels (global, route, component) - Create
+dynamic styles based on component state - Maintain consistency across your application - Support
+multiple themes or design variations ## Key Features
 
 {list(metadata.keyFeatures)}
 
-## Preset Levels
-
-The preset system works hierarchically with three levels:
+## Preset Levels The preset system works hierarchically with three levels:
 
 {#each metadata.presetLevels as level, i (i)}
-### {level.level}
+	### {level.level}
 
-**Location:** {level.location}
-**Scope:** {level.scope}
-**Use Case:** {level.useCase}
-**Priority:** {level.priority}
-
+	**Location:** {level.location}
+	**Scope:** {level.scope}
+	**Use Case:** {level.useCase}
+	**Priority:** {level.priority}
 {/each}
 
-## Setting Up Presets
+## Setting Up Presets ### Global Preset (App Root) Define your base theme in the root layout file:
 
-### Global Preset (App Root)
-
-Define your base theme in the root layout file:
-
-{codeBlock(`// src/routes/+layout.svelte
+{codeBlock(
+	`// src/routes/+layout.svelte
 <script>
   import { setPreset } from '@svelte-atoms/core/context';
 
@@ -68,13 +57,14 @@ Define your base theme in the root layout file:
 
   setPreset(theme);
 </script>
-`, 'svelte')}
+`,
+	'svelte'
+)}
 
-### Route-Level Preset
+### Route-Level Preset Override presets for specific routes:
 
-Override presets for specific routes:
-
-{codeBlock(`// src/routes/dashboard/+layout.svelte
+{codeBlock(
+	`// src/routes/dashboard/+layout.svelte
 <script>
   import { setPreset } from '@svelte-atoms/core/context';
 
@@ -89,13 +79,14 @@ Override presets for specific routes:
     })
   });
 </script>
-`, 'svelte')}
+`,
+	'svelte'
+)}
 
-### Component-Level Preset
+### Component-Level Preset Override presets for specific component subtrees:
 
-Override presets for specific component subtrees:
-
-{codeBlock(`// components/Settings.svelte
+{codeBlock(
+	`// components/Settings.svelte
 <script>
   import { setPreset } from '@svelte-atoms/core/context';
 
@@ -111,24 +102,24 @@ Override presets for specific component subtrees:
   <Card.Header>
     <Card.Title>Settings</Card.Title>
   </Card.Header>
-</Card.Root>`, 'svelte')}
+</Card.Root>`,
+	'svelte'
+)}
 
 ## Preset Keys
 
 {#each Object.entries(metadata.presetKeys) as [type, info] (type)}
-### {type.charAt(0).toUpperCase() + type.slice(1)} Components
+	### {type.charAt(0).toUpperCase() + type.slice(1)} Components
 
-{info.description}
+	{info.description}
 
-**Examples:** `{info.example}`
-
+	**Examples:** `{info.example}`
 {/each}
 
-## Compound Component Presets
+## Compound Component Presets Use dot notation to style sub-components:
 
-Use dot notation to style sub-components:
-
-{codeBlock(`setPreset({
+{codeBlock(
+	`setPreset({
   // Parent component
   alert: () => ({
     class: 'rounded-lg border p-4'
@@ -150,40 +141,33 @@ Use dot notation to style sub-components:
   'alert.actions': () => ({
     class: 'mt-3 flex items-center gap-2'
   })
-});`, 'typescript')}
+});`,
+	'typescript'
+)}
 
-## Reactive Presets (Dynamic Styling)
+## Reactive Presets (Dynamic Styling) Access component Bond values for dynamic styling:
 
-Access component bond state for dynamic styling:
-
-{codeBlock(`import { setPreset } from '@svelte-atoms/core/context';
-import { defineState, defineProperty } from '@svelte-atoms/core/utils';
+{codeBlock(
+	`import { setPreset } from '@svelte-atoms/core/context';
 
 setPreset({
   'accordion.item.header': (bond) => {
-    const isOpen = defineState([
-      defineProperty(
-        () => bond?.state?.isOpen,
-        (v) => (bond.state.isOpen = v),
-        'isOpen'
-      )
-    ]);
-    
     return () => ({
-      class: isOpen ? 'bg-accent' : 'bg-background'
+      class: bond?.isOpen ? 'bg-accent' : 'bg-background'
     });
   },
   
   'collapsible.trigger': (bond) => ({
-    class: bond?.state?.isOpen ? 'rotate-180' : 'rotate-0'
+    class: bond?.isOpen ? 'rotate-180' : 'rotate-0'
   })
-});`, 'typescript')}
+});`,
+	'typescript'
+)}
 
-## The $preset Placeholder
+## The $preset Placeholder Control where preset classes are inserted:
 
-Control where preset classes are inserted:
-
-{codeBlock(`<script>
+{codeBlock(
+	`<script>
   // HtmlAtom component with preset support
 </script>
 
@@ -192,13 +176,14 @@ Control where preset classes are inserted:
   class="my-custom-class $preset user-class"
 />
 
-<!-- Result: 'my-custom-class rounded-lg px-4 py-2 font-semibold user-class' -->`, 'svelte')}
+<!-- Result: 'my-custom-class rounded-lg px-4 py-2 font-semibold user-class' -->`,
+	'svelte'
+)}
 
-## Extended Attributes
+## Extended Attributes Presets can set any HTML attributes, not just classes:
 
-Presets can set any HTML attributes, not just classes:
-
-{codeBlock(`setPreset({
+{codeBlock(
+	`setPreset({
   button: () => ({
     class: 'rounded-lg px-4 py-2',
     'data-component': 'button',
@@ -212,13 +197,14 @@ Presets can set any HTML attributes, not just classes:
     role: 'heading',
     'aria-level': 2
   })
-});`, 'typescript')}
+});`,
+	'typescript'
+)}
 
-## Extending Presets
+## Extending Presets Presets at different levels merge together:
 
-Presets at different levels merge together:
-
-{codeBlock(`// Base theme (global)
+{codeBlock(
+	`// Base theme (global)
 setPreset({
   button: () => ({
     class: 'rounded-md px-4 py-2 font-semibold'
@@ -233,24 +219,24 @@ setPreset({
 });
 
 // Result: Classes are merged
-// 'rounded-md px-4 py-2 font-semibold shadow-lg hover:shadow-xl'`, 'typescript')}
+// 'rounded-md px-4 py-2 font-semibold shadow-lg hover:shadow-xl'`,
+	'typescript'
+)}
 
 ## Advanced Features
 
 {#each metadata.advancedFeatures as feature, i (i)}
-### {feature.feature}
+	### {feature.feature}
 
-{feature.description}
+	{feature.description}
 
-**Example:** {feature.example}
-
+	**Example:** {feature.example}
 {/each}
 
-## Performance Optimization
+## Performance Optimization The preset system is optimized for performance:
 
-The preset system is optimized for performance:
-
-{codeBlock(`// Preset resolution is memoized
+{codeBlock(
+	`// Preset resolution is memoized
 // - Only recomputes when preset key or bond changes
 // - Class string interpolation is cached
 // - Early exit for components without $preset placeholder
@@ -267,13 +253,14 @@ const _klass = $derived.by(() => {
   // Early exit if no $preset placeholder
   if (!merged.includes('$preset')) return merged;
   return merged.replaceAll('$preset', presetClassString);
-});`, 'typescript')}
+});`,
+	'typescript'
+)}
 
-## Common Patterns
+## Common Patterns ### Theme Switching
 
-### Theme Switching
-
-{codeBlock(`<script>
+{codeBlock(
+	`<script>
   import { setPreset } from '@svelte-atoms/core/context';
   
   let theme = $state('light');
@@ -289,11 +276,14 @@ const _klass = $derived.by(() => {
     
     setPreset(theme === 'light' ? lightTheme : darkTheme);
   });
-</script>`, 'svelte')}
+</script>`,
+	'svelte'
+)}
 
 ### Component Variants via Presets
 
-{codeBlock(`setPreset({
+{codeBlock(
+	`setPreset({
   button: () => ({
     class: 'base-button-styles'
   }),
@@ -305,43 +295,34 @@ const _klass = $derived.by(() => {
   'button.secondary': () => ({
     class: 'bg-secondary text-secondary-foreground'
   })
-});`, 'typescript')}
+});`,
+	'typescript'
+)}
 
 ### Conditional Presets
 
-{codeBlock(`setPreset({
+{codeBlock(
+	`setPreset({
   card: () => {
     const isLarge = window.innerWidth > 1024;
     return {
       class: isLarge ? 'max-w-2xl' : 'max-w-md'
     };
   }
-});`, 'typescript')}
+});`,
+	'typescript'
+)}
 
-## Best Practices
+## Best Practices ### ✅ DO - Set global presets at app root for base theme - Override at route
+level for section-specific theming - Use dot notation for compound component specificity - Access
+Bond values for reactive styling - Keep preset logic simple and focused - Use presets for common
+patterns ### ❌ DON'T - Override presets for one-off styling (use component props instead) - Create
+overly complex preset functions - Rely on presets for critical functionality - Duplicate logic
+across preset levels - Use presets for layout (use component composition) ## Examples ###
+Multi-Theme Setup
 
-### ✅ DO
-
-- Set global presets at app root for base theme
-- Override at route level for section-specific theming
-- Use dot notation for compound component specificity
-- Access bond state for reactive styling
-- Keep preset logic simple and focused
-- Use presets for common patterns
-
-### ❌ DON'T
-
-- Override presets for one-off styling (use component props instead)
-- Create overly complex preset functions
-- Rely on presets for critical functionality
-- Duplicate logic across preset levels
-- Use presets for layout (use component composition)
-
-## Examples
-
-### Multi-Theme Setup
-
-{codeBlock(`// themes/light.ts
+{codeBlock(
+	`// themes/light.ts
 export const lightTheme = {
   button: () => ({
     class: 'bg-white text-black border-gray-200'
@@ -367,11 +348,14 @@ export const darkTheme = {
   import { lightTheme } from './themes/light';
   
   setPreset(lightTheme);
-</script>`, 'typescript')}
+</script>`,
+	'typescript'
+)}
 
 ### Dashboard-Specific Styling
 
-{codeBlock(`// routes/dashboard/+layout.svelte
+{codeBlock(
+	`// routes/dashboard/+layout.svelte
 <script>
   import { setPreset } from '@svelte-atoms/core/context';
   
@@ -383,11 +367,14 @@ export const darkTheme = {
       class: 'text-lg font-bold text-slate-900'
     })
   });
-</script>`, 'svelte')}
+</script>`,
+	'svelte'
+)}
 
 ### Component Library Presets
 
-{codeBlock(`// lib/presets/components.ts
+{codeBlock(
+	`// lib/presets/components.ts
 export const componentPresets = {
   button: () => ({
     class: 'rounded-md transition-all duration-200'
@@ -398,11 +385,14 @@ export const componentPresets = {
   'dialog.overlay': () => ({
     class: 'bg-black/50 backdrop-blur-sm'
   })
-};`, 'typescript')}
+};`,
+	'typescript'
+)}
 
 ## Debugging Presets
 
-{codeBlock(`import { getPreset } from '@svelte-atoms/core/context';
+{codeBlock(
+	`import { getPreset } from '@svelte-atoms/core/context';
 
 // Check what preset is active
 const buttonPreset = getPreset('button');
@@ -411,13 +401,14 @@ console.log('Button preset:', buttonPreset);
 // Check preset resolution
 const Dialog.Root preset="dialog" class="debug">
   <!-- Check DevTools to see resolved classes -->
-</Dialog.Root>`, 'typescript')}
+</Dialog.Root>`,
+	'typescript'
+)}
 
-## Migration Guide
+## Migration Guide ### From Inline Styles
 
-### From Inline Styles
-
-{codeBlock(`<!-- Before -->
+{codeBlock(
+	`<!-- Before -->
 <Button class="rounded-lg px-4 py-2 bg-primary">Click</Button>
 <Button class="rounded-lg px-4 py-2 bg-primary">Another</Button>
 
@@ -431,11 +422,14 @@ const Dialog.Root preset="dialog" class="debug">
 </script>
 
 <Button>Click</Button>
-<Button>Another</Button>`, 'svelte')}
+<Button>Another</Button>`,
+	'svelte'
+)}
 
 ### From CSS Classes
 
-{codeBlock(`<!-- Before -->
+{codeBlock(
+	`<!-- Before -->
 <style>
   .my-button {
     @apply rounded-lg px-4 py-2 bg-primary;
@@ -453,13 +447,14 @@ const Dialog.Root preset="dialog" class="debug">
   });
 </script>
 
-<Button>Click</Button>`, 'svelte')}
+<Button>Click</Button>`,
+	'svelte'
+)}
 
-## TypeScript Support
+## TypeScript Support ### Basic Preset Typing
 
-### Basic Preset Typing
-
-{codeBlock(`import type { Preset } from '@svelte-atoms/core/types';
+{codeBlock(
+	`import type { Preset } from '@svelte-atoms/core/types';
 
 const myPreset: Preset = {
   button: () => ({
@@ -468,13 +463,15 @@ const myPreset: Preset = {
   })
 };
 
-setPreset(myPreset);`, 'typescript')}
+setPreset(myPreset);`,
+	'typescript'
+)}
 
-### Extending Component Props for Custom Variants
+### Extending Component Props for Custom Variants When creating custom variants using presets,
+extend the component prop types in your {inlineCode('app.d.ts')} file to get full TypeScript support:
 
-When creating custom variants using presets, extend the component prop types in your {inlineCode('app.d.ts')} file to get full TypeScript support:
-
-{codeBlock(`// app.d.ts
+{codeBlock(
+	`// app.d.ts
 
 // Extend @svelte-atoms/core types globally
 declare module '@svelte-atoms/core' {
@@ -494,18 +491,19 @@ declare module '@svelte-atoms/core' {
   }
 }
 
-export {};`, 'typescript')}
+export {};`,
+	'typescript'
+)}
 
-**Important Notes:**
+**Important Notes:** - The interface name must match the component name + "Props" (e.g., {inlineCode(
+	'ButtonProps'
+)}, {inlineCode('CardProps')}) - TypeScript will merge your custom properties with the original
+component props - This provides autocomplete and type checking for your custom variants - Place this
+in {inlineCode('src/app.d.ts')} or any {inlineCode('.d.ts')} file included in your TypeScript config ###
+Usage with Full Type Safety
 
-- The interface name must match the component name + "Props" (e.g., {inlineCode('ButtonProps')}, {inlineCode('CardProps')})
-- TypeScript will merge your custom properties with the original component props
-- This provides autocomplete and type checking for your custom variants
-- Place this in {inlineCode('src/app.d.ts')} or any {inlineCode('.d.ts')} file included in your TypeScript config
-
-### Usage with Full Type Safety
-
-{codeBlock(`<script lang="ts">
+{codeBlock(
+	`<script lang="ts">
   // TypeScript now knows about your custom variants
   // Example of variant type from ButtonProps
 </script>
@@ -516,11 +514,14 @@ export {};`, 'typescript')}
 <Button variant="destructive">Delete</Button>
 
 <!-- TypeScript error: "invalid" is not a valid variant -->
-<Button variant="invalid">Error</Button>`, 'svelte')}
+<Button variant="invalid">Error</Button>`,
+	'svelte'
+)}
 
 ### Advanced: Extending Multiple Properties
 
-{codeBlock(`// app.d.ts
+{codeBlock(
+	`// app.d.ts
 declare module '@svelte-atoms/core' {
   export interface ButtonProps {
     variant?: 'ghost' | 'primary' | 'secondary' | 'destructive' | 'outline';
@@ -534,11 +535,14 @@ declare module '@svelte-atoms/core' {
   }
 }
 
-export {};`, 'typescript')}
+export {};`,
+	'typescript'
+)}
 
 ### Type-Safe Reactive Presets
 
-{codeBlock(`import type { Preset } from '@svelte-atoms/core/types';
+{codeBlock(
+	`import type { Preset } from '@svelte-atoms/core/types';
 import type { Bond } from '@svelte-atoms/core/types/bond';
 
 const accordionPresets: Preset = {
@@ -551,26 +555,17 @@ const accordionPresets: Preset = {
         : 'hover:bg-accent/50'
     };
   }
-};`, 'typescript')}
+};`,
+	'typescript'
+)}
 
-### Best Practices
+### Best Practices **✅ DO:** - Define custom variants in {inlineCode('app.d.ts')} for global type extensions
+- Use type inference for preset definitions - Keep variant names descriptive and consistent - Document
+your custom variants in code comments - Use union types for variant options **❌ DON'T:** - Override original
+component props (extend only) - Use overly generic variant names like "type1", "type2" - Mix different
+naming conventions - Forget to export the empty object in {inlineCode('app.d.ts')}
 
-**✅ DO:**
-- Define custom variants in {inlineCode('app.d.ts')} for global type extensions
-- Use type inference for preset definitions
-- Keep variant names descriptive and consistent
-- Document your custom variants in code comments
-- Use union types for variant options
-
-**❌ DON'T:**
-- Override original component props (extend only)
-- Use overly generic variant names like "type1", "type2"
-- Mix different naming conventions
-- Forget to export the empty object in {inlineCode('app.d.ts')}
-
-## Next Steps
-
-- Learn about [Styling](/docs/styling) patterns and techniques
-- Explore [Variants](/docs/styling#variants) for component-level styling
-- Check out [Atoms](/docs/atoms) to understand the underlying components
-- Review [Component Examples](/docs/components) to see presets in action
+## Next Steps - Learn about [Styling](/docs/styling) patterns and techniques - Explore
+[Variants](/docs/styling#variants) for component-level styling - Check out [Atoms](/docs/atoms) to
+understand the underlying components - Review [Component Examples](/docs/components) to see presets
+in action

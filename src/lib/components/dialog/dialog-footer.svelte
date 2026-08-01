@@ -1,6 +1,7 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
 	import { HtmlAtom, mergeAtomProps, type Base } from '$svelte-atoms/core/components/atom';
-	import { DialogBond } from './bond.svelte';
+	import { createAtomInstance } from '$svelte-atoms/core/shared/bond';
+	import { DialogBond, DialogFooterAtom } from './bond.svelte';
 	import type { DialogFooterProps } from './types';
 
 	let {
@@ -12,15 +13,14 @@
 
 	const bond = DialogBond.getOrThrow('<Dialog.Footer /> must be used within a <Dialog.Root />');
 
-	const atom = bond.atom('footer');
+	const atom = createAtomInstance<DialogFooterAtom, DialogBond, HTMLElement>('footer', {
+		bond,
+		factory: (owner) => new DialogFooterAtom(owner as DialogBond)
+	});
 
 	const footerProps = $derived(mergeAtomProps(atom, preset, restProps));
 </script>
 
-<HtmlAtom
-	{bond}
-	class={['border-border', 'flex px-4', '$preset', klass]}
-	{...footerProps}
->
+<HtmlAtom {bond} class={['flex px-4', '$preset', klass]} {...footerProps}>
 	{@render children?.({ dialog: bond })}
 </HtmlAtom>

@@ -1,4 +1,3 @@
-
 import Page from './template.svelte';
 import { metadata } from '../shared';
 
@@ -11,10 +10,8 @@ const frontmatter: Frontmatter = {
 	category: 'styling',
 	depth: 'intermediate',
 	prerequisites: ['atoms'],
-	related: ['variants', 'preset', 'motion'],
+	related: ['variants', 'preset', 'motion']
 };
-
-
 
 export function GET() {
 	const text = renderLlmContent(Page, { frontmatter, metadata });

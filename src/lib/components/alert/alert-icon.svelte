@@ -8,13 +8,15 @@
 
 	let {
 		class: klass = '',
-		base = Icon,
+		base = Icon as unknown as B,
 		preset = undefined,
 		children = undefined,
 		...restProps
 	}: AlertIconProps<E, B> = $props();
 
-	const iconProps = $derived(mergePresetProps(preset, 'alert.icon', { ...bond?.icon(), ...restProps }));
+	const iconProps = $derived(
+		mergePresetProps(preset, 'alert.icon', { ...bond?.icon(), ...restProps })
+	);
 </script>
 
 <HtmlAtom

@@ -1,12 +1,20 @@
-<script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base, C extends AnySnippet = Snippet">
-	import { type Component, type Snippet } from 'svelte';
+<script
+	lang="ts"
+	generics="Tag extends keyof HTMLElementTagNameMap = 'div', BaseComponent extends Base = Base, Children extends AnySnippet = Snippet"
+>
+	import { type Snippet } from 'svelte';
 	import type { AnySnippet, Base, HtmlAtomProps } from './types';
 	import { RootBond } from '../root';
 	import { HtmlElement } from '../element';
 	import { getPreset } from '$svelte-atoms/core/context';
 	import type { PresetModuleName } from '$svelte-atoms/core/context/preset.svelte';
-	import SnippetRenderer from './snippet-renderer.svelte';
+	import SnippetAdapter from './snippet.svelte';
 	import * as resolvers from './resolvers';
+	import {
+		resolveRendererComponent,
+		resolveRendererProps,
+		resolveRenderTarget
+	} from './render-target';
 	import { runLifecycle } from './lifecycle.svelte';
 
 	const rootBond = RootBond.get();
@@ -19,30 +27,32 @@
 		bond = undefined,
 		variants = undefined,
 		fallback = undefined,
+		oninit = undefined,
 		children: children = undefined,
 		...restProps
-	}: HtmlAtomProps<E, B, C> = $props();
+	}: HtmlAtomProps<Tag, BaseComponent, Children> = $props();
 
 	// Bond lifecycle attachments (createLifecycleKey): fire each phase's `(bond) => …` callbacks
-	// against the live bond and hand back the props with those symbol keys stripped, so they
-	// never reach the DOM (where a symbol-fn prop would be mistaken for a node attachment).
-	const lifecycle = runLifecycle(
+	// against the live bond. The lifecycle keys are symbol-keyed, so Svelte ignores them on the
+	// DOM spread downstream — `restProps` flows on untouched.
+	runLifecycle(
 		() => restProps,
-		() => bond
+		() => bond,
+		() => oninit
 	);
 
 	// One $derived per cascade stage so each tracks only the props its stage reads.
 	const preset = $derived.by(() =>
 		resolvers.resolvePreset(presetKey as PresetModuleName | PresetModuleName[], bond, getPreset)
 	);
-	const localVariants = $derived(resolvers.resolveLocalVariants(variants, bond, lifecycle.rest));
+	const localVariants = $derived(resolvers.resolveLocalVariants(variants, bond, restProps));
 	const mergedVariants = $derived.by(() =>
-		resolvers.resolveVariants(preset, localVariants, bond, lifecycle.rest)
+		resolvers.resolveVariants(preset, localVariants, bond, restProps)
 	);
-	// The merge kernel: ONE walk over fallback → preset → variants → rest
-	// (ADR 0004 Decision 5). Class string and spread attrs both come from it.
+	// The merge kernel: ONE walk over fallback → preset → variants → rest.
+	// Class string and spread attrs both come from it.
 	const folded = $derived.by(() =>
-		resolvers.foldLayers(preset, mergedVariants, lifecycle.rest, fallback)
+		resolvers.foldLayers(preset, mergedVariants, restProps, fallback)
 	);
 	const finalKlass = $derived(resolvers.resolveClass(klass, folded));
 	const finalBase = $derived(resolvers.resolveBase(base, preset));
@@ -51,27 +61,15 @@
 
 	const atom = $derived(rootBond?.state?.props?.renderers?.html ?? HtmlElement);
 
-	const baseIsSnippet = $derived(resolvers.isSnippetBase(finalBase));
-
-	// Component identity and props as independent signals — identity only flips when base/atom change.
-	const RendererComponent = $derived(
-		baseIsSnippet ? (SnippetRenderer as unknown as Component) : ((finalBase ?? atom) as Component)
+	// Render-target normalization names the component/snippet decision in one place.
+	const renderTarget = $derived(resolveRenderTarget(finalBase, atom));
+	// Component identity and props are separate signals so prop changes do not remount the renderer.
+	const RendererComponent = $derived(resolveRendererComponent(renderTarget, SnippetAdapter));
+	const rendererProps = $derived.by(() =>
+		resolveRendererProps(renderTarget, finalKlass, finalAs, finalRestProps)
 	);
 
-	const rendererProps = $derived.by((): Record<string, unknown> => {
-		if (baseIsSnippet) {
-			return {
-				snippet: finalBase,
-				class: finalKlass,
-				as: finalAs,
-				children: children,
-				...finalRestProps
-			};
-		}
-		return { class: finalKlass, as: finalAs, ...finalRestProps };
-	});
-
-	function forwardChildren(...args: any[]) {
+	function forwardChildren(...args: unknown[]) {
 		return (children as ((...args: unknown[]) => unknown) | undefined)?.(...args);
 	}
 </script>

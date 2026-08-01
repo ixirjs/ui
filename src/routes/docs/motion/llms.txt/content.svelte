@@ -15,11 +15,9 @@
 
 <FrontMatter {frontmatter} />
 
-# Motion and Animation
-
-Motion APIs are available on {inlineCode('HtmlElement')} and {inlineCode('HtmlAtom')}.
-
-Supported hooks:
+# Motion and Animation Motion APIs are available on {inlineCode('HtmlElement')} and {inlineCode(
+	'HtmlAtom'
+)}. Supported hooks:
 
 {list([
 	'initial(node): one-time setup before transitions run',
@@ -31,7 +29,8 @@ Supported hooks:
 
 ## Native Svelte transitions
 
-{codeBlock(`<script lang="ts">
+{codeBlock(
+	`<script lang="ts">
   import { HtmlAtom } from '@svelte-atoms/core';
   import { fade, slide } from 'svelte/transition';
 
@@ -45,11 +44,14 @@ Supported hooks:
   >
     Animated block
   </HtmlAtom>
-{/if}`, 'svelte')}
+{/if}`,
+	'svelte'
+)}
 
 ## Reactive animation with external libraries
 
-{codeBlock(`<script lang="ts">
+{codeBlock(
+	`<script lang="ts">
   import { HtmlAtom } from '@svelte-atoms/core';
   import gsap from 'gsap';
 
@@ -67,10 +69,11 @@ Supported hooks:
   }}
 >
   Content
-</HtmlAtom>`, 'svelte')}
+</HtmlAtom>`,
+	'svelte'
+)}
 
-## Notes
-
-- {inlineCode('global')} defaults to {inlineCode('true')} for transitions.
-- Use {inlineCode('initial')} for setup only; use {inlineCode('animate')} for state-driven updates.
-- Return a valid Svelte transition config from {inlineCode('enter')} and {inlineCode('exit')}.
+## Notes - {inlineCode('global')} defaults to {inlineCode('true')} for transitions. - Use {inlineCode(
+	'initial'
+)} for setup only; use {inlineCode('animate')} for state-driven updates. - Return a valid Svelte transition
+config from {inlineCode('enter')} and {inlineCode('exit')}.

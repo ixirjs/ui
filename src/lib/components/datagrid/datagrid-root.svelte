@@ -1,7 +1,11 @@
-<script lang="ts" generics="T = unknown, E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { bindBond } from '$svelte-atoms/core/shared/bind-bond.svelte';
-	import { HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
-	import { DataGridBond, DataGridBondState, type DataGridStateProps } from './bond.svelte';
+<script
+	lang="ts"
+	generics="T = unknown, E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base"
+>
+	import { bindBond } from '$svelte-atoms/core/shared/bond/bind.svelte';
+	import { createAtomInstance } from '$svelte-atoms/core/shared/bond';
+	import { HtmlAtom, mergeAtomProps, type Base } from '$svelte-atoms/core/components/atom';
+	import { DataGridBond, DataGridRootAtom, type DataGridBondProps } from './bond.svelte';
 	import type { DatagridRootProps } from './types';
 	import './datagrid.css';
 
@@ -16,19 +20,33 @@
 		...restProps
 	}: DatagridRootProps<T, E, B> = $props();
 
+	let valuesState = $derived<string[]>(values);
+
 	const binding = bindBond<DataGridBond<T>>(
 		(props) => factory(props),
 		{
 			template: () => template,
-			values: [() => values, (v) => (values = v ?? [])]
+			values: [
+				() => valuesState,
+				(v) => {
+					valuesState = v ?? [];
+					values = valuesState;
+				}
+			]
 		},
 		{ preset: () => preset }
 	);
 	const bond = binding.bond.share();
+	const rootAtom = createAtomInstance<DataGridRootAtom, DataGridBond<T>>('root', {
+		bond,
+		factory: (owner) => new DataGridRootAtom(owner as DataGridBond<T>)
+	});
+	const rootProps = $derived(
+		mergeAtomProps(rootAtom, preset, { ...binding.stateProps, ...restProps })
+	);
 
-	function defaultFactory(props: DataGridStateProps<T>) {
-		const state = new DataGridBondState<T>(props);
-		return new DataGridBond<T>(state);
+	function defaultFactory(props: DataGridBondProps<T>) {
+		return DataGridBond.create<T>(props);
 	}
 
 	export function getBond() {
@@ -38,9 +56,8 @@
 
 <HtmlAtom
 	class={['datagrid-root w-full gap-x-0 gap-y-0', '$preset', klass]}
-	style="--template-columns:{bond.state.template || fallbackTemplate}"
-	{...binding.props}
-	{...restProps}
+	style="--template-columns:{bond.template || fallbackTemplate}"
+	{...rootProps}
 >
 	{@render children?.({ datagrid: bond })}
 </HtmlAtom>

@@ -2,7 +2,14 @@
 	import { createExampleLoader } from '$docs/utils/example-loader';
 	import { DocComponentPage, DocExample, DocCode, DocPropsTabs } from '$docs/components';
 	import type { PropsSection } from '$docs/components';
-	import { selectRootProps, selectItemProps, selectTriggerProps, selectSelectionsProps, selectSelectionProps, selectQueryProps } from './props';
+	import {
+		selectRootProps,
+		selectItemProps,
+		selectTriggerProps,
+		selectSelectionsProps,
+		selectSelectionProps,
+		selectQueryProps
+	} from './props';
 	import { metadata } from './shared';
 	import type { DocMode } from '$docs/context/doc-mode.svelte';
 	import type { Frontmatter } from '$docs/md/frontmatter';
@@ -24,11 +31,15 @@
 		{ label: 'Select.Item', presetKey: 'select.item', props: selectItemProps },
 		{ label: 'Select.Selections', props: selectSelectionsProps },
 		{ label: 'Select.Selection', props: selectSelectionProps },
-		{ label: 'Select.Query', props: selectQueryProps },
+		{ label: 'Select.Query', props: selectQueryProps }
 	];
 
 	const _loaders = import.meta.glob('./examples/*.svelte');
-	const _sources = import.meta.glob('./examples/*.svelte', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+	const _sources = import.meta.glob('./examples/*.svelte', {
+		query: '?raw',
+		import: 'default',
+		eager: true
+	}) as Record<string, string>;
 	const ex = createExampleLoader(_loaders, _sources);
 </script>
 
@@ -44,9 +55,17 @@
 	{/snippet}
 
 	{#snippet examples()}
-		<DocExample title="Basic Select" description="Simple dropdown select" {...ex('./examples/basic.svelte')} />
+		<DocExample
+			title="Basic Select"
+			description="Simple dropdown select"
+			{...ex('./examples/basic.svelte')}
+		/>
 
-		<DocExample title="Multiple Select" description="Select with multiple value support" {...ex('./examples/multiple.svelte')} />
+		<DocExample
+			title="Multiple Select"
+			description="Select with multiple value support"
+			{...ex('./examples/multiple.svelte')}
+		/>
 	{/snippet}
 
 	{#snippet apiReference()}

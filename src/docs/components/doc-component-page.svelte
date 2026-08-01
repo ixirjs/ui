@@ -9,7 +9,7 @@
 	import type { DocMode } from '$docs/context/doc-mode.svelte';
 	import type { Frontmatter } from '$docs/md/frontmatter';
 	import { newLine } from '$docs/md/template';
-	import type { ComponentDocMeta, UseCase, ComponentSummary } from '$docs/types';
+	import type { ComponentDocMeta } from '$docs/types';
 
 	let {
 		contentType = 'html',
@@ -28,7 +28,7 @@
 		// Content of the API Reference section — compose with <DocPropsSection> and <DocProps>.
 		apiReference,
 		// Full content override — bypasses all auto-rendered sections (e.g. for Input).
-		children,
+		children
 	}: {
 		contentType?: DocMode;
 		metadata: ComponentDocMeta;
@@ -46,7 +46,8 @@
 	const showPreset = $derived(preset !== undefined || Boolean(metadata.presetCode));
 	const isCompound = $derived(metadata.componentType === 'compound');
 	const hasMarkdownHeader = $derived(
-		isCompound && ((metadata.useCases?.length ?? 0) > 0 || (metadata.componentsSummary?.length ?? 0) > 0)
+		isCompound &&
+			((metadata.useCases?.length ?? 0) > 0 || (metadata.componentsSummary?.length ?? 0) > 0)
 	);
 </script>
 
@@ -69,18 +70,18 @@
 				**Type**: Compound Component
 
 				{#if metadata.useCases?.length}
-## Use Cases
+					## Use Cases
 
-				{#each metadata.useCases as uc, i (i)}
-- **{uc.title}**: {uc.description}
-				{/each}
+					{#each metadata.useCases as uc, i (i)}
+						- **{uc.title}**: {uc.description}
+					{/each}
 				{/if}
 				{#if metadata.componentsSummary?.length}
-## Components
+					## Components
 
-				{#each metadata.componentsSummary as comp, i (i)}
-- **{comp.name}**: {comp.description}
-				{/each}
+					{#each metadata.componentsSummary as comp, i (i)}
+						- **{comp.name}**: {comp.description}
+					{/each}
 				{/if}
 			</DocOnly>
 		{/if}
@@ -119,9 +120,7 @@
 		</DocSection>
 
 		<DocOnly for="markdown">
-{newLine(2)}## License
-
-MIT License
+			{newLine(2)}## License MIT License
 		</DocOnly>
 	{/if}
 </DocPage>

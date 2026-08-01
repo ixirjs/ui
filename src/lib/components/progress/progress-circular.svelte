@@ -3,7 +3,7 @@
 	import { mergePresetProps, HtmlAtom } from '$svelte-atoms/core/components/atom';
 	import { clamp } from '$svelte-atoms/core/utils/math';
 	import type { ProgressCircularProps } from './types';
-	import { SvgElement } from '../element'
+	import { SvgElement } from '../element';
 
 	let {
 		class: klass = '',
@@ -57,10 +57,10 @@
 	role="progressbar"
 	aria-valuemin={0}
 	aria-valuemax={max}
-	aria-valuenow={isIndeterminate ? undefined : value ?? undefined}
+	aria-valuenow={isIndeterminate ? undefined : (value ?? undefined)}
 	aria-valuetext={isIndeterminate ? undefined : `${Math.round(percent!)}%`}
 	data-indeterminate={isIndeterminate}
-	data-value={isIndeterminate ? undefined : value ?? undefined}
+	data-value={isIndeterminate ? undefined : (value ?? undefined)}
 	data-max={max}
 	data-completed={!isIndeterminate && percent === 100}
 	{...circularProps}
@@ -82,14 +82,24 @@
 
 <style>
 	@keyframes progress-circular-spin {
-		0% { transform: rotate(0deg); }
-		100% { transform: rotate(360deg); }
+		0% {
+			transform: rotate(0deg);
+		}
+		100% {
+			transform: rotate(360deg);
+		}
 	}
 
 	@keyframes progress-circular-dash {
-		0% { stroke-dashoffset: 119; }
-		50% { stroke-dashoffset: 30; }
-		100% { stroke-dashoffset: 119; }
+		0% {
+			stroke-dashoffset: 119;
+		}
+		50% {
+			stroke-dashoffset: 30;
+		}
+		100% {
+			stroke-dashoffset: 119;
+		}
 	}
 
 	:global(.animate-progress-circular-indeterminate) {

@@ -13,7 +13,9 @@
 		...restProps
 	}: CardHeaderProps<E, B> = $props();
 
-	const headerProps = $derived(mergePresetProps(preset, 'card.header', { ...bond?.header(), ...restProps }));
+	const headerProps = $derived(
+		mergePresetProps(preset, 'card.header', { ...bond?.header(), ...restProps })
+	);
 </script>
 
 <HtmlAtom

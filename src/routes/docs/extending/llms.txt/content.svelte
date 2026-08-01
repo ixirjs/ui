@@ -15,173 +15,142 @@
 
 <FrontMatter {frontmatter} />
 
-# Extending & Fusing
+# Extending & Fusing Every compound component has a **Bond** that coordinates rendered **Atoms** and
+shared **capabilities**. You can extend a Bond, fuse multiple Bonds, author a new Bond, or extract
+behavior as a capability. ## Extend A Component
 
-Every component is a **bond** — a bag of *atoms* (DOM slots) and *capabilities* (behaviour).
-Because a bond is data, the set of bonds is closed under combination: you can extend one, fuse
-two, author a new one, and project shared behaviour as a capability — all over the same public
-seam. The four moves, smallest to largest:
-
-- **Extend** — inherit a component and override a slot ({inlineCode('defineBond({ extends })')})
-- **Fuse** — combine two bonds into a new one ({inlineCode('fuse(...)')})
-- **Author** — declare a bond from atoms + capabilities ({inlineCode('defineBond(...)')})
-- **Capability** — extract reusable behaviour onto the role seam
-
-## Extend a component
-
-{inlineCode('extends')} is single-parent spec composition — the declarative {inlineCode('class extends')}.
-You inherit the parent's atoms, capabilities, and context key, and declare only what differs.
-The result is a real subclass: {inlineCode('instanceof')} the parent, same behaviour, rebranded.
+{inlineCode('defineBond({ parts })')} reuses the parent component's Atom registry and capabilities, then
+gives the new component its own name and context identity.
 
 {codeBlock(
-	`import { defineBond, triggerCapability, ClickTrigger, DropdownMenuBond } from '@svelte-atoms/core';
+	`import { defineBond, DropdownMenuBond } from '@svelte-atoms/core';
 
-// A command-palette flavour of dropdown-menu.
 export const CommandMenuBond = defineBond({
-  extends: DropdownMenuBond,
+  parts: [DropdownMenuBond],
   name: 'command-menu',
-  atoms: { trigger: CommandTriggerAtom },                  // override one slot (last-wins)
-  capabilities: () => [
-    triggerCapability(ClickTrigger, { ariaHasPopup: 'dialog' })  // re-register a slot (last-wins)
-  ],
+  atoms: {},
 });
-// Pair the value with its instance type (the const isn't generic):
+
 export type CommandMenuBond = InstanceType<typeof CommandMenuBond>;`,
 	'typescript'
 )}
 
-There is **one mechanism** for both composition and customisation: re-register an atom slot
-(via {inlineCode('atoms')}) or a capability slot (via {inlineCode('capabilities')}), and the
-later registration wins. No parallel hook system.
+## Fuse Components
 
-## Fuse two components
-
-{inlineCode('fuse')} unions the parts' atoms and concatenates their capabilities, then resolves
-each slot last-wins. The result is a first-class bond you can fuse again (the closure property:
-bond + bond = bond).
+{inlineCode('fuse')} unions atom registries and concatenates capabilities. Slot collisions resolve last-wins.
 
 {codeBlock(
 	`import { fuse, PopoverBond, DialogBond, PopoverTriggerAtom } from '@svelte-atoms/core';
 
-// PopoverDialog — a Popover trigger that opens Dialog's MODAL content.
 export const PopoverDialogBond = fuse({
-  name: 'popover-dialog',                    // rebrand: fresh namespace / preset / context key
-  parts: [PopoverBond, DialogBond],          // atoms UNION, capabilities CONCAT (last-wins per slot)
-  atoms: { trigger: PopoverTriggerAtom },    // curate the union — keep Popover's richer trigger
+  name: 'popover-dialog',
+  parts: [PopoverBond, DialogBond],
+  atoms: { trigger: PopoverTriggerAtom },
 });
+
 export type PopoverDialogBond = InstanceType<typeof PopoverDialogBond>;`,
 	'typescript'
 )}
 
-**Reuse the parts' own components.** A fused bond is shared under *each part's* context key, so
-the parts' existing atom components resolve it. Your fusion's atom tree is mostly re-exports —
-not bespoke wrappers.
+Fused bonds are shared under each part's context key, so you can reuse the existing part components.
 
 {codeBlock(
 	`<PopoverDialog.Root bind:open>
-  <Popover.Trigger>Open</Popover.Trigger>     <!-- Popover's own trigger -->
+  <Popover.Trigger>Open</Popover.Trigger>
   <PopoverDialog.Content>
-    <Dialog.Header>Title</Dialog.Header>       <!-- Dialog's own atoms -->
-    <Dialog.Body>…</Dialog.Body>
+    <Dialog.Header>Title</Dialog.Header>
+    <Dialog.Body>Content</Dialog.Body>
   </PopoverDialog.Content>
 </PopoverDialog.Root>`,
 	'svelte'
 )}
 
-## Author a bond from scratch
-
-{inlineCode('defineBond')} wires a declarative spec — atoms, capabilities, and non-atom methods —
-into a real Bond subclass with cached, typed atom factories and a context key. State stays a
-class you inject at construction.
-
-{codeBlock(
-	`import { defineBond, BondAtom } from '@svelte-atoms/core';
-
-class RootAtom extends BondAtom { constructor(b) { super(b, 'root'); } }
-class ItemAtom extends BondAtom {
-  constructor(b) { super(b, 'item'); }
-  override get attrs() { return { ...super.attrs, role: 'option' }; }
-}
-
-export const TilesBond = defineBond({
-  name: 'tiles',                       // DOM namespace, preset base, context key
-  atoms: { root: RootAtom, item: ItemAtom },   // → bond.root(), bond.item()
-  capabilities: (state) => [/* rovingCapability(...), selectionCapability(...) */],
-  methods: {                           // non-atom instance methods
-    open(this: TilesBond)  { this.state.open(); },
-    close(this: TilesBond) { this.state.close(); },
-  },
-});
-export type TilesBond = InstanceType<typeof TilesBond>;
-// new TilesBond(new TilesState(props))`,
-	'typescript'
-)}
-
-## Capabilities
-
-Behaviour lives in capabilities, not base classes — which is exactly why bonds compose. Reach
-for a built-in, or write your own.
-
-**Built-in stateful capabilities.** {inlineCode('RovingFocus')} ("which item is highlighted")
-and {inlineCode('SelectionModel')} ("what's committed") are two responsibilities a listbox
-composes — one each.
+## Author From Scratch New authoring puts shared state and mutation methods on the Bond. The Svelte
+component that renders a part creates a local Atom with {inlineCode('createAtomInstance')}.
 
 {codeBlock(
 	`import {
-  createRovingFocus, rovingCapability,
-  createSelection, selectionCapability,
+  Bond,
+  Atom,
+  createAtomInstance,
+  defineAtomCapability,
+  bondContextKey
 } from '@svelte-atoms/core';
+import { getContext, setContext } from 'svelte';
 
-const roving = createRovingFocus({
-  ids:  () => [...items.keys()],
-  item: (id) => items.get(id),         // powers roving.activeItem
-});
-const selection = createSelection({
-  get:  () => values,
-  set:  (v) => (values = v),
-  mode: () => (multiple ? 'multiple' : 'single'),
+export type TilesBondProps = { id?: string; value?: string };
+
+export class TilesBond extends Bond<TilesBondProps> {
+  static CONTEXT_KEY = bondContextKey('tiles');
+
+  constructor(props: TilesBondProps) {
+    super(props, 'tiles');
+  }
+
+  select(value: string) {
+    this.props.value = value;
+  }
+
+  static required() {
+    const bond = getContext<TilesBond | undefined>(TilesBond.CONTEXT_KEY);
+    if (!bond) throw new Error('Tiles parts must be rendered inside <Tiles.Root>.');
+    return bond;
+  }
+
+  share(): this {
+    return setContext(TilesBond.CONTEXT_KEY, this);
+  }
+}
+
+export class TileItemAtom extends Atom<TilesBond, HTMLButtonElement> {
+  constructor(bond: TilesBond | undefined) {
+    super(bond, 'item');
+  }
+}
+
+const optionRole = defineAtomCapability({
+  behavior: () => ({ attrs: () => ({ role: 'option' }) })
 });
 
-capabilities: () => [
-  rovingCapability(roving, { orientation: 'vertical' }),   // → container + item roles
-  selectionCapability(selection),                          // → container + item roles
-];`,
+const item = createAtomInstance('item', {
+  bond: () => TilesBond.required(),
+  register: { cardinality: 'many' },
+  factory: (bond) => new TileItemAtom(bond),
+  capabilities: [optionRole]
+});`,
 	'typescript'
 )}
 
-**Write your own.** A capability is a {inlineCode('{ slot, surface, behavior(role) }')} triple.
-Atoms opt into a projection with {inlineCode('.role(role)')}; {inlineCode('fuse')}/{inlineCode(
-	'defineBond'
-)} merge and resolve on the slot.
+## Capabilities Bond capabilities can be state-focused, coordination-focused, or effectful. Atom
+capabilities handle one node's local presentation, DOM behavior, and lifecycle.
 
 {codeBlock(
-	`import type { Capability, Behavior } from '@svelte-atoms/core';
+	`import { capabilityKey, defineBondCapability, defineAtomCapability } from '@svelte-atoms/core';
 
-export function busyCapability(isBusy: () => boolean): Capability<{ readonly busy: boolean }> {
-  return {
-    slot: 'busy',
+export const BUSY = capabilityKey<{ readonly busy: boolean }>('@acme/cap:busy');
+
+export function busyCapability(isBusy: () => boolean) {
+  return defineBondCapability({
+    slot: BUSY,
     surface: { get busy() { return isBusy(); } },
-    behavior(role): Behavior | undefined {
-      if (role === 'status') return { attrs: () => ({ 'aria-busy': isBusy() }) };
-      return undefined;
-    },
-  };
+    roles: {
+      status: () => ({ attrs: () => ({ 'aria-busy': isBusy() }) })
+    }
+  });
 }
-// register:  defineBond({ …, capabilities: () => [busyCapability(() => loading)] })
-// project:   class StatusAtom extends BondAtom {
-//              constructor(b) { super(b, 'status'); this.role('status'); }
-//            }`,
+
+export const statusRole = defineAtomCapability({
+  behavior: (node) => ({
+    attrs: () => ({ role: 'status', 'data-atom': node.name })
+  })
+});`,
 	'typescript'
 )}
 
-A **capability** is the noun — it has a {inlineCode('slot')}, lives in the spec, and is what
-fusion resolves. A **behaviour** is the verb — the per-role projection an atom folds, with no
-identity. Use a capability when two parts must resolve to one (focus, selection, roving); use a
-one-off behaviour for an ad-hoc, single-atom decoration via {inlineCode('atom.use(...)')}.
-
-## Extend or compose?
-
-Reach for the smallest move that fits. If you only need to rearrange markup or restyle, **compose
-atoms** and use {inlineCode('base')}/{inlineCode('preset')} — no new bond needed. Reach for
-{inlineCode('extends')}/{inlineCode('fuse')} only when you need new *behaviour*: a new atom slot,
-a different capability, or two components' behaviour in one.
+Use a capability when behavior crosses roles, is shared across component families, needs replacement
+or decoration by slot, needs whole-bond setup, bridges parent state into child nodes, or owns ARIA
+relationships between sibling nodes. ## Current public authoring surface New docs and new code
+should prefer `Bond`, `Atom`, `createAtomInstance`, `defineBondCapability`, `defineAtomCapability`,
+and registry lookup through `bond.node()` / `bond.nodes()`. Bond-owned factories and generated part
+methods remain compatibility adapters, but the old state and atom classes are internal
+implementation details.

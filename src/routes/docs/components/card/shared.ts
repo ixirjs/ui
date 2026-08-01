@@ -55,8 +55,7 @@ const useCases = [
 	},
 	{
 		title: 'User Profiles',
-		description:
-			'Present user information, avatars, bio, and action buttons in profile cards.'
+		description: 'Present user information, avatars, bio, and action buttons in profile cards.'
 	},
 	{
 		title: 'Product Catalog',

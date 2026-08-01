@@ -29,11 +29,11 @@
 		const atIdx = raw.indexOf('@');
 		if (atIdx === -1) return [{ text: raw, kind: 'plain' }];
 
-		const local  = raw.slice(0, atIdx);
+		const local = raw.slice(0, atIdx);
 		const domain = raw.slice(atIdx + 1);
 		const segs: Segment[] = [];
 
-		if (local)  segs.push({ text: local,  kind: 'local' });
+		if (local) segs.push({ text: local, kind: 'local' });
 		segs.push({ text: '@', kind: 'at' });
 
 		if (domain) {
@@ -41,7 +41,7 @@
 			const lastDot = domain.lastIndexOf('.');
 			if (lastDot !== -1 && lastDot < domain.length - 1) {
 				segs.push({ text: domain.slice(0, lastDot), kind: 'domain' });
-				segs.push({ text: domain.slice(lastDot),    kind: 'tld' });
+				segs.push({ text: domain.slice(lastDot), kind: 'tld' });
 			} else {
 				segs.push({ text: domain, kind: 'domain' });
 			}
@@ -53,11 +53,11 @@
 	const segments = $derived(parseSegments(value));
 
 	const kindStyle: Record<Segment['kind'], string> = {
-		local:  'color: var(--input-hl-primary, var(--foreground)); font-weight: 500',
-		at:     'color: var(--input-hl-muted, var(--foreground))',
+		local: 'color: var(--input-hl-primary, var(--foreground)); font-weight: 500',
+		at: 'color: var(--input-hl-muted, var(--foreground))',
 		domain: 'color: var(--input-hl-secondary, var(--foreground))',
-		tld:    'color: var(--input-hl-accent, var(--foreground))',
-		plain:  'color: var(--foreground)',
+		tld: 'color: var(--input-hl-accent, var(--foreground))',
+		plain: 'color: var(--foreground)'
 	};
 </script>
 

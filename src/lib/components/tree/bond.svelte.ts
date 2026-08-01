@@ -1,15 +1,18 @@
-import { Bond, BondAtom } from '$svelte-atoms/core/shared/bond.svelte';
-import { defineBond, type BondOf, type ViewOf } from '$svelte-atoms/core/shared';
+import { Bond, Atom } from '$svelte-atoms/core/shared/bond';
+import { defineBond, type BondOf } from '$svelte-atoms/core/shared';
 import {
 	createDisclosure,
+	disclosureCapability,
+	disclosureTrigger,
 	type Disclosure
-} from '$svelte-atoms/core/shared/capabilities/disclosure.svelte';
-import {
-	DisclosureState,
-	type DisclosureStateProps
-} from '$svelte-atoms/core/shared/capabilities/disclosure-state.svelte';
-import { triggerContentLink } from '$svelte-atoms/core/shared/capabilities/relationship.svelte';
+} from '$svelte-atoms/core/shared/capability/models/disclosure.svelte';
+import type { DisclosureStateProps } from '$svelte-atoms/core/shared/capability/models/disclosure-state.svelte';
+import { treeItemGroupLink } from '$svelte-atoms/core/shared/capability/models/relationship.svelte';
 import { isBrowser } from '$svelte-atoms/core/utils/dom.svelte';
+
+// -----------------------------------------------------------------------------
+// Public types
+// -----------------------------------------------------------------------------
 
 export type TreeBondProps = DisclosureStateProps;
 
@@ -21,9 +24,14 @@ export type TreeBondElements = {
 };
 
 // Minimal bond view — breaks the atom↔bond cycle.
-type TreeBondView = ViewOf<TreeBondState>;
 
-class TreeRootAtom extends BondAtom<TreeBondView, HTMLElement> {
+// -----------------------------------------------------------------------------
+// Internal types
+// -----------------------------------------------------------------------------
+
+type TreeBondView = TreeBondBase;
+
+export class TreeRootAtom extends Atom<TreeBondView, HTMLElement> {
 	constructor(bond: TreeBondView) {
 		super(bond, 'root');
 	}
@@ -35,15 +43,16 @@ class TreeRootAtom extends BondAtom<TreeBondView, HTMLElement> {
 		// aria-expanded lives on the header (trigger↔content link); root labelled by the header.
 		return {
 			...super.attrs,
-			'aria-labelledby': bond.atomByRole('trigger')?.id,
+			'aria-labelledby': bond.atomByRole('treeitem')?.id,
 			'aria-disabled': isDisabled
 		};
 	}
 }
 
-class TreeHeaderAtom extends BondAtom<TreeBondView, HTMLElement> {
+class TreeHeaderAtom extends Atom<TreeBondView, HTMLElement> {
 	constructor(bond: TreeBondView) {
 		super(bond, 'header');
+		this.role('treeitem');
 	}
 	override get attrs() {
 		const bond = this.bond;
@@ -59,9 +68,10 @@ class TreeHeaderAtom extends BondAtom<TreeBondView, HTMLElement> {
 	}
 }
 
-class TreeBodyAtom extends BondAtom<TreeBondView, HTMLElement> {
+class TreeBodyAtom extends Atom<TreeBondView, HTMLElement> {
 	constructor(bond: TreeBondView) {
 		super(bond, 'body');
+		this.role('treegroup');
 	}
 	override get attrs() {
 		// aria-labelledby + role=group come from the trigger↔content link (role:'content').
@@ -71,34 +81,80 @@ class TreeBodyAtom extends BondAtom<TreeBondView, HTMLElement> {
 	}
 }
 
-class TreeIndicatorAtom extends BondAtom<TreeBondView, HTMLElement> {
+class TreeIndicatorAtom extends Atom<TreeBondView, HTMLElement> {
 	constructor(bond: TreeBondView) {
 		super(bond, 'indicator');
 	}
 }
 
 // Captures the parent tree bond from context, enabling nesting.
-class TreeBondBase extends Bond<TreeBondProps, TreeBondState> {
-	#parent: TreeBond | undefined;
 
-	constructor(state: TreeBondState) {
-		super(state, 'tree');
-		this.#parent = TreeBond.get();
+// -----------------------------------------------------------------------------
+// Bond implementation
+// -----------------------------------------------------------------------------
+
+class TreeBondBase extends Bond<TreeBondProps> {
+	#parent: TreeBond | undefined;
+	readonly disclosure: Disclosure = createDisclosure({
+		get: () => this.props.open,
+		set: (v) => (this.props.open = v)
+	});
+
+	constructor(props: TreeBondProps, name = 'tree') {
+		super(props, name);
+		this.#parent = getOptionalParentTree();
+		this.capability(disclosureCapability(this.disclosure));
+		// treeitem↔group link: header gets aria-expanded/controls; body gets aria-labelledby/group.
+		this.capability(treeItemGroupLink(this.disclosure));
+		this.capability(disclosureTrigger({ event: 'pointerdown' }));
 	}
 
 	get parent(): TreeBond | undefined {
 		return this.#parent;
 	}
+
+	get isOpen(): boolean {
+		return this.disclosure.isOpen;
+	}
+
+	open(): void {
+		this.disclosure.open();
+	}
+
+	close(): void {
+		this.disclosure.close();
+	}
+
+	toggle(): void {
+		this.disclosure.toggle();
+	}
 }
 
-export const TreeBond = defineBond<
+// -----------------------------------------------------------------------------
+// Helpers
+// -----------------------------------------------------------------------------
+
+function getOptionalParentTree(): TreeBond | undefined {
+	try {
+		return TreeBond.get();
+	} catch {
+		return undefined;
+	}
+}
+
+// -----------------------------------------------------------------------------
+// Bond spec and constructor facade
+// -----------------------------------------------------------------------------
+
+const TreeBondImpl = defineBond<
 	{
 		root: typeof TreeRootAtom;
 		header: { atom: typeof TreeHeaderAtom; role: 'trigger' };
 		body: { atom: typeof TreeBodyAtom; role: 'content' };
 		indicator: typeof TreeIndicatorAtom;
 	},
-	TreeBondState,
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	any,
 	typeof TreeBondBase
 >({
 	name: 'tree',
@@ -111,18 +167,16 @@ export const TreeBond = defineBond<
 	}
 });
 
-export type TreeBond = BondOf<typeof TreeBond>;
+export type TreeBond = BondOf<typeof TreeBondImpl>;
 
-export class TreeBondState<Props extends TreeBondProps = TreeBondProps> extends DisclosureState<Props> {
-	// Storage stays in props.open. isOpen/open/close/toggle are inherited.
-	readonly disclosure: Disclosure = createDisclosure({
-		get: () => this.props.open,
-		set: (v) => (this.props.open = v)
-	});
-
-	constructor(props: Props) {
-		super(props);
-		// trigger↔content link (§11.3): header gets aria-expanded/controls; body gets aria-labelledby/group.
-		this.capability(triggerContentLink(this.disclosure, { contentRole: 'group' }));
-	}
+interface TreeBondConstructor {
+	new (props: TreeBondProps): TreeBond;
+	readonly CONTEXT_KEY: string;
+	readonly spec: (typeof TreeBondImpl)['spec'];
+	get(): TreeBond | undefined;
+	getOrThrow(message?: string): TreeBond;
+	set(bond: TreeBond): TreeBond;
+	create(props: TreeBondProps): TreeBond;
 }
+
+export const TreeBond = TreeBondImpl as unknown as TreeBondConstructor;

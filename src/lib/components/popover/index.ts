@@ -2,10 +2,11 @@ export * as Popover from './atoms';
 export { clickoutPopover, popover } from './attachments.svelte';
 export {
 	PopoverBond,
+	type PopoverBondProps,
 	type PopoverDomElements,
 	type PopoverParams,
-	PopoverState,
 	type PopoverStateProps,
+	popoverNode,
 	type TriggerParams,
 	PopoverTriggerAtom,
 	PopoverContentAtom,

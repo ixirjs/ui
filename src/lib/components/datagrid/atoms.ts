@@ -1,11 +1,11 @@
 export { default as Body } from './datagrid-body.svelte';
 export { default as Checkbox } from './datagrid-checkbox.svelte';
 export { default as Root } from './datagrid-root.svelte';
-// @deprecated Use `Row` instead
+/** @deprecated Use `Row` instead. */
 export { Tr } from './row';
-// @deprecated Use `Column` instead
+/** @deprecated Use `Column` instead. */
 export { Th } from './column';
-// @deprecated Use `Cell` instead
+/** @deprecated Use `Cell` instead. */
 export { Td } from './cell';
 
 export { default as Header } from './datagrid-header.svelte';

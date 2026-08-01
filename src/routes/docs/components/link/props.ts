@@ -22,7 +22,8 @@ export const linkProps: PropDefinition[] = [
 		name: 'rel',
 		type: 'string | undefined',
 		default: 'undefined',
-		description: 'Relationship between the current document and the linked URL. Use "noopener noreferrer" for external links.'
+		description:
+			'Relationship between the current document and the linked URL. Use "noopener noreferrer" for external links.'
 	},
 	{
 		name: 'children',
@@ -34,6 +35,7 @@ export const linkProps: PropDefinition[] = [
 		name: '...atomProps',
 		type: 'HtmlAtomProps',
 		default: '-',
-		description: 'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
-	},
+		description:
+			'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
+	}
 ];

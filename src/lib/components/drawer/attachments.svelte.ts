@@ -3,24 +3,24 @@ import { clickAction } from '$svelte-atoms/core/attachments/event.svelte';
 import { containsTarget } from '$svelte-atoms/core/utils/dom.svelte';
 import { DrawerBond } from './bond.svelte';
 
-export function drawer(callback: (node: HTMLElement, bond?: DrawerBond) => any) {
+export function drawer(callback: (node: HTMLElement, bond?: DrawerBond) => void | (() => void)) {
 	const bond = DrawerBond.get();
 	return (node: HTMLElement) => callback(node, bond);
 }
 
 export function toggleDrawer(onclick?: (ev: MouseEvent) => void) {
 	const bond = DrawerBond.get();
-	return clickAction(() => bond?.state.toggle(), onclick);
+	return clickAction(() => bond?.toggle(), onclick);
 }
 
 export function openDrawer(onclick?: (ev: MouseEvent) => void) {
 	const bond = DrawerBond.get();
-	return clickAction(() => bond?.state.open(), onclick);
+	return clickAction(() => bond?.open(), onclick);
 }
 
 export function closeDrawer(onclick?: (ev: MouseEvent) => void) {
 	const bond = DrawerBond.get();
-	return clickAction(() => bond?.state.close(), onclick);
+	return clickAction(() => bond?.close(), onclick);
 }
 
 export function clickoutDrawer(onclickout?: (ev: PointerEvent, bond?: DrawerBond) => void) {
@@ -30,7 +30,7 @@ export function clickoutDrawer(onclickout?: (ev: PointerEvent, bond?: DrawerBond
 		(ev: PointerEvent) => {
 			if (!bond) return;
 
-			if (!bond.state.props.open) {
+			if (!bond.props.open) {
 				return;
 			}
 
@@ -44,7 +44,7 @@ export function clickoutDrawer(onclickout?: (ev: PointerEvent, bond?: DrawerBond
 				return;
 			}
 
-			bond.state.close();
+			bond.close();
 		},
 		{
 			capture: true,

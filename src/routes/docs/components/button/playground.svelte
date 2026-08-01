@@ -17,11 +17,11 @@
 					<label for="style-select" class="mb-1 block text-sm font-medium text-gray-700"
 						>Style</label
 					>
-					<Select.Root
-						id="style-select"
-						class="border-border block w-full rounded-md border px-3 py-2 text-sm"
-					>
-						<Select.Trigger class="w-full" base={Input.Root}>
+					<Select.Root>
+						<Select.Trigger
+							class="border-border block w-full rounded-md border px-3 py-2 text-sm"
+							base={Input.Root}
+						>
 							<Select.Selections />
 							<Select.Placeholder>Select a style</Select.Placeholder>
 						</Select.Trigger>
@@ -36,11 +36,11 @@
 
 				<div>
 					<label for="size-select" class="mb-1 block text-sm font-medium text-gray-700">Size</label>
-					<Select.Root
-						id="style-select"
-						class="border-border block w-full rounded-md border px-3 py-2 text-sm"
-					>
-						<Select.Trigger class="w-full" base={Input.Root}>
+					<Select.Root>
+						<Select.Trigger
+							class="border-border block w-full rounded-md border px-3 py-2 text-sm"
+							base={Input.Root}
+						>
 							<Select.Selections />
 							<Select.Placeholder>Select a size</Select.Placeholder>
 						</Select.Trigger>

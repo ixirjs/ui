@@ -1,10 +1,20 @@
 <script lang="ts" generics="E extends HtmlElementTagName, B extends Base = Base">
 	import { PortalBond, PortalsBond, resolvePortal } from '$svelte-atoms/core/components/portal';
 	import { HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
+	import { createAtomInstance, type Atom } from '$svelte-atoms/core/shared/bond';
 	import type { HtmlElementTagName } from '$svelte-atoms/core/components/element';
-	import { clickout } from '$svelte-atoms/core/attachments';
-	import { containsTarget } from '$svelte-atoms/core/utils/dom.svelte';
-	import { PopoverBond } from './bond.svelte';
+	import {
+		OUTSIDE_PRESS,
+		type DismissPressEvent,
+		type OverlayView
+	} from '$svelte-atoms/core/components/portal/host';
+	import {
+		createPopoverAtom,
+		getPopoverPosition,
+		PopoverBond,
+		PopoverContentAtom,
+		popoverNode
+	} from './bond.svelte';
 	import { animatePopoverContent } from './motion.svelte';
 	import type { PopoverContentProps } from './types';
 	import Floating from './strategies/floating.svelte';
@@ -15,7 +25,7 @@
 	// Resolve the configured portal (id or bond); fall back to the ambient PortalBond when
 	// none is configured or the id is unknown.
 	const activePortalBond = $derived(
-		resolvePortal(PortalsBond.get(), bond.state.props.portal) ?? PortalBond.get()
+		resolvePortal(PortalsBond.get(), bond.props.portal) ?? PortalBond.get()
 	);
 
 	let {
@@ -33,30 +43,52 @@
 		fallback = {
 			animate: animatePopoverContent()
 		},
-		"z-index": zIndex = undefined,
+		'z-index': zIndex = undefined,
 		...restProps
 	}: PopoverContentProps<E, B> = $props();
 
-	const atom = bond.atom('content');
+	const atom = createAtomInstance<Atom<PopoverBond, HTMLElement>, PopoverBond, HTMLElement>(
+		'content',
+		{
+			bond,
+			factory: (owner) =>
+				createPopoverAtom(
+					owner as PopoverBond,
+					'content',
+					(popover) => new PopoverContentAtom(popover)
+				)
+		}
+	);
+	const outsidePress = $derived(bond.surface(OUTSIDE_PRESS));
 
 	const presentation = $derived({ preset: preset ?? atom.preset });
+
+	$effect(() => {
+		return outsidePress?.configure(
+			onclickoutside
+				? {
+						onDismiss: (ev: DismissPressEvent, overlay: OverlayView) =>
+							onclickoutside(ev as PointerEvent, overlay as PopoverBond)
+					}
+				: {}
+		);
+	});
 
 	// Trigger measurements, in px. Lazy: only read by function sizers (raw-string paths skip it).
 	// Re-runs on reposition so it tracks the trigger as it resizes.
 	const triggerSize = $derived.by(() => {
-		void bond.state.position;
-		const trigger = bond.element<Element>('trigger');
+		void getPopoverPosition(bond);
+		const trigger = popoverNode(bond, 'trigger')?.element;
 		if (!(trigger instanceof Element)) return { width: 0, minWidth: 0, maxWidth: Infinity };
 		return {
 			width: trigger.clientWidth,
 			get minWidth() {
 				const computed = getComputedStyle(trigger);
-				return parseFloat(computed.minWidth) || 0
-			} 
-			,
+				return parseFloat(computed.minWidth) || 0;
+			},
 			get maxWidth() {
 				const computed = getComputedStyle(trigger);
-				return parseFloat(computed.maxWidth) || Infinity
+				return parseFloat(computed.maxWidth) || Infinity;
 			}
 		};
 	});
@@ -82,34 +114,16 @@
 		style: sizeStyle,
 		...restProps
 	});
-
-	function clickoutAttachement(node: HTMLElement) {
-		const cleanup = clickout((ev) => {
-			if (onclickoutside) {
-				onclickoutside(ev, bond);
-				return;
-			}
-
-			if (containsTarget(bond.element('trigger'), ev.target)) {
-				return;
-			}
-
-			bond.state.close();
-		}, {})(node);
-
-		return cleanup;
-	}
 </script>
 
 <Floating />
 
 <Overlay portal={activePortalBond ?? 'root.l0'} {layer} {order} as="div" z-index={zIndex}>
 	<HtmlAtom
-		{@attach clickoutAttachement}
 		{bond}
 		{fallback}
 		class={[
-			'popover-content bg-popover text-popover-foreground border-border rounded-md border p-2 opacity-0 shadow-lg outline-none',
+			'popover-content bg-popover text-popover-foreground rounded-md border p-2 opacity-0 shadow-lg outline-none',
 			'$preset',
 			klass
 		]}

@@ -32,14 +32,15 @@
 
 	const checkboxRootProps = $derived(mergePresetProps(preset, 'checkbox', restProps));
 
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	let checkboxElement: HTMLInputElement | undefined = $state();
 
 	const isChecked = $derived(checked === true);
 	const isIndeterminate = $derived(indeterminate === true);
 	const showCheckmark = $derived(isChecked && !isIndeterminate);
 
-	const overlayContent = $derived(isIndeterminate ? indeterminateSnippet : showCheckmark ? checkedSnippet : undefined);
+	const overlayContent = $derived(
+		isIndeterminate ? indeterminateSnippet : showCheckmark ? checkedSnippet : undefined
+	);
 
 	function handleChange(ev: Event) {
 		onchange?.(ev, {
@@ -124,8 +125,6 @@
 	{@render content?.()}
 {/snippet}
 
-<!-- svelte-ignore a11y_click_events_have_key_events -->
-<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <Input.Root
 	as="div"
 	class={[

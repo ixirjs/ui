@@ -64,7 +64,7 @@ const componentsSummary = [
 	},
 	{
 		name: 'Toast.Close',
-		description: 'Dismiss button that calls bond.state.close() on click or Enter / Space'
+		description: 'Dismiss button that calls bond.close() on click or Enter / Space'
 	},
 	{ name: 'Toaster', description: 'Reactive manager class for imperative toast creation' }
 ];

@@ -13,7 +13,9 @@
 		...restProps
 	}: CardDescriptionProps<E, B> = $props();
 
-	const descriptionProps = $derived(mergePresetProps(preset, 'card.description', { ...bond?.description(), ...restProps }));
+	const descriptionProps = $derived(
+		mergePresetProps(preset, 'card.description', { ...bond?.description(), ...restProps })
+	);
 </script>
 
 <HtmlAtom

@@ -7,7 +7,7 @@
 	let {
 		title,
 		subtitle = undefined,
-		children,
+		children
 	}: {
 		title: string;
 		subtitle?: string;
@@ -26,9 +26,9 @@
 		{@render children()}
 	</Section.Root>
 {:else}
-{newLine(2)}## {title}
-{#if subtitle}
-{newLine()}_{subtitle}_
-{/if}
-{newLine()}{@render children()}
+	{newLine(2)}## {title}
+	{#if subtitle}
+		{newLine()}_{subtitle}_
+	{/if}
+	{newLine()}{@render children()}
 {/if}

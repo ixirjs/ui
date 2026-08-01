@@ -277,7 +277,16 @@
 		}
 	];
 
-	const categories = ['All', 'Form', 'Display', 'Layout', 'Navigation', 'Overlay', 'Feedback', 'Utility'];
+	const categories = [
+		'All',
+		'Form',
+		'Display',
+		'Layout',
+		'Navigation',
+		'Overlay',
+		'Feedback',
+		'Utility'
+	];
 
 	let selectedCategory = $state('All');
 	let searchQuery = $state('');
@@ -301,15 +310,16 @@
 	}
 
 	function statusClass(status: string) {
-		return status === 'Stable'
-			? 'bg-primary/10 text-primary'
-			: 'bg-muted text-muted-foreground';
+		return status === 'Stable' ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground';
 	}
 </script>
 
 <svelte:head>
 	<title>Components - Svelte Atoms</title>
-	<meta name="description" content="Browse all available components in the Svelte Atoms library — accessible, composable, and built for Svelte 5." />
+	<meta
+		name="description"
+		content="Browse all available components in the Svelte Atoms library — accessible, composable, and built for Svelte 5."
+	/>
 </svelte:head>
 
 <!-- Hero -->
@@ -317,8 +327,8 @@
 	<p class="text-primary mb-3 text-sm font-medium uppercase tracking-wide">Components</p>
 	<h1 class="text-foreground mb-4 text-4xl font-bold tracking-tight">Every UI piece you need.</h1>
 	<p class="text-muted-foreground mb-8 max-w-xl text-lg leading-relaxed">
-		Accessible, composable components built for Svelte 5. Each one is unstyled by default and
-		fully configurable through the preset system.
+		Accessible, composable components built for Svelte 5. Each one is unstyled by default and fully
+		configurable through the preset system.
 	</p>
 	<div class="flex flex-wrap gap-4">
 		<div class="border-border rounded-lg border px-4 py-2 text-center">
@@ -344,8 +354,18 @@
 <div class="mb-8 space-y-4">
 	<div class="relative max-w-sm">
 		<div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-			<svg xmlns="http://www.w3.org/2000/svg" class="text-muted-foreground h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-				<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				class="text-muted-foreground h-4 w-4"
+				fill="none"
+				stroke="currentColor"
+				viewBox="0 0 24 24"
+				stroke-width="2"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				aria-hidden="true"
+			>
+				<circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
 			</svg>
 		</div>
 		<input
@@ -359,7 +379,8 @@
 	<div class="flex flex-wrap gap-2">
 		{#each categories as category (category)}
 			<button
-				class="rounded-lg px-3 py-1.5 text-sm font-medium transition-colors {selectedCategory === category
+				class="rounded-lg px-3 py-1.5 text-sm font-medium transition-colors {selectedCategory ===
+				category
 					? 'bg-primary text-primary-foreground'
 					: 'bg-muted text-muted-foreground hover:text-foreground'}"
 				onclick={() => (selectedCategory = category)}
@@ -374,7 +395,9 @@
 <!-- Results count -->
 {#if searchQuery.trim() || selectedCategory !== 'All'}
 	<p class="text-muted-foreground mb-6 text-sm">
-		{filteredComponents.length} of {components.length} component{filteredComponents.length !== 1 ? 's' : ''}
+		{filteredComponents.length} of {components.length} component{filteredComponents.length !== 1
+			? 's'
+			: ''}
 		{selectedCategory !== 'All' ? `in ${selectedCategory}` : ''}
 		{searchQuery.trim() ? `matching "${searchQuery.trim()}"` : ''}
 	</p>
@@ -385,19 +408,32 @@
 	<!-- eslint-disable svelte/no-navigation-without-resolve -->
 	<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
 		{#each filteredComponents as component (component.href)}
-			<div class="group border-border hover:border-primary/40 flex flex-col rounded-xl border overflow-hidden transition-all hover:shadow-sm">
+			<div
+				class="group border-border hover:border-primary/40 flex flex-col rounded-xl border overflow-hidden transition-all hover:shadow-sm"
+			>
 				<!-- Interactive preview -->
-				<div class="border-border/50 border-b bg-muted/20 flex h-36 items-center justify-center overflow-hidden p-4">
+				<div
+					class="border-border/50 border-b bg-muted/20 flex h-36 items-center justify-center overflow-hidden p-4"
+				>
 					<ComponentPreview name={component.name} />
 				</div>
 
 				<!-- Info + link -->
-				<a href={component.href} class="flex flex-1 flex-col p-4 transition-colors hover:bg-muted/10">
+				<a
+					href={component.href}
+					class="flex flex-1 flex-col p-4 transition-colors hover:bg-muted/10"
+				>
 					<div class="mb-2 flex items-start justify-between gap-3">
-						<p class="text-foreground group-hover:text-primary text-sm font-semibold transition-colors">
+						<p
+							class="text-foreground group-hover:text-primary text-sm font-semibold transition-colors"
+						>
 							{component.name}
 						</p>
-						<span class="shrink-0 rounded px-1.5 py-0.5 font-mono text-xs {statusClass(component.status)}">
+						<span
+							class="shrink-0 rounded px-1.5 py-0.5 font-mono text-xs {statusClass(
+								component.status
+							)}"
+						>
 							{component.status}
 						</span>
 					</div>
@@ -410,8 +446,20 @@
 						<span class="bg-muted text-muted-foreground rounded px-2 py-0.5 text-xs">
 							{component.category}
 						</span>
-						<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground/50 group-hover:text-primary transition-colors" aria-hidden="true">
-							<path d="m9 18 6-6-6-6"/>
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							width="14"
+							height="14"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							class="text-muted-foreground/50 group-hover:text-primary transition-colors"
+							aria-hidden="true"
+						>
+							<path d="m9 18 6-6-6-6" />
 						</svg>
 					</div>
 				</a>
@@ -422,15 +470,28 @@
 {:else}
 	<div class="py-16 text-center">
 		<div class="bg-muted mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full">
-			<svg xmlns="http://www.w3.org/2000/svg" class="text-muted-foreground h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-				<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				class="text-muted-foreground h-6 w-6"
+				fill="none"
+				stroke="currentColor"
+				viewBox="0 0 24 24"
+				stroke-width="2"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				aria-hidden="true"
+			>
+				<circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
 			</svg>
 		</div>
 		<p class="text-foreground mb-1 text-sm font-semibold">No components found</p>
 		<p class="text-muted-foreground text-sm">Try a different search term or category.</p>
 		<button
 			class="text-primary mt-4 text-sm hover:underline"
-			onclick={() => { searchQuery = ''; selectedCategory = 'All'; }}
+			onclick={() => {
+				searchQuery = '';
+				selectedCategory = 'All';
+			}}
 		>
 			Clear filters
 		</button>

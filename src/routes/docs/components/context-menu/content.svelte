@@ -1,7 +1,13 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { createExampleLoader } from '$docs/utils/example-loader';
-	import { DocComponentPage, DocExample, DocSection, DocOnly, DocPropsTabs } from '$docs/components';
+	import {
+		DocComponentPage,
+		DocExample,
+		DocSection,
+		DocOnly,
+		DocPropsTabs
+	} from '$docs/components';
 	import type { ComponentDocMeta, PropsSection } from '$docs/components';
 	import type { DocMode } from '$docs/context/doc-mode.svelte';
 	import type { Frontmatter } from '$docs/md/frontmatter';
@@ -39,7 +45,8 @@ const preset = createPreset({
 
 	const metadata: ComponentDocMeta = {
 		componentTitle: 'Context Menu',
-		componentDescription: 'Right-click activated menu that appears at cursor position. Ideal for contextual actions and shortcuts.',
+		componentDescription:
+			'Right-click activated menu that appears at cursor position. Ideal for contextual actions and shortcuts.',
 		componentType: 'compound',
 		status: 'stable',
 		packageName: '@svelte-atoms/core',
@@ -54,13 +61,25 @@ const preset = createPreset({
 			'Tab exits the menu and returns focus to normal flow'
 		],
 		useCases: [
-			{ title: 'Contextual actions at cursor position', description: 'Open a menu exactly where the user right-clicks' },
-			{ title: 'Row/item actions in dense data interfaces', description: 'Attach per-row menus without extra UI chrome' },
-			{ title: 'Right-click interactions without layout shift', description: 'Non-destructive overlay that keeps the page stable' }
+			{
+				title: 'Contextual actions at cursor position',
+				description: 'Open a menu exactly where the user right-clicks'
+			},
+			{
+				title: 'Row/item actions in dense data interfaces',
+				description: 'Attach per-row menus without extra UI chrome'
+			},
+			{
+				title: 'Right-click interactions without layout shift',
+				description: 'Non-destructive overlay that keeps the page stable'
+			}
 		],
 		componentsSummary: [
 			{ name: 'ContextMenu.Root', description: 'Provides shared dropdown state and positioning' },
-			{ name: 'ContextMenu.Trigger', description: 'Captures right-click and opens at pointer coordinates' },
+			{
+				name: 'ContextMenu.Trigger',
+				description: 'Captures right-click and opens at pointer coordinates'
+			},
 			{ name: 'ContextMenu.Content', description: 'Floating menu container' },
 			{ name: 'ContextMenu.Item', description: 'Actionable item with keyboard support' }
 		]
@@ -68,13 +87,25 @@ const preset = createPreset({
 
 	const apiSections: PropsSection[] = [
 		{ label: 'ContextMenu.Root', presetKey: 'context-menu', props: contextMenuRootProps },
-		{ label: 'ContextMenu.Trigger', presetKey: 'context-menu.trigger', props: contextMenuTriggerProps },
-		{ label: 'ContextMenu.Content', presetKey: 'context-menu.content', props: contextMenuContentProps },
-		{ label: 'ContextMenu.Item', presetKey: 'context-menu.item', props: contextMenuItemProps },
+		{
+			label: 'ContextMenu.Trigger',
+			presetKey: 'context-menu.trigger',
+			props: contextMenuTriggerProps
+		},
+		{
+			label: 'ContextMenu.Content',
+			presetKey: 'context-menu.content',
+			props: contextMenuContentProps
+		},
+		{ label: 'ContextMenu.Item', presetKey: 'context-menu.item', props: contextMenuItemProps }
 	];
 
 	const _loaders = import.meta.glob('./examples/*.svelte');
-	const _sources = import.meta.glob('./examples/*.svelte', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+	const _sources = import.meta.glob('./examples/*.svelte', {
+		query: '?raw',
+		import: 'default',
+		eager: true
+	}) as Record<string, string>;
 	const ex = createExampleLoader(_loaders, _sources);
 </script>
 
@@ -86,9 +117,21 @@ const preset = createPreset({
 	next={{ label: 'DataGrid', href: '/docs/components/datagrid' }}
 >
 	{#snippet examples()}
-		<DocExample title="Basic Zone" description="Right-click the zone to open the menu" {...ex('./examples/basic.svelte')} />
-		<DocExample title="On Button" description="Use Button as the trigger base" {...ex('./examples/button.svelte')} />
-		<DocExample title="On DataGrid Row" description="Row-level context actions" {...ex('./examples/row.svelte')} />
+		<DocExample
+			title="Basic Zone"
+			description="Right-click the zone to open the menu"
+			{...ex('./examples/basic.svelte')}
+		/>
+		<DocExample
+			title="On Button"
+			description="Use Button as the trigger base"
+			{...ex('./examples/button.svelte')}
+		/>
+		<DocExample
+			title="On DataGrid Row"
+			description="Row-level context actions"
+			{...ex('./examples/row.svelte')}
+		/>
 	{/snippet}
 
 	{#snippet apiReference()}
@@ -98,8 +141,9 @@ const preset = createPreset({
 	{#snippet extra()}
 		<DocSection title="Related Components">
 			<DocOnly for="markdown">
-				- [Dropdown Menu](/docs/components/dropdown-menu): Underlying selection and item behavior reused by ContextMenu
-				- [Popover](/docs/components/popover): Floating panel with positioning logic
+				- [Dropdown Menu](/docs/components/dropdown-menu): Underlying selection and item behavior
+				reused by ContextMenu - [Popover](/docs/components/popover): Floating panel with positioning
+				logic
 			</DocOnly>
 
 			<DocOnly for="html">
@@ -108,7 +152,9 @@ const preset = createPreset({
 						href={resolve('/docs/components/dropdown-menu')}
 						class="border-border hover:border-primary group rounded-lg border p-4 transition-colors"
 					>
-						<h4 class="group-hover:text-primary mb-1 font-semibold transition-colors">Dropdown Menu</h4>
+						<h4 class="group-hover:text-primary mb-1 font-semibold transition-colors">
+							Dropdown Menu
+						</h4>
 						<p class="text-muted-foreground text-sm">
 							Underlying selection and item behavior reused by ContextMenu
 						</p>

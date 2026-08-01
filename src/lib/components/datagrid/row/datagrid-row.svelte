@@ -1,10 +1,14 @@
-<script lang="ts" generics="T = unknown, E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
+<script
+	lang="ts"
+	generics="T = unknown, E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base"
+>
 	import { untrack } from 'svelte';
-	import { bindBond } from '$svelte-atoms/core/shared/bind-bond.svelte';
-	import { HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
-	import { DataGridRowBond, DataGridRowBondState, type DataGridRowBondProps } from './bond.svelte';
+	import { bindBond } from '$svelte-atoms/core/shared/bond/bind.svelte';
+	import { createAtomInstance } from '$svelte-atoms/core/shared/bond';
+	import { HtmlAtom, mergeAtomProps, type Base } from '$svelte-atoms/core/components/atom';
+	import { DataGridRowBond, DataGridRowRootAtom, type DataGridRowBondProps } from './bond.svelte';
 	import type { DatagridRowProps } from '../types';
-    import './datagrid-row.css';
+	import './datagrid-row.css';
 
 	let {
 		class: klass = '',
@@ -27,16 +31,22 @@
 		{ preset: () => preset }
 	);
 	const bond = binding.bond.share();
+	const rootAtom = createAtomInstance<DataGridRowRootAtom, DataGridRowBond<T>>('root', {
+		bond,
+		factory: (owner) => new DataGridRowRootAtom(owner as DataGridRowBond<T>)
+	});
+	const rowProps = $derived(
+		mergeAtomProps(rootAtom, preset, { ...binding.stateProps, ...restProps })
+	);
 
-	const isHeader = $derived(bond.state.isHeader);
-	const isSelected = $derived(bond.state.isSelected);
+	const isHeader = $derived(bond.isHeader);
+	const isSelected = $derived(bond.isSelected);
 
 	const unmount = untrack(() => (isHeader ? undefined : bond.mount()));
 	$effect(() => unmount);
 
 	function defaultFactory(props: DataGridRowBondProps<T>) {
-		const state = new DataGridRowBondState<T>(props);
-		return new DataGridRowBond<T>(state);
+		return DataGridRowBond.create<T>(props);
 	}
 
 	function handleClick(ev: Event) {
@@ -55,8 +65,7 @@
 	]}
 	style="--rows:{rows}"
 	onclick={handleClick}
-	{...binding.props}
-	{...restProps}
+	{...rowProps}
 >
 	{@render children?.({ row: bond })}
 </HtmlAtom>

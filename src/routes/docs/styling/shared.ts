@@ -1,6 +1,6 @@
 export const metadata = {
 	title: 'Styling System - Svelte Atoms',
-	description: 'Master the flexible styling system with Tailwind, variants, and presets.',
+	description: 'Learn the flexible styling system with Tailwind, variants, and presets.',
 	pageTitle: 'Styling System',
 	pageDescription:
 		'Learn how to style Svelte Atoms components using Tailwind CSS, variants, presets, and custom CSS.',

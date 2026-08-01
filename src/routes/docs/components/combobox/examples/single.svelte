@@ -8,8 +8,8 @@
 		{ value: 'option3', label: 'Option 3' }
 	];
 
-	let singleValue = $state<string | undefined>();
-	let singleLabel = $state<string | undefined>();
+	let singleValue = $state('');
+	let singleLabel = $state('');
 </script>
 
 <div class="w-64">

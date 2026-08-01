@@ -41,20 +41,20 @@ export type DatagridRowChildren<T = unknown> = Snippet<[DatagridRowSnippetProps<
 
 // Deprecated snippet aliases
 
-// @deprecated Use `DatagridColumnSnippetProps` instead
+/** @deprecated Use `DatagridColumnSnippetProps` instead. */
 export interface DatagridThSnippetProps<T = unknown> extends DatagridColumnSnippetProps<T> {
 	th: DataGridColumnBond<T>;
 }
 
-// @deprecated Use `DatagridColumnChildren` instead
+/** @deprecated Use `DatagridColumnChildren` instead. */
 export type DatagridThChildren<T = unknown> = DatagridColumnChildren<T>;
 
-// @deprecated Use `DatagridRowSnippetProps` instead
+/** @deprecated Use `DatagridRowSnippetProps` instead. */
 export interface DatagridTrSnippetProps<T = unknown> extends DatagridRowSnippetProps<T> {
 	tr: DataGridRowBond<T>;
 }
 
-// @deprecated Use `DatagridRowChildren` instead
+/** @deprecated Use `DatagridRowChildren` instead. */
 export type DatagridTrChildren<T = unknown> = DatagridRowChildren<T>;
 
 // Component prop types
@@ -111,7 +111,7 @@ export interface DatagridColumnProps<
 	preset?: PresetKey;
 }
 
-// @deprecated Use `DatagridColumnProps` instead
+/** @deprecated Use `DatagridColumnProps` instead. */
 export type DatagridThProps<
 	T = unknown,
 	E extends HtmlElementTagName = 'div',
@@ -126,7 +126,7 @@ export interface DatagridCellProps<
 	onclick?: (ev: Event, options: { cell?: DataGridBond<T> }) => void;
 }
 
-// @deprecated Use `DatagridCellProps` instead
+/** @deprecated Use `DatagridCellProps` instead. */
 export type DatagridTdProps<
 	T = unknown,
 	E extends HtmlElementTagName = 'div',
@@ -153,7 +153,7 @@ export interface DatagridRowProps<
 	preset?: PresetKey;
 }
 
-// @deprecated Use `DatagridRowProps` instead
+/** @deprecated Use `DatagridRowProps` instead. */
 export type DatagridTrProps<
 	T = unknown,
 	E extends HtmlElementTagName = 'div',

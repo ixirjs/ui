@@ -81,25 +81,17 @@ The following components are inherited from Dropdown, Popover, and List modules:
 
 ```svelte
 <script>
-  import { ContextMenu } from '@svelte-atoms/core/context-menu';
+	import { ContextMenu } from '@svelte-atoms/core/context-menu';
 </script>
 
 <ContextMenu.Root>
-  <ContextMenu.Trigger>
-    Right-click me
-  </ContextMenu.Trigger>
-  <ContextMenu.List>
-    <ContextMenu.Item onclick={() => console.log('Copy')}>
-      Copy
-    </ContextMenu.Item>
-    <ContextMenu.Item onclick={() => console.log('Paste')}>
-      Paste
-    </ContextMenu.Item>
-    <ContextMenu.Divider />
-    <ContextMenu.Item onclick={() => console.log('Delete')}>
-      Delete
-    </ContextMenu.Item>
-  </ContextMenu.List>
+	<ContextMenu.Trigger>Right-click me</ContextMenu.Trigger>
+	<ContextMenu.List>
+		<ContextMenu.Item onclick={() => console.log('Copy')}>Copy</ContextMenu.Item>
+		<ContextMenu.Item onclick={() => console.log('Paste')}>Paste</ContextMenu.Item>
+		<ContextMenu.Divider />
+		<ContextMenu.Item onclick={() => console.log('Delete')}>Delete</ContextMenu.Item>
+	</ContextMenu.List>
 </ContextMenu.Root>
 ```
 
@@ -107,23 +99,21 @@ The following components are inherited from Dropdown, Popover, and List modules:
 
 ```svelte
 <ContextMenu.Root>
-  <ContextMenu.Trigger>
-    Right-click for options
-  </ContextMenu.Trigger>
-  <ContextMenu.List>
-    <ContextMenu.Group>
-      <ContextMenu.Title>Edit</ContextMenu.Title>
-      <ContextMenu.Item>Cut</ContextMenu.Item>
-      <ContextMenu.Item>Copy</ContextMenu.Item>
-      <ContextMenu.Item>Paste</ContextMenu.Item>
-    </ContextMenu.Group>
-    <ContextMenu.Divider />
-    <ContextMenu.Group>
-      <ContextMenu.Title>Actions</ContextMenu.Title>
-      <ContextMenu.Item>Rename</ContextMenu.Item>
-      <ContextMenu.Item>Delete</ContextMenu.Item>
-    </ContextMenu.Group>
-  </ContextMenu.List>
+	<ContextMenu.Trigger>Right-click for options</ContextMenu.Trigger>
+	<ContextMenu.List>
+		<ContextMenu.Group>
+			<ContextMenu.Title>Edit</ContextMenu.Title>
+			<ContextMenu.Item>Cut</ContextMenu.Item>
+			<ContextMenu.Item>Copy</ContextMenu.Item>
+			<ContextMenu.Item>Paste</ContextMenu.Item>
+		</ContextMenu.Group>
+		<ContextMenu.Divider />
+		<ContextMenu.Group>
+			<ContextMenu.Title>Actions</ContextMenu.Title>
+			<ContextMenu.Item>Rename</ContextMenu.Item>
+			<ContextMenu.Item>Delete</ContextMenu.Item>
+		</ContextMenu.Group>
+	</ContextMenu.List>
 </ContextMenu.Root>
 ```
 
@@ -131,18 +121,16 @@ The following components are inherited from Dropdown, Popover, and List modules:
 
 ```svelte
 <script>
-  let open = $state(false);
+	let open = $state(false);
 </script>
 
 <ContextMenu.Root bind:open>
-  <ContextMenu.Trigger>
-    Right-click me (open: {open})
-  </ContextMenu.Trigger>
-  <ContextMenu.List>
-    <ContextMenu.Item onclick={() => open = false}>
-      Close Menu
-    </ContextMenu.Item>
-  </ContextMenu.List>
+	<ContextMenu.Trigger>
+		Right-click me (open: {open})
+	</ContextMenu.Trigger>
+	<ContextMenu.List>
+		<ContextMenu.Item onclick={() => (open = false)}>Close Menu</ContextMenu.Item>
+	</ContextMenu.List>
 </ContextMenu.Root>
 ```
 
@@ -150,21 +138,21 @@ The following components are inherited from Dropdown, Popover, and List modules:
 
 ```svelte
 <script>
-  function handleContextMenu(event: MouseEvent) {
-    // Custom logic before opening menu
-    console.log('Context menu triggered at', event.clientX, event.clientY);
-    // Return false or call event.preventDefault() to prevent menu from opening
-  }
+	function handleContextMenu(event: MouseEvent) {
+		// Custom logic before opening menu
+		console.log('Context menu triggered at', event.clientX, event.clientY);
+		// Return false or call event.preventDefault() to prevent menu from opening
+	}
 </script>
 
 <ContextMenu.Root>
-  <ContextMenu.Trigger oncontextmenu={handleContextMenu}>
-    Right-click with custom handler
-  </ContextMenu.Trigger>
-  <ContextMenu.List>
-    <ContextMenu.Item>Action 1</ContextMenu.Item>
-    <ContextMenu.Item>Action 2</ContextMenu.Item>
-  </ContextMenu.List>
+	<ContextMenu.Trigger oncontextmenu={handleContextMenu}>
+		Right-click with custom handler
+	</ContextMenu.Trigger>
+	<ContextMenu.List>
+		<ContextMenu.Item>Action 1</ContextMenu.Item>
+		<ContextMenu.Item>Action 2</ContextMenu.Item>
+	</ContextMenu.List>
 </ContextMenu.Root>
 ```
 
@@ -215,13 +203,13 @@ Customize the context menu appearance using presets:
 import { createPreset } from '@svelte-atoms/core';
 
 const preset = createPreset({
-  'context-menu.trigger': () => ({
+	'context-menu.trigger': () => ({
 		class: 'cursor-context-menu select-none'
 	}),
-  'context-menu.content': () => ({
-    class: 'min-w-[8rem] rounded-md border bg-popover p-1 shadow-md flex flex-col gap-0.5'
+	'context-menu.content': () => ({
+		class: 'min-w-[8rem] rounded-md border bg-popover p-1 shadow-md flex flex-col gap-0.5'
 	}),
-  'context-menu.item': () => ({
+	'context-menu.item': () => ({
 		class:
 			'relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground'
 	})

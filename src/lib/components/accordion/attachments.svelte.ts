@@ -1,7 +1,4 @@
+import { createBondAttachment } from '$svelte-atoms/core/components/internal/attachments.svelte';
 import { AccordionBond } from './bond.svelte';
 
-export function accordion(callback: (node: HTMLElement, bond?: AccordionBond) => any) {
-	const bond = AccordionBond.get();
-
-	return (node: HTMLElement) => callback(node, bond);
-}
+export const accordion = createBondAttachment<AccordionBond>(AccordionBond);

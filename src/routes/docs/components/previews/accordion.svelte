@@ -3,7 +3,10 @@
 </script>
 
 <div class="w-52">
-	<Accordion values={['acc-what']} class="border-none overflow-hidden rounded-lg border divide-y divide-border p-1">
+	<Accordion
+		values={['acc-what']}
+		class="border-none overflow-hidden rounded-lg border divide-y divide-border p-1"
+	>
 		<AccordionItem.Root value="acc-what" class="py-1">
 			<AccordionItem.Header class="text-xs px-1.5 py-0.5 cursor-pointer">
 				<span class="font-medium">What is it?</span>

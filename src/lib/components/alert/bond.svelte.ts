@@ -1,10 +1,9 @@
-import {
-	bondContextKey,
-	Bond,
-	BondState,
-	type BondStateProps
-} from '$svelte-atoms/core/shared/bond.svelte';
+import { bondContextKey, Bond, type BondStateProps } from '$svelte-atoms/core/shared/bond';
 import { createAttachmentKey } from 'svelte/attachments';
+
+// -----------------------------------------------------------------------------
+// Public types
+// -----------------------------------------------------------------------------
 
 export type AlertBondProps = BondStateProps & {
 	disabled?: boolean;
@@ -21,13 +20,15 @@ export type AlertBondElements = {
 	closeButton: HTMLElement;
 };
 
-export class AlertBond<
-	State extends AlertBondState<AlertBondProps> = AlertBondState<AlertBondProps>
-> extends Bond<AlertBondProps, State> {
+// -----------------------------------------------------------------------------
+// Bond implementation
+// -----------------------------------------------------------------------------
+
+export class AlertBond extends Bond<AlertBondProps> {
 	static CONTEXT_KEY = bondContextKey('alert');
 
-	constructor(s: State) {
-		super(s);
+	constructor(props: AlertBondProps) {
+		super(props);
 	}
 
 	root(props: Record<string, unknown> = {}) {
@@ -107,11 +108,5 @@ export class AlertBond<
 				this.elements.closeButton = node;
 			}
 		};
-	}
-}
-
-export class AlertBondState<Props extends AlertBondProps> extends BondState<Props> {
-	constructor(props: Props) {
-		super(props);
 	}
 }

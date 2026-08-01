@@ -20,11 +20,19 @@
 
 	const apiSections: PropsSection[] = [
 		{ label: 'Card.Root', presetKey: 'card', props: cardRootProps },
-		{ label: 'Card Sub-Parts', presetKey: 'card.header / card.body / card.footer / …', props: cardSubPartProps },
+		{
+			label: 'Card Sub-Parts',
+			presetKey: 'card.header / card.body / card.footer / …',
+			props: cardSubPartProps
+		}
 	];
 
 	const _loaders = import.meta.glob('./examples/*.svelte');
-	const _sources = import.meta.glob('./examples/*.svelte', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+	const _sources = import.meta.glob('./examples/*.svelte', {
+		query: '?raw',
+		import: 'default',
+		eager: true
+	}) as Record<string, string>;
 	const ex = createExampleLoader(_loaders, _sources);
 </script>
 
@@ -40,9 +48,21 @@
 	{/snippet}
 
 	{#snippet examples()}
-		<DocExample title="Basic Card" description="Simple card with header, body, and footer" {...ex('./examples/basic.svelte')} />
-		<DocExample title="Card with Media" description="Card with image/media section" {...ex('./examples/with-media.svelte')} />
-		<DocExample title="Clickable Card" description="Interactive card with click handler" {...ex('./examples/clickable.svelte')} />
+		<DocExample
+			title="Basic Card"
+			description="Simple card with header, body, and footer"
+			{...ex('./examples/basic.svelte')}
+		/>
+		<DocExample
+			title="Card with Media"
+			description="Card with image/media section"
+			{...ex('./examples/with-media.svelte')}
+		/>
+		<DocExample
+			title="Clickable Card"
+			description="Interactive card with click handler"
+			{...ex('./examples/clickable.svelte')}
+		/>
 	{/snippet}
 
 	{#snippet apiReference()}

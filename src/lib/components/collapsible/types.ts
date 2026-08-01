@@ -51,5 +51,5 @@ export type CollapsibleIndicatorProps<
 	B extends Base = Base
 > = HtmlAtomProps<E, B, CollapsibleChildren> & CollapsibleIndicatorExtendProps;
 
-// @deprecated Use CollapsibleRootExtendProps instead
+/** @deprecated Use `CollapsibleRootExtendProps` instead. */
 export type CollapsibleExtendProps = CollapsibleRootExtendProps;

@@ -71,7 +71,7 @@ export const metadata = {
 	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Button' }],
 	useCases,
 	examples: {
-		preset: presetCode,
+		preset: presetCode
 	},
 	accessibility: accessibilityFeatures
 };

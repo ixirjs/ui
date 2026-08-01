@@ -20,11 +20,15 @@
 
 	const apiSections: PropsSection[] = [
 		{ label: 'Textarea.Root', presetKey: 'textarea', props: textareaRootProps },
-		{ label: 'Textarea.Input', presetKey: 'textarea.input', props: textareaInputProps },
+		{ label: 'Textarea.Input', presetKey: 'textarea.input', props: textareaInputProps }
 	];
 
 	const _loaders = import.meta.glob('./examples/*.svelte');
-	const _sources = import.meta.glob('./examples/*.svelte', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+	const _sources = import.meta.glob('./examples/*.svelte', {
+		query: '?raw',
+		import: 'default',
+		eager: true
+	}) as Record<string, string>;
 	const ex = createExampleLoader(_loaders, _sources);
 </script>
 
@@ -40,11 +44,23 @@
 	{/snippet}
 
 	{#snippet examples()}
-		<DocExample title="Basic Textarea" description="Multi-line text input" {...ex('./examples/basic.svelte')} />
+		<DocExample
+			title="Basic Textarea"
+			description="Multi-line text input"
+			{...ex('./examples/basic.svelte')}
+		/>
 
-		<DocExample title="Auto-resize Textarea" description="Textarea that grows with content" {...ex('./examples/auto-resize.svelte')} />
+		<DocExample
+			title="Auto-resize Textarea"
+			description="Textarea that grows with content"
+			{...ex('./examples/auto-resize.svelte')}
+		/>
 
-		<DocExample title="Disabled Textarea" description="Textarea in disabled state" {...ex('./examples/disabled.svelte')} />
+		<DocExample
+			title="Disabled Textarea"
+			description="Textarea in disabled state"
+			{...ex('./examples/disabled.svelte')}
+		/>
 	{/snippet}
 
 	{#snippet apiReference()}

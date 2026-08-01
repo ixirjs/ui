@@ -1,10 +1,10 @@
-import { animate, spring, type Easing, type Spring } from 'motion';
+import { animate, type Easing } from 'motion';
 import { DrawerBond } from '.';
 import { untrack } from 'svelte';
 
 export type DrawerSide = 'left' | 'right' | 'top' | 'bottom';
 
-type EasingOption = Easing | Easing[] | Spring;
+type EasingOption = Easing | Easing[];
 
 type AnimateDrawerContentParams = {
 	// seconds
@@ -91,7 +91,7 @@ export function animateDrawerContent(params: AnimateDrawerContentParams = {}) {
 			};
 
 			const animationOptions = useSpring
-				? { easing: spring({ stiffness, damping }), delay }
+				? { type: 'spring' as const, stiffness, damping, delay }
 				: { duration, ease: resolvedEase, delay };
 
 			controller = animate(node, keyframes, {

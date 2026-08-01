@@ -70,7 +70,7 @@ export const dropdownMenuItemProps: PropDefinition[] = [
 		name: 'factory',
 		type: '(() => DropdownMenuItemAtom) | undefined',
 		default: 'undefined',
-		description: 'Factory function to create a custom DropdownMenuItemAtom instance'
+		description: 'Factory function for advanced custom item Atom creation'
 	},
 	{
 		name: 'children',

@@ -3,11 +3,11 @@
 
 	const demoTabs = [
 		{ value: 'overview', label: 'Overview', content: 'High-level summary of your component.' },
-		{ value: 'details',  label: 'Details',  content: 'In-depth details and configuration options.' },
-		{ value: 'settings', label: 'Settings', content: 'Configure preferences and defaults.' },
+		{ value: 'details', label: 'Details', content: 'In-depth details and configuration options.' },
+		{ value: 'settings', label: 'Settings', content: 'Configure preferences and defaults.' }
 	];
 
-	let activeTab = $state(demoTabs[0].value);
+	let activeTab = $state(demoTabs[0]?.value ?? 'overview');
 </script>
 
 <div class="w-full max-w-lg">

@@ -49,15 +49,23 @@
 		{#if opts.visible}
 			<!-- Eye-off icon -->
 			<svg viewBox="0 0 16 16" fill="none" class="h-4 w-4" aria-hidden="true">
-				<path d="M2 2l12 12M6.5 6.6A2 2 0 0 0 9.4 9.5M4.2 4.3C2.8 5.3 1.7 6.5 1 8c1.3 2.7 4 4.5 7 4.5 1.2 0 2.3-.3 3.3-.8M7 3.6C7.3 3.5 7.7 3.5 8 3.5c3 0 5.7 1.8 7 4.5a9.6 9.6 0 0 1-1.7 2.4"
-					stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+				<path
+					d="M2 2l12 12M6.5 6.6A2 2 0 0 0 9.4 9.5M4.2 4.3C2.8 5.3 1.7 6.5 1 8c1.3 2.7 4 4.5 7 4.5 1.2 0 2.3-.3 3.3-.8M7 3.6C7.3 3.5 7.7 3.5 8 3.5c3 0 5.7 1.8 7 4.5a9.6 9.6 0 0 1-1.7 2.4"
+					stroke="currentColor"
+					stroke-width="1.3"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+				/>
 			</svg>
 		{:else}
 			<!-- Eye icon -->
 			<svg viewBox="0 0 16 16" fill="none" class="h-4 w-4" aria-hidden="true">
-				<path d="M1 8C2.3 5.3 5 3.5 8 3.5s5.7 1.8 7 4.5c-1.3 2.7-4 4.5-7 4.5S2.3 10.7 1 8Z"
-					stroke="currentColor" stroke-width="1.3"/>
-				<circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.3"/>
+				<path
+					d="M1 8C2.3 5.3 5 3.5 8 3.5s5.7 1.8 7 4.5c-1.3 2.7-4 4.5-7 4.5S2.3 10.7 1 8Z"
+					stroke="currentColor"
+					stroke-width="1.3"
+				/>
+				<circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.3" />
 			</svg>
 		{/if}
 	</button>
@@ -75,11 +83,7 @@
 	{placeholder}
 	{disabled}
 	{readonly}
-	class={cn(
-		INPUT_FIELD_CLASS,
-		preset?.class,
-		toClassValue(klass, bond)
-	)}
+	class={cn(INPUT_FIELD_CLASS, preset?.class, toClassValue(klass, bond))}
 	onchange={handleChange}
 	oninput={handleInput}
 	{...restProps}

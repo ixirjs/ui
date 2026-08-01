@@ -15,7 +15,9 @@
 		...restProps
 	}: AlertContentProps<E, B> & HTMLAttributes<Element> = $props();
 
-	const contentProps = $derived(mergePresetProps(preset, 'alert.content', { ...bond?.content(), ...restProps }));
+	const contentProps = $derived(
+		mergePresetProps(preset, 'alert.content', { ...bond?.content(), ...restProps })
+	);
 </script>
 
 <HtmlAtom

@@ -1,6 +1,4 @@
+import { createBondAttachment } from '$svelte-atoms/core/components/internal/attachments.svelte';
 import { StepBond } from './bond.svelte';
 
-export function step(callback: (node: HTMLElement, bond?: StepBond) => any) {
-	const bond = StepBond.get();
-	return (node: HTMLElement) => callback(node, bond);
-}
+export const step = createBondAttachment<StepBond>(StepBond);

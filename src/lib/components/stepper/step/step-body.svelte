@@ -1,6 +1,7 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { type Base } from '$svelte-atoms/core/components/atom';
-	import { StepBond } from './bond.svelte';
+	import { mergeAtomProps, type Base } from '$svelte-atoms/core/components/atom';
+	import { createAtomInstance } from '$svelte-atoms/core/shared/bond';
+	import { StepBodyAtom, StepBond } from './bond.svelte';
 	import { StepperBond } from '../bond.svelte';
 	import type { StepContentProps } from './types';
 	import { Stack } from '../../stack';
@@ -16,21 +17,27 @@
 		...restProps
 	}: StepContentProps<E, B> = $props();
 
+	const bodyAtom = stepBond
+		? createAtomInstance<StepBodyAtom, StepBond>('body', {
+				bond: stepBond,
+				factory: (owner) => new StepBodyAtom(owner as StepBond)
+			})
+		: undefined;
+
 	const contentProps = $derived({
 		class: klass,
-		preset: preset ?? 'stepper.step.content',
 		base,
-		...restProps
+		...mergeAtomProps(bodyAtom, preset ?? 'stepper.step.content', restProps)
 	});
 
 	// Register content snippet with the stepper while mounted.
 	$effect(() => {
 		if (stepBond && stepperBond && children) {
-			const index = stepBond.state.props.index;
-			stepperBond.state.registerStepContent(index, contentProps, children);
+			const index = stepBond.props.index;
+			stepperBond.registerStepContent(index, contentProps, children);
 
 			return () => {
-				stepperBond.state.unregisterStepContent(index);
+				stepperBond.unregisterStepContent(index);
 			};
 		}
 	});

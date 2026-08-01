@@ -7,7 +7,9 @@
 	import { DatePickerBond } from './bond.svelte';
 	import type { DatePickerMonthsProps } from './types';
 
-	const datePicker = DatePickerBond.getOrThrow('<DatePicker.Months /> must be used within a <DatePicker.Root />');
+	const datePicker = DatePickerBond.getOrThrow(
+		'<DatePicker.Months /> must be used within a <DatePicker.Root />'
+	);
 
 	const pivote = $derived(datePicker?.state.props.pivote ?? new Date());
 
@@ -29,11 +31,7 @@
 		'Dec'
 	];
 
-	let {
-		class: klass = '',
-		preset = undefined,
-		...restProps
-	}: DatePickerMonthsProps = $props();
+	let { class: klass = '', preset = undefined, ...restProps }: DatePickerMonthsProps = $props();
 
 	const monthsProps = $derived(mergePresetProps(preset, 'datepicker.months', restProps));
 
@@ -68,16 +66,16 @@
 		const current = datePicker.state.props.pivote;
 		datePicker.state.props.pivote = setMonth(current, monthIndex);
 
-		datePicker.state.closeMonthsPicker();
+		datePicker.closeMonthsPicker();
 	}
 
 	function handleYearPicker() {
 		if (!datePicker) return;
-		datePicker.state.openYearsPicker();
+		datePicker.openYearsPicker();
 	}
 </script>
 
-{#if datePicker.state.isMonthsPickerOpen}
+{#if datePicker.isMonthsPickerOpen}
 	<HtmlAtom
 		class={['absolute inset-0 z-1 flex flex-col gap-2 bg-inherit opacity-0', '$preset', klass]}
 		enter={(node) => {

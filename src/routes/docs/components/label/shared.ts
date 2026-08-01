@@ -19,23 +19,28 @@ const accessibilityFeatures = [
 const useCases = [
 	{
 		title: 'Form Field Labels',
-		description: 'Associate descriptive text with form inputs like text fields, selects, and checkboxes to improve usability and accessibility.'
+		description:
+			'Associate descriptive text with form inputs like text fields, selects, and checkboxes to improve usability and accessibility.'
 	},
 	{
 		title: 'Required Field Indicators',
-		description: 'Mark mandatory form fields clearly so users know which inputs they must fill out before submitting.'
+		description:
+			'Mark mandatory form fields clearly so users know which inputs they must fill out before submitting.'
 	},
 	{
 		title: 'Accessible Input Naming',
-		description: 'Provide accessible names for form controls used by screen readers and assistive technologies via the for/id association.'
+		description:
+			'Provide accessible names for form controls used by screen readers and assistive technologies via the for/id association.'
 	},
 	{
 		title: 'Checkbox and Radio Labels',
-		description: 'Wrap or associate text with checkbox and radio inputs to make the clickable area larger and more user-friendly.'
+		description:
+			'Wrap or associate text with checkbox and radio inputs to make the clickable area larger and more user-friendly.'
 	},
 	{
 		title: 'Field Descriptions',
-		description: 'Pair with helper text to give users context about what information is expected in a particular field.'
+		description:
+			'Pair with helper text to give users context about what information is expected in a particular field.'
 	}
 ];
 

@@ -22,11 +22,15 @@
 		{ label: 'Toast.Root', presetKey: 'toast', props: toastRootProps },
 		{ label: 'Toast.Title', presetKey: 'toast.title', props: toastTitleProps },
 		{ label: 'Toast.Description', presetKey: 'toast.description', props: toastDescriptionProps },
-		{ label: 'Toast.Close', presetKey: 'toast.close', props: toastCloseProps },
+		{ label: 'Toast.Close', presetKey: 'toast.close', props: toastCloseProps }
 	];
 
 	const _loaders = import.meta.glob('./examples/*.svelte');
-	const _sources = import.meta.glob('./examples/*.svelte', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+	const _sources = import.meta.glob('./examples/*.svelte', {
+		query: '?raw',
+		import: 'default',
+		eager: true
+	}) as Record<string, string>;
 	const ex = createExampleLoader(_loaders, _sources);
 </script>
 
@@ -38,9 +42,21 @@
 	next={{ label: 'Tooltip', href: '/docs/components/tooltip' }}
 >
 	{#snippet examples()}
-		<DocExample title="Toast Variants" description="Trigger different toast types using the Toaster manager." {...ex('./examples/variants.svelte')} />
-		<DocExample title="Declarative" description="Toast.Root owned entirely by markup — no manager required." {...ex('./examples/declarative.svelte')} />
-		<DocExample title="Auto-dismiss" description="Pass duration to auto-close after the given number of milliseconds." {...ex('./examples/auto-dismiss.svelte')} />
+		<DocExample
+			title="Toast Variants"
+			description="Trigger different toast types using the Toaster manager."
+			{...ex('./examples/variants.svelte')}
+		/>
+		<DocExample
+			title="Declarative"
+			description="Toast.Root owned entirely by markup — no manager required."
+			{...ex('./examples/declarative.svelte')}
+		/>
+		<DocExample
+			title="Auto-dismiss"
+			description="Pass duration to auto-close after the given number of milliseconds."
+			{...ex('./examples/auto-dismiss.svelte')}
+		/>
 	{/snippet}
 
 	{#snippet apiReference()}

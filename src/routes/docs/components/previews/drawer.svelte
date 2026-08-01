@@ -22,12 +22,7 @@
 				{/each}
 			</Drawer.Body>
 			<Drawer.Footer class="border-t border-border px-4 py-3">
-				<Button
-					variant="outline"
-					size="sm"
-					onclick={() => (drawerOpen = false)}
-					class="w-full"
-				>
+				<Button variant="outline" size="sm" onclick={() => (drawerOpen = false)} class="w-full">
 					Close
 				</Button>
 			</Drawer.Footer>

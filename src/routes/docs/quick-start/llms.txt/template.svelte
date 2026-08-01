@@ -6,33 +6,29 @@
 	let { data } = $props();
 	const { metadata, frontmatter } = $derived(data);
 </script>
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 
 <FrontMatter {frontmatter} />
-
 
 # {metadata.pageTitle}
 
 {metadata.pageDescription}
 
-## Requirements
-
-Before getting started, make sure your project meets the following requirements:
+## Requirements Before getting started, make sure your project meets the following requirements:
 
 {#each metadata.requirements as req, i (i)}
-### {req.requirement}
+	### {req.requirement}
 
-**Version:** {req.version}
+	**Version:** {req.version}
 
-{req.description}
-
+	{req.description}
 {/each}
 
-## Installation
+## Installation Install {inlineCode('@svelte-atoms/core')} using your preferred package manager:
 
-Install {inlineCode('@svelte-atoms/core')} using your preferred package manager:
-
-{codeBlock(`# npm
+{codeBlock(
+	`# npm
 npm install @svelte-atoms/core
 
 # pnpm
@@ -42,35 +38,36 @@ pnpm add @svelte-atoms/core
 yarn add @svelte-atoms/core
 
 # bun
-bun add @svelte-atoms/core`, 'bash')}
+bun add @svelte-atoms/core`,
+	'bash'
+)}
 
 ## Configuration
 
 {#each metadata.installationSteps as step, i (i)}
-### Step {step.step}: {step.title}
+	### Step {step.step}: {step.title}
 
-{step.description}
-
+	{step.description}
 {/each}
 
-### Step 1: Import Internal Styles
+### Step 1: Import Internal Styles Import the internal style file in your root layout file:
 
-Import the internal style file in your root layout file:
-
-{codeBlock(`<!-- src/routes/+layout.svelte -->
+{codeBlock(
+	`<!-- src/routes/+layout.svelte -->
 <script>
   import '@svelte-atoms/core/styles/internal.css';
 </script>
 
-<slot />`, 'svelte')}
+<slot />`,
+	'svelte'
+)}
 
-**Important:** The internal styles are minimal and only include necessary component styles. They don't include any opinionated styling or themes.
+**Important:** The internal styles are minimal and only include necessary component styles. They
+don't include any opinionated styling or themes. ### Step 2: Setup App CSS Configure Tailwind CSS
+and CSS variables for theming:
 
-### Step 2: Setup App CSS
-
-Configure Tailwind CSS and CSS variables for theming:
-
-{codeBlock(`/* src/app.css */
+{codeBlock(
+	`/* src/app.css */
 @import 'tailwindcss';
 
 @layer base {
@@ -117,15 +114,15 @@ Configure Tailwind CSS and CSS variables for theming:
     --input: 217.2 32.6% 17.5%;
     --ring: 224.3 76.3% 48%;
   }
-}`, 'css')}
+}`,
+	'css'
+)}
 
-**Note:** These are example color tokens. Customize them to match your brand and design system.
+**Note:** These are example color tokens. Customize them to match your brand and design system. ###
+Step 3: Configure Component Preset Set up global component presets for consistent styling:
 
-### Step 3: Configure Component Preset
-
-Set up global component presets for consistent styling:
-
-{codeBlock(`// src/preset.ts
+{codeBlock(
+	`// src/preset.ts
 import { setPreset } from '@svelte-atoms/core/context';
 
 setPreset({
@@ -144,23 +141,27 @@ setPreset({
   'card.body': () => ({
     class: 'p-6 pt-0'
   })
-});`, 'typescript')}
+});`,
+	'typescript'
+)}
 
 Then import this preset in your root layout:
 
-{codeBlock(`<!-- src/routes/+layout.svelte -->
+{codeBlock(
+	`<!-- src/routes/+layout.svelte -->
 <script>
   import '@svelte-atoms/core/styles/internal.css';
   import '../preset';
 </script>
 
-<slot />`, 'svelte')}
+<slot />`,
+	'svelte'
+)}
 
-## Your First Component
+## Your First Component Now you're ready to use Svelte Atoms components! Here's a simple example:
 
-Now you're ready to use Svelte Atoms components! Here's a simple example:
-
-{codeBlock(`<!-- src/routes/+page.svelte -->
+{codeBlock(
+	`<!-- src/routes/+page.svelte -->
 <script>
   import { Button } from '@svelte-atoms/core/components/button';
   import { Card } from '@svelte-atoms/core/components/card';
@@ -184,66 +185,39 @@ Now you're ready to use Svelte Atoms components! Here's a simple example:
       </Button>
     </div>
   </Card.Body>
-</Card.Root>`, 'svelte')}
+</Card.Root>`,
+	'svelte'
+)}
 
-**Success!** You now have a working Svelte Atoms setup. The button and card will use the presets you configured.
-
-## Next Steps
+**Success!** You now have a working Svelte Atoms setup. The button and card will use the presets you
+configured. ## Next Steps
 
 {#each metadata.nextSteps as step, i (i)}
-### {step.title}
+	### {step.title}
 
-{step.description}
+	{step.description}
 
-[Learn more]({step.link})
-
+	[Learn more]({step.link})
 {/each}
 
-## Common Issues
+## Common Issues ### Styles Not Applying **Problem:** Components render but have no styles.
+**Solution:** - Ensure you imported {inlineCode('@svelte-atoms/core/styles/internal.css')} in your root
+layout - Verify Tailwind CSS is configured correctly - Check that CSS variables are defined in your {inlineCode(
+	'app.css'
+)}
 
-### Styles Not Applying
+### Type Errors **Problem:** TypeScript shows errors for component props. **Solution:** - Make sure
+you're using TypeScript 5.0 or higher - Verify Svelte 5 is installed ({inlineCode('^5.0.0')}) -
+Check that your {inlineCode('svelte.config.js')} is configured for TypeScript ### Import Errors **Problem:**
+Can't import components or utilities. **Solution:** - Ensure {inlineCode('@svelte-atoms/core')} is installed
+correctly - Try deleting {inlineCode('node_modules')} and reinstalling - Check your package manager version
+### Preset Not Working **Problem:** Preset styles aren't applied to components. **Solution:** - Verify
+you're importing your preset file in the root layout - Check that {inlineCode('setPreset')} is called
+before components are rendered - Ensure components have the correct {inlineCode('preset')} prop value
+## Additional Setup ### Dark Mode To support dark mode, add a class toggle to your root component:
 
-**Problem:** Components render but have no styles.
-
-**Solution:** 
-- Ensure you imported {inlineCode('@svelte-atoms/core/styles/internal.css')} in your root layout
-- Verify Tailwind CSS is configured correctly
-- Check that CSS variables are defined in your {inlineCode('app.css')}
-
-### Type Errors
-
-**Problem:** TypeScript shows errors for component props.
-
-**Solution:**
-- Make sure you're using TypeScript 5.0 or higher
-- Verify Svelte 5 is installed ({inlineCode('^5.0.0')})
-- Check that your {inlineCode('svelte.config.js')} is configured for TypeScript
-
-### Import Errors
-
-**Problem:** Can't import components or utilities.
-
-**Solution:**
-- Ensure {inlineCode('@svelte-atoms/core')} is installed correctly
-- Try deleting {inlineCode('node_modules')} and reinstalling
-- Check your package manager version
-
-### Preset Not Working
-
-**Problem:** Preset styles aren't applied to components.
-
-**Solution:**
-- Verify you're importing your preset file in the root layout
-- Check that {inlineCode('setPreset')} is called before components are rendered
-- Ensure components have the correct {inlineCode('preset')} prop value
-
-## Additional Setup
-
-### Dark Mode
-
-To support dark mode, add a class toggle to your root component:
-
-{codeBlock(`<script>
+{codeBlock(
+	`<script>
   let darkMode = $state(false);
 </script>
 
@@ -253,26 +227,28 @@ To support dark mode, add a class toggle to your root component:
 
 <button onclick={() => darkMode = !darkMode}>
   Toggle Dark Mode
-</button>`, 'svelte')}
+</button>`,
+	'svelte'
+)}
 
-### Custom Fonts
+### Custom Fonts Add custom fonts to your {inlineCode('app.css')}:
 
-Add custom fonts to your {inlineCode('app.css')}:
-
-{codeBlock(`@import 'tailwindcss';
+{codeBlock(
+	`@import 'tailwindcss';
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 @layer base {
   body {
     font-family: 'Inter', sans-serif;
   }
-}`, 'css')}
+}`,
+	'css'
+)}
 
-### Tailwind Configuration
+### Tailwind Configuration Extend Tailwind to include additional utilities:
 
-Extend Tailwind to include additional utilities:
-
-{codeBlock(`// tailwind.config.js
+{codeBlock(
+	`// tailwind.config.js
 export default {
   content: ['./src/**/*.{html,js,svelte,ts}'],
   theme: {
@@ -285,13 +261,14 @@ export default {
       }
     }
   }
-};`, 'javascript')}
+};`,
+	'javascript'
+)}
 
-## Examples
+## Examples ### Button Variants
 
-### Button Variants
-
-{codeBlock(`<script>
+{codeBlock(
+	`<script>
   import { Button } from '@svelte-atoms/core/components/button';
 </script>
 
@@ -300,11 +277,14 @@ export default {
   <Button variant="secondary">Secondary</Button>
   <Button variant="outline">Outline</Button>
   <Button variant="ghost">Ghost</Button>
-</div>`, 'svelte')}
+</div>`,
+	'svelte'
+)}
 
 ### Form Example
 
-{codeBlock(`<script>
+{codeBlock(
+	`<script>
   import { Form } from '@svelte-atoms/core/components/form';
   import { Input } from '@svelte-atoms/core/components/input';
   import { Label } from '@svelte-atoms/core/components/label';
@@ -327,11 +307,14 @@ export default {
   </Form.Field>
   
   <Button type="submit">Submit</Button>
-</Form.Root>`, 'svelte')}
+</Form.Root>`,
+	'svelte'
+)}
 
 ### Dialog Example
 
-{codeBlock(`<script>
+{codeBlock(
+	`<script>
   import { Dialog } from '@svelte-atoms/core/components/dialog';
   import { Button } from '@svelte-atoms/core/components/button';
   
@@ -360,34 +343,21 @@ export default {
       </Button>
     </Dialog.Footer>
   </Dialog.Content>
-</Dialog.Root>`, 'svelte')}
+</Dialog.Root>`,
+	'svelte'
+)}
 
-## Tips for Success
-
-1. **Start Simple**: Begin with basic components and gradually add complexity
-2. **Use Presets**: Set up global presets early for consistent styling
-3. **Leverage TypeScript**: Take advantage of full type safety and autocomplete
-4. **Read the Docs**: Explore component documentation for all available options
-5. **Check Examples**: Look at example code for common patterns and use cases
-6. **Customize Gradually**: Start with defaults and customize as you understand the system
-7. **Use Dev Tools**: Browser DevTools help debug styles and component structure
-
-## Resources
-
-- [Component Library](/docs/components) - Browse all available components
-- [Philosophy](/docs/philosophy) - Understand the design principles
-- [Styling Guide](/docs/styling) - Master the styling system
-- [Preset System](/docs/preset) - Learn about global theming
-- [Accessibility](/docs/accessibility) - Build accessible applications
-- [GitHub Repository](https://github.com/svelte-atoms/core) - Source code and issues
-
-## Get Help
-
-If you run into issues:
-
-1. Check the [Component Documentation](/docs/components)
-2. Search [GitHub Issues](https://github.com/svelte-atoms/core/issues)
-3. Join the community discussions
-4. Read the troubleshooting guide
-
-Happy building with Svelte Atoms! 🚀
+## Tips for Success 1. **Start Simple**: Begin with basic components and gradually add complexity 2.
+**Use Presets**: Set up global presets early for consistent styling 3. **Leverage TypeScript**: Take
+advantage of full type safety and autocomplete 4. **Read the Docs**: Explore component documentation
+for all available options 5. **Check Examples**: Look at example code for common patterns and use
+cases 6. **Customize Gradually**: Start with defaults and customize as you understand the system 7.
+**Use Dev Tools**: Browser DevTools help debug styles and component structure ## Resources -
+[Component Library](/docs/components) - Browse all available components -
+[Philosophy](/docs/philosophy) - Understand the design principles - [Styling Guide](/docs/styling) -
+Learn the styling system - [Preset System](/docs/preset) - Learn about global theming -
+[Accessibility](/docs/accessibility) - Build accessible applications - [GitHub
+Repository](https://github.com/svelte-atoms/core) - Source code and issues ## Get Help If you run
+into issues: 1. Check the [Component Documentation](/docs/components) 2. Search [GitHub
+Issues](https://github.com/svelte-atoms/core/issues) 3. Join the community discussions 4. Read the
+troubleshooting guide Happy building with Svelte Atoms! 🚀

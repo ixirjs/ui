@@ -6,10 +6,11 @@
 			component: T;
 			target?: Element;
 			anchor?: Element;
-			context?: Map<any, any> | undefined;
+			context?: Map<unknown, unknown> | undefined;
 			intro?: boolean;
 			children?: Snippet;
 		},
+		// eslint-disable-next-line @typescript-eslint/no-empty-object-type -- intentional: `| {}` keeps `keyof U` = never so Override leaves the base props intact while tolerating arbitrary component props
 		ComponentProps<T> | {}
 	>;
 </script>
@@ -39,13 +40,15 @@
 
 		mount(component, {
 			target: _target,
-			anchor: anchor,
-			context: context,
 			intro: intro,
 			props: {
 				children,
 				...restProps
-			}
+			},
+			// `anchor`/`context` omitted when undefined — exactOptionalPropertyTypes rejects an
+			// explicit `undefined` for MountOptions' optional `Node`/`Map` fields.
+			...(anchor ? { anchor } : {}),
+			...(context ? { context } : {})
 		});
 	});
 </script>

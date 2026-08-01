@@ -1,9 +1,17 @@
-import { untrack } from 'svelte';
 import { TabsBond, type ITabs } from '../bond.svelte';
-import { getElementId } from '$svelte-atoms/core/utils/dom.svelte';
 import { portal } from '$svelte-atoms/core/attachments/portal.svelte';
-import { Bond, BondState, BondAtom, type BondStateProps } from '$svelte-atoms/core/shared/bond.svelte';
+import { Bond, defineAtom, type BondStateProps } from '$svelte-atoms/core/shared/bond';
 import { defineBond, type BondOf } from '$svelte-atoms/core/shared';
+import {
+	defineAtomCapability,
+	sharedCapabilityKey,
+	type AtomHost
+} from '$svelte-atoms/core/shared/capability';
+import { tabPanelLink } from '$svelte-atoms/core/shared/capability/models/relationship.svelte';
+
+// -----------------------------------------------------------------------------
+// Public types
+// -----------------------------------------------------------------------------
 
 export type TabBondProps<
 	T,
@@ -21,122 +29,166 @@ export type TabBondElement = {
 	description: HTMLElement;
 };
 
-// Atoms type `this.bond` against TabBondBase — breaks the atom↔bond cycle.
-class TabHeaderAtom extends BondAtom<TabBondBase, HTMLElement> {
-	constructor(bond: TabBondBase) {
-		super(bond, 'header');
-		// `role('item', value)` opts this header into the parent's selection capability.
-		this.role('item', bond.value);
-	}
-	override get attrs() {
-		const bond = this.bond;
-		const state = untrack(() => bond.state);
-		const props = untrack(() => state.props);
+// -----------------------------------------------------------------------------
+// Capability slots and shared helpers
+// -----------------------------------------------------------------------------
 
-		const tabBodyId = getElementId(bond.id, 'tab-body');
-		return {
-			...super.attrs,
-			role: 'tab' as const,
-			'aria-controls': tabBodyId,
-			'aria-disabled': props.disabled ?? false,
-			'data-controler-id': bond.tabs?.id,
-			'data-active': state.isActive
-		};
-	}
+const TAB_HEADER = sharedCapabilityKey<void>('@svelte-atoms/tab:header');
+const TAB_BODY = sharedCapabilityKey<void>('@svelte-atoms/tab:body');
 
-	override get handlers() {
-		const isDisabled = untrack(() => this.bond.state?.props).disabled ?? false;
+// Atoms type `this.bond` against TabBondBase to break the atom<->bond cycle.
 
-		return {
-			onclick: () => {
-				if (isDisabled) return;
-				this.bond.state.select();
+// -----------------------------------------------------------------------------
+// Atom definitions
+// -----------------------------------------------------------------------------
+
+export const TabHeaderAtom = defineAtom<TabBondBase>('header', (atom, bond) => {
+	// `role('item', value)` opts this header into the parent's selection capability.
+	atom.role('item', bond.value);
+	atom.role('tab');
+	atom.capability(tabHeaderPresentation());
+});
+export type TabHeaderAtom = InstanceType<typeof TabHeaderAtom>;
+
+export const TabBodyAtom = defineAtom<TabBondBase>('body', (atom) => {
+	atom.role('tabpanel');
+	atom.capability(tabBodyPresentation());
+});
+export type TabBodyAtom = InstanceType<typeof TabBodyAtom>;
+
+export const TabDescriptionAtom = defineAtom<TabBondBase>('description');
+export type TabDescriptionAtom = InstanceType<typeof TabDescriptionAtom>;
+
+// -----------------------------------------------------------------------------
+// Atom capabilities
+// -----------------------------------------------------------------------------
+
+function tabHeaderPresentation() {
+	return defineAtomCapability<void, AtomHost, TabBondBase>({
+		slot: TAB_HEADER,
+		meta: {
+			layer: 1,
+			kind: 'projection',
+			projects: ['header'],
+			docs: 'Tab header selected/disabled projection, activation, and header portal.'
+		},
+		behavior: {
+			attrs: (_node, bond) => ({
+				'aria-disabled': bond?.props.disabled ?? false,
+				'data-controler-id': bond?.tabs?.id,
+				'data-active': bond?.isActive
+			}),
+			handlers: (_node, bond) => ({
+				onclick: () => {
+					if (bond?.props.disabled) return;
+					bond?.select();
+				}
+			}),
+			onmount: (node, _host, bond) => {
+				const headerElement = bond?.tabs?.headerElement;
+
+				if (typeof HTMLElement === 'undefined' || !(node instanceof HTMLElement)) return;
+
+				if (!headerElement) {
+					node.hidden = true;
+					return;
+				}
+
+				return portal(headerElement)(node);
 			}
-		};
-	}
-
-	override onmount(node: HTMLElement): void | (() => void) {
-		const headerElement = this.bond.tabs?.headerElement;
-
-		if (!headerElement) {
-			node.hidden = true;
-			return;
 		}
-
-		portal(headerElement)(node);
-	}
+	});
 }
 
-class TabBodyAtom extends BondAtom<TabBondBase, HTMLElement> {
-	constructor(bond: TabBondBase) {
-		super(bond, 'body');
-	}
-	override get attrs() {
-		const bond = this.bond;
-		const tabHeaderId = getElementId(bond.id, 'tab-header');
-		const descriptionId = getElementId(bond.id, 'tab-description');
-		return {
-			...super.attrs,
-			role: 'tabpanel' as const,
-			'aria-labeledby': tabHeaderId,
-			'aria-describedby': descriptionId,
-			'aria-controledby': tabHeaderId,
-			'data-active': bond.state.isActive
-		};
-	}
+function tabBodyPresentation() {
+	return defineAtomCapability<void, AtomHost, TabBondBase>({
+		slot: TAB_BODY,
+		meta: {
+			layer: 1,
+			kind: 'projection',
+			projects: ['body'],
+			docs: 'Tab body active-state projection.'
+		},
+		behavior: {
+			attrs: (_node, bond) => ({
+				'data-active': bond?.isActive
+			})
+		}
+	});
 }
 
-class TabDescriptionAtom extends BondAtom<TabBondBase, HTMLElement> {
-	constructor(bond: TabBondBase) {
-		super(bond, 'description');
-	}
-	override get attrs() {
-		return {
-			...super.attrs
-		};
-	}
-}
+// Hand-written base for TabBond. Parent-tabs capture, selection projection,
+// and value/text/mount helpers live on the Bond instance.
 
-// Hand-written base for TabBond — parent-tabs capture and value/text/mount helpers the atoms call.
-// Non-generic (T is a runtime phantom carried by state); generic surface re-exposed by the facade.
-class TabBondBase extends Bond<TabBondProps<unknown>, TabBondState> {
+// -----------------------------------------------------------------------------
+// Bond implementation
+// -----------------------------------------------------------------------------
+
+class TabBondBase extends Bond<TabBondProps<unknown>> {
 	#parent: ITabs | undefined;
 
-	constructor(state: TabBondState) {
-		super(state, 'tab');
+	constructor(props: TabBondProps<unknown>, name = 'tab') {
+		super(props, name);
 		this.#parent = TabsBond.get();
+
+		// Re-register the parent's selection capability on this child bond so the tab-header
+		// atom can project it via `.role('item', value)`. Same instance, shared surface.
+		const selection = this.#parent?.selectionCapability();
+		if (selection) this.capability(selection);
+		this.capability(tabPanelLink({ selected: () => this.isActive }));
 	}
 
-	// The narrow parent contract this tab depends on (not the whole TabsBond).
 	get tabs(): ITabs | undefined {
 		return this.#parent;
 	}
 
 	get value() {
-		return this.state.props.value;
+		return this.props.value;
 	}
 
 	get text() {
 		return (this.elements?.header as HTMLElement | undefined)?.innerText ?? '';
 	}
 
+	get isActive() {
+		return this.#parent?.activeValue === this.props.value;
+	}
+
+	get isDisabled() {
+		return (
+			this.props.disabled ?? this.#parent?.headerElement?.getAttribute?.('aria-disabled') === 'true'
+		);
+	}
+
 	mount() {
 		return this.#parent?.mountItem(this.value, this as unknown as TabBond);
 	}
+
 	unmount() {
 		this.#parent?.unmountItem(this.id);
 	}
+
+	select() {
+		this.#parent?.select(this.props.value);
+	}
+
+	unselect() {
+		this.#parent?.unselect();
+	}
 }
 
-// TabBond — `defineBond` (§6) over TabBondBase via the generic facade (see TabsBond);
-// T is carried by state/tabs.
+// -----------------------------------------------------------------------------
+// Bond spec and constructor facade
+// -----------------------------------------------------------------------------
+
 const TabBondImpl = defineBond<
 	{
 		header: typeof TabHeaderAtom;
 		body: typeof TabBodyAtom;
 		description: typeof TabDescriptionAtom;
 	},
-	TabBondState,
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	any,
 	typeof TabBondBase
 >({
 	name: 'tab',
@@ -148,52 +200,26 @@ const TabBondImpl = defineBond<
 	}
 });
 
-// Generic instance type — narrows `state`/`tabs` to carry `T` (brand-preserving).
+// -----------------------------------------------------------------------------
+// Public types
+// -----------------------------------------------------------------------------
+
 export type TabBond<T = unknown> = BondOf<typeof TabBondImpl> & {
-	readonly state: TabBondState<T>;
+	readonly props: TabBondProps<T>;
 	readonly tabs: ITabs<T> | undefined;
 };
 
-// Generic-constructor facade over the non-generic impl.
+// -----------------------------------------------------------------------------
+// Bond spec and constructor facade
+// -----------------------------------------------------------------------------
+
 interface TabBondConstructor {
-	new <T = unknown>(state: TabBondState<T>): TabBond<T>;
+	new <T = unknown>(props: TabBondProps<T>): TabBond<T>;
 	readonly CONTEXT_KEY: string;
 	get<T = unknown>(): TabBond<T> | undefined;
 	getOrThrow<T = unknown>(message?: string): TabBond<T>;
 	set<T = unknown>(bond: TabBond<T>): TabBond<T>;
+	create<T = unknown>(props: TabBondProps<T>): TabBond<T>;
 }
 
 export const TabBond = TabBondImpl as unknown as TabBondConstructor;
-
-export class TabBondState<T = unknown> extends BondState<TabBondProps<T>> {
-	// Narrow parent contract (not the whole TabsBond/TabsBondState).
-	#parent?: ITabs<T> = TabsBond.get() as TabsBond<T> | undefined;
-
-	constructor(props: TabBondProps<T>) {
-		super(props);
-
-		// Re-register the parent's selection capability on this child state so the tab-header
-		// atom can project it via `.role('item', value)`. Same instance — shared surface.
-		const selection = this.#parent?.selectionCapability();
-		if (selection) this.capability(selection);
-	}
-
-	get isActive() {
-		return this.#parent?.activeValue === this.props.value;
-	}
-
-	get isDisabled() {
-		return (
-			this.props.disabled ??
-			this.#parent?.headerElement?.getAttribute?.('aria-disabled') === 'true'
-		);
-	}
-
-	select() {
-		this.#parent?.select(this.props.value);
-	}
-
-	unselect() {
-		this.#parent?.unselect();
-	}
-}

@@ -2,7 +2,6 @@
 	import { Teleport, ActivePortal } from '$svelte-atoms/core/components/portal';
 	import { containsTarget } from '$svelte-atoms/core/utils/dom.svelte';
 	import { type Base } from '$svelte-atoms/core/components/atom';
-	import { type OverlayState } from '$svelte-atoms/core/components/overlay';
 	import { ZLayer } from '../portal/zlayer.svelte';
 	import { Content as DialogContent } from '../dialog/atoms';
 	import { PopoverDialogBond } from './bond.svelte';
@@ -21,12 +20,17 @@
 
 	const bond = PopoverDialogBond.get();
 
-	const normalizedZIndex = $derived(
-		typeof zindex === 'number' && Number.isFinite(zindex) ? zindex : undefined
+	const baseLayer = new ZLayer('modal', () => 0);
+	const layerOffset = $derived(
+		typeof zindex === 'function'
+			? zindex(baseLayer.value) - baseLayer.value
+			: typeof zindex === 'number' && Number.isFinite(zindex)
+				? zindex
+				: 0
 	);
-	const layer = new ZLayer('modal', () => normalizedZIndex ?? 0).share();
+	const layer = new ZLayer('modal', () => layerOffset).share();
 
-	const open = $derived((bond?.state as OverlayState | undefined)?.isOpen ?? false);
+	const open = $derived(bond?.isOpen ?? false);
 	const disabled = $derived(
 		(bond?.state.props as { disabled?: boolean } | undefined)?.disabled ?? false
 	);
@@ -50,7 +54,7 @@
 		if (containsTarget(bond.elements?.content, ev.target)) return;
 		onclick?.(ev, bond);
 		if (ev.defaultPrevented) return;
-		if (type === 'modal' && !disabled) (bond.state as OverlayState).close();
+		if (type === 'modal' && !disabled) bond.close?.();
 	}
 </script>
 
@@ -66,7 +70,7 @@
 	onclick={onclickRoot}
 	oncancel={(ev) => {
 		ev.preventDefault();
-		(bond?.state as OverlayState | undefined)?.close();
+		bond?.close?.();
 	}}
 	{...rootProps}
 >

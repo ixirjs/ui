@@ -54,7 +54,6 @@ export const toastCloseProps: PropDefinition[] = [
 		type: '((ev: MouseEvent) => void) | undefined',
 		default: 'undefined',
 		description:
-			'Additional click handler. Call ev.preventDefault() to suppress the built-in close behaviour.'
+			'Additional click handler. Call ev.preventDefault() to suppress the built-in close behavior.'
 	}
 ];
-

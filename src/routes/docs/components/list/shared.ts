@@ -31,46 +31,56 @@ const accessibilityFeatures = [
 const useCases = [
 	{
 		title: 'Navigation Menus',
-		description: 'Build sidebar navigation or dropdown menus with grouped, titled sections and clickable list items.'
+		description:
+			'Build sidebar navigation or dropdown menus with grouped, titled sections and clickable list items.'
 	},
 	{
 		title: 'Settings Panels',
-		description: 'Display grouped settings categories with titles and dividers for organized, scannable interfaces.'
+		description:
+			'Display grouped settings categories with titles and dividers for organized, scannable interfaces.'
 	},
 	{
 		title: 'Content Feeds',
-		description: 'Render lists of articles, notifications, or messages where each item may include icons, metadata, and actions.'
+		description:
+			'Render lists of articles, notifications, or messages where each item may include icons, metadata, and actions.'
 	},
 	{
 		title: 'Step-by-step Instructions',
-		description: 'Use ordered lists to present numbered instructions or ranked items in a clear sequence.'
+		description:
+			'Use ordered lists to present numbered instructions or ranked items in a clear sequence.'
 	},
 	{
 		title: 'Feature Lists',
-		description: 'Enumerate product features, benefits, or comparison points with optional icons for visual emphasis.'
+		description:
+			'Enumerate product features, benefits, or comparison points with optional icons for visual emphasis.'
 	},
 	{
 		title: 'Action Lists',
-		description: 'Create interactive item lists where users can click items to trigger actions like navigation or selection.'
+		description:
+			'Create interactive item lists where users can click items to trigger actions like navigation or selection.'
 	}
 ];
 
 const componentsSummary = [
 	{
 		name: 'List.Root',
-		description: 'Root container element rendered as ul or ol depending on context. Manages layout and shared list styles.'
+		description:
+			'Root container element rendered as ul or ol depending on context. Manages layout and shared list styles.'
 	},
 	{
 		name: 'List.Item',
-		description: 'Individual list item rendered as an li element. Supports icons, actions, and clickable interactions.'
+		description:
+			'Individual list item rendered as an li element. Supports icons, actions, and clickable interactions.'
 	},
 	{
 		name: 'List.Group',
-		description: 'Groups related list items together, typically with visual separation or indentation.'
+		description:
+			'Groups related list items together, typically with visual separation or indentation.'
 	},
 	{
 		name: 'List.Title',
-		description: 'Section header within a grouped list, providing a label for a group of related items.'
+		description:
+			'Section header within a grouped list, providing a label for a group of related items.'
 	},
 	{
 		name: 'List.Divider',
@@ -80,7 +90,8 @@ const componentsSummary = [
 
 export const metadata = {
 	title: 'List - Svelte Atoms',
-	description: 'Flexible list component for displaying collections of items with grouping, titles, and dividers.',
+	description:
+		'Flexible list component for displaying collections of items with grouping, titles, and dividers.',
 	componentTitle: 'List',
 	componentDescription:
 		'Structured list component with grouping, ordered/unordered variants, and interactive items.',

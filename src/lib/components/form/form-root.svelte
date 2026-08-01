@@ -1,14 +1,23 @@
 <script module lang="ts">
 	import type { Snippet } from 'svelte';
-	import { bondFactory } from '$svelte-atoms/core/shared';
 	import type { HTMLAttributes } from 'svelte/elements';
-	import { mergePresetProps, HtmlAtom, type HtmlAtomProps, type Base } from '$svelte-atoms/core/components/atom';
-	import { bindBond } from '$svelte-atoms/core/shared/bind-bond.svelte';
+	import {
+		mergePresetProps,
+		HtmlAtom,
+		type HtmlAtomProps,
+		type Base
+	} from '$svelte-atoms/core/components/atom';
+	import { bindBond } from '$svelte-atoms/core/shared/bond/bind.svelte';
 	import type { Override, Factory } from '$svelte-atoms/core/types';
-	import { FormBond, FormBondState } from './bond.svelte';
+	import { FormBond, type FormProps } from './bond.svelte';
+	import type { PresetKey } from '$svelte-atoms/core/context/preset.svelte';
 
+	// Available on both the renderless and renderfull branches (preset is otherwise only on the
+	// renderfull `HtmlAtomProps` side, and validator was undeclared).
 	type CommonProps = {
 		factory?: Factory<FormBond>;
+		validator?: unknown;
+		preset?: PresetKey;
 	};
 
 	type RenderlessProps = {
@@ -33,7 +42,7 @@
 		class: klass = '',
 		renderless = false,
 		validator = undefined,
-		factory = bondFactory(FormBondState, FormBond),
+		factory = defaultFactory,
 		children = undefined,
 		preset = undefined,
 		...restProps
@@ -41,21 +50,21 @@
 
 	const formProps = $derived(mergePresetProps(preset, 'form', restProps));
 
-	const binding = bindBond<FormBond>(
-		(props) => factory(props),
-		{
-			renderless: () => renderless,
-			validator: () => validator
-		}
-	);
+	const binding = bindBond<FormBond>((props) => factory(props), {
+		renderless: () => renderless,
+		validator: () => validator
+	});
 	const bond = binding.bond.share();
-
 
 	export function getBond() {
 		return bond;
 	}
 
 	const content = $derived(renderless ? children : renderfull);
+
+	function defaultFactory(props: FormProps) {
+		return new FormBond(props);
+	}
 </script>
 
 {#snippet renderfull({ form }: { form: FormBond })}

@@ -1,6 +1,6 @@
-import { animate, spring } from 'motion';
+import { animate } from 'motion';
 import { untrack } from 'svelte';
-import { PopoverBond } from '.';
+import { getPopoverPosition, PopoverBond } from './bond.svelte';
 
 export type AnimatePopoverContentParams = {
 	// Animation duration in seconds (default: 0.05)
@@ -31,8 +31,8 @@ export function animatePopoverContent(params: AnimatePopoverContentParams = {}) 
 			damping = 30
 		} = params;
 
-		const isOpen = bond?.state.props.open ?? false;
-		const position = bond?.state.position;
+		const isOpen = bond?.props.open ?? false;
+		const position = bond ? getPopoverPosition(bond) : undefined;
 
 		if (!position) return;
 
@@ -46,10 +46,10 @@ export function animatePopoverContent(params: AnimatePopoverContentParams = {}) 
 
 		requestAnimationFrame(() => {
 			const placement = untrack(() => position.placement);
-			const [side, alignment] = placement?.split('-') ?? ['bottom', ''];
+			const [side = 'bottom', alignment = ''] = placement?.split('-') ?? ['bottom', ''];
 
-			const offset = untrack(() => bond?.state.props.offset ?? 0);
-			const hasArrow = untrack(() => bond?.state.props.arrow ?? false);
+			const offset = untrack(() => bond?.props.offset ?? 0);
+			const hasArrow = untrack(() => Boolean(bond?.node('arrow')));
 
 			const transformOrigin = getTransformOrigin(side, alignment);
 
@@ -70,8 +70,8 @@ export function animatePopoverContent(params: AnimatePopoverContentParams = {}) 
 				node,
 				keyframes,
 				useSpring
-					? { easing: spring({ stiffness, damping }), delay }
-					: { duration, easing: [0.16, 1, 0.3, 1], delay }
+					? { type: 'spring' as const, stiffness, damping, delay }
+					: { duration, ease: [0.16, 1, 0.3, 1] as const, delay }
 			);
 
 			animation.finished.then(() => {

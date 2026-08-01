@@ -2,7 +2,13 @@
 	import { mergePresetProps, HtmlAtom } from '$svelte-atoms/core/components/atom';
 	import type { BadgeProps } from './types';
 
-	let { class: klass = '', preset = undefined, as = 'span', children = undefined, ...restProps }: BadgeProps = $props();
+	let {
+		class: klass = '',
+		preset = undefined,
+		as = 'span',
+		children = undefined,
+		...restProps
+	}: BadgeProps = $props();
 
 	const badgeProps = $derived(mergePresetProps(preset, 'badge', restProps));
 </script>

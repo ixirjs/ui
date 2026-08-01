@@ -1,4 +1,10 @@
 // defineVariants: single-function variant system with bond state access, type safety, and attribute support.
+//
+// `any` is structural throughout this file: the variant-map generics
+// (`Record<string, Record<string, any>>`) and merged-attribute records are
+// permissive by design so every component's variant definition infers cleanly.
+// Narrowing to `unknown` would break inference across the whole variant system.
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import type { ClassValue } from 'svelte/elements';
 import type { Bond } from '$svelte-atoms/core/shared';

@@ -1,10 +1,10 @@
-import { animate } from 'motion';
+import { animate, type Easing } from 'motion';
 import { TreeBond } from './bond.svelte';
 
 export type AnimateTreeBodyParams = {
 	duration?: number;
 	delay?: number;
-	ease?: string;
+	ease?: Easing | Easing[];
 };
 
 export function animateTreeBody(params: AnimateTreeBodyParams = {}) {
@@ -20,7 +20,7 @@ export function animateTreeBody(params: AnimateTreeBodyParams = {}) {
 				opacity: +isOpen,
 				pointerEvents: isOpen ? '' : 'none'
 			},
-			{ duration, delay, ease }
+			{ duration, delay, ...(ease ? { ease } : {}) }
 		);
 	};
 }

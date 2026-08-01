@@ -4,7 +4,7 @@ import { animate, type Easing } from 'motion';
 export type EnterAccordionItemBodyParams = {
 	duration?: number;
 	delay?: number;
-	ease?: Easing | Easing[] | (string & {});
+	ease?: Easing | Easing[];
 };
 
 export function enterAccordionItemBody(params: EnterAccordionItemBodyParams = {}) {

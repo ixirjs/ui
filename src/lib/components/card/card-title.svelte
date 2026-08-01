@@ -13,7 +13,9 @@
 		...restProps
 	}: CardTitleProps<E, B> = $props();
 
-	const titleProps = $derived(mergePresetProps(preset, 'card.title', { ...bond?.title(), ...restProps }));
+	const titleProps = $derived(
+		mergePresetProps(preset, 'card.title', { ...bond?.title(), ...restProps })
+	);
 </script>
 
 <HtmlAtom

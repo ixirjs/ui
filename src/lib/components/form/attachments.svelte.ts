@@ -1,6 +1,4 @@
+import { createBondAttachment } from '$svelte-atoms/core/components/internal/attachments.svelte';
 import { FormBond } from './bond.svelte';
 
-export function form(callback: (node: HTMLElement, bond?: FormBond) => any) {
-	const bond = FormBond.get();
-	return (node: HTMLElement) => callback(node, bond);
-}
+export const form = createBondAttachment<FormBond>(FormBond);

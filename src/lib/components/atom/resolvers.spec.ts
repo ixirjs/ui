@@ -97,11 +97,7 @@ describe('presentation stages — resolvePreset fallback chains', () => {
 	});
 
 	it('first registered key in the chain wins', () => {
-		const out = resolvers.resolvePreset(
-			['combobox.arrow', 'popover.arrow'],
-			undefined,
-			getPreset
-		);
+		const out = resolvers.resolvePreset(['combobox.arrow', 'popover.arrow'], undefined, getPreset);
 		expect(out?.class).toBe('namespaced');
 	});
 

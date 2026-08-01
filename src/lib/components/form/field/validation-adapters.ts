@@ -1,3 +1,7 @@
+// The Zod adapter below bridges an untyped external schema: `schema.parse` returns
+// the parsed data and the thrown error's `issues` have no type we control, so `any`
+// is inherent to the shim. Narrowing buys no real safety here.
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export interface ValidationError {
 	path: (string | number)[];
 	message: string;

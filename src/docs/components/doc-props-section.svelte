@@ -6,7 +6,7 @@
 	let {
 		title,
 		presetKey,
-		children,
+		children
 	}: {
 		// Sub-section heading, e.g. "Accordion.Root"
 		title: string;
@@ -23,16 +23,17 @@
 		<div class="mb-3 flex items-baseline gap-3">
 			<h3 class="text-foreground text-lg font-semibold">{title}</h3>
 			{#if presetKey}
-				<span class="text-muted-foreground font-mono text-xs">preset: <code class="bg-muted rounded px-1 py-0.5">{presetKey}</code></span>
+				<span class="text-muted-foreground font-mono text-xs"
+					>preset: <code class="bg-muted rounded px-1 py-0.5">{presetKey}</code></span
+				>
 			{/if}
 		</div>
 		{@render children()}
 	</div>
 {:else}
-{newLine(2)}### {title}
-{#if presetKey}
-
-**Preset Key:** `{presetKey}`
-{/if}
-{newLine()}{@render children()}
+	{newLine(2)}### {title}
+	{#if presetKey}
+		**Preset Key:** `{presetKey}`
+	{/if}
+	{newLine()}{@render children()}
 {/if}

@@ -28,11 +28,11 @@
 				href={item.href}
 				class="text-muted-foreground sticky top-0 z-10 mb-1 px-2 py-1 text-xs font-semibold uppercase tracking-widest bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/80"
 				disabled={item.disabled === true}
-				onpointerdown={(ev)=> {
+				onpointerdown={(ev) => {
 					ev.preventDefault();
-					item.href && goto(item.href);
-				}}
-			>{item.title}</Tree.Header>
+					if (item.href) goto(item.href);
+				}}>{item.title}</Tree.Header
+			>
 			<Tree.Body class="flex flex-col">
 				{#each item.children as child, i (i)}
 					{@render tree(child)}
@@ -52,7 +52,8 @@
 			aria-disabled={item.disabled}
 		>
 			{#if isActive(pathname, item.href)}
-				<span class="bg-primary absolute left-0 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full"></span>
+				<span class="bg-primary absolute left-0 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full"
+				></span>
 			{/if}
 			<span class="pl-2">{item.title}</span>
 		</a>
@@ -70,7 +71,10 @@
 		</Scrollable.Content>
 	</Scrollable.Container>
 
-	<Scrollable.Track class="inset-y-8 opacity-0 group-hover:opacity-100 duration-500 transition-opacity overflow-clip" orientation="vertical">
+	<Scrollable.Track
+		class="inset-y-8 opacity-0 group-hover:opacity-100 duration-500 transition-opacity overflow-clip"
+		orientation="vertical"
+	>
 		<Scrollable.Thumb
 			orientation="vertical"
 			class="left-[50%] w-2 origin-center translate-x-[-50%] rounded-none transition-colors"

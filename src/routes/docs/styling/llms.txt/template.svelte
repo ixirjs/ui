@@ -9,7 +9,6 @@
 
 <FrontMatter {frontmatter} />
 
-
 # {metadata.pageTitle}
 
 {metadata.pageDescription}
@@ -25,23 +24,22 @@
 ## Styling Approaches
 
 {#each metadata.stylingApproaches as approach, i (i)}
-### {approach.approach}
+	### {approach.approach}
 
-{approach.description}
+	{approach.description}
 
-**Pros:**
-{list(approach.pros || [])}
+	**Pros:**
+	{list(approach.pros || [])}
 
-**Cons:**
-{list(approach.cons || [])}
-
+	**Cons:**
+	{list(approach.cons || [])}
 {/each}
 
-## Tailwind CSS (Recommended)
+## Tailwind CSS (Recommended) Svelte Atoms works perfectly with Tailwind CSS. Use utility classes
+directly on components:
 
-Svelte Atoms works perfectly with Tailwind CSS. Use utility classes directly on components:
-
-{codeBlock(`
+{codeBlock(
+	`
 <!-- Layout & spacing -->
 <Card.Root class="max-w-sm p-4">
   <Card.Header>
@@ -59,13 +57,14 @@ Svelte Atoms works perfectly with Tailwind CSS. Use utility classes directly on 
 
 <!-- With opacity -->
 <div class="bg-foreground/10">Subtle background</div>
-`, 'svelte')}
+`,
+	'svelte'
+)}
 
-## Class Organization
+## Class Organization Organize classes in a predictable order for better readability:
 
-Organize classes in a predictable order for better readability:
-
-{codeBlock(`
+{codeBlock(
+	`
 <HtmlAtom
   class={[
     'base-layout-classes',    // flex, grid, etc.
@@ -76,13 +75,14 @@ Organize classes in a predictable order for better readability:
     klass                     // User overrides (highest priority)
   ]}
 />
-`, 'svelte')}
+`,
+	'svelte'
+)}
 
-## cn() Utility
+## cn() Utility The {inlineCode('cn()')} utility intelligently merges class names and resolves conflicts:
 
-The {inlineCode('cn()')} utility intelligently merges class names and resolves conflicts:
-
-{codeBlock(`
+{codeBlock(
+	`
 import { cn } from '@svelte-atoms/core/utils';
 
 // Resolves conflicts automatically
@@ -96,26 +96,30 @@ cn('base', isActive && 'active', false && 'ignored');
 // Merges arrays
 cn(['text-sm', 'font-medium'], 'text-lg');
 // Result: 'font-medium text-lg'
-`, 'typescript')}
+`,
+	'typescript'
+)}
 
-## Color Tokens
-
-Svelte Atoms uses CSS variables for theming. All color tokens are available as Tailwind utilities:
+## Color Tokens Svelte Atoms uses CSS variables for theming. All color tokens are available as
+Tailwind utilities:
 
 {#each metadata.colorTokens as token, i (i)}
-### {token.token}
+	### {token.token}
 
-**Usage:** {token.usage}
+	**Usage:** {token.usage}
 
-{codeBlock(`
+	{codeBlock(
+		`
 <div class="bg-${token.token} text-${token.token}">Content</div>
-`, 'svelte')}
-
+`,
+		'svelte'
+	)}
 {/each}
 
 ### Using Color Tokens
 
-{codeBlock(`
+{codeBlock(
+	`
 <!-- Color tokens -->
 <div class="bg-background text-foreground">Background color</div>
 <Button class="bg-primary text-primary-foreground">Primary button</Button>
@@ -125,13 +129,14 @@ Svelte Atoms uses CSS variables for theming. All color tokens are available as T
 
 <!-- Borders and shadows -->
 <Card.Root class="border-border border shadow-lg">Card</Card.Root>
-`, 'svelte')}
+`,
+	'svelte'
+)}
 
-## Conditional Classes
+## Conditional Classes Apply classes conditionally based on component state:
 
-Apply classes conditionally based on component state:
-
-{codeBlock(`
+{codeBlock(
+	`
 <script>
   let isOpen = $state(false);
   let isActive = $state(true);
@@ -163,13 +168,14 @@ Apply classes conditionally based on component state:
 >
   Button
 </Button>
-`, 'svelte')}
+`,
+	'svelte'
+)}
 
-## Variant System
+## Variant System Define reusable style variants at the component level:
 
-Define reusable style variants at the component level:
-
-{codeBlock(`
+{codeBlock(
+	`
 <script lang="ts">
 	/* eslint-disable @typescript-eslint/no-unused-vars */
   import { defineVariants } from '@svelte-atoms/core/utils';
@@ -201,13 +207,14 @@ Define reusable style variants at the component level:
 <HtmlAtom variants={buttonVariants} {variant} {size} {...props}>
   {@render children?.()}
 </HtmlAtom>
-`, 'typescript')}
+`,
+	'typescript'
+)}
 
-## Compound Variants
+## Compound Variants Combine multiple variant conditions:
 
-Combine multiple variant conditions:
-
-{codeBlock(`
+{codeBlock(
+	`
 const alertVariants = defineVariants({
   class: 'rounded-lg p-4 border',
   variants: {
@@ -228,13 +235,14 @@ const alertVariants = defineVariants({
     }
   ]
 });
-`, 'typescript')}
+`,
+	'typescript'
+)}
 
-## Reactive Variants
+## Reactive Variants Create variants that respond to component state:
 
-Create variants that respond to component state:
-
-{codeBlock(`
+{codeBlock(
+	`
 const accordionVariants = defineVariants((bond) => ({
   class: 'border rounded-md transition-all',
   variants: {
@@ -244,13 +252,14 @@ const accordionVariants = defineVariants((bond) => ({
     }
   }
 }));
-`, 'typescript')}
+`,
+	'typescript'
+)}
 
-## Preset Placeholder
+## Preset Placeholder Control where preset classes are inserted:
 
-Control where preset classes are inserted:
-
-{codeBlock(`
+{codeBlock(
+	`
 <!-- In your component -->
 <HtmlAtom
   preset="button"
@@ -268,13 +277,14 @@ Control where preset classes are inserted:
 />
 
 <!-- Result: preset-classes component-classes user-classes -->
-`, 'svelte')}
+`,
+	'svelte'
+)}
 
-## Inline Styles
+## Inline Styles Use the {inlineCode('style')} attribute for dynamic values:
 
-Use the {inlineCode('style')} attribute for dynamic values:
-
-{codeBlock(`
+{codeBlock(
+	`
 <script>
   let width = $state(240);
   let opacity = $state(1);
@@ -294,22 +304,22 @@ Use the {inlineCode('style')} attribute for dynamic values:
 <div style="padding: 16px; background: blue;">
   Use Tailwind instead
 </div>
-`, 'svelte')}
+`,
+	'svelte'
+)}
 
 ## Best Practices
 
 {#each metadata.bestPractices as category, i (i)}
-### {category.category}
+	### {category.category}
 
-{list(category.practices)}
-
+	{list(category.practices)}
 {/each}
 
-## Common Patterns
+## Common Patterns ### Button Component
 
-### Button Component
-
-{codeBlock(`
+{codeBlock(
+	`
 <script lang="ts">
 	/* eslint-disable @typescript-eslint/no-unused-vars */
   import { HtmlAtom, defineVariants } from '@svelte-atoms/core';
@@ -346,11 +356,14 @@ Use the {inlineCode('style')} attribute for dynamic values:
   class={klass}
   {...props}
 />
-`, 'svelte')}
+`,
+	'svelte'
+)}
 
 ### Card Component
 
-{codeBlock(`
+{codeBlock(
+	`
 <script lang="ts">
 	/* eslint-disable @typescript-eslint/no-unused-vars */
   import { HtmlAtom } from '@svelte-atoms/core';
@@ -364,11 +377,14 @@ Use the {inlineCode('style')} attribute for dynamic values:
   class={['rounded-lg border bg-card text-card-foreground shadow-sm', klass]}
   {...props}
 />
-`, 'svelte')}
+`,
+	'svelte'
+)}
 
 ### Responsive Styling
 
-{codeBlock(`
+{codeBlock(
+	`
 <!-- Mobile-first responsive design -->
 <div class="
   text-sm md:text-base lg:text-lg
@@ -377,11 +393,14 @@ Use the {inlineCode('style')} attribute for dynamic values:
 ">
   Responsive content
 </div>
-`, 'svelte')}
+`,
+	'svelte'
+)}
 
 ### Dark Mode
 
-{codeBlock(`
+{codeBlock(
+	`
 <!-- Using color tokens (automatic dark mode) -->
 <div class="bg-background text-foreground">
   Automatically adapts to dark mode
@@ -391,11 +410,14 @@ Use the {inlineCode('style')} attribute for dynamic values:
 <div class="bg-white dark:bg-gray-900 text-black dark:text-white">
   Manual dark mode
 </div>
-`, 'svelte')}
+`,
+	'svelte'
+)}
 
 ### Hover and Focus States
 
-{codeBlock(`
+{codeBlock(
+	`
 <!-- Interactive states -->
 <button class="
   bg-primary text-primary-foreground
@@ -406,13 +428,14 @@ Use the {inlineCode('style')} attribute for dynamic values:
 ">
   Interactive Button
 </button>
-`, 'svelte')}
+`,
+	'svelte'
+)}
 
-## Advanced Techniques
+## Advanced Techniques ### Dynamic Class Generation
 
-### Dynamic Class Generation
-
-{codeBlock(`
+{codeBlock(
+	`
 function getButtonClasses(variant: string, size: string) {
   const base = 'inline-flex items-center justify-center';
   const variants = {
@@ -427,11 +450,14 @@ function getButtonClasses(variant: string, size: string) {
   
   return cn(base, variants[variant], sizes[size]);
 }
-`, 'typescript')}
+`,
+	'typescript'
+)}
 
 ### Custom Utility Classes
 
-{codeBlock(`
+{codeBlock(
+	`
 /* app.css */
 @layer utilities {
   .text-balance {
@@ -447,11 +473,14 @@ function getButtonClasses(variant: string, size: string) {
     display: none;
   }
 }
-`, 'css')}
+`,
+	'css'
+)}
 
 ### CSS Variables
 
-{codeBlock(`
+{codeBlock(
+	`
 /* Define custom properties */
 :root {
   --spacing-sm: 0.5rem;
@@ -463,24 +492,28 @@ function getButtonClasses(variant: string, size: string) {
 .custom-component {
   padding: var(--spacing-md);
 }
-`, 'css')}
+`,
+	'css'
+)}
 
-## Debugging Styles
+## Debugging Styles ### Inspect Applied Classes
 
-### Inspect Applied Classes
-
-{codeBlock(`
+{codeBlock(
+	`
 <script>
   import { cn } from '@svelte-atoms/core/utils';
   
   $inspect(cn('base', isActive && 'active'));
   // See what classes are actually applied
 </script>
-`, 'svelte')}
+`,
+	'svelte'
+)}
 
 ### Visual Debugging
 
-{codeBlock(`
+{codeBlock(
+	`
 <!-- Add visible borders to debug layout -->
 <div class="border-2 border-red-500">
   Debug me
@@ -490,41 +523,43 @@ function getButtonClasses(variant: string, size: string) {
 <div class="bg-red-100">
   Debug container
 </div>
-`, 'svelte')}
+`,
+	'svelte'
+)}
 
-## Performance Tips
+## Performance Tips 1. **Use Tailwind JIT**: Automatic purging and minimal build size 2. **Avoid
+Inline Styles**: Prefer classes for static values 3. **Memoize Computed Classes**: Cache expensive
+class computations 4. **Use Preset System**: Define common patterns once 5. **Leverage PurgeCSS**:
+Remove unused styles in production ## Migrating from Other Systems ### From CSS Modules
 
-1. **Use Tailwind JIT**: Automatic purging and minimal build size
-2. **Avoid Inline Styles**: Prefer classes for static values
-3. **Memoize Computed Classes**: Cache expensive class computations
-4. **Use Preset System**: Define common patterns once
-5. **Leverage PurgeCSS**: Remove unused styles in production
-
-## Migrating from Other Systems
-
-### From CSS Modules
-
-{codeBlock(`
+{codeBlock(
+	`
 <!-- Before -->
 <div class={styles.button}>Click</div>
 
 <!-- After -->
 <Button class="custom-button-styles">Click</Button>
-`, 'svelte')}
+`,
+	'svelte'
+)}
 
 ### From Styled Components
 
-{codeBlock(`
+{codeBlock(
+	`
 <!-- Before -->
 <Styled.Button>Click</Styled.Button>
 
 <!-- After -->
 <Button class="inline-flex items-center ...">Click</Button>
-`, 'svelte')}
+`,
+	'svelte'
+)}
 
 ### From Plain CSS
 
-{codeBlock(`
+{codeBlock(
+	`
 <!-- Before -->
 <style>
   .my-button {
@@ -536,18 +571,13 @@ function getButtonClasses(variant: string, size: string) {
 
 <!-- After -->
 <Button class="px-8 py-4 bg-blue-500">Click</Button>
-`, 'svelte')}
+`,
+	'svelte'
+)}
 
-## Resources
-
-- [Tailwind CSS Documentation](https://tailwindcss.com/docs)
-- [Preset System](/docs/preset) - Global theming guide
-- [Component Examples](/docs/components) - See styling in action
-- [Color Tokens Reference](/docs/theming) - Complete token list
-
-## Next Steps
-
-- Master the [Preset System](/docs/preset) for global theming
-- Learn about [Variants](/docs/variants) for reusable patterns
-- Explore [Component Examples](/docs/components) to see styling techniques
-- Read about [Accessibility](/docs/accessibility) for inclusive design
+## Resources - [Tailwind CSS Documentation](https://tailwindcss.com/docs) - [Preset
+System](/docs/preset) - Global theming guide - [Component Examples](/docs/components) - See styling
+in action - [Color Tokens Reference](/docs/theming) - Complete token list ## Next Steps - Learn the
+[Preset System](/docs/preset) for global theming - Learn about [Variants](/docs/variants) for
+reusable patterns - Explore [Component Examples](/docs/components) to see styling techniques - Read
+about [Accessibility](/docs/accessibility) for inclusive design

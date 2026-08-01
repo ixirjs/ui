@@ -20,11 +20,15 @@
 
 	const apiSections: PropsSection[] = [
 		{ label: 'Kbd', presetKey: 'kbd', props: kbdProps },
-		{ label: 'Shortcut', props: shortcutProps },
+		{ label: 'Shortcut', props: shortcutProps }
 	];
 
 	const _loaders = import.meta.glob('./examples/*.svelte');
-	const _sources = import.meta.glob('./examples/*.svelte', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+	const _sources = import.meta.glob('./examples/*.svelte', {
+		query: '?raw',
+		import: 'default',
+		eager: true
+	}) as Record<string, string>;
 	const ex = createExampleLoader(_loaders, _sources);
 </script>
 
@@ -40,11 +44,31 @@
 	{/snippet}
 
 	{#snippet examples()}
-		<DocExample title="Individual Keys" description="Use Kbd to represent a single keyboard key." {...ex('./examples/basic.svelte')} />
-		<DocExample title="Shortcut — keys prop" description="Pass an array of keys to render a key combination." {...ex('./examples/shortcut-keys.svelte')} />
-		<DocExample title="Custom Separator" description="Override the default '+' separator with any string." {...ex('./examples/custom-separator.svelte')} />
-		<DocExample title="Manual Composition" description="Use the children slot for full control over the shortcut layout." {...ex('./examples/manual-composition.svelte')} />
-		<DocExample title="Inline Usage" description="Kbd and Shortcut can be embedded directly within prose text." {...ex('./examples/inline.svelte')} />
+		<DocExample
+			title="Individual Keys"
+			description="Use Kbd to represent a single keyboard key."
+			{...ex('./examples/basic.svelte')}
+		/>
+		<DocExample
+			title="Shortcut — keys prop"
+			description="Pass an array of keys to render a key combination."
+			{...ex('./examples/shortcut-keys.svelte')}
+		/>
+		<DocExample
+			title="Custom Separator"
+			description="Override the default '+' separator with any string."
+			{...ex('./examples/custom-separator.svelte')}
+		/>
+		<DocExample
+			title="Manual Composition"
+			description="Use the children slot for full control over the shortcut layout."
+			{...ex('./examples/manual-composition.svelte')}
+		/>
+		<DocExample
+			title="Inline Usage"
+			description="Kbd and Shortcut can be embedded directly within prose text."
+			{...ex('./examples/inline.svelte')}
+		/>
 	{/snippet}
 
 	{#snippet apiReference()}

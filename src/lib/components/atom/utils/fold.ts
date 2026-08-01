@@ -2,7 +2,7 @@ import type { ClassValue } from 'svelte/elements';
 import { PRESET_SKIP, VARIANTS_SKIP } from './constants';
 import { getCachedOwnSymbols } from './cache';
 
-// Presentation merge kernel (ADR 0004 D5): one fold over fallback → preset → variants → rest,
+// Presentation merge kernel: one fold over fallback → preset → variants → rest,
 // each later layer winning. Class axis captured separately for `mergeClassesWithPreset`.
 export type FoldedPresentation = {
 	// preset.class captured during the walk (before variants in cascade).

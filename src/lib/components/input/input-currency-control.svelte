@@ -29,19 +29,19 @@
 
 	const preset = resolveControlPreset(() => presetKey, bond);
 
-	let inputEl   = $state<HTMLInputElement>();
+	let inputEl = $state<HTMLInputElement>();
 	let isFocused = $state(false);
 
 	// Locale separators + pre-compiled regexes
 	const separators = $derived.by(() => {
-		const parts   = new Intl.NumberFormat(locale).formatToParts(1234567.89);
-		const decimal = parts.find(p => p.type === 'decimal')?.value ?? '.';
-		const group   = parts.find(p => p.type === 'group')?.value   ?? ',';
-		const esc     = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+		const parts = new Intl.NumberFormat(locale).formatToParts(1234567.89);
+		const decimal = parts.find((p) => p.type === 'decimal')?.value ?? '.';
+		const group = parts.find((p) => p.type === 'group')?.value ?? ',';
+		const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 		return {
 			decimal,
-			reGroup:   new RegExp(esc(group),   'g'),
-			reDecimal: new RegExp(esc(decimal)),
+			reGroup: new RegExp(esc(group), 'g'),
+			reDecimal: new RegExp(esc(decimal))
 		};
 	});
 
@@ -53,7 +53,7 @@
 		const cleaned = raw
 			.replace(separators.reGroup, '')
 			.replace(separators.reDecimal, '.')
-			.replace(/[^0-9.\-]/g, '')
+			.replace(/[^0-9.-]/g, '')
 			.trim();
 		if (!cleaned || cleaned === '-') return undefined;
 		const n = parseFloat(cleaned);
@@ -67,7 +67,7 @@
 	// Sole writer of `amount` + `value`.
 	function commit(n: number | undefined) {
 		amount = n !== undefined ? clamp(n) : undefined;
-		value  = amount !== undefined ? amount.toFixed(precision) : '';
+		value = amount !== undefined ? amount.toFixed(precision) : '';
 		writeInputValue(bond, value);
 	}
 
@@ -82,11 +82,11 @@
 	const formattedParts = $derived(
 		amount !== undefined
 			? new Intl.NumberFormat(locale, {
-				style: 'currency',
-				currency,
-				minimumFractionDigits: precision,
-				maximumFractionDigits: precision,
-			}).formatToParts(amount)
+					style: 'currency',
+					currency,
+					minimumFractionDigits: precision,
+					maximumFractionDigits: precision
+				}).formatToParts(amount)
 			: []
 	);
 
@@ -113,7 +113,7 @@
 		if (disabled || readonly) return;
 		if (ev.key !== 'ArrowUp' && ev.key !== 'ArrowDown') return;
 		ev.preventDefault();
-		const dir        = ev.key === 'ArrowUp' ? 1 : -1;
+		const dir = ev.key === 'ArrowUp' ? 1 : -1;
 		const multiplier = ev.shiftKey ? 10 : ev.altKey ? 0.1 : 1;
 		commit((amount ?? 0) + dir * stepSize * multiplier);
 		if (inputEl && amount !== undefined) inputEl.value = toEditString(amount);
@@ -130,7 +130,6 @@
 </script>
 
 <span class="relative flex h-full w-full flex-1 items-center overflow-hidden">
-
 	<!-- Display overlay — shown while blurred -->
 	{#if !isFocused}
 		<span
@@ -138,21 +137,23 @@
 			class="pointer-events-none absolute inset-0 flex items-center overflow-hidden px-2 font-mono text-sm"
 			style="white-space: pre;"
 		>
-		{#if formattedParts.length}
-			{#each formattedParts as part (part)}
-				<span class={cn(
-								part.type === 'currency' && 'text-muted-foreground font-normal',
-								part.type === 'integer'  && 'text-foreground font-medium',
-								part.type === 'decimal'  && 'text-muted-foreground',
-								part.type === 'fraction' && 'text-foreground/70',
-								part.type === 'group'    && 'text-muted-foreground/60',
-								part.type === 'literal'  && 'text-muted-foreground/60',
-							)}>{part.value}</span>
-			{/each}
-		{:else}
-			<span class="text-muted-foreground">{placeholder}</span>
-		{/if}
-	</span>
+			{#if formattedParts.length}
+				{#each formattedParts as part (part)}
+					<span
+						class={cn(
+							part.type === 'currency' && 'text-muted-foreground font-normal',
+							part.type === 'integer' && 'text-foreground font-medium',
+							part.type === 'decimal' && 'text-muted-foreground',
+							part.type === 'fraction' && 'text-foreground/70',
+							part.type === 'group' && 'text-muted-foreground/60',
+							part.type === 'literal' && 'text-muted-foreground/60'
+						)}>{part.value}</span
+					>
+				{/each}
+			{:else}
+				<span class="text-muted-foreground">{placeholder}</span>
+			{/if}
+		</span>
 	{/if}
 
 	<!-- Native input — transparent while blurred, visible while focused -->
@@ -168,10 +169,12 @@
 		{readonly}
 		class={cn(
 			'relative h-full w-full flex-1 bg-transparent px-2 font-mono text-sm caret-foreground outline-none',
-			isFocused ? 'text-foreground placeholder:text-muted-foreground' : 'text-transparent placeholder:text-transparent',
+			isFocused
+				? 'text-foreground placeholder:text-muted-foreground'
+				: 'text-transparent placeholder:text-transparent',
 			disabled && 'cursor-not-allowed opacity-50',
 			preset?.class,
-			toClassValue(klass, bond),
+			toClassValue(klass, bond)
 		)}
 		oninput={handleInput}
 		onfocus={handleFocus}

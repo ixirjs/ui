@@ -5,6 +5,7 @@ const [getLayer, setLayer] = createContext<ZLayer>();
 
 // Built-in layer bases: positioned floats < modal surfaces < ambient feedback.
 export const LAYER_BASE = {
+	base: 0,
 	positioned: 10,
 	modal: 20,
 	ambient: 30
@@ -14,6 +15,10 @@ export type LayerName = keyof typeof LAYER_BASE;
 
 // A raw z-index, a built-in name, or a registered custom name (`string & {}` keeps autocomplete).
 export type LayerInput = number | LayerName | (string & {});
+
+// A z-index override: either an absolute number or a function that receives the computed
+// natural layer value and returns the final CSS z-index to apply.
+export type ZIndexInput = number | ((layerValue: number) => number);
 
 // name → base, seeded from the built-ins; extended via ZLayer.register.
 const registry = new SvelteMap<string, number>(Object.entries(LAYER_BASE));

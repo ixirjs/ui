@@ -1,14 +1,11 @@
-import { BondAtom } from '$svelte-atoms/core/shared/bond.svelte';
-import { defineBond, type BondOf, type ViewOf } from '$svelte-atoms/core/shared';
-import { OverlayBond } from '$svelte-atoms/core/components/overlay';
-import {
-	createDisclosure,
-	type Disclosure
-} from '$svelte-atoms/core/shared/capabilities/disclosure.svelte';
-import {
-	DisclosureState,
-	type DisclosureStateProps
-} from '$svelte-atoms/core/shared/capabilities/disclosure-state.svelte';
+import { Atom } from '$svelte-atoms/core/shared/bond';
+import { defineBond, type BondOf } from '$svelte-atoms/core/shared';
+import { OverlayBond } from '$svelte-atoms/core/components/portal/host';
+import type { DisclosureStateProps } from '$svelte-atoms/core/shared/capability/models/disclosure-state.svelte';
+
+// -----------------------------------------------------------------------------
+// Public types
+// -----------------------------------------------------------------------------
 
 export type SidebarBondProps<T extends Record<string, unknown> = Record<string, unknown>> =
 	DisclosureStateProps & {
@@ -22,9 +19,14 @@ export type SidebarElements = {
 };
 
 // Bond shape the atoms type `this.bond` against — breaks the atom↔bond cycle.
-type SidebarBondView = ViewOf<SidebarBondState>;
 
-class SidebarContentAtom extends BondAtom<SidebarBondView, HTMLElement> {
+// -----------------------------------------------------------------------------
+// Internal types
+// -----------------------------------------------------------------------------
+
+type SidebarBondView = SidebarBondBase;
+
+export class SidebarContentAtom extends Atom<SidebarBondView, HTMLElement> {
 	constructor(bond: SidebarBondView) {
 		super(bond, 'content');
 	}
@@ -41,25 +43,43 @@ class SidebarContentAtom extends BondAtom<SidebarBondView, HTMLElement> {
 	}
 }
 
-// Non-generic bond; `SidebarBondState` keeps its `Props` generic.
-export const SidebarBond = defineBond<
+// -----------------------------------------------------------------------------
+// Bond implementation
+// -----------------------------------------------------------------------------
+
+class SidebarBondBase extends OverlayBond<SidebarBondProps> {
+	constructor(props: SidebarBondProps, name = 'sidebar') {
+		super(props, name);
+	}
+}
+
+// Non-generic bond.
+
+// -----------------------------------------------------------------------------
+// Bond spec and constructor facade
+// -----------------------------------------------------------------------------
+
+const SidebarBondImpl = defineBond<
 	{ content: typeof SidebarContentAtom },
-	SidebarBondState,
-	typeof OverlayBond
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	any,
+	typeof SidebarBondBase
 >({
 	name: 'sidebar',
-	base: OverlayBond,
+	base: SidebarBondBase,
 	atoms: { content: SidebarContentAtom }
 });
 
-export type SidebarBond = BondOf<typeof SidebarBond>;
+export type SidebarBond = BondOf<typeof SidebarBondImpl>;
 
-export class SidebarBondState<
-	Props extends SidebarBondProps = SidebarBondProps
-> extends DisclosureState<Props> {
-	// Storage stays in `props.open`. isOpen/open/close/toggle are inherited.
-	readonly disclosure: Disclosure = createDisclosure({
-		get: () => this.props.open,
-		set: (v) => (this.props.open = v)
-	});
+interface SidebarBondConstructor {
+	new (props: SidebarBondProps): SidebarBond;
+	readonly CONTEXT_KEY: string;
+	readonly spec: (typeof SidebarBondImpl)['spec'];
+	get(): SidebarBond | undefined;
+	getOrThrow(message?: string): SidebarBond;
+	set(bond: SidebarBond): SidebarBond;
+	create(props: SidebarBondProps): SidebarBond;
 }
+
+export const SidebarBond = SidebarBondImpl as unknown as SidebarBondConstructor;

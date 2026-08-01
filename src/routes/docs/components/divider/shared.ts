@@ -19,23 +19,28 @@ const accessibilityFeatures = [
 const useCases = [
 	{
 		title: 'Section Separation',
-		description: 'Visually separate distinct sections of a page or card, such as between a header and body, or between content groups.'
+		description:
+			'Visually separate distinct sections of a page or card, such as between a header and body, or between content groups.'
 	},
 	{
 		title: 'List Item Separation',
-		description: 'Add subtle horizontal lines between list items in menus, settings panels, or navigation drawers.'
+		description:
+			'Add subtle horizontal lines between list items in menus, settings panels, or navigation drawers.'
 	},
 	{
 		title: 'Inline Content Separation',
-		description: 'Use the vertical variant to separate inline elements like breadcrumb items, toolbar buttons, or header action groups.'
+		description:
+			'Use the vertical variant to separate inline elements like breadcrumb items, toolbar buttons, or header action groups.'
 	},
 	{
 		title: 'Form Section Grouping',
-		description: 'Divide a long form into labeled sections (e.g., "Personal Info" / "Account Settings") with an optional text label.'
+		description:
+			'Divide a long form into labeled sections (e.g., "Personal Info" / "Account Settings") with an optional text label.'
 	},
 	{
 		title: 'Authentication Alternatives',
-		description: 'Display an "OR" divider between social login buttons and email/password form inputs.'
+		description:
+			'Display an "OR" divider between social login buttons and email/password form inputs.'
 	},
 	{
 		title: 'Card Layout Structure',
@@ -45,7 +50,8 @@ const useCases = [
 
 export const metadata = {
 	title: 'Divider - Svelte Atoms',
-	description: 'Visual separator for structuring content sections, supporting horizontal, vertical, and labeled variants.',
+	description:
+		'Visual separator for structuring content sections, supporting horizontal, vertical, and labeled variants.',
 	componentTitle: 'Divider',
 	componentDescription:
 		'Visual separator for content sections with horizontal/vertical orientation and optional labels.',

@@ -34,8 +34,9 @@ export const tabsRootProps: PropDefinition[] = [
 		name: '...atomProps',
 		type: 'HtmlAtomProps',
 		default: '-',
-		description: 'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
-	},
+		description:
+			'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
+	}
 ];
 
 export const tabHeaderProps: PropDefinition[] = [
@@ -46,17 +47,18 @@ export const tabHeaderProps: PropDefinition[] = [
 		description: 'Children'
 	},
 	{
-		name: 'onpointerdown',
+		name: 'onclick',
 		type: '((ev: PointerEvent, context: { tab?: TabBond<unknown>; }) => void) | undefined',
 		default: 'undefined',
-		description: 'Onpointerdown'
+		description: 'Onclick'
 	},
 	{
 		name: '...atomProps',
 		type: 'HtmlAtomProps',
 		default: '-',
-		description: 'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
-	},
+		description:
+			'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
+	}
 ];
 
 export const tabBodyProps: PropDefinition[] = [
@@ -70,8 +72,9 @@ export const tabBodyProps: PropDefinition[] = [
 		name: '...atomProps',
 		type: 'HtmlAtomProps',
 		default: '-',
-		description: 'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
-	},
+		description:
+			'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
+	}
 ];
 
 export const tabDescriptionProps: PropDefinition[] = [
@@ -85,8 +88,9 @@ export const tabDescriptionProps: PropDefinition[] = [
 		name: '...atomProps',
 		type: 'HtmlAtomProps',
 		default: '-',
-		description: 'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
-	},
+		description:
+			'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
+	}
 ];
 
 export const tabsHeaderProps: PropDefinition[] = [
@@ -100,8 +104,9 @@ export const tabsHeaderProps: PropDefinition[] = [
 		name: '...atomProps',
 		type: 'HtmlAtomProps',
 		default: '-',
-		description: 'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
-	},
+		description:
+			'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
+	}
 ];
 
 export const tabsBodyProps: PropDefinition[] = [
@@ -115,8 +120,9 @@ export const tabsBodyProps: PropDefinition[] = [
 		name: '...atomProps',
 		type: 'HtmlAtomProps',
 		default: '-',
-		description: 'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
-	},
+		description:
+			'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
+	}
 ];
 
 export const tabsContentProps: PropDefinition[] = [
@@ -130,7 +136,7 @@ export const tabsContentProps: PropDefinition[] = [
 		name: '...atomProps',
 		type: 'HtmlAtomProps',
 		default: '-',
-		description: 'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
-	},
+		description:
+			'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
+	}
 ];
-

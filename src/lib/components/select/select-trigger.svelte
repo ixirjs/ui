@@ -4,7 +4,7 @@
 	import { SelectBond } from './bond.svelte';
 	import type { SelectTriggerProps } from './types';
 
-	const bond = SelectBond.getOrThrow('select atom was not found');
+	const bond = SelectBond.getOrThrow('SelectTrigger must be used within a Select');
 
 	let {
 		class: klass = '',
@@ -14,9 +14,10 @@
 		...restProps
 	}: SelectTriggerProps<T, B> = $props();
 
-	const atom = bond.atom('trigger');
-
-	const presentation = $derived({ preset: preset ?? atom.preset });
+	// Forward only `preset`, not `atom.spread`: the inner popover `Trigger` resolves the same shared
+	// bond's `trigger` atom and applies `mergeAtomProps` itself, so spreading the atom here too would
+	// double-apply its attrs/handlers and re-mint attachment keys. Intentional, not a missing spread.
+	const presentation = $derived({ preset: preset ?? 'select.trigger' });
 </script>
 
 <Trigger

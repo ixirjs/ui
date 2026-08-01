@@ -12,6 +12,7 @@
 		mount(Frame, {
 			target: element,
 			props: {
+				title,
 				children,
 				...restProps
 			}

@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { SelectBond } from './bond.svelte';
+	import { SelectBond, SelectPlaceholderAtom } from './bond.svelte';
 	import { HtmlAtom } from '$svelte-atoms/core/components/atom';
+	import { createAtomInstance } from '$svelte-atoms/core/shared/bond';
 
 	const bond = SelectBond.get();
 
@@ -11,9 +12,14 @@
 		...restProps
 	} = $props();
 
-	const atom = bond?.placeholder();
+	const atom = bond
+		? createAtomInstance<SelectPlaceholderAtom, SelectBond, HTMLElement>('placeholder', {
+				bond,
+				factory: (owner) => new SelectPlaceholderAtom(owner as SelectBond)
+			})
+		: undefined;
 
-	const hasValue = $derived(!!bond?.state.props.values?.length);
+	const hasValue = $derived(!!bond?.props.values?.length);
 
 	const presentation = $derived({
 		preset: preset ?? atom?.preset ?? 'select.placeholder'

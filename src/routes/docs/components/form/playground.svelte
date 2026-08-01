@@ -56,7 +56,7 @@
 						onsubmit={handleSubmit}
 					>
 						<Field.Root name="name" bind:value={formData.name} disabled={isDisabled}>
-							{#snippet children({ field })}
+							{#snippet children()}
 								<Field.Label class="mb-1 block text-sm font-medium text-gray-700">Name</Field.Label>
 								<Field.Control type="text" placeholder="Enter your name" component={Input.Root}>
 									<Input.Value />
@@ -65,7 +65,7 @@
 						</Field.Root>
 
 						<Field.Root name="email" bind:value={formData.email} disabled={isDisabled}>
-							{#snippet children({ field })}
+							{#snippet children()}
 								<Field.Label class="mb-1 block text-sm font-medium text-gray-700">
 									Email
 								</Field.Label>
@@ -76,7 +76,7 @@
 						</Field.Root>
 
 						<Field.Root name="message" bind:value={formData.message} disabled={isDisabled}>
-							{#snippet children({ field })}
+							{#snippet children()}
 								<Field.Label class="mb-1 block text-sm font-medium text-gray-700">
 									Message
 								</Field.Label>
@@ -87,7 +87,7 @@
 						</Field.Root>
 
 						<Field.Root name="subscribe" bind:value={formData.subscribe} disabled={isDisabled}>
-							{#snippet children({ field })}
+							{#snippet children()}
 								<div class="flex items-center space-x-2">
 									<Field.Control
 										type="checkbox"
@@ -136,16 +136,16 @@
 		</Playground.Preview>
 
 		<Playground.Controls>
-			<Playground.Header title="Customize Form" />
+			<Playground.Header>Customize Form</Playground.Header>
 
 			<div class="space-y-4">
 				<div>
-					<label class="mb-2 block text-sm font-medium text-gray-700">Variant</label>
-					<Select.Root
-						id="style-select"
-						class="border-border block w-full rounded-md border px-3 py-2 text-sm"
-					>
-						<Select.Trigger class="w-full" base={Input.Root}>
+					<div class="mb-2 block text-sm font-medium text-gray-700">Variant</div>
+					<Select.Root>
+						<Select.Trigger
+							class="border-border block w-full rounded-md border px-3 py-2 text-sm"
+							base={Input.Root}
+						>
 							<Select.Selections />
 							<Select.Placeholder>Select a style</Select.Placeholder>
 						</Select.Trigger>
@@ -160,8 +160,11 @@
 				</div>
 
 				<div>
-					<label class="mb-2 block text-sm font-medium text-gray-700">Size</label>
+					<label for="form-playground-size" class="mb-2 block text-sm font-medium text-gray-700"
+						>Size</label
+					>
 					<select
+						id="form-playground-size"
 						bind:value={selectedSize}
 						class="border-border w-full rounded-md border px-3 py-2 text-sm focus:border-purple-500 focus:ring-1 focus:ring-purple-500 focus:outline-none"
 					>
@@ -173,11 +176,12 @@
 
 				<div class="flex items-center space-x-2">
 					<input
+						id="form-playground-disabled"
 						type="checkbox"
 						bind:checked={isDisabled}
 						class="border-border rounded text-purple-600 focus:ring-purple-500"
 					/>
-					<label class="text-sm text-gray-700">Disabled</label>
+					<label for="form-playground-disabled" class="text-sm text-gray-700">Disabled</label>
 				</div>
 			</div>
 

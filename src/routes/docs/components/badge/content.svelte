@@ -1,11 +1,6 @@
 <script lang="ts">
 	import { createExampleLoader } from '$docs/utils/example-loader';
-	import {
-		DocComponentPage,
-		DocExample,
-		DocCode,
-		DocPropsTabs,
-	} from '$docs/components';
+	import { DocComponentPage, DocExample, DocCode, DocPropsTabs } from '$docs/components';
 	import type { PropsSection } from '$docs/components';
 	import { badgeProps } from './props';
 	import { metadata } from './shared';
@@ -23,12 +18,14 @@
 		related: []
 	};
 
-	const apiSections: PropsSection[] = [
-		{ label: 'Badge', presetKey: 'badge', props: badgeProps },
-	];
+	const apiSections: PropsSection[] = [{ label: 'Badge', presetKey: 'badge', props: badgeProps }];
 
 	const _loaders = import.meta.glob('./examples/*.svelte');
-	const _sources = import.meta.glob('./examples/*.svelte', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+	const _sources = import.meta.glob('./examples/*.svelte', {
+		query: '?raw',
+		import: 'default',
+		eager: true
+	}) as Record<string, string>;
 	const ex = createExampleLoader(_loaders, _sources);
 </script>
 
@@ -40,9 +37,21 @@
 	next={{ label: 'Breadcrumb', href: '/docs/components/breadcrumb' }}
 >
 	{#snippet examples()}
-		<DocExample title="Basic Badge" description="Simple badge component" {...ex('./examples/basic.svelte')} />
-		<DocExample title="Badge Variants" description="Different styles for various contexts" {...ex('./examples/variants.svelte')} />
-		<DocExample title="Badge Sizes" description="Different sizes for various use cases" {...ex('./examples/sizes.svelte')} />
+		<DocExample
+			title="Basic Badge"
+			description="Simple badge component"
+			{...ex('./examples/basic.svelte')}
+		/>
+		<DocExample
+			title="Badge Variants"
+			description="Different styles for various contexts"
+			{...ex('./examples/variants.svelte')}
+		/>
+		<DocExample
+			title="Badge Sizes"
+			description="Different sizes for various use cases"
+			{...ex('./examples/sizes.svelte')}
+		/>
 	{/snippet}
 
 	{#snippet preset()}

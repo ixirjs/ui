@@ -20,11 +20,15 @@
 
 	const apiSections: PropsSection[] = [
 		{ label: 'Radio', presetKey: 'radio', props: radioProps },
-		{ label: 'RadioGroup', props: radioGroupProps },
+		{ label: 'RadioGroup', props: radioGroupProps }
 	];
 
 	const _loaders = import.meta.glob('./examples/*.svelte');
-	const _sources = import.meta.glob('./examples/*.svelte', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+	const _sources = import.meta.glob('./examples/*.svelte', {
+		query: '?raw',
+		import: 'default',
+		eager: true
+	}) as Record<string, string>;
 	const ex = createExampleLoader(_loaders, _sources);
 </script>
 
@@ -40,11 +44,23 @@
 	{/snippet}
 
 	{#snippet examples()}
-		<DocExample title="Basic Radio" description="Single radio button" {...ex('./examples/basic.svelte')} />
+		<DocExample
+			title="Basic Radio"
+			description="Single radio button"
+			{...ex('./examples/basic.svelte')}
+		/>
 
-		<DocExample title="Radio Group" description="Multiple radio buttons for single selection" {...ex('./examples/group.svelte')} />
+		<DocExample
+			title="Radio Group"
+			description="Multiple radio buttons for single selection"
+			{...ex('./examples/group.svelte')}
+		/>
 
-		<DocExample title="Disabled Radio" description="Radio button in disabled state" {...ex('./examples/disabled.svelte')} />
+		<DocExample
+			title="Disabled Radio"
+			description="Radio button in disabled state"
+			{...ex('./examples/disabled.svelte')}
+		/>
 	{/snippet}
 
 	{#snippet apiReference()}

@@ -100,13 +100,28 @@
 			class="text-muted-foreground hover:text-foreground shrink-0 transition-colors"
 		>
 			<svg viewBox="0 0 16 16" fill="none" class="h-3.5 w-3.5" aria-hidden="true">
-				<path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+				<path
+					d="M3 3l10 10M13 3L3 13"
+					stroke="currentColor"
+					stroke-width="1.5"
+					stroke-linecap="round"
+				/>
 			</svg>
 		</button>
 	{:else}
-		<svg viewBox="0 0 16 16" fill="none" class="text-muted-foreground h-4 w-4 shrink-0" aria-hidden="true">
-			<path d="M2 12V9l4-4 3 3 2-2 3 3v3H2z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
-			<circle cx="11" cy="4" r="1.5" stroke="currentColor" stroke-width="1.2"/>
+		<svg
+			viewBox="0 0 16 16"
+			fill="none"
+			class="text-muted-foreground h-4 w-4 shrink-0"
+			aria-hidden="true"
+		>
+			<path
+				d="M2 12V9l4-4 3 3 2-2 3 3v3H2z"
+				stroke="currentColor"
+				stroke-width="1.2"
+				stroke-linejoin="round"
+			/>
+			<circle cx="11" cy="4" r="1.5" stroke="currentColor" stroke-width="1.2" />
 		</svg>
 		<span class="text-muted-foreground flex-1 text-sm">{placeholder}</span>
 	{/if}

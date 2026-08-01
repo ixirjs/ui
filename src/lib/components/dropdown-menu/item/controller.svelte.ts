@@ -1,5 +1,5 @@
 // Structural contract for items held in the bond's #items map.
-// Implemented by SelectItemController; rendered items are now plain BondAtoms.
+// Implemented by SelectItemController; rendered items are now Atoms.
 
 export type DropdownMenuItemControllerProps = {
 	readonly id: string;

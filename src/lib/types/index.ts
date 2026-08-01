@@ -1,4 +1,4 @@
-import type { Bond, BondState, BondStateProps } from '$lib/shared/bond.svelte';
+import type { Bond, BondState, BondStateProps } from '$lib/shared/bond';
 
 // Override conflicting properties of T with U.
 export type Override<T, U> = Omit<T, keyof U> & U;
@@ -15,12 +15,17 @@ export type DeepOverride<T, U> = U extends object
 		: U
 	: U;
 
-// Extracts the state-props type a Bond was parameterized with; reads `state` first so defineBond bonds resolve correctly.
-type PropsOf<T extends Bond> = T extends { state: BondState<infer P> }
+// Extracts the props type a Bond was parameterized with; reads the bond first so props-owned
+// defineBond bases resolve without relying on the BondState compatibility slot.
+type PropsOf<T extends Bond> = T extends { readonly __props?: infer P }
 	? P
-	: T extends Bond<infer P>
+	: T extends { readonly props: infer P }
 		? P
-		: BondStateProps;
+		: T extends Bond<infer P>
+			? P
+			: T extends { state: BondState<infer P> }
+				? P
+				: BondStateProps;
 
 export type Factory<T extends Bond> = (props: PropsOf<T>) => T;
 

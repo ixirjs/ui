@@ -2,21 +2,28 @@
 	import { animate as motion } from 'motion';
 	import { Icon } from '$svelte-atoms/core/components/icon';
 	import { mergeAtomProps, HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
+	import { createAtomInstance } from '$svelte-atoms/core/shared/bond';
 	import IconArrowDown from '$svelte-atoms/core/icons/icon-arrow-down.svelte';
-	import { CollapsibleBond } from './bond.svelte';
+	import { CollapsibleBond, CollapsibleIndicatorAtom } from './bond.svelte';
 	import type { CollapsibleIndicatorProps } from './types';
 
-	const bond = CollapsibleBond.get();
+	const bond = CollapsibleBond.getOrThrow(
+		'<Collapsible.Indicator /> must be used within a <Collapsible.Root />'
+	);
 	const isOpen = $derived(bond?.state.props.open ?? false);
 
 	let {
 		class: klass = '',
 		preset = undefined,
-		animate=defaultAnimate,
+		animate = defaultAnimate,
 		children = undefined,
 		...restProps
 	}: CollapsibleIndicatorProps<E, B> = $props();
-	const atom = bond?.atom('indicator');
+	const atom = createAtomInstance<CollapsibleIndicatorAtom, CollapsibleBond>('indicator', {
+		bond,
+		required: true,
+		factory: (owner) => new CollapsibleIndicatorAtom(owner as CollapsibleBond)
+	});
 
 	const indicatorProps = $derived(mergeAtomProps(atom, preset, restProps));
 

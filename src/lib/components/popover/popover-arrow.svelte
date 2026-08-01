@@ -1,10 +1,16 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
 	import { animate as motion } from 'motion';
 	import { HtmlAtom, mergeAtomProps, type Base } from '$svelte-atoms/core/components/atom';
-	import { PopoverBond } from './bond.svelte';
+	import { createAtomInstance, type Atom } from '$svelte-atoms/core/shared/bond';
+	import {
+		createPopoverAtom,
+		getPopoverPosition,
+		PopoverArrowAtom,
+		PopoverBond
+	} from './bond.svelte';
 	import type { PopoverArrowProps } from './types';
 
-	const bond = PopoverBond.getOrThrow('');
+	const bond = PopoverBond.getOrThrow('<Popover.Arrow /> must be used within a <Popover />');
 
 	let {
 		class: klass = '',
@@ -16,9 +22,16 @@
 		...restProps
 	}: PopoverArrowProps<E, B> = $props();
 
-	const atom = bond.atom('arrow');
+	const atom = createAtomInstance<Atom<PopoverBond, HTMLElement>, PopoverBond, HTMLElement>(
+		'arrow',
+		{
+			bond,
+			factory: (owner) =>
+				createPopoverAtom(owner as PopoverBond, 'arrow', (popover) => new PopoverArrowAtom(popover))
+		}
+	);
 
-	const position = $derived(bond.state.position);
+	const position = $derived(getPopoverPosition(bond));
 	const middlewareArrowData = $derived(position?.middlewareData?.arrow);
 	const side = $derived(position?.placement?.split('-')[0] ?? 'top');
 

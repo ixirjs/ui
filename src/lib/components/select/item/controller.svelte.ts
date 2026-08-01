@@ -2,6 +2,7 @@ import { getContext, setContext } from 'svelte';
 import { createAttachmentKey } from 'svelte/attachments';
 import { nanoid } from 'nanoid';
 import { SelectBond } from '../bond.svelte';
+import { closeOverlay } from '$svelte-atoms/core/components/portal/host/policies/overlay-view';
 import type { DropdownMenuItemControllerInterface } from '$svelte-atoms/core/components/dropdown-menu/item/controller.svelte';
 
 export type SelectItemProps<T = unknown> = {
@@ -30,12 +31,10 @@ export class SelectItemController<T = unknown> implements DropdownMenuItemContro
 		this.#props = props;
 		this.#id = this.props.id ?? nanoid();
 
-		this.#select = SelectBond.get() as
-			| SelectBond
-			| undefined;
+		this.#select = SelectBond.get() as SelectBond | undefined;
 
 		if (!this.#select) {
-			throw new Error('SelectItem must be used within a Select context');
+			throw new Error('SelectItem must be used within a Select context.');
 		}
 	}
 
@@ -78,15 +77,15 @@ export class SelectItemController<T = unknown> implements DropdownMenuItemContro
 
 	get isHighlighted() {
 		// The controller mounts into the roving by its own `#id`, so the active id IS that id.
-		return this.#select?.state.roving.activeId === this.id;
+		return this.#select?.roving.activeId === this.id;
 	}
 
 	get isSelected() {
-		return this.#select?.state.props.values?.includes(this.value) ?? false;
+		return this.#select?.props.values?.includes(this.value) ?? false;
 	}
 
 	mount() {
-		this.#unmount = this.#select?.state?.mountItem?.(this.#id, this) ?? undefined;
+		this.#unmount = this.#select?.mountItem?.(this.#id, this) ?? undefined;
 
 		return this.unmount;
 	}
@@ -100,11 +99,11 @@ export class SelectItemController<T = unknown> implements DropdownMenuItemContro
 	}
 
 	select() {
-		this.#select?.state.select([this.value]);
+		this.#select?.select([this.value]);
 	}
 
 	unselect() {
-		this.#select?.state.unselect([this.value]);
+		this.#select?.unselect([this.value]);
 	}
 
 	toggle() {
@@ -116,7 +115,7 @@ export class SelectItemController<T = unknown> implements DropdownMenuItemContro
 	}
 
 	close() {
-		this.#select?.state.close();
+		if (this.#select) closeOverlay(this.#select);
 	}
 
 	share() {

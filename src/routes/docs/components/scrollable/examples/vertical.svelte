@@ -11,7 +11,7 @@
 			{/each}
 		</Scrollable.Content>
 	</Scrollable.Container>
-	<Scrollable.Track>
-		<Scrollable.Thumb />
+	<Scrollable.Track orientation="vertical">
+		<Scrollable.Thumb orientation="vertical" />
 	</Scrollable.Track>
 </Scrollable.Root>

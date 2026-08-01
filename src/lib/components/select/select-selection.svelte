@@ -3,11 +3,11 @@
 	import { SelectBond } from './bond.svelte';
 	import type { SelectSelectionProps } from './types';
 	import { Chip } from '../chip';
-	import { HtmlAtom as Atom } from '../atom';
+	import { HtmlAtom } from '../atom';
 
 	const bond = SelectBond.getOrThrow('SelectSelection must be used within a Select');
 
-	const isMultiple = $derived(bond.state.props.multiple);
+	const isMultiple = $derived(bond.props.multiple);
 
 	let {
 		class: klass = '',
@@ -35,7 +35,7 @@
 	}
 </script>
 
-<Atom
+<HtmlAtom
 	{as}
 	{bond}
 	base={_base}
@@ -53,4 +53,4 @@
 	{:else}
 		{selection?.label}
 	{/if}
-</Atom>
+</HtmlAtom>

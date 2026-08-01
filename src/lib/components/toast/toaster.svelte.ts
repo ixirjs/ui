@@ -39,7 +39,7 @@ const [get, set] = createContext<Toaster>();
  * position live in your markup** — you iterate {@link Toaster.toasts} into `<Toast.Root>`s
  * inside a region element you own.
  *
- * Containment contract (ADR 0009 D3): a toast must render *above* any modal, never clipped
+ * Containment contract: a toast must render *above* any modal, never clipped
  * by its stacking/scroll context. Because the region is user-land, that is your
  * responsibility — place the region at the app root, or teleport it to the root Portal and
  * give it the ambient layer:

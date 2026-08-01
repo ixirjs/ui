@@ -10,7 +10,8 @@ export const comboboxRootProps: PropDefinition[] = [
 		name: 'open',
 		type: 'boolean | undefined',
 		default: 'false',
-		description: 'Controls whether the combobox dropdown is open. Can be bound for controlled usage.'
+		description:
+			'Controls whether the combobox dropdown is open. Can be bound for controlled usage.'
 	},
 	{
 		name: 'value',
@@ -58,7 +59,8 @@ export const comboboxRootProps: PropDefinition[] = [
 		name: 'placement',
 		type: 'string | undefined',
 		default: "'bottom-start'",
-		description: 'Preferred placement position for the dropdown content (floating-ui placement value).'
+		description:
+			'Preferred placement position for the dropdown content (floating-ui placement value).'
 	},
 	{
 		name: 'offset',
@@ -82,8 +84,9 @@ export const comboboxRootProps: PropDefinition[] = [
 		name: '...atomProps',
 		type: 'HtmlAtomProps',
 		default: '-',
-		description: 'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
-	},
+		description:
+			'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
+	}
 ];
 
 export const comboboxSelectionsProps: PropDefinition[] = [
@@ -96,8 +99,8 @@ export const comboboxSelectionsProps: PropDefinition[] = [
 	{
 		name: 'Selection',
 		type: 'Component<{}, {}, string> | undefined',
-		default: '\'\'',
-		description: 'Custom component to render each individual selection badge.',
+		default: "''",
+		description: 'Custom component to render each individual selection badge.'
 	},
 	{
 		name: 'children',
@@ -110,7 +113,7 @@ export const comboboxSelectionsProps: PropDefinition[] = [
 		type: '(<T extends DropdownBond>(bond: T) => DropdownSelection[]) | undefined',
 		default: 'undefined',
 		description: 'Custom function to retrieve selections from the bond'
-	},
+	}
 ];
 
 export const comboboxSelectionProps: PropDefinition[] = [
@@ -136,8 +139,9 @@ export const comboboxSelectionProps: PropDefinition[] = [
 		name: '...atomProps',
 		type: 'HtmlAtomProps',
 		default: '-',
-		description: 'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
-	},
+		description:
+			'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
+	}
 ];
 
 export const comboboxControlProps: PropDefinition[] = [
@@ -174,7 +178,7 @@ export const comboboxControlProps: PropDefinition[] = [
 	{
 		name: 'type',
 		type: 'HTMLInputTypeAttribute | null',
-		default: '\'text\'',
+		default: "'text'",
 		description: 'HTML input type attribute'
 	},
 	{
@@ -210,7 +214,7 @@ export const comboboxControlProps: PropDefinition[] = [
 	{
 		name: 'preset',
 		type: 'PresetModuleName | string',
-		default: '\'input.control\'',
+		default: "'input.control'",
 		description: 'Preset module name for styling'
 	},
 	{
@@ -266,6 +270,5 @@ export const comboboxControlProps: PropDefinition[] = [
 		type: 'NodeFunction',
 		default: 'undefined',
 		description: 'Function called when element is destroyed'
-	},
+	}
 ];
-

@@ -15,13 +15,11 @@
 
 <FrontMatter {frontmatter} />
 
-# Component Composition
+# Component Composition Svelte Atoms favors composition over monolithic components. ## Base
+Composition with {inlineCode('base')}
 
-Svelte Atoms favors composition over monolithic components.
-
-## Base Composition with {inlineCode('base')}
-
-{codeBlock(`<script lang="ts">
+{codeBlock(
+	`<script lang="ts">
   import { Button, Popover } from '@svelte-atoms/core';
 </script>
 
@@ -32,11 +30,14 @@ Svelte Atoms favors composition over monolithic components.
   <Popover.Content>
     Settings panel
   </Popover.Content>
-</Popover.Root>`, 'svelte')}
+</Popover.Root>`,
+	'svelte'
+)}
 
 ## Compose forms from focused atoms
 
-{codeBlock(`<script lang="ts">
+{codeBlock(
+	`<script lang="ts">
   import { Field, Input } from '@svelte-atoms/core';
 </script>
 
@@ -44,11 +45,14 @@ Svelte Atoms favors composition over monolithic components.
   <Field.Label>Password</Field.Label>
   <Field.Control base={Input.PasswordControl} placeholder="••••••••" />
   <Field.HelperText>Use at least 8 characters.</Field.HelperText>
-</Field.Root>`, 'svelte')}
+</Field.Root>`,
+	'svelte'
+)}
 
 ## Compose selection UIs
 
-{codeBlock(`<script lang="ts">
+{codeBlock(
+	`<script lang="ts">
   import { Select, Button } from '@svelte-atoms/core';
 </script>
 
@@ -62,7 +66,9 @@ Svelte Atoms favors composition over monolithic components.
       <Select.Item value="b">Option B</Select.Item>
     </Select.List>
   </Select.Content>
-</Select.Root>`, 'svelte')}
+</Select.Root>`,
+	'svelte'
+)}
 
 ## Composition Rules
 

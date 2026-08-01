@@ -27,8 +27,12 @@
 					preset="context-menu.content"
 					class="min-w-44 rounded-lg border bg-popover shadow-md p-0"
 				>
-					<ContextMenu.Item preset="context-menu.item" class="border-none">Edit row</ContextMenu.Item>
-					<ContextMenu.Item preset="context-menu.item" class="border-none text-destructive">Delete row</ContextMenu.Item>
+					<ContextMenu.Item preset="context-menu.item" class="border-none"
+						>Edit row</ContextMenu.Item
+					>
+					<ContextMenu.Item preset="context-menu.item" class="border-none text-destructive"
+						>Delete row</ContextMenu.Item
+					>
 				</ContextMenu.Content>
 			</ContextMenu.Root>
 		{/each}

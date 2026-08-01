@@ -49,8 +49,7 @@ const useCases = [
 	},
 	{
 		title: 'Settings Sections',
-		description:
-			'Group related settings that can be hidden or shown based on user needs.'
+		description: 'Group related settings that can be hidden or shown based on user needs.'
 	}
 ];
 

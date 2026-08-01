@@ -9,11 +9,7 @@
 	const datePickerBond = DatePickerBond.get();
 	const calendarBond = CalendarBond.get();
 
-	let {
-		class: klass = '',
-		preset = undefined,
-		...restProps
-	}: DatePickerHeaderProps = $props();
+	let { class: klass = '', preset = undefined, ...restProps }: DatePickerHeaderProps = $props();
 
 	const headerProps = $derived(mergePresetProps(preset, 'datepicker.header', restProps));
 
@@ -25,16 +21,16 @@
 	const year = $derived(pivote.getFullYear());
 
 	function handlePreviousMonth() {
-		calendarBond?.state?.previousMonth();
+		calendarBond?.previousMonth();
 	}
 
 	function handleNextMonth() {
-		calendarBond?.state?.nextMonth();
+		calendarBond?.nextMonth();
 	}
 
 	function handleMonthPicker() {
 		if (!datePickerBond) return;
-		datePickerBond.state.openMonthsPicker();
+		datePickerBond.openMonthsPicker();
 	}
 </script>
 

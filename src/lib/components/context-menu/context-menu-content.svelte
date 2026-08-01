@@ -3,10 +3,14 @@
 	import { containsTarget } from '$svelte-atoms/core/utils/dom.svelte';
 	import type { Base } from '../atom';
 	import type { HtmlElementTagName } from '../element';
-	import { PopoverBond, type PopoverContentProps } from '../popover';
+	import { popoverNode, type PopoverBond, type PopoverContentProps } from '../popover';
+	import { closeOverlay } from '../portal/host/policies/overlay-view';
 	import { Content } from '../dropdown-menu/atoms';
+	import { ContextMenuBond } from './bond.svelte';
 
-    const bond = PopoverBond.getOrThrow('<ContextMenu.Content /> must be used within a <ContextMenu.Root />');
+	const bond = ContextMenuBond.getOrThrow(
+		'<ContextMenu.Content /> must be used within a <ContextMenu.Root />'
+	);
 
 	// Context menus size to their own `min-w-*` class, not the trigger: empty `minWidth` floor
 	// drops the inherited dropdown default so the class wins. Opt back in per-instance with `minWidth`.
@@ -14,22 +18,22 @@
 
 	function onclickoutHandler(ev: PointerEvent, bond: PopoverBond) {
 		// Right-click on the trigger should not close the popover.
-		if (containsTarget(bond.element('trigger'), ev.target) && ev.button === 2) {
+		if (containsTarget(popoverNode(bond, 'trigger')?.element, ev.target) && ev.button === 2) {
 			return;
 		}
 
-		bond.state.close();
+		closeOverlay(bond);
 	}
 
 	function contextMenuOutAttachement(node: HTMLElement) {
 		const cleanup = clickout(
 			(ev) => {
 				if (onclickoutside) {
-					onclickoutside(ev, bond);
+					onclickoutside(ev, bond as unknown as PopoverBond);
 					return;
 				}
 
-				onclickoutHandler(ev, bond);
+				onclickoutHandler(ev, bond as unknown as PopoverBond);
 			},
 			{ type: 'pointerdown' }
 		)(node);

@@ -29,7 +29,8 @@
 				<AccordionItem.Indicator class="ml-auto" />
 			</AccordionItem.Header>
 			<AccordionItem.Body>
-				Yes — all components include ARIA attributes, keyboard navigation, and screen reader support.
+				Yes — all components include ARIA attributes, keyboard navigation, and screen reader
+				support.
 			</AccordionItem.Body>
 		</AccordionItem.Root>
 	</Accordion>

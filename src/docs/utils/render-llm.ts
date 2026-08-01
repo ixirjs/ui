@@ -13,14 +13,14 @@ export function renderLlmContent(component: Component, props: Record<string, any
 // Strips HTML tags/comments, unescapes entities, and collapses excess blank lines.
 export function cleanLlmText(html: string): string {
 	return html
-		.replace(/<!--[\s\S]*?-->/g, '')           // strip HTML comments
-		.replace(/<[^>]+>/g, '')                    // strip any remaining HTML tags
+		.replace(/<!--[\s\S]*?-->/g, '') // strip HTML comments
+		.replace(/<[^>]+>/g, '') // strip any remaining HTML tags
 		.replace(/&lt;/g, '<')
 		.replace(/&gt;/g, '>')
 		.replace(/&amp;/g, '&')
 		.replace(/&quot;/g, '"')
 		.replace(/&#39;/g, "'")
-		.replace(/---\s+[ \t]+(?=#)/g, '---\n\n')  // fix frontmatter spacing before headers
-		.replace(/\n{3,}/g, '\n\n')                  // collapse 3+ blank lines to 2
+		.replace(/---\s+[ \t]+(?=#)/g, '---\n\n') // fix frontmatter spacing before headers
+		.replace(/\n{3,}/g, '\n\n') // collapse 3+ blank lines to 2
 		.trim();
 }

@@ -16,13 +16,13 @@
 
 	// Close mobile nav on route change
 	$effect(() => {
-		$page.url.pathname;
+		void $page.url.pathname;
 		mobileNavOpen = false;
 		mobileTocOpen = false;
 	});
 
 	$effect(() => {
-		$page.url.pathname;
+		void $page.url.pathname;
 		requestAnimationFrame(() => {
 			if (!mainEl) return;
 			const headings = Array.from(mainEl.querySelectorAll('h2[id]'));
@@ -51,7 +51,8 @@
 			children: [
 				{ title: 'Introduction', href: '/docs' },
 				{ title: 'Quick Start', href: '/docs/quick-start' },
-				{ title: 'Philosophy', href: '/docs/philosophy' }
+				{ title: 'Philosophy', href: '/docs/philosophy' },
+				{ title: 'Migration Guide', href: '/docs/migration' }
 			]
 		},
 		{
@@ -113,20 +114,35 @@
 </script>
 
 <!-- Mobile sticky bar (hidden on desktop) -->
-<div class="border-border bg-background/80 sticky top-14 z-40 flex items-center border-b px-4 py-2 backdrop-blur-md lg:hidden">
+<div
+	class="border-border bg-background/80 sticky top-14 z-40 flex items-center border-b px-4 py-2 backdrop-blur-md lg:hidden"
+>
 	<!-- Left: hamburger -->
 	<button
-		onclick={() => { mobileNavOpen = !mobileNavOpen; mobileTocOpen = false; }}
+		onclick={() => {
+			mobileNavOpen = !mobileNavOpen;
+			mobileTocOpen = false;
+		}}
 		class="text-muted-foreground hover:text-foreground hover:bg-muted flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors"
 		aria-label="Toggle navigation"
 	>
 		{#if mobileNavOpen}
 			<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+				<path
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					stroke-width="2"
+					d="M6 18L18 6M6 6l12 12"
+				/>
 			</svg>
 		{:else}
 			<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+				<path
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					stroke-width="2"
+					d="M4 6h16M4 12h16M4 18h16"
+				/>
 			</svg>
 		{/if}
 		<span>Menu</span>
@@ -135,14 +151,22 @@
 	<!-- Right: current heading + TOC toggle -->
 	{#if toc.length > 0}
 		<button
-			onclick={() => { mobileTocOpen = !mobileTocOpen; mobileNavOpen = false; }}
+			onclick={() => {
+				mobileTocOpen = !mobileTocOpen;
+				mobileNavOpen = false;
+			}}
 			class="text-muted-foreground hover:text-foreground hover:bg-muted ml-auto flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm transition-colors"
 			aria-label="Toggle table of contents"
 		>
 			<span class="max-w-[180px] truncate">
-				{activeId ? (toc.find(t => t.id === activeId)?.text ?? toc[0]?.text) : toc[0]?.text}
+				{activeId ? (toc.find((t) => t.id === activeId)?.text ?? toc[0]?.text) : toc[0]?.text}
 			</span>
-			<svg class="h-3.5 w-3.5 shrink-0 transition-transform {mobileTocOpen ? 'rotate-180' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+			<svg
+				class="h-3.5 w-3.5 shrink-0 transition-transform {mobileTocOpen ? 'rotate-180' : ''}"
+				fill="none"
+				stroke="currentColor"
+				viewBox="0 0 24 24"
+			>
 				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
 			</svg>
 		</button>
@@ -163,12 +187,7 @@
 		<DocsFooter />
 	</main>
 
-	<DocsTocSidebar
-		{toc}
-		{activeId}
-		open={mobileTocOpen}
-		onclose={() => (mobileTocOpen = false)}
-	/>
+	<DocsTocSidebar {toc} {activeId} open={mobileTocOpen} onclose={() => (mobileTocOpen = false)} />
 </div>
 
 <style>

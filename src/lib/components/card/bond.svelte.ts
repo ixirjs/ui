@@ -1,11 +1,10 @@
 import { createAttachmentKey } from 'svelte/attachments';
 import { getElementId } from '$svelte-atoms/core/utils/dom.svelte';
-import {
-	bondContextKey,
-	Bond,
-	BondState,
-	type BondStateProps
-} from '$svelte-atoms/core/shared/bond.svelte';
+import { bondContextKey, Bond, type BondStateProps } from '$svelte-atoms/core/shared/bond';
+
+// -----------------------------------------------------------------------------
+// Public types
+// -----------------------------------------------------------------------------
 
 export type CardBondProps = BondStateProps & {
 	disabled?: boolean;
@@ -36,13 +35,15 @@ const CARD_ELEMENTS_KIND = {
 	footer: 'card-footer'
 };
 
-export class CardBond<
-	State extends CardBondState<CardBondProps> = CardBondState<CardBondProps>
-> extends Bond<CardBondProps, State> {
+// -----------------------------------------------------------------------------
+// Bond implementation
+// -----------------------------------------------------------------------------
+
+export class CardBond extends Bond<CardBondProps> {
 	static CONTEXT_KEY = bondContextKey('card');
 
-	constructor(s: State) {
-		super(s);
+	constructor(props: CardBondProps) {
+		super(props);
 	}
 
 	root(props: Record<string, unknown> = {}) {
@@ -162,11 +163,5 @@ export class CardBond<
 				this.elements.footer = node;
 			}
 		};
-	}
-}
-
-export class CardBondState<Props extends CardBondProps> extends BondState<Props> {
-	constructor(props: Props) {
-		super(props);
 	}
 }

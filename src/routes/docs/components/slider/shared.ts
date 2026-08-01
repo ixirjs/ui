@@ -54,7 +54,8 @@ const useCases = [
 
 export const metadata = {
 	title: 'Slider - Svelte Atoms',
-	description: 'Accessible slider component for selecting numeric values across a configurable range.',
+	description:
+		'Accessible slider component for selecting numeric values across a configurable range.',
 	componentTitle: 'Slider',
 	componentDescription:
 		'Single-value range input with bindable value, horizontal or vertical orientation, and customizable thumb and track rendering.',

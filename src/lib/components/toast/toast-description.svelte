@@ -17,10 +17,6 @@
 	const descriptionProps = $derived(mergeAtomProps(atom, preset, restProps));
 </script>
 
-<HtmlAtom
-	{as}
-	{bond}
-	{...descriptionProps}
->
+<HtmlAtom {as} {bond} {...descriptionProps}>
 	{@render children?.({ toast: bond })}
 </HtmlAtom>

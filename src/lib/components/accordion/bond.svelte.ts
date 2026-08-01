@@ -1,13 +1,21 @@
-import type { AccordionItemBond } from './item/bond.svelte';
-import type { Collection } from '$svelte-atoms/core/shared/collection.svelte';
+import type { Collection } from '$svelte-atoms/core/shared/bond/collection.svelte';
 import {
 	createSelection,
 	type SelectionModel
-} from '$svelte-atoms/core/shared/capabilities/selection.svelte';
-import { BondState, BondAtom, type BondStateProps } from '$svelte-atoms/core/shared/bond.svelte';
-import { defineBond, type BondOf, type ViewOf } from '$svelte-atoms/core/shared';
+} from '$svelte-atoms/core/shared/capability/models/selection.svelte';
+import { Bond, defineAtom, type BondStateProps } from '$svelte-atoms/core/shared/bond';
+import { defineBond, type BondOf } from '$svelte-atoms/core/shared';
+import {
+	defineAtomCapability,
+	sharedCapabilityKey,
+	type AtomHost
+} from '$svelte-atoms/core/shared/capability';
 
-export type AccordionStateProps = BondStateProps & {
+// -----------------------------------------------------------------------------
+// Public types
+// -----------------------------------------------------------------------------
+
+export type AccordionBondProps = BondStateProps & {
 	open: boolean;
 	value?: string;
 	values: string[];
@@ -21,56 +29,52 @@ export type AccordionElements = {
 	indicator: HTMLElement;
 };
 
-// Breaks the atom↔bond cycle via defineBond (§12.2).
-type AccordionBondView = ViewOf<AccordionState>;
+export type AccordionItemHandle = {
+	readonly id: string;
+};
 
-export class AccordionRootAtom extends BondAtom<AccordionBondView> {
-	constructor(bond: AccordionBondView) {
-		super(bond, 'root');
-	}
+// -----------------------------------------------------------------------------
+// Capability slots and shared helpers
+// -----------------------------------------------------------------------------
 
-	override get attrs() {
-		const props = this.bond.state?.props;
-		const isOpen = props?.open ?? false;
-		const isDisabled = props?.disabled ?? false;
-		const isMultiple = props?.multiple ?? false;
-
-		return {
-			...super.attrs,
-			'aria-expand': isOpen,
-			'aria-disabled': isDisabled,
-			'aria-multiselectable': isMultiple
-		};
-	}
-}
-
-// Selection lives on AccordionState (§6).
-export const AccordionBond = defineBond<{ root: typeof AccordionRootAtom }, AccordionState>({
-	name: 'accordion',
-	atoms: { root: AccordionRootAtom }
-});
-
-export type AccordionBond = BondOf<typeof AccordionBond>;
+const ACCORDION_ROOT = sharedCapabilityKey<void>('@svelte-atoms/accordion:root');
 
 // Narrow parent contract an item child depends on; keeps the child→parent seam stub-testable.
+
+// -----------------------------------------------------------------------------
+// Public types
+// -----------------------------------------------------------------------------
+
 export interface IAccordion {
 	readonly id: string;
 	readonly values: readonly string[];
 	readonly isDisabled: boolean;
+	readonly multiple: boolean;
+	readonly collapsible: boolean;
 	open(ids: string[]): void;
 	close(ids: string[]): void;
 	toggle(id: string): void;
 	// Returns a cleanup that unregisters the item.
-	attachItem(id: string, item: AccordionItemBond): () => void;
+	attachItem(id: string, item: AccordionItemHandle): () => void;
 }
 
-export class AccordionState extends BondState<AccordionStateProps> implements IAccordion {
+// -----------------------------------------------------------------------------
+// Bond implementation
+// -----------------------------------------------------------------------------
+
+export class AccordionBondBase extends Bond<AccordionBondProps> implements IAccordion {
 	// Owns set-algebra + single/multiple mode over the bindable props.values backing.
 	#selection: SelectionModel<string> = createSelection<string>({
 		get: () => this.props.values,
 		set: (v) => (this.props.values = v),
 		mode: () => (this.props.multiple ? 'multiple' : 'single')
 	});
+
+	constructor(props: AccordionBondProps, name = 'accordion') {
+		super(props, name);
+		// Eagerly create owned collections outside derived reads; collection() registers a capability.
+		void this.items;
+	}
 
 	get selection(): SelectionModel<string> {
 		return this.#selection;
@@ -84,13 +88,21 @@ export class AccordionState extends BondState<AccordionStateProps> implements IA
 		return this.props.disabled ?? false;
 	}
 
+	get multiple(): boolean {
+		return this.props.multiple ?? false;
+	}
+
+	get collapsible(): boolean {
+		return this.props.collapsible ?? false;
+	}
+
 	// Insertion-ordered reactive collection of mounted item bonds.
-	get items(): Collection<AccordionItemBond> {
-		return this.collection<AccordionItemBond>('item');
+	get items(): Collection<AccordionItemHandle> {
+		return this.collection<AccordionItemHandle>('item');
 	}
 
 	// Mounted item bonds for the currently-open values, in values order.
-	get activeItems(): readonly (AccordionItemBond | undefined)[] {
+	get activeItems(): readonly (AccordionItemHandle | undefined)[] {
 		return this.props.values.map((d) => this.items.get(d));
 	}
 
@@ -106,7 +118,74 @@ export class AccordionState extends BondState<AccordionStateProps> implements IA
 		this.#selection.toggle(id);
 	}
 
-	attachItem(id: string, item: AccordionItemBond): () => void {
-		return this.items.attach(id, item);
+	attachItem(id: string, item: AccordionItemHandle): () => void {
+		return this.items.set(id, item);
 	}
 }
+
+// -----------------------------------------------------------------------------
+// Atom definitions
+// -----------------------------------------------------------------------------
+
+export const AccordionRootAtom = defineAtom<AccordionBondBase>('root', (atom) => {
+	atom.capability(accordionRootPresentation());
+});
+export type AccordionRootAtom = InstanceType<typeof AccordionRootAtom>;
+
+// -----------------------------------------------------------------------------
+// Atom capabilities
+// -----------------------------------------------------------------------------
+
+function accordionRootPresentation() {
+	return defineAtomCapability<void, AtomHost, AccordionBondBase>({
+		slot: ACCORDION_ROOT,
+		meta: {
+			layer: 1,
+			kind: 'projection',
+			projects: ['root'],
+			docs: 'Accordion root open, disabled, and selection-mode projection.'
+		},
+		behavior: {
+			attrs: (_node, bond) => {
+				const props = bond?.props;
+
+				return {
+					'aria-expand': props?.open ?? false,
+					'aria-disabled': props?.disabled ?? false,
+					'aria-multiselectable': props?.multiple ?? false
+				};
+			}
+		}
+	});
+}
+
+// Selection and item coordination live on the Bond instance.
+
+// -----------------------------------------------------------------------------
+// Bond spec and constructor facade
+// -----------------------------------------------------------------------------
+
+const AccordionBondImpl = defineBond<
+	{ root: typeof AccordionRootAtom },
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	any,
+	typeof AccordionBondBase
+>({
+	name: 'accordion',
+	base: AccordionBondBase,
+	atoms: { root: AccordionRootAtom }
+});
+
+export type AccordionBond = BondOf<typeof AccordionBondImpl>;
+
+interface AccordionBondConstructor {
+	new (props: AccordionBondProps): AccordionBond;
+	readonly CONTEXT_KEY: string;
+	readonly spec: (typeof AccordionBondImpl)['spec'];
+	get(): AccordionBond | undefined;
+	getOrThrow(message?: string): AccordionBond;
+	set(bond: AccordionBond): AccordionBond;
+	create(props: AccordionBondProps): AccordionBond;
+}
+
+export const AccordionBond = AccordionBondImpl as unknown as AccordionBondConstructor;

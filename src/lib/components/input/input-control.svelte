@@ -3,7 +3,8 @@
 	import { resolveControlPreset, INPUT_FIELD_CLASS, writeInputValue } from './shared';
 	import { cn, toClassValue } from '$svelte-atoms/core/utils';
 	import type { Base } from '$svelte-atoms/core/components/atom';
-	import { InputBond } from './bond.svelte';
+	import { createAtomInstance } from '$svelte-atoms/core/shared/bond';
+	import { InputBond, InputControlAtom } from './bond.svelte';
 	import type { InputControlProps } from './types';
 
 	const bond = InputBond.get();
@@ -19,26 +20,36 @@
 		preset: presetKey = 'input.control',
 		onchange = undefined,
 		oninput = undefined,
+		// pulled out of restProps: a void `<input>` can't take a (1-arg) children snippet.
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
+		children = undefined,
 		...restProps
 	}: InputControlProps<B> = $props();
 
 	const preset = resolveControlPreset(() => presetKey, bond);
+	const atom = bond
+		? createAtomInstance<InputControlAtom, InputBond, HTMLInputElement>('input', {
+				bond,
+				register: { key: 'input' },
+				factory: (owner) => new InputControlAtom(owner!)
+			})
+		: undefined;
 
 	const valueProps = $derived({
-		...(bond?.atom('input').spread ?? {}),
+		...(atom?.spread ?? {}),
 		...restProps
 	});
 
 	// Single source of truth for the change/input detail payload (reads current bindable values).
 	const changeDetail = (event: Event) => ({ value, files, date, number, checked, event });
 
-	function handleChange(ev: CustomEvent) {
+	function handleChange(ev: Event & { currentTarget: EventTarget & HTMLInputElement }) {
 		if (!onchange) return;
 
 		onchange?.(ev, changeDetail(ev));
 	}
 
-	function handleInput(ev: InputEvent) {
+	function handleInput(ev: Event & { currentTarget: EventTarget & HTMLInputElement }) {
 		if (!oninput) return;
 
 		const currentTarget = ev.currentTarget as HTMLInputElement;
@@ -47,7 +58,7 @@
 			number = currentTarget.valueAsNumber;
 		}
 
-		if (type === 'date' || type == 'time' || type === 'datetime-local' || type === 'date-local') {
+		if (type === 'date' || type == 'time' || type === 'datetime-local') {
 			date = currentTarget.valueAsDate;
 		}
 
@@ -64,11 +75,7 @@
 			writeInputValue(bond, v);
 		}
 	}
-	class={cn(
-		INPUT_FIELD_CLASS,
-		preset?.class,
-		toClassValue(klass, bond)
-	)}
+	class={cn(INPUT_FIELD_CLASS, preset?.class, toClassValue(klass, bond))}
 	type={type ?? 'text'}
 	onchange={handleChange}
 	oninput={handleInput}

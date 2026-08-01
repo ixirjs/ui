@@ -1,4 +1,3 @@
-
 import Page from './template.svelte';
 import { metadata } from '../shared';
 
@@ -10,10 +9,8 @@ const frontmatter: Frontmatter = {
 	title: 'Quick Start Guide',
 	category: 'getting-started',
 	depth: 'beginner',
-	related: ['philosophy', 'atoms', 'imports'],
+	related: ['philosophy', 'atoms', 'imports']
 };
-
-
 
 export function GET() {
 	const text = renderLlmContent(Page, { frontmatter, metadata });

@@ -15,7 +15,9 @@
 		...restProps
 	}: AlertActionsProps<E, B> & HTMLAttributes<Element> = $props();
 
-	const actionsProps = $derived(mergePresetProps(preset, 'alert.actions', { ...bond?.actions(), ...restProps }));
+	const actionsProps = $derived(
+		mergePresetProps(preset, 'alert.actions', { ...bond?.actions(), ...restProps })
+	);
 </script>
 
 <HtmlAtom

@@ -11,14 +11,18 @@
 	const mode = getDocMode();
 
 	function toValue(label: string) {
-		return label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+		return label
+			.toLowerCase()
+			.replace(/[^a-z0-9]+/g, '-')
+			.replace(/^-|-$/g, '');
 	}
 
 	const resolved = $derived(sections.map((s) => ({ ...s, value: s.value ?? toValue(s.label) })));
+	const initialValue = $derived(resolved[0]?.value ?? '');
 </script>
 
 {#if mode === 'html'}
-	<Tabs.Root value={resolved[0]?.value} class="mt-2">
+	<Tabs.Root value={initialValue} class="mt-2">
 		<Tabs.Header class="border-b overflow-x-auto scrollbar-none">
 			{#each resolved as section (section.value)}
 				<Tab.Root value={section.value}>
@@ -39,12 +43,11 @@
 		</Tabs.Body>
 	</Tabs.Root>
 {:else}
-{#each resolved as section (section.value)}
-{newLine(2)}### {section.label}
-{#if section.presetKey}
-
-**Preset Key:** `{section.presetKey}`
-{/if}
-<PropsTable props={section.props} />
-{/each}
+	{#each resolved as section (section.value)}
+		{newLine(2)}### {section.label}
+		{#if section.presetKey}
+			**Preset Key:** `{section.presetKey}`
+		{/if}
+		<PropsTable props={section.props} />
+	{/each}
 {/if}

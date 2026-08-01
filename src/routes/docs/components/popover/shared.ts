@@ -24,50 +24,61 @@ const accessibilityFeatures = [
 const useCases = [
 	{
 		title: 'User Account Menus',
-		description: 'Display user profile information, settings, and quick actions near the trigger button.'
+		description:
+			'Display user profile information, settings, and quick actions near the trigger button.'
 	},
 	{
 		title: 'Contextual Help',
-		description: 'Show tooltips, hints, or additional information without navigating away from the current view.'
+		description:
+			'Show tooltips, hints, or additional information without navigating away from the current view.'
 	},
 	{
 		title: 'Action Menus',
-		description: 'Present a list of actions or options related to a specific element (e.g., share, edit, delete).'
+		description:
+			'Present a list of actions or options related to a specific element (e.g., share, edit, delete).'
 	},
 	{
 		title: 'Form Field Assistance',
-		description: 'Provide additional context, validation messages, or input suggestions near form fields.'
+		description:
+			'Provide additional context, validation messages, or input suggestions near form fields.'
 	},
 	{
 		title: 'Quick Previews',
-		description: 'Display preview content (e.g., image thumbnails, card details) when hovering or clicking on elements.'
+		description:
+			'Display preview content (e.g., image thumbnails, card details) when hovering or clicking on elements.'
 	},
 	{
 		title: 'Filter Controls',
-		description: 'Show filter options or settings in a compact overlay without cluttering the main interface.'
+		description:
+			'Show filter options or settings in a compact overlay without cluttering the main interface.'
 	}
 ];
 
 const componentsSummary = [
 	{
 		name: 'Popover.Root',
-		description: 'Root container that manages the popover state, positioning, and behavior. Controls the open/close state and coordinates all child components.'
+		description:
+			'Root container that manages the popover state, positioning, and behavior. Controls the open/close state and coordinates all child components.'
 	},
 	{
 		name: 'Popover.Trigger',
-		description: 'Interactive element that opens/closes the popover. Can be any clickable element like a button or link.'
+		description:
+			'Interactive element that opens/closes the popover. Can be any clickable element like a button or link.'
 	},
 	{
 		name: 'Popover.Content',
-		description: 'Container for the popover\'s main content. Positioned relative to the trigger using floating-ui.'
+		description:
+			"Container for the popover's main content. Positioned relative to the trigger using floating-ui."
 	},
 	{
 		name: 'Popover.Indicator',
-		description: 'Optional visual indicator (e.g., chevron icon) that reflects the popover\'s open/closed state.'
+		description:
+			"Optional visual indicator (e.g., chevron icon) that reflects the popover's open/closed state."
 	},
 	{
 		name: 'Popover.Arrow',
-		description: 'Optional arrow pointer that visually connects the popover content to its trigger element.'
+		description:
+			'Optional arrow pointer that visually connects the popover content to its trigger element.'
 	}
 ];
 

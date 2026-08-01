@@ -31,7 +31,12 @@ describe('foldPresentation — cascade precedence', () => {
 
 	it('symbol from an earlier layer survives when later layers omit it', () => {
 		const sym = Symbol('preset-attachment');
-		const out = foldPresentation(undefined, { [sym]: 'preset' } as Record<string, unknown>, undefined, {});
+		const out = foldPresentation(
+			undefined,
+			{ [sym]: 'preset' } as Record<string, unknown>,
+			undefined,
+			{}
+		);
 		expect(out.attrs[sym]).toBe('preset');
 	});
 });
@@ -83,12 +88,7 @@ describe('foldPresentation — skip sets', () => {
 
 describe('foldPresentation — class-axis capture', () => {
 	it('captures preset.class and variants.class as separate fields', () => {
-		const out = foldPresentation(
-			undefined,
-			{ class: 'preset-c' },
-			{ class: ['variant-c'] },
-			{}
-		);
+		const out = foldPresentation(undefined, { class: 'preset-c' }, { class: ['variant-c'] }, {});
 		expect(out.presetClass).toBe('preset-c');
 		expect(out.variantClass).toEqual(['variant-c']);
 	});

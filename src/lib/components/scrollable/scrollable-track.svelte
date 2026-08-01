@@ -1,6 +1,7 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
 	import type { ScrollableTrackProps } from './types';
 	import { ScrollableBond } from './bond.svelte';
+	import { createAtomInstance } from '$svelte-atoms/core/shared/bond';
 	import { mergePresetProps, HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
 
 	let {
@@ -19,9 +20,14 @@
 	const isOpen = $derived(bond?.state?.props?.open ?? true);
 	const isScrolling = $derived(bond?.state?.props?.isScrolling ?? false);
 
-	const atom = $derived(orientation === 'horizontal' ? bond.atom('trackX') : bond.atom('trackY'));
+	const atom = createAtomInstance(() => (orientation === 'horizontal' ? 'trackX' : 'trackY'), {
+		bond,
+		factory: (owner, key) => (key === 'trackX' ? owner!.trackX() : owner!.trackY())
+	});
 
-	const trackProps = $derived(mergePresetProps(preset, 'scrollable.track', { ...atom.spread, ...restProps }));
+	const trackProps = $derived(
+		mergePresetProps(preset, 'scrollable.track', { ...atom.spread, ...restProps })
+	);
 </script>
 
 {#if (isOpen || isScrolling) && hasScroll}
@@ -29,7 +35,7 @@
 		{bond}
 		as="div"
 		class={[
-			'scrollable-track bg-foreground/10 hover:bg-foreground/15 border-border absolute z-10 rounded transition-opacity',
+			'scrollable-track bg-foreground/10 hover:bg-foreground/15 absolute z-10 rounded transition-opacity',
 			{ vertical: 'inset-y-0 right-0 w-2', horizontal: 'inset-x-0 bottom-0 h-2' }[orientation],
 			'$preset',
 			klass

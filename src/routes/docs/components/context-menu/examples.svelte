@@ -22,32 +22,44 @@
 </script>
 
 {#if contentType === 'markdown'}
-	Includes three examples:
-	- Basic right-click zone
-	- Button as trigger base
-	- DataGrid row-level actions
+	Includes three examples: - Basic right-click zone - Button as trigger base - DataGrid row-level
+	actions
 {/if}
 
-
 {#if contentType === 'html'}
-	<DocExample title="Basic Zone" description="Right-click the zone to open the menu" code={basicCode}>
+	<DocExample
+		title="Basic Zone"
+		description="Right-click the zone to open the menu"
+		code={basicCode}
+	>
 		<ContextMenu.Root>
-			<ContextMenu.Trigger class="flex h-32 w-64 items-center justify-center rounded-lg border border-dashed p-4 text-sm bg-card/50">
-					Right-click this area
+			<ContextMenu.Trigger
+				class="flex h-32 w-64 items-center justify-center rounded-lg border border-dashed p-4 text-sm bg-card/50"
+			>
+				Right-click this area
 			</ContextMenu.Trigger>
-			<ContextMenu.Content preset="context-menu.content" class="min-w-44 rounded-lg border bg-popover shadow-md p-0">
+			<ContextMenu.Content
+				preset="context-menu.content"
+				class="min-w-44 rounded-lg border bg-popover shadow-md p-0"
+			>
 				<ContextMenu.Item preset="context-menu.item" class="border-none">Copy</ContextMenu.Item>
 				<ContextMenu.Item preset="context-menu.item" class="border-none">Paste</ContextMenu.Item>
 				<ContextMenu.Divider />
-				<ContextMenu.Item preset="context-menu.item" class="border-none text-destructive">Delete</ContextMenu.Item>
+				<ContextMenu.Item preset="context-menu.item" class="border-none text-destructive"
+					>Delete</ContextMenu.Item
+				>
 			</ContextMenu.Content>
 		</ContextMenu.Root>
 	</DocExample>
 
 	<DocExample title="On Button" description="Use Button as the trigger base" code={buttonCode}>
 		<ContextMenu.Root>
-			<ContextMenu.Trigger base={Button} variant="secondary">Right-click button</ContextMenu.Trigger>
-			<ContextMenu.Content preset="context-menu.content" class="min-w-44 rounded-lg border bg-popover shadow-md p-0">
+			<ContextMenu.Trigger base={Button} variant="secondary">Right-click button</ContextMenu.Trigger
+			>
+			<ContextMenu.Content
+				preset="context-menu.content"
+				class="min-w-44 rounded-lg border bg-popover shadow-md p-0"
+			>
 				<ContextMenu.Item preset="context-menu.item" class="border-none">Open</ContextMenu.Item>
 				<ContextMenu.Item preset="context-menu.item" class="border-none">Rename</ContextMenu.Item>
 			</ContextMenu.Content>
@@ -65,7 +77,10 @@
 			<DataGrid.Body>
 				{#each rows as row (row.id)}
 					<ContextMenu.Root>
-						<ContextMenu.Trigger base={DataGrid.Row} class="cursor-context-menu px-8 py-0 rounded-none">
+						<ContextMenu.Trigger
+							base={DataGrid.Row}
+							class="cursor-context-menu px-8 py-0 rounded-none"
+						>
 							<DataGrid.Cell>{row.name}</DataGrid.Cell>
 							<DataGrid.Cell>{row.role}</DataGrid.Cell>
 						</ContextMenu.Trigger>
@@ -73,7 +88,9 @@
 							preset="context-menu.content"
 							class="min-w-44 rounded-lg border bg-popover shadow-md p-0"
 						>
-							<ContextMenu.Item preset="context-menu.item" class="border-none">Edit row</ContextMenu.Item>
+							<ContextMenu.Item preset="context-menu.item" class="border-none"
+								>Edit row</ContextMenu.Item
+							>
 							<ContextMenu.Item preset="context-menu.item" class="border-none text-destructive"
 								>Delete row</ContextMenu.Item
 							>

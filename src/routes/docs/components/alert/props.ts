@@ -34,8 +34,9 @@ export const alertRootProps: PropDefinition[] = [
 		name: '...atomProps',
 		type: 'HtmlAtomProps',
 		default: '-',
-		description: 'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
-	},
+		description:
+			'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
+	}
 ];
 
 export const alertSubPartProps: PropDefinition[] = [
@@ -43,7 +44,7 @@ export const alertSubPartProps: PropDefinition[] = [
 		name: 'bond',
 		type: 'AlertBond',
 		default: 'undefined',
-		description: 'Bond object passed down from Alert.Root for internal state communication'
+		description: 'Bond object passed down from Alert.Root for shared component coordination'
 	},
 	{
 		name: 'preset',
@@ -61,6 +62,7 @@ export const alertSubPartProps: PropDefinition[] = [
 		name: '...atomProps',
 		type: 'HtmlAtomProps',
 		default: '-',
-		description: 'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
-	},
+		description:
+			'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
+	}
 ];

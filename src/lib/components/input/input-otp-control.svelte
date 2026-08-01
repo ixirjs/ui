@@ -27,15 +27,15 @@
 
 	let slotEls = $state<Array<HTMLInputElement | undefined>>([]);
 
-	const slots  = $derived(Array.from({ length }, (_, i) => value?.[i] ?? ''));
-	const isFull = $derived(slots.every(s => s !== ''));
+	const slots = $derived(Array.from({ length }, (_, i) => value?.[i] ?? ''));
+	const isFull = $derived(slots.every((s) => s !== ''));
 
 	// Tracks previous full state so oncomplete fires only once per fill.
 	let wasFull = $state(false);
 
 	function isValidChar(char: string): boolean {
-		if (type === 'numeric')     return /^\d$/.test(char);
-		if (type === 'alpha')       return /^[a-zA-Z]$/.test(char);
+		if (type === 'numeric') return /^\d$/.test(char);
+		if (type === 'alpha') return /^[a-zA-Z]$/.test(char);
 		return /^[a-zA-Z0-9]$/.test(char); // alphanumeric
 	}
 
@@ -98,10 +98,26 @@
 			return;
 		}
 
-		if (key === 'ArrowLeft')  { ev.preventDefault(); focusSlot(index - 1);     return; }
-		if (key === 'ArrowRight') { ev.preventDefault(); focusSlot(index + 1);     return; }
-		if (key === 'Home')       { ev.preventDefault(); focusSlot(0);             return; }
-		if (key === 'End')        { ev.preventDefault(); focusSlot(length - 1);    return; }
+		if (key === 'ArrowLeft') {
+			ev.preventDefault();
+			focusSlot(index - 1);
+			return;
+		}
+		if (key === 'ArrowRight') {
+			ev.preventDefault();
+			focusSlot(index + 1);
+			return;
+		}
+		if (key === 'Home') {
+			ev.preventDefault();
+			focusSlot(0);
+			return;
+		}
+		if (key === 'End') {
+			ev.preventDefault();
+			focusSlot(length - 1);
+			return;
+		}
 
 		// Printable character
 		if (key.length === 1 && !ev.ctrlKey && !ev.metaKey && !ev.altKey) {
@@ -127,14 +143,15 @@
 		if (!chars.length) return;
 
 		const arr = getArr();
-		chars.forEach((c, i) => { arr[fromIndex + i] = c; });
+		chars.forEach((c, i) => {
+			arr[fromIndex + i] = c;
+		});
 		commit(arr);
 		focusSlot(Math.min(length - 1, fromIndex + chars.length));
 		emit(ev);
 	}
 </script>
 
-<!-- svelte-ignore a11y_no_static_element_interactions -->
 <span
 	role="group"
 	aria-label="One-time password"
@@ -178,7 +195,7 @@
 					'focus:bg-foreground/5',
 					!bond && 'focus:border-foreground/40 focus:ring-2 focus:ring-foreground/20',
 					disabled && 'cursor-not-allowed',
-					readonly && 'cursor-default',
+					readonly && 'cursor-default'
 				)}
 				placeholder={slotVal === '' ? placeholder : ''}
 				onkeydown={(ev) => handleKeydown(ev, i)}

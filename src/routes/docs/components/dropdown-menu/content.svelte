@@ -20,11 +20,15 @@
 
 	const apiSections: PropsSection[] = [
 		{ label: 'DropdownMenu.Root', presetKey: 'dropdown-menu', props: dropdownMenuListProps },
-		{ label: 'DropdownMenu.Item', presetKey: 'dropdown-menu.item', props: dropdownMenuItemProps },
+		{ label: 'DropdownMenu.Item', presetKey: 'dropdown-menu.item', props: dropdownMenuItemProps }
 	];
 
 	const _loaders = import.meta.glob('./examples/*.svelte');
-	const _sources = import.meta.glob('./examples/*.svelte', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+	const _sources = import.meta.glob('./examples/*.svelte', {
+		query: '?raw',
+		import: 'default',
+		eager: true
+	}) as Record<string, string>;
 	const ex = createExampleLoader(_loaders, _sources);
 </script>
 
@@ -40,9 +44,17 @@
 	{/snippet}
 
 	{#snippet examples()}
-		<DocExample title="Basic Dropdown Menu" description="Simple menu with navigation items" {...ex('./examples/basic.svelte')} />
+		<DocExample
+			title="Basic Dropdown Menu"
+			description="Simple menu with navigation items"
+			{...ex('./examples/basic.svelte')}
+		/>
 
-		<DocExample title="Interactive Menu" description="Menu items with click handlers" {...ex('./examples/interactive.svelte')} />
+		<DocExample
+			title="Interactive Menu"
+			description="Menu items with click handlers"
+			{...ex('./examples/interactive.svelte')}
+		/>
 	{/snippet}
 
 	{#snippet apiReference()}

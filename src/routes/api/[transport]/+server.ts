@@ -159,7 +159,10 @@ const handler = createMcpHandler(
 			},
 			async () => {
 				const overview = await readDocFromEndpoint('/docs/overview/llms.txt', currentBaseUrl);
-				const quickRef = await readDocFromEndpoint('/docs/quick-reference/llms.txt', currentBaseUrl);
+				const quickRef = await readDocFromEndpoint(
+					'/docs/quick-reference/llms.txt',
+					currentBaseUrl
+				);
 
 				return {
 					content: [

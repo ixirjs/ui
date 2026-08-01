@@ -1,6 +1,6 @@
 import { getContext, setContext } from 'svelte';
 
-// Header context: set by DataGrid.Header, read by DataGridRowBondState. Read `isHeader` by value (not context presence) so header-ness stays reactive.
+// Header context: set by DataGrid.Header, read by row bonds. Read `isHeader` by value (not context presence) so header-ness stays reactive.
 
 const DATAGRID_HEADER_CONTEXT_KEY = '@atoms/context/datagrid/header';
 

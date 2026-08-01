@@ -18,34 +18,41 @@ const accessibilityFeatures = [
 const useCases = [
 	{
 		title: 'Multi-step Forms',
-		description: 'Break complex registration or checkout forms into discrete, guided steps to reduce cognitive load and improve completion rates.'
+		description:
+			'Break complex registration or checkout forms into discrete, guided steps to reduce cognitive load and improve completion rates.'
 	},
 	{
 		title: 'Onboarding Flows',
-		description: 'Guide new users through a structured onboarding sequence with progress indicators showing where they are in the process.'
+		description:
+			'Guide new users through a structured onboarding sequence with progress indicators showing where they are in the process.'
 	},
 	{
 		title: 'Installation Wizards',
-		description: 'Lead users through software setup or configuration processes with clear step indicators and back/next navigation.'
+		description:
+			'Lead users through software setup or configuration processes with clear step indicators and back/next navigation.'
 	},
 	{
 		title: 'Order or Booking Process',
-		description: 'Present e-commerce checkout or reservation flows (select, configure, confirm, pay) as sequential, trackable steps.'
+		description:
+			'Present e-commerce checkout or reservation flows (select, configure, confirm, pay) as sequential, trackable steps.'
 	},
 	{
 		title: 'Progress Tracking',
-		description: 'Visualize progress through a workflow, project phase, or approval process with completed, active, and pending step states.'
+		description:
+			'Visualize progress through a workflow, project phase, or approval process with completed, active, and pending step states.'
 	},
 	{
 		title: 'Educational Modules',
-		description: 'Structure learning paths or tutorials as steps with optional and required segments and linear or free navigation modes.'
+		description:
+			'Structure learning paths or tutorials as steps with optional and required segments and linear or free navigation modes.'
 	}
 ];
 
 const componentsSummary = [
 	{
 		name: 'Stepper.Root',
-		description: 'Root container managing the active step state, orientation, and linear progression mode.'
+		description:
+			'Root container managing the active step state, orientation, and linear progression mode.'
 	},
 	{
 		name: 'Stepper.Header',
@@ -57,15 +64,18 @@ const componentsSummary = [
 	},
 	{
 		name: 'Stepper.Content',
-		description: 'Displays the body content of the currently active step with optional enter/exit animations.'
+		description:
+			'Displays the body content of the currently active step with optional enter/exit animations.'
 	},
 	{
 		name: 'Stepper.Footer',
-		description: 'Container for navigation buttons (Previous/Next) with access to the stepper bond for state.'
+		description:
+			'Container for navigation buttons (Previous/Next) with access to the stepper bond for state.'
 	},
 	{
 		name: 'Step.Root',
-		description: 'Individual step item managing its own active, completed, optional, and disabled states.'
+		description:
+			'Individual step item managing its own active, completed, optional, and disabled states.'
 	},
 	{
 		name: 'Step.Header',

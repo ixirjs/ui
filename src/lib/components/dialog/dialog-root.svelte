@@ -1,11 +1,13 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
 	import { Teleport, ActivePortal } from '$svelte-atoms/core/components/portal';
-	import { containsTarget } from '$svelte-atoms/core/utils/dom.svelte';
 	import type { Base } from '$svelte-atoms/core/components/atom';
-	import { DialogBond, DialogBondState } from './bond.svelte';
+	import { mergeAtomProps } from '$svelte-atoms/core/components/atom';
+	import { DialogBond, DialogRootAtom, type DialogBondProps } from './bond.svelte';
 	import type { DialogProps } from './types';
 	import { ZLayer } from '../portal/zlayer.svelte';
-	import { bindBond, bondFactory, useCapabilities } from '$svelte-atoms/core/shared';
+	import { bindBond, useCapabilities } from '$svelte-atoms/core/shared';
+	import { createAtomInstance } from '$svelte-atoms/core/shared/bond';
+	import { BACKDROP_PRESS } from '$svelte-atoms/core/components/portal/host';
 
 	let {
 		class: klass = '',
@@ -14,53 +16,66 @@
 		disabled = false,
 		type = 'modal' as 'modal' | 'non-modal',
 		as = 'dialog' as E,
-		// Default +0 within the `modal` band; a sibling Drawer (+1) wins by convention (ADR 0009 D5). Override to reorder.
-		"z-index": zindex = 0,
+		// Default +0 within the `modal` band; a sibling Drawer (+1) wins by convention. Override to reorder.
+		'z-index': zindex = 0,
 		portal = undefined,
-		factory = bondFactory(DialogBondState, DialogBond),
+		factory = defaultFactory,
 		children = undefined,
 		onclick = undefined,
 		...restProps
 	}: DialogProps<E, B> = $props();
 
-	const normalizedZIndex = $derived(
-		typeof zindex === 'number' && Number.isFinite(zindex) ? zindex : undefined
+	let openState = $derived(open);
+
+	const z = $derived(
+		typeof zindex === 'function'
+			? zindex(0)
+			: typeof zindex === 'number' && Number.isFinite(zindex)
+				? zindex
+				: 0
 	);
-	const layer = new ZLayer('modal', () => normalizedZIndex ?? 0).share();
+	const layer = new ZLayer('modal', () => z);
+	new ZLayer('base', () => 0).share();
 
 	const binding = bindBond<DialogBond>(
 		(props) => factory(props),
 		{
-			open: [() => open, (v) => (open = v)],
+			open: [
+				() => openState,
+				(v) => {
+					openState = v;
+					open = openState;
+				}
+			],
 			disabled: () => disabled
 		},
 		{ preset: () => preset }
 	);
 	const bond = binding.bond.share();
-
-	// Run capability setups — focus capture/restore (ADR 0001 / ADR 0003) is owned by the focus
-	// capability's setup() and applies however the dialog closes (#5, ADR 0010).
-	useCapabilities(bond);
-	// Topmost-open-overlay Escape coordination (ADR 0009 D1/D2): a nested popover's Escape closes only it.
-
-	const rootProps: Record<string, unknown> = $derived({
-		...binding?.props,
-		...restProps
+	const rootAtom = createAtomInstance<DialogRootAtom, DialogBond, HTMLElement>('root', {
+		bond,
+		factory: (owner) => new DialogRootAtom(owner as DialogBond)
 	});
 
+	// Activate the bond's capability setups: the focus capability captures activeElement on
+	// open and restores it however the dialog closes, and the escape capability enrolls this
+	// overlay in the topmost-open-overlay stack so a nested popover's Escape closes only it.
+	useCapabilities(bond);
+
+	const rootProps: Record<string, unknown> = $derived(
+		mergeAtomProps(rootAtom, preset, { ...binding.stateProps, ...restProps })
+	);
+	const backdropPress = $derived(bond.surface(BACKDROP_PRESS));
+
+	function defaultFactory(props: DialogBondProps) {
+		return DialogBond.create(props);
+	}
+
 	function onclickDialogElement(ev: MouseEvent) {
-		if (containsTarget(bond?.elements?.content, ev.target)) {
-			return;
-		}
-
-		// User handler runs first; ev.preventDefault() cancels the close
-		onclick?.(ev, bond);
-
-		if (ev.defaultPrevented) return;
-
-		if (type === 'modal' && !disabled) {
-			bond.state.close();
-		}
+		backdropPress?.(bond, ev, {
+			enabled: type === 'modal',
+			onDismiss: (event) => onclick?.(event as MouseEvent, bond)
+		});
 	}
 
 	export function getBond() {
@@ -68,13 +83,12 @@
 	}
 </script>
 
-
 <Teleport
 	{as}
 	portal={portal ?? 'root.l0'}
 	class={[
-		'border-border pointer-events-none fixed top-0 left-0 flex h-full w-full items-center justify-center bg-neutral-900/0 transition-colors duration-200',
-		open && 'pointer-events-auto bg-neutral-900/10',
+		'pointer-events-none fixed top-0 left-0 flex h-full w-full items-center justify-center bg-neutral-900/0 transition-colors duration-200',
+		openState && 'pointer-events-auto bg-neutral-900/10',
 		'$preset',
 		klass
 	]}
@@ -82,7 +96,8 @@
 	onclick={onclickDialogElement}
 	oncancel={(ev) => {
 		ev.preventDefault();
-		open = false;
+		openState = false;
+		open = openState;
 	}}
 	{...rootProps}
 >

@@ -3,9 +3,12 @@
 	generics="Src extends Component = Component, E extends HtmlElementTagName = 'div', B extends Base = Base"
 >
 	import type { Component } from 'svelte';
-	import type { HTMLAttributes } from 'svelte/elements';
 	import { mergePresetProps, HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
-	import type { HtmlElementTagName, HtmlElementType } from '$svelte-atoms/core/components/element';
+	import type {
+		HtmlElementTagName,
+		HtmlElementType,
+		HtmlElementAttributes
+	} from '$svelte-atoms/core/components/element';
 	import type { IconProps } from './types';
 	import './icon.css';
 
@@ -17,11 +20,11 @@
 		preset = undefined,
 		children = undefined,
 		...restProps
-	}: IconProps<Src, E, B> & HTMLAttributes<Element> = $props();
+	}: IconProps<Src, E, B> & HtmlElementAttributes<Element> = $props();
 
 	const iconProps = $derived(mergePresetProps(preset, 'icon', restProps));
 
-	const content = $derived(src ? sourceSnippet : children );
+	const content = $derived(src ? sourceSnippet : children);
 </script>
 
 {#snippet sourceSnippet()}

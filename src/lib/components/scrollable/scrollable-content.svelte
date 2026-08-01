@@ -1,6 +1,7 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
 	import type { ScrollableContentProps } from './types';
 	import { ScrollableBond } from './bond.svelte';
+	import { createAtomInstance } from '$svelte-atoms/core/shared/bond';
 	import { mergeAtomProps, HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
 
 	const bond = ScrollableBond.getOrThrow('ScrollableContent must be used within a ScrollableRoot');
@@ -12,7 +13,10 @@
 		...restProps
 	}: ScrollableContentProps<E, B> = $props();
 
-	const atom = bond.atom('content');
+	const atom = createAtomInstance('content', {
+		bond,
+		factory: (owner) => owner!.content()
+	});
 
 	const contentProps = $derived(mergeAtomProps(atom, preset, restProps));
 </script>

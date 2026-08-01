@@ -1,5 +1,3 @@
-import type { Bond } from '$svelte-atoms/core/shared';
-
 export type ResolvedProps = Record<string, unknown>;
 
 // Two-level cache for resolved variants (legacy/public API): WeakMap<bond, Map<key, result>>.
@@ -9,7 +7,8 @@ const variantCacheNoBond = new Map<string, ResolvedProps>();
 
 export const MAX_CACHE_SIZE = 100;
 
-export function getCacheMap(bond: Bond | null | undefined): Map<string, ResolvedProps> {
+// `bond` is used only as a reference key (WeakMap<object>); any object identity works.
+export function getCacheMap(bond: object | null | undefined): Map<string, ResolvedProps> {
 	if (!bond) return variantCacheNoBond;
 	let map = variantCacheByBond.get(bond);
 	if (!map) {
@@ -26,7 +25,7 @@ const defCacheNoBondMap = new WeakMap<object, Map<string, ResolvedProps>>();
 
 export function getDefCacheMap(
 	def: object,
-	bond: Bond | null | undefined
+	bond: object | null | undefined
 ): Map<string, ResolvedProps> {
 	if (!bond) {
 		let m = defCacheNoBondMap.get(def);

@@ -5,7 +5,7 @@ export function tab(
 	callback: (
 		node: HTMLElement,
 		{ tab, tabs }: { tab?: TabBond<unknown> | undefined; tabs?: TabsBond<unknown> | undefined }
-	) => any
+	) => void | (() => void)
 ) {
 	const tabBond = TabBond.get();
 	const tabsBond = TabsBond.get();

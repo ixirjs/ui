@@ -3,7 +3,9 @@
 	import { Icon } from '$svelte-atoms/core/components/icon';
 	import IconArrowDown from '$svelte-atoms/core/icons/icon-arrow-down.svelte';
 	import { HtmlAtom } from '$svelte-atoms/core/components/atom';
-	import { PopoverBond } from './bond.svelte';
+	import { createAtomInstance, type Atom } from '$svelte-atoms/core/shared/bond';
+	import { createPopoverAtom, PopoverBond, PopoverIndicatorAtom } from './bond.svelte';
+	import { overlayIsOpen } from '$svelte-atoms/core/components/portal/host/policies/overlay-view';
 
 	const bond = PopoverBond.getOrThrow('<Popover.Indicator /> must be used within a <Popover />');
 
@@ -13,9 +15,20 @@
 		children = undefined
 	} = $props();
 
-	const atom = bond.atom('indicator');
+	const atom = createAtomInstance<Atom<PopoverBond, HTMLElement>, PopoverBond, HTMLElement>(
+		'indicator',
+		{
+			bond,
+			factory: (owner) =>
+				createPopoverAtom(
+					owner as PopoverBond,
+					'indicator',
+					(popover) => new PopoverIndicatorAtom(popover)
+				)
+		}
+	);
 
-	const isOpen = $derived(bond?.state.props.open ?? false);
+	const isOpen = $derived(overlayIsOpen(bond));
 
 	const presentation = $derived({ preset: preset ?? atom.preset });
 </script>

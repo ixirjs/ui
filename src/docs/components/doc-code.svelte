@@ -5,7 +5,7 @@
 
 	let {
 		code,
-		lang = 'svelte',
+		lang = 'svelte'
 	}: {
 		code: string;
 		lang?: string;
@@ -17,5 +17,5 @@
 {#if mode === 'html'}
 	<CodeBlock {lang} {code} />
 {:else}
-{codeBlock(code, lang)}
+	{codeBlock(code, lang)}
 {/if}

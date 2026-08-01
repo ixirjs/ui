@@ -16,8 +16,9 @@ export const textareaRootProps: PropDefinition[] = [
 		name: '...atomProps',
 		type: 'HtmlAtomProps',
 		default: '-',
-		description: 'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
-	},
+		description:
+			'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
+	}
 ];
 
 export const textareaInputProps: PropDefinition[] = [
@@ -43,7 +44,8 @@ export const textareaInputProps: PropDefinition[] = [
 		name: 'readonly',
 		type: 'boolean | undefined',
 		default: 'false',
-		description: 'Makes the textarea read-only; the value is visible but cannot be changed by the user.'
+		description:
+			'Makes the textarea read-only; the value is visible but cannot be changed by the user.'
 	},
 	{
 		name: 'rows',
@@ -85,7 +87,8 @@ export const textareaInputProps: PropDefinition[] = [
 		name: 'autocomplete',
 		type: 'string | undefined',
 		default: 'undefined',
-		description: 'Browser autocomplete hint. Use "on", "off", or a specific token like "street-address".'
+		description:
+			'Browser autocomplete hint. Use "on", "off", or a specific token like "street-address".'
 	},
 	{
 		name: 'spellcheck',
@@ -97,6 +100,7 @@ export const textareaInputProps: PropDefinition[] = [
 		name: 'wrap',
 		type: '"soft" | "hard" | "off" | undefined',
 		default: 'undefined',
-		description: 'How the textarea wraps text during form submission. "hard" inserts newlines; "soft" does not.'
-	},
+		description:
+			'How the textarea wraps text during form submission. "hard" inserts newlines; "soft" does not.'
+	}
 ];

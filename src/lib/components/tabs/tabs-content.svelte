@@ -5,25 +5,19 @@
 
 	const bond = TabsBond.get();
 
-	let {
-		preset = undefined,
-		...restProps
-	}: TabsContentProps<E, B> = $props();
+	let { preset = undefined, ...restProps }: TabsContentProps<E, B> = $props();
 
-	const value = $derived(bond?.state?.props.value);
-	const items = $derived(Array.from(bond?.state?.tabContents ?? []));
+	const value = $derived(bond?.props.value);
+	const items = $derived(Array.from(bond?.tabContents ?? []));
 
 	const contentProps = $derived(mergePresetProps(preset, 'tabs.content', restProps));
 </script>
 
 {#each items as item (item.value)}
-   {@render item.render({
+	{@render item.render({
 		...(item.props ?? {}),
-		...(value === item.value ? {} : {children: undefined}),
+		...(value === item.value ? {} : { children: undefined }),
 		...contentProps,
 		selected: value === item.value
-   })}
+	})}
 {/each}
-
-
-

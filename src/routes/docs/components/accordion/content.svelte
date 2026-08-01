@@ -1,12 +1,6 @@
 <script lang="ts">
 	import { createExampleLoader } from '$docs/utils/example-loader';
-	import {
-		DocComponentPage,
-		DocExample,
-		DocCode,
-		DocOnly,
-		DocPropsTabs,
-	} from '$docs/components';
+	import { DocComponentPage, DocExample, DocCode, DocPropsTabs } from '$docs/components';
 	import type { PropsSection } from '$docs/components';
 	import {
 		accordionRootProps,
@@ -33,13 +27,29 @@
 	const apiSections: PropsSection[] = [
 		{ label: 'Accordion.Root', presetKey: 'accordion', props: accordionRootProps },
 		{ label: 'AccordionItem.Root', presetKey: 'accordion.item', props: accordionItemRootProps },
-		{ label: 'AccordionItem.Header', presetKey: 'accordion.item.header', props: accordionItemHeaderProps },
-		{ label: 'AccordionItem.Body', presetKey: 'accordion.item.body', props: accordionItemBodyProps },
-		{ label: 'AccordionItem.Indicator', presetKey: 'accordion.item.indicator', props: accordionItemIndicatorProps },
+		{
+			label: 'AccordionItem.Header',
+			presetKey: 'accordion.item.header',
+			props: accordionItemHeaderProps
+		},
+		{
+			label: 'AccordionItem.Body',
+			presetKey: 'accordion.item.body',
+			props: accordionItemBodyProps
+		},
+		{
+			label: 'AccordionItem.Indicator',
+			presetKey: 'accordion.item.indicator',
+			props: accordionItemIndicatorProps
+		}
 	];
 
 	const _loaders = import.meta.glob('./examples/*.svelte');
-	const _sources = import.meta.glob('./examples/*.svelte', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+	const _sources = import.meta.glob('./examples/*.svelte', {
+		query: '?raw',
+		import: 'default',
+		eager: true
+	}) as Record<string, string>;
 	const ex = createExampleLoader(_loaders, _sources);
 </script>
 
@@ -55,9 +65,21 @@
 	{/snippet}
 
 	{#snippet examples()}
-		<DocExample title="Basic Accordion" description="Simple accordion with collapsible sections" {...ex('./examples/basic.svelte')} />
-		<DocExample title="Collapsible Accordion" description="All items can be collapsed simultaneously" {...ex('./examples/collapsible.svelte')} />
-		<DocExample title="Multiple Mode" description="Allow multiple sections to be open at once" {...ex('./examples/multiple.svelte')} />
+		<DocExample
+			title="Basic Accordion"
+			description="Simple accordion with collapsible sections"
+			{...ex('./examples/basic.svelte')}
+		/>
+		<DocExample
+			title="Collapsible Accordion"
+			description="All items can be collapsed simultaneously"
+			{...ex('./examples/collapsible.svelte')}
+		/>
+		<DocExample
+			title="Multiple Mode"
+			description="Allow multiple sections to be open at once"
+			{...ex('./examples/multiple.svelte')}
+		/>
 	{/snippet}
 
 	{#snippet apiReference()}

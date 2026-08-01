@@ -85,7 +85,8 @@ export const fieldControlProps: PropDefinition[] = [
 		name: 'children',
 		type: 'Snippet',
 		default: '-',
-		description: 'Control content (Input.Control, Textarea.Control, etc.). Receives { field } in snippet props.'
+		description:
+			'Control content (Input.Control, Textarea.Control, etc.). Receives { field } in snippet props.'
 	}
 ];
 
@@ -106,7 +107,8 @@ export const fieldHelperTextProps: PropDefinition[] = [
 		name: 'children',
 		type: 'Snippet',
 		default: '-',
-		description: 'Helper text content rendered under the field control. Receives { field } in snippet props.'
+		description:
+			'Helper text content rendered under the field control. Receives { field } in snippet props.'
 	}
 ];
 

@@ -46,6 +46,19 @@ export interface InputRootProps<
 	files?: File[] | null;
 }
 
+// Detail payload forwarded as the 2nd arg of `Input.Control`'s change/input handlers — a snapshot
+// of the parsed bindable values plus the originating DOM event.
+export interface InputControlDetail {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	value?: any;
+	// `| undefined` (not just `?:`): these snapshot the bindable values, which are present-but-undefined.
+	files?: File[] | undefined;
+	date?: Date | null | undefined;
+	number?: number | undefined;
+	checked?: boolean | undefined;
+	event?: Event;
+}
+
 interface InputControlBaseProps {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	value?: any;
@@ -56,6 +69,10 @@ interface InputControlBaseProps {
 	class?: ClassValue | ClassValue[];
 	type?: InputControlType | null;
 	children?: InputChildren;
+	// Declared here (the Override's `U` side) so they win over the native `<input>` handlers that
+	// `Override`'s Omit would otherwise collapse to `{}` via HtmlAtomProps' index signature.
+	onchange?: (event: Event, detail?: InputControlDetail) => void;
+	oninput?: (event: Event, detail?: InputControlDetail) => void;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type

@@ -1,15 +1,17 @@
-import { BondAtom } from '$svelte-atoms/core/shared';
-import type { ViewOf } from '$svelte-atoms/core/shared';
+import { Atom } from '$svelte-atoms/core/shared';
+import type { Bond } from '$svelte-atoms/core/shared/bond';
 import { getElementId } from '$svelte-atoms/core/utils/dom.svelte';
-import type { CalendarBondState } from './bond.svelte';
+import type { CalendarBondProps } from './bond.svelte';
 import type { Day } from './types';
 
 export type WeekdayIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
 // Bond shape the calendar atoms type this.bond against — breaks the atom↔bond cycle.
-type CalendarBondView = ViewOf<CalendarBondState>;
+type CalendarBondView = Bond<CalendarBondProps> & {
+	isDaySelected(day: Day): boolean;
+};
 
-export class CalendarRootAtom extends BondAtom<CalendarBondView> {
+export class CalendarRootAtom extends Atom<CalendarBondView> {
 	constructor(bond: CalendarBondView) {
 		super(bond, 'root');
 	}
@@ -25,7 +27,7 @@ export class CalendarRootAtom extends BondAtom<CalendarBondView> {
 	}
 }
 
-export class CalendarBodyAtom extends BondAtom<CalendarBondView> {
+export class CalendarBodyAtom extends Atom<CalendarBondView> {
 	constructor(bond: CalendarBondView) {
 		super(bond, 'body');
 	}
@@ -45,7 +47,7 @@ export class CalendarBodyAtom extends BondAtom<CalendarBondView> {
 	// §RovingTabindex.
 }
 
-export class CalendarHeaderAtom extends BondAtom<CalendarBondView> {
+export class CalendarHeaderAtom extends Atom<CalendarBondView> {
 	constructor(bond: CalendarBondView) {
 		super(bond, 'header');
 	}
@@ -61,7 +63,7 @@ export class CalendarHeaderAtom extends BondAtom<CalendarBondView> {
 }
 
 // Data-driven atom cached by weekday index (0–6); each index gets a distinct id to avoid the old shared-id bug.
-export class CalendarWeekDayAtom extends BondAtom<CalendarBondView> {
+export class CalendarWeekDayAtom extends Atom<CalendarBondView> {
 	readonly weekDayIndex: WeekdayIndex;
 
 	constructor(bond: CalendarBondView, weekDayIndex: WeekdayIndex) {
@@ -80,7 +82,7 @@ export class CalendarWeekDayAtom extends BondAtom<CalendarBondView> {
 
 // Data-driven atom cached by day.id; carries ARIA attrs so consumers spread directly.
 // Subclass and override attrs to extend (e.g. holiday rendering).
-export class CalendarDayAtom extends BondAtom<CalendarBondView> {
+export class CalendarDayAtom extends Atom<CalendarBondView> {
 	readonly day: Day;
 
 	constructor(bond: CalendarBondView, day: Day) {
@@ -93,7 +95,7 @@ export class CalendarDayAtom extends BondAtom<CalendarBondView> {
 			...super.attrs,
 			'data-kind': 'calendar-day',
 			role: 'gridcell',
-			'aria-selected': this.bond.state.isDaySelected(this.day),
+			'aria-selected': this.bond.isDaySelected(this.day),
 			'aria-disabled': this.day.disabled,
 			tabindex: this.day.disabled ? -1 : 0
 		};

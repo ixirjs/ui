@@ -15,11 +15,14 @@
 				<Dialog.CloseButton class="ml-auto" />
 			</Dialog.Header>
 			<Dialog.Body class="text-muted-foreground text-sm">
-				<p>This action cannot be undone. This will permanently delete your account and remove all associated data.</p>
+				<p>
+					This action cannot be undone. This will permanently delete your account and remove all
+					associated data.
+				</p>
 			</Dialog.Body>
 			<Dialog.Footer class="flex justify-end gap-2">
-				<Button variant="outline" onclick={() => dialog.state.close()}>Cancel</Button>
-				<Button variant="destructive" onclick={() => dialog.state.close()}>Delete account</Button>
+				<Button variant="outline" onclick={() => dialog.close()}>Cancel</Button>
+				<Button variant="destructive" onclick={() => dialog.close()}>Delete account</Button>
 			</Dialog.Footer>
 		</Dialog.Content>
 	{/snippet}

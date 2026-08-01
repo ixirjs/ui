@@ -29,7 +29,11 @@
 	];
 
 	const _loaders = import.meta.glob('./examples/*.svelte');
-	const _sources = import.meta.glob('./examples/*.svelte', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+	const _sources = import.meta.glob('./examples/*.svelte', {
+		query: '?raw',
+		import: 'default',
+		eager: true
+	}) as Record<string, string>;
 	const ex = createExampleLoader(_loaders, _sources);
 </script>
 
@@ -43,18 +47,35 @@
 	{#snippet preset()}
 		<DocCode lang="typescript" code={metadata.examples.preset} />
 		<DocOnly for="markdown">
-**Available Preset Keys:** `alert`, `alert.icon`, `alert.title`, `alert.description`, `alert.content`, `alert.actions`, `alert.close-button`
+			**Available Preset Keys:** `alert`, `alert.icon`, `alert.title`, `alert.description`,
+			`alert.content`, `alert.actions`, `alert.close-button`
 		</DocOnly>
 	{/snippet}
 
 	{#snippet examples()}
-		<DocExample title="Basic Alert" description="Simple alert with icon and title" {...ex('./examples/basic.svelte')} />
+		<DocExample
+			title="Basic Alert"
+			description="Simple alert with icon and title"
+			{...ex('./examples/basic.svelte')}
+		/>
 
-		<DocExample title="Alert Variants" description="Different alert styles for various contexts" {...ex('./examples/variants.svelte')} />
+		<DocExample
+			title="Alert Variants"
+			description="Different alert styles for various contexts"
+			{...ex('./examples/variants.svelte')}
+		/>
 
-		<DocExample title="Dismissible Alert" description="Alert with close button" {...ex('./examples/dismissible.svelte')} />
+		<DocExample
+			title="Dismissible Alert"
+			description="Alert with close button"
+			{...ex('./examples/dismissible.svelte')}
+		/>
 
-		<DocExample title="Alert with Actions" description="Alert with action buttons" {...ex('./examples/actions.svelte')} />
+		<DocExample
+			title="Alert with Actions"
+			description="Alert with action buttons"
+			{...ex('./examples/actions.svelte')}
+		/>
 	{/snippet}
 
 	{#snippet apiReference()}

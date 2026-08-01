@@ -1,23 +1,40 @@
-import { BondAtom, BondState, type BondStateProps } from '$svelte-atoms/core/shared/bond.svelte';
-import { defineBond, type BondOf, type ViewOf } from '$svelte-atoms/core/shared';
-import { labelledControl } from '$svelte-atoms/core/shared/capabilities/relationship.svelte';
+import { Bond, defineAtom, type BondStateProps } from '$svelte-atoms/core/shared/bond';
+import { defineBond, type BondOf } from '$svelte-atoms/core/shared';
+import {
+	defineAtomCapability,
+	sharedCapabilityKey,
+	type AtomHost
+} from '$svelte-atoms/core/shared/capability';
+import {
+	errorMessageLink,
+	labelledControl
+} from '$svelte-atoms/core/shared/capability/models/relationship.svelte';
+import {
+	createValidation,
+	validationCapability,
+	type ValidationError,
+	type ValidationModel,
+	type ValidationResult
+} from '$svelte-atoms/core/shared/capability/models/validation.svelte';
+import {
+	createStatus,
+	statusCapability
+} from '$svelte-atoms/core/shared/capability/models/status.svelte';
 
-export interface ValidationError {
-	path: (string | number)[];
-	message: string;
-	code?: string;
-}
+// -----------------------------------------------------------------------------
+// Public types
+// -----------------------------------------------------------------------------
 
-export interface ValidationResult<T = unknown> {
-	success: boolean;
-	data?: T;
-	errors: ValidationError[];
-}
+export type { ValidationError, ValidationResult };
 
 export interface ValidationAdapter<Schema, Value> {
 	validate(schema: Schema, value: Value): ValidationResult<Value>;
 	validateAsync?(schema: Schema, value: Value): Promise<ValidationResult<Value>>;
 }
+
+// -----------------------------------------------------------------------------
+// Internal types
+// -----------------------------------------------------------------------------
 
 type ZodLikeIssue = {
 	path?: (string | number)[];
@@ -29,6 +46,10 @@ type ZodLikeSchema = {
 	parse: (value: unknown) => unknown;
 	parseAsync?: (value: unknown) => Promise<unknown>;
 };
+
+// -----------------------------------------------------------------------------
+// Helpers
+// -----------------------------------------------------------------------------
 
 function isZodLikeError(error: unknown): error is { issues: ZodLikeIssue[] } {
 	return (
@@ -86,6 +107,10 @@ export class ZodValidationAdapter<T extends ZodLikeSchema> implements Validation
 	}
 }
 
+// -----------------------------------------------------------------------------
+// Public types
+// -----------------------------------------------------------------------------
+
 export type FieldStateProps<
 	Extension extends Record<string, unknown> = Record<string, unknown>,
 	Schema = unknown,
@@ -110,85 +135,30 @@ export type FieldDomElements = {
 	root: HTMLElement;
 	label: HTMLElement;
 	control: HTMLElement;
+	description: HTMLElement;
 };
 
-// Bond shape the field atoms type `this.bond` against — breaks the atom↔bond cycle.
-type FieldBondView = ViewOf<FieldBondState>;
+// -----------------------------------------------------------------------------
+// Bond implementation
+// -----------------------------------------------------------------------------
 
-export class FieldRootAtom extends BondAtom<FieldBondView, HTMLElement> {
-	constructor(bond: FieldBondView) {
-		super(bond, 'root');
-	}
+export class FieldBondBase<Props extends FieldStateProps = FieldStateProps> extends Bond<Props> {
+	readonly validation: ValidationModel = createValidation({
+		validate: () => this.#runValidation(),
+		validateAsync: () => this.#runValidationAsync()
+	});
+	readonly status = createStatus({
+		disabled: () => this.props.disabled,
+		readonly: () => this.props.readonly
+	});
 
-	override get attrs() {
-		const hasErrors = this.bond.state.errors.length > 0;
-		// Group is labelled by the atom that declared the 'label' role.
-		return {
-			...super.attrs,
-			role: 'group',
-			'aria-labelledby': this.bond.atomByRole('label')?.id,
-			'aria-describedby': hasErrors ? `error-${this.bond.id}` : undefined,
-			'aria-invalid': `${hasErrors}`
-		};
-	}
-}
-
-export class FieldLabelAtom extends BondAtom<FieldBondView, HTMLElement> {
-	constructor(bond: FieldBondView) {
-		super(bond, 'label');
-	}
-	// `for` and id come from the labelledControl link (role:'label', nativeFor).
-}
-
-export class FieldControlAtom extends BondAtom<FieldBondView, HTMLElement> {
-	constructor(bond: FieldBondView) {
-		super(bond, 'control');
-	}
-
-	override get attrs() {
-		const hasErrors = this.bond.state.errors.length > 0;
-		// `aria-labelledby` comes from labelledControl (role:'control'); rest is validation state.
-		return {
-			...super.attrs,
-			'aria-describedby': hasErrors ? `error-${this.bond.id}` : undefined,
-			'aria-invalid': `${hasErrors}`,
-			'aria-disabled': `${this.bond.state.props.disabled}`,
-			'aria-readonly': `${this.bond.state.props.readonly}`,
-			'aria-errormessage': hasErrors ? `error-${this.bond.id}` : undefined
-		};
-	}
-}
-
-// FieldBond — label/control fold in the labelled-control link via their roles; validation on FieldBondState.
-export const FieldBond = defineBond<
-	{
-		root: typeof FieldRootAtom;
-		label: { atom: typeof FieldLabelAtom; role: 'label' };
-		control: { atom: typeof FieldControlAtom; role: 'control' };
-	},
-	FieldBondState
->({
-	name: 'field',
-	atoms: {
-		root: FieldRootAtom,
-		label: { atom: FieldLabelAtom, role: 'label' },
-		control: { atom: FieldControlAtom, role: 'control' }
-	}
-});
-
-// Instance type — paired with the const above.
-export type FieldBond = BondOf<typeof FieldBond>;
-
-export class FieldBondState<
-	Props extends FieldStateProps = FieldStateProps
-> extends BondState<Props> {
-	#errors = $state<ValidationError[]>([]);
-	#isValidating = $state(false);
-
-	constructor(props: Props) {
-		super(props);
+	constructor(props: Props, name = 'field') {
+		super(props, name);
 		// label ↔ control a11y linkage: control gets aria-labelledby, label gets `for`.
 		this.capability(labelledControl({ nativeFor: true }));
+		this.capability(validationCapability(this.validation));
+		this.capability(errorMessageLink({ invalid: () => this.validation.isInvalid }));
+		this.capability(statusCapability(this.status, { roles: ['control'] }));
 	}
 
 	get value() {
@@ -212,18 +182,29 @@ export class FieldBondState<
 	}
 
 	get errors() {
-		return [...this.#errors];
+		return this.validation.errors;
 	}
 
 	get isValidating() {
-		return this.#isValidating;
+		return this.validation.isValidating;
 	}
 
 	validate(): ValidationResult {
+		return this.validation.validate();
+	}
+
+	async validateASync(): Promise<ValidationResult> {
+		return this.validation.validateAsync();
+	}
+
+	clear() {
+		this.validation.clear();
+	}
+
+	#runValidation(): ValidationResult {
 		const { schema, validator, value, onvalidation } = this.props;
 
 		if (!schema || !validator) {
-			this.#errors = [];
 			const result: ValidationResult = { success: true, data: value, errors: [] };
 			onvalidation?.(result);
 			return result;
@@ -231,42 +212,27 @@ export class FieldBondState<
 
 		const result = validator.validate(schema, value);
 
-		this.#errors = result.errors;
-
 		onvalidation?.(result);
 
 		return result;
 	}
 
-	async validateASync(): Promise<ValidationResult> {
+	async #runValidationAsync(): Promise<ValidationResult> {
 		const { schema, validator, value, onvalidation } = this.props;
 
 		if (!schema || !validator) {
-			this.#errors = [];
 			const result: ValidationResult = { success: true, data: value, errors: [] };
 			onvalidation?.(result);
 			return result;
 		}
 
-		this.#isValidating = true;
+		const result = validator.validateAsync
+			? await validator.validateAsync(schema, value)
+			: validator.validate(schema, value);
 
-		try {
-			const result = validator.validateAsync
-				? await validator.validateAsync(schema, value)
-				: validator.validate(schema, value);
+		onvalidation?.(result);
 
-			this.#errors = result.errors;
-
-			onvalidation?.(result);
-
-			return result;
-		} finally {
-			this.#isValidating = false;
-		}
-	}
-
-	clear() {
-		this.#errors = [];
+		return result;
 	}
 
 	toJSON() {
@@ -276,3 +242,107 @@ export class FieldBondState<
 		};
 	}
 }
+
+// -----------------------------------------------------------------------------
+// Internal types
+// -----------------------------------------------------------------------------
+
+type FieldBondView = FieldBondBase;
+
+// -----------------------------------------------------------------------------
+// Capability slots and shared helpers
+// -----------------------------------------------------------------------------
+
+const FIELD_ROOT = sharedCapabilityKey<void>('@svelte-atoms/field:root');
+
+// -----------------------------------------------------------------------------
+// Atom definitions
+// -----------------------------------------------------------------------------
+
+export const FieldRootAtom = defineAtom<FieldBondView>('root', (atom) => {
+	atom.capability(fieldRootPresentation());
+});
+export type FieldRootAtom = InstanceType<typeof FieldRootAtom>;
+
+export const FieldLabelAtom = defineAtom<FieldBondView>('label');
+export type FieldLabelAtom = InstanceType<typeof FieldLabelAtom>;
+// `for` and id come from the labelledControl link (role:'label', nativeFor).
+
+export const FieldControlAtom = defineAtom<FieldBondView>('control');
+export type FieldControlAtom = InstanceType<typeof FieldControlAtom>;
+
+export const FieldDescriptionAtom = defineAtom<FieldBondView>('description', (atom) => {
+	atom.role('error');
+});
+export type FieldDescriptionAtom = InstanceType<typeof FieldDescriptionAtom>;
+
+// -----------------------------------------------------------------------------
+// Atom capabilities
+// -----------------------------------------------------------------------------
+
+function fieldRootPresentation() {
+	return defineAtomCapability<void, AtomHost, FieldBondView>({
+		slot: FIELD_ROOT,
+		meta: {
+			layer: 1,
+			kind: 'projection',
+			projects: ['root'],
+			docs: 'Field root group labelling and validation state projection.'
+		},
+		behavior: {
+			attrs: (_node, bond) => {
+				const hasErrors = (bond?.errors.length ?? 0) > 0;
+				const description = bond?.atomByRole(hasErrors ? 'error' : 'description')?.id;
+
+				return {
+					role: 'group',
+					'aria-labelledby': bond?.atomByRole('label')?.id,
+					'aria-describedby': description,
+					'aria-invalid': `${hasErrors}`
+				};
+			}
+		}
+	});
+}
+
+// FieldBond — label/control fold in the labelled-control link via their roles; validation lives on the Bond.
+
+// -----------------------------------------------------------------------------
+// Bond spec and constructor facade
+// -----------------------------------------------------------------------------
+
+const FieldBondImpl = defineBond<
+	{
+		root: typeof FieldRootAtom;
+		label: { atom: typeof FieldLabelAtom; role: 'label' };
+		control: { atom: typeof FieldControlAtom; role: 'control' };
+		description: { atom: typeof FieldDescriptionAtom; role: 'description' };
+	},
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	any,
+	typeof FieldBondBase
+>({
+	name: 'field',
+	base: FieldBondBase,
+	atoms: {
+		root: FieldRootAtom,
+		label: { atom: FieldLabelAtom, role: 'label' },
+		control: { atom: FieldControlAtom, role: 'control' },
+		description: { atom: FieldDescriptionAtom, role: 'description' }
+	}
+});
+
+// Instance type — paired with the const above.
+export type FieldBond = BondOf<typeof FieldBondImpl>;
+
+interface FieldBondConstructor {
+	new (props: FieldStateProps): FieldBond;
+	readonly CONTEXT_KEY: string;
+	readonly spec: (typeof FieldBondImpl)['spec'];
+	get(): FieldBond | undefined;
+	getOrThrow(message?: string): FieldBond;
+	set(bond: FieldBond): FieldBond;
+	create(props: FieldStateProps): FieldBond;
+}
+
+export const FieldBond = FieldBondImpl as unknown as FieldBondConstructor;

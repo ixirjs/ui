@@ -47,7 +47,9 @@
 	const isReadonly = $derived(_readonly || readonly);
 	const isChecked = $derived(proxy.current === value);
 
-	const checkedContentSnippet = $derived(isChecked ? checkedContent ? customCheckedContent: defaultCheckedContent : undefined);
+	const checkedContentSnippet = $derived(
+		isChecked ? (checkedContent ? customCheckedContent : defaultCheckedContent) : undefined
+	);
 
 	function handleChange(ev: Event) {
 		const checked = (ev.currentTarget as HTMLInputElement)?.checked ?? false;
@@ -76,8 +78,9 @@
 </script>
 
 {#snippet defaultCheckedContent()}
-	<Stack.Item 
-		class="rounded-inherit pointer-events-none size-full scale-[0.6] bg-current" 
+	<Stack.Item
+		value="indicator"
+		class="rounded-inherit pointer-events-none size-full scale-[0.6] bg-current"
 		enter={animateRadioIndicatorIn()}
 		exit={animateRadioIndicatorOut()}
 	/>
@@ -101,7 +104,7 @@
 	as="label"
 	{...radioProps}
 >
-	<Stack.Item class="pointer-events-none flex size-full">
+	<Stack.Item value="control" class="pointer-events-none flex size-full">
 		<input
 			bind:group={proxy.current}
 			{id}

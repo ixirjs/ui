@@ -2,7 +2,7 @@ const compositionCode = `
 <script lang="ts">
   import { HtmlAtom } from '@svelte-atoms/core';
   import { Button } from '@svelte-atoms/core/button';
-<\/script>
+</script>
 
 <!-- Use Button as base, add custom styles -->
 <HtmlAtom base={Button} class="custom-additional-styles">
@@ -15,7 +15,7 @@ const animationCode = `
   import { fade, slide } from 'svelte/transition';
   
   let show = $state(true);
-<\/script>
+</script>
 
 {#if show}
   <HtmlAtom 
@@ -46,7 +46,7 @@ const customComponentCode = `
     secondary: 'bg-gray-500 text-white hover:bg-gray-600',
     danger: 'bg-red-500 text-white hover:bg-red-600'
   };
-<\/script>
+</script>
 
 <HtmlAtom 
   as="button" 
@@ -103,14 +103,14 @@ const useCases = [
 
 export const metadata = {
 	title: 'Atom - Svelte Atoms',
-	description: 'The foundational building block for all svelte-atoms components.',
+	description: 'The HtmlAtom UI primitive and its relationship to runtime Atom classes.',
 	componentTitle: 'Atom',
 	componentDescription:
-		'Foundational building block providing polymorphic HTML with preset styling and Bond integration.',
+		'HtmlAtom is the renderable UI primitive. Runtime Atom classes are separate objects used for node ownership, capabilities, and Bond integration.',
 	componentType: 'simple' as const,
 	status: 'stable' as const,
 	packageName: '@svelte-atoms/core',
-	importCode: "import { BondAtom } from '@svelte-atoms/core';",
+	importCode: "import { HtmlAtom } from '@svelte-atoms/core';",
 	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Atom' }],
 	useCases,
 	examples: {

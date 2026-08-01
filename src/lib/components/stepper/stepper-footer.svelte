@@ -15,10 +15,6 @@
 	const footerProps = $derived(mergePresetProps(preset, 'stepper.footer', restProps));
 </script>
 
-<HtmlAtom
-	{bond}
-	class={['stepper-footer w-full', '$preset', klass]}
-	{...footerProps}
->
+<HtmlAtom {bond} class={['stepper-footer w-full', '$preset', klass]} {...footerProps}>
 	{@render children?.({ stepper: bond })}
 </HtmlAtom>

@@ -18,8 +18,8 @@
 				<p>Make changes to your profile here. Click save when you're done.</p>
 			</Dialog.Body>
 			<Dialog.Footer class="flex justify-end gap-2">
-				<Button variant="outline" onclick={() => dialog.state.close()}>Cancel</Button>
-				<Button onclick={() => dialog.state.close()}>Save changes</Button>
+				<Button variant="outline" onclick={() => dialog.close()}>Cancel</Button>
+				<Button onclick={() => dialog.close()}>Save changes</Button>
 			</Dialog.Footer>
 		</Dialog.Content>
 	{/snippet}

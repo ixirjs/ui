@@ -4,12 +4,12 @@
 
 <script lang="ts">
 	import { cn, defineState, defineProperty } from '$svelte-atoms/core/utils';
-	import { bindBond } from '$svelte-atoms/core/shared/bind-bond.svelte';
-	import { bondFactory } from '$svelte-atoms/core/shared';
-	import { ActivePortal, Portal, Portals } from '$svelte-atoms/core/components/portal';
-	import { mergePresetProps, HtmlAtom as Atom } from '$svelte-atoms/core/components/atom';
+	import { bindBond } from '$svelte-atoms/core/shared/bond/bind.svelte';
+	import { ActivePortal, Portals } from '$svelte-atoms/core/components/portal';
+	import { PortalHost } from '$svelte-atoms/core/components/portal/host';
+	import { mergePresetProps, HtmlAtom } from '$svelte-atoms/core/components/atom';
 	import { HtmlElement, SvgElement } from '$svelte-atoms/core/components/element';
-	import { RootBond, RootBondState } from './bond.svelte';
+	import { RootBond } from './bond.svelte';
 	import type { RootProps } from './types';
 
 	let {
@@ -52,15 +52,14 @@
 		})
 	]);
 
-	const binding = bindBond<RootBond>(
-		bondFactory(RootBondState, RootBond),
-		{ renderers: () => renderers }
-	);
+	const binding = bindBond<RootBond>((props) => new RootBond(props), {
+		renderers: () => renderers
+	});
 	const bond = binding.bond.share();
 </script>
 
 <Portals id="root">
-	<Atom
+	<HtmlAtom
 		{@attach (node: HTMLElement) => {
 			bond.rootElement = node;
 		}}
@@ -74,15 +73,13 @@
 	>
 		{#if portal}
 			{@render portal?.()}
+			<ActivePortal portal="root.l0">
+				{@render children?.()}
+			</ActivePortal>
 		{:else}
-			<!-- Absolute surface over the root atom; the soft containment boundary for overlays. -->
-			<Portal.Outer id="root.l0">
-				<Portal.Inner />
-			</Portal.Outer>
+			<PortalHost id="root.l0" class="flex-1 flex flex-col w-full h-full">
+				{@render children?.()}
+			</PortalHost>
 		{/if}
-
-		<ActivePortal portal="root.l0">
-			{@render children?.()}
-		</ActivePortal>
-	</Atom>
+	</HtmlAtom>
 </Portals>

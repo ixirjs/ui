@@ -4,7 +4,7 @@
 	import { PropsTable } from '$docs/md/components';
 
 	let {
-		data,
+		data
 	}: {
 		data: { name: string; type: string; default: string; description: string }[];
 	} = $props();

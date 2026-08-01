@@ -38,10 +38,10 @@
 	role="progressbar"
 	aria-valuemin={0}
 	aria-valuemax={max}
-	aria-valuenow={isIndeterminate ? undefined : value ?? undefined}
+	aria-valuenow={isIndeterminate ? undefined : (value ?? undefined)}
 	aria-valuetext={isIndeterminate ? undefined : `${Math.round(percent!)}%`}
 	data-indeterminate={isIndeterminate}
-	data-value={isIndeterminate ? undefined : value ?? undefined}
+	data-value={isIndeterminate ? undefined : (value ?? undefined)}
 	data-max={max}
 	data-completed={!isIndeterminate && percent === 100}
 	{...linearProps}
@@ -57,9 +57,15 @@
 
 <style>
 	@keyframes progress-indeterminate {
-		0%   { transform: translateX(-100%); }
-		50%  { transform: translateX(300%); }
-		100% { transform: translateX(-100%); }
+		0% {
+			transform: translateX(-100%);
+		}
+		50% {
+			transform: translateX(300%);
+		}
+		100% {
+			transform: translateX(-100%);
+		}
 	}
 
 	:global(.animate-progress-indeterminate) {

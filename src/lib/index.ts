@@ -1,4 +1,5 @@
 export * from './components';
+export { Atom } from './components';
 export * from './utils';
 export * from './shared';
 export * from './runes';

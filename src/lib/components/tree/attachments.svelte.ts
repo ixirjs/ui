@@ -1,7 +1,4 @@
+import { createBondAttachment } from '$svelte-atoms/core/components/internal/attachments.svelte';
 import { TreeBond } from './bond.svelte';
 
-export function tree(callback: (node: HTMLElement, bond?: TreeBond) => any) {
-	const bond = TreeBond.get();
-
-	return (node: HTMLElement) => callback(node, bond);
-}
+export const tree = createBondAttachment<TreeBond>(TreeBond);

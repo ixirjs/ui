@@ -64,7 +64,6 @@
 </script>
 
 <span class="relative flex h-full w-full flex-1 items-center overflow-hidden">
-
 	<!-- Coloured overlay — scrolls with the input -->
 	<span
 		aria-hidden="true"

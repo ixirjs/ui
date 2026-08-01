@@ -19,5 +19,13 @@
 		"target": "ES2022",
 		"lib": ["ES2022", "ESNext.Disposable", "DOM", "DOM.Iterable"],
 		"verbatimModuleSyntax": true
-	}
+	},
+	"exclude": [
+		"dist",
+		"build",
+		"storybook-static",
+		"test-results",
+		"node_modules",
+		"src/routes/**/llms.txt/**"
+	]
 }

@@ -1,4 +1,8 @@
 <script lang="ts">
+	// This segment is a `contenteditable` field whose text is managed imperatively: setting
+	// `textContent` (rather than binding it) is required to avoid Svelte re-rendering fighting the
+	// caret position on every keystroke. The no-dom-manipulating rule doesn't fit this pattern.
+	/* eslint-disable svelte/no-dom-manipulating */
 	import { untrack } from 'svelte';
 	import { clamp as clampRange } from '$svelte-atoms/core/utils/math';
 	import type { ColorSegmentProps } from './types';
@@ -11,16 +15,21 @@
 		class: klass = '',
 		onchange,
 		oncommit,
-		onfocusmove,
+		onfocusmove
 	}: ColorSegmentProps = $props();
 
 	let el = $state<HTMLSpanElement>();
 
-	const isHex    = $derived(channel.kind === 'hex');
+	const isHex = $derived(channel.kind === 'hex');
 	const minWidth = $derived(
 		isHex
 			? 2
-			: Math.max(3, (channel.precision ?? 0) + Math.ceil(Math.log10(Math.abs(channel.max) + 1)) + (channel.suffix?.length ?? 0))
+			: Math.max(
+					3,
+					(channel.precision ?? 0) +
+						Math.ceil(Math.log10(Math.abs(channel.max) + 1)) +
+						(channel.suffix?.length ?? 0)
+				)
 	);
 
 	function formatValue(v: number | string | undefined): string {
@@ -61,9 +70,7 @@
 			raw = raw.slice(0, -channel.suffix.length).trim();
 		}
 		if (isHex) {
-			return /^[0-9a-fA-F]{1,2}$/.test(raw)
-				? raw.padStart(2, '0').toUpperCase()
-				: undefined;
+			return /^[0-9a-fA-F]{1,2}$/.test(raw) ? raw.padStart(2, '0').toUpperCase() : undefined;
 		}
 		const n = parseFloat(raw);
 		return isNaN(n) ? undefined : clamp(n);
@@ -82,12 +89,18 @@
 
 	function step(dir: 1 | -1, multiplier = 1) {
 		if (isHex) {
-			const cur = typeof value === 'string' ? parseInt(value, 16) : (value as number | undefined) ?? 0;
-			onchange?.(clamp(cur + dir * multiplier).toString(16).padStart(2, '0').toUpperCase());
+			const cur =
+				typeof value === 'string' ? parseInt(value, 16) : ((value as number | undefined) ?? 0);
+			onchange?.(
+				clamp(cur + dir * multiplier)
+					.toString(16)
+					.padStart(2, '0')
+					.toUpperCase()
+			);
 		} else {
 			const cur = typeof value === 'number' ? value : parseFloat(String(value ?? channel.min));
 			const prec = channel.precision ?? 0;
-			const inc  = prec > 0 ? Math.pow(10, -prec) : 1;
+			const inc = prec > 0 ? Math.pow(10, -prec) : 1;
 			onchange?.(clamp(parseFloat((cur + dir * inc * multiplier).toFixed(prec + 1))));
 		}
 	}
@@ -132,7 +145,7 @@
 
 		if (key === 'ArrowUp' || key === 'ArrowDown') {
 			ev.preventDefault();
-			const dir        = key === 'ArrowUp' ? 1 : -1;
+			const dir = key === 'ArrowUp' ? 1 : -1;
 			const multiplier = ev.shiftKey ? 10 : ev.altKey ? 0.1 : 1;
 			step(dir, multiplier);
 			requestAnimationFrame(() => {
@@ -158,7 +171,7 @@
 			const sel = window.getSelection();
 			if (sel?.rangeCount && el) {
 				const range = sel.getRangeAt(0);
-				const len   = el.textContent?.length ?? 0;
+				const len = el.textContent?.length ?? 0;
 				if (range.endOffset === len && range.collapsed) {
 					ev.preventDefault();
 					commit(ev, false);
@@ -168,8 +181,15 @@
 			return;
 		}
 
-		if (key === 'Enter') { ev.preventDefault(); commit(ev, false); return; }
-		if (key === 'Tab')   { commit(ev, false); return; }
+		if (key === 'Enter') {
+			ev.preventDefault();
+			commit(ev, false);
+			return;
+		}
+		if (key === 'Tab') {
+			commit(ev, false);
+			return;
+		}
 
 		if ((key === 'Backspace' || key === 'Delete') && !el?.textContent?.trim()) {
 			ev.preventDefault();
@@ -180,10 +200,10 @@
 	// Sanitize pasted text to the channel's allowed characters before inserting.
 	function handlePaste(ev: ClipboardEvent) {
 		ev.preventDefault();
-		const raw     = ev.clipboardData?.getData('text/plain') ?? '';
+		const raw = ev.clipboardData?.getData('text/plain') ?? '';
 		const allowed = isHex
 			? raw.replace(/[^0-9a-fA-F]/gi, '').slice(0, 2)
-			: raw.replace(/[^0-9.\-]/g, '');
+			: raw.replace(/[^0-9.-]/g, '');
 		if (!allowed || !el) return;
 
 		// Insert at cursor via Selection API (no execCommand)
@@ -221,11 +241,15 @@
 		'focus:bg-foreground/10 focus:outline-none focus:rounded-sm',
 		hasValue ? 'text-foreground' : 'text-muted-foreground',
 		disabled && 'cursor-not-allowed opacity-50',
-		klass,
-	].filter(Boolean).join(' ')}
+		klass
+	]
+		.filter(Boolean)
+		.join(' ')}
 	onfocus={handleFocus}
 	onblur={handleBlur}
-	oninput={() => {/* filtered in keydown; DOM read on commit */}}
+	oninput={() => {
+		/* filtered in keydown; DOM read on commit */
+	}}
 	onkeydown={handleKeydown}
-	onpaste={handlePaste}
->{displayText}</span>
+	onpaste={handlePaste}>{displayText}</span
+>

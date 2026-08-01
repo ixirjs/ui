@@ -1,25 +1,57 @@
 import {
+	Atom,
 	Bond,
-	BondState,
-	BondAtom,
+	defineAtom,
 	type BondElements,
 	type BondStateProps
-} from '$svelte-atoms/core/shared/bond.svelte';
-import { defineBond, type BondOf, type ViewOf } from '$svelte-atoms/core/shared';
+} from '$svelte-atoms/core/shared/bond';
+import { defineBond, type BondOf } from '$svelte-atoms/core/shared';
 
-export type PortalStateProps = BondStateProps & {
+// -----------------------------------------------------------------------------
+// Public types
+// -----------------------------------------------------------------------------
+
+export type PortalBondProps = BondStateProps & {
 	id: string;
 };
+
+export type PortalStateProps = PortalBondProps;
 
 export type PortalElements = BondElements & {
 	root?: HTMLElement;
 	inner?: HTMLElement;
 };
 
-// Bond shape the portal atoms type `this.bond` against — breaks the atom↔bond cycle.
-type PortalBondView = ViewOf<PortalState>;
+// -----------------------------------------------------------------------------
+// Bond implementation
+// -----------------------------------------------------------------------------
 
-export class PortalRootAtom extends BondAtom<PortalBondView, HTMLElement> {
+export class PortalBondBase<Props extends PortalBondProps = PortalBondProps> extends Bond<Props> {
+	constructor(props: Props) {
+		super(props, 'portal');
+	}
+
+	// The teleport sink and the floating-ui boundary are the same element: the Inner once mounted,
+	// else the Outer.
+	get boundaryElement(): HTMLElement | undefined {
+		return (
+			(this.node('inner')?.element as HTMLElement | undefined) ??
+			(this.node('root')?.element as HTMLElement | undefined)
+		);
+	}
+}
+
+// -----------------------------------------------------------------------------
+// Internal types
+// -----------------------------------------------------------------------------
+
+type PortalBondView = PortalBondBase<PortalBondProps>;
+
+// -----------------------------------------------------------------------------
+// Atom definitions
+// -----------------------------------------------------------------------------
+
+export class PortalRootAtom extends Atom<PortalBondView, HTMLElement> {
 	constructor(bond: PortalBondView) {
 		super(bond, 'root');
 	}
@@ -32,23 +64,17 @@ export class PortalRootAtom extends BondAtom<PortalBondView, HTMLElement> {
 	}
 }
 
-export class PortalInnerAtom extends BondAtom<PortalBondView, HTMLElement> {
-	constructor(bond: PortalBondView) {
-		super(bond, 'inner');
-	}
-}
+export const PortalInnerAtom = defineAtom<PortalBondView, HTMLElement>('inner');
+export type PortalInnerAtom = InstanceType<typeof PortalInnerAtom>;
 
-class PortalBondBase extends Bond<PortalStateProps, PortalState> {
-	// The teleport sink and the floating-ui boundary are the same element: the Inner once mounted,
-	// else the Outer. A getter, not a $derived memo, so synchronous readers see a fresh value.
-	get boundaryElement(): HTMLElement | undefined {
-		return this.element<HTMLElement>('inner') ?? this.element<HTMLElement>('root');
-	}
-}
+// -----------------------------------------------------------------------------
+// Bond spec and constructor facade
+// -----------------------------------------------------------------------------
 
-export const PortalBond = defineBond<
+const PortalBondImpl = defineBond<
 	{ root: typeof PortalRootAtom; inner: typeof PortalInnerAtom },
-	PortalState,
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	any,
 	typeof PortalBondBase
 >({
 	name: 'portal',
@@ -56,6 +82,17 @@ export const PortalBond = defineBond<
 	atoms: { root: PortalRootAtom, inner: PortalInnerAtom }
 });
 
-export type PortalBond = BondOf<typeof PortalBond>;
+export type PortalBond = BondOf<typeof PortalBondImpl>;
 
-export class PortalState extends BondState<PortalStateProps> {}
+interface PortalBondConstructor {
+	new (props: PortalBondProps): PortalBond;
+	readonly CONTEXT_KEY: string;
+	readonly CONTEXT_KEYS?: readonly string[];
+	readonly spec: (typeof PortalBondImpl)['spec'];
+	get(): PortalBond | undefined;
+	getOrThrow(message?: string): PortalBond;
+	set(bond: PortalBond): PortalBond;
+	create(props: PortalBondProps): PortalBond;
+}
+
+export const PortalBond = PortalBondImpl as unknown as PortalBondConstructor;

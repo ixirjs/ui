@@ -1,6 +1,7 @@
 import type { Snippet } from 'svelte';
 import type { Base, HtmlAtomProps } from '../atom';
 import type { PopoverDialogBond } from './bond.svelte';
+import type { ZIndexInput } from '../portal';
 
 // Children snippets receive the fused bond.
 type Slot = Snippet<[{ popoverDialog: PopoverDialogBond }]>;
@@ -22,7 +23,7 @@ export interface PopoverDialogContentProps<
 	B extends Base = Base
 > extends HtmlAtomProps<E, B, Slot> {
 	type?: 'modal' | 'non-modal';
-	'z-index'?: number;
+	'z-index'?: ZIndexInput;
 	portal?: string;
 	children?: Slot;
 	onclick?: (ev: MouseEvent, bond: PopoverDialogBond) => void;

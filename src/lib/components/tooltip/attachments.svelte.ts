@@ -1,7 +1,4 @@
+import { createBondAttachment } from '$svelte-atoms/core/components/internal/attachments.svelte';
 import { PopoverBond } from '$svelte-atoms/core/components/popover/bond.svelte';
 
-export function tooltip(callback: (node: HTMLElement, tab?: PopoverBond) => any) {
-	const bond = PopoverBond.get();
-
-	return (node: HTMLElement) => callback(node, bond);
-}
+export const tooltip = createBondAttachment<PopoverBond>(PopoverBond);

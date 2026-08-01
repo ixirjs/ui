@@ -1,7 +1,13 @@
 <script lang="ts">
 	import { mergePresetProps, HtmlAtom } from '$svelte-atoms/core/components/atom';
 
-	let { class: klass = '', as = 'div', preset = undefined, children = undefined, ...restProps } = $props();
+	let {
+		class: klass = '',
+		as = 'div',
+		preset = undefined,
+		children = undefined,
+		...restProps
+	} = $props();
 
 	const rootProps = $derived(mergePresetProps(preset, 'breadcrumb', restProps));
 </script>

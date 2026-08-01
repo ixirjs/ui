@@ -2,6 +2,7 @@ import type { Snippet } from 'svelte';
 import type { Factory } from '$svelte-atoms/core/types';
 import type { SidebarBond } from './bond.svelte';
 import type { Base, HtmlAtomProps, SnippetProps } from '../atom';
+import type { ZIndexInput } from '../portal';
 
 // Sidebar Snippet Props
 
@@ -15,13 +16,13 @@ export type SidebarRootProps<
 	E extends keyof HTMLElementTagNameMap = 'div',
 	B extends Base = Base
 > = HtmlAtomProps<E, B, SidebarChildren> & {
-	'z-index'?: number;
+	'z-index'?: ZIndexInput;
 	open?: boolean;
 	disabled?: boolean;
 	width?: string | number;
 	/**
-	 * Render as a teleported overlay carrying `ZLayer('modal')` instead of an in-flow rail (ADR
-	 * 0009 D3). Structural — read once at mount, not toggled at runtime.
+	 * Render as a teleported overlay carrying `ZLayer('modal')` instead of an in-flow rail.
+	 * Structural — read once at mount, not toggled at runtime.
 	 */
 	overlay?: boolean;
 	/** Teleport target when `overlay` is set (defaults to the root portal `'root.l0'`). */

@@ -16,10 +16,7 @@ export function on<E extends Event = Event, T extends EventTarget = Element>(
 
 // Attachment: run `onclick`, then — unless it called preventDefault() — run `action`.
 // Single source of truth for click handlers that drive a bond action (toggle/open/close/…).
-export function clickAction(
-	action: (ev: MouseEvent) => void,
-	onclick?: (ev: MouseEvent) => void
-) {
+export function clickAction(action: (ev: MouseEvent) => void, onclick?: (ev: MouseEvent) => void) {
 	return on<MouseEvent, HTMLElement>('click', (ev) => {
 		onclick?.(ev);
 

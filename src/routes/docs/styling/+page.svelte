@@ -17,7 +17,6 @@
 <!-- With opacity modifier -->
 <div class="bg-foreground/10">Subtle background</div>`;
 
-
 	const cnExample = `import { cn } from '@svelte-atoms/core/utils';
 
 // Resolves Tailwind conflicts — last one wins
@@ -131,7 +130,7 @@ ${'<'}/HtmlAtom>`;
   ]
 });`;
 
-	const reactiveVariantsExample = `// Pass a function to access component bond state
+	const reactiveVariantsExample = `// Pass a function to access component Bond values
 const accordionVariants = defineVariants((bond) => ({
   class: 'border rounded-md transition-all',
   variants: {
@@ -195,7 +194,7 @@ ${'<'}/div>`;
 		},
 		{
 			label: 'Object',
-			code: "class={{ active: isActive, hidden: !show }}",
+			code: 'class={{ active: isActive, hidden: !show }}',
 			description: 'Boolean-keyed map'
 		},
 		{
@@ -281,11 +280,24 @@ ${'<'}/div>`;
 	<div class="flex flex-wrap gap-3">
 		<Button href="/docs/preset" as="a" variant="primary" class="gap-2 px-5">
 			Preset System
-			<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-				<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				width="14"
+				height="14"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				aria-hidden="true"
+			>
+				<path d="M5 12h14" /><path d="m12 5 7 7-7 7" />
 			</svg>
 		</Button>
-		<Button href="/docs/accessibility" as="a" variant="outline" class="px-5">Accessibility Guide</Button>
+		<Button href="/docs/accessibility" as="a" variant="outline" class="px-5"
+			>Accessibility Guide</Button
+		>
 	</div>
 </div>
 
@@ -300,18 +312,25 @@ ${'<'}/div>`;
 
 	<div class="space-y-3 mb-8">
 		<p class="text-muted-foreground leading-relaxed">
-			Every component accepts a <code class="bg-primary/10 text-primary rounded px-1.5 py-0.5 font-mono text-sm">class</code> prop
-			that supports strings, arrays, and objects. The styling system builds on Tailwind CSS utilities,
-			enhanced by the <code class="bg-primary/10 text-primary rounded px-1.5 py-0.5 font-mono text-sm">cn()</code> utility for
-			intelligent merging, and integrated with the preset system for global theming.
+			Every component accepts a <code
+				class="bg-primary/10 text-primary rounded px-1.5 py-0.5 font-mono text-sm">class</code
+			>
+			prop that supports strings, arrays, and objects. The styling system builds on Tailwind CSS utilities,
+			enhanced by the
+			<code class="bg-primary/10 text-primary rounded px-1.5 py-0.5 font-mono text-sm">cn()</code> utility
+			for intelligent merging, and integrated with the preset system for global theming.
 		</p>
 	</div>
 
 	<div class="grid gap-3 sm:grid-cols-2 md:grid-cols-4 mb-8">
 		{#each classPropFormats as fmt (fmt.label)}
 			<div class="border-border rounded-lg border p-4">
-				<p class="text-foreground mb-2 text-xs font-semibold uppercase tracking-wide">{fmt.label}</p>
-				<code class="text-primary block font-mono text-xs leading-relaxed break-all">{fmt.code}</code>
+				<p class="text-foreground mb-2 text-xs font-semibold uppercase tracking-wide">
+					{fmt.label}
+				</p>
+				<code class="text-primary block font-mono text-xs leading-relaxed break-all"
+					>{fmt.code}</code
+				>
 				<p class="text-muted-foreground mt-2 text-xs">{fmt.description}</p>
 			</div>
 		{/each}
@@ -321,9 +340,22 @@ ${'<'}/div>`;
 		{#each metadata.keyFeatures as feature, i (i)}
 			<div class="border-border rounded-lg border p-4">
 				<div class="flex items-start gap-2">
-					<div class="bg-primary/10 text-primary mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded">
-						<svg xmlns="http://www.w3.org/2000/svg" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-							<path d="M20 6 9 17l-5-5"/>
+					<div
+						class="bg-primary/10 text-primary mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded"
+					>
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							width="9"
+							height="9"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="3"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							aria-hidden="true"
+						>
+							<path d="M20 6 9 17l-5-5" />
 						</svg>
 					</div>
 					<p class="text-muted-foreground text-xs leading-relaxed">{feature}</p>
@@ -343,8 +375,8 @@ ${'<'}/div>`;
 	</Section.Header>
 
 	<p class="text-muted-foreground mb-6 text-sm leading-relaxed">
-		All component props and the class array accept any Tailwind utility. Responsive prefixes,
-		state variants, and opacity modifiers work exactly as expected.
+		All component props and the class array accept any Tailwind utility. Responsive prefixes, state
+		variants, and opacity modifiers work exactly as expected.
 	</p>
 
 	<div class="overflow-hidden rounded-lg">
@@ -357,7 +389,8 @@ ${'<'}/div>`;
 	<Section.Header>
 		<Section.Title>The cn() utility</Section.Title>
 		<Section.Subtitle>
-			Intelligent class merging — combines clsx for conditionals with tailwind-merge for conflict resolution.
+			Intelligent class merging — combines clsx for conditionals with tailwind-merge for conflict
+			resolution.
 		</Section.Subtitle>
 	</Section.Header>
 
@@ -377,19 +410,23 @@ ${'<'}/div>`;
 	<Section.Header>
 		<Section.Title>CSS custom properties</Section.Title>
 		<Section.Subtitle>
-			Semantic color tokens follow shadcn/ui conventions for maximum compatibility and theme-awareness.
+			Semantic color tokens follow shadcn/ui conventions for maximum compatibility and
+			theme-awareness.
 		</Section.Subtitle>
 	</Section.Header>
 
 	<p class="text-muted-foreground mb-6 text-sm leading-relaxed">
-		Use token-based utilities like <code class="bg-primary/10 text-primary rounded px-1.5 py-0.5 font-mono text-xs">bg-primary</code> instead
-		of specific colors. Tokens adapt automatically to dark mode and custom themes.
+		Use token-based utilities like <code
+			class="bg-primary/10 text-primary rounded px-1.5 py-0.5 font-mono text-xs">bg-primary</code
+		> instead of specific colors. Tokens adapt automatically to dark mode and custom themes.
 	</p>
 
 	<div class="grid gap-2 sm:grid-cols-2 mb-6">
 		{#each metadata.colorTokens as token (token.token)}
 			<div class="border-border flex items-center gap-3 rounded-lg border px-3 py-2">
-				<code class="bg-primary/10 text-primary shrink-0 rounded px-1.5 py-0.5 font-mono text-xs">{token.token}</code>
+				<code class="bg-primary/10 text-primary shrink-0 rounded px-1.5 py-0.5 font-mono text-xs"
+					>{token.token}</code
+				>
 				<span class="text-muted-foreground text-xs">{token.usage}</span>
 			</div>
 		{/each}
@@ -410,10 +447,12 @@ ${'<'}/div>`;
 	</Section.Header>
 
 	<p class="text-muted-foreground mb-6 text-sm leading-relaxed">
-		Falsy values (<code class="bg-primary/10 text-primary rounded px-1.5 py-0.5 font-mono text-xs">false</code>,
+		Falsy values (<code class="bg-primary/10 text-primary rounded px-1.5 py-0.5 font-mono text-xs"
+			>false</code
+		>,
 		<code class="bg-primary/10 text-primary rounded px-1.5 py-0.5 font-mono text-xs">null</code>,
-		<code class="bg-primary/10 text-primary rounded px-1.5 py-0.5 font-mono text-xs">undefined</code>) are silently dropped.
-		Arrays can be arbitrarily nested.
+		<code class="bg-primary/10 text-primary rounded px-1.5 py-0.5 font-mono text-xs">undefined</code
+		>) are silently dropped. Arrays can be arbitrarily nested.
 	</p>
 
 	<div class="overflow-hidden rounded-lg">
@@ -426,24 +465,33 @@ ${'<'}/div>`;
 	<Section.Header>
 		<Section.Title>Variant system</Section.Title>
 		<Section.Subtitle>
-			Define reusable, type-safe component variants with full TypeScript inference and bond state access.
+			Define reusable, type-safe component variants with full TypeScript inference and Bond value
+			access.
 		</Section.Subtitle>
 	</Section.Header>
 
 	<DocCallout variant="info" title="Local vs global variants">
 		<p class="text-muted-foreground text-sm leading-relaxed">
-			<strong>Local variants</strong> — defined with <code class="bg-primary/10 text-primary rounded px-1.5 py-0.5 font-mono text-xs">defineVariants()</code> in the
-			component file. Best for component-specific styling. <strong>Global variants</strong> — defined in the
+			<strong>Local variants</strong> — defined with
+			<code class="bg-primary/10 text-primary rounded px-1.5 py-0.5 font-mono text-xs"
+				>defineVariants()</code
+			>
+			in the component file. Best for component-specific styling. <strong>Global variants</strong> —
+			defined in the
 			<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
 			<a href="/docs/preset" class="text-primary font-medium hover:underline">Preset System</a>
-			via <code class="bg-primary/10 text-primary rounded px-1.5 py-0.5 font-mono text-xs">setPreset()</code>. Apply consistently across your entire app.
+			via
+			<code class="bg-primary/10 text-primary rounded px-1.5 py-0.5 font-mono text-xs"
+				>setPreset()</code
+			>. Apply consistently across your entire app.
 		</p>
 	</DocCallout>
 
 	<p class="text-muted-foreground mb-6 text-sm leading-relaxed">
-		<code class="bg-primary/10 text-primary rounded px-1.5 py-0.5 font-mono text-xs">defineVariants()</code> creates a type-safe
-		variant configuration for use at the component level. Variants support multiple dimensions (size,
-		variant, state), defaults, compound rules, and any HTML attribute — not just class.
+		<code class="bg-primary/10 text-primary rounded px-1.5 py-0.5 font-mono text-xs"
+			>defineVariants()</code
+		> creates a type-safe variant configuration for use at the component level. Variants support multiple
+		dimensions (size, variant, state), defaults, compound rules, and any HTML attribute — not just class.
 	</p>
 
 	<div class="overflow-hidden rounded-lg mb-8">
@@ -465,14 +513,17 @@ ${'<'}/div>`;
 	<Section.Header>
 		<Section.Title>Compound variants</Section.Title>
 		<Section.Subtitle>
-			Apply additional classes and attributes only when a specific combination of variants is active.
+			Apply additional classes and attributes only when a specific combination of variants is
+			active.
 		</Section.Subtitle>
 	</Section.Header>
 
 	<p class="text-muted-foreground mb-6 text-sm leading-relaxed">
 		Compound variants fire when all listed variant keys match simultaneously. They can set classes,
-		ARIA attributes, <code class="bg-primary/10 text-primary rounded px-1.5 py-0.5 font-mono text-xs">role</code>, or
-		any other HTML attribute — useful for accessibility patterns that depend on combined state.
+		ARIA attributes, <code
+			class="bg-primary/10 text-primary rounded px-1.5 py-0.5 font-mono text-xs">role</code
+		>, or any other HTML attribute — useful for accessibility patterns that depend on combined
+		state.
 	</p>
 
 	<div class="overflow-hidden rounded-lg">
@@ -485,16 +536,23 @@ ${'<'}/div>`;
 	<Section.Header>
 		<Section.Title>Reactive variants</Section.Title>
 		<Section.Subtitle>
-			Access component bond state for variants that update automatically when internal state changes.
+			Access component Bond values for variants that update automatically when internal state
+			changes.
 		</Section.Subtitle>
 	</Section.Header>
 
 	<p class="text-muted-foreground mb-6 text-sm leading-relaxed">
-		Pass a function to <code class="bg-primary/10 text-primary rounded px-1.5 py-0.5 font-mono text-xs">defineVariants()</code> to receive
-		the bond. This lets variant classes react to state like
+		Pass a function to <code
+			class="bg-primary/10 text-primary rounded px-1.5 py-0.5 font-mono text-xs"
+			>defineVariants()</code
+		>
+		to receive the bond. This lets variant classes react to state like
 		<code class="bg-primary/10 text-primary rounded px-1.5 py-0.5 font-mono text-xs">isOpen</code>,
-		<code class="bg-primary/10 text-primary rounded px-1.5 py-0.5 font-mono text-xs">isActive</code>, or
-		<code class="bg-primary/10 text-primary rounded px-1.5 py-0.5 font-mono text-xs">isDisabled</code> without extra prop wiring.
+		<code class="bg-primary/10 text-primary rounded px-1.5 py-0.5 font-mono text-xs">isActive</code
+		>, or
+		<code class="bg-primary/10 text-primary rounded px-1.5 py-0.5 font-mono text-xs"
+			>isDisabled</code
+		> without extra prop wiring.
 	</p>
 
 	<div class="overflow-hidden rounded-lg">
@@ -512,9 +570,10 @@ ${'<'}/div>`;
 	</Section.Header>
 
 	<p class="text-muted-foreground mb-6 text-sm leading-relaxed">
-		Place the string <code class="bg-primary/10 text-primary rounded px-1.5 py-0.5 font-mono text-xs">'$preset'</code> anywhere in a class
-		array and it is replaced by resolved preset classes. Without it, preset classes are prepended
-		automatically, which means your component defaults come after the preset baseline.
+		Place the string <code
+			class="bg-primary/10 text-primary rounded px-1.5 py-0.5 font-mono text-xs">'$preset'</code
+		> anywhere in a class array and it is replaced by resolved preset classes. Without it, preset classes
+		are prepended automatically, which means your component defaults come after the preset baseline.
 	</p>
 
 	<div class="overflow-hidden rounded-lg">
@@ -548,7 +607,9 @@ ${'<'}/div>`;
 			<ul class="space-y-1.5">
 				{#each ['Static colors, padding, margins — use Tailwind', 'Fixed dimensions or spacing — use Tailwind', 'State-based classes — use conditional arrays'] as item, i (i)}
 					<li class="flex items-start gap-2 text-sm">
-						<span class="text-muted-foreground/50 mt-0.5 shrink-0 font-mono text-xs leading-5">−</span>
+						<span class="text-muted-foreground/50 mt-0.5 shrink-0 font-mono text-xs leading-5"
+							>−</span
+						>
 						<span class="text-muted-foreground">{item}</span>
 					</li>
 				{/each}
@@ -573,7 +634,9 @@ ${'<'}/div>`;
 	<div class="border-border divide-border overflow-hidden rounded-lg border divide-y">
 		{#each bestPractices as practice (practice.num)}
 			<div class="flex gap-4 p-5">
-				<span class="text-primary shrink-0 font-mono text-xs font-semibold pt-0.5">{practice.num}</span>
+				<span class="text-primary shrink-0 font-mono text-xs font-semibold pt-0.5"
+					>{practice.num}</span
+				>
 				<div>
 					<p class="text-foreground mb-1 text-sm font-semibold">{practice.title}</p>
 					<p class="text-muted-foreground text-sm leading-relaxed">{practice.description}</p>

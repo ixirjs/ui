@@ -19,9 +19,7 @@
 </script>
 
 <Root
-	class={[
-		'bg-background relative min-h-screen w-full justify-normal p-0 font-sans antialiased'
-	]}
+	class={['bg-background relative min-h-screen w-full justify-normal p-0 font-sans antialiased']}
 >
 	<div class="flex w-full flex-col">
 		<Header />

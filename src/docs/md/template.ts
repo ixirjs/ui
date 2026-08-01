@@ -1,7 +1,7 @@
 // Tagged template literal for markdown strings; dedents common leading whitespace.
 export function md(strings: TemplateStringsArray, ...values: any[]): string {
 	// Combine template parts
-	let result = strings.reduce((acc, str, i) => {
+	const result = strings.reduce((acc, str, i) => {
 		return acc + str + (values[i] ?? '');
 	}, '');
 
@@ -11,9 +11,7 @@ export function md(strings: TemplateStringsArray, ...values: any[]): string {
 
 	if (nonEmptyLines.length === 0) return '';
 
-	const minIndent = Math.min(
-		...nonEmptyLines.map((line) => line.match(/^\s*/)?.[0].length ?? 0)
-	);
+	const minIndent = Math.min(...nonEmptyLines.map((line) => line.match(/^\s*/)?.[0].length ?? 0));
 
 	return lines
 		.map((line) => line.slice(minIndent))

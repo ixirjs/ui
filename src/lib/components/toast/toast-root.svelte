@@ -1,44 +1,55 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
 	import { HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
-	import { ToastBond, ToastBondState } from './bond.svelte';
+	import { mergeAtomProps } from '$svelte-atoms/core/components/atom';
+	import { ToastBond } from './bond.svelte';
 	import type { ToastRootProps } from './types';
-	import { bondFactory,bindBond } from '$svelte-atoms/core/shared';
+	import { bindBond, createAtomInstance } from '$svelte-atoms/core/shared';
 
 	let {
 		open = $bindable(true),
 		disabled = false,
 		duration = 0,
-		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		dismissible: _dismissible,
 		preset = undefined,
-		factory = bondFactory(ToastBondState, ToastBond),
+		factory = (props) => ToastBond.create(props),
 		children = undefined,
-		onclose = undefined,
+		// swallowed: kept out of restProps (would attach as a native DOM `close` listener). Not yet wired to the close flow.
+		onclose: _onclose = undefined,
 		...restProps
 	}: ToastRootProps<E, B> = $props();
+
+	let openState = $derived(open);
 
 	const binding = bindBond<ToastBond>(
 		(props) => factory(props),
 		{
-			open: [() => open, (v) => (open = v)],
+			open: [
+				() => openState,
+				(v) => {
+					openState = v;
+					open = openState;
+				}
+			],
 			disabled: () => disabled
 		},
 		{ preset: () => preset }
 	);
-	
+
 	const bond = binding.bond.share();
-
-
-	const rootProps = $derived({
-		...binding.props,
-		...restProps
+	const rootAtom = createAtomInstance('root', {
+		bond,
+		factory: (owner) => owner!.root()
 	});
+
+	const rootProps = $derived(
+		mergeAtomProps(rootAtom, preset, { ...binding.stateProps, ...restProps })
+	);
 
 	// Auto-dismiss when duration > 0.
 	$effect(() => {
-		if (!open || duration <= 0) return;
+		if (!openState || duration <= 0) return;
 		const handle = setTimeout(() => {
-			open = false;
+			bond.close();
 		}, duration);
 		return () => clearTimeout(handle);
 	});
@@ -48,8 +59,6 @@
 	}
 </script>
 
-<HtmlAtom
-	{...rootProps}
->
+<HtmlAtom {...rootProps}>
 	{@render children?.({ toast: bond })}
 </HtmlAtom>

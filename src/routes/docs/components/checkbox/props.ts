@@ -34,7 +34,8 @@ export const checkboxProps: PropDefinition[] = [
 		name: 'checkedContent',
 		type: 'Component | Snippet | undefined',
 		default: 'undefined',
-		description: 'Custom content to render inside the checkbox when it is checked (e.g., a checkmark icon)'
+		description:
+			'Custom content to render inside the checkbox when it is checked (e.g., a checkmark icon)'
 	},
 	{
 		name: 'indeterminateContent',
@@ -52,6 +53,7 @@ export const checkboxProps: PropDefinition[] = [
 		name: '...atomProps',
 		type: 'HtmlAtomProps',
 		default: '-',
-		description: 'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
-	},
+		description:
+			'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
+	}
 ];

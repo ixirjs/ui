@@ -1,11 +1,11 @@
-import { animate } from 'motion';
+import { animate, type Easing } from 'motion';
 import { CollapsibleBond } from '.';
 import { DURATION } from '$svelte-atoms/core/shared';
 
 export type AnimateCollapsibleBodyParams = {
 	duration?: number;
 	delay?: number;
-	ease?: string;
+	ease?: Easing | Easing[];
 };
 
 export function animateCollapsibleBody(params: AnimateCollapsibleBodyParams = {}) {
@@ -21,7 +21,7 @@ export function animateCollapsibleBody(params: AnimateCollapsibleBodyParams = {}
 				opacity: +isOpen,
 				height: isOpen ? 'auto' : 0
 			},
-			{ duration, delay, ease }
+			{ duration, delay, ...(ease ? { ease } : {}) }
 		);
 	};
 }

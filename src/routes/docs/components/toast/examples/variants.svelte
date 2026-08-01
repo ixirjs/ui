@@ -11,11 +11,33 @@
 </script>
 
 <div class="flex flex-wrap gap-2">
-	<Button onclick={() => toaster.add('default', { data: { title: 'Hello!' } as ToastData })}>Default</Button>
-	<Button onclick={() => toaster.add('info', { data: { title: 'Heads up', description: 'Just so you know.' } as ToastData })}>Info</Button>
-	<Button onclick={() => toaster.add('success', { data: { title: 'Saved!', description: 'Changes have been persisted.' } as ToastData })}>Success</Button>
-	<Button onclick={() => toaster.add('warning', { data: { title: 'Careful', description: 'Storage is almost full.' } as ToastData })}>Warning</Button>
-	<Button onclick={() => toaster.add('error', { data: { title: 'Error', description: 'Something went wrong.' } as ToastData })}>Error</Button>
+	<Button onclick={() => toaster.add('default', { data: { title: 'Hello!' } as ToastData })}
+		>Default</Button
+	>
+	<Button
+		onclick={() =>
+			toaster.add('info', {
+				data: { title: 'Heads up', description: 'Just so you know.' } as ToastData
+			})}>Info</Button
+	>
+	<Button
+		onclick={() =>
+			toaster.add('success', {
+				data: { title: 'Saved!', description: 'Changes have been persisted.' } as ToastData
+			})}>Success</Button
+	>
+	<Button
+		onclick={() =>
+			toaster.add('warning', {
+				data: { title: 'Careful', description: 'Storage is almost full.' } as ToastData
+			})}>Warning</Button
+	>
+	<Button
+		onclick={() =>
+			toaster.add('error', {
+				data: { title: 'Error', description: 'Something went wrong.' } as ToastData
+			})}>Error</Button
+	>
 	<Button onclick={() => toaster.clear()}>Clear all</Button>
 </div>
 
@@ -32,7 +54,10 @@
 			{#if data.description}
 				<Toast.Description class="text-sm opacity-80">{data.description}</Toast.Description>
 			{/if}
-			<Toast.Close class="absolute top-2 right-2 rounded p-1 opacity-50 transition-opacity hover:opacity-100" onclick={() => toaster.dismiss(item.id)} />
+			<Toast.Close
+				class="absolute top-2 right-2 rounded p-1 opacity-50 transition-opacity hover:opacity-100"
+				onclick={() => toaster.dismiss(item.id)}
+			/>
 		</Toast.Root>
 	{/each}
 </ol>

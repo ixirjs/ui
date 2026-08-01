@@ -1,9 +1,8 @@
 <script lang="ts">
-	import { PopoverState, PopoverBond } from './bond.svelte';
-	import { bondFactory } from '$svelte-atoms/core/shared';
-	import { OverlayBond } from '$svelte-atoms/core/components/overlay';
-	import { useCapabilities } from '$svelte-atoms/core/shared/use-capabilities.svelte';
-	import { bindBond } from '$svelte-atoms/core/shared/bind-bond.svelte';
+	import { PopoverBond, type PopoverBondProps } from './bond.svelte';
+	import { OverlayBond } from '$svelte-atoms/core/components/portal/host';
+	import { useCapabilities } from '$svelte-atoms/core/shared/capability/use.svelte';
+	import { bindBond } from '$svelte-atoms/core/shared/bond/bind.svelte';
 	import type { PopoverRootProps } from './types';
 
 	const owner = OverlayBond.get() ?? null;
@@ -14,33 +13,44 @@
 		placements = ['bottom-start', 'bottom-end', 'top-start', 'top-end', 'bottom', 'top'],
 		placement = 'bottom',
 		offset = 2,
+		position = 'absolute',
 		portal = undefined,
-		factory = bondFactory(PopoverState, PopoverBond),
+		factory = defaultFactory,
 		children = undefined,
 		...restProps
 	}: PopoverRootProps = $props();
 
-	const binding = bindBond<PopoverBond>(
-		(props) => factory(props),
-		{
-			open: [() => open && (owner?.isOpen ?? true), (v) => { open = v; }],
-			disabled: () => disabled,
-			placement: () => placement,
-			offset: () => offset,
-			placements: () => placements ?? [],
-			portal: () => portal,
-			// Vestigial: this element-less context root has no typed channel to forward restProps
-			// (its rest type doesn't overlap bond state props). Kept to consume restProps; see note.
-			rest: () => restProps
-		}
-	);
+	function defaultFactory(props: PopoverBondProps): PopoverBond {
+		return PopoverBond.create(props);
+	}
+
+	let openState = $derived(open);
+
+	const binding = bindBond<PopoverBond>((props) => factory(props), {
+		open: [
+			() => openState && (owner?.isOpen ?? true),
+			(v) => {
+				openState = v;
+				open = openState;
+			}
+		],
+		disabled: () => disabled,
+		placement: () => placement,
+		offset: () => offset,
+		position: () => position,
+		placements: () => placements ?? [],
+		portal: () => portal,
+		// Vestigial: this element-less context root has no typed channel to forward restProps
+		// (its rest type doesn't overlap bond state props). Kept to consume restProps; see note.
+		rest: () => restProps
+	});
 	const bond = binding.bond.share();
 
-	// Run the bond's capability setups — focus capture/restore (ADR 0001/0003) now lives on the
-	// focus capability's setup(), so every overlay rendering via this Root gets it automatically (#5).
+	// Activate the bond's capability setups: the focus capability captures activeElement on open
+	// and restores it on close (so every overlay rendering via this Root gets it automatically),
+	// and the escape capability enrolls this overlay in the topmost-open-overlay stack so only
+	// the frontmost surface acts on Escape.
 	useCapabilities(bond);
-	// Topmost-open-overlay Escape coordination (ADR 0009 D1/D2).
-
 
 	export function getBond() {
 		return bond;

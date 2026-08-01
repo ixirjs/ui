@@ -1,7 +1,4 @@
+import { createBondAttachment } from '$svelte-atoms/core/components/internal/attachments.svelte';
 import { DataGridBond } from './bond.svelte';
 
-export function datagrid(callback: (node: HTMLElement, bond?: DataGridBond) => any) {
-	const bond = DataGridBond.get();
-
-	return (node: HTMLElement) => callback(node, bond);
-}
+export const datagrid = createBondAttachment<DataGridBond>(DataGridBond);

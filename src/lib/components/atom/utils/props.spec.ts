@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { extractRestProps } from './props';
+import { extractRestProps, mergeAtomProps } from './props';
 
 describe('extractRestProps', () => {
 	it('fallback is lowest priority — preset overrides it', () => {
@@ -81,5 +81,47 @@ describe('extractRestProps', () => {
 		);
 
 		expect((result as Record<symbol, unknown>)[sym]).toBe(restVal);
+	});
+});
+
+describe('mergeAtomProps', () => {
+	it('runs user event props before atom handlers and skips atom handlers when default is prevented', () => {
+		const order: string[] = [];
+		const event = {
+			defaultPrevented: false,
+			preventDefault() {
+				this.defaultPrevented = true;
+			}
+		};
+
+		const props = mergeAtomProps(
+			{
+				preset: 'test.root',
+				spread: { onclick: () => order.push('atom') }
+			},
+			undefined,
+			{
+				onclick: (ev: typeof event) => {
+					order.push('user');
+					ev.preventDefault();
+				}
+			}
+		);
+
+		expect(props.preset).toBe('test.root');
+		(props.onclick as (ev: typeof event) => void)(event);
+		expect(order).toEqual(['user']);
+	});
+
+	it('keeps atom attachment symbols before user attachment symbols', () => {
+		const atomKey = Symbol('atom');
+		const userKey = Symbol('user');
+
+		const props = mergeAtomProps({ spread: { [atomKey]: () => undefined } }, 'fallback', {
+			[userKey]: () => undefined
+		} as Record<string, unknown>);
+
+		expect(props.preset).toBe('fallback');
+		expect(Object.getOwnPropertySymbols(props)).toEqual([atomKey, userKey]);
 	});
 });

@@ -39,10 +39,17 @@
 
 		<Stepper.Footer class="mt-4 flex justify-between">
 			{#snippet children({ stepper })}
-				<Button variant="outline" onclick={() => stepper.state.navigation.previous()} disabled={activeStep === 0}>
+				<Button
+					variant="outline"
+					onclick={() => stepper.navigation.previous()}
+					disabled={activeStep === 0}
+				>
 					Previous
 				</Button>
-				<Button onclick={() => stepper.state.navigation.next()} disabled={activeStep === steps.length - 1}>
+				<Button
+					onclick={() => stepper.navigation.next()}
+					disabled={activeStep === steps.length - 1}
+				>
 					Next
 				</Button>
 			{/snippet}

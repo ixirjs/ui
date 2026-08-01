@@ -15,7 +15,10 @@
 
 		{#snippet trackContent({ percent })}
 			<div class="bg-muted relative h-2 w-full rounded-full">
-				<div class="bg-primary absolute inset-y-0 left-0 rounded-full" style={`width: ${percent}%`}></div>
+				<div
+					class="bg-primary absolute inset-y-0 left-0 rounded-full"
+					style={`width: ${percent}%`}
+				></div>
 			</div>
 		{/snippet}
 	</Slider>

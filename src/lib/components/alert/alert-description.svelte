@@ -13,7 +13,9 @@
 		...restProps
 	}: AlertDescriptionProps<E, B> = $props();
 
-	const descriptionProps = $derived(mergePresetProps(preset, 'alert.description', { ...bond?.description(), ...restProps }));
+	const descriptionProps = $derived(
+		mergePresetProps(preset, 'alert.description', { ...bond?.description(), ...restProps })
+	);
 </script>
 
 <HtmlAtom

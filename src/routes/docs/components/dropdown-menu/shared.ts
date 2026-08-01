@@ -33,8 +33,7 @@ const useCases = [
 	},
 	{
 		title: 'Navigation Menus',
-		description:
-			'Create dropdown navigation menus for site navigation or application menu bars.'
+		description: 'Create dropdown navigation menus for site navigation or application menu bars.'
 	},
 	{
 		title: 'Command Palettes',
@@ -84,10 +83,7 @@ export const metadata = {
 	status: 'stable' as const,
 	packageName: '@svelte-atoms/core',
 	importCode: "import { DropdownMenu } from '@svelte-atoms/core';",
-	breadcrumbs: [
-		{ label: 'Components', href: '/docs/components' },
-		{ label: 'Dropdown Menu' }
-	],
+	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Dropdown Menu' }],
 	useCases,
 	componentsSummary,
 	examples: {

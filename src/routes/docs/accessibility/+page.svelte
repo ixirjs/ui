@@ -182,8 +182,21 @@
 			class="border-border bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center gap-2 rounded-md border px-5 py-2 text-sm font-medium transition-colors"
 		>
 			WAI-ARIA Practices
-			<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-				<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				width="12"
+				height="12"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				aria-hidden="true"
+			>
+				<path d="M15 3h6v6" /><path d="M10 14 21 3" /><path
+					d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+				/>
 			</svg>
 		</a>
 		<a
@@ -202,16 +215,17 @@
 	<Section.Header>
 		<Section.Title>Overview</Section.Title>
 		<Section.Subtitle>
-			All components follow the WAI-ARIA Authoring Practices Guide — keyboard, ARIA, and focus management built in.
+			All components follow the WAI-ARIA Authoring Practices Guide — keyboard, ARIA, and focus
+			management built in.
 		</Section.Subtitle>
 	</Section.Header>
 
 	<div class="space-y-3 mb-8">
 		<p class="text-muted-foreground leading-relaxed">
 			<strong>@svelte-atoms/core</strong> follows the WAI-ARIA Authoring Practices Guide (APG) to ensure
-			components are accessible to assistive technology users. Every component includes proper ARIA
-			attributes, keyboard navigation, focus management, and semantic HTML by default — you do not need
-			to add these manually.
+			components are accessible to assistive technology users. Every component includes proper ARIA attributes,
+			keyboard navigation, focus management, and semantic HTML by default — you do not need to add these
+			manually.
 		</p>
 	</div>
 
@@ -240,7 +254,9 @@
 			<div class="space-y-2">
 				{#each universalKeys as item (item.key)}
 					<div class="flex items-start gap-3">
-						<kbd class="bg-muted text-foreground shrink-0 rounded px-1.5 py-0.5 font-mono text-xs">{item.key}</kbd>
+						<kbd class="bg-muted text-foreground shrink-0 rounded px-1.5 py-0.5 font-mono text-xs"
+							>{item.key}</kbd
+						>
 						<span class="text-muted-foreground text-xs leading-relaxed">{item.description}</span>
 					</div>
 				{/each}
@@ -248,11 +264,15 @@
 		</div>
 
 		<div class="border-border rounded-lg border p-4">
-			<p class="text-foreground mb-3 text-xs font-semibold uppercase tracking-wide">Lists &amp; Menus</p>
+			<p class="text-foreground mb-3 text-xs font-semibold uppercase tracking-wide">
+				Lists &amp; Menus
+			</p>
 			<div class="space-y-2">
 				{#each listKeys as item (item.key)}
 					<div class="flex items-start gap-3">
-						<kbd class="bg-muted text-foreground shrink-0 rounded px-1.5 py-0.5 font-mono text-xs">{item.key}</kbd>
+						<kbd class="bg-muted text-foreground shrink-0 rounded px-1.5 py-0.5 font-mono text-xs"
+							>{item.key}</kbd
+						>
 						<span class="text-muted-foreground text-xs leading-relaxed">{item.description}</span>
 					</div>
 				{/each}
@@ -264,7 +284,9 @@
 			<div class="space-y-2">
 				{#each tabKeys as item (item.key)}
 					<div class="flex items-start gap-3">
-						<kbd class="bg-muted text-foreground shrink-0 rounded px-1.5 py-0.5 font-mono text-xs">{item.key}</kbd>
+						<kbd class="bg-muted text-foreground shrink-0 rounded px-1.5 py-0.5 font-mono text-xs"
+							>{item.key}</kbd
+						>
 						<span class="text-muted-foreground text-xs leading-relaxed">{item.description}</span>
 					</div>
 				{/each}
@@ -295,7 +317,9 @@
 	<div class="grid gap-2 sm:grid-cols-2 mb-6">
 		{#each ariaAttributes as item (item.attr)}
 			<div class="border-border flex items-center gap-3 rounded-lg border px-3 py-2">
-				<code class="bg-primary/10 text-primary shrink-0 rounded px-1.5 py-0.5 font-mono text-xs">{item.attr}</code>
+				<code class="bg-primary/10 text-primary shrink-0 rounded px-1.5 py-0.5 font-mono text-xs"
+					>{item.attr}</code
+				>
 				<span class="text-muted-foreground text-xs">{item.description}</span>
 			</div>
 		{/each}
@@ -318,7 +342,9 @@
 	<div class="border-border divide-border mb-8 overflow-hidden rounded-lg border divide-y">
 		{#each focusFeatures as feature (feature.num)}
 			<div class="flex gap-4 p-5">
-				<span class="text-primary shrink-0 font-mono text-xs font-semibold pt-0.5">{feature.num}</span>
+				<span class="text-primary shrink-0 font-mono text-xs font-semibold pt-0.5"
+					>{feature.num}</span
+				>
 				<div>
 					<p class="text-foreground mb-1 text-sm font-semibold">{feature.title}</p>
 					<p class="text-muted-foreground text-sm leading-relaxed">{feature.description}</p>
@@ -343,15 +369,17 @@
 	<Section.Header>
 		<Section.Title>Semantic HTML</Section.Title>
 		<Section.Subtitle>
-			Components use proper semantic elements and can be overridden with the <code class="bg-primary/10 text-primary font-mono text-xs">as</code> prop.
+			Components use proper semantic elements and can be overridden with the <code
+				class="bg-primary/10 text-primary font-mono text-xs">as</code
+			> prop.
 		</Section.Subtitle>
 	</Section.Header>
 
 	<p class="text-muted-foreground mb-6 text-sm leading-relaxed">
 		Semantic elements convey meaning to screen readers, search engines, and browser accessibility
 		APIs. All components default to the semantically correct element. Use the
-		<code class="bg-primary/10 text-primary rounded px-1.5 py-0.5 font-mono text-xs">as</code> prop to override when needed while
-		preserving all behavior.
+		<code class="bg-primary/10 text-primary rounded px-1.5 py-0.5 font-mono text-xs">as</code> prop to
+		override when needed while preserving all behavior.
 	</p>
 
 	<div class="overflow-hidden rounded-lg">
@@ -369,12 +397,7 @@
 	</Section.Header>
 
 	<div class="grid gap-3 sm:grid-cols-2 mb-6">
-		{#each [
-			{ label: 'Accessible Names', detail: 'Use aria-label or aria-labelledby for icon-only buttons and controls without visible text.' },
-			{ label: 'Live Regions', detail: 'Use role="alert" or aria-live for dynamic content that should be announced immediately.' },
-			{ label: 'Descriptions', detail: 'Associate help text with inputs via aria-describedby for richer context.' },
-			{ label: 'State Announcements', detail: 'State attributes like aria-expanded update reactively and are announced automatically.' }
-		] as item (item.label)}
+		{#each [{ label: 'Accessible Names', detail: 'Use aria-label or aria-labelledby for icon-only buttons and controls without visible text.' }, { label: 'Live Regions', detail: 'Use role="alert" or aria-live for dynamic content that should be announced immediately.' }, { label: 'Descriptions', detail: 'Associate help text with inputs via aria-describedby for richer context.' }, { label: 'State Announcements', detail: 'State attributes like aria-expanded update reactively and are announced automatically.' }] as item (item.label)}
 			<div class="border-border rounded-lg border p-4">
 				<p class="text-foreground mb-1.5 text-sm font-semibold">{item.label}</p>
 				<p class="text-muted-foreground text-xs leading-relaxed">{item.detail}</p>
@@ -417,10 +440,12 @@
 	</Section.Header>
 
 	<p class="text-muted-foreground mb-6 text-sm leading-relaxed">
-		Custom elements use <code class="bg-primary/10 text-primary rounded px-1.5 py-0.5 font-mono text-xs">aria-disabled</code> (preserves
-		focus for screen reader announcement) while native form inputs use the HTML
-		<code class="bg-primary/10 text-primary rounded px-1.5 py-0.5 font-mono text-xs">disabled</code> attribute (excludes from form
-		submission). Visual opacity is applied in both cases.
+		Custom elements use <code
+			class="bg-primary/10 text-primary rounded px-1.5 py-0.5 font-mono text-xs">aria-disabled</code
+		>
+		(preserves focus for screen reader announcement) while native form inputs use the HTML
+		<code class="bg-primary/10 text-primary rounded px-1.5 py-0.5 font-mono text-xs">disabled</code> attribute
+		(excludes from form submission). Visual opacity is applied in both cases.
 	</p>
 
 	<div class="overflow-hidden rounded-lg">
@@ -439,9 +464,13 @@
 
 	<p class="text-muted-foreground mb-6 text-sm leading-relaxed">
 		All interactive components use
-		<code class="bg-primary/10 text-primary rounded px-1.5 py-0.5 font-mono text-xs">:focus-visible</code> so focus rings appear for
-		keyboard navigation but not on mouse click. Customize the ring color via the
-		<code class="bg-primary/10 text-primary rounded px-1.5 py-0.5 font-mono text-xs">--ring</code> CSS custom property.
+		<code class="bg-primary/10 text-primary rounded px-1.5 py-0.5 font-mono text-xs"
+			>:focus-visible</code
+		>
+		so focus rings appear for keyboard navigation but not on mouse click. Customize the ring color via
+		the
+		<code class="bg-primary/10 text-primary rounded px-1.5 py-0.5 font-mono text-xs">--ring</code> CSS
+		custom property.
 	</p>
 
 	<div class="overflow-hidden rounded-lg">
@@ -478,12 +507,7 @@
 	</Section.Header>
 
 	<div class="grid gap-3 sm:grid-cols-2 mb-6">
-		{#each [
-			{ label: 'Normal text', ratio: '4.5:1 minimum', note: 'All foreground/background pairs' },
-			{ label: 'Large text (18px+)', ratio: '3:1 minimum', note: 'Headings and bold text' },
-			{ label: 'Interactive elements', ratio: '3:1 minimum', note: 'Borders and focus rings' },
-			{ label: 'Disabled states', ratio: 'Reduced intentionally', note: 'Still visually distinct' }
-		] as item (item.label)}
+		{#each [{ label: 'Normal text', ratio: '4.5:1 minimum', note: 'All foreground/background pairs' }, { label: 'Large text (18px+)', ratio: '3:1 minimum', note: 'Headings and bold text' }, { label: 'Interactive elements', ratio: '3:1 minimum', note: 'Borders and focus rings' }, { label: 'Disabled states', ratio: 'Reduced intentionally', note: 'Still visually distinct' }] as item (item.label)}
 			<div class="border-border rounded-lg border p-4">
 				<p class="text-foreground mb-1 text-sm font-semibold">{item.label}</p>
 				<p class="text-primary font-mono text-xs font-medium">{item.ratio}</p>
@@ -535,7 +559,9 @@
 	<div class="border-border divide-border overflow-hidden rounded-lg border divide-y">
 		{#each bestPractices as practice (practice.num)}
 			<div class="flex gap-4 p-5">
-				<span class="text-primary shrink-0 font-mono text-xs font-semibold pt-0.5">{practice.num}</span>
+				<span class="text-primary shrink-0 font-mono text-xs font-semibold pt-0.5"
+					>{practice.num}</span
+				>
 				<div>
 					<p class="text-foreground mb-1 text-sm font-semibold">{practice.title}</p>
 					<p class="text-muted-foreground text-sm leading-relaxed">{practice.description}</p>

@@ -20,11 +20,15 @@
 
 	const apiSections: PropsSection[] = [
 		{ label: 'Stack.Root', presetKey: 'stack', props: stackRootProps },
-		{ label: 'Stack.Item', presetKey: 'stack.item', props: stackItemProps },
+		{ label: 'Stack.Item', presetKey: 'stack.item', props: stackItemProps }
 	];
 
 	const _loaders = import.meta.glob('./examples/*.svelte');
-	const _sources = import.meta.glob('./examples/*.svelte', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+	const _sources = import.meta.glob('./examples/*.svelte', {
+		query: '?raw',
+		import: 'default',
+		eager: true
+	}) as Record<string, string>;
 	const ex = createExampleLoader(_loaders, _sources);
 </script>
 
@@ -40,9 +44,21 @@
 	{/snippet}
 
 	{#snippet examples()}
-		<DocExample title="Vertical Stack" description="Items stacked vertically (default)" {...ex('./examples/vertical.svelte')} />
-		<DocExample title="Horizontal Stack" description="Items arranged horizontally" {...ex('./examples/horizontal.svelte')} />
-		<DocExample title="Grid Stack" description="Items arranged in a grid" {...ex('./examples/grid.svelte')} />
+		<DocExample
+			title="Vertical Stack"
+			description="Items stacked vertically (default)"
+			{...ex('./examples/vertical.svelte')}
+		/>
+		<DocExample
+			title="Horizontal Stack"
+			description="Items arranged horizontally"
+			{...ex('./examples/horizontal.svelte')}
+		/>
+		<DocExample
+			title="Grid Stack"
+			description="Items arranged in a grid"
+			{...ex('./examples/grid.svelte')}
+		/>
 	{/snippet}
 
 	{#snippet apiReference()}

@@ -1,8 +1,7 @@
 import type { Snippet } from 'svelte';
 import type { HtmlAtomProps, Base, SnippetProps } from '$svelte-atoms/core/components/atom';
-import type { Override, Factory } from '$svelte-atoms/core/types';
-import type { TransitionFunction } from '$svelte-atoms/core/components/element';
-import type { PortalBond } from '$svelte-atoms/core/components/portal';
+import type { Factory } from '$svelte-atoms/core/types';
+import type { PortalBond, ZIndexInput } from '$svelte-atoms/core/components/portal';
 import type { DrawerBond } from './bond.svelte';
 
 // Declaration-merge into these to add app-specific props per drawer part.
@@ -37,23 +36,19 @@ export interface DrawerSnippetProps extends SnippetProps {
 
 export type DrawerChildren = Snippet<[DrawerSnippetProps]>;
 
+// Plain `extends` (not `Override<...>`): an Omit-based Override over HtmlAtomProps' `[key: string]:
+// unknown` index signature collapses every un-overridden named prop (children, fallback, …) to
+// `unknown`. The transition hooks (initial/enter/exit) are the standard 1-arg element signatures —
+// the drawer's animation comes from `fallback`/`animateDrawerRoot`, and they forward to <Teleport>.
 export interface SlideoverRootProps<E extends keyof HTMLElementTagNameMap, B extends Base = Base>
-	extends
-		Override<
-			HtmlAtomProps<E, B, DrawerChildren>,
-			{
-				initial?: (node: HTMLElement, bond: DrawerBond) => void;
-				enter?: (node: HTMLElement, bond: DrawerBond) => TransitionFunction<HTMLElement>;
-				exit?: (node: HTMLElement, bond: DrawerBond) => TransitionFunction<HTMLElement>;
-			}
-		>,
-		DrawerExtendProps {
-	'z-index'?: number;
+	extends HtmlAtomProps<E, B, DrawerChildren>, DrawerExtendProps {
+	'z-index'?: ZIndexInput;
 	open?: boolean;
 	disabled?: boolean;
 	side?: 'left' | 'right' | 'top' | 'bottom';
+	position?: 'absolute' | 'fixed';
 	portal?: string | PortalBond;
-	onclose?: (event: Event, bond: DrawerBond) => void;
+	onclose?: ((event: Event, bond: DrawerBond) => void) | undefined;
 	factory?: Factory<DrawerBond>;
 }
 

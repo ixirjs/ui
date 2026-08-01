@@ -21,7 +21,10 @@
 	const preset = resolveControlPreset(() => presetKey, bond);
 
 	// Parse URL into segments
-	type Segment = { text: string; kind: 'protocol' | 'host' | 'port' | 'pathname' | 'search' | 'hash' | 'plain' };
+	type Segment = {
+		text: string;
+		kind: 'protocol' | 'host' | 'port' | 'pathname' | 'search' | 'hash' | 'plain';
+	};
 
 	function parseSegments(raw: string): Segment[] {
 		if (!raw) return [];
@@ -128,13 +131,13 @@
 	const segments = $derived(parseSegments(value));
 
 	const kindStyle: Record<Segment['kind'], string> = {
-		protocol:  'color: var(--input-hl-muted, var(--foreground))',
-		host:      'color: var(--input-hl-primary, var(--foreground)); font-weight: 500',
-		port:      'color: var(--input-hl-warning, var(--foreground))',
-		pathname:  'color: var(--input-hl-secondary, var(--foreground))',
-		search:    'color: var(--input-hl-info, var(--foreground))',
-		hash:      'color: var(--input-hl-accent, var(--foreground))',
-		plain:     'color: var(--input-hl-muted, var(--foreground))',
+		protocol: 'color: var(--input-hl-muted, var(--foreground))',
+		host: 'color: var(--input-hl-primary, var(--foreground)); font-weight: 500',
+		port: 'color: var(--input-hl-warning, var(--foreground))',
+		pathname: 'color: var(--input-hl-secondary, var(--foreground))',
+		search: 'color: var(--input-hl-info, var(--foreground))',
+		hash: 'color: var(--input-hl-accent, var(--foreground))',
+		plain: 'color: var(--input-hl-muted, var(--foreground))'
 	};
 </script>
 

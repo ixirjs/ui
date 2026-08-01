@@ -12,7 +12,7 @@ export type BadgeChildren = Snippet<[BadgeSnippetProps]>;
 
 // Badge props
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 // Badge renders `children?.()` with no argument, so children is a plain Snippet.
 // BadgeChildren/BadgeSnippetProps remain exported for consumers that want the typed shape.
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface BadgeProps extends HtmlAtomProps<'span', never> {}

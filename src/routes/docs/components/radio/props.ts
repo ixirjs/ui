@@ -10,7 +10,8 @@ export const radioProps: PropDefinition[] = [
 		name: 'value',
 		type: 'T | undefined',
 		default: 'undefined',
-		description: 'The value this radio button represents. Compared against `group` to determine the checked state.'
+		description:
+			'The value this radio button represents. Compared against `group` to determine the checked state.'
 	},
 	{
 		name: 'group',
@@ -52,7 +53,8 @@ export const radioProps: PropDefinition[] = [
 		name: 'checkedContent',
 		type: 'Component | Snippet | undefined',
 		default: 'undefined',
-		description: 'Custom component or snippet rendered in place of the default indicator when the radio is checked.'
+		description:
+			'Custom component or snippet rendered in place of the default indicator when the radio is checked.'
 	},
 	{
 		name: 'children',
@@ -76,8 +78,9 @@ export const radioProps: PropDefinition[] = [
 		name: '...atomProps',
 		type: 'HtmlAtomProps',
 		default: '-',
-		description: 'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
-	},
+		description:
+			'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
+	}
 ];
 
 export const radioGroupProps: PropDefinition[] = [
@@ -127,6 +130,7 @@ export const radioGroupProps: PropDefinition[] = [
 		name: '...atomProps',
 		type: 'HtmlAtomProps',
 		default: '-',
-		description: 'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
-	},
+		description:
+			'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
+	}
 ];

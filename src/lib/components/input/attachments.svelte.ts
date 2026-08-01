@@ -1,6 +1,4 @@
-import { PopoverBond } from '$svelte-atoms/core/components/popover/bond.svelte';
+import { createBondAttachment } from '$svelte-atoms/core/components/internal/attachments.svelte';
+import { InputBond } from './bond.svelte';
 
-export function input(callback: (node: HTMLElement, bond?: PopoverBond) => any) {
-	const bond = PopoverBond.get();
-	return (node: HTMLElement) => callback(node, bond);
-}
+export const input = createBondAttachment<InputBond>(InputBond);

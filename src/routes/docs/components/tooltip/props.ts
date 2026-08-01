@@ -35,7 +35,7 @@ export const tooltipRootProps: PropDefinition[] = [
 		type: 'Placement[]',
 		default: 'undefined',
 		description: 'Fallback placements used by floating-ui when the primary placement overflows.'
-	},
+	}
 ];
 
 export const tooltipTriggerProps: PropDefinition[] = [
@@ -56,7 +56,7 @@ export const tooltipTriggerProps: PropDefinition[] = [
 		type: 'HtmlAtomProps',
 		default: '-',
 		description: 'All HTML element props are forwarded to the trigger element.'
-	},
+	}
 ];
 
 export const tooltipContentProps: PropDefinition[] = [
@@ -83,5 +83,5 @@ export const tooltipContentProps: PropDefinition[] = [
 		type: 'HtmlAtomProps',
 		default: '-',
 		description: 'All HTML element props are forwarded to the content element.'
-	},
+	}
 ];

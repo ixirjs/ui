@@ -2,7 +2,13 @@
 	import { createExampleLoader } from '$docs/utils/example-loader';
 	import { DocComponentPage, DocExample, DocCode, DocPropsTabs } from '$docs/components';
 	import type { PropsSection } from '$docs/components';
-	import { listRootProps, listGroupProps, listItemProps, listTitleProps, listDividerProps } from './props';
+	import {
+		listRootProps,
+		listGroupProps,
+		listItemProps,
+		listTitleProps,
+		listDividerProps
+	} from './props';
 	import { metadata } from './shared';
 	import type { DocMode } from '$docs/context/doc-mode.svelte';
 	import type { Frontmatter } from '$docs/md/frontmatter';
@@ -23,11 +29,15 @@
 		{ label: 'List.Group', presetKey: 'list.group', props: listGroupProps },
 		{ label: 'List.Item', presetKey: 'list.item', props: listItemProps },
 		{ label: 'List.Title', presetKey: 'list.title', props: listTitleProps },
-		{ label: 'List.Divider', presetKey: 'list.divider', props: listDividerProps },
+		{ label: 'List.Divider', presetKey: 'list.divider', props: listDividerProps }
 	];
 
 	const _loaders = import.meta.glob('./examples/*.svelte');
-	const _sources = import.meta.glob('./examples/*.svelte', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+	const _sources = import.meta.glob('./examples/*.svelte', {
+		query: '?raw',
+		import: 'default',
+		eager: true
+	}) as Record<string, string>;
 	const ex = createExampleLoader(_loaders, _sources);
 </script>
 
@@ -43,11 +53,23 @@
 	{/snippet}
 
 	{#snippet examples()}
-		<DocExample title="Basic List" description="Simple list with items" {...ex('./examples/basic.svelte')} />
+		<DocExample
+			title="Basic List"
+			description="Simple list with items"
+			{...ex('./examples/basic.svelte')}
+		/>
 
-		<DocExample title="List with Groups" description="List with section groups and titles" {...ex('./examples/grouped.svelte')} />
+		<DocExample
+			title="List with Groups"
+			description="List with section groups and titles"
+			{...ex('./examples/grouped.svelte')}
+		/>
 
-		<DocExample title="Clickable List" description="Interactive list items with click handlers" {...ex('./examples/clickable.svelte')} />
+		<DocExample
+			title="Clickable List"
+			description="Interactive list items with click handlers"
+			{...ex('./examples/clickable.svelte')}
+		/>
 	{/snippet}
 
 	{#snippet apiReference()}

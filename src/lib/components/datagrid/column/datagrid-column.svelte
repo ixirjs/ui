@@ -1,15 +1,19 @@
-<script lang="ts" generics="T = unknown, E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { bindBond } from '$svelte-atoms/core/shared/bind-bond.svelte';
-	import { HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
+<script
+	lang="ts"
+	generics="T = unknown, E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base"
+>
+	import { bindBond } from '$svelte-atoms/core/shared/bond/bind.svelte';
+	import { createAtomInstance } from '$svelte-atoms/core/shared/bond';
+	import { HtmlAtom, mergeAtomProps, type Base } from '$svelte-atoms/core/components/atom';
 	import {
 		DataGridColumnBond,
-		DataGridColumnBondState,
+		DataGridColumnRootAtom,
 		type DataGridColumnBondProps
 	} from './bond.svelte';
 	import type { DatagridColumnProps } from '../types';
-	
+
 	const ID = $props.id();
-	
+
 	let {
 		class: klass = '',
 		preset = undefined,
@@ -37,17 +41,22 @@
 		{ preset: () => preset }
 	);
 	const bond = binding.bond.share();
+	const rootAtom = createAtomInstance<DataGridColumnRootAtom, DataGridColumnBond<T>>('root', {
+		bond,
+		factory: (owner) => new DataGridColumnRootAtom(owner as DataGridColumnBond<T>)
+	});
 
-	const isSortable = $derived(bond.state.isSortable);
-	const columnProps = $derived({ ...binding.props, ...bond.state.props, ...restProps });
+	const isSortable = $derived(bond.isSortable);
+	const columnProps = $derived(
+		mergeAtomProps(rootAtom, preset, { ...binding.stateProps, ...bond.props, ...restProps })
+	);
 
 	const unmount = bond.mount();
 
 	$effect(() => unmount);
 
 	function defaultFactory(props: DataGridColumnBondProps): DataGridColumnBond<T> {
-		const bondState = new DataGridColumnBondState(props);
-		return new DataGridColumnBond<T>(bondState);
+		return DataGridColumnBond.create<T>(props);
 	}
 
 	function onclick_(ev: Event) {
@@ -61,15 +70,10 @@
 				return;
 			}
 
-			if (isSortable) {
-				if (direction === 'asc') {
-					direction = 'desc';
-				} else {
-					direction = 'asc';
-				}
+			if (direction === 'asc') {
+				direction = 'desc';
 			} else {
-				if (!(typeof sortable === 'boolean')) {
-				}
+				direction = 'asc';
 			}
 
 			if (typeof sortable === 'string') {

@@ -1,4 +1,8 @@
 <script lang="ts">
+	// This segment is a `contenteditable` field whose text is managed imperatively: setting
+	// `textContent` (rather than binding it) is required to avoid Svelte re-rendering fighting the
+	// caret position on every keystroke. The no-dom-manipulating rule doesn't fit this pattern.
+	/* eslint-disable svelte/no-dom-manipulating */
 	import { untrack } from 'svelte';
 	import { clamp as clampRange } from '$svelte-atoms/core/utils/math';
 	import type { SegmentProps } from './shared';
@@ -14,7 +18,7 @@
 		class: klass = '',
 		onchange,
 		onfocusmove,
-		onrollover,
+		onrollover
 	}: SegmentProps = $props();
 
 	let el = $state<HTMLSpanElement>();
@@ -36,7 +40,8 @@
 	$effect(() => {
 		if (!el) return;
 		const text = getDisplay();
-		void buffer; void value; // track as reactive deps
+		void buffer;
+		void value; // track as reactive deps
 
 		untrack(() => {
 			requestAnimationFrame(() => {
@@ -89,14 +94,18 @@
 			ev.preventDefault();
 			buffer = '';
 			const cur = value ?? min;
-			if (cur >= max) { onchange?.(min); onrollover?.(1); }
-			else onchange?.(cur + 1);
+			if (cur >= max) {
+				onchange?.(min);
+				onrollover?.(1);
+			} else onchange?.(cur + 1);
 		} else if (ev.key === 'ArrowDown') {
 			ev.preventDefault();
 			buffer = '';
 			const cur = value ?? max;
-			if (cur <= min) { onchange?.(max); onrollover?.(-1); }
-			else onchange?.(cur - 1);
+			if (cur <= min) {
+				onchange?.(max);
+				onrollover?.(-1);
+			} else onchange?.(cur - 1);
 		} else if (ev.key === 'ArrowLeft') {
 			ev.preventDefault();
 			if (buffer) buffer = '';
@@ -134,9 +143,13 @@
 		'focus:bg-foreground/10 focus:outline-none',
 		'text-muted-foreground',
 		disabled && 'cursor-not-allowed opacity-50',
-		klass,
-	].filter(Boolean).join(' ')}
+		klass
+	]
+		.filter(Boolean)
+		.join(' ')}
 	onkeydown={handleKeydown}
 	onpaste={(ev) => ev.preventDefault()}
-	onblur={() => { if (buffer) commitBuffer(buffer, false); }}
->{displayPlaceholder}</span>
+	onblur={() => {
+		if (buffer) commitBuffer(buffer, false);
+	}}>{displayPlaceholder}</span
+>

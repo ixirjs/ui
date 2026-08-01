@@ -1,6 +1,7 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
 	import type { HTMLAttributes } from 'svelte/elements';
-	import { InputBond } from './bond.svelte';
+	import { createAtomInstance } from '$svelte-atoms/core/shared/bond';
+	import { InputBond, InputPlaceholderAtom } from './bond.svelte';
 	import {
 		HtmlAtom,
 		type ElementType,
@@ -18,10 +19,16 @@
 		preset = undefined,
 		...restProps
 	}: HtmlAtomProps<E, B> & HTMLAttributes<Element> = $props();
+	const atom = bond
+		? createAtomInstance<InputPlaceholderAtom, InputBond>('placeholder', {
+				bond,
+				factory: (owner) => new InputPlaceholderAtom(owner!)
+			})
+		: undefined;
 
 	const placeholderProps = $derived({
-		preset: preset ?? bond?.atom('placeholder').preset ?? 'input.placeholder',
-		...(bond?.atom('placeholder').spread ?? {}),
+		preset: preset ?? atom?.preset ?? 'input.placeholder',
+		...(atom?.spread ?? {}),
 		...restProps
 	});
 

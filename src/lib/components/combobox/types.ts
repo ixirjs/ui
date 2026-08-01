@@ -36,16 +36,13 @@ export interface ComboboxRootProps<
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface ComboboxSelectionsProps extends DropdownSelectionsProps {
-}
+export interface ComboboxSelectionsProps extends DropdownSelectionsProps {}
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface ComboboxSelectionProps extends DropdownSelectionProps {
-}
+export interface ComboboxSelectionProps extends DropdownSelectionProps {}
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface ComboboxControlProps extends InputControlProps {
-}
+export interface ComboboxControlProps extends InputControlProps {}
 
 export interface ComboboxSelection {
 	id: string;

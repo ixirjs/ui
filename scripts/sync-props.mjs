@@ -336,12 +336,12 @@ function findAllTypesFiles(componentDir) {
 					} else if (stat.isFile() && entry === 'types.ts') {
 						typesFiles.push(fullPath);
 					}
-				} catch (err) {
+				} catch (_err) {
 					// Skip files/dirs we can't access
 					continue;
 				}
 			}
-		} catch (err) {
+		} catch (_err) {
 			// Skip directories we can't read
 		}
 	}

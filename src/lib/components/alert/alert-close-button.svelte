@@ -20,7 +20,9 @@
 		...restProps
 	}: AlertCloseButtonProps<E, B> & HTMLAttributes<Element> = $props();
 
-	const closeButtonProps = $derived(mergePresetProps(preset, 'alert.close-button', { ...bond?.closeButton(), ...restProps }));
+	const closeButtonProps = $derived(
+		mergePresetProps(preset, 'alert.close-button', { ...bond?.closeButton(), ...restProps })
+	);
 </script>
 
 <HtmlAtom

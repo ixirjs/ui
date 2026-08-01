@@ -35,11 +35,15 @@
 		{ label: 'DataGrid.Row', presetKey: 'datagrid.row', props: datagridTrProps },
 		{ label: 'DataGrid.Column', presetKey: 'datagrid.column', props: datagridThProps },
 		{ label: 'DataGrid.Cell', presetKey: 'datagrid.cell', props: datagridTdProps },
-		{ label: 'DataGrid.Checkbox', presetKey: 'datagrid.checkbox', props: datagridCheckboxProps },
+		{ label: 'DataGrid.Checkbox', presetKey: 'datagrid.checkbox', props: datagridCheckboxProps }
 	];
 
 	const _loaders = import.meta.glob('./examples/*.svelte');
-	const _sources = import.meta.glob('./examples/*.svelte', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+	const _sources = import.meta.glob('./examples/*.svelte', {
+		query: '?raw',
+		import: 'default',
+		eager: true
+	}) as Record<string, string>;
 	const ex = createExampleLoader(_loaders, _sources);
 </script>
 
@@ -55,11 +59,23 @@
 	{/snippet}
 
 	{#snippet examples()}
-		<DocExample title="Basic DataGrid" description="Simple data grid with header and rows" {...ex('./examples/basic.svelte')} />
+		<DocExample
+			title="Basic DataGrid"
+			description="Simple data grid with header and rows"
+			{...ex('./examples/basic.svelte')}
+		/>
 
-		<DocExample title="Selectable Rows" description="DataGrid with row selection via checkboxes" {...ex('./examples/selectable.svelte')} />
+		<DocExample
+			title="Selectable Rows"
+			description="DataGrid with row selection via checkboxes"
+			{...ex('./examples/selectable.svelte')}
+		/>
 
-		<DocExample title="Sortable Columns" description="DataGrid with click-to-sort column headers" {...ex('./examples/sortable.svelte')} />
+		<DocExample
+			title="Sortable Columns"
+			description="DataGrid with click-to-sort column headers"
+			{...ex('./examples/sortable.svelte')}
+		/>
 
 		<DocExample
 			title="Row-Spanning Side Column"

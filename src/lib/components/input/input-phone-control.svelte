@@ -2,7 +2,11 @@
 	import { resolveControlPreset, writeInputValue } from './shared';
 	import { cn, toClassValue } from '$svelte-atoms/core/utils';
 	import { InputBond } from './bond.svelte';
-	import type { InputPhoneControlProps, PhoneSpan as Span, PhoneSpanType as SpanType } from './types';
+	import type {
+		InputPhoneControlProps,
+		PhoneSpan as Span,
+		PhoneSpanType as SpanType
+	} from './types';
 
 	const bond = InputBond.get();
 
@@ -61,12 +65,18 @@
 			let leftOpt = false;
 			for (let k = j - 1; k >= 0; k--) {
 				const tk = tokens[k]!;
-				if (tk.type === 'digit') { leftOpt = tk.optional; break; }
+				if (tk.type === 'digit') {
+					leftOpt = tk.optional;
+					break;
+				}
 			}
 			let rightOpt = false;
 			for (let k = j + 1; k < tokens.length; k++) {
 				const tk = tokens[k]!;
-				if (tk.type === 'digit') { rightOpt = tk.optional; break; }
+				if (tk.type === 'digit') {
+					rightOpt = tk.optional;
+					break;
+				}
 			}
 			t.optional = leftOpt && rightOpt;
 		}
@@ -75,7 +85,7 @@
 	}
 
 	const tokens = $derived(format ? parseFormat(format) : []);
-	const maxDigits = $derived(tokens.filter(t => t.type === 'digit').length);
+	const maxDigits = $derived(tokens.filter((t) => t.type === 'digit').length);
 
 	// Build masked string from digits + tokens
 	// empty: filler for an unfilled required slot ('_' to display, '' to measure)
@@ -96,7 +106,7 @@
 				} else {
 					// optional literal shows only if any optional slot is filled
 					const adjacentFilled = tokens.some(
-						tok => tok.type === 'digit' && tok.optional && digits[tok.slotIndex] !== undefined
+						(tok) => tok.type === 'digit' && tok.optional && digits[tok.slotIndex] !== undefined
 					);
 					if (adjacentFilled) out += t.char;
 				}
@@ -108,7 +118,7 @@
 	// Position of the next empty slot in the masked string
 	function nextCursorPos(digits: string): number {
 		const anyOptFilled = tokens.some(
-			t => t.type === 'digit' && t.optional && digits[t.slotIndex] !== undefined
+			(t) => t.type === 'digit' && t.optional && digits[t.slotIndex] !== undefined
 		);
 		let pos = 0;
 		for (const t of tokens) {
@@ -128,10 +138,10 @@
 	// Segment color map
 	const segmentColors: Record<string, string> = {
 		country: 'var(--input-hl-accent, var(--foreground))',
-		area:    'var(--foreground)',
-		prefix:  'var(--input-hl-secondary, var(--foreground))',
-		line:    'var(--foreground)',
-		other:   'var(--foreground)',
+		area: 'var(--foreground)',
+		prefix: 'var(--input-hl-secondary, var(--foreground))',
+		line: 'var(--foreground)',
+		other: 'var(--foreground)'
 	};
 
 	const digitSlotKind = $derived.by<string[]>(() => {
@@ -159,13 +169,15 @@
 				const kind = (digitSlotKind[t.slotIndex] ?? 'other') as SpanType;
 				const spanType: SpanType = filled ? kind : 'empty';
 				const spanStyle = filled
-					? (segmentMap ? `color: ${segmentColors[kind] ?? segmentColors['other']}` : 'color: var(--foreground)')
+					? segmentMap
+						? `color: ${segmentColors[kind] ?? segmentColors['other']}`
+						: 'color: var(--foreground)'
 					: 'color: color-mix(in oklch, var(--muted-foreground) 40%, transparent)';
 				spans.push({ text: ch, class: '', style: spanStyle, type: spanType });
 			} else {
 				if (t.optional) {
 					const anyOptFilled = tokens.some(
-						tok => tok.type === 'digit' && tok.optional && value[tok.slotIndex] !== undefined
+						(tok) => tok.type === 'digit' && tok.optional && value[tok.slotIndex] !== undefined
 					);
 					if (!anyOptFilled) continue;
 				}
@@ -176,7 +188,10 @@
 		// merge consecutive same-type spans (keeps type for the snippet)
 		return spans.reduce<Span[]>((acc, s) => {
 			const last = acc[acc.length - 1];
-			if (last && last.type === s.type) { last.text += s.text; return acc; }
+			if (last && last.type === s.type) {
+				last.text += s.text;
+				return acc;
+			}
 			return [...acc, { ...s }];
 		}, []);
 	});
@@ -184,7 +199,7 @@
 	// Sync external value → display + caret
 	$effect(() => {
 		if (!format || !inputEl) return;
-		const masked = (value || isFocused) ? buildMasked(value) : '';
+		const masked = value || isFocused ? buildMasked(value) : '';
 		if (inputEl.value !== masked) inputEl.value = masked;
 		// re-place caret via rAF to beat the browser's own placement
 		if (isFocused) {
@@ -242,17 +257,15 @@
 					}
 					charPos++;
 				} else {
-					const willRender = !t.optional || tokens.some(
-						tok => tok.type === 'digit' && tok.optional && value[tok.slotIndex] !== undefined
-					);
+					const willRender =
+						!t.optional ||
+						tokens.some(
+							(tok) => tok.type === 'digit' && tok.optional && value[tok.slotIndex] !== undefined
+						);
 					if (willRender) charPos++;
 				}
 			}
-		} else if (
-			ev.key.length === 1 &&
-			!ev.ctrlKey && !ev.metaKey &&
-			!/\d/.test(ev.key)
-		) {
+		} else if (ev.key.length === 1 && !ev.ctrlKey && !ev.metaKey && !/\d/.test(ev.key)) {
 			// block non-digit printable keys: no input event, caret stays put
 			ev.preventDefault();
 		}
@@ -271,7 +284,7 @@
 			// free mode: insert at caret
 			const input = ev.currentTarget as HTMLInputElement;
 			const start = input.selectionStart ?? value.length;
-			const end   = input.selectionEnd   ?? value.length;
+			const end = input.selectionEnd ?? value.length;
 			value = value.slice(0, start) + pasted + value.slice(end);
 			writeInputValue(bond, value);
 			oninput?.(ev, { value });
@@ -313,7 +326,6 @@
 
 {#if format}
 	<span class="relative flex h-full w-full flex-1 items-center overflow-hidden">
-
 		<!-- coloured overlay (mirrors the input, no caret) -->
 		<span
 			aria-hidden="true"

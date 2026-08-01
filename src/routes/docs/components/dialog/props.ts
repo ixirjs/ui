@@ -27,13 +27,13 @@ export const dialogProps: PropDefinition[] = [
 	},
 	{
 		name: 'factory',
-		type: '((props: DialogBondProps) => DialogBond<DialogBondState<DialogBondProps>>) | undefined',
+		type: '((props: DialogBondProps) => DialogBond) | undefined',
 		default: 'undefined',
 		description: 'Custom factory function to create a DialogBond instance with custom logic.'
 	},
 	{
 		name: 'children',
-		type: 'Snippet<[{ dialog: DialogBond<DialogBondState<DialogBondProps>>; }]> | undefined',
+		type: 'Snippet<[{ dialog: DialogBond; }]> | undefined',
 		default: 'undefined',
 		description:
 			'Dialog content. Receives the DialogBond for accessing open state and close functionality.'

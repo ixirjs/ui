@@ -7,7 +7,7 @@
 
 	let { ...restProps }: ComboboxSelectionsProps = $props();
 
-	let selections = $derived(bond.state.allSelections);
+	let selections = $derived(bond.allSelections);
 </script>
 
 <Selections getSelections={() => selections} {...restProps} />

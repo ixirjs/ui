@@ -18,10 +18,14 @@
 			{#snippet children({ field }: FieldSnippetProps)}
 				<Field.Label>Email</Field.Label>
 				<Input.Root>
-					<Field.Control base={Input.Control as unknown as never} type="email" placeholder="Enter your email" />
+					<Field.Control
+						base={Input.Control as unknown as never}
+						type="email"
+						placeholder="Enter your email"
+					/>
 				</Input.Root>
-				{#if field?.state.errors.length}
-					<Field.HelperText class="text-destructive">{field.state.errors[0]?.message}</Field.HelperText>
+				{#if field?.errors.length}
+					<Field.HelperText class="text-destructive">{field.errors[0]?.message}</Field.HelperText>
 				{:else}
 					<Field.HelperText>We'll only use this for account updates.</Field.HelperText>
 				{/if}

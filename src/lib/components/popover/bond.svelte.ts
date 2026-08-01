@@ -1,24 +1,33 @@
 import { untrack } from 'svelte';
 import { type ComputePositionReturn, type Placement } from '@floating-ui/dom';
+import { Atom, defineAtom, type BondVirtualElement } from '$svelte-atoms/core/shared/bond';
+import { defineBond, type BondOf, type BondSpec } from '$svelte-atoms/core/shared';
 import {
-	Bond,
-	bondContextKey,
-	type AtomRegistry,
-	type BondVirtualElement
-} from '$svelte-atoms/core/shared/bond.svelte';
-import { BondAtom, type BondSpec } from '$svelte-atoms/core/shared';
+	defineAtomCapability,
+	sharedCapabilityKey,
+	type AtomHost
+} from '$svelte-atoms/core/shared/capability';
 import { focus, getElementId, isBrowser } from '$svelte-atoms/core/utils/dom.svelte';
 import {
-	OverlayState,
+	OverlayBond,
 	OverlayTriggerAtom,
-	trappedFocus,
 	positionedCapabilities,
+	trappedFocus,
+	type OverlayStateProps,
 	type OverlayView,
-	type PositionedOverlayElements,
-	type OverlayStateProps
-} from '$svelte-atoms/core/components/overlay';
+	type PositionedOverlayElements
+} from '$svelte-atoms/core/components/portal/host';
+import {
+	closeOverlay,
+	overlayIsDisabled,
+	overlayIsOpen
+} from '$svelte-atoms/core/components/portal/host/policies/overlay-view';
 import type { PortalBond } from '../portal';
 import type { PopoverStrategy } from './strategy-types';
+
+// -----------------------------------------------------------------------------
+// Public types
+// -----------------------------------------------------------------------------
 
 export type PopoverParams = {
 	apply?: (
@@ -41,14 +50,19 @@ export type PopoverContentPropsParams = {
 	engine?: 'internal' | PopoverEngine | undefined;
 };
 
-export type PopoverStateProps = OverlayStateProps & {
+export type PopoverBondProps = OverlayStateProps & {
 	disabled: boolean;
 	placements: Placement[];
 	placement: Placement | undefined;
 	offset: number;
+	// CSS positioning strategy for the floating content. Set explicitly by the consumer;
+	// always authoritative (a host overlay no longer forces it). Defaults to 'absolute'.
+	position: 'fixed' | 'absolute';
 	portal?: string | PortalBond;
 	strategy?: PopoverStrategy;
 };
+
+export type PopoverStateProps = PopoverBondProps;
 
 export type TriggerParams = {
 	onclick?: (ev: MouseEvent) => void;
@@ -63,6 +77,16 @@ export type PopoverDomElements = PositionedOverlayElements & {
 	arrow?: HTMLElement;
 };
 
+// -----------------------------------------------------------------------------
+// Capability slots and shared helpers
+// -----------------------------------------------------------------------------
+
+const POPOVER_ARROW = sharedCapabilityKey<void>('@svelte-atoms/popover:arrow');
+const POPOVER_OVERLAY = sharedCapabilityKey<void>('@svelte-atoms/popover:overlay');
+const POPOVER_CONTENT = sharedCapabilityKey<void>('@svelte-atoms/popover:content');
+const POPOVER_INDICATOR = sharedCapabilityKey<void>('@svelte-atoms/popover:indicator');
+const POPOVER_TRIGGER = sharedCapabilityKey<void>('@svelte-atoms/popover:trigger');
+
 // Positioned defaults (click trigger, escape, restore-to-trigger) + trapped-focus override.
 // Shared by PopoverBond constructor and popoverSpec so they never drift.
 function popoverCapabilities() {
@@ -72,51 +96,15 @@ function popoverCapabilities() {
 	];
 }
 
+// -----------------------------------------------------------------------------
+// Bond implementation
+// -----------------------------------------------------------------------------
+
 // Floating-positioned disclosure with optional arrow/indicator/virtual-trigger.
-// Overlay behaviour via capabilities; adds Tab→focus-content and Tab-trap within content.
-export class PopoverBond<
-	Props extends PopoverStateProps = PopoverStateProps,
-	State extends PopoverState<Props> = PopoverState<Props>
-> extends Bond<Props, State> {
-	static CONTEXT_KEY = bondContextKey('popover');
-
-	static override atoms: AtomRegistry<PopoverBond> = {
-		trigger: (b) => new PopoverTriggerAtom(b),
-		'virtual-trigger': (b) => new PopoverVirtualTriggerAtom(b),
-		overlay: (b) => new PopoverOverlayAtom(b),
-		content: (b) => new PopoverContentAtom(b),
-		arrow: (b) => new PopoverArrowAtom(b),
-		indicator: (b) => new PopoverIndicatorAtom(b)
-	};
-
-	// Fusion seam (§13): exposes atoms + capabilities to fuse() via popoverSpec.
-	// Getter form avoids the temporal dead zone — popoverSpec is declared below.
-	static get spec() {
-		return popoverSpec;
-	}
-
-	constructor(state: State) {
-		super(state, 'popover');
-		// Overlay behaviour via capabilities (§13). Subclasses customize by re-registering a
-		// slot last-wins (dropdown-menu/select → trigger ariaHasPopup, combobox → escape).
-		for (const cap of popoverCapabilities()) this.capability(cap);
-	}
-
-	// Disclosure verbs — delegate to OverlayState (kept so callers of bond.open/close/toggle work).
-	open(): void {
-		this.state.open();
-	}
-	close(): void {
-		this.state.close();
-	}
-	toggle(): void {
-		this.state.toggle();
-	}
-}
-
-export class PopoverState<
-	Props extends PopoverStateProps = PopoverStateProps
-> extends OverlayState<Props> {
+// Overlay behaviour via capabilities; adds Tab->focus-content and Tab-trap within content.
+export class PopoverBondBase<
+	Props extends PopoverBondProps = PopoverBondProps
+> extends OverlayBond<Props> {
 	position = $state<ComputePositionReturn>();
 	// Whether position should be actively computed. Defaults to `open`; can be overridden
 	// to keep computing while hiding or to start computing on hover before open.
@@ -125,6 +113,10 @@ export class PopoverState<
 	#computedResolve!: (position: ComputePositionReturn) => void;
 	// Resolves with the next computed position; renewed after each resolution.
 	computed: Promise<ComputePositionReturn> = this.#createComputed();
+
+	constructor(props: Props, name = 'popover') {
+		super(props, name);
+	}
 
 	#createComputed() {
 		return new Promise<ComputePositionReturn>((resolve) => {
@@ -144,21 +136,89 @@ export class PopoverState<
 	}
 }
 
-export class PopoverArrowAtom<B extends OverlayView = PopoverBond> extends BondAtom<B, HTMLElement> {
-	constructor(bond: B) {
-		super(bond, 'arrow');
-	}
+type PopoverBondView = PopoverBondBase<PopoverBondProps>;
 
-	override get attrs() {
-		return {
-			...super.attrs,
-			role: 'presentation',
-			'aria-hidden': true
-		};
-	}
+// -----------------------------------------------------------------------------
+// Legacy state surface adapters
+// -----------------------------------------------------------------------------
+
+type PopoverLegacyStateSurface = {
+	position?: ComputePositionReturn;
+	tracking?: boolean | undefined;
+	computed?: Promise<ComputePositionReturn>;
+	shouldTrackPosition?: boolean;
+	notifyComputed?: (position: ComputePositionReturn) => void;
+};
+
+type PopoverBondSurface = PopoverLegacyStateSurface;
+
+function popoverBondSurface(bond: OverlayView): PopoverBondSurface {
+	return bond as unknown as PopoverBondSurface;
 }
 
-export class PopoverVirtualTriggerAtom<B extends OverlayView = PopoverBond> extends BondAtom<B, BondVirtualElement> {
+function popoverStateSurface(bond: OverlayView): PopoverLegacyStateSurface {
+	return (bond.state ?? {}) as PopoverLegacyStateSurface;
+}
+
+export function getPopoverPosition(bond: OverlayView): ComputePositionReturn | undefined {
+	return popoverBondSurface(bond).position ?? popoverStateSurface(bond).position;
+}
+
+export function setPopoverTracking(bond: OverlayView, tracking: boolean | undefined): void {
+	if ('tracking' in bond) {
+		popoverBondSurface(bond).tracking = tracking;
+		return;
+	}
+	popoverStateSurface(bond).tracking = tracking;
+}
+
+export function shouldTrackPopoverPosition(bond: OverlayView): boolean {
+	const bondValue = popoverBondSurface(bond).shouldTrackPosition;
+	return bondValue ?? popoverStateSurface(bond).shouldTrackPosition ?? overlayIsOpen(bond);
+}
+
+export function notifyPopoverComputed(bond: OverlayView, position: ComputePositionReturn): void {
+	const bondNotify = popoverBondSurface(bond).notifyComputed;
+	if (bondNotify) {
+		bondNotify.call(bond, position);
+		return;
+	}
+	popoverStateSurface(bond).notifyComputed?.(position);
+}
+
+export function popoverNode<N extends Atom = Atom>(bond: OverlayView, key: string): N | undefined {
+	return bond.node<N>(key);
+}
+
+// -----------------------------------------------------------------------------
+// Atom factory extension point
+// -----------------------------------------------------------------------------
+
+type PopoverHTMLElementNode = Atom<PopoverBond, HTMLElement>;
+
+export function createPopoverAtom<N extends PopoverHTMLElementNode>(
+	bond: PopoverBond,
+	key: string,
+	fallback: (bond: PopoverBond) => N
+): N {
+	const method = (bond as unknown as Record<string, unknown>)[key];
+	if (typeof method === 'function') return method.call(bond) as N;
+	return fallback(bond);
+}
+
+// -----------------------------------------------------------------------------
+// Atom definitions
+// -----------------------------------------------------------------------------
+
+export const PopoverArrowAtom = defineAtom<OverlayView, HTMLElement>('arrow', (atom) => {
+	atom.capability(popoverArrowPresentation());
+});
+export type PopoverArrowAtom = InstanceType<typeof PopoverArrowAtom>;
+
+export class PopoverVirtualTriggerAtom<B extends OverlayView = PopoverBondView> extends Atom<
+	B,
+	BondVirtualElement
+> {
 	constructor(bond: B) {
 		super(bond, 'virtual-trigger');
 	}
@@ -188,140 +248,196 @@ export class PopoverVirtualTriggerAtom<B extends OverlayView = PopoverBond> exte
 	}
 }
 
-// Overlay container atom — owns the dialog ARIA contract and the focus-trap/escape
+// Overlay container atom: owns the dialog ARIA contract and the focus-trap/escape
 // capabilities via `.role('surface')`.
-export class PopoverOverlayAtom<B extends OverlayView = PopoverBond> extends BondAtom<B, HTMLElement> {
-	constructor(bond: B) {
-		super(bond, 'overlay');
-		this.role('surface');
-	}
+export const PopoverOverlayAtom = defineAtom<OverlayView, HTMLElement>('overlay', (atom) => {
+	atom.role('surface');
+	atom.capability(popoverOverlayPresentation());
+});
+export type PopoverOverlayAtom = InstanceType<typeof PopoverOverlayAtom>;
 
-	override get attrs() {
-		// Label the dialog by the trigger, not itself (a self-reference is meaningless).
-		const triggerId = getElementId(this.bond.id, `${this.bond.namespace}-trigger`);
-		const isOpen = this.bond.state.isOpen;
-		const isDisabled = this.bond.state.isDisabled;
-		const isActive = isOpen && !isDisabled;
+// No hand-written handlers: focus-trap + escape onkeydown come from `.role('surface')`.
 
-		return {
-			...super.attrs,
-			role: 'dialog',
-			'aria-modal': false,
-			'aria-labelledby': triggerId,
-			inert: !isActive ? true : undefined,
-			tabindex: -1,
-			'data-active': isActive
-		};
-	}
+export const PopoverContentAtom = defineAtom<OverlayView, HTMLElement>('content', (atom) => {
+	atom.capability(popoverContentPresentation());
+});
+export type PopoverContentAtom = InstanceType<typeof PopoverContentAtom>;
 
-	// No hand-written handlers: focus-trap + escape onkeydown come from `.role('surface')`.
-
-	override onmount(node: HTMLElement) {
-		const triggerElement = this.bond.element<Element>('trigger');
-		if (!triggerElement) return;
-
-		const isOpen = untrack(() => this.bond.state.isOpen);
-		if (!isOpen) return;
-
-		// Avoid stealing focus from inputs/textareas inside trigger
-		const activeElement = document.activeElement as HTMLElement;
-		const triggerContainsFocus =
-			['input', 'textarea'].includes(activeElement.tagName.toLowerCase()) &&
-			triggerElement.contains(activeElement);
-
-		if (!triggerContainsFocus) {
-			setTimeout(() => focus(node, ['textarea:not([disabled])', 'input:not([disabled])']), 0);
-		}
-	}
-}
-
-export class PopoverContentAtom<B extends OverlayView = PopoverBond> extends BondAtom<B, HTMLElement> {
-	constructor(bond: B) {
-		super(bond, 'content');
-	}
-
-	override get attrs() {
-		const isOpen = this.bond.state.isOpen;
-		const isDisabled = this.bond.state.isDisabled;
-		const isActive = isOpen && !isDisabled;
-		return {
-			...super.attrs,
-			'data-active': isActive
-		};
-	}
-
-	override get handlers() {
-		return {};
-	}
-}
-
-export class PopoverIndicatorAtom<B extends OverlayView = PopoverBond> extends BondAtom<B, HTMLElement> {
-	constructor(bond: B) {
-		super(bond, 'indicator');
-	}
-
-	override get attrs() {
-		const isOpen = this.bond.state.isOpen;
-		return {
-			...super.attrs,
-			'aria-hidden': true,
-			'aria-live': isOpen ? ('polite' as const) : ('off' as const)
-		};
-	}
-}
+export const PopoverIndicatorAtom = defineAtom<OverlayView, HTMLElement>('indicator', (atom) => {
+	atom.capability(popoverIndicatorPresentation());
+});
+export type PopoverIndicatorAtom = InstanceType<typeof PopoverIndicatorAtom>;
 
 // Extends OverlayTriggerAtom with role="button" (non-button), disabled attr (button),
-// Tab→focus-content, and Escape→close routing.
-export class PopoverTriggerAtom<B extends OverlayView = PopoverBond> extends OverlayTriggerAtom<B> {
-	override get attrs() {
-		const isButtonElement = isBrowser() ? this.element instanceof HTMLButtonElement : false;
-		const isDisabled = this.bond.state.isDisabled;
-		return {
-			...super.attrs,
-			role: isButtonElement ? '' : 'button',
-			disabled: isButtonElement ? isDisabled : undefined
-		};
-	}
+// Tab->focus-content, and Escape->close routing.
+export const PopoverTriggerAtom = defineAtom(OverlayTriggerAtom, (atom) => {
+	atom.capability(popoverTriggerPresentation());
+});
+export type PopoverTriggerAtom = InstanceType<typeof PopoverTriggerAtom>;
 
-	override get handlers() {
-		const baseHandlers = super.handlers as {
-			onclick?: (ev: MouseEvent) => void;
-			onkeydown?: (ev: KeyboardEvent) => void;
-		};
+// -----------------------------------------------------------------------------
+// Atom capabilities
+// -----------------------------------------------------------------------------
 
-		return {
-			...baseHandlers,
-			onkeydown: (ev: KeyboardEvent) => {
-				if (this.bond.state.isDisabled) return;
-
-				if (ev.key === 'Tab') {
-					this.bond.element<HTMLElement>('content')?.focus();
-					return;
-				}
-
-				if (ev.key === 'Escape') {
-					// Trigger holds focus (not trapped in content): Escape still closes.
-					this.bond.state.close();
-					return;
-				}
-
-				baseHandlers.onkeydown?.(ev);
-			}
-		} as Record<string, unknown>;
-	}
+function popoverArrowPresentation<B extends OverlayView>() {
+	return defineAtomCapability<void, AtomHost, B>({
+		slot: POPOVER_ARROW,
+		meta: {
+			layer: 1,
+			kind: 'projection',
+			projects: ['arrow'],
+			docs: 'Popover arrow presentational ARIA projection.'
+		},
+		behavior: {
+			attrs: () => ({
+				role: 'presentation',
+				'aria-hidden': true
+			})
+		}
+	});
 }
+
+function popoverOverlayPresentation<B extends OverlayView>() {
+	return defineAtomCapability<void, AtomHost, B, HTMLElement>({
+		slot: POPOVER_OVERLAY,
+		meta: {
+			layer: 1,
+			kind: 'projection',
+			projects: ['overlay'],
+			docs: 'Popover overlay dialog ARIA, active-state projection, and open-focus behavior.'
+		},
+		behavior: {
+			attrs: (_node, bond) => {
+				if (!bond) return {};
+				// Label the dialog by the trigger, not itself (a self-reference is meaningless).
+				const triggerId = getElementId(bond.id, `${bond.namespace}-trigger`);
+				const isOpen = overlayIsOpen(bond);
+				const isDisabled = overlayIsDisabled(bond);
+				const isActive = isOpen && !isDisabled;
+
+				return {
+					role: 'dialog',
+					'aria-modal': false,
+					'aria-labelledby': triggerId,
+					inert: !isActive ? true : undefined,
+					tabindex: -1,
+					'data-active': isActive
+				};
+			},
+			onmount: (element, _node, bond) => {
+				if (!bond) return;
+				const triggerElement = popoverNode(bond, 'trigger')?.element as Element | undefined;
+				if (!triggerElement) return;
+
+				const isOpen = untrack(() => overlayIsOpen(bond));
+				if (!isOpen) return;
+
+				// Avoid stealing focus from inputs/textareas inside trigger.
+				const activeElement = document.activeElement as HTMLElement;
+				const triggerContainsFocus =
+					['input', 'textarea'].includes(activeElement.tagName.toLowerCase()) &&
+					triggerElement.contains(activeElement);
+
+				if (!triggerContainsFocus) {
+					setTimeout(
+						() => focus(element, ['textarea:not([disabled])', 'input:not([disabled])']),
+						0
+					);
+				}
+			}
+		}
+	});
+}
+
+function popoverContentPresentation<B extends OverlayView>() {
+	return defineAtomCapability<void, AtomHost, B>({
+		slot: POPOVER_CONTENT,
+		meta: {
+			layer: 1,
+			kind: 'projection',
+			projects: ['content'],
+			docs: 'Popover content active-state projection.'
+		},
+		behavior: {
+			attrs: (_node, bond) => {
+				if (!bond) return {};
+				const isOpen = overlayIsOpen(bond);
+				const isDisabled = overlayIsDisabled(bond);
+				return {
+					'data-active': isOpen && !isDisabled
+				};
+			}
+		}
+	});
+}
+
+function popoverIndicatorPresentation<B extends OverlayView>() {
+	return defineAtomCapability<void, AtomHost, B>({
+		slot: POPOVER_INDICATOR,
+		meta: {
+			layer: 1,
+			kind: 'projection',
+			projects: ['indicator'],
+			docs: 'Popover indicator live-state projection.'
+		},
+		behavior: {
+			attrs: (_node, bond) => {
+				const isOpen = bond ? overlayIsOpen(bond) : false;
+				return {
+					'aria-hidden': true,
+					'aria-live': isOpen ? ('polite' as const) : ('off' as const)
+				};
+			}
+		}
+	});
+}
+
+function popoverTriggerPresentation<B extends OverlayView>() {
+	return defineAtomCapability<void, AtomHost, B>({
+		slot: POPOVER_TRIGGER,
+		meta: {
+			layer: 1,
+			kind: 'policy',
+			projects: ['trigger'],
+			docs: 'Popover trigger button semantics and keyboard routing.'
+		},
+		behavior: {
+			attrs: (node, bond) => {
+				const isButtonElement = isBrowser() ? node.element instanceof HTMLButtonElement : false;
+				const isDisabled = bond ? overlayIsDisabled(bond) : false;
+				return {
+					role: isButtonElement ? '' : 'button',
+					disabled: isButtonElement ? isDisabled : undefined
+				};
+			},
+			handlers: (_node, bond) => ({
+				onkeydown: (ev: KeyboardEvent) => {
+					if (!bond || overlayIsDisabled(bond)) return;
+
+					if (ev.key === 'Tab') {
+						(popoverNode(bond, 'content')?.element as HTMLElement | undefined)?.focus();
+						return;
+					}
+
+					if (ev.key === 'Escape') {
+						// Trigger holds focus (not trapped in content): Escape still closes.
+						closeOverlay(bond);
+					}
+				}
+			})
+		}
+	});
+}
+
+// -----------------------------------------------------------------------------
+// Bond spec and constructor facade
+// -----------------------------------------------------------------------------
 
 // Fusion spec (§9.4.1): exposes popover's atoms + capabilities to fuse() without
 // converting the generic PopoverBond to a defineBond. Pass as `{ spec: popoverSpec }`.
-export const popoverSpec: BondSpec<{
-	trigger: typeof PopoverTriggerAtom;
-	'virtual-trigger': typeof PopoverVirtualTriggerAtom;
-	overlay: typeof PopoverOverlayAtom;
-	content: typeof PopoverContentAtom;
-	arrow: typeof PopoverArrowAtom;
-	indicator: typeof PopoverIndicatorAtom;
-}> = {
+export const popoverSpec = {
 	name: 'popover',
+	base: PopoverBondBase,
 	atoms: {
 		trigger: PopoverTriggerAtom,
 		'virtual-trigger': PopoverVirtualTriggerAtom,
@@ -331,4 +447,50 @@ export const popoverSpec: BondSpec<{
 		indicator: PopoverIndicatorAtom
 	},
 	capabilities: popoverCapabilities
-};
+} satisfies BondSpec<
+	{
+		trigger: typeof PopoverTriggerAtom;
+		'virtual-trigger': typeof PopoverVirtualTriggerAtom;
+		overlay: typeof PopoverOverlayAtom;
+		content: typeof PopoverContentAtom;
+		arrow: typeof PopoverArrowAtom;
+		indicator: typeof PopoverIndicatorAtom;
+	},
+	typeof PopoverBondBase
+>;
+
+const PopoverBondImpl = defineBond<
+	{
+		trigger: typeof PopoverTriggerAtom;
+		'virtual-trigger': typeof PopoverVirtualTriggerAtom;
+		overlay: typeof PopoverOverlayAtom;
+		content: typeof PopoverContentAtom;
+		arrow: typeof PopoverArrowAtom;
+		indicator: typeof PopoverIndicatorAtom;
+	},
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	any,
+	typeof PopoverBondBase
+>(popoverSpec);
+
+// Propagate OverlayBond's owner context through composed families that share Popover's context.
+Object.defineProperty(PopoverBondImpl, 'CONTEXT_KEYS', {
+	value: [PopoverBondImpl.CONTEXT_KEY, OverlayBond.CONTEXT_KEY],
+	writable: true,
+	configurable: true
+});
+
+export type PopoverBond = BondOf<typeof PopoverBondImpl>;
+
+interface PopoverBondConstructor {
+	new (props: PopoverBondProps): PopoverBond;
+	readonly CONTEXT_KEY: string;
+	readonly CONTEXT_KEYS?: readonly string[];
+	readonly spec: (typeof PopoverBondImpl)['spec'];
+	get(): PopoverBond | undefined;
+	getOrThrow(message?: string): PopoverBond;
+	set(bond: PopoverBond): PopoverBond;
+	create(props: PopoverBondProps): PopoverBond;
+}
+
+export const PopoverBond = PopoverBondImpl as unknown as PopoverBondConstructor;

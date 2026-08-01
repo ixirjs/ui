@@ -107,13 +107,13 @@ export const selectRootProps: PropDefinition[] = [
 	},
 	{
 		name: 'factory',
-		type: 'Factory<SelectBond<SelectStateProps, SelectBondState<SelectStateProps>, SelectBondElements>> | undefined',
+		type: 'Factory<SelectBond> | undefined',
 		default: 'undefined',
 		description: 'Factory'
 	},
 	{
 		name: 'children',
-		type: 'Snippet<[{ select: SelectBond<any, SelectBondState<any>, SelectBondElements>; }]> | undefined',
+		type: 'Snippet<[{ select: SelectBond; }]> | undefined',
 		default: 'undefined',
 		description: 'Children'
 	},

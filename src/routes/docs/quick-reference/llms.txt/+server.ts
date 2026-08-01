@@ -1,4 +1,3 @@
-
 import Page from './template.svelte';
 
 import type { Frontmatter } from '$docs/md/frontmatter';
@@ -10,16 +9,16 @@ const frontmatter: Frontmatter = {
 	category: 'reference',
 	depth: 'foundational',
 	prerequisites: [],
-	related: ['overview', 'usage'],
+	related: ['overview', 'usage']
 };
-
-
 
 export function GET() {
 	const text = renderLlmContent(Page, { frontmatter });
 
 	return new Response(text, {
-		headers: { 'Content-Type': 'text/markdown; charset=utf-8',
-			'Cache-Control': 'public, max-age=3600' }
+		headers: {
+			'Content-Type': 'text/markdown; charset=utf-8',
+			'Cache-Control': 'public, max-age=3600'
+		}
 	});
 }

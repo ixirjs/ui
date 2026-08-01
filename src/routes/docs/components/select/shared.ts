@@ -43,8 +43,7 @@ const useCases = [
 	},
 	{
 		title: 'Navigation Menus',
-		description:
-			'Create dropdown navigation menus for site navigation or contextual menu options.'
+		description: 'Create dropdown navigation menus for site navigation or contextual menu options.'
 	},
 	{
 		title: 'Form Field Replacements',

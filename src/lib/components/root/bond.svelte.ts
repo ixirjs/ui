@@ -1,10 +1,9 @@
-import {
-	bondContextKey,
-	Bond,
-	BondState,
-	type BondStateProps
-} from '$svelte-atoms/core/shared/bond.svelte';
+import { bondContextKey, Bond, type BondStateProps } from '$svelte-atoms/core/shared/bond';
 import type { Component } from 'svelte';
+
+// -----------------------------------------------------------------------------
+// Public types
+// -----------------------------------------------------------------------------
 
 export type RootStateProps<T extends Record<string, unknown> = Record<string, unknown>> =
 	BondStateProps & {
@@ -16,11 +15,15 @@ export type RootStateProps<T extends Record<string, unknown> = Record<string, un
 		extend: T;
 	};
 
-export class RootBond extends Bond<RootStateProps, RootBondState> {
+// -----------------------------------------------------------------------------
+// Bond implementation
+// -----------------------------------------------------------------------------
+
+export class RootBond extends Bond<RootStateProps> {
 	static CONTEXT_KEY = bondContextKey('root');
 
-	constructor(atom: RootBondState) {
-		super(atom);
+	constructor(props: RootStateProps) {
+		super(props);
 	}
 
 	get rootElement() {
@@ -28,11 +31,5 @@ export class RootBond extends Bond<RootStateProps, RootBondState> {
 	}
 	set rootElement(el: HTMLElement | undefined) {
 		this.elements.root = el;
-	}
-}
-
-export class RootBondState extends BondState<RootStateProps> {
-	constructor(state: RootStateProps) {
-		super(state);
 	}
 }

@@ -9,14 +9,14 @@
 			{
 				title: 'Atoms',
 				description:
-					'HtmlAtom wraps any HTML element with preset classes, variants, and bond state — zero hardcoded styles, infinite flexibility.',
+					'Atom Components render flexible parts; Atoms provide runtime spreads, element refs, and local capabilities.',
 				href: '/docs/atoms',
 				iconKey: 'atoms'
 			},
 			{
-				title: 'Bond System',
+				title: 'Bonds',
 				description:
-					'Shared reactive state flows through component trees via Svelte context — no prop drilling, no store boilerplate.',
+					'Shared state, context, registered Atoms, and compound coordination without prop drilling.',
 				href: '/docs/bonds',
 				iconKey: 'bonds'
 			},
@@ -30,7 +30,7 @@
 			{
 				title: 'TypeScript',
 				description:
-					'Full type inference for variants, slots, and bond state. Catch mistakes at author time, not at runtime.',
+					'Full type inference for variants, Atoms, capabilities, and Bond props. Catch mistakes at author time.',
 				href: '/docs/quick-start',
 				iconKey: 'typescript'
 			},
@@ -65,7 +65,7 @@
 		},
 		{
 			title: 'Philosophy',
-			description: 'Understand the Atom → Bond → Preset architecture.',
+			description: 'Understand Atoms, Bonds, capabilities, and presets.',
 			href: '/docs/philosophy',
 			badge: 'Concepts'
 		},
@@ -73,6 +73,12 @@
 			title: 'Styling',
 			description: 'Own every pixel via the Preset system.',
 			href: '/docs/styling',
+			badge: 'Guide'
+		},
+		{
+			title: 'Migration',
+			description: 'Move older BondState and Bond-owned Atom code to the current model.',
+			href: '/docs/migration',
 			badge: 'Guide'
 		}
 	];
@@ -94,24 +100,34 @@
 			n: '3',
 			title: 'Import and use components',
 			lang: 'svelte' as const,
-			code: "<script>\n  import { Button } from '@svelte-atoms/core/button';\n<" + "/script>\n\n<Button>Click me</Button>"
+			code:
+				"<script>\n  import { Button } from '@svelte-atoms/core/button';\n<" +
+				'/script>\n\n<Button>Click me</Button>'
 		}
 	];
 </script>
 
 {#snippet featureIcon(key: FeatureKey)}
 	{#if key === 'atoms'}
-		<circle cx="12" cy="12" r="1"/><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="11"/>
+		<circle cx="12" cy="12" r="1" /><circle cx="12" cy="12" r="7" /><circle
+			cx="12"
+			cy="12"
+			r="11"
+		/>
 	{:else if key === 'bonds'}
-		<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+		<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path
+			d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"
+		/>
 	{:else if key === 'preset'}
-		<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>
+		<path
+			d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"
+		/><circle cx="12" cy="12" r="3" />
 	{:else if key === 'typescript'}
-		<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+		<polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" />
 	{:else if key === 'aria'}
-		<circle cx="12" cy="12" r="10"/><path d="M12 8h.01"/><path d="M11 12h1v4h1"/>
+		<circle cx="12" cy="12" r="10" /><path d="M12 8h.01" /><path d="M11 12h1v4h1" />
 	{:else if key === 'runes'}
-		<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+		<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
 	{/if}
 {/snippet}
 
@@ -196,7 +212,9 @@
 <Section.Root>
 	<Section.Header>
 		<Section.Title>Core concepts</Section.Title>
-		<Section.Subtitle>Three composable primitives that give you complete control over behaviour, state, and style</Section.Subtitle>
+		<Section.Subtitle
+			>Atoms, Bonds, capabilities, and presets give you control over behavior, state, and style</Section.Subtitle
+		>
 	</Section.Header>
 	<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
 		{#each features as feature (feature.href)}
@@ -204,7 +222,9 @@
 				href={feature.href}
 				class="group border-border hover:border-primary/40 bg-card block rounded-lg border p-5 transition-all"
 			>
-				<div class="bg-primary/10 text-primary mb-4 inline-flex h-9 w-9 items-center justify-center rounded-lg">
+				<div
+					class="bg-primary/10 text-primary mb-4 inline-flex h-9 w-9 items-center justify-center rounded-lg"
+				>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
 						width="16"
@@ -274,13 +294,14 @@
 		<p class="text-primary mb-2 text-xs font-medium uppercase tracking-wide">Next steps</p>
 		<h2 class="text-foreground mb-1.5 text-lg font-semibold">Ready to go deeper?</h2>
 		<p class="text-muted-foreground mb-5 text-sm leading-relaxed">
-			Learn the architecture, master the styling system, and understand what makes Svelte Atoms
+			Learn the architecture, use the styling system, and understand what makes Svelte Atoms
 			different from other component libraries.
 		</p>
 		<div class="flex flex-wrap gap-2">
 			<Button href="/docs/philosophy" as="a" variant="primary">Learn the Philosophy</Button>
 			<Button href="/docs/atoms" as="a" variant="outline">Understand Atoms</Button>
-			<Button href="/docs/bonds" as="a" variant="outline">Master Bonds</Button>
+			<Button href="/docs/bonds" as="a" variant="outline">Understand Bonds</Button>
+			<Button href="/docs/migration" as="a" variant="outline">Migration Guide</Button>
 			<Button href="/docs/preset" as="a" variant="outline">Explore Presets</Button>
 		</div>
 	</div>

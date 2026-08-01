@@ -1,7 +1,7 @@
 import type { Snippet } from 'svelte';
 import type { HtmlAtomProps, Base } from '$svelte-atoms/core/components/atom';
 import type { Factory } from '$svelte-atoms/core/types';
-import type { TreeBond, TreeBondProps } from './bond.svelte';
+import type { TreeBond } from './bond.svelte';
 
 export type TreeRootProps<
 	E extends keyof HTMLElementTagNameMap = 'div',

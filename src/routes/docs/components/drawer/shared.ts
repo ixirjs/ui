@@ -37,7 +37,7 @@ const useCases = [
 	{
 		title: 'Filters and Settings',
 		description:
-			'Show filtering options or settings panels that don\'t require full-page navigation.'
+			"Show filtering options or settings panels that don't require full-page navigation."
 	},
 	{
 		title: 'Shopping Carts',
@@ -74,33 +74,27 @@ const componentsSummary = [
 	},
 	{
 		name: 'Drawer.Header',
-		description:
-			'Optional header section for drawer title and close button.'
+		description: 'Optional header section for drawer title and close button.'
 	},
 	{
 		name: 'Drawer.Body',
-		description:
-			'Main content area of the drawer.'
+		description: 'Main content area of the drawer.'
 	},
 	{
 		name: 'Drawer.Footer',
-		description:
-			'Optional footer section for action buttons.'
+		description: 'Optional footer section for action buttons.'
 	},
 	{
 		name: 'Drawer.Title',
-		description:
-			'Semantic title element with proper ARIA labeling.'
+		description: 'Semantic title element with proper ARIA labeling.'
 	},
 	{
 		name: 'Drawer.Description',
-		description:
-			'Semantic description for additional context to screen readers.'
+		description: 'Semantic description for additional context to screen readers.'
 	},
 	{
 		name: 'Drawer.Backdrop',
-		description:
-			'Overlay backdrop that dims the background when drawer is open.'
+		description: 'Overlay backdrop that dims the background when drawer is open.'
 	}
 ];
 

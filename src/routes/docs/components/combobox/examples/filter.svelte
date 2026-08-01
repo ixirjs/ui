@@ -11,8 +11,8 @@
 		{ value: 'jpy', label: 'Japanese Yen' }
 	];
 
-	let currencyValue = $state<string | undefined>();
-	let currencyLabel = $state<string | undefined>();
+	let currencyValue = $state('');
+	let currencyLabel = $state('');
 
 	const filteredCurrencies = filterDropdownData(
 		() => currencies,

@@ -14,7 +14,7 @@
 
 	const shortcutProps = $derived(mergePresetProps(preset, 'shortcut', restProps));
 
-	let content = $derived(children ?? defaultChildren)
+	let content = $derived(children ?? defaultChildren);
 </script>
 
 {#snippet separatorContent()}
@@ -22,9 +22,9 @@
 {/snippet}
 
 {#snippet defaultChildren()}
-	{#each keys as key, i ( key )}
+	{#each keys as key, i (key)}
 		{@const content = i > 0 ? separatorContent : null}
-	
+
 		{@render content?.()}
 		<Kbd>{key}</Kbd>
 	{/each}

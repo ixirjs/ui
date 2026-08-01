@@ -13,7 +13,7 @@
 		// Lazy component loader from createExampleLoader(). Renders the example file in HTML mode.
 		component = undefined,
 		// Inline preview — fallback when no component loader is provided.
-		children = undefined,
+		children = undefined
 	}: {
 		title: string;
 		description?: string;
@@ -33,13 +33,11 @@
 		{/if}
 	</DemoExample>
 {:else}
-{newLine()}### {title}
-{#if description}
-
-{newLine()}{description}
-{/if}
-{#if code}
-
-{newLine(2)}{codeBlock(code, lang)}
-{/if}
+	{newLine()}### {title}
+	{#if description}
+		{newLine()}{description}
+	{/if}
+	{#if code}
+		{newLine(2)}{codeBlock(code, lang)}
+	{/if}
 {/if}

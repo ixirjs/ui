@@ -51,16 +51,17 @@ export interface ElementProps<T extends ElementTagName = ElementTagName> extends
 	// emit styles as :global rather than scoped
 	global?: boolean;
 
+	// `| undefined` on the lifecycle/transition hooks is required by exactOptionalPropertyTypes:
+	// callers forward these from optional props (value possibly `undefined`), e.g. `<Atom {initial}>`.
 	// runs once on mount, before enter transition
-	initial?: NodeFunction<T>;
+	initial?: NodeFunction<T> | undefined;
 
-	enter?: TransitionFunction<ElementType<T>>;
+	enter?: TransitionFunction<ElementType<T>> | undefined;
 
-	exit?: TransitionFunction<ElementType<T>>;
+	exit?: TransitionFunction<ElementType<T>> | undefined;
 
-	animate?: NodeFunction<T>;
+	animate?: NodeFunction<T> | undefined;
 
-	// `| undefined` is required by exactOptionalPropertyTypes
 	onmount?: NodeFunction<T> | undefined;
 
 	// `| undefined`: see onmount
@@ -75,6 +76,16 @@ export interface HtmlElementEventProps {
 	onintroend?: (ev: TransitionEvent) => void;
 	onexitend?: (ev: TransitionEvent) => void;
 }
+
+// Svelte's HTMLAttributes re-declares the transition-lifecycle events (e.g.
+// `onintroend`) as CustomEvent handlers, which collide with the library's
+// CSS-`TransitionEvent`-flavored HtmlElementEventProps when the two are
+// intersected on a component's props. Strip the overlapping keys so the
+// library's definitions win when a component does `Props & HtmlAttributes<E>`.
+export type HtmlElementAttributes<E extends EventTarget> = Omit<
+	HTMLAttributes<E>,
+	keyof HtmlElementEventProps
+>;
 
 export interface HtmlElementProps<
 	T extends HtmlElementTagName = 'div',

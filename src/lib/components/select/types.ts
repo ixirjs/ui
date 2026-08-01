@@ -1,8 +1,7 @@
 import type { Component, Snippet } from 'svelte';
 import type { HtmlAtomProps, Base, SnippetProps } from '$svelte-atoms/core/components/atom';
-import type { Factory, Override } from '$svelte-atoms/core/types';
+import type { Factory } from '$svelte-atoms/core/types';
 import type { SelectBond } from './bond.svelte';
-import type { PopoverTriggerProps } from '$svelte-atoms/core/components/popover';
 import type { ClassValue } from 'svelte/elements';
 import type { SelectItemController } from './item';
 import type { SelectItemAtom } from './item/bond.svelte';
@@ -10,14 +9,11 @@ import type { SelectItemAtom } from './item/bond.svelte';
 // Snippet props (extensible)
 
 export interface SelectSnippetProps extends SnippetProps {
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	select: SelectBond;
-	// @deprecated Use `select`
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	/** @deprecated Use `select` instead. */
 	dropdown: SelectBond;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type SelectChildren = Snippet<[SelectSnippetProps]>;
 
 export interface SelectRootProps<
@@ -42,11 +38,14 @@ export interface SelectRootProps<
 	onquerychange?: (query: string) => void;
 }
 
+// Extends HtmlAtomProps directly (PopoverTriggerProps is itself an empty `HtmlAtomProps<…,
+// PopoverChildren>`): an `Override<…>` here would Omit-collapse `as`/etc. to `unknown` via
+// HtmlAtomProps' index signature. The 3rd generic swaps in SelectChildren cleanly.
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface SelectTriggerProps<
 	E extends keyof HTMLElementTagNameMap = 'div',
 	B extends Base = Base
-> extends Override<PopoverTriggerProps<E, B>, { children?: SelectChildren }> {}
+> extends HtmlAtomProps<E, B, SelectChildren> {}
 
 export interface SelectSelectionsProps {
 	class?: ClassValue;
@@ -65,7 +64,6 @@ export interface SelectSelectionsProps {
 export interface SelectSelectionProps<
 	E extends keyof HTMLElementTagNameMap = 'div',
 	B extends Base = Base
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 > extends HtmlAtomProps<E, B> {
 	selection: SelectSelection;
 	children?: Snippet;

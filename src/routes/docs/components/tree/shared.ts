@@ -25,23 +25,28 @@ const accessibilityFeatures = [
 const useCases = [
 	{
 		title: 'File System Browsers',
-		description: 'Display directory and file structures with expandable folder nodes and nested file items.'
+		description:
+			'Display directory and file structures with expandable folder nodes and nested file items.'
 	},
 	{
 		title: 'Organization Charts',
-		description: 'Render hierarchical org structures with nested groups and team members as expandable tree nodes.'
+		description:
+			'Render hierarchical org structures with nested groups and team members as expandable tree nodes.'
 	},
 	{
 		title: 'Category Navigation',
-		description: 'Build nested category trees for e-commerce filters, taxonomy browsers, or content classification.'
+		description:
+			'Build nested category trees for e-commerce filters, taxonomy browsers, or content classification.'
 	},
 	{
 		title: 'JSON or XML Viewers',
-		description: 'Visualize structured data like JSON objects or XML elements as an expandable tree for debugging or exploration.'
+		description:
+			'Visualize structured data like JSON objects or XML elements as an expandable tree for debugging or exploration.'
 	},
 	{
 		title: 'Documentation Sidebar',
-		description: 'Create a hierarchical docs navigation with expandable section groups and nested page links.'
+		description:
+			'Create a hierarchical docs navigation with expandable section groups and nested page links.'
 	},
 	{
 		title: 'Permission Trees',
@@ -52,15 +57,18 @@ const useCases = [
 const componentsSummary = [
 	{
 		name: 'Tree.Root',
-		description: 'Root node container that manages the open/closed expanded state. Bindable open prop for controlled usage.'
+		description:
+			'Root node container that manages the open/closed expanded state. Bindable open prop for controlled usage.'
 	},
 	{
 		name: 'Tree.Header',
-		description: 'Clickable header element that toggles the expanded/collapsed state of the tree node when clicked.'
+		description:
+			'Clickable header element that toggles the expanded/collapsed state of the tree node when clicked.'
 	},
 	{
 		name: 'Tree.Body',
-		description: 'Collapsible content container for nested tree items, shown when the node is expanded.'
+		description:
+			'Collapsible content container for nested tree items, shown when the node is expanded.'
 	}
 ];
 

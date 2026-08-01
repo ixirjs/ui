@@ -1,6 +1,8 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
+	import type { Snippet } from 'svelte';
 	import { mergeAtomProps, type Base } from '$svelte-atoms/core/components/atom';
-	import { TabBond } from './bond.svelte';
+	import { createAtomInstance } from '$svelte-atoms/core/shared/bond';
+	import { TabBodyAtom, TabBond } from './bond.svelte';
 	import { TabsBond } from '../bond.svelte';
 	import type { TabBodyProps } from '../types';
 	import { Stack } from '../../stack';
@@ -15,19 +17,22 @@
 		...restProps
 	}: TabBodyProps<E, B> = $props();
 
-	const atom = tabBond.atom('body');
+	const atom = createAtomInstance<TabBodyAtom, TabBond, HTMLElement>('body', {
+		bond: tabBond,
+		factory: (owner) => new TabBodyAtom(owner as TabBond)
+	});
 
 	const contentProps = $derived(mergeAtomProps(atom, preset, restProps));
 
-	const value = $derived(tabBond?.state.props.value);
+	const value = $derived(tabBond?.props.value);
 
 	// Register content snippet with tabs while mounted.
 	$effect.pre(() => {
-		if(!value) return;
-		if(!tabBond) return;
-		if(!tabsBond) return;
+		if (!value) return;
+		if (!tabBond) return;
+		if (!tabsBond) return;
 
-		tabsBond.state.registerTabContent(value, {
+		tabsBond.registerTabContent(value, {
 			render: body,
 			props: {
 				children
@@ -35,20 +40,36 @@
 		});
 
 		return () => {
-			tabsBond.state.unregisterTabContent(value);
+			tabsBond.unregisterTabContent(value);
 		};
 	});
 </script>
 
-{#snippet body({children = undefined, selected = false, ...props}: Record<string, unknown> = {})}
-	<Stack.Item 
-		class={['tab-body pointer-events-none flex h-auto w-full min-w-full flex-1 flex-col', selected && 'pointer-events-auto', '$preset', klass]} 
-		value={value}
-		inert={selected ? undefined : true} 
-		{...contentProps} 
+{#snippet body({
+	children = undefined,
+	selected = false,
+	...props
+}: {
+	children?: Snippet<[Record<string, unknown>]>;
+	selected?: boolean;
+	[key: string]: unknown;
+} = {})}
+	<Stack.Item
+		class={[
+			'tab-body pointer-events-none flex h-auto w-full min-w-full flex-1 flex-col',
+			selected && 'pointer-events-auto',
+			'$preset',
+			klass
+		]}
+		{value}
+		inert={selected ? undefined : true}
+		{...contentProps}
 		{...props}
 	>
-		{@render children?.({ ...(tabBond ? { tab: tabBond } : {}), ...(tabsBond ? { tabs: tabsBond } : {}) })}
+		{@render children?.({
+			...(tabBond ? { tab: tabBond } : {}),
+			...(tabsBond ? { tabs: tabsBond } : {})
+		})}
 	</Stack.Item>
 {/snippet}
 

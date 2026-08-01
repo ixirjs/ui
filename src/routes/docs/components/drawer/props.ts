@@ -16,7 +16,8 @@ export const slideoverRootProps: PropDefinition[] = [
 		name: 'side',
 		type: "'left' | 'right' | 'top' | 'bottom' | undefined",
 		default: "'right'",
-		description: 'Which edge of the screen the drawer slides in from. Controls the slide animation direction.'
+		description:
+			'Which edge of the screen the drawer slides in from. Controls the slide animation direction.'
 	},
 	{
 		name: 'disabled',
@@ -28,20 +29,22 @@ export const slideoverRootProps: PropDefinition[] = [
 		name: 'portal',
 		type: 'string | PortalBond | undefined',
 		default: "'root.l0'",
-		description: 'Portal target selector or PortalBond instance. Teleports drawer content to a different DOM node. Defaults to L0 z-layer.'
+		description:
+			'Portal target selector or PortalBond instance. Teleports drawer content to a different DOM node. Defaults to L0 z-layer.'
 	},
 	{
 		name: 'onclose',
 		type: '((event: Event, bond: DrawerBond<...>) => void) | undefined',
 		default: 'undefined',
-		description: 'Callback fired when the drawer is closed. Receives the closing event and DrawerBond instance.'
+		description:
+			'Callback fired when the drawer is closed. Receives the closing event and DrawerBond instance.'
 	},
 	{
 		name: 'factory',
 		type: 'Factory<DrawerBond<...>> | undefined',
 		default: 'undefined',
 		description: 'Custom factory function to create a DrawerBond instance with custom logic.'
-	},
+	}
 ];
 
 export const slideoverContentProps: PropDefinition[] = [
@@ -128,7 +131,7 @@ export const slideoverContentProps: PropDefinition[] = [
 		type: 'Snippet',
 		default: 'undefined',
 		description: 'Children content snippet'
-	},
+	}
 ];
 
 export const slideoverHeaderProps: PropDefinition[] = [
@@ -215,7 +218,7 @@ export const slideoverHeaderProps: PropDefinition[] = [
 		type: 'Snippet',
 		default: 'undefined',
 		description: 'Children content snippet'
-	},
+	}
 ];
 
 export const drawerBodyProps: PropDefinition[] = [
@@ -302,17 +305,14 @@ export const drawerBodyProps: PropDefinition[] = [
 		type: 'Snippet',
 		default: 'undefined',
 		description: 'Children content snippet'
-	},
+	}
 ];
 
-export const slideoverFooterProps: PropDefinition[] = [
-];
+export const slideoverFooterProps: PropDefinition[] = [];
 
-export const slideoverTitleProps: PropDefinition[] = [
-];
+export const slideoverTitleProps: PropDefinition[] = [];
 
-export const slideoverDescriptionProps: PropDefinition[] = [
-];
+export const slideoverDescriptionProps: PropDefinition[] = [];
 
 export const slideoverBackdropProps: PropDefinition[] = [
 	{
@@ -398,6 +398,5 @@ export const slideoverBackdropProps: PropDefinition[] = [
 		type: 'Snippet',
 		default: 'undefined',
 		description: 'Children content snippet'
-	},
+	}
 ];
-

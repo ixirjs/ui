@@ -6,7 +6,6 @@ export { default as Thumb } from './scrollable-thumb.svelte';
 
 export {
 	ScrollableBond,
-	ScrollableState,
 	ScrollableRootAtom,
 	ScrollableContainerAtom,
 	ScrollableContentAtom,

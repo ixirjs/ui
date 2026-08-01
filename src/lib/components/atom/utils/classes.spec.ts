@@ -17,11 +17,9 @@ describe('mergeClassesWithPreset', () => {
 		expect(result).toBe('bg-white font-bold');
 	});
 
-	it('only uses the last $preset occurrence as the injection point', () => {
+	it('uses the last $preset occurrence as the injection point and discards earlier sentinels', () => {
 		const result = mergeClassesWithPreset('a $preset b $preset c', 'PRESET', undefined);
-		// first $preset is treated as literal text; last one is the injection point
-		expect(result).toContain('PRESET');
-		expect(result).toContain('c');
+		expect(result).toBe('a b PRESET c');
 	});
 
 	it('handles undefined userClass gracefully', () => {
@@ -45,11 +43,26 @@ describe('mergeClassesWithPreset — array user class (the component-root shape)
 		expect(result).toBe('flex flex-col preset-class p-4 variant-class user-class');
 	});
 
-	it('uses the LAST exact $preset item as the injection point', () => {
+	it('uses the last exact $preset item as the injection point and discards earlier sentinels', () => {
 		const result = mergeClassesWithPreset(['$preset', 'mid', '$preset'], 'PRESET', undefined);
-		// earlier $preset stays literal, last one injects
-		expect(result).toContain('PRESET');
-		expect(result).toContain('mid');
+		expect(result).toBe('mid PRESET');
+	});
+
+	it('resolves nested component-root sentinels without changing wrapper structure', () => {
+		const result = mergeClassesWithPreset(
+			[
+				'input-root',
+				'$preset',
+				['checkbox-root', '$preset', ['datagrid-cell-checkbox', '$preset', 'user-class']],
+				'relative'
+			],
+			'datagrid-preset',
+			'variant-class'
+		);
+
+		expect(result).toBe(
+			'input-root checkbox-root datagrid-cell-checkbox datagrid-preset variant-class user-class relative'
+		);
 	});
 
 	it('handles arrays without a placeholder like plain strings (preset only via variants)', () => {

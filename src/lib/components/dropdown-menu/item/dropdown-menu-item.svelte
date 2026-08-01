@@ -1,12 +1,13 @@
-<script
-	lang="ts"
->
+<script lang="ts">
 	import { DropdownMenuItemAtom, type DropdownMenuItemAtomProps } from './bond.svelte';
 	import { DropdownMenuBond } from '../bond.svelte';
 	import type { DropdownMenuItemProps } from './types';
 	import { List } from '../../list';
+	import { createAtomInstance } from '$svelte-atoms/core/shared/bond';
 
-	const menu = DropdownMenuBond.getOrThrow('<DropdownMenuItem> must be used within a <DropdownMenu>.');
+	const menu = DropdownMenuBond.getOrThrow(
+		'<DropdownMenuItem> must be used within a <DropdownMenu>.'
+	);
 
 	const ID = $props.id();
 	let {
@@ -19,16 +20,22 @@
 		...restProps
 	}: DropdownMenuItemProps = $props();
 
-	// `atom`'s name is id-specific (`item-<id>`), so read the shared
-	// `dropdown-menu.item` preset from the bond's canonical item atom instead.
-	const presentation = $derived({ preset: preset ?? menu.item().preset });
-
 	const itemProps = $derived<DropdownMenuItemAtomProps>({
 		id,
 		disabled
 	});
 
-	const atom = new DropdownMenuItemAtom<typeof menu>(itemProps, menu);
+	const atom = createAtomInstance<DropdownMenuItemAtom<typeof menu>, typeof menu, HTMLElement>(
+		() => `item-${id}`,
+		{
+			bond: () => menu,
+			required: true,
+			register: { key: 'item', cardinality: 'many' },
+			factory: () => new DropdownMenuItemAtom<typeof menu>(itemProps, menu)
+		}
+	);
+
+	const presentation = $derived({ preset: preset ?? atom.preset });
 
 	// Atom spread (attrs + handlers + element attachment + roving projection) plus custom props.
 	const itemAttrs = $derived({
@@ -39,10 +46,11 @@
 	// Register the item into the bond so roving focus / keyboard navigation can see
 	// it. Stable (outside the reactive `spread`), so it never feeds the mount loop.
 	$effect.pre(() => {
-		menu.state.registerItem(ID, atom);
+		const itemId = id;
+		menu.registerItem(itemId, atom);
 
 		return () => {
-			menu.state.unregisterItem(ID);
+			menu.unregisterItem(itemId);
 		};
 	});
 

@@ -19,40 +19,48 @@ const accessibilityFeatures = [
 const useCases = [
 	{
 		title: 'Navigation Drawers',
-		description: 'Implement collapsible navigation panels that slide in from the left or right edge to display menus, links, or filters.'
+		description:
+			'Implement collapsible navigation panels that slide in from the left or right edge to display menus, links, or filters.'
 	},
 	{
 		title: 'Detail Panels',
-		description: 'Show contextual details or metadata for a selected item without navigating away from the main content view.'
+		description:
+			'Show contextual details or metadata for a selected item without navigating away from the main content view.'
 	},
 	{
 		title: 'Filter and Search Panels',
-		description: 'Reveal advanced filter controls or search options in a side panel to keep the main UI uncluttered.'
+		description:
+			'Reveal advanced filter controls or search options in a side panel to keep the main UI uncluttered.'
 	},
 	{
 		title: 'Dashboard Widgets',
-		description: 'Expand collapsible sidebar sections to display charts, stats, or additional data alongside the primary content area.'
+		description:
+			'Expand collapsible sidebar sections to display charts, stats, or additional data alongside the primary content area.'
 	},
 	{
 		title: 'Settings Panels',
-		description: 'Slide in application or page-level settings alongside the content being edited or viewed.'
+		description:
+			'Slide in application or page-level settings alongside the content being edited or viewed.'
 	}
 ];
 
 const componentsSummary = [
 	{
 		name: 'Sidebar.Root',
-		description: 'Root container that manages the open/closed state and provides the sidebar context to child components.'
+		description:
+			'Root container that manages the open/closed state and provides the sidebar context to child components.'
 	},
 	{
 		name: 'Sidebar.Content',
-		description: 'The animated sidebar panel that slides in/out. Accepts width, enter/exit animations, and custom styling.'
+		description:
+			'The animated sidebar panel that slides in/out. Accepts width, enter/exit animations, and custom styling.'
 	}
 ];
 
 export const metadata = {
 	title: 'Sidebar - Svelte Atoms',
-	description: 'Collapsible side panel component for navigation drawers, detail views, and filter panels.',
+	description:
+		'Collapsible side panel component for navigation drawers, detail views, and filter panels.',
 	componentTitle: 'Sidebar',
 	componentDescription:
 		'Collapsible side panel with left/right placement, smooth animations, and state binding.',

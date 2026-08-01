@@ -15,13 +15,12 @@
 
 <FrontMatter {frontmatter} />
 
-# Variants System
+# Variants System The current variants API is {inlineCode('defineVariants')} from {inlineCode(
+	'@svelte-atoms/core'
+)}. ## Basic variant definition
 
-The current variants API is {inlineCode('defineVariants')} from {inlineCode('@svelte-atoms/core')}.
-
-## Basic variant definition
-
-{codeBlock(`import { defineVariants } from '@svelte-atoms/core';
+{codeBlock(
+	`import { defineVariants } from '@svelte-atoms/core';
 
 const buttonVariants = defineVariants({
   class: 'inline-flex items-center justify-center rounded-md font-medium transition-colors',
@@ -41,11 +40,14 @@ const buttonVariants = defineVariants({
     variant: 'primary',
     size: 'md'
   }
-});`, 'typescript')}
+});`,
+	'typescript'
+)}
 
 ## Applying variants in a component
 
-{codeBlock(`<script lang="ts">
+{codeBlock(
+	`<script lang="ts">
   import { HtmlAtom, defineVariants } from '@svelte-atoms/core';
 
   const variants = defineVariants({
@@ -64,11 +66,14 @@ const buttonVariants = defineVariants({
 
 <HtmlAtom {rest} variants={variants} {tone}>
   {@render children?.()}
-</HtmlAtom>`, 'svelte')}
+</HtmlAtom>`,
+	'svelte'
+)}
 
 ## Compound variants
 
-{codeBlock(`const variants = defineVariants({
+{codeBlock(
+	`const variants = defineVariants({
   variants: {
     variant: { primary: '...', outline: '...' },
     size: { sm: '...', lg: '...' }
@@ -80,19 +85,23 @@ const buttonVariants = defineVariants({
       class: 'shadow-md'
     }
   ]
-});`, 'typescript')}
+});`,
+	'typescript'
+)}
 
-## Preset Integration
+## Preset Integration Use {inlineCode('setPreset')} for global defaults and keep per-component variants
+local:
 
-Use {inlineCode('setPreset')} for global defaults and keep per-component variants local:
-
-{codeBlock(`import { setPreset } from '@svelte-atoms/core';
+{codeBlock(
+	`import { setPreset } from '@svelte-atoms/core';
 
 setPreset({
   button: () => ({
     class: 'font-semibold tracking-wide'
   })
-});`, 'typescript')}
+});`,
+	'typescript'
+)}
 
 ## Best Practices
 

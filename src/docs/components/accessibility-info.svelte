@@ -1,7 +1,7 @@
 <script lang="ts">
 	type Props = {
 		features: string[];
-		title?: string;
+		title?: string | undefined;
 	};
 
 	let { features, title = '' }: Props = $props();

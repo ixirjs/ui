@@ -7,7 +7,6 @@ export type * from './scrollable-thumb.svelte';
 export {
 	ScrollableBond,
 	type ScrollableBondElements,
-	ScrollableState,
 	type ScrollableBondProps
 } from './bond.svelte';
 export { scrollable } from './attachments.svelte';

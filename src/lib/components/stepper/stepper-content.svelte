@@ -7,16 +7,18 @@
 
 	let {
 		class: klass = '',
+		// swallowed: this component renders the active step's content, not its own children
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		children = undefined,
 		preset = undefined,
 		...restProps
 	}: StepperContentProps<E, B> = $props();
 
-	const activeStep = $derived(bond?.state?.getStep(bond?.state?.props?.step));
-	const activeStepContent = $derived(bond?.state?.activeStepContent);
+	const activeStep = $derived(bond?.getStep(bond?.props?.step));
+	const activeStepContent = $derived(bond?.activeStepContent);
 
-	const contentKlass = $derived(activeStepContent?.props.class)
-	const contentProps = $derived.by(()=> {
+	const contentKlass = $derived(activeStepContent?.props.class);
+	const contentProps = $derived.by(() => {
 		const { class: klass, ...restContentProps } = activeStepContent?.props ?? {};
 		return mergePresetProps(preset, 'stepper.content', { ...restContentProps, ...restProps });
 	});

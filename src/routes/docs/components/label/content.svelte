@@ -18,12 +18,14 @@
 		related: []
 	};
 
-	const apiSections: PropsSection[] = [
-		{ label: 'Label', presetKey: 'label', props: labelProps },
-	];
+	const apiSections: PropsSection[] = [{ label: 'Label', presetKey: 'label', props: labelProps }];
 
 	const _loaders = import.meta.glob('./examples/*.svelte');
-	const _sources = import.meta.glob('./examples/*.svelte', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+	const _sources = import.meta.glob('./examples/*.svelte', {
+		query: '?raw',
+		import: 'default',
+		eager: true
+	}) as Record<string, string>;
 	const ex = createExampleLoader(_loaders, _sources);
 </script>
 
@@ -39,9 +41,21 @@
 	{/snippet}
 
 	{#snippet examples()}
-		<DocExample title="Basic Label" description="Label associated with a form control" {...ex('./examples/basic.svelte')} />
-		<DocExample title="Required Label" description="Label with required indicator" {...ex('./examples/required.svelte')} />
-		<DocExample title="Disabled Label" description="Label for a disabled control" {...ex('./examples/disabled.svelte')} />
+		<DocExample
+			title="Basic Label"
+			description="Label associated with a form control"
+			{...ex('./examples/basic.svelte')}
+		/>
+		<DocExample
+			title="Required Label"
+			description="Label with required indicator"
+			{...ex('./examples/required.svelte')}
+		/>
+		<DocExample
+			title="Disabled Label"
+			description="Label for a disabled control"
+			{...ex('./examples/disabled.svelte')}
+		/>
 	{/snippet}
 
 	{#snippet apiReference()}

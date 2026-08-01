@@ -19,14 +19,23 @@
 		<Field.Root {...commonFieldProps} name="name">
 			<Field.Label>Name</Field.Label>
 			<Input.Root>
-				<Field.Control base={Input.Control as unknown as never} bind:value={name} placeholder="Enter your name" />
+				<Field.Control
+					base={Input.Control as unknown as never}
+					bind:value={name}
+					placeholder="Enter your name"
+				/>
 			</Input.Root>
 		</Field.Root>
 
 		<Field.Root {...commonFieldProps} name="email">
 			<Field.Label>Email</Field.Label>
 			<Input.Root>
-				<Field.Control base={Input.Control as unknown as never} bind:value={email} type="email" placeholder="Enter your email" />
+				<Field.Control
+					base={Input.Control as unknown as never}
+					bind:value={email}
+					type="email"
+					placeholder="Enter your email"
+				/>
 			</Input.Root>
 		</Field.Root>
 

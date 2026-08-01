@@ -1,4 +1,5 @@
 <script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
+	import { DEV } from 'esm-env';
 	import type { HTMLAttributes } from 'svelte/elements';
 	import type { TeleportProps } from './types';
 	import { HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
@@ -21,7 +22,7 @@
 
 	// Warn (in an effect, after registration settles) when a string id never resolves.
 	$effect(() => {
-		if (import.meta.env?.DEV && typeof portal === 'string' && !portalBond) {
+		if (DEV && typeof portal === 'string' && !portalBond) {
 			console.warn(
 				`[svelte-atoms] <Teleport portal="${portal}">: no portal registered with this id; nothing is teleported.`
 			);
@@ -35,7 +36,9 @@
 
 {#snippet content()}
 	<HtmlAtom {@attach teleport} as={as as E} {base} {...restProps}>
-		{@render children?.({ portal: portalBond })}
+		{#if portalBond}
+			{@render children?.({ portal: portalBond })}
+		{/if}
 	</HtmlAtom>
 {/snippet}
 

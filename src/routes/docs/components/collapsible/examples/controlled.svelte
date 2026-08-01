@@ -15,7 +15,5 @@
 			<p class="text-sm">This collapsible is controlled by external state.</p>
 		</Collapsible.Body>
 	</Collapsible.Root>
-	<Button onclick={() => (open = !open)} variant="outline" size="sm">
-		Toggle from Outside
-	</Button>
+	<Button onclick={() => (open = !open)} variant="outline" size="sm">Toggle from Outside</Button>
 </div>

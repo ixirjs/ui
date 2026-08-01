@@ -1,3 +1,7 @@
+// These adapters bridge untyped external schema libraries (Yup, Joi): the schema
+// objects, the values they validate, and the errors they throw have no shared types
+// we control, so `any` is inherent to the shim. Narrowing buys no real safety here.
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { ValidationAdapter, ValidationResult, ValidationError } from './field/bond.svelte';
 
 export class YupValidationAdapter implements ValidationAdapter<any, any> {

@@ -12,7 +12,9 @@
 		...restProps
 	}: CardContentProps<E, B> = $props();
 
-	const contentProps = $derived(mergePresetProps(preset, 'card.content', { ...bond?.content(), ...restProps }));
+	const contentProps = $derived(
+		mergePresetProps(preset, 'card.content', { ...bond?.content(), ...restProps })
+	);
 </script>
 
 <HtmlAtom

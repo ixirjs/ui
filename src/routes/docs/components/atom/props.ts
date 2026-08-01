@@ -8,9 +8,9 @@ export interface PropDefinition {
 export const htmlAtomProps: PropDefinition[] = [
 	{
 		name: 'bond',
-		type: 'Bond<BondStateProps, BondState<BondStateProps>, BondElements> | undefined',
+		type: 'Bond | undefined',
 		default: 'undefined',
-		description: 'Bond'
+		description: 'Optional Bond context for dynamic presets and component coordination'
 	},
 	{
 		name: 'base',
@@ -29,6 +29,6 @@ export const htmlAtomProps: PropDefinition[] = [
 		type: 'Variants | undefined',
 		default: 'undefined',
 		description:
-			'Variant definition or function to resolve variants\n- VariantDefinition: Static variant config with base, variants, compoundVariants, defaultVariants\n- Function: Dynamic function that receives bond and props, returns props (legacy)'
+			'Variant definition or function to resolve variants\n- VariantDefinition: Static variant config with base, variants, compoundVariants, defaultVariants\n- Function: Dynamic function that receives Bond and props, returns props'
 	}
 ];

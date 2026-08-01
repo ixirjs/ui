@@ -26,4 +26,3 @@ export { default as DocPropsSection } from './doc-props-section.svelte';
 export { default as DocPropsTabs } from './doc-props-tabs.svelte';
 export type { ComponentDocMeta, UseCase, ComponentSummary, PropsSection } from '$docs/types';
 export { getDocMode, setDocMode } from '../context/doc-mode.svelte';
-

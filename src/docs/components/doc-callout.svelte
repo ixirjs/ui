@@ -6,7 +6,7 @@
 	let {
 		variant = 'info',
 		title = undefined,
-		children,
+		children
 	}: {
 		variant?: 'info' | 'warning' | 'success' | 'tip' | 'note';
 		title?: string;
@@ -16,11 +16,11 @@
 	const mode = getDocMode();
 
 	const mdPrefix: Record<string, string> = {
-		info:    '> ℹ️',
+		info: '> ℹ️',
 		warning: '> ⚠️',
 		success: '> ✅',
-		tip:     '> 💡',
-		note:    '>',
+		tip: '> 💡',
+		note: '>'
 	};
 </script>
 
@@ -29,7 +29,6 @@
 		{@render children()}
 	</DocCallout>
 {:else}
-{mdPrefix[variant]}{title ? ` **${title}**` : ''}
->
-> {@render children()}
+	{mdPrefix[variant]}{title ? ` **${title}**` : ''}
+	> > {@render children()}
 {/if}

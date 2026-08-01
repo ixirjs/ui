@@ -37,7 +37,7 @@
 	$effect(() => {
 		if (!canvasElement) return;
 		if (!render) return;
-		if (!isReady) render;
+		if (!isReady) return;
 
 		computedColor = getComputedStyle(canvasElement).color;
 

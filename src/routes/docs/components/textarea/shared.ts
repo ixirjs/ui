@@ -19,34 +19,41 @@ const accessibilityFeatures = [
 const useCases = [
 	{
 		title: 'Message Composition',
-		description: 'Provide a multi-line text input for composing messages, emails, or comments in chat and communication interfaces.'
+		description:
+			'Provide a multi-line text input for composing messages, emails, or comments in chat and communication interfaces.'
 	},
 	{
 		title: 'Form Long-text Fields',
-		description: 'Capture longer user inputs like addresses, bios, descriptions, or feedback in form submissions.'
+		description:
+			'Capture longer user inputs like addresses, bios, descriptions, or feedback in form submissions.'
 	},
 	{
 		title: 'Code or Markdown Editors',
-		description: 'Use as a base for simple code snippet editors or markdown input fields with monospace fonts and resizing control.'
+		description:
+			'Use as a base for simple code snippet editors or markdown input fields with monospace fonts and resizing control.'
 	},
 	{
 		title: 'Product or Content Descriptions',
-		description: 'Allow authors to enter multi-line product descriptions, blog post excerpts, or content summaries in CMS interfaces.'
+		description:
+			'Allow authors to enter multi-line product descriptions, blog post excerpts, or content summaries in CMS interfaces.'
 	},
 	{
 		title: 'Support Ticket Forms',
-		description: 'Collect detailed issue descriptions or support requests in help desk and customer service forms.'
+		description:
+			'Collect detailed issue descriptions or support requests in help desk and customer service forms.'
 	}
 ];
 
 const componentsSummary = [
 	{
 		name: 'Textarea.Root',
-		description: 'Wrapper container for the textarea, providing layout context and preset styling for the field group.'
+		description:
+			'Wrapper container for the textarea, providing layout context and preset styling for the field group.'
 	},
 	{
 		name: 'Textarea.Control',
-		description: 'The actual textarea input element with full support for value, placeholder, rows, cols, maxlength, and validation attributes.'
+		description:
+			'The actual textarea input element with full support for value, placeholder, rows, cols, maxlength, and validation attributes.'
 	}
 ];
 

@@ -1,3 +1,4 @@
+// unobserves on cleanup.
 export function resizeObserver(
 	callback: ResizeObserverCallback,
 	options?: ResizeObserverOptions | undefined

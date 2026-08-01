@@ -4,6 +4,8 @@ import type { HtmlElementProps, ElementType } from '../element/types';
 import type { PresetKey } from '$svelte-atoms/core/context/preset.svelte';
 import type { Bond } from '$svelte-atoms/core/shared';
 import type { VariantDefinition } from '$svelte-atoms/core/utils';
+import type { LifecycleAttachment } from './lifecycle.svelte';
+import type { ExplicitBase } from './render-target';
 
 // Base component/snippet types
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -22,11 +24,11 @@ export type Base<Args extends unknown[] = []> = Args extends [
 	Record<string, any>,
 	...unknown[]
 ]
-	? ComponentBase
+	? ComponentBase | ExplicitBase
 	: Args extends []
-		? SnippetBase | ComponentBase
+		? SnippetBase | ComponentBase | ExplicitBase
 		: Args extends unknown[]
-			? SnippetBase
+			? SnippetBase | ExplicitBase
 			: never;
 
 // Base interface for snippet context props. Extend to type the snippet argument.
@@ -63,6 +65,18 @@ export interface HtmlAtomProps<
 	// Merge order (last wins): fallback → preset → variants → restProps.
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	fallback?: Record<string, any> | undefined;
+
+	// SSR-capable init hook. Unlike symbol-keyed lifecycle keys (which Svelte's server
+	// rest_props drops), this string-keyed prop survives SSR, so it fires synchronously on the
+	// server AND on the client during hydration — keep it idempotent. Returned cleanup runs on
+	// client teardown only. Use it when init logic must run during server render.
+	oninit?: LifecycleAttachment | undefined;
+}
+
+export interface HtmlAtomParams<T extends unknown[] = []> {
+	tagName?: HtmlElementTagName | undefined;
+	base?: Base<T> | undefined;
+	snippet?: Snippet<T> | undefined;
 }
 
 export type { ElementType };

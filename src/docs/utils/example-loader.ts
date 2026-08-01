@@ -17,7 +17,7 @@ export function createExampleLoader(
 	return function ex(src: string): { component: ExampleLoader; code: string } {
 		return {
 			component: loaders[src] as ExampleLoader,
-			code: transform(sources[src] ?? ''),
+			code: transform(sources[src] ?? '')
 		};
 	};
 }

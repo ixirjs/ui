@@ -7,8 +7,6 @@
 		<p class="text-muted-foreground text-xs">
 			© {year} Svelte Atoms. Open source under the MIT license.
 		</p>
-		<p class="text-muted-foreground text-xs">
-			Built with Svelte 5 · Runes · TailwindCSS
-		</p>
+		<p class="text-muted-foreground text-xs">Built with Svelte 5 · Runes · TailwindCSS</p>
 	</div>
 </footer>

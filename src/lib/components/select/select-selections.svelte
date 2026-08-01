@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { HtmlAtom as Atom } from '../atom';
+	import { HtmlAtom } from '../atom';
 	import SelectSelection from './select-selection.svelte';
 	import { SelectBond } from './bond.svelte';
 	import type { SelectSelectionsProps } from './types';
@@ -28,7 +28,7 @@
 			return getSelections(bond);
 		}
 
-		return bond.state.selections.map((controller) => ({
+		return bond.selections.map((controller) => ({
 			id: controller.id,
 			value: controller.value,
 			get label() {
@@ -43,11 +43,11 @@
 			controller
 		}));
 	});
-	const isMultiple = $derived(bond.state.props.multiple);
+	const isMultiple = $derived(bond.props.multiple);
 </script>
 
 {#if isMultiple && selections.length}
-	<Atom class={['flex flex-wrap items-center gap-2', klass]} {...restProps}>
+	<HtmlAtom class={['flex flex-wrap items-center gap-2', klass]} {...restProps}>
 		{#if children}
 			{@render children?.({ selections: selections, selection: selections[0] })}
 		{:else}
@@ -57,7 +57,7 @@
 				</Selection>
 			{/each}
 		{/if}
-	</Atom>
+	</HtmlAtom>
 {:else if children && selections[0]}
 	{@render children?.({ selections: selections, selection: selections[0] })}
 {:else if selections[0]}

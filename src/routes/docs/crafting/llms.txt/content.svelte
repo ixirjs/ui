@@ -15,18 +15,12 @@
 
 <FrontMatter {frontmatter} />
 
-# Crafting Components from Scratch
+# Crafting Components from Scratch ## Build in layers 1. Start with behavior and semantics. 2.
+Expose a small public API. 3. Add variants and preset integration. 4. Add motion only when it
+improves UX. ## Minimal component skeleton
 
-## Build in layers
-
-1. Start with behavior and semantics.
-2. Expose a small public API.
-3. Add variants and preset integration.
-4. Add motion only when it improves UX.
-
-## Minimal component skeleton
-
-{codeBlock(`<script lang="ts">
+{codeBlock(
+	`<script lang="ts">
   import { HtmlAtom, defineVariants } from '@svelte-atoms/core';
 
   const badgeVariants = defineVariants({
@@ -55,11 +49,11 @@
   {...rest}
 >
   {@render children?.()}
-</HtmlAtom>`, 'svelte')}
+</HtmlAtom>`,
+	'svelte'
+)}
 
-## Compound component checklist
-
-For multi-part components (for example popovers, menus, drawers):
+## Compound component checklist For multi-part components (for example popovers, menus, drawers):
 
 {list([
 	'Provide a Root atom that owns state and context.',
@@ -68,13 +62,8 @@ For multi-part components (for example popovers, menus, drawers):
 	'Keep each child usable with base={...} composition.'
 ])}
 
-## Import and naming guidelines
-
-- Export public APIs from {inlineCode('@svelte-atoms/core')}.
-- Use kebab-case filenames.
-- Use PascalCase component symbols and camelCase helpers.
-
-## Common pitfalls
+## Import and naming guidelines - Export public APIs from {inlineCode('@svelte-atoms/core')}. - Use
+kebab-case filenames. - Use PascalCase component symbols and camelCase helpers. ## Common pitfalls
 
 {list([
 	'Overloading components with too many one-off props.',

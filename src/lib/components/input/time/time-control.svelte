@@ -3,12 +3,20 @@
 	import { cn, toClassValue } from '$svelte-atoms/core/utils';
 	import { untrack } from 'svelte';
 	import { InputBond } from '../bond.svelte';
-	import type { InputTimeControlProps, InputNumber24HourControlProps, InputNumber12HourControlProps } from '../types';
+	import type {
+		InputTimeControlProps,
+		InputNumber24HourControlProps,
+		InputNumber12HourControlProps
+	} from '../types';
 	import Segment from './segment.svelte';
 	import {
-		parseTimeString, buildTimeValue, clampTimeParts, mergeParts,
-		displayToInternal, internalToDisplay,
-		type TimeParts,
+		parseTimeString,
+		buildTimeValue,
+		clampTimeParts,
+		mergeParts,
+		displayToInternal,
+		internalToDisplay,
+		type TimeParts
 	} from './shared';
 
 	const bond = InputBond.get();
@@ -27,19 +35,24 @@
 		onchange = undefined,
 		oninput = undefined,
 		...restProps
-	}: InputTimeControlProps & (InputNumber24HourControlProps | InputNumber12HourControlProps) = $props();
+	}: InputTimeControlProps &
+		(InputNumber24HourControlProps | InputNumber12HourControlProps) = $props();
 
 	const preset = resolveControlPreset(() => presetKey, bond);
 
 	// External value always wins over local edits.
-	const parts = $derived(parseTimeString(value, untrack(() => date ?? undefined), hourFormat));
+	const parts = $derived(
+		parseTimeString(
+			value,
+			untrack(() => date ?? undefined),
+			hourFormat
+		)
+	);
 	const { hh, mm, ss, period: p } = $derived(parts);
 
-	const displayHours = $derived(
-		hh === undefined || hourFormat === 24 ? hh : internalToDisplay(hh)
-	);
+	const displayHours = $derived(hh === undefined || hourFormat === 24 ? hh : internalToDisplay(hh));
 
-	let segHours   = $state<{ focus(): void }>();
+	let segHours = $state<{ focus(): void }>();
 	let segMinutes = $state<{ focus(): void }>();
 	let segSeconds = $state<{ focus(): void }>();
 
@@ -51,6 +64,8 @@
 
 		// Sync bound date prop in place
 		if (date && clamped.hh !== undefined && clamped.mm !== undefined) {
+			// Local Date mutated before assignment; reactivity comes from `date = nd`, not in-place mutation.
+			// eslint-disable-next-line svelte/prefer-svelte-reactivity
 			const nd = new Date(date);
 			nd.setHours(clamped.hh, clamped.mm, withSeconds ? (clamped.ss ?? 0) : 0, 0);
 			if (nd.getTime() !== date.getTime()) date = nd;
@@ -63,15 +78,16 @@
 
 		const detail = { value: raw };
 		if (ev) onchange?.(ev, detail);
-		else    oninput?.(undefined as unknown as Event, detail);
+		else oninput?.(undefined as unknown as Event, detail);
 	}
 
 	// Convert display hours to internal 24h before emitting.
 	function handleHoursChange(displayH: number | undefined) {
-		if (displayH === undefined) { emit(undefined); return; }
-		const internal = hourFormat === 12
-			? displayToInternal(displayH, p ?? 'AM')
-			: displayH;
+		if (displayH === undefined) {
+			emit(undefined);
+			return;
+		}
+		const internal = hourFormat === 12 ? displayToInternal(displayH, p ?? 'AM') : displayH;
 		emit(undefined, { hh: internal });
 	}
 
@@ -129,7 +145,6 @@
 	}
 </script>
 
-<!-- svelte-ignore a11y_no_static_element_interactions -->
 <span
 	class={cn(
 		'inline-flex h-full flex-1 items-center gap-0 px-2 font-mono',
@@ -147,9 +162,10 @@
 		max={hourFormat === 12 ? 12 : 23}
 		digits={2}
 		placeholder="HH"
-		{disabled} {readonly}
+		{disabled}
+		{readonly}
 		onchange={handleHoursChange}
-		onfocusmove={(dir) => dir === 1 ? segMinutes?.focus() : undefined}
+		onfocusmove={(dir) => (dir === 1 ? segMinutes?.focus() : undefined)}
 	/>
 
 	<span class="text-muted-foreground select-none">:</span>
@@ -157,21 +173,35 @@
 	<Segment
 		bind:this={segMinutes}
 		value={mm}
-		min={0} max={59} digits={2} placeholder="MM"
-		{disabled} {readonly}
-		onchange={(v) => { const o: TimeParts = {}; if (v !== undefined) o.mm = v; emit(undefined, o); }}
+		min={0}
+		max={59}
+		digits={2}
+		placeholder="MM"
+		{disabled}
+		{readonly}
+		onchange={(v) => {
+			const o: TimeParts = {};
+			if (v !== undefined) o.mm = v;
+			emit(undefined, o);
+		}}
 		onfocusmove={(dir) => {
 			if (dir === 1 && withSeconds) segSeconds?.focus();
-			else if (dir === 1 && hourFormat === 12) { /* AM/PM is reached via Tab, not arrow */ }
-			else if (dir === -1) segHours?.focus();
+			else if (dir === 1 && hourFormat === 12) {
+				/* AM/PM is reached via Tab, not arrow */
+			} else if (dir === -1) segHours?.focus();
 		}}
 		onrollover={(dir) => {
 			if (displayHours === undefined) return;
 			const maxH = hourFormat === 12 ? 12 : 23;
 			const minH = hourFormat === 12 ? 1 : 0;
-			const nextDisplayH = dir === 1
-				? (displayHours >= maxH ? minH : displayHours + 1)
-				: (displayHours <= minH ? maxH : displayHours - 1);
+			const nextDisplayH =
+				dir === 1
+					? displayHours >= maxH
+						? minH
+						: displayHours + 1
+					: displayHours <= minH
+						? maxH
+						: displayHours - 1;
 			handleHoursChange(nextDisplayH);
 		}}
 	/>
@@ -181,25 +211,42 @@
 		<Segment
 			bind:this={segSeconds}
 			value={ss}
-			min={0} max={59} digits={2} placeholder="SS"
-			{disabled} {readonly}
-			onchange={(v) => { const o: TimeParts = {}; if (v !== undefined) o.ss = v; emit(undefined, o); }}
-			onfocusmove={(dir) => dir === -1 ? segMinutes?.focus() : undefined}
+			min={0}
+			max={59}
+			digits={2}
+			placeholder="SS"
+			{disabled}
+			{readonly}
+			onchange={(v) => {
+				const o: TimeParts = {};
+				if (v !== undefined) o.ss = v;
+				emit(undefined, o);
+			}}
+			onfocusmove={(dir) => (dir === -1 ? segMinutes?.focus() : undefined)}
 			onrollover={(dir) => {
-				const nextMM = dir === 1
-					? (mm !== undefined && mm >= 59 ? 0 : (mm ?? 0) + 1)
-					: (mm !== undefined && mm <= 0 ? 59 : (mm ?? 59) - 1);
+				const nextMM =
+					dir === 1
+						? mm !== undefined && mm >= 59
+							? 0
+							: (mm ?? 0) + 1
+						: mm !== undefined && mm <= 0
+							? 59
+							: (mm ?? 59) - 1;
 				const wrapsHour = (dir === 1 && nextMM === 0) || (dir === -1 && nextMM === 59);
 				const override: TimeParts = { mm: nextMM };
 				if (wrapsHour && displayHours !== undefined) {
 					const maxH = hourFormat === 12 ? 12 : 23;
 					const minH = hourFormat === 12 ? 1 : 0;
-					const nextDisplayH = dir === 1
-						? (displayHours >= maxH ? minH : displayHours + 1)
-						: (displayHours <= minH ? maxH : displayHours - 1);
-					override.hh = hourFormat === 12
-						? displayToInternal(nextDisplayH, p ?? 'AM')
-						: nextDisplayH;
+					const nextDisplayH =
+						dir === 1
+							? displayHours >= maxH
+								? minH
+								: displayHours + 1
+							: displayHours <= minH
+								? maxH
+								: displayHours - 1;
+					override.hh =
+						hourFormat === 12 ? displayToInternal(nextDisplayH, p ?? 'AM') : nextDisplayH;
 				}
 				emit(undefined, override);
 			}}

@@ -1,7 +1,7 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { bondFactory,bindBond } from '$svelte-atoms/core/shared';
+	import { bindBond } from '$svelte-atoms/core/shared';
 	import { mergePresetProps, HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
-	import { CardBond, CardBondState } from './bond.svelte';
+	import { CardBond } from './bond.svelte';
 	import type { CardRootProps } from './types';
 	import './card.css';
 
@@ -9,25 +9,26 @@
 		class: klass = '',
 		preset = undefined,
 		disabled = false,
-		factory = bondFactory(CardBondState, CardBond),
+		factory = (props) => new CardBond(props),
 		children = undefined,
 		onclick = undefined,
 		onkeydown = undefined,
 		...restProps
 	}: CardRootProps<E, B> = $props();
 
-	const binding = bindBond<CardBond>(
-		(props) => factory(props),
-		{
-			disabled: [() => disabled, (v) => { disabled = v ?? false; }]
-		}
-	);
+	const binding = bindBond<CardBond>((props) => factory(props), {
+		disabled: [
+			() => disabled,
+			(v) => {
+				disabled = v ?? false;
+			}
+		]
+	});
 	const bond = binding.bond.share();
 
 	const disabledStyles = $derived(disabled ? 'opacity-50 cursor-not-allowed' : '');
 
 	const rootProps = $derived(mergePresetProps(preset, 'card', { ...bond?.root(), ...restProps }));
-
 
 	function handleClick(event: MouseEvent) {
 		if (disabled) return;

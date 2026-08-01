@@ -7,6 +7,6 @@ export function resolvePortal(
 	portals: PortalsBond | undefined,
 	idOrBond: string | PortalBond | undefined
 ): PortalBond | undefined {
-	if (typeof idOrBond === 'string') return portals?.state.get(idOrBond);
+	if (typeof idOrBond === 'string') return portals?.getPortal(idOrBond);
 	return idOrBond;
 }

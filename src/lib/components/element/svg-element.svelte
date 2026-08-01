@@ -11,7 +11,7 @@
 
 	let {
 		class: klass = '',
-		as="g",
+		as = 'g',
 		global = true,
 		initial = undefined,
 		enter = undefined,
@@ -40,7 +40,7 @@
 	});
 
 	$effect(() => {
-		if(!hasEntered) return;
+		if (!hasEntered) return;
 		if (!node) return;
 
 		animate?.(node);
@@ -58,13 +58,14 @@
 			hasEntered = true;
 		},
 		...restProps
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any -- loose passthrough spread onto a polymorphic element; `unknown` values can't satisfy attribute types
 	}) as Record<string, any>;
 
 	const transitionSnippet = $derived(global ? globalTransition : localTransition);
 
 	function enterTransition(node: Element) {
 		initial?.(node);
-		
+
 		return enter?.(node) ?? {};
 	}
 
@@ -74,13 +75,25 @@
 </script>
 
 {#snippet globalTransition()}
-	<svelte:element this={as} class={cn(toClassValue(klass))} in:enterTransition|global out:exitTransition|global {...elementProps}>
+	<svelte:element
+		this={as}
+		class={cn(toClassValue(klass))}
+		in:enterTransition|global
+		out:exitTransition|global
+		{...elementProps}
+	>
 		{@render children?.()}
 	</svelte:element>
 {/snippet}
 
 {#snippet localTransition()}
-	<svelte:element this={as} class={cn(toClassValue(klass))} in:enterTransition out:exitTransition {...elementProps}>
+	<svelte:element
+		this={as}
+		class={cn(toClassValue(klass))}
+		in:enterTransition
+		out:exitTransition
+		{...elementProps}
+	>
 		{@render children?.()}
 	</svelte:element>
 {/snippet}

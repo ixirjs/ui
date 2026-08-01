@@ -4,7 +4,6 @@ export {
 	PopoverBond,
 	type PopoverDomElements,
 	type PopoverParams,
-	PopoverState,
 	type PopoverStateProps,
 	type TriggerParams
 } from '../popover';
@@ -18,7 +17,7 @@ export * from './item';
 export { dropdownMenu } from './attachments.svelte';
 export {
 	DropdownMenuBond,
-	DropdownMenuBondState,
+	DropdownMenuBondBase,
 	DropdownMenuContentAtom,
 	DropdownMenuTriggerAtom,
 	DropdownMenuItemAtom,

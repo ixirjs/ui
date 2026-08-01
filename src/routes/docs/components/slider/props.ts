@@ -34,7 +34,8 @@ export const sliderProps: PropDefinition[] = [
 		name: 'orientation',
 		type: "'horizontal' | 'vertical' | undefined",
 		default: "'horizontal'",
-		description: 'Slider direction. Vertical mode is useful for volume, brightness, or timeline controls.'
+		description:
+			'Slider direction. Vertical mode is useful for volume, brightness, or timeline controls.'
 	},
 	{
 		name: 'disabled',
@@ -70,7 +71,8 @@ export const sliderProps: PropDefinition[] = [
 		name: 'children',
 		type: 'Snippet<[]> | undefined',
 		default: 'undefined',
-		description: 'Optional content rendered after the slider root, for labels, helper text, or value output.'
+		description:
+			'Optional content rendered after the slider root, for labels, helper text, or value output.'
 	},
 	{
 		name: 'oninput',
@@ -88,6 +90,7 @@ export const sliderProps: PropDefinition[] = [
 		name: '...atomProps',
 		type: 'HtmlAtomProps',
 		default: '-',
-		description: 'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for inherited properties.'
+		description:
+			'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for inherited properties.'
 	}
 ];

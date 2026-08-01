@@ -1,7 +1,5 @@
 <script lang="ts">
-	import { Form, Field } from '$lib/components/form/atoms';
 	import Button from '$lib/components/button/button.svelte';
-	import { Preview } from '$docs/preview';
 	import { Playground } from '$docs/playground';
 
 	let formData = $state({
@@ -109,8 +107,7 @@
 										: selectedSize === 'lg'
 											? 'px-4 py-3 text-base'
 											: ''
-								}`}
-							></textarea>
+								}`}></textarea>
 						</div>
 
 						<div class="flex items-center space-x-2">
@@ -159,7 +156,7 @@
 		</Playground.Preview>
 
 		<Playground.Controls>
-			<Playground.Header title="Customize Form" />
+			<Playground.Header>Customize Form</Playground.Header>
 
 			<div class="space-y-4">
 				<div>

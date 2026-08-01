@@ -18,12 +18,14 @@
 		related: []
 	};
 
-	const apiSections: PropsSection[] = [
-		{ label: 'Link', presetKey: 'link', props: linkProps },
-	];
+	const apiSections: PropsSection[] = [{ label: 'Link', presetKey: 'link', props: linkProps }];
 
 	const _loaders = import.meta.glob('./examples/*.svelte');
-	const _sources = import.meta.glob('./examples/*.svelte', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+	const _sources = import.meta.glob('./examples/*.svelte', {
+		query: '?raw',
+		import: 'default',
+		eager: true
+	}) as Record<string, string>;
 	const ex = createExampleLoader(_loaders, _sources);
 </script>
 
@@ -39,9 +41,21 @@
 	{/snippet}
 
 	{#snippet examples()}
-		<DocExample title="Basic Link" description="Standard navigation link" {...ex('./examples/basic.svelte')} />
-		<DocExample title="Link Variants" description="Different link visual styles" {...ex('./examples/variants.svelte')} />
-		<DocExample title="External Link" description="Link to an external resource" {...ex('./examples/external.svelte')} />
+		<DocExample
+			title="Basic Link"
+			description="Standard navigation link"
+			{...ex('./examples/basic.svelte')}
+		/>
+		<DocExample
+			title="Link Variants"
+			description="Different link visual styles"
+			{...ex('./examples/variants.svelte')}
+		/>
+		<DocExample
+			title="External Link"
+			description="Link to an external resource"
+			{...ex('./examples/external.svelte')}
+		/>
 	{/snippet}
 
 	{#snippet apiReference()}

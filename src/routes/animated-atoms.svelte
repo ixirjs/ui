@@ -5,7 +5,6 @@
 	import { debounce } from 'es-toolkit';
 	import { animate } from 'animejs';
 
-	let svgElement: SVGSVGElement = $state();
 	let animationFrame: number = $state(0);
 
 	let isShowAtoms = $state(false);
@@ -140,9 +139,11 @@
 
 	function updateOuterCircles() {
 		for (let i = 0; i < outerCircles.length; i++) {
+			const circle = outerCircles[i];
+			if (!circle) continue;
 			const angle = (i / OUTER_CIRCLE_COUNT) * 2 * Math.PI + rotationAngle;
-			outerCircles[i].x = centerX + Math.cos(angle) * OUTER_CIRCLE_DISTANCE;
-			outerCircles[i].y = centerY + Math.sin(angle) * OUTER_CIRCLE_DISTANCE;
+			circle.x = centerX + Math.cos(angle) * OUTER_CIRCLE_DISTANCE;
+			circle.y = centerY + Math.sin(angle) * OUTER_CIRCLE_DISTANCE;
 		}
 	}
 
@@ -151,6 +152,7 @@
 
 		for (let i = 0; i < atoms.length; i++) {
 			const atom = atoms[i];
+			if (!atom) continue;
 
 			// Check if atom is in the central deflection area
 			const distanceToCenter = Math.sqrt(
@@ -197,6 +199,7 @@
 			for (let j = i + 1; j < atoms.length; j++) {
 				const atom1 = atoms[i];
 				const atom2 = atoms[j];
+				if (!atom1 || !atom2) continue;
 				const distance = Math.sqrt(Math.pow(atom1.x - atom2.x, 2) + Math.pow(atom1.y - atom2.y, 2));
 
 				if (distance < MAX_CONNECTION_DISTANCE) {
@@ -277,37 +280,18 @@
 		animationFrame = requestAnimationFrame(_animate);
 	}
 
-	function handleResize() {
-		if (svgElement) {
-			const rect = svgElement.getBoundingClientRect();
-			clientWidth = rect.width;
-			clientHeight = rect.height;
-			centerX = clientWidth / 2;
-			centerY = clientHeight / 2;
-			createAtoms();
-			createOuterCircles();
-		}
-	}
-
 	onMount(() => {
-		// handleResize();
 		_animate();
-
-		// window.addEventListener('resize', handleResize);
 
 		return () => {
 			if (animationFrame) {
 				cancelAnimationFrame(animationFrame);
 			}
-			// window.removeEventListener('resize', handleResize);
 		};
 	});
 </script>
 
-<!-- <svelte:window on:resize={handleResize} /> -->
-
 <svg
-	bind:this={svgElement}
 	class="absolute inset-0 z-0 h-full w-full overflow-visible"
 	viewBox="0 0 {clientWidth} {clientHeight}"
 	preserveAspectRatio="xMidYMid slice"

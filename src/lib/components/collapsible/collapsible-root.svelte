@@ -1,7 +1,8 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { bindBond } from '$svelte-atoms/core/shared/bind-bond.svelte';
-	import { HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
-	import { CollapsibleBond, CollapsibleState, type CollapsibleStateProps } from './bond.svelte';
+	import { bindBond } from '$svelte-atoms/core/shared/bond/bind.svelte';
+	import { createAtomInstance } from '$svelte-atoms/core/shared/bond';
+	import { HtmlAtom, mergeAtomProps, type Base } from '$svelte-atoms/core/components/atom';
+	import { CollapsibleBond, CollapsibleRootAtom, type CollapsibleStateProps } from './bond.svelte';
 	import type { CollapsibleRootProps } from './types';
 
 	let {
@@ -16,10 +17,18 @@
 		...restProps
 	}: CollapsibleRootProps<E, B> = $props();
 
+	let openState = $derived(open);
+
 	const binding = bindBond<CollapsibleBond>(
 		(props) => factory(props),
 		{
-			open: [() => open, (v) => (open = v)],
+			open: [
+				() => openState,
+				(v) => {
+					openState = v;
+					open = openState;
+				}
+			],
 			data: () => data,
 			disabled: () => disabled,
 			value: () => value
@@ -27,10 +36,16 @@
 		{ preset: () => preset }
 	);
 	const bond = binding.bond.share();
+	const rootAtom = createAtomInstance<CollapsibleRootAtom, CollapsibleBond>('root', {
+		bond,
+		factory: (owner) => new CollapsibleRootAtom(owner as CollapsibleBond)
+	});
+	const rootProps = $derived(
+		mergeAtomProps(rootAtom, preset, { ...binding.stateProps, ...restProps })
+	);
 
 	function defaultFactory(props: CollapsibleStateProps) {
-		const bondState = new CollapsibleState(props);
-		return new CollapsibleBond(bondState).share();
+		return CollapsibleBond.create(props);
 	}
 
 	export function getBond() {
@@ -40,8 +55,7 @@
 
 <HtmlAtom
 	class={['border-border flex w-full flex-col overflow-hidden', '$preset', klass]}
-	{...binding.props}
-	{...restProps}
+	{...rootProps}
 >
 	{@render children?.({ collapsible: bond })}
 </HtmlAtom>

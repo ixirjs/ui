@@ -4,7 +4,13 @@
 	import type { AvatarProps } from './types';
 	import './avatar.css';
 
-	let { class: klass = '', preset = undefined, src = '', alt = '', ...restProps }: AvatarProps = $props();
+	let {
+		class: klass = '',
+		preset = undefined,
+		src = '',
+		alt = '',
+		...restProps
+	}: AvatarProps = $props();
 
 	const avatarProps = $derived(mergePresetProps(preset, 'avatar', restProps));
 

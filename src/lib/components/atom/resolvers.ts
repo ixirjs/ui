@@ -10,7 +10,7 @@ import * as utils from './utils';
 // .svelte's $derived wrappers track minimal dependencies. Merge order (last wins):
 //     fallback → preset → variants → restProps
 // Pinned by resolvers.spec.ts + fold.spec.ts. The cascade runs via ONE foldPresentation
-// kernel call (ADR 0004 D5) — foldLayers walks all four layers once.
+// kernel call — foldLayers walks all four layers once.
 
 // Resolve the preset record from a preset key or ordered fallback chain (first registered wins).
 export function resolvePreset(

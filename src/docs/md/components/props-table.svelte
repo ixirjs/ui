@@ -15,8 +15,8 @@
 		return items.map(row).join('\n');
 	}
 </script>
+
 <!-- eslint-disable-next-line svelte/no-useless-mustaches -->
-{"\n"}
-| name | type | default | description |
-| --- | --- | --- | --- |
+{'\n'}
+| name | type | default | description | | --- | --- | --- | --- |
 {rows(props)}

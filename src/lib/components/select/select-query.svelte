@@ -1,23 +1,26 @@
 <script lang="ts">
 	import { mergeAtomProps } from '$svelte-atoms/core/components/atom';
-	import { SelectBond } from './bond.svelte';
+	import { SelectBond, SelectQueryAtom } from './bond.svelte';
 	import { Input } from '$svelte-atoms/core/components/input';
 	import type { SelectQueryProps } from './types';
+	import { createAtomInstance } from '$svelte-atoms/core/shared/bond';
 
-	const bond = SelectBond.getOrThrow('Select atom was not found');
+	const bond = SelectBond.getOrThrow('SelectQuery must be used within a Select');
 
 	let {
 		value = $bindable(),
 		class: klass = '',
 		preset = undefined,
-		children = undefined,
 		...restProps
 	}: SelectQueryProps = $props();
 
 	// The `query` atom plays role 'input' (`'query'` target): `atom.spread` carries the
 	// projected combobox a11y (role, aria-autocomplete/expanded/controls/activedescendant)
 	// and an `oninput` that writes `props.query`.
-	const atom = bond.query();
+	const atom = createAtomInstance<SelectQueryAtom, SelectBond, HTMLInputElement>('query', {
+		bond,
+		factory: (owner) => new SelectQueryAtom(owner as SelectBond)
+	});
 
 	const queryProps = $derived(mergeAtomProps(atom, preset, restProps));
 </script>
@@ -27,9 +30,9 @@
      `value` mirrors it for the public bindable API. -->
 <Input.Control
 	bind:value={
-		() => bond.state.props.query ?? '',
+		() => bond.props.query ?? '',
 		(v) => {
-			bond.state.props.query = v;
+			bond.props.query = v;
 			value = v;
 		}
 	}

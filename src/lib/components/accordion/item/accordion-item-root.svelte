@@ -1,10 +1,11 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { bindBond } from '$svelte-atoms/core/shared/bind-bond.svelte';
-	import { bondFactory } from '$svelte-atoms/core/shared';
-	import { HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
+	import { bindBond } from '$svelte-atoms/core/shared/bond/bind.svelte';
+	import { createAtomInstance } from '$svelte-atoms/core/shared/bond';
+	import { HtmlAtom, mergeAtomProps, type Base } from '$svelte-atoms/core/components/atom';
 	import {
 		AccordionItemBond,
-		AccordionItemBondState
+		AccordionItemRootAtom,
+		type AccordionItemBondProps
 	} from './bond.svelte';
 	import type { AccordionItemRootProps } from './types';
 
@@ -13,7 +14,7 @@
 		value,
 		data = undefined,
 		disabled = false,
-		factory = bondFactory(AccordionItemBondState, AccordionItemBond),
+		factory = defaultFactory,
 		children = undefined,
 		preset = undefined,
 		...restProps
@@ -29,17 +30,23 @@
 		{ preset: () => preset }
 	);
 	const bond = binding.bond.share();
+	const rootAtom = createAtomInstance<AccordionItemRootAtom, AccordionItemBond>('root', {
+		bond,
+		factory: (owner) => new AccordionItemRootAtom(owner as AccordionItemBond)
+	});
+	const rootProps = $derived(
+		mergeAtomProps(rootAtom, preset, { ...binding.stateProps, ...restProps })
+	);
 
+	function defaultFactory(props: AccordionItemBondProps) {
+		return AccordionItemBond.create(props);
+	}
 
 	export function getBond() {
 		return bond;
 	}
 </script>
 
-<HtmlAtom
-	class={['border-border', '$preset', klass]}
-	{...binding.props}
-	{...restProps}
->
+<HtmlAtom class={['border-border', '$preset', klass]} {...rootProps}>
 	{@render children?.({ accordionItem: bond })}
 </HtmlAtom>

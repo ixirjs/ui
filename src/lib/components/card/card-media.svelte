@@ -13,7 +13,9 @@
 		...restProps
 	}: CardMediaProps<E, B> = $props();
 
-	const mediaProps = $derived(mergePresetProps(preset, 'card.media', { ...bond?.media(), ...restProps }));
+	const mediaProps = $derived(
+		mergePresetProps(preset, 'card.media', { ...bond?.media(), ...restProps })
+	);
 </script>
 
 <HtmlAtom

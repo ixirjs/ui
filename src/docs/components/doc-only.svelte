@@ -4,7 +4,7 @@
 
 	let {
 		for: target = 'both',
-		children,
+		children
 	}: {
 		// Render mode gate: "html" = browser only, "markdown" = LLM output only, "both" = always (default)
 		for?: DocMode | 'both';
@@ -12,7 +12,7 @@
 	} = $props();
 
 	const mode = getDocMode();
-	const visible = target === 'both' || target === mode;
+	const visible = $derived(target === 'both' || target === mode);
 </script>
 
 {#if visible}

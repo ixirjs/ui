@@ -17,11 +17,6 @@
 	const bodyProps = $derived(mergePresetProps(preset, 'stepper.body', restProps));
 </script>
 
-<HtmlAtom
-	{bond}
-	{base}
-	class={['stepper-body w-full', '$preset', klass]}
-	{...bodyProps}
->
+<HtmlAtom {bond} {base} class={['stepper-body w-full', '$preset', klass]} {...bodyProps}>
 	{@render children?.({ stepper: bond })}
 </HtmlAtom>

@@ -32,9 +32,20 @@
 	},
 	"files": [
 		"dist",
+		"!dist/**/*.md",
+		"!dist/**/*.MD",
 		"!dist/**/*.test.*",
 		"!dist/**/*.spec.*",
-		"!dist/**/*.stories.*"
+		"!dist/**/*.stories.*",
+		"!dist/**/*-fixture.svelte",
+		"!dist/**/*-fixture.svelte.d.ts",
+		"!dist/**/*-probe.svelte",
+		"!dist/**/*-probe.svelte.d.ts",
+		"!dist/**/*-test.svelte",
+		"!dist/**/*-test.svelte.d.ts",
+		"!dist/**/probe.svelte",
+		"!dist/**/probe.svelte.d.ts",
+		"!dist/**/*.bench.*"
 	],
 	"sideEffects": [
 		"**/*.css"
@@ -47,461 +58,6 @@
 			"types": "./dist/index.d.ts",
 			"svelte": "./dist/index.js",
 			"default": "./dist/index.js"
-		},
-		"./accordion": {
-			"types": "./dist/components/accordion/index.d.ts",
-			"svelte": "./dist/components/accordion/index.js",
-			"default": "./dist/components/accordion/index.js"
-		},
-		"./accordion/atoms": {
-			"types": "./dist/components/accordion/atoms.d.ts",
-			"svelte": "./dist/components/accordion/atoms.js",
-			"default": "./dist/components/accordion/atoms.js"
-		},
-		"./accordion/item": {
-			"types": "./dist/components/accordion/item/index.d.ts",
-			"svelte": "./dist/components/accordion/item/index.js",
-			"default": "./dist/components/accordion/item/index.js"
-		},
-		"./accordion/item/atoms": {
-			"types": "./dist/components/accordion/item/atoms.d.ts",
-			"svelte": "./dist/components/accordion/item/atoms.js",
-			"default": "./dist/components/accordion/item/atoms.js"
-		},
-		"./atom": {
-			"types": "./dist/components/atom/index.d.ts",
-			"svelte": "./dist/components/atom/index.js",
-			"default": "./dist/components/atom/index.js"
-		},
-		"./alert": {
-			"types": "./dist/components/alert/index.d.ts",
-			"svelte": "./dist/components/alert/index.js",
-			"default": "./dist/components/alert/index.js"
-		},
-		"./alert/atoms": {
-			"types": "./dist/components/alert/atoms.d.ts",
-			"svelte": "./dist/components/alert/atoms.js",
-			"default": "./dist/components/alert/atoms.js"
-		},
-		"./avatar": {
-			"types": "./dist/components/avatar/index.d.ts",
-			"svelte": "./dist/components/avatar/index.js",
-			"default": "./dist/components/avatar/index.js"
-		},
-		"./badge": {
-			"types": "./dist/components/badge/index.d.ts",
-			"svelte": "./dist/components/badge/index.js",
-			"default": "./dist/components/badge/index.js"
-		},
-		"./breadcrumb": {
-			"types": "./dist/components/breadcrumb/index.d.ts",
-			"svelte": "./dist/components/breadcrumb/index.js",
-			"default": "./dist/components/breadcrumb/index.js"
-		},
-		"./button": {
-			"types": "./dist/components/button/index.d.ts",
-			"svelte": "./dist/components/button/index.js",
-			"default": "./dist/components/button/index.js"
-		},
-		"./calendar": {
-			"types": "./dist/components/calendar/index.d.ts",
-			"svelte": "./dist/components/calendar/index.js",
-			"default": "./dist/components/calendar/index.js"
-		},
-		"./calendar/atoms": {
-			"types": "./dist/components/calendar/atoms.d.ts",
-			"svelte": "./dist/components/calendar/atoms.js",
-			"default": "./dist/components/calendar/atoms.js"
-		},
-		"./card": {
-			"types": "./dist/components/card/index.d.ts",
-			"svelte": "./dist/components/card/index.js",
-			"default": "./dist/components/card/index.js"
-		},
-		"./card/atoms": {
-			"types": "./dist/components/card/atoms.d.ts",
-			"svelte": "./dist/components/card/atoms.js",
-			"default": "./dist/components/card/atoms.js"
-		},
-		"./checkbox": {
-			"types": "./dist/components/checkbox/index.d.ts",
-			"svelte": "./dist/components/checkbox/index.js",
-			"default": "./dist/components/checkbox/index.js"
-		},
-		"./chip": {
-			"types": "./dist/components/chip/index.d.ts",
-			"svelte": "./dist/components/chip/index.js",
-			"default": "./dist/components/chip/index.js"
-		},
-		"./collapsible": {
-			"types": "./dist/components/collapsible/index.d.ts",
-			"svelte": "./dist/components/collapsible/index.js",
-			"default": "./dist/components/collapsible/index.js"
-		},
-		"./collapsible/atoms": {
-			"types": "./dist/components/collapsible/atoms.d.ts",
-			"svelte": "./dist/components/collapsible/atoms.js",
-			"default": "./dist/components/collapsible/atoms.js"
-		},
-		"./container": {
-			"types": "./dist/components/container/index.d.ts",
-			"svelte": "./dist/components/container/index.js",
-			"default": "./dist/components/container/index.js"
-		},
-		"./combobox": {
-			"types": "./dist/components/combobox/index.d.ts",
-			"svelte": "./dist/components/combobox/index.js",
-			"default": "./dist/components/combobox/index.js"
-		},
-		"./combobox/atoms": {
-			"types": "./dist/components/combobox/atoms.d.ts",
-			"svelte": "./dist/components/combobox/atoms.js",
-			"default": "./dist/components/combobox/atoms.js"
-		},
-		"./date-picker": {
-			"types": "./dist/components/date-picker/index.d.ts",
-			"svelte": "./dist/components/date-picker/index.js",
-			"default": "./dist/components/date-picker/index.js"
-		},
-		"./date-picker/atoms": {
-			"types": "./dist/components/date-picker/atoms.d.ts",
-			"svelte": "./dist/components/date-picker/atoms.js",
-			"default": "./dist/components/date-picker/atoms.js"
-		},
-		"./datagrid": {
-			"types": "./dist/components/datagrid/index.d.ts",
-			"svelte": "./dist/components/datagrid/index.js",
-			"default": "./dist/components/datagrid/index.js"
-		},
-		"./datagrid/atoms": {
-			"types": "./dist/components/datagrid/atoms.d.ts",
-			"svelte": "./dist/components/datagrid/atoms.js",
-			"default": "./dist/components/datagrid/atoms.js"
-		},
-		"./dialog": {
-			"types": "./dist/components/dialog/index.d.ts",
-			"svelte": "./dist/components/dialog/index.js",
-			"default": "./dist/components/dialog/index.js"
-		},
-		"./dialog/atoms": {
-			"types": "./dist/components/dialog/atoms.d.ts",
-			"svelte": "./dist/components/dialog/atoms.js",
-			"default": "./dist/components/dialog/atoms.js"
-		},
-		"./divider": {
-			"types": "./dist/components/divider/index.d.ts",
-			"svelte": "./dist/components/divider/index.js",
-			"default": "./dist/components/divider/index.js"
-		},
-		"./drawer": {
-			"types": "./dist/components/drawer/index.d.ts",
-			"svelte": "./dist/components/drawer/index.js",
-			"default": "./dist/components/drawer/index.js"
-		},
-		"./drawer/atoms": {
-			"types": "./dist/components/drawer/atoms.d.ts",
-			"svelte": "./dist/components/drawer/atoms.js",
-			"default": "./dist/components/drawer/atoms.js"
-		},
-		"./dropdown": {
-			"types": "./dist/components/dropdown/index.d.ts",
-			"svelte": "./dist/components/dropdown/index.js",
-			"default": "./dist/components/dropdown/index.js"
-		},
-		"./dropdown/atoms": {
-			"types": "./dist/components/dropdown/atoms.d.ts",
-			"svelte": "./dist/components/dropdown/atoms.js",
-			"default": "./dist/components/dropdown/atoms.js"
-		},
-		"./dropdown-menu": {
-			"types": "./dist/components/dropdown-menu/index.d.ts",
-			"svelte": "./dist/components/dropdown-menu/index.js",
-			"default": "./dist/components/dropdown-menu/index.js"
-		},
-		"./dropdown-menu/atoms": {
-			"types": "./dist/components/dropdown-menu/atoms.d.ts",
-			"svelte": "./dist/components/dropdown-menu/atoms.js",
-			"default": "./dist/components/dropdown-menu/atoms.js"
-		},
-		"./dropdown-menu/item": {
-			"types": "./dist/components/dropdown-menu/item/index.d.ts",
-			"svelte": "./dist/components/dropdown-menu/item/index.js",
-			"default": "./dist/components/dropdown-menu/item/index.js"
-		},
-		"./context-menu": {
-			"types": "./dist/components/context-menu/index.d.ts",
-			"svelte": "./dist/components/context-menu/index.js",
-			"default": "./dist/components/context-menu/index.js"
-		},
-		"./context-menu/atoms": {
-			"types": "./dist/components/context-menu/atoms.d.ts",
-			"svelte": "./dist/components/context-menu/atoms.js",
-			"default": "./dist/components/context-menu/atoms.js"
-		},
-		"./element": {
-			"types": "./dist/components/element/index.d.ts",
-			"svelte": "./dist/components/element/index.js",
-			"default": "./dist/components/element/index.js"
-		},
-		"./form": {
-			"types": "./dist/components/form/index.d.ts",
-			"svelte": "./dist/components/form/index.js",
-			"default": "./dist/components/form/index.js"
-		},
-		"./form/atoms": {
-			"types": "./dist/components/form/atoms.d.ts",
-			"svelte": "./dist/components/form/atoms.js",
-			"default": "./dist/components/form/atoms.js"
-		},
-		"./form/field": {
-			"types": "./dist/components/form/field/index.d.ts",
-			"svelte": "./dist/components/form/field/index.js",
-			"default": "./dist/components/form/field/index.js"
-		},
-		"./form/field/atoms": {
-			"types": "./dist/components/form/field/atoms.d.ts",
-			"svelte": "./dist/components/form/field/atoms.js",
-			"default": "./dist/components/form/field/atoms.js"
-		},
-		"./icon": {
-			"types": "./dist/components/icon/index.d.ts",
-			"svelte": "./dist/components/icon/index.js",
-			"default": "./dist/components/icon/index.js"
-		},
-		"./image": {
-			"types": "./dist/components/image/index.d.ts",
-			"svelte": "./dist/components/image/index.js",
-			"default": "./dist/components/image/index.js"
-		},
-		"./input": {
-			"types": "./dist/components/input/index.d.ts",
-			"svelte": "./dist/components/input/index.js",
-			"default": "./dist/components/input/index.js"
-		},
-		"./input/atoms": {
-			"types": "./dist/components/input/atoms.d.ts",
-			"svelte": "./dist/components/input/atoms.js",
-			"default": "./dist/components/input/atoms.js"
-		},
-		"./label": {
-			"types": "./dist/components/label/index.d.ts",
-			"svelte": "./dist/components/label/index.js",
-			"default": "./dist/components/label/index.js"
-		},
-		"./layer": {
-			"types": "./dist/components/layer/index.d.ts",
-			"svelte": "./dist/components/layer/index.js",
-			"default": "./dist/components/layer/index.js"
-		},
-		"./layer/atoms": {
-			"types": "./dist/components/layer/atoms.d.ts",
-			"svelte": "./dist/components/layer/atoms.js",
-			"default": "./dist/components/layer/atoms.js"
-		},
-		"./lazy": {
-			"types": "./dist/components/lazy/index.d.ts",
-			"svelte": "./dist/components/lazy/index.js",
-			"default": "./dist/components/lazy/index.js"
-		},
-		"./link": {
-			"types": "./dist/components/link/index.d.ts",
-			"svelte": "./dist/components/link/index.js",
-			"default": "./dist/components/link/index.js"
-		},
-		"./list": {
-			"types": "./dist/components/list/index.d.ts",
-			"svelte": "./dist/components/list/index.js",
-			"default": "./dist/components/list/index.js"
-		},
-		"./list/atoms": {
-			"types": "./dist/components/list/atoms.d.ts",
-			"svelte": "./dist/components/list/atoms.js",
-			"default": "./dist/components/list/atoms.js"
-		},
-		"./menu": {
-			"types": "./dist/components/menu/index.d.ts",
-			"svelte": "./dist/components/menu/index.js",
-			"default": "./dist/components/menu/index.js"
-		},
-		"./menu/atoms": {
-			"types": "./dist/components/menu/atoms.d.ts",
-			"svelte": "./dist/components/menu/atoms.js",
-			"default": "./dist/components/menu/atoms.js"
-		},
-		"./popover": {
-			"types": "./dist/components/popover/index.d.ts",
-			"svelte": "./dist/components/popover/index.js",
-			"default": "./dist/components/popover/index.js"
-		},
-		"./popover/atoms": {
-			"types": "./dist/components/popover/atoms.d.ts",
-			"svelte": "./dist/components/popover/atoms.js",
-			"default": "./dist/components/popover/atoms.js"
-		},
-		"./portal": {
-			"types": "./dist/components/portal/index.d.ts",
-			"svelte": "./dist/components/portal/index.js",
-			"default": "./dist/components/portal/index.js"
-		},
-		"./portal/atoms": {
-			"types": "./dist/components/portal/atoms.d.ts",
-			"svelte": "./dist/components/portal/atoms.js",
-			"default": "./dist/components/portal/atoms.js"
-		},
-		"./qr-code": {
-			"types": "./dist/components/qr-code/index.d.ts",
-			"svelte": "./dist/components/qr-code/index.js",
-			"default": "./dist/components/qr-code/index.js"
-		},
-		"./radio": {
-			"types": "./dist/components/radio/index.d.ts",
-			"svelte": "./dist/components/radio/index.js",
-			"default": "./dist/components/radio/index.js"
-		},
-		"./root": {
-			"types": "./dist/components/root/index.d.ts",
-			"svelte": "./dist/components/root/index.js",
-			"default": "./dist/components/root/index.js"
-		},
-		"./scrollable": {
-			"types": "./dist/components/scrollable/index.d.ts",
-			"svelte": "./dist/components/scrollable/index.js",
-			"default": "./dist/components/scrollable/index.js"
-		},
-		"./scrollable/atoms": {
-			"types": "./dist/components/scrollable/atoms.d.ts",
-			"svelte": "./dist/components/scrollable/atoms.js",
-			"default": "./dist/components/scrollable/atoms.js"
-		},
-		"./select": {
-			"types": "./dist/components/select/index.d.ts",
-			"svelte": "./dist/components/select/index.js",
-			"default": "./dist/components/select/index.js"
-		},
-		"./select/atoms": {
-			"types": "./dist/components/select/atoms.d.ts",
-			"svelte": "./dist/components/select/atoms.js",
-			"default": "./dist/components/select/atoms.js"
-		},
-		"./select/item": {
-			"types": "./dist/components/select/item/index.d.ts",
-			"svelte": "./dist/components/select/item/index.js",
-			"default": "./dist/components/select/item/index.js"
-		},
-		"./sidebar": {
-			"types": "./dist/components/sidebar/index.d.ts",
-			"svelte": "./dist/components/sidebar/index.js",
-			"default": "./dist/components/sidebar/index.js"
-		},
-		"./sidebar/atoms": {
-			"types": "./dist/components/sidebar/atoms.d.ts",
-			"svelte": "./dist/components/sidebar/atoms.js",
-			"default": "./dist/components/sidebar/atoms.js"
-		},
-		"./slider": {
-			"types": "./dist/components/slider/index.d.ts",
-			"svelte": "./dist/components/slider/index.js",
-			"default": "./dist/components/slider/index.js"
-		},
-		"./stack": {
-			"types": "./dist/components/stack/index.d.ts",
-			"svelte": "./dist/components/stack/index.js",
-			"default": "./dist/components/stack/index.js"
-		},
-		"./stack/atoms": {
-			"types": "./dist/components/stack/atoms.d.ts",
-			"svelte": "./dist/components/stack/atoms.js",
-			"default": "./dist/components/stack/atoms.js"
-		},
-		"./stepper": {
-			"types": "./dist/components/stepper/index.d.ts",
-			"svelte": "./dist/components/stepper/index.js",
-			"default": "./dist/components/stepper/index.js"
-		},
-		"./stepper/atoms": {
-			"types": "./dist/components/stepper/atoms.d.ts",
-			"svelte": "./dist/components/stepper/atoms.js",
-			"default": "./dist/components/stepper/atoms.js"
-		},
-		"./stepper/step": {
-			"types": "./dist/components/stepper/step/index.d.ts",
-			"svelte": "./dist/components/stepper/step/index.js",
-			"default": "./dist/components/stepper/step/index.js"
-		},
-		"./stepper/step/atoms": {
-			"types": "./dist/components/stepper/step/atoms.d.ts",
-			"svelte": "./dist/components/stepper/step/atoms.js",
-			"default": "./dist/components/stepper/step/atoms.js"
-		},
-		"./swatch": {
-			"types": "./dist/components/swatch/index.d.ts",
-			"svelte": "./dist/components/swatch/index.js",
-			"default": "./dist/components/swatch/index.js"
-		},
-		"./switch": {
-			"types": "./dist/components/switch/index.d.ts",
-			"svelte": "./dist/components/switch/index.js",
-			"default": "./dist/components/switch/index.js"
-		},
-		"./tabs": {
-			"types": "./dist/components/tabs/index.d.ts",
-			"svelte": "./dist/components/tabs/index.js",
-			"default": "./dist/components/tabs/index.js"
-		},
-		"./tabs/atoms": {
-			"types": "./dist/components/tabs/atoms.d.ts",
-			"svelte": "./dist/components/tabs/atoms.js",
-			"default": "./dist/components/tabs/atoms.js"
-		},
-		"./tabs/tab": {
-			"types": "./dist/components/tabs/tab/index.d.ts",
-			"svelte": "./dist/components/tabs/tab/index.js",
-			"default": "./dist/components/tabs/tab/index.js"
-		},
-		"./tabs/tab/atoms": {
-			"types": "./dist/components/tabs/tab/atoms.d.ts",
-			"svelte": "./dist/components/tabs/tab/atoms.js",
-			"default": "./dist/components/tabs/tab/atoms.js"
-		},
-		"./textarea": {
-			"types": "./dist/components/textarea/index.d.ts",
-			"svelte": "./dist/components/textarea/index.js",
-			"default": "./dist/components/textarea/index.js"
-		},
-		"./textarea/atoms": {
-			"types": "./dist/components/textarea/atoms.d.ts",
-			"svelte": "./dist/components/textarea/atoms.js",
-			"default": "./dist/components/textarea/atoms.js"
-		},
-		"./toast": {
-			"types": "./dist/components/toast/index.d.ts",
-			"svelte": "./dist/components/toast/index.js",
-			"default": "./dist/components/toast/index.js"
-		},
-		"./toast/atoms": {
-			"types": "./dist/components/toast/atoms.d.ts",
-			"svelte": "./dist/components/toast/atoms.js",
-			"default": "./dist/components/toast/atoms.js"
-		},
-		"./tooltip": {
-			"types": "./dist/components/tooltip/index.d.ts",
-			"svelte": "./dist/components/tooltip/index.js",
-			"default": "./dist/components/tooltip/index.js"
-		},
-		"./tooltip/atoms": {
-			"types": "./dist/components/tooltip/atoms.d.ts",
-			"svelte": "./dist/components/tooltip/atoms.js",
-			"default": "./dist/components/tooltip/atoms.js"
-		},
-		"./tree": {
-			"types": "./dist/components/tree/index.d.ts",
-			"svelte": "./dist/components/tree/index.js",
-			"default": "./dist/components/tree/index.js"
-		},
-		"./tree/atoms": {
-			"types": "./dist/components/tree/atoms.d.ts",
-			"svelte": "./dist/components/tree/atoms.js",
-			"default": "./dist/components/tree/atoms.js"
 		},
 		"./utils": {
 			"types": "./dist/utils/index.d.ts",
@@ -520,21 +76,34 @@
 		"./styles/root": {
 			"svelte": "./dist/components/root/root.css",
 			"default": "./dist/components/root/root.css"
+		},
+		"./overlay/policies": null,
+		"./virtual": null,
+		"./*/atoms": {
+			"types": "./dist/components/*/atoms.d.ts",
+			"svelte": "./dist/components/*/atoms.js",
+			"default": "./dist/components/*/atoms.js"
+		},
+		"./*": {
+			"types": "./dist/components/*/index.d.ts",
+			"svelte": "./dist/components/*/index.js",
+			"default": "./dist/components/*/index.js"
 		}
 	},
 	"peerDependencies": {
 		"svelte": "^5.46.4"
 	},
 	"devDependencies": {
-		"@chromatic-com/storybook": "^5.1.2",
+		"@chromatic-com/storybook": "^5.2.1",
 		"@eslint/compat": "^1.4.1",
 		"@eslint/js": "^9.39.4",
+		"@modelcontextprotocol/sdk": "^1.29.0",
 		"@playwright/test": "^1.59.1",
-		"@storybook/addon-a11y": "^10.3.5",
-		"@storybook/addon-docs": "^10.3.5",
+		"@storybook/addon-a11y": "^10.4.6",
+		"@storybook/addon-docs": "^10.4.6",
 		"@storybook/addon-svelte-csf": "^5.1.2",
-		"@storybook/addon-vitest": "^10.3.5",
-		"@storybook/sveltekit": "^10.3.5",
+		"@storybook/addon-vitest": "^10.4.6",
+		"@storybook/sveltekit": "^10.4.6",
 		"@sveltejs/adapter-auto": "^6.1.1",
 		"@sveltejs/adapter-netlify": "^5.2.4",
 		"@sveltejs/kit": "^2.57.1",
@@ -548,17 +117,19 @@
 		"animejs": "^4.3.6",
 		"eslint": "^9.39.4",
 		"eslint-config-prettier": "^10.1.8",
-		"eslint-plugin-storybook": "^10.3.5",
+		"eslint-plugin-storybook": "^10.4.6",
 		"eslint-plugin-svelte": "^3.17.0",
 		"globals": "^16.5.0",
+		"lucide-svelte": "^1.0.1",
+		"mcp-handler": "^1.1.0",
 		"mdsvex": "^0.12.7",
 		"playwright": "^1.59.1",
 		"prettier": "^3.8.3",
-		"prettier-plugin-svelte": "^3.5.1",
-		"prettier-plugin-tailwindcss": "^0.6.14",
+		"prettier-plugin-svelte": "^4",
+		"prettier-plugin-tailwindcss": "^0.8",
 		"publint": "^0.3.18",
 		"shiki": "^3.23.0",
-		"storybook": "^10.3.5",
+		"storybook": "^10.4.6",
 		"svelte": "^5.55.4",
 		"svelte-check": "^4.4.6",
 		"svelte-render-scan": "^1.1.0",
@@ -601,13 +172,11 @@
 	},
 	"dependencies": {
 		"@floating-ui/dom": "^1.7.6",
-		"@modelcontextprotocol/sdk": "^1.29.0",
 		"@qrcode-js/browser": "^1.2.0",
 		"clsx": "^2.1.1",
 		"date-fns": "^4.1.0",
+		"esm-env": "^1.2.2",
 		"es-toolkit": "^1.45.1",
-		"lucide-svelte": "^1.0.1",
-		"mcp-handler": "^1.1.0",
 		"motion": "^12.38.0",
 		"nanoid": "^5.1.9",
 		"tailwind-merge": "^3.5.0"

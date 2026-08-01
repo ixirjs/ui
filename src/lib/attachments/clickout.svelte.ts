@@ -4,6 +4,7 @@ export type ClickoutOptions = AddEventListenerOptions & {
 	type?: 'click' | 'pointerdown' | 'mousedown';
 };
 
+// options.type selects the event type ('click' | 'pointerdown' | 'mousedown', default 'click').
 export function clickout<T extends Element>(
 	onclick?: (ev: PointerEvent, node?: T) => void,
 	options?: ClickoutOptions

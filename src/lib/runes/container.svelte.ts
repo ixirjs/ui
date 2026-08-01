@@ -1,5 +1,6 @@
 import { resizeObserver } from '$svelte-atoms/core/attachments/resize-observer.svelte';
 
+// current is empty until the element is attached and first measured.
 export function container() {
 	let element = $state<HTMLElement>();
 	let size = $state<{ width: number; height: number }>();

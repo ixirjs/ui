@@ -76,12 +76,12 @@ const componentsSummary = [
 	{
 		name: 'AccordionItem.Body',
 		description:
-			'Collapsible content area that reveals or hides based on the item\'s open state with animated transitions.'
+			"Collapsible content area that reveals or hides based on the item's open state with animated transitions."
 	},
 	{
 		name: 'AccordionItem.Indicator',
 		description:
-			'Optional visual indicator (chevron/arrow icon) that rotates to reflect the item\'s open/closed state.'
+			"Optional visual indicator (chevron/arrow icon) that rotates to reflect the item's open/closed state."
 	}
 ];
 

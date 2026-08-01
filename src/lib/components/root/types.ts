@@ -10,6 +10,6 @@ export interface RootProps<
 	E extends keyof HTMLElementTagNameMap = 'div',
 	B extends Base = Base
 > extends HtmlAtomProps<E, B> {
-	// Custom portal configuration snippet.
-	portals?: Snippet;
+	// Custom portal configuration snippet (rendered in place of the default Portal.Outer/Inner).
+	portal?: Snippet;
 }

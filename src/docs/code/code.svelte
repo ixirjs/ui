@@ -1,13 +1,8 @@
 <script lang="ts">
 	import { Button } from '$lib/components/button';
 	import { Icon } from '$lib/components/icon';
-	import {
-		createHighlighter,
-		type Highlighter,
-		type BundledLanguage,
-		type BundledTheme
-	} from 'shiki';
-	import { onMount, type Snippet } from 'svelte';
+	import { createHighlighter, type Highlighter, type BundledLanguage } from 'shiki';
+	import { onMount } from 'svelte';
 
 	type Props = {
 		code: string;

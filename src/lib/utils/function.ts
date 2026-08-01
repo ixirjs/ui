@@ -1,3 +1,6 @@
+// `any` is structurally required here: this is the canonical "accepts any function"
+// generic-plumbing idiom — `unknown` would break `ReturnType<T>` inference and the spread call.
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export function call<const T extends (...args: any) => any = (...args: any) => any>(
 	param: T,
 	...args: any[]

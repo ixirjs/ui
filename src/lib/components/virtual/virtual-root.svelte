@@ -1,7 +1,7 @@
 <script lang="ts" generics="T">
 	import type { VirtualListViewportProps } from './types';
 	import { throttle } from 'es-toolkit';
-	import { onMount, tick } from 'svelte';
+	import { onMount, tick, untrack } from 'svelte';
 	import { twMerge } from 'tailwind-merge';
 
 	let {
@@ -31,7 +31,7 @@
 
 	// Estimated heights via exponential moving average (for unmeasured/dynamic-height items).
 	let heightMap: number[] = $state([]);
-	let averageHeight = $state(itemHeight || 50);
+	let averageHeight = $state(untrack(() => itemHeight || 50));
 	let heightSampleCount = $state(0);
 
 	let rows: HTMLElement[] = $state([]);

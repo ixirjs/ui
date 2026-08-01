@@ -1,12 +1,15 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { mergeAtomProps, HtmlAtom as Atom, type Base } from '$svelte-atoms/core/components/atom';
-	import { StepBond } from './bond.svelte';
+	import { mergeAtomProps, HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
+	import { createAtomInstance } from '$svelte-atoms/core/shared/bond';
+	import { StepBond, StepSeparatorAtom } from './bond.svelte';
 	import { StepperBond } from '../bond.svelte';
 	import type { StepSeparatorProps } from './types';
 
 	const bond = StepBond.getOrThrow('StepSeparator must be used within a Step component.');
 
-	const stepperBond = StepperBond.getOrThrow('StepSeparator must be used within a Stepper component.');
+	const stepperBond = StepperBond.getOrThrow(
+		'StepSeparator must be used within a Stepper component.'
+	);
 
 	let {
 		class: klass = '',
@@ -15,15 +18,17 @@
 		...restProps
 	}: StepSeparatorProps<E, B> = $props();
 
-
-	const atom = bond.atom('separator');
+	const atom = createAtomInstance<StepSeparatorAtom, StepBond>('separator', {
+		bond,
+		factory: (owner) => new StepSeparatorAtom(owner as StepBond)
+	});
 
 	const separatorProps = $derived(mergeAtomProps(atom, preset, restProps));
 
-	const isVertical = $derived(stepperBond?.state?.props?.orientation === 'vertical');
+	const isVertical = $derived(stepperBond?.props?.orientation === 'vertical');
 </script>
 
-<Atom
+<HtmlAtom
 	{bond}
 	class={[
 		'flex-1 data-[active=true]:bg-primary data-[completed=true]:bg-primary/70',
@@ -35,4 +40,4 @@
 	{...separatorProps}
 >
 	{@render children?.({ step: bond })}
-</Atom>
+</HtmlAtom>

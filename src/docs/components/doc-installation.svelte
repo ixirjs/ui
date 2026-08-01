@@ -5,20 +5,20 @@
 
 	let {
 		packageName,
-		importCode,
+		importCode
 	}: {
 		packageName: string;
 		importCode: string;
 	} = $props();
 
 	const mode = getDocMode();
-	const installCmd = `npm install ${packageName}`;
+	const installCmd = $derived(`npm install ${packageName}`);
 </script>
 
 {#if mode === 'html'}
 	<Installation {packageName} {importCode} />
 {:else}
-{codeBlock(installCmd, 'bash')}
+	{codeBlock(installCmd, 'bash')}
 
-{codeBlock(importCode, 'typescript')}
+	{codeBlock(importCode, 'typescript')}
 {/if}

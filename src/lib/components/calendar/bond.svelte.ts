@@ -1,5 +1,5 @@
-import { Bond, BondState, type BondStateProps } from '$svelte-atoms/core/shared/bond.svelte';
-import { defineBond, type BondOf, type ViewOf } from '$svelte-atoms/core/shared';
+import { Bond, type BondStateProps } from '$svelte-atoms/core/shared/bond';
+import { defineBond, type BondOf } from '$svelte-atoms/core/shared';
 import {
 	CalendarRootAtom,
 	CalendarBodyAtom,
@@ -9,6 +9,10 @@ import {
 	type WeekdayIndex
 } from './atoms.svelte';
 import type { CalendarRange, Day, Month } from './types';
+
+// -----------------------------------------------------------------------------
+// Public types
+// -----------------------------------------------------------------------------
 
 export type CalendarBondProps = BondStateProps & {
 	value?: Date;
@@ -35,57 +39,33 @@ export type CalendarBondElements = {
 };
 
 // Bond shape the calendar atoms type this.bond against — breaks the atom↔bond cycle.
-type CalendarBondView = ViewOf<CalendarBondState>;
 
-// Hand-written base for CalendarBond — registers data-driven day/weekDay atoms via registerAtom.
+// -----------------------------------------------------------------------------
+// Internal types
+// -----------------------------------------------------------------------------
+
+type CalendarBondView = CalendarBondBase;
+
+// Hand-written base for CalendarBond — creates data-driven day/weekDay atoms.
 // Static parts (root/body/header) come from the defineBond spec below.
-class CalendarBondBase extends Bond<CalendarBondProps, CalendarBondState> {
+
+// -----------------------------------------------------------------------------
+// Bond implementation
+// -----------------------------------------------------------------------------
+
+class CalendarBondBase extends Bond<CalendarBondProps> {
+	constructor(props: CalendarBondProps, name = 'calendar') {
+		super(props, name);
+	}
+
 	// Per-weekday cell atom, cached by index (0=Sunday..6=Saturday).
 	weekDay(index: number) {
-		const key = `weekday-${index}`;
-		this.registerAtom(
-			key,
-			(b) => new CalendarWeekDayAtom(b as CalendarBondView, index as WeekdayIndex)
-		);
-		return this.atom(key) as CalendarWeekDayAtom;
+		return new CalendarWeekDayAtom(this as CalendarBondView, index as WeekdayIndex);
 	}
 
 	// Per-day cell atom, cached by day.id.
 	day(day: Day) {
-		const key = `day-${day.id}`;
-		this.registerAtom(key, (b) => new CalendarDayAtom(b as CalendarBondView, day));
-		return this.atom(key) as CalendarDayAtom;
-	}
-}
-
-// CalendarBond via defineBond: declares root/body/header atoms; day/weekDay live on the base.
-// Selection/navigation logic lives on CalendarBondState.
-export const CalendarBond = defineBond<
-	{
-		root: typeof CalendarRootAtom;
-		body: typeof CalendarBodyAtom;
-		header: typeof CalendarHeaderAtom;
-	},
-	CalendarBondState,
-	typeof CalendarBondBase
->({
-	name: 'calendar',
-	base: CalendarBondBase,
-	atoms: {
-		root: CalendarRootAtom,
-		body: CalendarBodyAtom,
-		header: CalendarHeaderAtom
-	}
-});
-
-// Instance type — paired with the const above (value + type).
-export type CalendarBond = BondOf<typeof CalendarBond>;
-
-export class CalendarBondState<
-	Props extends CalendarBondProps = CalendarBondProps
-> extends BondState<Props> {
-	constructor(props: Props) {
-		super(props);
+		return new CalendarDayAtom(this as CalendarBondView, day);
 	}
 
 	selectDate(date: Date) {
@@ -129,6 +109,8 @@ export class CalendarBondState<
 	nextMonth() {
 		if (this.props.pivote) {
 			const current = this.props.pivote;
+			// Assigned wholesale to the reactive prop cell (never mutated in place) — a plain Date is correct here.
+			// eslint-disable-next-line svelte/prefer-svelte-reactivity
 			this.props.pivote = new Date(current.getFullYear(), current.getMonth() + 1, 1);
 		}
 	}
@@ -136,6 +118,8 @@ export class CalendarBondState<
 	previousMonth() {
 		if (this.props.pivote) {
 			const current = this.props.pivote;
+			// Assigned wholesale to the reactive prop cell (never mutated in place) — a plain Date is correct here.
+			// eslint-disable-next-line svelte/prefer-svelte-reactivity
 			this.props.pivote = new Date(current.getFullYear(), current.getMonth() - 1, 1);
 		}
 	}
@@ -159,3 +143,44 @@ export class CalendarBondState<
 		return this.props.value?.getTime() === day.date.getTime();
 	}
 }
+
+// CalendarBond via defineBond: declares root/body/header atoms; day/weekDay live on the base.
+// Selection/navigation logic lives on CalendarBondBase.
+
+// -----------------------------------------------------------------------------
+// Bond spec and constructor facade
+// -----------------------------------------------------------------------------
+
+const CalendarBondImpl = defineBond<
+	{
+		root: typeof CalendarRootAtom;
+		body: typeof CalendarBodyAtom;
+		header: typeof CalendarHeaderAtom;
+	},
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	any,
+	typeof CalendarBondBase
+>({
+	name: 'calendar',
+	base: CalendarBondBase,
+	atoms: {
+		root: CalendarRootAtom,
+		body: CalendarBodyAtom,
+		header: CalendarHeaderAtom
+	}
+});
+
+// Instance type — paired with the const above (value + type).
+export type CalendarBond = BondOf<typeof CalendarBondImpl>;
+
+interface CalendarBondConstructor {
+	new (props: CalendarBondProps): CalendarBond;
+	readonly CONTEXT_KEY: string;
+	readonly spec: (typeof CalendarBondImpl)['spec'];
+	get(): CalendarBond | undefined;
+	getOrThrow(message?: string): CalendarBond;
+	set(bond: CalendarBond): CalendarBond;
+	create(props: CalendarBondProps): CalendarBond;
+}
+
+export const CalendarBond = CalendarBondImpl as unknown as CalendarBondConstructor;

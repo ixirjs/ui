@@ -2,7 +2,7 @@ import clsx from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { cn, type ClassValue } from '$svelte-atoms/core/utils';
 
-// Generational trie memo for the class axis (ADR 0004 D5): walks (userClass, presetClass, variantClass)
+// Generational trie memo for the class axis: walks (userClass, presetClass, variantClass)
 // through nested Maps; hits are zero-allocation. Eviction is generational (hot→prev wholesale at TRIE_MAX).
 
 // Path-compressed (preset, variant) → result tail; `n` chains rare collisions.
@@ -23,6 +23,10 @@ let trieEntries = 0;
 
 const PLACEHOLDER = '$preset';
 const PLACEHOLDER_LEN = 7;
+
+function stripPlaceholders(value: string): string {
+	return value.indexOf(PLACEHOLDER) === -1 ? value : value.split(PLACEHOLDER).join('');
+}
 
 function isStringy(v: unknown): v is string | undefined {
 	return v === undefined || typeof v === 'string';
@@ -148,15 +152,9 @@ function mergeJoined(
 		if (lastIdx === -1) {
 			return twMerge(userClass + ' ' + v);
 		}
-		return twMerge(
-			userClass.slice(0, lastIdx) +
-				' ' +
-				(presetClass ?? '') +
-				' ' +
-				v +
-				' ' +
-				userClass.slice(lastIdx + PLACEHOLDER_LEN)
-		);
+		const before = stripPlaceholders(userClass.slice(0, lastIdx));
+		const after = stripPlaceholders(userClass.slice(lastIdx + PLACEHOLDER_LEN));
+		return twMerge(before + ' ' + (presetClass ?? '') + ' ' + v + ' ' + after);
 	}
 
 	if (userClass == null) {
@@ -181,8 +179,8 @@ function mergeJoined(
 	let joined = '';
 	for (let i = 0; i < userClass.length; i++) {
 		const item = userClass[i];
-		if (i === placeholderIdx) {
-			joined += ' ' + (presetClass ?? '') + ' ' + v;
+		if (item === PLACEHOLDER) {
+			if (i === placeholderIdx) joined += ' ' + (presetClass ?? '') + ' ' + v;
 			continue;
 		}
 		if (!item) continue;
@@ -205,8 +203,8 @@ function computeMerged(
 		if (lastIdx === -1) {
 			return cn(userClass, variantClass ?? '');
 		}
-		const before = userClass.slice(0, lastIdx);
-		const after = userClass.slice(lastIdx + PLACEHOLDER_LEN);
+		const before = stripPlaceholders(userClass.slice(0, lastIdx));
+		const after = stripPlaceholders(userClass.slice(lastIdx + PLACEHOLDER_LEN));
 		return cn(before, presetClass ?? '', variantClass ?? '', after);
 	}
 
@@ -220,7 +218,10 @@ function computeMerged(
 		let placeholderIdx = -1;
 		for (let i = 0; i < userClass.length; i++) {
 			const item = userClass[i];
-			if (typeof item !== 'string') continue;
+			if (!item) continue;
+			if (typeof item !== 'string') {
+				return computeMerged(clsx(userClass as never[]), presetClass, variantClass);
+			}
 			if (item === PLACEHOLDER) {
 				placeholderIdx = i; // keep scanning — LAST exact item wins
 				continue;
@@ -237,9 +238,15 @@ function computeMerged(
 		}
 
 		// Exact-item placeholder: splice preset + variant classes in its place.
-		const parts: ClassValue[] = userClass.slice(0, placeholderIdx);
-		parts.push(presetClass ?? '', variantClass ?? '');
-		for (let i = placeholderIdx + 1; i < userClass.length; i++) parts.push(userClass[i]);
+		const parts: ClassValue[] = [];
+		for (let i = 0; i < userClass.length; i++) {
+			const item = userClass[i];
+			if (item === PLACEHOLDER) {
+				if (i === placeholderIdx) parts.push(presetClass ?? '', variantClass ?? '');
+				continue;
+			}
+			parts.push(item);
+		}
 		return cn(parts);
 	}
 
@@ -247,8 +254,8 @@ function computeMerged(
 	return computeMerged(clsx(userClass as never), presetClass, variantClass);
 }
 
-// Merges userClass + presetClass + variantClass into a Tailwind-safe string. The `$preset`
-// placeholder (last occurrence wins) controls injection point; all-string inputs go through the trie.
+// Merges userClass + presetClass + variantClass into a Tailwind-safe string. The last `$preset`
+// placeholder controls the injection point; earlier sentinels are discarded.
 export function mergeClassesWithPreset(
 	userClass: string | ClassValue | undefined,
 	presetClass: ClassValue | undefined,

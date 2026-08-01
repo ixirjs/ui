@@ -19,11 +19,15 @@
 	};
 
 	const apiSections: PropsSection[] = [
-		{ label: 'Divider', presetKey: 'divider', props: dividerProps },
+		{ label: 'Divider', presetKey: 'divider', props: dividerProps }
 	];
 
 	const _loaders = import.meta.glob('./examples/*.svelte');
-	const _sources = import.meta.glob('./examples/*.svelte', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+	const _sources = import.meta.glob('./examples/*.svelte', {
+		query: '?raw',
+		import: 'default',
+		eager: true
+	}) as Record<string, string>;
 	const ex = createExampleLoader(_loaders, _sources);
 </script>
 
@@ -39,9 +43,21 @@
 	{/snippet}
 
 	{#snippet examples()}
-		<DocExample title="Horizontal Divider" description="Default horizontal separator" {...ex('./examples/basic.svelte')} />
-		<DocExample title="Vertical Divider" description="Vertical separator for inline content" {...ex('./examples/orientation.svelte')} />
-		<DocExample title="Labeled Divider" description="Divider with center label" {...ex('./examples/label.svelte')} />
+		<DocExample
+			title="Horizontal Divider"
+			description="Default horizontal separator"
+			{...ex('./examples/basic.svelte')}
+		/>
+		<DocExample
+			title="Vertical Divider"
+			description="Vertical separator for inline content"
+			{...ex('./examples/orientation.svelte')}
+		/>
+		<DocExample
+			title="Labeled Divider"
+			description="Divider with center label"
+			{...ex('./examples/label.svelte')}
+		/>
 	{/snippet}
 
 	{#snippet apiReference()}

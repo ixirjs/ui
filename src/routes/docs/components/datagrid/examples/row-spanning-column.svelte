@@ -2,12 +2,42 @@
 	import { DataGrid } from '$lib/components/datagrid';
 
 	const inventoryRows = [
-		{ id: 'sku-001', code: 'AMX-100', store: 'Downtown', name: 'Amoxicillin 500mg', category: 'Antibiotics' },
-		{ id: 'sku-002', code: 'ATR-220', store: 'Central', name: 'Atorvastatin 20mg', category: 'Cardio' },
-		{ id: 'sku-003', code: 'MET-500', store: 'Westside', name: 'Metformin 500mg', category: 'Diabetes' },
-		{ id: 'sku-004', code: 'IBP-200', store: 'North', name: 'Ibuprofen 200mg', category: 'Pain Relief' },
+		{
+			id: 'sku-001',
+			code: 'AMX-100',
+			store: 'Downtown',
+			name: 'Amoxicillin 500mg',
+			category: 'Antibiotics'
+		},
+		{
+			id: 'sku-002',
+			code: 'ATR-220',
+			store: 'Central',
+			name: 'Atorvastatin 20mg',
+			category: 'Cardio'
+		},
+		{
+			id: 'sku-003',
+			code: 'MET-500',
+			store: 'Westside',
+			name: 'Metformin 500mg',
+			category: 'Diabetes'
+		},
+		{
+			id: 'sku-004',
+			code: 'IBP-200',
+			store: 'North',
+			name: 'Ibuprofen 200mg',
+			category: 'Pain Relief'
+		},
 		{ id: 'sku-005', code: 'OMZ-040', store: 'East', name: 'Omeprazole 40mg', category: 'Gastro' },
-		{ id: 'sku-006', code: 'AZI-500', store: 'South', name: 'Azithromycin 500mg', category: 'Antibiotics' }
+		{
+			id: 'sku-006',
+			code: 'AZI-500',
+			store: 'South',
+			name: 'Azithromycin 500mg',
+			category: 'Antibiotics'
+		}
 	];
 
 	const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
@@ -68,7 +98,9 @@
 		</div>
 	</DataGrid.Body>
 
-	<DataGrid.Footer class="col-span-full border-t border-border px-3 py-2 text-xs text-muted-foreground">
+	<DataGrid.Footer
+		class="col-span-full border-t border-border px-3 py-2 text-xs text-muted-foreground"
+	>
 		Use row-span-full on the side rail and col-[2/-1] on row wrappers to keep all body rows aligned
 	</DataGrid.Footer>
 </DataGrid.Root>

@@ -7,8 +7,8 @@
 	let { data } = $props();
 	const { metadata, frontmatter } = $derived(data);
 </script>
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 
 <FrontMatter {frontmatter} />
 
@@ -16,20 +16,16 @@
 
 {metadata.pageDescription}
 
-## Core Principles
-
-Svelte Atoms is built on three fundamental principles that guide every design decision:
+## Core Principles Svelte Atoms is built on three fundamental principles that guide every design
+decision:
 
 {#each metadata.corePrinciples as principle, i (i)}
-### {principle.title}
+	### {principle.title}
 
-{principle.description}
+	{principle.description}
 
-**Benefits:**
-{
-list(principle.benefits)
-}
-
+	**Benefits:**
+	{list(principle.benefits)}
 {/each}
 
 ## Bond Architecture
@@ -42,7 +38,8 @@ list(principle.benefits)
 
 **Example:**
 
-{codeBlock(`
+{codeBlock(
+	`
 // Creating a Bond
 const accordion = createAccordionBond({
   multiple: false,
@@ -54,28 +51,26 @@ const accordion = createAccordionBond({
   <AccordionItem value="item-1">...</AccordionItem>
   <AccordionItem value="item-2">...</AccordionItem>
 </Accordion>
-`, 'typescript')}
+`,
+	'typescript'
+)}
 
 ### Bond Features
 
 {#each metadata.bondArchitecture.features as feature, i (i)}
-#### {feature.title}
+	#### {feature.title}
 
-{feature.description}
-
+	{feature.description}
 {/each}
 
-## Why Svelte 5?
-
-Svelte 5's Runes API enables patterns that weren't possible before:
+## Why Svelte 5? Svelte 5's Runes API enables patterns that weren't possible before:
 
 {#each metadata.whySvelte5 as item, i (i)}
-### {item.feature}
+	### {item.feature}
 
-{item.description}
+	{item.description}
 
-**Impact:** {item.impact}
-
+	**Impact:** {item.impact}
 {/each}
 
 ## Customization Philosophy
@@ -83,41 +78,31 @@ Svelte 5's Runes API enables patterns that weren't possible before:
 {metadata.customizationPhilosophy.description}
 
 {#each metadata.customizationPhilosophy.approaches as approach, i (i)}
-### {approach.title}
+	### {approach.title}
 
-{approach.description}
-
+	{approach.description}
 {/each}
 
-## Design Goals
-
-What we optimize for when building Svelte Atoms:
+## Design Goals What we optimize for when building Svelte Atoms:
 
 {#each metadata.designGoals as goal, i (i)}
-### {goal.goal} (Priority: {goal.priority})
+	### {goal.goal} (Priority: {goal.priority})
 
-{goal.description}
-
+	{goal.description}
 {/each}
 
-## What We're Not
-
-It's important to understand what Svelte Atoms is NOT trying to be:
+## What We're Not It's important to understand what Svelte Atoms is NOT trying to be:
 
 {#each metadata.whatWeAreNot as item, i (i)}
-### {item.title}
+	### {item.title}
 
-{item.description}
-
+	{item.description}
 {/each}
 
-## Philosophy in Practice
+## Philosophy in Practice ### Composition Example Instead of a monolithic component with 50 props:
 
-### Composition Example
-
-Instead of a monolithic component with 50 props:
-
-{codeBlock(`
+{codeBlock(
+	`
 <!-- Other libraries -->
 <DataTable
   data={data}
@@ -132,11 +117,14 @@ Instead of a monolithic component with 50 props:
   renderRow={CustomRow}
   /* 40 more props... */
 />
-`, 'svelte')}
+`,
+	'svelte'
+)}
 
 Svelte Atoms uses composition:
 
-{codeBlock(`
+{codeBlock(
+	`
 <!-- Svelte Atoms -->
 <DataGrid.Root>
   <DataGrid.Header>
@@ -159,13 +147,14 @@ Svelte Atoms uses composition:
     {/each}
   </DataGrid.Body>
 </DataGrid.Root>
-`, 'svelte')}
+`,
+	'svelte'
+)}
 
-### Styling Example
+### Styling Example Full control over styling at every level:
 
-Full control over styling at every level:
-
-{codeBlock(`
+{codeBlock(
+	`
 <!-- Global preset -->
 <script>
   setPreset({
@@ -185,13 +174,14 @@ Full control over styling at every level:
 </Button>
 
 <!-- Result: preset + variant + size + custom classes merged intelligently -->
-`, 'svelte')}
+`,
+	'svelte'
+)}
 
-### Bond Example
+### Bond Example State management without prop drilling:
 
-State management without prop drilling:
-
-{codeBlock(`
+{codeBlock(
+	`
 <!-- Root component creates and shares bond -->
 <script>
   const tabsBond = createTabsBond({ value: 'tab1' });
@@ -209,46 +199,23 @@ State management without prop drilling:
     Content 1
   </Tabs.Panel>
 </Tabs.Root>
-`, 'svelte')}
+`,
+	'svelte'
+)}
 
-## Comparison with Other Approaches
-
-### Traditional Component Libraries
-
-**Pros:**
-{list([
-	'Fast to get started',
-	'Pre-designed components',
-	'Consistent look out of the box'
-])}
+## Comparison with Other Approaches ### Traditional Component Libraries **Pros:**
+{list(['Fast to get started', 'Pre-designed components', 'Consistent look out of the box'])}
 
 **Cons:**
-{list([
-	'Limited customization',
-	'Fighting default styles',
-	'Vendor lock-in',
-	'Large bundle sizes'
-])}
+{list(['Limited customization', 'Fighting default styles', 'Vendor lock-in', 'Large bundle sizes'])}
 
-### Headless UI Libraries
-
-**Pros:**
-{list([
-	'Behavior without styling',
-	'Good flexibility',
-	'Accessible by default'
-])}
+### Headless UI Libraries **Pros:**
+{list(['Behavior without styling', 'Good flexibility', 'Accessible by default'])}
 
 **Cons:**
-{list([
-	'Still opinionated structure',
-	'Limited composition',
-	'Complex API for customization'
-])}
+{list(['Still opinionated structure', 'Limited composition', 'Complex API for customization'])}
 
-### Svelte Atoms
-
-**Pros:**
+### Svelte Atoms **Pros:**
 {list([
 	'Maximum flexibility',
 	'Composition-first',
@@ -265,22 +232,21 @@ State management without prop drilling:
 	'Requires understanding of composition patterns'
 ])}
 
-## Guiding Questions
+## Guiding Questions When making design decisions, we ask:
 
-When making design decisions, we ask:
+{list(
+	[
+		'**Does it enable or constrain?** - Prefer enabling building blocks over constraining configurations',
+		'**Is it composable?** - Can it combine with other primitives to create new patterns?',
+		'**Is it accessible by default?** - Does it handle ARIA, keyboard nav, and focus management automatically?',
+		'**Is it type-safe?** - Does TypeScript provide helpful autocomplete and catch errors?',
+		"**Is it performant?** - Does it leverage Svelte 5's reactivity optimally?",
+		'**Is it understandable?** - Can developers debug and reason about the implementation?'
+	],
+	true
+)}
 
-{list([
-	'**Does it enable or constrain?** - Prefer enabling building blocks over constraining configurations',
-	'**Is it composable?** - Can it combine with other primitives to create new patterns?',
-	'**Is it accessible by default?** - Does it handle ARIA, keyboard nav, and focus management automatically?',
-	'**Is it type-safe?** - Does TypeScript provide helpful autocomplete and catch errors?',
-	"**Is it performant?** - Does it leverage Svelte 5's reactivity optimally?",
-	'**Is it understandable?** - Can developers debug and reason about the implementation?'
-], true)}
-
-## Future Direction
-
-Svelte Atoms will continue to:
+## Future Direction Svelte Atoms will continue to:
 
 {list([
 	'**Expand primitives**: Add more building blocks for common patterns',
@@ -302,14 +268,17 @@ What we won't do:
 
 ## Learning Path
 
-{list([
-	'**Start with Atoms**: Understand the basic building blocks',
-	'**Learn Composition**: Practice combining primitives',
-	'**Master Bonds**: Understand state management patterns',
-	'**Explore Presets**: Set up global theming',
-	'**Build Real Components**: Apply knowledge to real projects',
-	'**Contribute Back**: Share patterns and improvements'
-], true)}
+{list(
+	[
+		'**Start with Atoms**: Understand the basic building blocks',
+		'**Learn Composition**: Practice combining primitives',
+		'**Understand Bonds**: Learn shared state, registered Atoms, and capabilities',
+		'**Explore Presets**: Set up global theming',
+		'**Build Real Components**: Apply knowledge to real projects',
+		'**Contribute Back**: Share patterns and improvements'
+	],
+	true
+)}
 
 ## Community Principles
 
@@ -321,9 +290,8 @@ What we won't do:
 	'**Education**: Help developers understand, not just use'
 ])}
 
-## Conclusion
-
-Svelte Atoms is about giving you the building blocks to create exactly what you need, without compromise. It's built on the beliefs that:
+## Conclusion Svelte Atoms is about giving you the building blocks to create exactly what you need,
+without compromise. It's built on the beliefs that:
 
 {list([
 	'Composition is more flexible than configuration',
@@ -334,6 +302,7 @@ Svelte Atoms is about giving you the building blocks to create exactly what you 
 	'Simplicity and transparency build trust'
 ])}
 
-If these principles resonate with you, Svelte Atoms will feel natural and powerful. If you prefer batteries-included solutions with opinionated defaults, you might prefer a traditional component library.
-
-We're building for developers who want control, understand trade-offs, and enjoy building from primitives.
+If these principles resonate with you, Svelte Atoms will feel natural and powerful. If you prefer
+batteries-included solutions with opinionated defaults, you might prefer a traditional component
+library. We're building for developers who want control, understand trade-offs, and enjoy building
+from primitives.

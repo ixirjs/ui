@@ -62,9 +62,17 @@
 
 	// Overlay segment types
 	type SegmentKind =
-		| 'lat-val' | 'lat-min' | 'lat-sec' | 'lat-dir'
-		| 'lng-val' | 'lng-min' | 'lng-sec' | 'lng-dir'
-		| 'sep' | 'symbol' | 'error';
+		| 'lat-val'
+		| 'lat-min'
+		| 'lat-sec'
+		| 'lat-dir'
+		| 'lng-val'
+		| 'lng-min'
+		| 'lng-sec'
+		| 'lng-dir'
+		| 'sep'
+		| 'symbol'
+		| 'error';
 
 	type Segment = { text: string; kind: SegmentKind };
 
@@ -77,9 +85,9 @@
 		'lng-min': 'color: var(--input-hl-primary, var(--foreground))',
 		'lng-sec': 'color: var(--input-hl-dim, var(--foreground))',
 		'lng-dir': 'color: var(--input-hl-primary, var(--foreground)); font-weight: 600',
-		'sep':     'color: var(--input-hl-muted, var(--foreground))',
-		'symbol':  'color: var(--input-hl-muted, var(--foreground)); opacity: 0.6',
-		'error':   'color: var(--input-hl-error, var(--destructive))',
+		sep: 'color: var(--input-hl-muted, var(--foreground))',
+		symbol: 'color: var(--input-hl-muted, var(--foreground)); opacity: 0.6',
+		error: 'color: var(--input-hl-error, var(--destructive))'
 	};
 
 	// DMS helpers
@@ -111,29 +119,29 @@
 			const ld = toDms(lt, 'lat');
 			const nd = toDms(ln, 'lng');
 
-			segs.push({ text: String(ld.d),                   kind: latOk ? 'lat-val' : 'error' });
-			segs.push({ text: '°',                            kind: 'symbol' });
+			segs.push({ text: String(ld.d), kind: latOk ? 'lat-val' : 'error' });
+			segs.push({ text: '°', kind: 'symbol' });
 			segs.push({ text: String(ld.m).padStart(2, '0'), kind: 'lat-min' });
-			segs.push({ text: "'",                            kind: 'symbol' });
+			segs.push({ text: "'", kind: 'symbol' });
 			segs.push({ text: ld.s.toFixed(2).padStart(5, '0'), kind: 'lat-sec' });
-			segs.push({ text: '"',                            kind: 'symbol' });
-			segs.push({ text: ld.dir,                         kind: 'lat-dir' });
+			segs.push({ text: '"', kind: 'symbol' });
+			segs.push({ text: ld.dir, kind: 'lat-dir' });
 
 			segs.push({ text: ',  ', kind: 'sep' });
 
-			segs.push({ text: String(nd.d),                   kind: lngOk ? 'lng-val' : 'error' });
-			segs.push({ text: '°',                            kind: 'symbol' });
+			segs.push({ text: String(nd.d), kind: lngOk ? 'lng-val' : 'error' });
+			segs.push({ text: '°', kind: 'symbol' });
 			segs.push({ text: String(nd.m).padStart(2, '0'), kind: 'lng-min' });
-			segs.push({ text: "'",                            kind: 'symbol' });
+			segs.push({ text: "'", kind: 'symbol' });
 			segs.push({ text: nd.s.toFixed(2).padStart(5, '0'), kind: 'lng-sec' });
-			segs.push({ text: '"',                            kind: 'symbol' });
-			segs.push({ text: nd.dir,                         kind: 'lng-dir' });
+			segs.push({ text: '"', kind: 'symbol' });
+			segs.push({ text: nd.dir, kind: 'lng-dir' });
 		} else {
 			segs.push({ text: lt.toFixed(precision), kind: latOk ? 'lat-val' : 'error' });
-			segs.push({ text: '°',                  kind: 'symbol' });
-			segs.push({ text: ',  ',                kind: 'sep' });
+			segs.push({ text: '°', kind: 'symbol' });
+			segs.push({ text: ',  ', kind: 'sep' });
 			segs.push({ text: ln.toFixed(precision), kind: lngOk ? 'lng-val' : 'error' });
-			segs.push({ text: '°',                  kind: 'symbol' });
+			segs.push({ text: '°', kind: 'symbol' });
 		}
 
 		return segs;
@@ -142,9 +150,7 @@
 	const segments = $derived(buildSegments(value));
 	const parsedCoords = $derived(parseCoords(value));
 	const coordsValid = $derived(
-		parsedCoords !== null &&
-		isValidLat(parsedCoords.lat) &&
-		isValidLng(parsedCoords.lng)
+		parsedCoords !== null && isValidLat(parsedCoords.lat) && isValidLng(parsedCoords.lng)
 	);
 
 	// Sync value → lat/lng props
@@ -236,7 +242,6 @@
 </script>
 
 <span class="relative flex h-full w-full flex-1 items-center overflow-hidden">
-
 	<!-- Display mode overlay (hidden while focused) -->
 	{#if !isFocused}
 		<span
@@ -249,7 +254,7 @@
 		>
 			<span style="transform: translateX(-{scrollLeft}px)">
 				{#if segments.length}
-					{#each segments as seg}
+					{#each segments as seg, i (i)}
 						<span style={kindStyle[seg.kind]}>{seg.text}</span>
 					{/each}
 				{:else}
@@ -272,7 +277,9 @@
 		{readonly}
 		class={cn(
 			'relative h-full w-full flex-1 bg-transparent px-2 font-mono text-sm caret-foreground outline-none',
-			isFocused ? 'text-foreground placeholder:text-muted-foreground' : 'text-transparent placeholder:text-transparent',
+			isFocused
+				? 'text-foreground placeholder:text-muted-foreground'
+				: 'text-transparent placeholder:text-transparent',
 			disabled && 'cursor-not-allowed opacity-50',
 			preset?.class,
 			toClassValue(klass, bond)
@@ -290,7 +297,7 @@
 	{#if locate && !readonly && !disabled}
 		<button
 			type="button"
-			title={locating ? 'Locating…' : locationError ?? 'Use current location'}
+			title={locating ? 'Locating…' : (locationError ?? 'Use current location')}
 			aria-label="Use current location"
 			class={cn(
 				'mr-1.5 flex shrink-0 cursor-pointer items-center justify-center rounded p-0.5 transition-colors',
@@ -317,9 +324,9 @@
 			>
 				<circle cx="12" cy="12" r="10" />
 				<circle cx="12" cy="12" r="3" />
-				<line x1="12" y1="2"  x2="12" y2="5"  />
+				<line x1="12" y1="2" x2="12" y2="5" />
 				<line x1="12" y1="19" x2="12" y2="22" />
-				<line x1="2"  y1="12" x2="5"  y2="12" />
+				<line x1="2" y1="12" x2="5" y2="12" />
 				<line x1="19" y1="12" x2="22" y2="12" />
 			</svg>
 		</button>

@@ -79,14 +79,14 @@ setPreset({
 	const dynamicPresetCode = `import { setPreset } from '@svelte-atoms/core/context';
 
 setPreset({
-  // Returning a function makes the preset reactive to bond state
+  // Returning a function makes the preset reactive to Bond values
   'accordion.item.header': (bond) => {
     return () => ({
       class: ['', bond?.state?.isActive ? 'text-foreground/100' : 'text-foreground/50']
     });
   },
 
-  // Static preset — no bond state needed
+  // Static preset — no Bond values needed
   'accordion.item.body': () => ({
     class: 'overflow-hidden mt-2'
   })
@@ -186,7 +186,7 @@ setPreset({
     defaults: { size: 'md' }
   }),
 
-  // Reactive — returns a factory so classes recompute with bond state
+  // Reactive — returns a factory so classes recompute with Bond values
   'accordion.item.header': (bond) => () => ({
     class: bond?.state?.isActive ? 'text-primary font-semibold' : 'text-muted-foreground'
   }),
@@ -229,7 +229,7 @@ setPreset({
 			num: '05',
 			title: 'Return a factory for reactive styles',
 			description:
-				'Returning () => ({...}) instead of a plain object makes the preset recompute when bond state changes.'
+				'Returning () => ({...}) instead of a plain object makes the preset recompute when Bond values change.'
 		},
 		{
 			num: '06',
@@ -264,7 +264,7 @@ setPreset({
 		{
 			title: 'Accessibility Defaults',
 			description:
-				"Set aria-* attributes, role, and tabindex globally so every instance of a component starts accessible without per-use boilerplate."
+				'Set aria-* attributes, role, and tabindex globally so every instance of a component starts accessible without per-use boilerplate.'
 		}
 	];
 </script>
@@ -277,15 +277,28 @@ setPreset({
 <!-- Hero -->
 <div class="border-border/60 mb-14 border-b pb-12">
 	<p class="text-primary mb-3 text-sm font-medium uppercase tracking-wide">Preset System</p>
-	<h1 class="text-foreground mb-4 text-4xl font-bold tracking-tight">Style once. Apply everywhere.</h1>
+	<h1 class="text-foreground mb-4 text-4xl font-bold tracking-tight">
+		Style once. Apply everywhere.
+	</h1>
 	<p class="text-muted-foreground mb-8 max-w-xl text-lg leading-relaxed">
 		{metadata.pageDescription}
 	</p>
 	<div class="flex flex-wrap gap-3">
 		<Button href="/docs/bonds" as="a" variant="primary" class="gap-2 px-5">
 			Understand Bonds
-			<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-				<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				width="14"
+				height="14"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				aria-hidden="true"
+			>
+				<path d="M5 12h14" /><path d="m12 5 7 7-7 7" />
 			</svg>
 		</Button>
 		<Button href="/docs/atoms" as="a" variant="outline" class="px-5">Explore Atoms</Button>
@@ -317,9 +330,22 @@ setPreset({
 		{#each metadata.keyFeatures as feature, i (i)}
 			<div class="border-border rounded-lg border p-4">
 				<div class="flex items-start gap-3">
-					<div class="bg-primary/10 text-primary mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded">
-						<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-							<path d="M20 6 9 17l-5-5"/>
+					<div
+						class="bg-primary/10 text-primary mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded"
+					>
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							width="10"
+							height="10"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="3"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							aria-hidden="true"
+						>
+							<path d="M20 6 9 17l-5-5" />
 						</svg>
 					</div>
 					<p class="text-muted-foreground text-sm leading-relaxed">{feature}</p>
@@ -333,7 +359,9 @@ setPreset({
 <Section.Root>
 	<Section.Header>
 		<Section.Title>Preset Levels</Section.Title>
-		<Section.Subtitle>Three scopes — global, route, component — each narrower than the last.</Section.Subtitle>
+		<Section.Subtitle
+			>Three scopes — global, route, component — each narrower than the last.</Section.Subtitle
+		>
 	</Section.Header>
 
 	<div class="space-y-4">
@@ -371,7 +399,9 @@ setPreset({
 <Section.Root>
 	<Section.Header>
 		<Section.Title>Global preset configuration</Section.Title>
-		<Section.Subtitle>Define your base theme at the application root for consistent styling across every page.</Section.Subtitle>
+		<Section.Subtitle
+			>Define your base theme at the application root for consistent styling across every page.</Section.Subtitle
+		>
 	</Section.Header>
 
 	<div class="overflow-hidden rounded-lg">
@@ -383,7 +413,9 @@ setPreset({
 <Section.Root>
 	<Section.Header>
 		<Section.Title>Route-level overrides</Section.Title>
-		<Section.Subtitle>Extend or override presets for specific routes — only specify what changes.</Section.Subtitle>
+		<Section.Subtitle
+			>Extend or override presets for specific routes — only specify what changes.</Section.Subtitle
+		>
 	</Section.Header>
 
 	<div class="overflow-hidden rounded-lg">
@@ -395,7 +427,9 @@ setPreset({
 <Section.Root>
 	<Section.Header>
 		<Section.Title>Component-level customization</Section.Title>
-		<Section.Subtitle>Scope presets to a specific subtree without affecting the global theme.</Section.Subtitle>
+		<Section.Subtitle
+			>Scope presets to a specific subtree without affecting the global theme.</Section.Subtitle
+		>
 	</Section.Header>
 
 	<div class="overflow-hidden rounded-lg">
@@ -407,13 +441,16 @@ setPreset({
 <Section.Root>
 	<Section.Header>
 		<Section.Title>Compound component presets</Section.Title>
-		<Section.Subtitle>Configure nested components with dot notation for precise sub-component control.</Section.Subtitle>
+		<Section.Subtitle
+			>Configure nested components with dot notation for precise sub-component control.</Section.Subtitle
+		>
 	</Section.Header>
 
 	<p class="text-muted-foreground mb-6 text-sm leading-relaxed">
-		Use <code class="bg-primary/10 text-primary rounded px-1.5 py-0.5 font-mono text-xs">'parent.child'</code> notation to style
-		sub-components independently. This is especially useful for compound components like Alert, Card,
-		Dialog, and Accordion, where each part needs its own styling.
+		Use <code class="bg-primary/10 text-primary rounded px-1.5 py-0.5 font-mono text-xs"
+			>'parent.child'</code
+		> notation to style sub-components independently. This is especially useful for compound components
+		like Alert, Card, Dialog, and Accordion, where each part needs its own styling.
 	</p>
 
 	<div class="overflow-hidden rounded-lg">
@@ -425,13 +462,15 @@ setPreset({
 <Section.Root>
 	<Section.Header>
 		<Section.Title>Reactive state-based styling</Section.Title>
-		<Section.Subtitle>Access component bond state for dynamic presets that update automatically.</Section.Subtitle>
+		<Section.Subtitle
+			>Access component Bond values for dynamic presets that update automatically.</Section.Subtitle
+		>
 	</Section.Header>
 
 	<p class="text-muted-foreground mb-6 text-sm leading-relaxed">
-		Preset functions receive the component's bond as a parameter. To make styles reactive, return
-		a <em>factory function</em> instead of a plain object — the factory is re-evaluated whenever
-		bond state changes.
+		Preset functions receive the component's bond as a parameter. To make styles reactive, return a <em
+			>factory function</em
+		> instead of a plain object — the factory is re-evaluated whenever Bond values change.
 	</p>
 
 	<div class="overflow-hidden rounded-lg mb-6">
@@ -444,15 +483,17 @@ setPreset({
 			<div>
 				<p class="text-foreground mb-1.5 text-xs font-semibold">Static preset</p>
 				<p class="text-muted-foreground text-xs leading-relaxed">
-						Return a record directly: <code class="bg-primary/10 text-primary font-mono text-xs">() => (&lbrace;class: '...'&rbrace;)</code>.
-					Evaluated once at context setup.
+					Return a record directly: <code class="bg-primary/10 text-primary font-mono text-xs"
+						>() => (&lbrace;class: '...'&rbrace;)</code
+					>. Evaluated once at context setup.
 				</p>
 			</div>
 			<div>
 				<p class="text-foreground mb-1.5 text-xs font-semibold">Reactive preset</p>
 				<p class="text-muted-foreground text-xs leading-relaxed">
-						Return a factory: <code class="bg-primary/10 text-primary font-mono text-xs">(bond) => () => (&lbrace;class: '...'&rbrace;)</code>.
-					Re-evaluated on every render when bond state changes.
+					Return a factory: <code class="bg-primary/10 text-primary font-mono text-xs"
+						>(bond) => () => (&lbrace;class: '...'&rbrace;)</code
+					>. Re-evaluated on every render when Bond values change.
 				</p>
 			</div>
 		</div>
@@ -463,13 +504,16 @@ setPreset({
 <Section.Root>
 	<Section.Header>
 		<Section.Title>The $preset placeholder</Section.Title>
-		<Section.Subtitle>Control exactly where preset classes are inserted in your class list.</Section.Subtitle>
+		<Section.Subtitle
+			>Control exactly where preset classes are inserted in your class list.</Section.Subtitle
+		>
 	</Section.Header>
 
 	<p class="text-muted-foreground mb-6 text-sm leading-relaxed">
-		Place the string <code class="bg-primary/10 text-primary rounded px-1.5 py-0.5 font-mono text-xs">'$preset'</code> anywhere in a class
-		array and it will be replaced by the resolved preset classes at that position. This gives you
-		full control over specificity ordering.
+		Place the string <code
+			class="bg-primary/10 text-primary rounded px-1.5 py-0.5 font-mono text-xs">'$preset'</code
+		> anywhere in a class array and it will be replaced by the resolved preset classes at that position.
+		This gives you full control over specificity ordering.
 	</p>
 
 	<div class="overflow-hidden rounded-lg">
@@ -481,13 +525,16 @@ setPreset({
 <Section.Root>
 	<Section.Header>
 		<Section.Title>Extending and composing presets</Section.Title>
-		<Section.Subtitle>Build upon existing preset definitions with automatic deep merging.</Section.Subtitle>
+		<Section.Subtitle
+			>Build upon existing preset definitions with automatic deep merging.</Section.Subtitle
+		>
 	</Section.Header>
 
 	<p class="text-muted-foreground mb-6 leading-relaxed">
-		<code class="bg-primary/10 text-primary rounded px-1.5 py-0.5 font-mono text-sm">setPreset()</code> always merges into the existing
-		context. Variants, sizes, and other nested records are combined — you never lose what was
-		already defined at a higher level.
+		<code class="bg-primary/10 text-primary rounded px-1.5 py-0.5 font-mono text-sm"
+			>setPreset()</code
+		> always merges into the existing context. Variants, sizes, and other nested records are combined
+		— you never lose what was already defined at a higher level.
 	</p>
 
 	<div class="overflow-hidden rounded-lg">
@@ -505,7 +552,9 @@ setPreset({
 	<div class="border-border divide-border overflow-hidden rounded-lg border divide-y">
 		{#each bestPractices as practice (practice.num)}
 			<div class="flex gap-4 p-5">
-				<span class="text-primary shrink-0 font-mono text-xs font-semibold pt-0.5">{practice.num}</span>
+				<span class="text-primary shrink-0 font-mono text-xs font-semibold pt-0.5"
+					>{practice.num}</span
+				>
 				<div>
 					<p class="text-foreground mb-1 text-sm font-semibold">{practice.title}</p>
 					<p class="text-muted-foreground text-sm leading-relaxed">{practice.description}</p>
@@ -542,53 +591,75 @@ setPreset({
 	<div class="border-border divide-border overflow-hidden rounded-lg border divide-y">
 		<div class="p-5">
 			<div class="mb-3 flex items-center gap-3">
-				<code class="bg-primary/10 text-primary rounded px-2 py-1 font-mono text-sm">setPreset(preset)</code>
+				<code class="bg-primary/10 text-primary rounded px-2 py-1 font-mono text-sm"
+					>setPreset(preset)</code
+				>
 			</div>
 			<p class="text-muted-foreground mb-3 text-sm leading-relaxed">
 				Sets or deep-merges preset configuration into the current Svelte context. Call at component
-				init time in any <code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">+layout.svelte</code> or component.
+				init time in any <code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs"
+					>+layout.svelte</code
+				> or component.
 			</p>
 			<div class="bg-muted/30 rounded-lg p-3">
-				<code class="text-muted-foreground text-xs">setPreset(preset: Partial&lt;Preset&gt;): void</code>
+				<code class="text-muted-foreground text-xs"
+					>setPreset(preset: Partial&lt;Preset&gt;): void</code
+				>
 			</div>
 		</div>
 
 		<div class="p-5">
 			<div class="mb-3 flex items-center gap-3">
-				<code class="bg-primary/10 text-primary rounded px-2 py-1 font-mono text-sm">getPreset(key?)</code>
+				<code class="bg-primary/10 text-primary rounded px-2 py-1 font-mono text-sm"
+					>getPreset(key?)</code
+				>
 			</div>
 			<p class="text-muted-foreground mb-3 text-sm leading-relaxed">
 				Retrieves preset configuration from context. Pass a key for a specific entry; omit for the
 				full preset map.
 			</p>
 			<div class="bg-muted/30 rounded-lg p-3">
-				<code class="text-muted-foreground text-xs">getPreset&lt;K&gt;(key?: K): PresetEntry | Partial&lt;Preset&gt;</code>
+				<code class="text-muted-foreground text-xs"
+					>getPreset&lt;K&gt;(key?: K): PresetEntry | Partial&lt;Preset&gt;</code
+				>
 			</div>
 		</div>
 
 		<div class="p-5">
 			<div class="mb-3 flex items-center gap-3">
-				<code class="bg-primary/10 text-primary rounded px-2 py-1 font-mono text-sm">mergePreset(callback)</code>
+				<code class="bg-primary/10 text-primary rounded px-2 py-1 font-mono text-sm"
+					>mergePreset(callback)</code
+				>
 			</div>
 			<p class="text-muted-foreground mb-3 text-sm leading-relaxed">
 				Low-level merge function that receives the current preset and returns the merged result.
-				Used internally by <code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">setPreset</code>.
+				Used internally by <code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs"
+					>setPreset</code
+				>.
 			</p>
 			<div class="bg-muted/30 rounded-lg p-3">
-				<code class="text-muted-foreground text-xs">mergePreset(callback: (current: Partial&lt;Preset&gt; | undefined) =&gt; Partial&lt;Preset&gt;): void</code>
+				<code class="text-muted-foreground text-xs"
+					>mergePreset(callback: (current: Partial&lt;Preset&gt; | undefined) =&gt;
+					Partial&lt;Preset&gt;): void</code
+				>
 			</div>
 		</div>
 
 		<div class="p-5">
 			<div class="mb-3 flex items-center gap-3">
-				<code class="bg-primary/10 text-primary rounded px-2 py-1 font-mono text-sm">PresetEntry</code>
+				<code class="bg-primary/10 text-primary rounded px-2 py-1 font-mono text-sm"
+					>PresetEntry</code
+				>
 			</div>
 			<p class="text-muted-foreground mb-3 text-sm leading-relaxed">
-				The type of each preset value. Receives the component bond and returns either a record (static)
-				or a factory returning a record (reactive).
+				The type of each preset value. Receives the component bond and returns either a record
+				(static) or a factory returning a record (reactive).
 			</p>
 			<div class="bg-muted/30 rounded-lg p-3">
-				<code class="text-muted-foreground text-xs">type PresetEntry = (bond: Bond | null) =&gt; PresetEntryRecord | (() =&gt; PresetEntryRecord)</code>
+				<code class="text-muted-foreground text-xs"
+					>type PresetEntry = (bond: Bond | null) =&gt; PresetEntryRecord | (() =&gt;
+					PresetEntryRecord)</code
+				>
 			</div>
 		</div>
 	</div>

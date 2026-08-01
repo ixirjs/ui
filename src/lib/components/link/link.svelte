@@ -1,7 +1,17 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { mergePresetProps, HtmlAtom, type HtmlAtomProps, type Base } from '$svelte-atoms/core/components/atom';
+	import {
+		mergePresetProps,
+		HtmlAtom,
+		type HtmlAtomProps,
+		type Base
+	} from '$svelte-atoms/core/components/atom';
 
-	let { class: klass = '', preset = undefined, children, ...restProps }: HtmlAtomProps<E, B> = $props();
+	let {
+		class: klass = '',
+		preset = undefined,
+		children,
+		...restProps
+	}: HtmlAtomProps<E, B> = $props();
 
 	const linkProps = $derived(mergePresetProps(preset, 'link', restProps));
 </script>

@@ -1,6 +1,7 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
 	import { mergeAtomProps, type Base } from '$svelte-atoms/core/components/atom';
-	import { Overlay } from '$svelte-atoms/core/components/overlay';
+	import { PortalHost } from '$svelte-atoms/core/components/portal/host';
+	import { createAtomInstance } from '$svelte-atoms/core/shared/bond';
 	import { SidebarBond } from './bond.svelte';
 	import { animateSidebarContent } from './motion.svelte';
 	import type { SidebarRootProps } from './types';
@@ -18,16 +19,19 @@
 		...restProps
 	}: SidebarRootProps<E, B> = $props();
 
-	const atom = bond.atom('content');
+	const atom = createAtomInstance('content', {
+		bond,
+		factory: (owner) => owner!.content()
+	});
 
 	const contentProps = $derived(mergeAtomProps(atom, preset, restProps));
 </script>
 
-<Overlay
+<PortalHost
 	{bond}
-	class={['bg-card border-border', 'max-h-screen overflow-visible', '$preset', klass]}
+	class={['bg-card max-h-screen overflow-visible', '$preset', klass]}
 	{fallback}
 	{...contentProps}
 >
-		{@render children?.({ sidebar: bond })}
-</Overlay>
+	{@render children?.({ sidebar: bond })}
+</PortalHost>

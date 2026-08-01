@@ -19,38 +19,46 @@ const accessibilityFeatures = [
 const useCases = [
 	{
 		title: 'Fixed-height Content Panels',
-		description: 'Contain long text, lists, or tables within a fixed-height container with custom-styled scrollbars that match your design system.'
+		description:
+			'Contain long text, lists, or tables within a fixed-height container with custom-styled scrollbars that match your design system.'
 	},
 	{
 		title: 'Horizontal Image Galleries',
-		description: 'Create horizontally scrollable card rows or image carousels with custom scroll track and thumb styling.'
+		description:
+			'Create horizontally scrollable card rows or image carousels with custom scroll track and thumb styling.'
 	},
 	{
 		title: 'Code Editors and Log Viewers',
-		description: 'Display large amounts of code or log output in scrollable panels with precise scroll position control.'
+		description:
+			'Display large amounts of code or log output in scrollable panels with precise scroll position control.'
 	},
 	{
 		title: 'Chat or Message Feeds',
-		description: 'Render scrollable chat history with programmatic control over scroll position for auto-scrolling to the latest message.'
+		description:
+			'Render scrollable chat history with programmatic control over scroll position for auto-scrolling to the latest message.'
 	},
 	{
 		title: 'Data Tables',
-		description: 'Wrap wide data tables in a horizontal scrollable container so users can access all columns without breaking layout.'
+		description:
+			'Wrap wide data tables in a horizontal scrollable container so users can access all columns without breaking layout.'
 	},
 	{
 		title: 'Sidebars and Navigation',
-		description: 'Enable overflow scrolling in sidebar navigation when the item list exceeds the viewport height.'
+		description:
+			'Enable overflow scrolling in sidebar navigation when the item list exceeds the viewport height.'
 	}
 ];
 
 const componentsSummary = [
 	{
 		name: 'Scrollable.Root',
-		description: 'Root component that establishes the scrollable context and exposes scroll state (scrollX, scrollY, scrollWidth, etc.).'
+		description:
+			'Root component that establishes the scrollable context and exposes scroll state (scrollX, scrollY, scrollWidth, etc.).'
 	},
 	{
 		name: 'Scrollable.Container',
-		description: 'The visible viewport container with overflow clipping. Accepts orientation for vertical or horizontal layout.'
+		description:
+			'The visible viewport container with overflow clipping. Accepts orientation for vertical or horizontal layout.'
 	},
 	{
 		name: 'Scrollable.Content',
@@ -68,7 +76,8 @@ const componentsSummary = [
 
 export const metadata = {
 	title: 'Scrollable - Svelte Atoms',
-	description: 'Custom scrollbar container component for vertical and horizontal scrollable content areas.',
+	description:
+		'Custom scrollbar container component for vertical and horizontal scrollable content areas.',
 	componentTitle: 'Scrollable',
 	componentDescription:
 		'Custom-styled scrollable container with full control over scroll position and appearance.',

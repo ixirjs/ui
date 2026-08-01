@@ -26,7 +26,7 @@
 	function onclick_(ev: MouseEvent) {
 		(onclick as ((ev: MouseEvent) => void) | undefined)?.(ev);
 		if (ev.defaultPrevented) return;
-		bond?.state.close();
+		(closeProps.onclick as ((ev: MouseEvent) => void) | undefined)?.(ev);
 	}
 </script>
 

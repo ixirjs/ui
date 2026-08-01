@@ -2,22 +2,17 @@
 	import { Section, CodeBlock, DocCallout } from '$docs/components';
 
 	// ── Extend an existing component ───────────────────────────────────────────
-	const extendCode = `import { defineBond, triggerCapability, ClickTrigger } from '@svelte-atoms/core';
-import { DropdownMenuBond } from '@svelte-atoms/core';
+	const extendCode = `import { defineBond, DropdownMenuBond } from '@svelte-atoms/core';
 
-// A command-palette flavour of dropdown-menu. \`extends\` inherits ALL of
-// dropdown-menu's atoms, capabilities, and context key — you only declare the
-// differences. The result is a real subclass: \`instanceof DropdownMenuBond\`,
-// same roving + dismiss behaviour, rebranded to \`command-menu\`.
+// A command-palette flavour of dropdown-menu.
+// parts: reuses the parent Bond's atoms, capabilities, and behavior.
+// name: gives the new component its own namespace, preset path, and context key.
 export const CommandMenuBond = defineBond({
-  extends: DropdownMenuBond,
+  parts: [DropdownMenuBond],
   name: 'command-menu',
-  atoms: { trigger: CommandTriggerAtom },                  // override one slot (last-wins)
-  capabilities: () => [
-    triggerCapability(ClickTrigger, { ariaHasPopup: 'dialog' })  // re-register a slot (last-wins)
-  ],
+  atoms: {}
 });
-// Pair the value with its instance type (the const isn't generic):
+
 export type CommandMenuBond = InstanceType<typeof CommandMenuBond>;`;
 
 	// ── Fuse two components into one ───────────────────────────────────────────
@@ -45,25 +40,56 @@ export type PopoverDialogBond = InstanceType<typeof PopoverDialogBond>;`;
 </PopoverDialog.Root>`;
 
 	// ── Author a brand-new bond ────────────────────────────────────────────────
-	const defineBondCode = `import { defineBond, BondAtom } from '@svelte-atoms/core';
+	const defineBondCode = `import {
+  Bond,
+  Atom,
+  createAtomInstance,
+  defineAtomCapability,
+  bondContextKey
+} from '@svelte-atoms/core';
+import { getContext, setContext } from 'svelte';
 
-class RootAtom extends BondAtom { constructor(b) { super(b, 'root'); } }
-class ItemAtom extends BondAtom {
-  constructor(b) { super(b, 'item'); }
-  override get attrs() { return { ...super.attrs, role: 'option' }; }
+export type TilesBondProps = { id?: string; value?: string };
+
+export class TilesBond extends Bond<TilesBondProps> {
+  static CONTEXT_KEY = bondContextKey('tiles');
+
+  constructor(props: TilesBondProps) {
+    super(props, 'tiles');
+  }
+
+  select(value: string) {
+    this.props.value = value;
+  }
+
+  static required() {
+    const bond = getContext<TilesBond | undefined>(TilesBond.CONTEXT_KEY);
+    if (!bond) throw new Error('Tiles parts must be rendered inside <Tiles.Root>.');
+    return bond;
+  }
+
+  share(): this {
+    return setContext(TilesBond.CONTEXT_KEY, this);
+  }
 }
 
-export const TilesBond = defineBond({
-  name: 'tiles',                       // DOM namespace, preset base, context key
-  atoms: { root: RootAtom, item: ItemAtom },   // → bond.root(), bond.item()
-  capabilities: (state) => [/* rovingCapability(...), selectionCapability(...) */],
-  methods: {                           // non-atom instance methods
-    open(this: TilesBond)  { this.state.open(); },
-    close(this: TilesBond) { this.state.close(); },
-  },
+export class TileItemAtom extends Atom<TilesBond, HTMLButtonElement> {
+  constructor(bond: TilesBond | undefined) {
+    super(bond, 'item');
+  }
+}
+
+const optionRole = defineAtomCapability({
+  behavior: () => ({ attrs: () => ({ role: 'option' }) })
 });
-export type TilesBond = InstanceType<typeof TilesBond>;
-// State stays a class you inject at construction: new TilesBond(new TilesState(props))`;
+
+// In Tile.Item.svelte:
+const item = createAtomInstance('item', {
+  bond: () => TilesBond.required(),
+  register: { cardinality: 'many' },
+  factory: (bond) => new TileItemAtom(bond),
+  capabilities: [optionRole]
+});`;
 
 	// ── Use the built-in stateful capabilities ─────────────────────────────────
 	const builtinsCode = `import {
@@ -92,27 +118,34 @@ capabilities: () => [
 ];`;
 
 	// ── Write your own capability ──────────────────────────────────────────────
-	const capabilityCode = `import type { Capability, Behavior } from '@svelte-atoms/core';
+	const capabilityCode = `import {
+  capabilityKey,
+  defineBondCapability,
+  defineAtomCapability
+} from '@svelte-atoms/core';
 
-// A capability is { slot, surface, behavior(role) }:
-//   • slot    — its identity (what fuse/defineBond merge & resolve, last-wins)
-//   • surface — what you program against (state + methods), read via bond.capability(slot)
-//   • behavior(role) — the per-role projection an atom folds via .role(role)
-export function busyCapability(isBusy: () => boolean): Capability<{ readonly busy: boolean }> {
-  return {
-    slot: 'busy',
+export const BUSY = capabilityKey<{ readonly busy: boolean }>('@acme/cap:busy');
+
+// Bond capability: shared state, cross-node coordination, or whole-bond effects.
+export function busyCapability(isBusy: () => boolean) {
+  return defineBondCapability({
+    slot: BUSY,
     surface: { get busy() { return isBusy(); } },
-    behavior(role): Behavior | undefined {
-      if (role === 'status') return { attrs: () => ({ 'aria-busy': isBusy() }) };
-      return undefined;
-    },
-  };
+    roles: {
+      status: () => ({ attrs: () => ({ 'aria-busy': isBusy() }) })
+    }
+  });
 }
 
-// register:  defineBond({ …, capabilities: () => [busyCapability(() => loading)] })
-// project:   class StatusAtom extends BondAtom {
-//              constructor(b) { super(b, 'status'); this.role('status'); }  // folds aria-busy in
-//            }`;
+// Atom capability: one node's local presentation, DOM behavior, or lifecycle.
+export const statusRole = defineAtomCapability({
+  behavior: (node) => ({
+    attrs: () => ({ role: 'status', 'data-atom': node.name })
+  })
+});
+
+// register on a Bond:     this.capability(busyCapability(() => this.props.loading))
+// register on an Atom: createAtomInstance('status', { capabilities: [statusRole] })`;
 </script>
 
 <svelte:head>
@@ -127,10 +160,10 @@ export function busyCapability(isBusy: () => boolean): Capability<{ readonly bus
 	<Section.Header>
 		<Section.Title>Extending &amp; Fusing</Section.Title>
 		<Section.Subtitle>
-			Every component is a <strong>bond</strong> — a bag of <em>atoms</em> (DOM slots) and
-			<em>capabilities</em> (behaviour). Because a bond is data, the set of bonds is closed under
-			combination: you can extend one, fuse two, author a new one, and project shared behaviour as a
-			capability — all over the same public seam.
+			Every compound component has a <strong>Bond</strong> that coordinates rendered
+			<strong>Atoms</strong> and shared <strong>capabilities</strong>. Because a bond spec is data,
+			the set of bonds is closed under combination: you can extend one, fuse two, author a new one,
+			and project shared behavior as a capability over the same public seam.
 		</Section.Subtitle>
 	</Section.Header>
 
@@ -138,8 +171,9 @@ export function busyCapability(isBusy: () => boolean): Capability<{ readonly bus
 		<p class="text-muted-foreground text-sm">The four moves, smallest to largest:</p>
 		<ul class="text-muted-foreground list-disc space-y-1 pl-5 text-sm">
 			<li>
-				<strong>Extend</strong> — inherit a component and override a slot (<code
-					class="bg-muted text-foreground rounded px-1.5 py-0.5 text-xs">defineBond({'{ extends }'})</code
+				<strong>Extend</strong> — reuse a component family and override only what differs (<code
+					class="bg-muted text-foreground rounded px-1.5 py-0.5 text-xs"
+					>defineBond({'{ parts }'})</code
 				>)
 			</li>
 			<li>
@@ -152,7 +186,7 @@ export function busyCapability(isBusy: () => boolean): Capability<{ readonly bus
 					class="bg-muted text-foreground rounded px-1.5 py-0.5 text-xs">defineBond(...)</code
 				>)
 			</li>
-			<li><strong>Capability</strong> — extract reusable behaviour onto the role seam</li>
+			<li><strong>Capability</strong> — extract reusable behavior onto the role seam</li>
 		</ul>
 	</div>
 </Section.Root>
@@ -161,10 +195,9 @@ export function busyCapability(isBusy: () => boolean): Capability<{ readonly bus
 	<Section.Header>
 		<Section.Title>Extend a component</Section.Title>
 		<Section.Subtitle>
-			<code class="bg-muted text-foreground rounded px-1.5 py-0.5 text-xs">extends</code> is single-parent
-			spec composition — the declarative <code
-				class="bg-muted text-foreground rounded px-1.5 py-0.5 text-xs">class extends</code
-			>. You inherit the parent's atoms, capabilities, and context key, and declare only what differs.
+			<code class="bg-muted text-foreground rounded px-1.5 py-0.5 text-xs">parts</code> reuses a parent
+			component family. You inherit the parent's atoms and capabilities, get a fresh name and context
+			key, and declare only what differs.
 		</Section.Subtitle>
 	</Section.Header>
 
@@ -175,8 +208,9 @@ export function busyCapability(isBusy: () => boolean): Capability<{ readonly bus
 	<DocCallout variant="info" title="Override by re-registering — last-wins">
 		There is one mechanism for both composition and customisation: re-register an atom slot (via
 		<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">atoms</code>) or a capability
-		slot (via <code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">capabilities</code>),
-		and the later registration wins. No parallel hook system.
+		slot (via
+		<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">capabilities</code>), and the
+		later registration wins. No parallel hook system.
 	</DocCallout>
 </Section.Root>
 
@@ -185,7 +219,7 @@ export function busyCapability(isBusy: () => boolean): Capability<{ readonly bus
 		<Section.Title>Fuse two components</Section.Title>
 		<Section.Subtitle>
 			<code class="bg-muted text-foreground rounded px-1.5 py-0.5 text-xs">fuse</code> unions the parts'
-			atoms and concatenates their capabilities, then resolves each slot last-wins. The result is a first-class
+			Atoms and concatenates their capabilities, then resolves each slot last-wins. The result is a first-class
 			bond you can fuse again.
 		</Section.Subtitle>
 	</Section.Header>
@@ -210,9 +244,13 @@ export function busyCapability(isBusy: () => boolean): Capability<{ readonly bus
 	<Section.Header>
 		<Section.Title>Author a bond from scratch</Section.Title>
 		<Section.Subtitle>
-			<code class="bg-muted text-foreground rounded px-1.5 py-0.5 text-xs">defineBond</code> wires a declarative
-			spec — atoms, capabilities, and non-atom methods — into a real Bond subclass with cached, typed atom
-			factories and a context key.
+			New authoring puts shared state and mutation methods on the
+			<code class="bg-muted text-foreground rounded px-1.5 py-0.5 text-xs">Bond</code>, while
+			rendered parts create local
+			<code class="bg-muted text-foreground rounded px-1.5 py-0.5 text-xs">Atom</code>
+			instances with
+			<code class="bg-muted text-foreground rounded px-1.5 py-0.5 text-xs">createAtomInstance</code
+			>.
 		</Section.Subtitle>
 	</Section.Header>
 
@@ -225,8 +263,8 @@ export function busyCapability(isBusy: () => boolean): Capability<{ readonly bus
 	<Section.Header>
 		<Section.Title>Capabilities</Section.Title>
 		<Section.Subtitle>
-			Behaviour lives in capabilities, not base classes — which is exactly why bonds compose. Reach for
-			a built-in, or write your own.
+			Behaviour lives in capabilities, not base classes. Bond capabilities can be state-focused,
+			coordination-focused, or effectful; Atom capabilities handle local DOM behavior.
 		</Section.Subtitle>
 	</Section.Header>
 
@@ -234,10 +272,10 @@ export function busyCapability(isBusy: () => boolean): Capability<{ readonly bus
 		<div>
 			<p class="text-foreground mb-1 text-sm font-semibold">Built-in stateful capabilities</p>
 			<p class="text-muted-foreground mb-3 text-sm">
-				<code class="bg-muted text-foreground rounded px-1.5 py-0.5 text-xs">RovingFocus</code> ("which
-				item is highlighted") and <code
-					class="bg-muted text-foreground rounded px-1.5 py-0.5 text-xs">SelectionModel</code
-				> ("what's committed") are two responsibilities a listbox composes — one each.
+				<code class="bg-muted text-foreground rounded px-1.5 py-0.5 text-xs">RovingFocus</code>
+				("which item is highlighted") and
+				<code class="bg-muted text-foreground rounded px-1.5 py-0.5 text-xs">SelectionModel</code> ("what's
+				committed") are two responsibilities a listbox composes — one each.
 			</p>
 			<div class="overflow-hidden rounded-lg">
 				<CodeBlock lang="typescript" code={builtinsCode} />
@@ -248,12 +286,14 @@ export function busyCapability(isBusy: () => boolean): Capability<{ readonly bus
 			<p class="text-foreground mb-1 text-sm font-semibold">Write your own</p>
 			<p class="text-muted-foreground mb-3 text-sm">
 				A capability is a <code class="bg-muted text-foreground rounded px-1.5 py-0.5 text-xs"
-					>{'{ slot, surface, behavior(role) }'}</code
-				> triple. Atoms opt into a projection with <code
-					class="bg-muted text-foreground rounded px-1.5 py-0.5 text-xs">.role(role)</code
-				>; <code class="bg-muted text-foreground rounded px-1.5 py-0.5 text-xs">fuse</code>/<code
-					class="bg-muted text-foreground rounded px-1.5 py-0.5 text-xs">defineBond</code
-				> merge and resolve on the slot.
+					>{'{ slot, surface, roles/behavior, setup }'}</code
+				>
+				unit. Atoms opt into Bond role projections with
+				<code class="bg-muted text-foreground rounded px-1.5 py-0.5 text-xs">.role(role)</code>;
+				local Atom capabilities are passed to
+				<code class="bg-muted text-foreground rounded px-1.5 py-0.5 text-xs"
+					>createAtomInstance</code
+				>.
 			</p>
 			<div class="overflow-hidden rounded-lg">
 				<CodeBlock lang="typescript" code={capabilityCode} />
@@ -261,13 +301,13 @@ export function busyCapability(isBusy: () => boolean): Capability<{ readonly bus
 		</div>
 	</div>
 
-	<DocCallout variant="info" title="Capability or behaviour?">
-		A <strong>capability</strong> is the noun — it has a <code
-			class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">slot</code
-		>, lives in the spec, and is what fusion resolves. A <strong>behaviour</strong> is the verb — the per-role
-		projection an atom folds, with no identity. Use a capability when two parts must resolve to one (focus,
-		selection, roving); use a one-off behaviour for an ad-hoc, single-atom decoration via
-		<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">atom.use(...)</code>.
+	<DocCallout variant="info" title="Capability or behavior?">
+		A <strong>capability</strong> is the noun — it has a
+		<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">slot</code>, lives in the
+		spec, and is what fusion resolves. A <strong>behavior</strong> is the verb — a projection an
+		Atom folds into its spread, with no identity. Use a capability when two parts must resolve to
+		one (focus, selection, roving); use a one-off behavior for an ad-hoc, single-node decoration via
+		<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">node.behavior(...)</code>.
 	</DocCallout>
 </Section.Root>
 
@@ -281,9 +321,12 @@ export function busyCapability(isBusy: () => boolean): Capability<{ readonly bus
 		If you only need to rearrange markup or restyle, <strong>compose atoms</strong> and use
 		<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">base</code>/<code
 			class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">preset</code
-		> — no new bond needed. Reach for <code
-			class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">extends</code
-		>/<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">fuse</code> only when you need new
-		<em>behaviour</em> (a new atom slot, a different capability, or two components' behaviour in one).
+		>
+		— no new bond needed. Reach for
+		<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">parts</code>/<code
+			class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">fuse</code
+		>
+		only when you need new
+		<em>behavior</em> (a new Atom slot, a different capability, or two components' behavior in one).
 	</DocCallout>
 </Section.Root>

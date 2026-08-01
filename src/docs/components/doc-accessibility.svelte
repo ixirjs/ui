@@ -1,18 +1,19 @@
 <script lang="ts">
 	import { getDocMode } from '$docs/context/doc-mode.svelte';
 	import AccessibilityInfo from './accessibility-info.svelte';
-	import { list, newLine } from '$docs/md/template';
+	import { list } from '$docs/md/template';
 
 	let {
 		features,
-		title = undefined,
+		title = undefined
 	}: {
 		features: string[];
-		title?: string;
+		title?: string | undefined;
 	} = $props();
 
 	const mode = getDocMode();
 </script>
+
 {#if mode === 'html'}
 	<AccessibilityInfo {features} {title} />
 {:else}

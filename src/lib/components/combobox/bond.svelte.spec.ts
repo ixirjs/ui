@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { ComboboxBondState } from './bond.svelte';
+import { ComboboxBond } from './bond.svelte';
 import { INPUT } from '$svelte-atoms/core/shared';
 
 // Verifies that query (filter box) and value (trigger box) are independent stores — editing one
@@ -8,8 +8,8 @@ describe('Combobox input capability — query vs value are separate stores', () 
 	it('set(query) filters without touching value; set(value) selects without touching query', () => {
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const props: any = { query: '', values: [], multiple: false };
-		const state = new ComboboxBondState(props);
-		const input = state.capability(INPUT)!.surface!;
+		const bond = ComboboxBond.create(props);
+		const input = bond.require(INPUT);
 
 		// Type in the search box → only `query` changes.
 		input.set('gb', 'query');

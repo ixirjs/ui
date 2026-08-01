@@ -1,7 +1,8 @@
 import type { ResolvedProps } from './cache';
 import { foldPresentation } from './fold';
+import { mergeSpreadProps } from '../../../shared/bond/merge';
 
-// Thin wrapper over `foldPresentation` (ADR 0004 D5): returns the cascade-merged attrs axis
+// Thin wrapper over `foldPresentation`: returns the cascade-merged attrs axis
 // (fallback → preset → mergedVariants → restProps). Kept as the stable public name.
 export function extractRestProps(
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -17,10 +18,10 @@ export function extractRestProps(
 	>;
 }
 
-// Single source of truth for the `{ preset: preset ?? atom?.preset, ...atom?.spread, ...restProps }`
-// derivation repeated across every bonded part component. Layering (last wins): the atom's own spread
-// (attrs/handlers/attachments) is the base, the component's rest props override, and the resolved
-// preset is the component override falling back to the atom's default preset key.
+// Single source of truth for the bonded part merge repeated across components. The atom's own spread
+// is the base, component rest props are the explicit user layer, and events/attachments compose via
+// the deterministic bond merge rules. The resolved preset is the component override falling back to
+// the atom's default preset key.
 export function mergeAtomProps(
 	atom: { preset?: string; spread?: Record<string | symbol, unknown> } | undefined,
 	preset: unknown,
@@ -28,8 +29,11 @@ export function mergeAtomProps(
 ): Record<string, unknown> {
 	return {
 		preset: preset ?? atom?.preset,
-		...atom?.spread,
-		...restProps
+		...mergeSpreadProps(atom?.spread, restProps, {
+			source: atom?.preset ? `atom preset "${atom.preset}"` : 'atom spread',
+			nextSource: 'component props',
+			nextIsUser: true
+		})
 	};
 }
 

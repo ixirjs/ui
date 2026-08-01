@@ -22,7 +22,8 @@ export const sidebarRootProps: PropDefinition[] = [
 		name: 'width',
 		type: 'string | number | undefined',
 		default: 'undefined',
-		description: 'Width of the sidebar panel. Accepts CSS values (e.g., "320px", "20rem") or numeric pixel values.'
+		description:
+			'Width of the sidebar panel. Accepts CSS values (e.g., "320px", "20rem") or numeric pixel values.'
 	},
 	{
 		name: 'factory',
@@ -34,8 +35,9 @@ export const sidebarRootProps: PropDefinition[] = [
 		name: '...atomProps',
 		type: 'HtmlAtomProps',
 		default: '-',
-		description: 'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
-	},
+		description:
+			'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
+	}
 ];
 
 export const sidebarContentProps: PropDefinition[] = [
@@ -49,6 +51,7 @@ export const sidebarContentProps: PropDefinition[] = [
 		name: '...atomProps',
 		type: 'HtmlAtomProps',
 		default: '-',
-		description: 'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
-	},
+		description:
+			'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
+	}
 ];

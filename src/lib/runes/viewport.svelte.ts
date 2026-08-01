@@ -2,6 +2,8 @@ export type Viewport = {
 	width: number;
 	height: number;
 };
+
+// current is undefined until the first browser effect runs.
 export function viewport() {
 	let vp = $state<Viewport>();
 

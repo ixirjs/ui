@@ -8,27 +8,27 @@ Steps are typically used within a `Stepper.Root` component to create multi-step 
 
 ```svelte
 <script>
-  import { Stepper, Step } from '@svelte-atoms/core';
+	import { Stepper, Step } from '@svelte-atoms/core';
 </script>
 
 <Stepper.Root>
-  <Step.Root index={0} header="Account Setup" body="Create your account">
-    {#snippet children({ step })}
-      <Step.Header>
-        <Step.Indicator />
-        <Step.Separator />
-        
-        <div>
-          <Step.Title>Account Setup</Step.Title>
-          <Step.Description>Create your account</Step.Description>
-        </div>
-      </Step.Header>
-      
-      <Step.Body>
-        <!-- Step content goes here -->
-      </Step.Body>
-    {/snippet}
-  </Step.Root>
+	<Step.Root index={0} header="Account Setup" body="Create your account">
+		{#snippet children({ step })}
+			<Step.Header>
+				<Step.Indicator />
+				<Step.Separator />
+
+				<div>
+					<Step.Title>Account Setup</Step.Title>
+					<Step.Description>Create your account</Step.Description>
+				</div>
+			</Step.Header>
+
+			<Step.Body>
+				<!-- Step content goes here -->
+			</Step.Body>
+		{/snippet}
+	</Step.Root>
 </Stepper.Root>
 ```
 
@@ -39,6 +39,7 @@ Steps are typically used within a `Stepper.Root` component to create multi-step 
 The root container for a step. Manages step state and provides context to child components.
 
 **Props:**
+
 - `index` - Step index in the stepper sequence
 - `header` - Step header text
 - `body` - Step body/description text
@@ -85,13 +86,11 @@ Steps work seamlessly with the Stepper component's navigation system. The step's
 
 ```svelte
 <Step.Root index={0}>
-  {#snippet children({ step })}
-    {@const isActive = step?.state?.isActive}
-    {@const isCompleted = step?.state?.isCompleted}
-    
-    <Step.Title class={isActive ? 'font-bold' : ''}>
-      Step 1
-    </Step.Title>
-  {/snippet}
+	{#snippet children({ step })}
+		{@const isActive = step?.isActive}
+		{@const isCompleted = step?.isCompleted}
+
+		<Step.Title class={isActive ? 'font-bold' : ''}>Step 1</Step.Title>
+	{/snippet}
 </Step.Root>
 ```

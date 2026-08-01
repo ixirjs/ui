@@ -32,56 +32,68 @@ const accessibilityFeatures = [
 const useCases = [
 	{
 		title: 'Registration & Login Forms',
-		description: 'Build accessible sign-up and login forms with field-level validation, error messages, and label associations.'
+		description:
+			'Build accessible sign-up and login forms with field-level validation, error messages, and label associations.'
 	},
 	{
 		title: 'Settings & Profile Editing',
-		description: 'Create user settings panels where fields map to specific data keys, with schema-based validation and error feedback.'
+		description:
+			'Create user settings panels where fields map to specific data keys, with schema-based validation and error feedback.'
 	},
 	{
 		title: 'Multi-Step Forms',
-		description: 'Compose individual Field groups across steps in a wizard flow, with shared validation logic and state management.'
+		description:
+			'Compose individual Field groups across steps in a wizard flow, with shared validation logic and state management.'
 	},
 	{
 		title: 'Contact & Feedback Forms',
-		description: 'Collect user input like name, email, and message in a structured form with required field validation and submission handling.'
+		description:
+			'Collect user input like name, email, and message in a structured form with required field validation and submission handling.'
 	},
 	{
 		title: 'Data Entry Interfaces',
-		description: 'Build admin or internal forms for creating or editing records (products, users, configurations) with rich input types and validation adapters.'
+		description:
+			'Build admin or internal forms for creating or editing records (products, users, configurations) with rich input types and validation adapters.'
 	},
 	{
 		title: 'Checkout & Payment Forms',
-		description: 'Compose complex checkout flows with address, payment, and billing fields using consistent layout and field error display.'
+		description:
+			'Compose complex checkout flows with address, payment, and billing fields using consistent layout and field error display.'
 	}
 ];
 
 const componentsSummary = [
 	{
 		name: 'Form.Root',
-		description: 'Root form element that manages form state, mounts field bonds, and provides the validator context to all child fields. Renders as a semantic <form> element.'
+		description:
+			'Root form element that manages form state, mounts field bonds, and provides the validator context to all child fields. Renders as a semantic <form> element.'
 	},
 	{
 		name: 'Field.Root',
-		description: 'Container for a single form field. Manages the field bond (name, value, validation), and provides field context to all field atoms.'
+		description:
+			'Container for a single form field. Manages the field bond (name, value, validation), and provides field context to all field atoms.'
 	},
 	{
 		name: 'Field.Label',
-		description: 'Accessible label element automatically associated with the field control via the field bond. Exposes { field } in snippet children.'
+		description:
+			'Accessible label element automatically associated with the field control via the field bond. Exposes { field } in snippet children.'
 	},
 	{
 		name: 'Field.Control',
-		description: 'Wrapper component that connects an input element (Input.Root, Textarea.Root, etc.) to the field bond for value and validation state wiring. Exposes { field } in snippet children.'
+		description:
+			'Wrapper component that connects an input element (Input.Root, Textarea.Root, etc.) to the field bond for value and validation state wiring. Exposes { field } in snippet children.'
 	},
 	{
 		name: 'Field.HelperText',
-		description: 'Helper text rendered under the field control for guidance, hints, or supporting context. Exposes { field } in snippet children.'
+		description:
+			'Helper text rendered under the field control for guidance, hints, or supporting context. Exposes { field } in snippet children.'
 	}
 ];
 
 export const metadata = {
 	title: 'Form & Field - Svelte Atoms',
-	description: 'Composable form and field components for building accessible, validated forms with Bond-based state management.',
+	description:
+		'Composable form and field components for building accessible, validated forms with Bond-based state management.',
 	componentTitle: 'Form & Field',
 	componentDescription:
 		'Composable form components with validation, schema support, and field-level state management.',

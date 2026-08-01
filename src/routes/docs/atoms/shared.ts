@@ -1,6 +1,6 @@
 // Private: Code examples
 const anatomyCode = `<script lang="ts">
-  import { HtmlAtom as Atom, defineVariants } from '@svelte-atoms/core';
+  import { HtmlAtom, defineVariants } from '@svelte-atoms/core';
   
 
   let { ...restProps } = $props();
@@ -26,7 +26,7 @@ const anatomyCode = `<script lang="ts">
   });
 </script>
 
-<Atom
+<HtmlAtom
   preset="custom-preset"
   as="button"
   base={undefined}
@@ -35,7 +35,7 @@ const anatomyCode = `<script lang="ts">
   onclick={() => console.log('clicked')}
 >
   Click me
-</Atom>
+</HtmlAtom>
 
 <!-- Renders as: -->
 <button class="px-4 py-2 rounded bg-blue-500 text-white">
@@ -116,8 +116,26 @@ const presetUsageCode = `<script lang="ts">
 
 // Private: What are atoms content
 const whatAreAtomsContent = [
-	'In chemistry, atoms are the basic units that combine to form molecules. In Svelte Atoms, the same principle applies: atoms are the fundamental components that combine to create more complex UI patterns.',
-	'Unlike traditional component libraries that provide fully-featured components, atoms give you the raw building blocks. They handle the hard parts (accessibility, keyboard navigation, state management) while giving you complete control over structure and styling.'
+	'In chemistry, atoms are the basic units that combine to form molecules. In Svelte Atoms, the same principle applies: atom UI components are the fundamental pieces that combine to create more complex UI patterns.',
+	'Unlike traditional component libraries that only provide fully-featured components, atom UI primitives give you raw building blocks. Runtime Atom classes handle node-level behavior and integration while the UI component keeps you in control of structure and styling.'
+];
+
+const terminology = [
+	{
+		term: 'Atom UI',
+		description:
+			'The Svelte component you render, such as HtmlAtom or Button.Root. It chooses the element, accepts HTML props, applies presets and variants, and renders markup.'
+	},
+	{
+		term: 'Atom class',
+		description:
+			'The runtime object created with createAtomInstance or by a higher-level component. It owns one DOM node, spread props, lifecycle, local capabilities, and Bond registration.'
+	},
+	{
+		term: 'How they work together',
+		description:
+			'An Atom UI component renders the interface. When behavior needs shared state, capabilities, or node lookup, that component creates or uses an Atom class instance behind the scenes.'
+	}
 ];
 
 // Private: Key features
@@ -141,28 +159,28 @@ export const metadata = {
 	title: 'Atoms - Svelte Atoms',
 	description: 'Understanding the fundamental building blocks of Svelte Atoms.',
 	pageTitle: 'Atoms',
-	pageDescription:
-		'The fundamental building blocks of Svelte Atoms - primitive components that power everything.',
+	pageDescription: 'The primitive UI components and runtime Atom classes that power everything.',
 	breadcrumbs: [{ label: 'Docs', href: '/docs' }, { label: 'Atoms' }],
 	whatAreAtoms: whatAreAtomsContent,
+	terminology,
 	concepts: [
 		{
-			title: 'Primitive Components',
+			title: 'Primitive UI',
 			icon: 'circle',
 			description:
-				'Atoms are unstyled by default. They provide behavior, accessibility, and state management without imposing design decisions. You add the styling.'
+				'Atom UI components are unstyled by default. They provide a render surface for behavior, accessibility, and state without imposing design decisions. You add the styling.'
 		},
 		{
-			title: 'Render Props Pattern',
+			title: 'Runtime Atoms',
 			icon: 'grid',
 			description:
-				'Many atoms use render props (snippet slots in Svelte 5) to give you full control over rendering. The atom handles logic, you handle markup.'
+				'Atom classes are runtime companions for rendered parts. They own element refs, spread props, lifecycle, local capabilities, and Bond registration.'
 		},
 		{
 			title: 'Composition Over Configuration',
 			icon: 'layers',
 			description:
-				'Instead of dozens of props for every possible use case, atoms compose together. Build what you need from simple pieces.'
+				'Instead of dozens of props for every possible use case, Atom UI components and Atom classes compose together. Build what you need from simple pieces.'
 		}
 	],
 	anatomyExample: {
@@ -174,7 +192,7 @@ export const metadata = {
 			category: 'Building Custom Components',
 			icon: 'check',
 			description:
-				'Use atoms as the foundation for your own component library. Atoms provide powerful features that make building custom components easier:',
+				'Use Atom UI primitives as the foundation for your own component library. Runtime Atom classes can add powerful behavior when your components need deeper coordination:',
 			features: [
 				'**Preset configuration** for consistent styling across your app',
 				'**Animation lifecycles** for smooth transitions and effects',
@@ -191,7 +209,7 @@ export const metadata = {
 			category: 'Need Full Control',
 			icon: 'check',
 			description:
-				'When pre-built components are too opinionated, atoms give you the power to build exactly what you need.',
+				'When pre-built components are too opinionated, Atom UI primitives give you the power to build exactly what you need.',
 			examples: [
 				'Multi-step forms',
 				'Advanced dashboards',
@@ -238,8 +256,14 @@ export const metadata = {
 		}
 	},
 	availableAtoms: [
-		{ name: 'HtmlAtom', description: 'Base component for HTML elements with variants and presets' },
-		{ name: 'Atom', description: 'Generic atom for building custom components' },
+		{
+			name: 'HtmlAtom',
+			description: 'Base UI component for HTML elements with variants and presets'
+		},
+		{
+			name: 'Atom class',
+			description: 'Runtime class for node ownership, capabilities, and Bonds'
+		},
 		{ name: 'HtmlElement', description: 'Low-level HTML element wrapper' }
 	],
 	examples: {

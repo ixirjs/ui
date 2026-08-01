@@ -1,6 +1,4 @@
+import { createBondAttachment } from '$svelte-atoms/core/components/internal/attachments.svelte';
 import { FieldBond } from './bond.svelte';
 
-export function field(callback: (node: HTMLElement, bond?: FieldBond) => any) {
-	const bond = FieldBond.get();
-	return (node: HTMLElement) => callback(node, bond);
-}
+export const field = createBondAttachment<FieldBond>(FieldBond);

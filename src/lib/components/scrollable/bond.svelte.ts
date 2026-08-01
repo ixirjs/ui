@@ -1,6 +1,10 @@
-import { Bond, BondState, BondAtom, type BondStateProps } from '$svelte-atoms/core/shared/bond.svelte';
+import { Bond, Atom, type BondStateProps } from '$svelte-atoms/core/shared/bond';
 import { defineBond, type BondOf } from '$svelte-atoms/core/shared';
 import { clamp } from '$svelte-atoms/core/utils/math';
+
+// -----------------------------------------------------------------------------
+// Public types
+// -----------------------------------------------------------------------------
 
 export type ScrollableBondProps = BondStateProps & {
 	scrollX: number;
@@ -25,7 +29,11 @@ export type ScrollableBondElements = {
 	thumbY: HTMLElement;
 };
 
-export class ScrollableRootAtom extends BondAtom<ScrollableBondBase> {
+// -----------------------------------------------------------------------------
+// Atom definitions
+// -----------------------------------------------------------------------------
+
+export class ScrollableRootAtom extends Atom<ScrollableBondBase> {
 	constructor(bond: ScrollableBondBase) {
 		super(bond, 'root');
 	}
@@ -41,7 +49,7 @@ export class ScrollableRootAtom extends BondAtom<ScrollableBondBase> {
 	}
 }
 
-export class ScrollableContainerAtom extends BondAtom<ScrollableBondBase> {
+export class ScrollableContainerAtom extends Atom<ScrollableBondBase> {
 	constructor(bond: ScrollableBondBase) {
 		super(bond, 'container');
 	}
@@ -55,18 +63,24 @@ export class ScrollableContainerAtom extends BondAtom<ScrollableBondBase> {
 	}
 
 	override onmount() {
-		this.bond.updateScrollState();
+		let mounted = true;
+		queueMicrotask(() => {
+			if (mounted) this.bond.updateScrollState();
+		});
+		return () => {
+			mounted = false;
+		};
 	}
 }
 
-export class ScrollableContentAtom extends BondAtom<ScrollableBondBase> {
+export class ScrollableContentAtom extends Atom<ScrollableBondBase> {
 	constructor(bond: ScrollableBondBase) {
 		super(bond, 'content');
 	}
 }
 
 // Track atom; axis fixed at construction.
-export class ScrollableTrackAtom extends BondAtom<ScrollableBondBase> {
+export class ScrollableTrackAtom extends Atom<ScrollableBondBase> {
 	#axis: 'x' | 'y';
 
 	constructor(bond: ScrollableBondBase, axis: 'x' | 'y') {
@@ -94,7 +108,7 @@ export class ScrollableTrackAtom extends BondAtom<ScrollableBondBase> {
 }
 
 // Thumb atom; axis fixed at construction.
-export class ScrollableThumbAtom extends BondAtom<ScrollableBondBase> {
+export class ScrollableThumbAtom extends Atom<ScrollableBondBase> {
 	#axis: 'x' | 'y';
 
 	constructor(bond: ScrollableBondBase, axis: 'x' | 'y') {
@@ -149,11 +163,16 @@ class ScrollableThumbYAtom extends ScrollableThumbAtom {
 }
 
 // Hand-written base: scroll geometry, drag, measurement, and parent-context capture; defineBond extends it.
-class ScrollableBondBase extends Bond<ScrollableBondProps, ScrollableState> {
+
+// -----------------------------------------------------------------------------
+// Bond implementation
+// -----------------------------------------------------------------------------
+
+class ScrollableBondBase extends Bond<ScrollableBondProps> {
 	#parent: ScrollableBond | undefined;
 
-	constructor(state: ScrollableState) {
-		super(state, 'scrollable');
+	constructor(props: ScrollableBondProps, name = 'scrollable') {
+		super(props, name);
 		this.#parent = ScrollableBond.get();
 	}
 
@@ -162,8 +181,10 @@ class ScrollableBondBase extends Bond<ScrollableBondProps, ScrollableState> {
 	}
 
 	// Narrows the inherited element registry to concrete HTMLElements (hides VirtualElement).
-	override get elements(): Partial<ScrollableBondElements> & Record<string, HTMLElement | undefined> {
-		return super.elements as Partial<ScrollableBondElements> & Record<string, HTMLElement | undefined>;
+	override get elements(): Partial<ScrollableBondElements> &
+		Record<string, HTMLElement | undefined> {
+		return super.elements as Partial<ScrollableBondElements> &
+			Record<string, HTMLElement | undefined>;
 	}
 
 	scrollTo(x: number, y: number) {
@@ -298,7 +319,12 @@ class ScrollableBondBase extends Bond<ScrollableBondProps, ScrollableState> {
 }
 
 // Atoms type `this.bond` against the base to reach geometry/drag methods directly.
-export const ScrollableBond = defineBond<
+
+// -----------------------------------------------------------------------------
+// Bond spec and constructor facade
+// -----------------------------------------------------------------------------
+
+const ScrollableBondImpl = defineBond<
 	{
 		root: typeof ScrollableRootAtom;
 		container: typeof ScrollableContainerAtom;
@@ -308,7 +334,8 @@ export const ScrollableBond = defineBond<
 		thumbX: typeof ScrollableThumbXAtom;
 		thumbY: typeof ScrollableThumbYAtom;
 	},
-	ScrollableState,
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	any,
 	typeof ScrollableBondBase
 >({
 	name: 'scrollable',
@@ -324,10 +351,16 @@ export const ScrollableBond = defineBond<
 	}
 });
 
-export type ScrollableBond = BondOf<typeof ScrollableBond>;
+export type ScrollableBond = BondOf<typeof ScrollableBondImpl>;
 
-export class ScrollableState extends BondState<ScrollableBondProps> {
-	constructor(props: ScrollableBondProps) {
-		super(props);
-	}
+interface ScrollableBondConstructor {
+	new (props: ScrollableBondProps): ScrollableBond;
+	readonly CONTEXT_KEY: string;
+	readonly spec: (typeof ScrollableBondImpl)['spec'];
+	get(): ScrollableBond | undefined;
+	getOrThrow(message?: string): ScrollableBond;
+	set(bond: ScrollableBond): ScrollableBond;
+	create(props: ScrollableBondProps): ScrollableBond;
 }
+
+export const ScrollableBond = ScrollableBondImpl as unknown as ScrollableBondConstructor;

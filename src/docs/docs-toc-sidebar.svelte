@@ -32,7 +32,9 @@
 <!-- Desktop: always-visible fixed aside -->
 {#if toc.length > 0}
 	<div class="hidden w-52 shrink-0 xl:block" aria-hidden="true"></div>
-	<aside class="bg-background fixed top-14 right-6 hidden h-[calc(100vh-3.5rem)] w-52 shrink-0 overflow-y-auto docs-scroll xl:block">
+	<aside
+		class="bg-background fixed top-14 right-6 hidden h-[calc(100vh-3.5rem)] w-52 shrink-0 overflow-y-auto docs-scroll xl:block"
+	>
 		<div class="py-6 text-sm">
 			<p class="text-muted-foreground mb-3 px-2 text-xs font-semibold uppercase tracking-widest">
 				On this page
@@ -47,8 +49,8 @@
 							activeId === entry.id
 								? 'border-primary text-foreground font-medium'
 								: 'border-border text-muted-foreground hover:text-foreground'
-						]}
-					>{entry.text}</a>
+						]}>{entry.text}</a
+					>
 				{/each}
 			</nav>
 		</div>
@@ -58,8 +60,16 @@
 <!-- Mobile: Drawer from right -->
 <Drawer.Root bind:open {onclose} side="right" class="lg:hidden z-50">
 	{#snippet children({ drawer })}
-		<Drawer.Backdrop class={['duration-75 bg-black/0 transition-[backdrop-filter]', drawer.state.props.open ? 'backdrop-grayscale-100' : '']} />
-		<Drawer.Content class="bg-background border-border w-80 border-l p-0 shadow-xl flex flex-col" animate={animateDrawerContent({duration: DURATION.smooth/1000})}>
+		<Drawer.Backdrop
+			class={[
+				'duration-75 bg-black/0 transition-[backdrop-filter]',
+				drawer.state.props.open ? 'backdrop-grayscale-100' : ''
+			]}
+		/>
+		<Drawer.Content
+			class="bg-background border-border w-80 border-l p-0 shadow-xl flex flex-col"
+			animate={animateDrawerContent({ duration: DURATION.smooth / 1000 })}
+		>
 			<Drawer.Header class="border-b border-border px-6 py-4 flex items-center justify-between">
 				<h4 class="text-foreground text-lg font-semibold">On this page</h4>
 				<button
@@ -68,7 +78,12 @@
 					aria-label="Close table of contents"
 				>
 					<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M6 18L18 6M6 6l12 12"
+						></path>
 					</svg>
 				</button>
 			</Drawer.Header>
@@ -83,8 +98,8 @@
 								activeId === entry.id
 									? 'border-primary text-foreground bg-primary/8 font-medium'
 									: 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
-							]}
-						>{entry.text}</a>
+							]}>{entry.text}</a
+						>
 					{/each}
 				</div>
 			</Drawer.Body>

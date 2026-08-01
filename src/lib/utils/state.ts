@@ -1,7 +1,7 @@
 export type StateDefiner<T extends object> = (base: T) => T;
 
 // Build a bond's props object from per-field accessor cells. Each definer installs a live getter/setter.
-// `base` is spread once — fields become frozen snapshots; reactive props must use defineProperty instead (ADR 0002).
+// `base` is spread once — fields become frozen snapshots; reactive props must use defineProperty instead.
 export function defineState<T extends object>(
 	definers: StateDefiner<Partial<T>>[],
 	base?: () => Partial<T>

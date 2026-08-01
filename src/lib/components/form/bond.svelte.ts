@@ -1,10 +1,9 @@
 import type { FieldBond } from './field/bond.svelte';
-import {
-	bondContextKey,
-	Bond,
-	BondState,
-	type BondStateProps
-} from '$svelte-atoms/core/shared/bond.svelte';
+import { bondContextKey, Bond, type BondStateProps } from '$svelte-atoms/core/shared/bond';
+
+// -----------------------------------------------------------------------------
+// Public types
+// -----------------------------------------------------------------------------
 
 export type FormProps<Extension extends Record<string, unknown> = Record<string, unknown>> =
 	BondStateProps & {
@@ -17,11 +16,15 @@ export type FormElements = {
 	root: HTMLElement;
 };
 
-export class FormBond extends Bond<FormProps, FormBondState> {
+// -----------------------------------------------------------------------------
+// Bond state
+// -----------------------------------------------------------------------------
+
+export class FormBond<Props extends FormProps = FormProps> extends Bond<Props> {
 	static CONTEXT_KEY = bondContextKey('form');
 
-	constructor(state: FormBondState) {
-		super(state);
+	constructor(props: Props, name = 'form') {
+		super(props, name);
 	}
 
 	root() {
@@ -35,16 +38,9 @@ export class FormBond extends Bond<FormProps, FormBondState> {
 	control() {
 		return {};
 	}
-}
-
-export class FormBondState<Props extends FormProps = FormProps> extends BondState<Props> {
-	constructor(props: Props) {
-		super(props);
-	}
-
 	mountField(id: string, atom: FieldBond) {
-		// Collection.attach registers + returns the cleanup (see shared/collection.svelte.ts).
-		return this.collection<FieldBond>('field').attach(id, atom);
+		// Collection.set registers + returns the cleanup (see shared/bond/collection.svelte.ts).
+		return this.collection<FieldBond>('field').set(id, atom);
 	}
 
 	unmountField(id: string) {
@@ -52,7 +48,7 @@ export class FormBondState<Props extends FormProps = FormProps> extends BondStat
 	}
 
 	validate() {
-		this.fields.map((field) => field.state.validate());
+		this.fields.map((field) => field.validate());
 	}
 
 	clear() {}

@@ -26,23 +26,23 @@
 	// 7-day alignment intact. Boundary off-month days are kept here and rendered as
 	// blank placeholders below so the columns stay put.
 	const visibleDays = $derived.by(() => {
-		const days = currentMonth?.days ?? [];
+		type Day = NonNullable<typeof currentMonth>['days'][number];
+		const days: Day[] = currentMonth?.days ?? [];
 		if (outsideDays) return days;
 
-		const weeks = [];
+		const weeks: Day[][] = [];
 		for (let i = 0; i < days.length; i += 7) {
 			weeks.push(days.slice(i, i + 7));
 		}
 		return weeks.filter((week) => week.some((day) => !day.offmonth)).flat();
 	});
 
-	const bodyProps = $derived(mergePresetProps(preset, 'calendar.body', { ...calendarBond?.body().spread, ...restProps }));
+	const bodyProps = $derived(
+		mergePresetProps(preset, 'calendar.body', { ...calendarBond?.body().spread, ...restProps })
+	);
 </script>
 
-<HtmlAtom
-	class={cn('col-span-full grid w-full grid-cols-subgrid', klass)}
-	{...bodyProps}
->
+<HtmlAtom class={cn('col-span-full grid w-full grid-cols-subgrid', klass)} {...bodyProps}>
 	{#each visibleDays as day (day.id)}
 		{#if !outsideDays && day.offmonth}
 			<div aria-hidden="true"></div>
@@ -52,7 +52,7 @@
 			<CalendarDay
 				{day}
 				onclick={() => {
-					calendarBond?.state.selectStart(new Date(day.date));
+					calendarBond?.selectStart(new Date(day.date));
 				}}
 			/>
 		{/if}

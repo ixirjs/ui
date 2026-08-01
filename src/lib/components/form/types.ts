@@ -54,6 +54,16 @@ export interface FieldLabelProps<
 	for?: never;
 }
 
+// Detail payload forwarded to `Field.Control`'s `oninput` — type-agnostic, so every typed
+// value channel is optional. Matches what the control reads off the input at runtime.
+export interface FieldInputDetail {
+	value?: unknown;
+	files?: File[];
+	date?: Date | null;
+	number?: number;
+	checked?: boolean;
+}
+
 export interface FieldControlProps<
 	E extends keyof HTMLElementTagNameMap = 'div',
 	B extends Base = Base
@@ -63,7 +73,7 @@ export interface FieldControlProps<
 	valueAsNumber?: number;
 	checked?: boolean;
 	files?: File[] | null;
-	oninput?: (ev: CustomEvent, detail?: { value: unknown }) => void;
+	oninput?: (ev: InputEvent, detail?: FieldInputDetail) => void;
 	children?: FieldChildren;
 }
 
@@ -74,7 +84,7 @@ export interface FieldHelperTextProps<
 	children?: FieldChildren;
 }
 
-export interface FieldTextProps<
+export type FieldTextProps<
 	E extends keyof HTMLElementTagNameMap = 'p',
 	B extends Base = Base
-> extends FieldHelperTextProps<E, B> {}
+> = FieldHelperTextProps<E, B>;
