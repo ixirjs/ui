@@ -14,7 +14,7 @@
 		showControls = true,
 		disabled = false,
 		placeholder = undefined,
-		preset = 'input.number',
+		preset = undefined,
 		decrement = undefined,
 		increment = undefined,
 		onchange = undefined,
@@ -54,7 +54,7 @@
 	}
 </script>
 
-<!-- ─── Default part snippets ──────────────────────────────────────────── -->
+<!-- Default part snippets -->
 
 {#snippet defaultDecrement({ action: dec, disabled: dis }: { action: () => void; disabled: boolean })}
 	<button
@@ -84,7 +84,7 @@
 	</button>
 {/snippet}
 
-<!-- ─── Render ────────────────────────────────────────────────────────── -->
+<!-- Render -->
 
 {@render decrementSnippet?.({ action: handleDecrement, disabled: !canDecrement })}
 

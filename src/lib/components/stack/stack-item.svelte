@@ -6,14 +6,11 @@
 
 	type Element = ElementType<E>;
 
-	const bond = StackBond.get();
-
-	if (!bond) {
-		throw new Error('Stack.Item must be used within a Stack.Root component.');
-	}
+	const bond = StackBond.getOrThrow('Stack.Item must be used within a Stack.Root component.');
 
 	let {
 		class: klass = '',
+		preset = undefined,
 		value,
 		children,
 		style: userStyle = '',
@@ -32,10 +29,15 @@
 
 	const zIndex = $derived(bond?.state.getZIndex(value) ?? 0);
 
+	// `value` is reactive and `item(value)` is keyed by it, so the atom must be
+	// derived — a plain const would freeze it to the initial value's atom.
+	const atom = $derived(bond?.item(value));
+
 	const itemProps = $derived({
-		...bond?.item(value).spread,
+		preset: preset ?? 'stack.item',
+		...atom?.spread,
 		...restProps,
-		// Merge user style with z-index from atom
+		// Append the atom's z-index to any user-supplied style.
 		style: userStyle ? `${userStyle}; z-index: ${zIndex}` : `z-index: ${zIndex}`
 	});
 
@@ -43,7 +45,6 @@
 </script>
 
 <HtmlAtom
-	preset="stack.item"
 	class={['stack-item', '$preset', klass]}
 	data-value={value}
 	data-active={isActive}

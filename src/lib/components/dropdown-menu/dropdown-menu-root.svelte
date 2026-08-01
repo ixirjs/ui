@@ -5,6 +5,8 @@
 
 	let { open = $bindable(false), factory = defaultFactory, ...restProps }: PopoverRootProps = $props();
 
+	// Bespoke: DropdownMenuBond is a defineBond-style bond whose nominal open/close/toggle methods the
+	// generic `bondFactory` structural inference would drop, breaking assignment to Factory<PopoverBond>.
 	function defaultFactory(props: DropdownMenuBondProps) {
 		const menuBondState = new DropdownMenuBondState(props);
 		return new DropdownMenuBond(menuBondState);

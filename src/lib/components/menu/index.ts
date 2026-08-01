@@ -36,5 +36,5 @@ export type {
 	DropdownMenuListProps as MenuListProps
 } from '../dropdown-menu/types';
 
-// Item exports (already shimmed in item/index.ts)
+// Item exports
 export * from './item';

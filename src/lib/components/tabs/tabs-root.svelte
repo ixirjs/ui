@@ -30,8 +30,7 @@
 					value = v as D | undefined;
 					revision++; // Trigger reactivity in uncontrolled mode
 				}
-			],
-			rest: () => restProps
+			]
 		},
 		{ preset: () => preset }
 	);

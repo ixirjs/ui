@@ -16,7 +16,7 @@ export {
 	type SelectStateProps as DropdownStateProps
 } from '../select/bond.svelte';
 
-// Item exports (already shimmed in item/index.ts)
+// Item exports
 export * from './item';
 
 // Runes
@@ -29,13 +29,13 @@ export { filterSelectData as filter } from '../select/runes.svelte';
 
 // Types
 export type {
-	DropdownRootProps,
-	DropdownTriggerProps,
-	DropdownSelectionsProps,
-	DropdownSelectionProps,
-	DropdownQueryProps,
-	DropdownSelection
-} from './types';
+	SelectRootProps as DropdownRootProps,
+	SelectTriggerProps as DropdownTriggerProps,
+	SelectSelectionsProps as DropdownSelectionsProps,
+	SelectSelectionProps as DropdownSelectionProps,
+	SelectQueryProps as DropdownQueryProps,
+	SelectSelection as DropdownSelection
+} from '../select/types';
 
 // Animate aliases
 export type {

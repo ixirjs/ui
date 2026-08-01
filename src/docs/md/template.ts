@@ -1,19 +1,4 @@
-/**
- * Markdown template literal tag for syntax highlighting and processing
- * 
- * Usage:
- * ```ts
- * const content = md`
- *   # Hello World
- *   This is **markdown**!
- * `;
- * ```
- * 
- * For syntax highlighting in VS Code:
- * - Install "es6-string-html" or "lit-html" extension
- * - Use comment annotation: const x = /* md *\/ `markdown here`;
- * - Or configure your editor to recognize the `md` tag
- */
+// Tagged template literal for markdown strings; dedents common leading whitespace.
 export function md(strings: TemplateStringsArray, ...values: any[]): string {
 	// Combine template parts
 	let result = strings.reduce((acc, str, i) => {
@@ -36,9 +21,7 @@ export function md(strings: TemplateStringsArray, ...values: any[]): string {
 		.trim();
 }
 
-/**
- * Markdown template literal tag that preserves exact formatting (no dedent)
- */
+// Like md`` but skips dedenting — preserves exact formatting.
 export function mdRaw(strings: TemplateStringsArray, ...values: any[]): string {
 	return strings.reduce((acc, str, i) => {
 		return acc + str + (values[i] ?? '');

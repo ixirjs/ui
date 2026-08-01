@@ -60,10 +60,8 @@ describe('Collection<T>', () => {
 		expect(() => c.attach('a', 'second')).toThrow(/duplicate id 'a'/);
 	});
 
-	// Regression: children register from their mount-attachment, i.e. inside an
-	// effect. If `attach` read `#items` reactively (the DEV guard / cleanup check)
-	// it would depend on the map it then writes and self-invalidate into
-	// `effect_update_depth_exceeded`. Registering from an effect must be stable.
+	// Regression: attach runs inside the child's mount effect; a reactive read of `#items`
+	// (DEV guard / cleanup check) would depend on the map it writes → effect_update_depth_exceeded.
 	it('attach from inside an effect does not self-invalidate', () => {
 		const c = new Collection<string>('test');
 		const dispose = $effect.root(() => {

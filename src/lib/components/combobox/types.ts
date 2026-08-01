@@ -8,9 +8,7 @@ import type {
 } from '../select';
 import type { InputControlProps } from '../input';
 
-// ============================================================================
-// Combobox Snippet Props (Extensible)
-// ============================================================================
+// Snippet props (extensible)
 
 export interface ComboboxSnippetProps extends SnippetProps {
 	combobox: ComboboxBond;
@@ -39,17 +37,14 @@ export interface ComboboxRootProps<
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface ComboboxSelectionsProps extends DropdownSelectionsProps {
-	//
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface ComboboxSelectionProps extends DropdownSelectionProps {
-	//
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface ComboboxControlProps extends InputControlProps {
-	//
 }
 
 export interface ComboboxSelection {

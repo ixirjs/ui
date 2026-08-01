@@ -59,6 +59,7 @@ export const metadata = {
 		advanced: [
 			{ title: 'Composition', href: '/docs/composition/llms.txt', description: 'Component composition patterns' },
 			{ title: 'Crafting', href: '/docs/crafting/llms.txt', description: 'Creating custom components' },
+			{ title: 'Extending & Fusing', href: '/docs/extending/llms.txt', description: 'Extend, fuse, and author components with defineBond, fuse, and capabilities' },
 			{ title: 'Motion', href: '/docs/motion/llms.txt', description: 'Motion and animation system' },
 			{ title: 'Transitions', href: '/docs/transitions/llms.txt', description: 'Transitions and animations' },
 			{ title: 'Accessibility', href: '/docs/accessibility/llms.txt', description: 'Accessibility features' }

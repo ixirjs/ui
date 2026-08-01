@@ -1,5 +1,6 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
 	import { onDestroy } from 'svelte';
+	import { bondFactory } from '$svelte-atoms/core/shared';
 	import { bindBond } from '$svelte-atoms/core/shared/bind-bond.svelte';
 	import { HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
 	import { FieldBond, FieldBondState, type FieldStateProps } from './bond.svelte';
@@ -15,7 +16,7 @@
 		name = undefined,
 		schema = undefined,
 		validator = undefined,
-		factory = defaultFactory,
+		factory = bondFactory(FieldBondState, FieldBond),
 		children = undefined,
 		...restProps
 	}: FieldRootProps<E, B> = $props();
@@ -39,10 +40,6 @@
 	const unmount = formBond?.state.mountField(bond.id, bond) ?? (() => {});
 	onDestroy(() => unmount());
 
-	function defaultFactory(props: FieldStateProps) {
-		const bondState = new FieldBondState(props);
-		return new FieldBond(bondState);
-	}
 
 	export function getBond() {
 		return bond;

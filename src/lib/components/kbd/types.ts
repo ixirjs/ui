@@ -12,13 +12,9 @@ export interface KbdProps extends HtmlAtomProps<'kbd'>, KbdExtendProps {
 }
 
 export interface ShortcutProps extends HtmlAtomProps<'span'>, ShortcutExtendProps {
-	/**
-	 * Array of keys to render in sequence, e.g. ['⌘', 'K'] or ['Ctrl', 'Shift', 'P']
-	 */
+	// Keys to render in sequence, e.g. ['⌘', 'K'] or ['Ctrl', 'Shift', 'P']
 	keys?: string[];
-	/**
-	 * Separator between keys — default '+'
-	 */
+	// Separator between keys (default '+')
 	separator?: string;
 	children?: Snippet<[]>;
 }

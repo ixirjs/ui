@@ -3,9 +3,8 @@
 	import type { TeleportProps } from './types';
 	import { HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
 	import type { HtmlElementTagName, HtmlElementType } from '$svelte-atoms/core/components/element';
-	import { PortalsBond } from './portals';
-	import { RootBond } from '$svelte-atoms/core/components/root/bond.svelte';
-	import { port } from './utils';
+	import { PortalsBond, resolvePortal } from './portals';
+	import { port } from './port';
 
 	type Element = HtmlElementType<E>;
 
@@ -13,28 +12,24 @@
 		$props();
 
 	const portalsBond = PortalsBond.get();
-	const rootBond = RootBond.get();
 
-	const portalBond = $derived.by(() => {
-		if (typeof portal === 'string') {
-			const p = portalsBond?.state.get(portal);
-			if(p) return p;
+	const portalBond = $derived(resolvePortal(portalsBond, portal));
 
-			return rootBond?.state?.getPortal(portal!);
-		}
-
-		return portal;
-	});
-
-	const targetElement = $derived(portalBond?.targetElement);
+	const targetElement = $derived(portalBond?.boundaryElement);
 
 	const ui = $derived(targetElement ? content : undefined);
 
+	// Warn (in an effect, after registration settles) when a string id never resolves.
+	$effect(() => {
+		if (import.meta.env?.DEV && typeof portal === 'string' && !portalBond) {
+			console.warn(
+				`[svelte-atoms] <Teleport portal="${portal}">: no portal registered with this id; nothing is teleported.`
+			);
+		}
+	});
+
 	function teleport(node: HTMLElement) {
-
-		const unport = port(node, targetElement);
-
-		return unport;
+		return port(node, targetElement);
 	}
 </script>
 

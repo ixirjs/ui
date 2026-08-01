@@ -1,8 +1,7 @@
 <script lang="ts" generics="D">
 	import type { ComboboxRootProps } from './types';
-	import { bindBond } from '$svelte-atoms/core/shared';
+	import { bindBond, useCapabilities } from '$svelte-atoms/core/shared';
 	import { ComboboxBond, ComboboxBondState, type ComboboxBondProps } from './bond.svelte';
-	import { useFocusRestore } from '$svelte-atoms/core/shared/overlay';
 
 	let {
 		open = $bindable(false),
@@ -48,8 +47,10 @@
 	);
 	const bond = binding.bond.share();
 
-	// Focus capture/restore reacts to `open` (ADR 0001 / ADR 0003).
-	useFocusRestore(bond);
+	// Run capability setups — focus capture/restore reacts to `open` via the focus capability's
+	// setup() (ADR 0001 / ADR 0003, ADR 0010).
+	useCapabilities(bond);
+	// Topmost-open-overlay Escape coordination (ADR 0009 D1/D2).
 
 	function defaultFactory(props: ComboboxBondProps) {
 		const bondState = new ComboboxBondState<D>(props);

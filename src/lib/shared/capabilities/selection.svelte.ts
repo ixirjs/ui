@@ -1,7 +1,7 @@
-import type { Behavior, Capability } from '../bond.svelte';
+import { sharedCapabilityKey, type Behavior, type Capability } from '../bond.svelte';
 
-// `createSelection` returns the SelectionModel surface (storage-agnostic controller).
-// `selectionCapability` wraps it into a projectable Capability for the role stitch.
+// Public slot key — surface type travels with the key, so `capability(SELECTION)` is typed (no cast).
+export const SELECTION = sharedCapabilityKey<SelectionModel<unknown>>('@svelte-atoms/cap:selection');
 
 // SelectionModel<T> — owns the logic of "which values are committed" (single vs multiple,
 // set algebra) but not the storage: state lives in consumer-bindable bond props.
@@ -18,6 +18,8 @@ export interface SelectionModel<T> {
 	// Commit if absent, remove if present.
 	toggle(value: T): void;
 	clear(): void;
+	// Iterable protocol — yields the committed values in storage order (`[...selection]`, `for…of`).
+	[Symbol.iterator](): IterableIterator<T>;
 }
 
 // The storage seam the model controls. The bond supplies reactive accessors over its own props
@@ -70,7 +72,9 @@ export function createSelection<T>(backing: SelectionBacking<T>): SelectionModel
 		select,
 		deselect,
 		toggle,
-		clear
+		clear,
+		// Snapshot the backing each iteration so the read registers reactivity at the call site.
+		[Symbol.iterator]: () => list()[Symbol.iterator]()
 	};
 }
 
@@ -96,16 +100,15 @@ export function selectionCapability<T>(
 	const interactive = options.interactive ?? true;
 
 	return {
-		slot: 'selection',
+		slot: SELECTION,
 		surface: model,
 		behavior(role, ctx): Behavior | undefined {
 			if (role === 'item') {
 				const value = ctx as T;
 				const projection: Behavior = {
 					attrs: () => ({
-						// aria-* is a boolean ARIA state (true/false); data-selected is a CSS
-						// hook, emitted present-only (absent when unselected) so `[data-selected]`
-						// selectors work conventionally.
+						// aria-* is a boolean state; data-selected is a present-only CSS hook
+						// (absent when unselected) so `[data-selected]` selectors work.
 						...(aria ? { [aria]: model.isSelected(value) } : {}),
 						'data-selected': model.isSelected(value) ? '' : undefined
 					})

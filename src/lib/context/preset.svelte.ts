@@ -18,39 +18,17 @@ export interface PresetEntryRecord {
 	attachments?: Attachment[];
 }
 
-/** A single preset entry value — either a record or a deferred factory returning one. */
+// A single preset entry value — either a record or a deferred factory returning one.
 export type PresetEntryValue = PresetEntryRecord | (() => PresetEntryRecord);
 
-/**
- * A preset entry — invoked with a bond and returns either a single
- * {@link PresetEntryValue} or an array of them.
- *
- * Returning an array makes it easy to layer/merge preset configurations
- * (e.g. base preset + per-route override + per-component override). Entries
- * are merged in order, with later entries taking precedence.
- */
+// A preset entry — invoked with a bond, returns a PresetEntryValue or array.
+// Arrays are merged in order (later entries win), enabling layered overrides.
 export type PresetEntry = (
 	bond: Bond | undefined | null,
 	...args: any[]
 ) => PresetEntryValue | Array<PresetEntryValue>;
 
-/**
- * Registry of all preset slot names → their PresetEntry type.
- *
- * Extend this interface via module augmentation to add custom preset slots
- * in your app or library — with full TypeScript autocomplete:
- *
- * @example
- * ```ts
- * // my-app/presets.d.ts
- * declare module '@svelte-atoms/core/context/preset' {
- *   interface PresetModuleMap {
- *     'my-badge': PresetEntry;
- *     'my-badge.icon': PresetEntry;
- *   }
- * }
- * ```
- */
+// Registry of preset slot names → PresetEntry. Extend via module augmentation to add custom slots with full autocomplete.
 export interface PresetModuleMap {
 	accordion: PresetEntry;
 	'accordion.item.body': PresetEntry;
@@ -80,6 +58,13 @@ export interface PresetModuleMap {
 	'combobox.control': PresetEntry;
 	'combobox.trigger': PresetEntry;
 	'combobox.item': PresetEntry;
+	'combobox.content': PresetEntry;
+	'select.content': PresetEntry;
+	'select.item': PresetEntry;
+	'dropdown-menu.content': PresetEntry;
+	'dropdown-menu.item': PresetEntry;
+	'context-menu.content': PresetEntry;
+	'context-menu.item': PresetEntry;
 	'dialog.close-button': PresetEntry;
 	'dialog.body': PresetEntry;
 	'dialog.content': PresetEntry;
@@ -204,8 +189,11 @@ export interface PresetModuleMap {
 	'progress.circular.fill': PresetEntry;
 }
 
-/** All valid preset slot names — derived from PresetModuleMap for extensibility. */
+// All valid preset slot names — derived from PresetModuleMap for extensibility.
 export type PresetModuleName = keyof PresetModuleMap;
+
+// A preset key accepted by atoms — a single slot name or an ordered fallback chain (first-registered-wins).
+export type PresetKey = PresetModuleName | (string & {}) | (PresetModuleName | (string & {}))[];
 
 export type Preset = { [K in PresetModuleName]: PresetModuleMap[K] };
 
@@ -232,13 +220,13 @@ export function mergePreset(
 	const result: Partial<Preset> = { ...currentPreset };
 
 	const keys = Object.keys(override) as PresetModuleName[];
-	for (let i = 0; i < keys.length; i++) {
-		const k = keys[i];
+	for (const k of keys) {
 		const next = override[k];
 		if (!next) continue;
 		const existing = currentPreset?.[k];
 		if (existing) {
-			const e = existing, n = next;
+			const e = existing,
+				n = next;
 			result[k] = ((bond, ...args) => {
 				const a = resolvePreset(e(bond, ...args));
 				const b = resolvePreset(n(bond, ...args));

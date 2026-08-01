@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { HTMLAttributes } from 'svelte/elements';
-	import { HtmlAtom } from '$svelte-atoms/core/components/atom';
+	import { mergePresetProps, HtmlAtom } from '$svelte-atoms/core/components/atom';
+	import { clamp } from '$svelte-atoms/core/utils/math';
 	import type { SliderChangeDetails, SliderProps } from './types';
 
 	let {
@@ -13,7 +14,7 @@
 		id,
 		name,
 		orientation = 'horizontal',
-		preset = 'slider',
+		preset = undefined,
 		thumbContent = undefined,
 		trackContent = undefined,
 		onchange = undefined,
@@ -22,9 +23,11 @@
 		...restProps
 	}: SliderProps & HTMLAttributes<HTMLDivElement> = $props();
 
+	const sliderProps = $derived(mergePresetProps(preset, 'slider', restProps));
+
 	function clampNumber(current: number, lower: number, upper: number) {
 		if (!Number.isFinite(current)) return lower;
-		return Math.min(upper, Math.max(lower, current));
+		return clamp(current, lower, upper);
 	}
 
 	const normalizedMin = $derived(Math.min(min, max));
@@ -120,7 +123,6 @@
 {/snippet}
 
 <HtmlAtom
-	{preset}
 	as="div"
 	class={[
 		'slider-root relative flex items-center',
@@ -130,7 +132,7 @@
 		klass
 	]}
 	aria-orientation={orientation}
-	{...restProps}
+	{...sliderProps}
 >
 	{@render (trackContent ?? defaultTrack)({ value: normalizedValue, percent, min: normalizedMin, max: normalizedMax })}
 

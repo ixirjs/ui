@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" class="size-full" viewBox="0 0 24 24"
-	><!-- Icon from Huge Icons by Hugeicons - undefined --><path
+	><!-- Icon from Huge Icons by Hugeicons --><path
 		fill="none"
 		stroke="currentColor"
 		stroke-linecap="round"

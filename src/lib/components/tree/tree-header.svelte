@@ -1,24 +1,24 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
 	import type { HTMLAttributes } from 'svelte/elements';
-	import { HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
+	import { mergeAtomProps, HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
 	import { TreeBond } from './bond.svelte';
 	import type { TreeHeaderProps } from './types';
 
 	type Element = HTMLElementTagNameMap[E];
 
-	const bond = TreeBond.get();
+	const bond = TreeBond.getOrThrow('<Tree.Header /> must be used within a <Tree.Root />');
 
 	let {
 		class: klass = '',
+		preset = undefined,
 		children = undefined,
 		onpointerdown = undefined,
 		...restProps
 	}: TreeHeaderProps<E, B> & HTMLAttributes<Element> = $props();
 
-	const headerProps = $derived({
-		...bond?.header().spread,
-		...restProps
-	});
+	const atom = bond.atom('header');
+
+	const headerProps = $derived(mergeAtomProps(atom, preset, restProps));
 
 	function handlePointerDown(ev: PointerEvent) {
 		onpointerdown?.(ev);
@@ -33,8 +33,7 @@
 
 <HtmlAtom
 	{bond}
-	preset="tree.header"
-	class={['border-border cursor-pointer', '$preset', klass]}
+	class={['cursor-pointer', '$preset', klass]}
 	onpointerdown={handlePointerDown}
 	{...headerProps}
 >

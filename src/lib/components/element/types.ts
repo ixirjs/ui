@@ -3,9 +3,7 @@ import type { TransitionConfig } from 'svelte/transition';
 import type { ClassValue } from '$svelte-atoms/core/utils';
 import type { Snippet } from 'svelte';
 
-// ============================================================================
-// Element Type Definitions
-// ============================================================================
+// Element tag names
 
 export type HtmlElementTagName = keyof HTMLElementTagNameMap;
 export type SvgElementTagName = keyof SVGElementTagNameMap;
@@ -20,9 +18,7 @@ export type ElementType<T> = T extends HtmlElementTagName
 		? SVGElementTagNameMap[T]
 		: never;
 
-// ============================================================================
-// Attributes & Events
-// ============================================================================
+// Attributes
 
 export type ElementAttributes<T extends ElementTagName> = T extends HtmlElementTagName
 	? HTMLAttributes<ElementType<T>>
@@ -30,9 +26,7 @@ export type ElementAttributes<T extends ElementTagName> = T extends HtmlElementT
 		? SVGAttributes<ElementType<T>>
 		: never;
 
-// ============================================================================
-// Transition & Lifecycle Functions
-// ============================================================================
+// Transition & lifecycle functions
 
 export interface TransitionFunction<T extends Element = Element> {
 	(node: T): Partial<TransitionConfig> | void;
@@ -43,53 +37,42 @@ export interface NodeFunction<T extends ElementTagName = ElementTagName> {
 	(node: ElementType<T>, ...args: any[]): any;
 }
 
-// ============================================================================
-// Base Element Props (Core, Extensible)
-// ============================================================================
+// Base element props
 
 export interface ElementProps<T extends ElementTagName = ElementTagName> extends Record<
 	string,
 	unknown
 > {
-	/** CSS class binding (string, array, or computed) */
 	class?: ClassValue | ClassValue[];
 
-	/** Change the HTML tag (use polymorphic components) */
+	// polymorphic tag override
 	as?: T | (string & {});
 
-	/** Apply styles globally */
+	// emit styles as :global rather than scoped
 	global?: boolean;
 
-	/** Initial animation/setup on mount */
+	// runs once on mount, before enter transition
 	initial?: NodeFunction<T>;
 
-	/** Enter transition */
-	enter?: TransitionFunction<T>;
+	enter?: TransitionFunction<ElementType<T>>;
 
-	/** Exit transition */
-	exit?: TransitionFunction<T>;
+	exit?: TransitionFunction<ElementType<T>>;
 
-	/** Animation function */
 	animate?: NodeFunction<T>;
 
-	/** Lifecycle: on mount */
-	onmount?: NodeFunction<T>;
+	// `| undefined` is required by exactOptionalPropertyTypes
+	onmount?: NodeFunction<T> | undefined;
 
-	/** Lifecycle: on destroy */
-	ondestroy?: NodeFunction<T>;
+	// `| undefined`: see onmount
+	ondestroy?: NodeFunction<T> | undefined;
 
 	[key: string]: unknown;
 }
 
-// ============================================================================
-// HTML Element Props (with transition events)
-// ============================================================================
+// HTML element props (with transition events)
 
 export interface HtmlElementEventProps {
-	/** Fired when enter transition ends */
 	onintroend?: (ev: TransitionEvent) => void;
-
-	/** Fired when exit transition ends */
 	onexitend?: (ev: TransitionEvent) => void;
 }
 
@@ -101,8 +84,13 @@ export interface HtmlElementProps<
 	children?: Children;
 }
 
-// ============================================================================
-// SVG Element Props
-// ============================================================================
-
-export type SvgElementProps<T extends SvgElementTagName = 'g'> = ElementProps<T>;
+// SVG element props — mirrors HtmlElementProps so `children` and the transition events
+// (onintroend/onexitend) are declared explicitly rather than collapsing to `{}` via the
+// HTMLAttributes Omit (ElementProps's index signature otherwise strips them).
+export interface SvgElementProps<
+	T extends SvgElementTagName = 'g',
+	Children extends Snippet<unknown[]> = Snippet
+>
+	extends ElementProps<T>, HtmlElementEventProps {
+	children?: Children;
+}

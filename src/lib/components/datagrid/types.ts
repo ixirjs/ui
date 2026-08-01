@@ -9,7 +9,7 @@ import type { PresetKey } from '$svelte-atoms/core/context/preset.svelte';
 import type { HtmlElementTagName } from '../element';
 import type { Direction, SortableType, Override } from '$svelte-atoms/core/types';
 
-// ── Shared types ────────────────────────────────────────────────────────────
+// Shared types
 
 export type { Direction, SortableType };
 
@@ -19,9 +19,7 @@ export interface SortBy {
 	by?: SortableType;
 }
 
-// ============================================================================
-// Datagrid Snippet Props (Extensible)
-// ============================================================================
+// Snippet props
 
 export interface DatagridSnippetProps<T = unknown> extends SnippetProps {
 	datagrid: DataGridBond<T> | undefined;
@@ -41,7 +39,8 @@ export interface DatagridRowSnippetProps<T = unknown> extends SnippetProps {
 
 export type DatagridRowChildren<T = unknown> = Snippet<[DatagridRowSnippetProps<T>]>;
 
-// ── Deprecated snippet aliases ───────────────────────────────────────────
+// Deprecated snippet aliases
+
 // @deprecated Use `DatagridColumnSnippetProps` instead
 export interface DatagridThSnippetProps<T = unknown> extends DatagridColumnSnippetProps<T> {
 	th: DataGridColumnBond<T>;
@@ -58,7 +57,7 @@ export interface DatagridTrSnippetProps<T = unknown> extends DatagridRowSnippetP
 // @deprecated Use `DatagridRowChildren` instead
 export type DatagridTrChildren<T = unknown> = DatagridRowChildren<T>;
 
-// ── Component prop types ────────────────────────────────────────────────────
+// Component prop types
 
 export interface DatagridRootProps<
 	T = unknown,

@@ -16,7 +16,7 @@ import {
 	type OverlayView,
 	type PositionedOverlayElements,
 	type OverlayStateProps
-} from '$svelte-atoms/core/shared/overlay';
+} from '$svelte-atoms/core/components/overlay';
 import type { PortalBond } from '../portal';
 import type { PopoverStrategy } from './strategy-types';
 
@@ -48,7 +48,6 @@ export type PopoverStateProps = OverlayStateProps & {
 	offset: number;
 	portal?: string | PortalBond;
 	strategy?: PopoverStrategy;
-	readonly positionStrategy: 'fixed' | 'absolute';
 };
 
 export type TriggerParams = {
@@ -65,7 +64,7 @@ export type PopoverDomElements = PositionedOverlayElements & {
 };
 
 // Positioned defaults (click trigger, escape, restore-to-trigger) + trapped-focus override.
-// Shared by PopoverBond constructor and popoverSpec so the two never drift.
+// Shared by PopoverBond constructor and popoverSpec so they never drift.
 function popoverCapabilities() {
 	return [
 		...positionedCapabilities(),
@@ -90,7 +89,7 @@ export class PopoverBond<
 		indicator: (b) => new PopoverIndicatorAtom(b)
 	};
 
-	// Fusion seam (§13): lets defineBond/fuse read popover's atoms + capabilities via popoverSpec.
+	// Fusion seam (§13): exposes atoms + capabilities to fuse() via popoverSpec.
 	// Getter form avoids the temporal dead zone — popoverSpec is declared below.
 	static get spec() {
 		return popoverSpec;
@@ -98,15 +97,12 @@ export class PopoverBond<
 
 	constructor(state: State) {
 		super(state, 'popover');
-		// Overlay behaviour = capabilities, ONE mechanism (§13). Positioned defaults,
-		// but popover traps Tab (focus slot override, last-wins). Subclasses customize
-		// the same way: re-register a slot (dropdown-menu/select → trigger `ariaHasPopup`,
-		// combobox → escape). Shared with `popoverSpec` (the fusion seam) so no drift.
+		// Overlay behaviour via capabilities (§13). Subclasses customize by re-registering a
+		// slot last-wins (dropdown-menu/select → trigger ariaHasPopup, combobox → escape).
 		for (const cap of popoverCapabilities()) this.capability(cap);
 	}
 
-	// ── disclosure verb — delegates to OverlayState (kept so subclass atoms/
-	//    .svelte that call `bond.open/close/toggle` keep working) ────────────
+	// Disclosure verbs — delegate to OverlayState (kept so callers of bond.open/close/toggle work).
 	open(): void {
 		this.state.open();
 	}
@@ -201,9 +197,7 @@ export class PopoverOverlayAtom<B extends OverlayView = PopoverBond> extends Bon
 	}
 
 	override get attrs() {
-		// Label the dialog by the TRIGGER, not by itself. `this.name` is `'overlay'`,
-		// so the previous `${namespace}-${this.name}` resolved to this atom's own id —
-		// a meaningless self-reference. The trigger atom's id is `${namespace}-trigger`.
+		// Label the dialog by the trigger, not itself (a self-reference is meaningless).
 		const triggerId = getElementId(this.bond.id, `${this.bond.namespace}-trigger`);
 		const isOpen = this.bond.state.isOpen;
 		const isDisabled = this.bond.state.isDisabled;
@@ -220,8 +214,7 @@ export class PopoverOverlayAtom<B extends OverlayView = PopoverBond> extends Bon
 		};
 	}
 
-	// No hand-written handlers: focus-trap + escape `onkeydown` are folded in by
-	// `.role('surface')` (focus + escape capabilities) and chained via composeHandlers.
+	// No hand-written handlers: focus-trap + escape onkeydown come from `.role('surface')`.
 
 	override onmount(node: HTMLElement) {
 		const triggerElement = this.bond.element<Element>('trigger');
@@ -307,8 +300,7 @@ export class PopoverTriggerAtom<B extends OverlayView = PopoverBond> extends Ove
 				}
 
 				if (ev.key === 'Escape') {
-					// focus is normally trapped in content, but if the trigger holds focus,
-					// Escape still closes (gated on disabled).
+					// Trigger holds focus (not trapped in content): Escape still closes.
 					this.bond.state.close();
 					return;
 				}

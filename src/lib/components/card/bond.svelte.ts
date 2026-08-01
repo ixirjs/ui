@@ -1,11 +1,15 @@
 import { createAttachmentKey } from 'svelte/attachments';
-import { getContext, setContext } from 'svelte';
 import { getElementId } from '$svelte-atoms/core/utils/dom.svelte';
-import { Bond, BondState, type BondStateProps } from '$svelte-atoms/core/shared/bond.svelte';
+import {
+	bondContextKey,
+	Bond,
+	BondState,
+	type BondStateProps
+} from '$svelte-atoms/core/shared/bond.svelte';
 
 export type CardBondProps = BondStateProps & {
 	disabled?: boolean;
-	readonly rest?: Record<string, unknown>;
+	clickable?: boolean;
 };
 
 export type CardBondElements = {
@@ -34,15 +38,11 @@ const CARD_ELEMENTS_KIND = {
 
 export class CardBond<
 	State extends CardBondState<CardBondProps> = CardBondState<CardBondProps>
-> extends Bond<CardBondProps, State, CardBondElements> {
-	static CONTEXT_KEY = '@atoms/context/card';
+> extends Bond<CardBondProps, State> {
+	static CONTEXT_KEY = bondContextKey('card');
 
 	constructor(s: State) {
 		super(s);
-	}
-
-	share(): this {
-		return CardBond.set(this) as this;
 	}
 
 	root(props: Record<string, unknown> = {}) {
@@ -163,18 +163,10 @@ export class CardBond<
 			}
 		};
 	}
-
-	static get(): CardBond | undefined {
-		return getContext(CardBond.CONTEXT_KEY);
-	}
-
-	static set(bond: CardBond): CardBond {
-		return setContext(CardBond.CONTEXT_KEY, bond);
-	}
 }
 
 export class CardBondState<Props extends CardBondProps> extends BondState<Props> {
-	constructor(props: () => Props) {
+	constructor(props: Props) {
 		super(props);
 	}
 }

@@ -1,6 +1,6 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
 	import type { HTMLAttributes } from 'svelte/elements';
-	import { HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
+	import { mergePresetProps, HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
 	import { AlertBond } from './bond.svelte';
 	import type { AlertActionsProps } from './types';
 
@@ -10,20 +10,16 @@
 
 	let {
 		class: klass = '',
-		preset = 'alert.actions',
+		preset = undefined,
 		children = undefined,
 		...restProps
 	}: AlertActionsProps<E, B> & HTMLAttributes<Element> = $props();
 
-	const actionsProps = $derived({
-		...bond?.actions(),
-		...restProps
-	});
+	const actionsProps = $derived(mergePresetProps(preset, 'alert.actions', { ...bond?.actions(), ...restProps }));
 </script>
 
 <HtmlAtom
 	{bond}
-	{preset}
 	class={['alert-actions border-border mt-3 flex items-center gap-2', '$preset', klass]}
 	{...actionsProps}
 >

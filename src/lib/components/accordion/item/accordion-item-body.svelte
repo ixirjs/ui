@@ -1,5 +1,5 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
+	import { mergeAtomProps, HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
 	import { AccordionItemBond } from './bond.svelte';
 	import { enterAccordionItemBody, exitAccordionItemBody } from './motion.svelte';
 	import type { AccordionItemBodyProps } from './types';
@@ -22,11 +22,7 @@
 
 	const atom = bond?.atom('body');
 
-	const bodyProps = $derived({
-		preset: preset ?? atom?.preset,
-		...atom?.spread,
-		...restProps
-	});
+	const bodyProps = $derived(mergeAtomProps(atom, preset, restProps));
 
 	const content = $derived(bond && isOpen ? body: undefined);
 </script>

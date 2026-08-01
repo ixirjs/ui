@@ -191,7 +191,7 @@
 </script>
 
 <Root class={['svelte-atoms-story-root', scheme.current === 'dark' ? 'dark' : 'light']}>
-	<div class="flex min-h-full w-full flex-col items-center justify-center overflow-y-auto p-4">
+	<div class="flex min-h-full w-full flex-col items-center justify-center overflow-y-auto p-0">
 		{@render children?.()}
 	</div>
 </Root>

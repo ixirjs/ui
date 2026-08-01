@@ -1,7 +1,6 @@
 <script lang="ts" generics="T">
-	import { bindBond } from '$svelte-atoms/core/shared';
+	import { bondFactory,bindBond, useCapabilities } from '$svelte-atoms/core/shared';
 	import { SelectBond, SelectBondState, type SelectStateProps } from './bond.svelte';
-	import { useFocusRestore } from '$svelte-atoms/core/shared/overlay';
 	import type { SelectRootProps } from './types';
 
 	let {
@@ -17,7 +16,7 @@
 		offset = 1,
 		keys = [],
 		query = $bindable(''),
-		factory = defaultFactory,
+		factory = bondFactory(SelectBondState, SelectBond),
 		children = undefined,
 		onquerychange = undefined,
 		...restProps
@@ -43,23 +42,21 @@
 			offset: () => offset,
 			placements: () => (placements ?? []) as SelectStateProps['placements'],
 			keys: () => keys ?? [],
-			// `query` is the bond-owned filter source (read by `createBondFilter`, cleared by
-			// `ClearThenClose`). Wired here so writes are reactive and `bind:query` works;
-			// `onquerychange` fires on each change.
+			// Bond-owned filter source: accessor wiring makes writes reactive for `bind:query`
+			// and fires `onquerychange` (read by `createBondFilter`, cleared by `ClearThenClose`).
 			query: [() => query, (v) => { query = v ?? ''; onquerychange?.(v ?? ''); }],
+			// Vestigial: element-less context root, no typed channel to forward restProps.
 			rest: () => restProps
 		}
 	);
 
 	const bond = binding.bond.share();
 
-	// Focus capture/restore reacts to `open` (ADR 0001 / ADR 0003).
-	useFocusRestore(bond);
+	// Run capability setups — focus capture/restore reacts to `open` via the focus capability's
+	// setup() (ADR 0001 / ADR 0003, ADR 0010).
+	useCapabilities(bond);
+	// Topmost-open-overlay Escape coordination (ADR 0009 D1/D2).
 
-	function defaultFactory(props: SelectStateProps) {
-		const bondState = new SelectBondState(props);
-		return new SelectBond(bondState);
-	}
 
 	export function getBond() {
 		return bond;

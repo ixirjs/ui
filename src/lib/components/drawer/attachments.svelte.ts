@@ -1,4 +1,6 @@
 import { clickout } from '$svelte-atoms/core/attachments/clickout.svelte';
+import { clickAction } from '$svelte-atoms/core/attachments/event.svelte';
+import { containsTarget } from '$svelte-atoms/core/utils/dom.svelte';
 import { DrawerBond } from './bond.svelte';
 
 export function drawer(callback: (node: HTMLElement, bond?: DrawerBond) => any) {
@@ -8,71 +10,17 @@ export function drawer(callback: (node: HTMLElement, bond?: DrawerBond) => any) 
 
 export function toggleDrawer(onclick?: (ev: MouseEvent) => void) {
 	const bond = DrawerBond.get();
-
-	return (node: HTMLElement) => {
-		const clickHandler = (ev: MouseEvent) => {
-			onclick?.(ev, bond);
-
-			if (ev.defaultPrevented) {
-				return;
-			}
-
-			bond?.state.toggle();
-		};
-
-		node.addEventListener('click', clickHandler);
-
-		return () => {
-			node.removeEventListener('click', clickHandler);
-		};
-	};
+	return clickAction(() => bond?.state.toggle(), onclick);
 }
 
 export function openDrawer(onclick?: (ev: MouseEvent) => void) {
 	const bond = DrawerBond.get();
-
-	return (node: HTMLElement) => {
-		const clickHandler = (ev: MouseEvent) => {
-			onclick?.(ev);
-
-			if (ev.defaultPrevented) {
-				return;
-			}
-
-			bond?.state.open();
-		};
-
-		node.addEventListener('click', clickHandler);
-
-		return () => {
-			node.removeEventListener('click', clickHandler);
-		};
-	};
+	return clickAction(() => bond?.state.open(), onclick);
 }
 
 export function closeDrawer(onclick?: (ev: MouseEvent) => void) {
 	const bond = DrawerBond.get();
-
-	return (node: HTMLElement) => {
-		if (!bond) {
-			return;
-		}
-		const clickHandler = (ev: MouseEvent) => {
-			onclick?.(ev);
-
-			if (ev.defaultPrevented) {
-				return;
-			}
-
-			bond?.state.open();
-		};
-
-		node.addEventListener('click', clickHandler);
-
-		return () => {
-			node.removeEventListener('click', clickHandler);
-		};
-	};
+	return clickAction(() => bond?.state.close(), onclick);
 }
 
 export function clickoutDrawer(onclickout?: (ev: PointerEvent, bond?: DrawerBond) => void) {
@@ -86,9 +34,7 @@ export function clickoutDrawer(onclickout?: (ev: PointerEvent, bond?: DrawerBond
 				return;
 			}
 
-			const target = ev.target as Element;
-
-			if (bond.elements.content?.contains(target)) {
+			if (containsTarget(bond.elements.content, ev.target)) {
 				return;
 			}
 

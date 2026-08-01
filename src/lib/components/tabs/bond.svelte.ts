@@ -10,6 +10,7 @@ import { defineBond, type BondOf, type ViewOf } from '$svelte-atoms/core/shared'
 import {
 	createSelection,
 	selectionCapability,
+	SELECTION,
 	type SelectionModel
 } from '$svelte-atoms/core/shared/capabilities/selection.svelte';
 import type { Collection } from '$svelte-atoms/core/shared/collection.svelte';
@@ -20,7 +21,6 @@ export type TabsBondProps<T extends Record<string, unknown> = Record<string, unk
 		value?: string | undefined;
 		multiple?: boolean;
 		extend?: T;
-		readonly rest?: Record<string, unknown>;
 	};
 
 export type TabElements = {
@@ -104,7 +104,7 @@ class TabsBondBase extends Bond<TabsBondProps, TabsBondState> implements ITabs {
 		return this.element<HTMLElement>('header');
 	}
 	selectionCapability(): Capability | undefined {
-		return this.capability('selection');
+		return this.capability(SELECTION);
 	}
 	mountItem(value: string, tab: TabBond) {
 		return this.state.mountItem(value, tab);
@@ -142,6 +142,7 @@ interface TabsBondConstructor {
 	new <T = unknown>(state: TabsBondState<T>): TabsBond<T>;
 	readonly CONTEXT_KEY: string;
 	get<T = unknown>(): TabsBond<T> | undefined;
+	getOrThrow<T = unknown>(message?: string): TabsBond<T>;
 	set<T = unknown>(bond: TabsBond<T>): TabsBond<T>;
 }
 

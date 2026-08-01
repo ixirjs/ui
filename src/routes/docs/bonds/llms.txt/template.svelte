@@ -158,14 +158,16 @@ export class MyComponentBond<
 {codeBlock(`<script lang="ts">
 	/* eslint-disable @typescript-eslint/no-unused-vars */
   import { MyComponentBond, MyComponentState } from './bond.svelte';
-  
+  import { defineState, defineProperty } from '@svelte-atoms/core/utils';
+
   let { open = $bindable(false), disabled = false } = $props();
-  
-  // Create bond state with reactive props
-  const bondState = new MyComponentState(() => ({
-    open,
-    disabled
-  }));
+
+  // Wrap bindables as reactive prop cells, then create the bond state
+  const bondProps = defineState<MyComponentStateProps>([
+    defineProperty('open', () => open, (v) => { open = v; }),
+    defineProperty('disabled', () => disabled)
+  ]);
+  const bondState = new MyComponentState(bondProps);
   
   // Create and share bond for compound components
   const bond = new MyComponentBond(bondState).share();
@@ -203,17 +205,12 @@ let open = $bindable(false);
 
 // Create reactive props with bindables
 const bondProps = defineState<DialogBondProps>([
-  defineProperty(
-    () => open,
-    (v) => (open = v),
-    'open'
-  )
-], () => ({ 
-  disabled: false  // Static props
+  defineProperty('open', () => open, (v) => (open = v))
+], () => ({
+  disabled: false  // Static defaults only — frozen snapshot, not reactive
 }));
 
-// Pass as function
-const state = new DialogBondState(() => bondProps);`, 'typescript')}
+const state = new DialogBondState(bondProps);`, 'typescript')}
 
 ### Element Props with Spread
 
@@ -260,8 +257,8 @@ const state = new DialogBondState(() => bondProps);`, 'typescript')}
   // Use factory (allows customization)
   const bond = factory(bondProps).share();
   
-  function _factory(props) {
-    const state = new TreeState(() => props);
+  function defaultFactory(props) {
+    const state = new TreeState(props);
     return new TreeBond(state);
   }
 </script>`, 'svelte')}

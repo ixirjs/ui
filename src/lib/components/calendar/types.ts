@@ -29,9 +29,7 @@ export type Month = {
 };
 export type CalendarRange = [Date | undefined, Date | undefined];
 
-// ============================================================================
-// Calendar Snippet Props (Extensible)
-// ============================================================================
+// Snippet props
 
 export interface CalendarSnippetProps extends SnippetProps {
 	calendar: CalendarBond;

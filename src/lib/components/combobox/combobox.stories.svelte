@@ -7,7 +7,25 @@
 	const { Story } = defineMeta({
 		title: 'Atoms/Combobox',
 		parameters: { layout: 'centered' },
-		args: {}
+		args: {
+			multiple: false,
+			disabled: false,
+			placeholder: 'Search a language…'
+		},
+		argTypes: {
+			multiple: {
+				control: 'boolean',
+				description: 'Allow selecting multiple values (chips mode)'
+			},
+			disabled: {
+				control: 'boolean',
+				description: 'Disable the combobox'
+			},
+			placeholder: {
+				control: 'text',
+				description: 'Placeholder text shown in the search input'
+			}
+		}
 	});
 </script>
 
@@ -30,6 +48,12 @@
 	const allKeys = languages.map((l) => l.value);
 	const match = (q: string) => (l: Option) => l.label.toLowerCase().includes(q.trim().toLowerCase());
 
+	// Default story state
+	let defaultValue = $state<string>();
+	let defaultValues = $state<string[]>([]);
+	let defaultSearch = $state('');
+	const defaultFiltered = $derived(languages.filter(match(defaultSearch)));
+
 	let single = $state<string>();
 	let searchA = $state('');
 	const filteredA = $derived(languages.filter(match(searchA)));
@@ -49,6 +73,75 @@
 	const inputClass =
 		'text-foreground placeholder:text-muted-foreground min-w-24 flex-1 bg-transparent text-sm outline-none';
 </script>
+
+<!-- 0. Default — configurable via Storybook controls. Supports both single and multiple modes. -->
+<Story name="Basic">
+	{#snippet template(args)}
+		<div class="flex flex-col gap-2" style="width: 340px;">
+			<p class="text-foreground text-sm font-medium">Language</p>
+			<ACombobox.Root
+				keys={allKeys}
+				bind:query={defaultSearch}
+				bind:value={defaultValue}
+				bind:values={defaultValues}
+				multiple={args.multiple}
+				disabled={args.disabled}
+			>
+				<ACombobox.Trigger
+					base={Input.Root}
+					class="border-border flex h-auto min-h-11 w-full flex-wrap items-center gap-1 rounded-lg border px-3 py-2"
+				>
+					{#if args.multiple}
+						<ACombobox.Selections class="flex flex-wrap gap-1">
+							{#snippet children({ selections })}
+								{#each selections as selection (selection.id)}
+									<div animate:flip={{ duration: 200 }}>
+										<ACombobox.Selection
+											{selection}
+											class="bg-primary/10 text-primary inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium"
+										>
+											{selection.label}
+										</ACombobox.Selection>
+									</div>
+								{/each}
+							{/snippet}
+						</ACombobox.Selections>
+					{/if}
+					<ACombobox.Query class={inputClass} placeholder={args.placeholder} />
+				</ACombobox.Trigger>
+
+				<ACombobox.Content class={contentClass}>
+					<div class="max-h-60 overflow-auto py-1">
+						{#each defaultFiltered as item (item.value)}
+							<div animate:flip={{ duration: 150 }}>
+								<ACombobox.Item value={item.value} class={itemClass}>
+									<span class="flex-1">{item.label}</span>
+									{#if args.multiple}
+										<span class="text-primary opacity-0 data-on:opacity-100" data-on={defaultValues.includes(item.value) ? '' : undefined}>✓</span>
+									{:else}
+										<span class="text-primary opacity-0 data-on:opacity-100" data-on={defaultValue === item.value ? '' : undefined}>✓</span>
+									{/if}
+								</ACombobox.Item>
+							</div>
+						{/each}
+						{#if defaultFiltered.length === 0}
+							<div class="text-muted-foreground px-3 py-6 text-center text-sm">
+								No language matches "{defaultSearch}"
+							</div>
+						{/if}
+					</div>
+				</ACombobox.Content>
+			</ACombobox.Root>
+			<p class="text-muted-foreground text-xs">
+				{#if args.multiple}
+					Selected: <code>{defaultValues.join(', ') || '—'}</code>
+				{:else}
+					Value: <code>{defaultValue ?? '—'}</code>
+				{/if}
+			</p>
+		</div>
+	{/snippet}
+</Story>
 
 <!-- 1. Autocomplete (single) — one filter box in the trigger; the picked item shows as a chip
      beside it. Typing filters (`Combobox.Query` → `query`); selecting commits the value. -->
@@ -81,7 +174,7 @@
 					{/each}
 					{#if filteredA.length === 0}
 						<div class="text-muted-foreground px-3 py-6 text-center text-sm">
-							No language matches “{searchA}”
+							No language matches "{searchA}"
 						</div>
 					{/if}
 				</div>

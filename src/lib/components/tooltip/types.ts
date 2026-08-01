@@ -1,9 +1,7 @@
 import type { Snippet } from 'svelte';
 import type { HtmlAtomProps, Base, SnippetProps } from '$svelte-atoms/core/components/atom';
 
-// ============================================================================
-// Tooltip Snippet Props (Extensible)
-// ============================================================================
+// Tooltip Snippet Props
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface TooltipSnippetProps extends SnippetProps {}

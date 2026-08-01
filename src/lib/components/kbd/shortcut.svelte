@@ -1,15 +1,18 @@
 <script lang="ts">
-	import { HtmlAtom } from '$svelte-atoms/core/components/atom';
+	import { mergePresetProps, HtmlAtom } from '$svelte-atoms/core/components/atom';
 	import Kbd from './kbd.svelte';
 	import type { ShortcutProps } from './types';
 
 	let {
 		class: klass = '',
+		preset = undefined,
 		keys = [],
 		separator = '+',
 		children,
 		...restProps
 	}: ShortcutProps = $props();
+
+	const shortcutProps = $derived(mergePresetProps(preset, 'shortcut', restProps));
 
 	let content = $derived(children ?? defaultChildren)
 </script>
@@ -28,11 +31,10 @@
 {/snippet}
 
 <HtmlAtom
-	preset="shortcut"
 	as="span"
 	class={['shortcut inline-flex items-center gap-1', '$preset', klass]}
 	aria-label={keys.join(' ' + separator + ' ')}
-	{...restProps}
+	{...shortcutProps}
 >
 	{@render content()}
 </HtmlAtom>

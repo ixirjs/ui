@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { HTMLAttributes } from 'svelte/elements';
-	import { HtmlAtom } from '$svelte-atoms/core/components/atom';
+	import { mergePresetProps, HtmlAtom } from '$svelte-atoms/core/components/atom';
+	import { clamp } from '$svelte-atoms/core/utils/math';
 	import type { ProgressCircularProps } from './types';
 	import { SvgElement } from '../element'
 
@@ -8,12 +9,14 @@
 		class: klass = '',
 		value = null,
 		max = 100,
-		preset = 'progress.circular',
+		preset = undefined,
 		...restProps
 	}: ProgressCircularProps & HTMLAttributes<HTMLDivElement> = $props();
 
+	const circularProps = $derived(mergePresetProps(preset, 'progress.circular', restProps));
+
 	const isIndeterminate = $derived(value === null || value === undefined);
-	const percent = $derived(isIndeterminate ? null : Math.min(100, Math.max(0, (value! / max) * 100)));
+	const percent = $derived(isIndeterminate ? null : clamp((value! / max) * 100, 0, 100));
 
 	const radius = 20;
 	const circumference = 2 * Math.PI * radius;
@@ -45,7 +48,6 @@
 {/snippet}
 
 <HtmlAtom
-	{preset}
 	as="div"
 	class={[
 		'progress-root progress-root--circular relative inline-flex items-center justify-center',
@@ -61,7 +63,7 @@
 	data-value={isIndeterminate ? undefined : value ?? undefined}
 	data-max={max}
 	data-completed={!isIndeterminate && percent === 100}
-	{...restProps}
+	{...circularProps}
 >
 	<svg viewBox="0 0 48 48" class="h-full w-full -rotate-90" aria-hidden="true">
 		<SvgElement

@@ -1,9 +1,7 @@
 <script lang="ts">
-	import { getPreset } from '$svelte-atoms/core/context';
-	import { resolvePreset } from '$svelte-atoms/core/components/atom';
+	import { resolveControlPreset, writeInputValue } from './shared';
+	import { clamp } from '$svelte-atoms/core/utils/math';
 	import { cn, toClassValue } from '$svelte-atoms/core/utils';
-	import type { PresetModuleName } from '$svelte-atoms/core/context/preset.svelte';
-	import { untrack } from 'svelte';
 	import { InputBond } from './bond.svelte';
 	import type { InputOtpControlProps } from './types';
 
@@ -11,7 +9,7 @@
 
 	let {
 		class: klass = '',
-		value = $bindable(),
+		value = $bindable(''),
 		length = 6,
 		type = 'numeric',
 		groupSize = undefined,
@@ -25,19 +23,16 @@
 		...restProps
 	}: InputOtpControlProps = $props();
 
-	const preset = resolvePreset(getPreset(untrack(() => presetKey) as PresetModuleName)?.apply(bond, [bond]));
+	const preset = resolveControlPreset(() => presetKey, bond);
 
-	// ── Slot refs ──────────────────────────────────────────────────────────
 	let slotEls = $state<Array<HTMLInputElement | undefined>>([]);
 
-	// ── Derived slots ─────────────────────────────────────────────────────
 	const slots  = $derived(Array.from({ length }, (_, i) => value?.[i] ?? ''));
 	const isFull = $derived(slots.every(s => s !== ''));
 
-	// ── Track previous full state so oncomplete only fires once per fill ──
+	// Tracks previous full state so oncomplete fires only once per fill.
 	let wasFull = $state(false);
 
-	// ── Input validation per type ─────────────────────────────────────────
 	function isValidChar(char: string): boolean {
 		if (type === 'numeric')     return /^\d$/.test(char);
 		if (type === 'alpha')       return /^[a-zA-Z]$/.test(char);
@@ -48,22 +43,19 @@
 		return type !== 'numeric' ? char.toUpperCase() : char;
 	}
 
-	// ── Commit value ──────────────────────────────────────────────────────
 	function commit(arr: string[]) {
 		value = arr.join('');
-		if (bond) bond.state.props.value = value;
+		writeInputValue(bond, value);
 	}
 
 	function getArr(): string[] {
 		return Array.from({ length }, (_, i) => value[i] ?? '');
 	}
 
-	// ── Focus helpers ─────────────────────────────────────────────────────
 	function focusSlot(index: number) {
-		slotEls[Math.max(0, Math.min(length - 1, index))]?.focus();
+		slotEls[clamp(index, 0, length - 1)]?.focus();
 	}
 
-	// ── Emit ──────────────────────────────────────────────────────────────
 	function emit(ev: Event) {
 		const detail = { value };
 		oninput?.(ev, detail);
@@ -76,7 +68,6 @@
 		wasFull = isFull;
 	}
 
-	// ── Keydown ───────────────────────────────────────────────────────────
 	function handleKeydown(ev: KeyboardEvent, index: number) {
 		if (disabled || readonly) return;
 
@@ -86,7 +77,6 @@
 			ev.preventDefault();
 			const arr = getArr();
 			if (arr[index]) {
-				// Clear current slot
 				arr[index] = '';
 				commit(arr);
 			} else if (index > 0) {
@@ -125,7 +115,6 @@
 		}
 	}
 
-	// ── Paste ─────────────────────────────────────────────────────────────
 	function handlePaste(ev: ClipboardEvent, fromIndex: number) {
 		ev.preventDefault();
 		const pasted = ev.clipboardData?.getData('text') ?? '';
@@ -188,7 +177,6 @@
 					!bond && 'border border-border bg-input',
 					'focus:bg-foreground/5',
 					!bond && 'focus:border-foreground/40 focus:ring-2 focus:ring-foreground/20',
-					// bond && i > 0 && !(groupSize !== undefined && i % groupSize === 0) && 'border-l border-border rounded-none',
 					disabled && 'cursor-not-allowed',
 					readonly && 'cursor-default',
 				)}
@@ -197,7 +185,7 @@
 				onpaste={(ev) => handlePaste(ev, i)}
 				onclick={() => slotEls[i]?.select()}
 				oninput={(ev) => {
-					// All input handled via keydown — suppress native input
+					// Input is handled in keydown; suppress the native input write.
 					(ev.currentTarget as HTMLInputElement).value = slotVal;
 				}}
 			/>

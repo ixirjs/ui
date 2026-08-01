@@ -1,9 +1,7 @@
 import type { Snippet } from 'svelte';
 import type { HtmlAtomProps, SnippetProps } from '../atom';
 
-// ============================================================================
-// Container Snippet Props (Extensible)
-// ============================================================================
+// Container snippet props
 
 export interface ContainerSnippetProps extends SnippetProps {
 	clientWidth: number;

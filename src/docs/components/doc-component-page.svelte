@@ -17,36 +17,17 @@
 		frontmatter,
 		prev,
 		next,
-		/**
-		 * Optional content appended inside the Installation section.
-		 * Use for DocCallout notes, compatibility warnings, etc.
-		 */
+		// Optional content appended inside the Installation section (e.g. DocCallout, warnings).
 		installationNote,
-		/**
-		 * Overrides the auto-rendered Preset Configuration section body.
-		 * If absent and `metadata.presetCode` is set, renders a DocCode block.
-		 * If both are absent, the section is hidden entirely.
-		 */
+		// Overrides the Preset Configuration section body; hides the section if absent with no presetCode.
 		preset,
-		/**
-		 * Content of the Examples section.
-		 * Wrap each example in <DocExample>.
-		 */
+		// Content of the Examples section — wrap each example in <DocExample>.
 		examples,
-		/**
-		 * Arbitrary sections inserted between Examples and API Reference.
-		 * Wrap each in <DocSection title="...">.
-		 */
+		// Arbitrary sections inserted between Examples and API Reference — wrap in <DocSection>.
 		extra,
-		/**
-		 * Content of the API Reference section.
-		 * Use <DocPropsSection> and <DocProps> to compose props tables.
-		 */
+		// Content of the API Reference section — compose with <DocPropsSection> and <DocProps>.
 		apiReference,
-		/**
-		 * Full content override — bypasses every auto-rendered section.
-		 * Use only when the page structure diverges significantly (e.g. Input).
-		 */
+		// Full content override — bypasses all auto-rendered sections (e.g. for Input).
 		children,
 	}: {
 		contentType?: DocMode;

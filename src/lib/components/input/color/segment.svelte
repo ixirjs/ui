@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
+	import { clamp as clampRange } from '$svelte-atoms/core/utils/math';
 	import type { ColorSegmentProps } from './types';
 
 	let {
@@ -22,7 +23,6 @@
 			: Math.max(3, (channel.precision ?? 0) + Math.ceil(Math.log10(Math.abs(channel.max) + 1)) + (channel.suffix?.length ?? 0))
 	);
 
-	// ── Format ──────────────────────────────────────────────────────────
 	function formatValue(v: number | string | undefined): string {
 		if (v === undefined) return '';
 		if (isHex) return String(v).padStart(2, '0').toUpperCase();
@@ -32,7 +32,7 @@
 		return prec > 0 ? num.toFixed(prec) : String(Math.round(num));
 	}
 
-	// ── Display (when not focused) ───────────────────────────────────────
+	// Text shown when not focused; falls back to the channel label when empty.
 	const displayText = $derived.by(() => {
 		const fmt = formatValue(value);
 		if (!fmt) return channel.label;
@@ -41,9 +41,9 @@
 
 	const hasValue = $derived(value !== undefined);
 
-	// ── Sync DOM when not focused ────────────────────────────────────────
 	let isFocused = $state(false);
 
+	// Keep DOM text in sync with displayText, but never clobber it while editing.
 	$effect(() => {
 		if (!el || isFocused) return;
 		void displayText;
@@ -52,15 +52,11 @@
 		});
 	});
 
-	// ── Clamp ───────────────────────────────────────────────────────────
-	function clamp(v: number): number {
-		return Math.max(channel.min, Math.min(channel.max, v));
-	}
+	const clamp = (v: number) => clampRange(v, channel.min, channel.max);
 
-	// ── Strip suffix and parse el.textContent ────────────────────────────
+	// Parse el.textContent into a channel value (stripping the suffix first).
 	function parseContent(): number | string | undefined {
 		let raw = (el?.textContent ?? '').trim();
-		// Strip suffix if present
 		if (channel.suffix && raw.endsWith(channel.suffix)) {
 			raw = raw.slice(0, -channel.suffix.length).trim();
 		}
@@ -73,7 +69,6 @@
 		return isNaN(n) ? undefined : clamp(n);
 	}
 
-	// ── Commit ──────────────────────────────────────────────────────────
 	function commit(ev: Event | null, andAdvance = false) {
 		const parsed = parseContent();
 		if (ev) {
@@ -85,7 +80,6 @@
 		if (andAdvance) onfocusmove?.(1);
 	}
 
-	// ── Step ────────────────────────────────────────────────────────────
 	function step(dir: 1 | -1, multiplier = 1) {
 		if (isHex) {
 			const cur = typeof value === 'string' ? parseInt(value, 16) : (value as number | undefined) ?? 0;
@@ -98,7 +92,6 @@
 		}
 	}
 
-	// ── Focus ───────────────────────────────────────────────────────────
 	function handleFocus() {
 		isFocused = true;
 		if (el) {
@@ -115,7 +108,6 @@
 		}
 	}
 
-	// ── Blur ────────────────────────────────────────────────────────────
 	function handleBlur(ev: FocusEvent) {
 		isFocused = false;
 		commit(ev, false);
@@ -124,7 +116,6 @@
 		});
 	}
 
-	// ── Keydown ─────────────────────────────────────────────────────────
 	function handleKeydown(ev: KeyboardEvent) {
 		if (disabled || readonly) return;
 
@@ -186,7 +177,7 @@
 		}
 	}
 
-	// ── Paste ───────────────────────────────────────────────────────────
+	// Sanitize pasted text to the channel's allowed characters before inserting.
 	function handlePaste(ev: ClipboardEvent) {
 		ev.preventDefault();
 		const raw     = ev.clipboardData?.getData('text/plain') ?? '';

@@ -199,7 +199,7 @@ function computeMerged(
 	presetClass: ClassValue | undefined,
 	variantClass: ClassValue | undefined
 ): string {
-	// ── string user class ────────────────────────────────────────────────
+	// string user class
 	if (typeof userClass === 'string') {
 		const lastIdx = userClass.lastIndexOf(PLACEHOLDER);
 		if (lastIdx === -1) {
@@ -210,12 +210,12 @@ function computeMerged(
 		return cn(before, presetClass ?? '', variantClass ?? '', after);
 	}
 
-	// ── no user class ────────────────────────────────────────────────────
+	// no user class
 	if (userClass == null) {
 		return cn(variantClass ?? '');
 	}
 
-	// ── array user class — the component-root shape ──────────────────────
+	// array user class — the component-root shape
 	if (Array.isArray(userClass)) {
 		let placeholderIdx = -1;
 		for (let i = 0; i < userClass.length; i++) {
@@ -243,12 +243,12 @@ function computeMerged(
 		return cn(parts);
 	}
 
-	// ── object ClassValue (e.g. `{ active: true }`) — rare ──────────────
+	// object ClassValue (e.g. `{ active: true }`) — rare
 	return computeMerged(clsx(userClass as never), presetClass, variantClass);
 }
 
-// Merges userClass + presetClass + variantClass into a Tailwind-safe string.
-// `$preset` placeholder controls injection point (last occurrence wins); all-string inputs go through the trie.
+// Merges userClass + presetClass + variantClass into a Tailwind-safe string. The `$preset`
+// placeholder (last occurrence wins) controls injection point; all-string inputs go through the trie.
 export function mergeClassesWithPreset(
 	userClass: string | ClassValue | undefined,
 	presetClass: ClassValue | undefined,

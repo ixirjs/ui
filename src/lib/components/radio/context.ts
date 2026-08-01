@@ -1,6 +1,6 @@
 import { getContext, setContext } from 'svelte';
 
-export const RADIO_GROUP_CONTEXT_KEY = '@icare/context/radio-group';
+export const RADIO_GROUP_CONTEXT_KEY = '@atoms/context/radio/group';
 
 export type RadioGroupContext = {
 	disabled: boolean;

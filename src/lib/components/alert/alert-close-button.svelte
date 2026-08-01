@@ -3,7 +3,7 @@
 	generics="E extends keyof HTMLElementTagNameMap = 'button', B extends Base = Base"
 >
 	import type { HTMLAttributes } from 'svelte/elements';
-	import { HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
+	import { mergePresetProps, HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
 	import { AlertBond } from './bond.svelte';
 	import type { AlertCloseButtonProps } from './types';
 	import { Icon } from '../icon';
@@ -15,21 +15,17 @@
 	let {
 		class: klass = '',
 		as = 'button' as E,
-		preset = 'alert.close-button',
+		preset = undefined,
 		children = undefined,
 		...restProps
 	}: AlertCloseButtonProps<E, B> & HTMLAttributes<Element> = $props();
 
-	const closeButtonProps = $derived({
-		...bond?.closeButton(),
-		...restProps
-	});
+	const closeButtonProps = $derived(mergePresetProps(preset, 'alert.close-button', { ...bond?.closeButton(), ...restProps }));
 </script>
 
 <HtmlAtom
 	{as}
 	{bond}
-	{preset}
 	class={[
 		'alert-close-button border-border flex size-6 items-center justify-center rounded p-0.5 transition-colors hover:bg-black/10 dark:hover:bg-white/10',
 		'$preset',

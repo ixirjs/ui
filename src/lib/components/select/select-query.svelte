@@ -1,13 +1,10 @@
 <script lang="ts">
+	import { mergeAtomProps } from '$svelte-atoms/core/components/atom';
 	import { SelectBond } from './bond.svelte';
 	import { Input } from '$svelte-atoms/core/components/input';
 	import type { SelectQueryProps } from './types';
 
-	const bond = SelectBond.get();
-
-	if (!bond) {
-		throw new Error('Select atom was not found');
-	}
+	const bond = SelectBond.getOrThrow('Select atom was not found');
 
 	let {
 		value = $bindable(),
@@ -22,11 +19,7 @@
 	// and an `oninput` that writes `props.query`.
 	const atom = bond.query();
 
-	const queryProps = $derived({
-		preset: preset ?? atom.preset,
-		...atom.spread,
-		...restProps
-	});
+	const queryProps = $derived(mergeAtomProps(atom, preset, restProps));
 </script>
 
 <!-- The control's text IS the bond's `query` (the `'input'` capability's `query` field):

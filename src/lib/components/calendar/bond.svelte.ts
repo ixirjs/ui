@@ -1,6 +1,13 @@
 import { Bond, BondState, type BondStateProps } from '$svelte-atoms/core/shared/bond.svelte';
-import { getContext, setContext } from 'svelte';
-import { createAttachmentKey } from 'svelte/attachments';
+import { defineBond, type BondOf, type ViewOf } from '$svelte-atoms/core/shared';
+import {
+	CalendarRootAtom,
+	CalendarBodyAtom,
+	CalendarHeaderAtom,
+	CalendarWeekDayAtom,
+	CalendarDayAtom,
+	type WeekdayIndex
+} from './atoms.svelte';
 import type { CalendarRange, Day, Month } from './types';
 
 export type CalendarBondProps = BondStateProps & {
@@ -17,7 +24,6 @@ export type CalendarBondProps = BondStateProps & {
 	previousMonth?: Month;
 	nextMonth?: Month;
 	extend?: Record<string, unknown>;
-	readonly rest?: Record<string, unknown>;
 };
 
 export type CalendarBondElements = {
@@ -28,90 +34,61 @@ export type CalendarBondElements = {
 	header: HTMLElement;
 };
 
-export class CalendarBond<
-	Props extends CalendarBondProps = CalendarBondProps,
-	State extends CalendarBondState<Props> = CalendarBondState<Props>
-> extends Bond<Props, State, CalendarBondElements> {
-	static CONTEXT_KEY = '@atoms/context/calendar';
+// Bond shape the calendar atoms type this.bond against — breaks the atom↔bond cycle.
+type CalendarBondView = ViewOf<CalendarBondState>;
 
-	constructor(s: State) {
-		super(s);
+// Hand-written base for CalendarBond — registers data-driven day/weekDay atoms via registerAtom.
+// Static parts (root/body/header) come from the defineBond spec below.
+class CalendarBondBase extends Bond<CalendarBondProps, CalendarBondState> {
+	// Per-weekday cell atom, cached by index (0=Sunday..6=Saturday).
+	weekDay(index: number) {
+		const key = `weekday-${index}`;
+		this.registerAtom(
+			key,
+			(b) => new CalendarWeekDayAtom(b as CalendarBondView, index as WeekdayIndex)
+		);
+		return this.atom(key) as CalendarWeekDayAtom;
 	}
 
-	share(): this {
-		return CalendarBond.set(this) as this;
-	}
-
-	root() {
-		return {
-			id: `calendar-root-${this.id}`,
-			'aria-label': 'Calendar',
-			'aria-disabled': this.state.props.disabled ?? false,
-			role: 'application',
-			[createAttachmentKey()]: (node: HTMLElement) => {
-				this.elements.root = node;
-			}
-		};
-	}
-
-	body() {
-		return {
-			id: `calendar-month-${this.id}`,
-			role: 'grid',
-			'aria-labelledby': `calendar-month-label-${this.id}`,
-			[createAttachmentKey()]: (node: HTMLElement) => {
-				this.elements.body = node;
-			}
-		};
-	}
-
+	// Per-day cell atom, cached by day.id.
 	day(day: Day) {
-		return {
-			id: `calendar-day-${this.id}-${day.id}`,
-			role: 'gridcell',
-			'aria-selected': this.state.isDaySelected(day),
-			'aria-disabled': day.disabled,
-			tabindex: day.disabled ? -1 : 0
-		};
-	}
-
-	weekDay() {
-		return {
-			id: `calendar-weekday-${this.id}`,
-			role: 'columnheader'
-		};
-	}
-
-	header() {
-		return {
-			id: `calendar-weekdays-${this.id}`,
-			role: 'row',
-			[createAttachmentKey()]: (node: HTMLElement) => {
-				this.elements.header = node;
-			}
-		};
-	}
-
-	static get(): CalendarBond | undefined {
-		return getContext(this.CONTEXT_KEY);
-	}
-
-	static set(bond: CalendarBond): CalendarBond {
-		return setContext(this.CONTEXT_KEY, bond);
+		const key = `day-${day.id}`;
+		this.registerAtom(key, (b) => new CalendarDayAtom(b as CalendarBondView, day));
+		return this.atom(key) as CalendarDayAtom;
 	}
 }
 
-export class CalendarBondState<Props extends CalendarBondProps> extends BondState<Props> {
-	constructor(props: () => Props) {
+// CalendarBond via defineBond: declares root/body/header atoms; day/weekDay live on the base.
+// Selection/navigation logic lives on CalendarBondState.
+export const CalendarBond = defineBond<
+	{
+		root: typeof CalendarRootAtom;
+		body: typeof CalendarBodyAtom;
+		header: typeof CalendarHeaderAtom;
+	},
+	CalendarBondState,
+	typeof CalendarBondBase
+>({
+	name: 'calendar',
+	base: CalendarBondBase,
+	atoms: {
+		root: CalendarRootAtom,
+		body: CalendarBodyAtom,
+		header: CalendarHeaderAtom
+	}
+});
+
+// Instance type — paired with the const above (value + type).
+export type CalendarBond = BondOf<typeof CalendarBond>;
+
+export class CalendarBondState<
+	Props extends CalendarBondProps = CalendarBondProps
+> extends BondState<Props> {
+	constructor(props: Props) {
 		super(props);
 	}
 
 	selectDate(date: Date) {
-		// if (this.props.range) {
-		// } else {
-		// 	this.props.value = date;
-		// }
-
 		if (!this.props.start) {
 			this.props.range[0] = date;
 		} else if (!this.props.end) {

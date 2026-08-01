@@ -1,5 +1,4 @@
 import { animate, spring, type Easing, type Spring } from 'motion';
-import { DURATION } from '$svelte-atoms/core/shared';
 import { DrawerBond } from '.';
 import { untrack } from 'svelte';
 
@@ -8,23 +7,18 @@ export type DrawerSide = 'left' | 'right' | 'top' | 'bottom';
 type EasingOption = Easing | Easing[] | Spring;
 
 type AnimateDrawerContentParams = {
-	// Animation duration in seconds (default: 0.3)
+	// seconds
 	duration?: number;
-	// Delay before animation starts in seconds (default: 0)
+	// seconds
 	delay?: number;
-	// Easing for open animation (default: smooth deceleration)
 	easeOpen?: EasingOption;
-	// Easing for close animation (default: snappy acceleration)
 	easeClose?: EasingOption;
-	// Easing override for both open/close
+	// overrides easeOpen/easeClose for both directions
 	ease?: EasingOption;
-	// Use spring physics for natural motion (default: false)
 	spring?: boolean;
-	// Spring stiffness (default: 300)
 	stiffness?: number;
-	// Spring damping (default: 30)
 	damping?: number;
-	// Disable pointer events during animation (default: true)
+	// disable pointer events during animation
 	inert?: boolean;
 };
 
@@ -34,8 +28,8 @@ export function animateDrawerContent(params: AnimateDrawerContentParams = {}) {
 		duration = 0.3,
 		delay = 0,
 		ease,
-		easeOpen = [0.16, 1, 0.3, 1], // Smooth deceleration (similar to popover)
-		easeClose = [0.4, 0, 0.6, 1], // Quick acceleration out
+		easeOpen = [0.16, 1, 0.3, 1], // smooth deceleration
+		easeClose = [0.4, 0, 0.6, 1], // quick acceleration out
 		spring: useSpring = false,
 		stiffness = 280,
 		damping = 28,
@@ -44,7 +38,7 @@ export function animateDrawerContent(params: AnimateDrawerContentParams = {}) {
 
 	const bond = untrack(() => DrawerBond.get());
 
-	// Read side from bond (set in Drawer.Root)
+	// side is set in Drawer.Root
 	const side = bond?.state.props.side ?? 'right';
 
 	const position = getSidePosition(side);
@@ -55,22 +49,20 @@ export function animateDrawerContent(params: AnimateDrawerContentParams = {}) {
 	return (node: HTMLElement) => {
 		const isOpen = bond?.state.props.open ?? false;
 
-		// Apply initial hidden state immediately (before any animation)
-		// This prevents FOUC (flash of unstyled content)
+		// Apply hidden state before any animation to prevent FOUC.
 		if (!animated) {
 			node.style.transform = `translate(${hidden.x}, ${hidden.y})`;
 			node.style.opacity = '0.3';
 			Object.assign(node.style, position);
 		}
 
-		// Disable interactions during animation
 		if (inert) {
 			node.style.pointerEvents = 'none';
 		}
 
 		let controller: ReturnType<typeof animate>;
 
-		// Initial mount (closed state)
+		// Initial mount in closed state: settle without animating.
 		if (!animated && !isOpen) {
 			controller = animate(
 				node,
@@ -89,7 +81,6 @@ export function animateDrawerContent(params: AnimateDrawerContentParams = {}) {
 			);
 			animated = true;
 		} else {
-			// Animated open/close transition
 			const resolvedEase = ease ?? (isOpen ? easeOpen : easeClose);
 
 			const keyframes = {
@@ -151,11 +142,10 @@ function getSidePosition(
 }
 
 type AnimateDrawerRootParams = {
-	// Animation duration in seconds (default: 0.3)
+	// seconds
 	duration?: number;
-	// Delay before animation starts in seconds (default: 0)
+	// seconds
 	delay?: number;
-	// Easing function (default: smooth in-out)
 	ease?: EasingOption;
 };
 

@@ -1,44 +1,37 @@
+import type { Snippet } from 'svelte';
 import { SvelteMap } from 'svelte/reactivity';
-import { getContext, setContext } from 'svelte';
 import type { PortalBond } from '../bond.svelte';
-import { Bond, BondState, type BondStateProps } from '$svelte-atoms/core/shared/bond.svelte';
+import type { Factory } from '$svelte-atoms/core/types';
+import { BondState, type BondStateProps } from '$svelte-atoms/core/shared/bond.svelte';
+import { defineBond, type BondOf } from '$svelte-atoms/core/shared';
 
 export type PortalsStateProps = BondStateProps & {
 	id: string;
 };
 
-export class PortalsBond extends Bond<PortalsStateProps, PortalsState> {
-	static CONTEXT_KEY = '@atoms/context/portals';
+export type PortalsProps = {
+	id: string;
+	factory?: Factory<PortalsBond>;
+	children?: Snippet<[{ portals: PortalsBond }]>;
+};
 
-	constructor(bond: PortalsState) {
-		super(bond, 'portals');
-	}
+// Context-only registry bond (no atoms); the portal map lives on PortalsState.
+export const PortalsBond = defineBond<Record<never, never>, PortalsState>({
+	name: 'portals',
+	atoms: {}
+});
 
-	share() {
-		return PortalsBond.set(this) as this;
-	}
+export type PortalsBond = BondOf<typeof PortalsBond>;
 
-	static get(): PortalsBond | undefined {
-		return getContext(PortalsBond.CONTEXT_KEY);
-	}
-
-	static set(bond: PortalsBond): PortalsBond {
-		return setContext(PortalsBond.CONTEXT_KEY, bond);
-	}
-}
-
+// The single portal registry for a tree — every portal registers here, all consumers resolve from it.
 export class PortalsState extends BondState<PortalsStateProps> {
-	#portals: Map<string, PortalBond> = new SvelteMap();
-
-	constructor(props: () => PortalsStateProps) {
-		super(props);
-	}
+	#portals = new SvelteMap<string, PortalBond>();
 
 	get id() {
 		return this.props.id;
 	}
 
-	get(id: string) {
+	get(id: string): PortalBond | undefined {
 		return this.#portals.get(id);
 	}
 
@@ -48,5 +41,14 @@ export class PortalsState extends BondState<PortalsStateProps> {
 
 	delete(id: string) {
 		this.#portals.delete(id);
+	}
+
+	// set/delete as a lifecycle pair: returns an unregister thunk that only deletes if the entry is
+	// still this portal, so a same-id remount isn't clobbered by a stale unregister.
+	register(id: string, portal: PortalBond): () => void {
+		this.#portals.set(id, portal);
+		return () => {
+			if (this.#portals.get(id) === portal) this.#portals.delete(id);
+		};
 	}
 }

@@ -1,5 +1,5 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { type Base } from '$svelte-atoms/core/components/atom';
+	import { mergePresetProps, type Base } from '$svelte-atoms/core/components/atom';
 	import { TabsBond } from './bond.svelte';
 	import type { TabsContentProps } from './types';
 
@@ -13,10 +13,7 @@
 	const value = $derived(bond?.state?.props.value);
 	const items = $derived(Array.from(bond?.state?.tabContents ?? []));
 
-	const contentProps = $derived({
-		preset: preset ?? 'tabs.content',
-		...restProps
-	});
+	const contentProps = $derived(mergePresetProps(preset, 'tabs.content', restProps));
 </script>
 
 {#each items as item (item.value)}

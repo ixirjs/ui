@@ -1,11 +1,8 @@
-/**
- * Pure helpers for time-related input controls.
- * No Svelte reactivity here — import freely from .svelte files and plain .ts.
- */
+// Pure helpers for time-related input controls — no Svelte reactivity.
 export type { SegmentProps, TimeParts, DateTimeParts, LooseParts } from './types';
 import type { TimeParts, DateTimeParts } from './types';
 
-// ── Merge utility ──────────────────────────────────────────────────────────
+// Shallow-merge overrides into base, skipping undefined override values.
 export function mergeParts<T extends object>(base: T, overrides: T): T {
 	const clean = Object.fromEntries(
 		Object.entries(overrides).filter(([, v]) => v !== undefined)
@@ -13,9 +10,9 @@ export function mergeParts<T extends object>(base: T, overrides: T): T {
 	return { ...base, ...clean };
 }
 
-// ── Time helpers ───────────────────────────────────────────────────────────
+// Time helpers
 
-/** Parse a HH:MM[:SS] string (always 24 h internally) into TimeParts. */
+// Parse a HH:MM[:SS] string (always 24h internally) into TimeParts.
 export function parseTimeString(str: string, date?: Date, hourFormat: 12 | 24 = 24): TimeParts {
 	if (!str) {
 		if (date) {
@@ -41,7 +38,7 @@ export function parseTimeString(str: string, date?: Date, hourFormat: 12 | 24 = 
 	return result;
 }
 
-/** Build a HH:MM[:SS] string from TimeParts. Returns '' if incomplete. */
+// Build a HH:MM[:SS] string from TimeParts. Returns '' if incomplete.
 export function buildTimeValue(parts: TimeParts, withSeconds: boolean): string {
 	const { hh, mm, ss } = parts;
 	if (hh === undefined || mm === undefined) return '';
@@ -51,23 +48,23 @@ export function buildTimeValue(parts: TimeParts, withSeconds: boolean): string {
 	return `${h}:${m}`;
 }
 
-/** Convert 1–12 display hours to 0–23 internal, given current period. */
+// Convert 1–12 display hours to 0–23 internal, given current period.
 export function displayToInternal(displayH: number, period: 'AM' | 'PM'): number {
 	if (period === 'AM') return displayH === 12 ? 0 : displayH;
 	return displayH === 12 ? 12 : displayH + 12;
 }
 
-/** Convert 0–23 internal hours to 1–12 display. */
+// Convert 0–23 internal hours to 1–12 display.
 export function internalToDisplay(h: number): number {
 	return h % 12 === 0 ? 12 : h % 12;
 }
 
-/** Seconds since midnight — used for min/max clamping. */
+// Seconds since midnight — used for min/max clamping.
 export function timeToSeconds(h = 0, m = 0, s = 0): number {
 	return h * 3600 + m * 60 + s;
 }
 
-/** Clamp TimeParts to optional min/max strings. Returns clamped parts or original if in range. */
+// Clamp TimeParts to optional min/max strings. Returns clamped parts or original if in range.
 export function clampTimeParts(parts: TimeParts, min?: string, max?: string): TimeParts {
 	const { hh, mm, ss } = parts;
 	if (hh === undefined || mm === undefined) return parts;
@@ -99,9 +96,9 @@ export function clampTimeParts(parts: TimeParts, min?: string, max?: string): Ti
 	return parts;
 }
 
-// ── DateTime helpers ───────────────────────────────────────────────────────
+// DateTime helpers
 
-/** Parse a YYYY-MM-DD string into DateTimeParts (date-only, no time fields). */
+// Parse a YYYY-MM-DD string into DateTimeParts (date-only, no time fields).
 export function parseDateString(str: string): DateTimeParts {
 	if (!str) return {};
 	const m = str.match(/^(\d{4})-(\d{2})-(\d{2})$/);
@@ -113,7 +110,7 @@ export function parseDateString(str: string): DateTimeParts {
 	};
 }
 
-/** Build a YYYY-MM-DD string from DateTimeParts. Returns '' if incomplete. */
+// Build a YYYY-MM-DD string from DateTimeParts. Returns '' if incomplete.
 export function buildDateValue(parts: DateTimeParts): string {
 	const { year, month, day } = parts;
 	if (year === undefined || month === undefined || day === undefined) return '';
@@ -121,7 +118,7 @@ export function buildDateValue(parts: DateTimeParts): string {
 	return `${pad(year, 4)}-${pad(month)}-${pad(day)}`;
 }
 
-/** Parse a YYYY-MM-DDTHH:MM[:SS] string into DateTimeParts. */
+// Parse a YYYY-MM-DDTHH:MM[:SS] string into DateTimeParts.
 export function parseDateTimeString(str: string): DateTimeParts {
 	if (!str) return {};
 	const m = str.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?/);
@@ -136,7 +133,7 @@ export function parseDateTimeString(str: string): DateTimeParts {
 	};
 }
 
-/** Build a YYYY-MM-DDTHH:MM[:SS] string from DateTimeParts. Returns '' if incomplete. */
+// Build a YYYY-MM-DDTHH:MM[:SS] string from DateTimeParts. Returns '' if incomplete.
 export function buildDateTimeValue(parts: DateTimeParts, withSeconds: boolean): string {
 	const { year, month, day, hours, minutes, seconds } = parts;
 	if (
@@ -153,7 +150,7 @@ export function buildDateTimeValue(parts: DateTimeParts, withSeconds: boolean): 
 	return withSeconds ? `${base}:${pad(seconds ?? 0)}` : base;
 }
 
-/** Max days in a given month/year (falls back to year 2000 if year unknown). */
+// Max days in a given month/year (falls back to year 2000 if year unknown).
 export function maxDaysInMonth(month?: number, year?: number): number {
 	if (!month) return 31;
 	return new Date(year ?? 2000, month, 0).getDate();

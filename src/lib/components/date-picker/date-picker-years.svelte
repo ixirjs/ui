@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { mergePresetProps } from '$svelte-atoms/core/components/atom';
 	import { animate } from 'motion';
 	import { getYear, setYear } from 'date-fns';
 	import { cn } from '$svelte-atoms/core/utils';
@@ -7,7 +8,7 @@
 	import { HtmlAtom } from '../atom';
 	import { Icon } from '../icon';
 
-	const datePicker = DatePickerBond.get();
+	const datePicker = DatePickerBond.getOrThrow('<DatePicker.Years /> must be used within a <DatePicker.Root />');
 
 	const pivote = $derived(datePicker?.state.props.pivote ?? new Date());
 
@@ -15,7 +16,7 @@
 
 	const currentYear = $derived(getYear(pivote));
 
-	// Generate array of years to display (12 years: current ±5)
+	// 12-year grid: pivot −5 through pivot +6.
 	const yearsGrid = $derived.by(() => {
 		const years = [];
 		const startYear = pivoteYear - 5;
@@ -27,10 +28,11 @@
 
 	let {
 		class: klass = '',
-		preset = 'datepicker.years',
-		children,
+		preset = undefined,
 		...restProps
 	}: DatePickerYearsProps = $props();
+
+	const yearsProps = $derived(mergePresetProps(preset, 'datepicker.years', restProps));
 
 	let scrollTimeout: NodeJS.Timeout | undefined = undefined;
 
@@ -79,14 +81,13 @@
 	function handleWheel(event: WheelEvent) {
 		event.preventDefault();
 
-		// Clear any existing timeout
 		if (scrollTimeout) {
 			clearTimeout(scrollTimeout);
 		}
 
-		// Debounce the scroll event to avoid rapid year changes
+		// Debounce so rapid wheel deltas don't skip years.
 		scrollTimeout = setTimeout(() => {
-			const direction = event.deltaY > 0 ? 1 : -1; // Positive = scroll down = next year
+			const direction = event.deltaY > 0 ? 1 : -1; // scroll down = next year
 			pivoteYear = pivoteYear + direction;
 		}, 50);
 	}
@@ -120,15 +121,12 @@
 			};
 		}}
 		onwheel={handleWheel}
-		{preset}
-		{...restProps}
+		{...yearsProps}
 	>
 		<HtmlAtom class="flex flex-1 flex-col" {enter} {exit}>
-			<!-- Navigation Bar -->
 			<nav
 				class="border-border text-foreground flex h-12 items-center justify-between gap-2 border-b px-2 py-2"
 			>
-				<!-- Previous Year Button -->
 				<button
 					type="button"
 					class="hover:bg-foreground/10 active:bg-foreground/20 flex size-8 cursor-pointer items-center justify-center rounded-md transition-colors"
@@ -151,12 +149,9 @@
 					</Icon>
 				</button>
 
-				<!-- Year Display -->
 				<div class="flex-1">
-					<!-- {currentYear} -->
 				</div>
 
-				<!-- Next Year Button -->
 				<button
 					type="button"
 					class="hover:bg-foreground/10 active:bg-foreground/20 flex size-8 cursor-pointer items-center justify-center rounded-md transition-colors"
@@ -180,7 +175,6 @@
 				</button>
 			</nav>
 
-			<!-- Years Grid -->
 			<div class="grid flex-1 grid-cols-4 gap-1 px-2 py-2">
 				{#each yearsGrid as year, i (i)}
 					{@const isSelected = year === pivote.getFullYear()}

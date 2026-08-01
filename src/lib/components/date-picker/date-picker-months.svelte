@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { mergePresetProps } from '$svelte-atoms/core/components/atom';
 	import { animate } from 'motion';
 	import { getYear, getMonth, setMonth } from 'date-fns';
 	import { cn } from '$svelte-atoms/core/utils';
@@ -6,14 +7,13 @@
 	import { DatePickerBond } from './bond.svelte';
 	import type { DatePickerMonthsProps } from './types';
 
-	const datePicker = DatePickerBond.get();
+	const datePicker = DatePickerBond.getOrThrow('<DatePicker.Months /> must be used within a <DatePicker.Root />');
 
 	const pivote = $derived(datePicker?.state.props.pivote ?? new Date());
 
 	const currentYear = $derived(getYear(pivote));
 	const currentMonth = $derived(getMonth(pivote));
 
-	// Generate array of months
 	const monthsGrid = [
 		'Jan',
 		'Feb',
@@ -31,10 +31,11 @@
 
 	let {
 		class: klass = '',
-		preset = 'datepicker.months',
-		children,
+		preset = undefined,
 		...restProps
 	}: DatePickerMonthsProps = $props();
+
+	const monthsProps = $derived(mergePresetProps(preset, 'datepicker.months', restProps));
 
 	function enter(node: HTMLElement) {
 		animate(
@@ -103,11 +104,9 @@
 				duration: 100
 			};
 		}}
-		{preset}
-		{...restProps}
+		{...monthsProps}
 	>
 		<HtmlAtom class="flex flex-1 flex-col gap-2" {enter} {exit}>
-			<!-- Year Display -->
 			<nav
 				class="border-border text-foreground flex h-12 items-center justify-center gap-2 border-b px-2 py-2"
 			>
@@ -119,7 +118,6 @@
 				</button>
 			</nav>
 
-			<!-- Months Grid -->
 			<div class="grid flex-1 grid-cols-3 gap-1 px-2 pb-2">
 				{#each monthsGrid as month, index (index)}
 					{@const isSelected = index === currentMonth}

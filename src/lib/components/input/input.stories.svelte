@@ -4,16 +4,37 @@
 	import { Label } from '../label';
 	import { OtpControl } from './atoms';
 
-	// More on how to set up stories at: https://storybook.js.org/docs/writing-stories
 	const { Story } = defineMeta({
 		title: 'Atoms/Input',
-		// This component will have an automatically generated Autodocs entry: https://storybook.js.org/docs/writing-docs/autodocs
 
 		parameters: {
-			// More on how to position stories at: https://storybook.js.org/docs/configure/story-layout
-			layout: 'fullscreen'
+			layout: 'centered'
 		},
-		args: {}
+		args: {
+			placeholder: 'Type something…',
+			disabled: false,
+			readonly: false,
+			type: 'text'
+		},
+		argTypes: {
+			placeholder: {
+				control: 'text',
+				description: 'Placeholder text shown when the field is empty'
+			},
+			disabled: {
+				control: 'boolean',
+				description: 'Disable the input, preventing interaction'
+			},
+			readonly: {
+				control: 'boolean',
+				description: 'Make the input read-only (value visible but not editable)'
+			},
+			type: {
+				control: 'select',
+				options: ['text', 'password'],
+				description: 'Control variant to render inside the root'
+			}
+		}
 	});
 </script>
 
@@ -31,28 +52,105 @@
 	let otpCompleted = $state(false);
 	let currencyValue = $state('');
 	let currencyAmount = $state<number | undefined>(undefined);
-	let colorValue = $state('');	let locationLat = $state<number | undefined>(undefined);
+	let colorValue = $state('');
+	let locationLat = $state<number | undefined>(undefined);
 	let locationLng = $state<number | undefined>(undefined);
 
-	let today = $state(new Date());	
+	let today = $state(new Date());
 </script>
 
-<Story name="Input" args={{}}>
+<Story name="Basic" args={{ placeholder: 'Type something…', disabled: false, readonly: false, type: 'text' }}>
+	{#snippet template(args)}
+		<div class="flex w-72 flex-col gap-1">
+			<Label>Label</Label>
+			<MyInput.Root>
+				{#if args.type === 'password'}
+					<MyInput.PasswordControl
+						placeholder={args.placeholder}
+						disabled={args.disabled}
+						readonly={args.readonly}
+					/>
+				{:else}
+					<MyInput.TextControl
+						placeholder={args.placeholder}
+						disabled={args.disabled}
+						readonly={args.readonly}
+					/>
+				{/if}
+			</MyInput.Root>
+		</div>
+	{/snippet}
+</Story>
+
+<Story name="Text Variants" parameters={{ layout: 'fullscreen' }}>
+	<div class="flex flex-col gap-4 p-4">
+		<div class="flex flex-col gap-1">
+			<Label>Default</Label>
+			<MyInput.Root class="w-72">
+				<MyInput.TextControl placeholder="Enter text…" />
+			</MyInput.Root>
+		</div>
+
+		<div class="flex flex-col gap-1">
+			<Label>Disabled</Label>
+			<MyInput.Root class="w-72">
+				<MyInput.TextControl value="Prefilled value" disabled />
+			</MyInput.Root>
+		</div>
+
+		<div class="flex flex-col gap-1">
+			<Label>Readonly</Label>
+			<MyInput.Root class="w-72">
+				<MyInput.TextControl value="Read-only value" readonly />
+			</MyInput.Root>
+		</div>
+
+		<div class="flex flex-col gap-1">
+			<Label>Password</Label>
+			<MyInput.Root class="w-72">
+				<MyInput.PasswordControl placeholder="Enter password…" />
+			</MyInput.Root>
+		</div>
+
+		<div class="flex flex-col gap-1">
+			<Label>With leading icon</Label>
+			<MyInput.Root class="w-72">
+				<MyInput.Icon class="text-muted-foreground">
+					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4">
+						<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+					</svg>
+				</MyInput.Icon>
+				<MyInput.TextControl placeholder="Search…" />
+			</MyInput.Root>
+		</div>
+
+		<div class="flex flex-col gap-1">
+			<Label>With placeholder overlay</Label>
+			<MyInput.Root class="w-72">
+				<div class="relative flex-1">
+					<MyInput.TextControl class="pr-2" placeholder="" />
+					<MyInput.Placeholder class="text-foreground/30 pl-2">name@example.com</MyInput.Placeholder>
+				</div>
+			</MyInput.Root>
+		</div>
+	</div>
+</Story>
+
+<Story name="Currency" parameters={{ layout: 'fullscreen' }}>
 	<div class="flex flex-col">
 		<Label for="price-input">Price</Label>
 		<MyInput.Root>
 			<MyInput.Icon class="text-foreground box-content px-0">$</MyInput.Icon>
-			<div class="flex-1 relative">
-				<MyInput.Control id="price-input" class="border-border box-content border-x px-2 py-2" type="currency"  />
+			<div class="relative flex-1">
+				<MyInput.Control id="price-input" class="border-border box-content border-x px-2 py-2" type="currency" />
 				<MyInput.Placeholder class="text-foreground/20 pl-2">Hello World</MyInput.Placeholder>
 			</div>
 			<MyInput.Icon class="text-foreground box-content px-2">.00</MyInput.Icon>
-
 		</MyInput.Root>
 	</div>
 </Story>
 
-<Story name="Number Control">
+<Story name="Number Control" parameters={{ layout: 'fullscreen' }}>
 	<div class="flex flex-col gap-4 p-4">
 		<div class="flex flex-col gap-1">
 			<Label>Quantity</Label>
@@ -99,8 +197,8 @@
 	</div>
 </Story>
 
-<!-- ─── TimeControl ──────────────────────────────────────────────────────── -->
-<Story name="Time Control">
+<!-- TimeControl -->
+<Story name="Time Control" parameters={{ layout: 'fullscreen' }}>
 	<div class="flex flex-col gap-4 p-4">
 		<MyInput.Root class="border-border flex h-10 w-64 items-center rounded-md border">
 			<MyInput.TimeControl bind:value={timeValue} bind:date={today} hourFormat={12} />
@@ -110,7 +208,7 @@
 	</div>
 </Story>
 
-<Story name="Time Control (WithRange)">
+<Story name="Time Control (WithRange)" parameters={{ layout: 'fullscreen' }}>
 	<div class="flex flex-col gap-4 p-4">
 		<p class="text-muted-foreground text-sm">08:00 – 18:00 only</p>
 		<MyInput.Root class="border-border flex h-10 w-64 items-center rounded-md border">
@@ -119,8 +217,8 @@
 	</div>
 </Story>
 
-<!-- ─── DateTimeControl ─────────────────────────────────────────────────── -->
-<Story name="Date Time Control">
+<!-- DateTimeControl -->
+<Story name="Date Time Control" parameters={{ layout: 'fullscreen' }}>
 	<div class="flex flex-col gap-4 p-4">
 		<MyInput.Root class="border-border flex h-10 w-72 items-center rounded-md border">
 			<MyInput.DateTimeControl bind:value={dateTimeValue} bind:date={dateTimeDate} />
@@ -132,8 +230,8 @@
 	</div>
 </Story>
 
-<!-- ─── DateControl ───────────────────────────────────────────────────────── -->
-<Story name="Date Control">
+<!-- DateControl -->
+<Story name="Date Control" parameters={{ layout: 'fullscreen' }}>
 	<div class="flex flex-col gap-4 p-4">
 		<div class="flex flex-col gap-1">
 			<Label>Date only</Label>
@@ -177,8 +275,8 @@
 	</div>
 </Story>
 
-<!-- ─── FileControl ──────────────────────────────────────────────────────── -->
-<Story name="File Control">
+<!-- FileControl -->
+<Story name="File Control" parameters={{ layout: 'fullscreen' }}>
 	<div class="flex flex-col gap-4 p-4">
 		<MyInput.Root class="border-border flex h-10 w-80 items-center rounded-md border">
 			<MyInput.FileControl bind:files placeholder="Choose a file…" />
@@ -189,7 +287,7 @@
 	</div>
 </Story>
 
-<Story name="File Control (Multiple)">
+<Story name="File Control (Multiple)" parameters={{ layout: 'fullscreen' }}>
 	<div class="flex flex-col gap-4 p-4">
 		<MyInput.Root class="border-border flex h-10 w-80 items-center rounded-md border">
 			<MyInput.FileControl bind:files multiple accept="image/*" placeholder="Choose images…" />
@@ -197,13 +295,13 @@
 	</div>
 </Story>
 
-<Story name="File Control (CustomTrigger)">
+<Story name="File Control (CustomTrigger)" parameters={{ layout: 'fullscreen' }}>
 	<div class="flex flex-col gap-4 p-4">
 		<MyInput.Root class="border-border flex h-10 w-80 items-center rounded-md border">
 			<MyInput.FileControl bind:files>
 				{#snippet triggerContent({ hasFiles, files: f, open })}
 					{#if hasFiles}
-						<span class="text-foreground px-2 text-sm">{f[0].name}</span>
+						<span class="text-foreground px-2 text-sm">{f[0]?.name}</span>
 					{:else}
 						<button type="button" onclick={open} class="text-primary px-2 text-sm underline">
 							Upload file
@@ -215,8 +313,8 @@
 	</div>
 </Story>
 
-<!-- ─── UrlControl ───────────────────────────────────────────────────────── -->
-<Story name="Url Control">
+<!-- UrlControl -->
+<Story name="Url Control" parameters={{ layout: 'fullscreen' }}>
 	<div class="flex flex-col gap-4 p-4">
 		<MyInput.Root class="border-border flex h-10 w-80 items-center rounded-md border">
 			<MyInput.UrlControl bind:value={urlValue} placeholder="example.com" />
@@ -225,16 +323,16 @@
 	</div>
 </Story>
 
-<Story name="Url Control (HttpScheme)">
+<Story name="Url Control (HttpScheme)" parameters={{ layout: 'fullscreen' }}>
 	<div class="flex flex-col gap-4 p-4">
 		<MyInput.Root class="border-border flex h-10 w-80 items-center rounded-md border">
-			<MyInput.UrlControl bind:value={urlValue} scheme="http://" placeholder="example.com" />
+			<MyInput.UrlControl bind:value={urlValue} placeholder="example.com" />
 		</MyInput.Root>
 	</div>
 </Story>
 
-<!-- ─── PhoneControl ─────────────────────────────────────────────────────── -->
-<Story name="Phone Control">
+<!-- PhoneControl -->
+<Story name="Phone Control" parameters={{ layout: 'fullscreen' }}>
 	<div class="flex flex-col gap-4 p-4">
 		<MyInput.Root class="border-border flex h-10 w-64 items-center rounded-md border">
 			<MyInput.PhoneControl bind:value={phoneValue} format="+# (###) ###-####" />
@@ -243,7 +341,7 @@
 	</div>
 </Story>
 
-<Story name="Phone Control (UK)">
+<Story name="Phone Control (UK)" parameters={{ layout: 'fullscreen' }}>
 	<div class="flex flex-col gap-4 p-4">
 		<MyInput.Root class="border-border flex h-10 w-64 items-center rounded-md border">
 			<MyInput.PhoneControl bind:value={phoneValue} format="+44 #### ######" placeholder="7700 900000" />
@@ -251,8 +349,8 @@
 	</div>
 </Story>
 
-<!-- ─── LocationControl ──────────────────────────────────────────────────── -->
-<Story name="Location Control">
+<!-- LocationControl -->
+<Story name="Location Control" parameters={{ layout: 'fullscreen' }}>
 	<div class="flex flex-col gap-4 p-4">
 		<div class="flex flex-col gap-1">
 			<Label>Decimal degrees (default)</Label>
@@ -275,7 +373,7 @@
 	</div>
 </Story>
 
-<Story name="Location Control (DMS)">
+<Story name="Location Control (DMS)" parameters={{ layout: 'fullscreen' }}>
 	<div class="flex flex-col gap-4 p-4">
 		<div class="flex flex-col gap-1">
 			<Label>Degrees, minutes, seconds overlay</Label>
@@ -294,7 +392,7 @@
 	</div>
 </Story>
 
-<Story name="Location Control (Precision)">
+<Story name="Location Control (Precision)" parameters={{ layout: 'fullscreen' }}>
 	<div class="flex flex-col gap-4 p-4">
 		<div class="flex flex-col gap-1">
 			<Label>2 decimal places</Label>
@@ -337,7 +435,7 @@
 	</div>
 </Story>
 
-<Story name="Location Control (NoLocate)">
+<Story name="Location Control (NoLocate)" parameters={{ layout: 'fullscreen' }}>
 	<div class="flex flex-col gap-4 p-4">
 		<div class="flex flex-col gap-1">
 			<Label>Without geolocation button</Label>
@@ -352,7 +450,7 @@
 	</div>
 </Story>
 
-<Story name="Location Control (States)">
+<Story name="Location Control (States)" parameters={{ layout: 'fullscreen' }}>
 	<div class="flex flex-col gap-4 p-4">
 		<div class="flex flex-col gap-1">
 			<Label>Disabled</Label>
@@ -384,7 +482,7 @@
 	</div>
 </Story>
 
-<Story name="Location Control (WithIcon)">
+<Story name="Location Control (WithIcon)" parameters={{ layout: 'fullscreen' }}>
 	<div class="flex flex-col gap-4 p-4">
 		<div class="flex flex-col gap-1">
 			<Label>With leading icon</Label>
@@ -405,8 +503,9 @@
 		</div>
 	</div>
 </Story>
-<!-- ─── OTP Control ───────────────────────────────────────────────────────── -->
-<Story name="OTP Control">
+
+<!-- OTP Control -->
+<Story name="OTP Control" parameters={{ layout: 'fullscreen' }}>
 	<div class="flex flex-col gap-6 p-4">
 
 		<div class="flex flex-col gap-2">
@@ -414,7 +513,7 @@
 			<MyInput.Root class="border-border flex h-10 w-72 items-center rounded-md border overflow-hidden">
 				<MyInput.OtpControl
 					bind:value={otpValue}
-					oncomplete={(v) => { otpCompleted = true; }}
+					oncomplete={() => { otpCompleted = true; }}
 				/>
 			</MyInput.Root>
 			<p class="text-muted-foreground text-sm">
@@ -432,7 +531,7 @@
 
 		<div class="flex flex-col gap-2">
 			<Label>Standalone — individual boxes (default)</Label>
-			<OtpControl length={6} oncomplete={(v) => { otpCompleted = true; }} />
+			<OtpControl length={6} oncomplete={() => { otpCompleted = true; }} />
 		</div>
 
 		<div class="flex flex-col gap-2">
@@ -457,8 +556,8 @@
 	</div>
 </Story>
 
-<!-- ─── Currency Control ──────────────────────────────────────────────────── -->
-<Story name="Currency Control">
+<!-- Currency Control -->
+<Story name="Currency Control" parameters={{ layout: 'fullscreen' }}>
 	<div class="flex flex-col gap-6 p-4">
 		<div class="flex flex-col gap-2">
 			<Label>USD (default)</Label>
@@ -518,8 +617,8 @@
 	</div>
 </Story>
 
-<!-- ─── Color Control ────────────────────────────────────────────────────── -->
-<Story name="Color Control">
+<!-- Color Control -->
+<Story name="Color Control" parameters={{ layout: 'fullscreen' }}>
 	<div class="flex flex-col gap-4 p-4">
 		<!-- Format grid -->
 		<div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">

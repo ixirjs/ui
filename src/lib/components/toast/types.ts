@@ -2,10 +2,7 @@ import type { Snippet } from 'svelte';
 import type { HtmlAtomProps, Base } from '$svelte-atoms/core/components/atom';
 import type { ToastBond, ToastBondProps } from './bond.svelte';
 
-// ============================================================================
-// Toast Snippet Props (Extensible)
-// ============================================================================
-
+// Snippet props
 export interface ToastSnippetProps {
 	toast: ToastBond | undefined;
 }
@@ -19,10 +16,10 @@ export interface ToastRootProps<
 	open?: boolean;
 	disabled?: boolean;
 	dismissible?: boolean;
-	/** Auto-dismiss duration in ms. Set to 0 to disable auto-dismiss. Default: 0. */
+	// Auto-dismiss duration in ms. Set to 0 to disable. Default: 0.
 	duration?: number;
 	onclose?: () => void;
-	/** Optional factory to construct a custom bond. */
+	// Optional factory to construct a custom bond.
 	factory?: (props: ToastBondProps) => ToastBond;
 }
 

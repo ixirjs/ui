@@ -37,7 +37,6 @@
 </script>
 
 <HtmlAtom
-	{bond}
 	class={['datagrid-root w-full gap-x-0 gap-y-0', '$preset', klass]}
 	style="--template-columns:{bond.state.template || fallbackTemplate}"
 	{...binding.props}

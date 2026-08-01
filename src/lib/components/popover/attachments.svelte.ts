@@ -1,5 +1,6 @@
 import { PopoverBond } from './bond.svelte';
 import { clickout as gclickout } from '$svelte-atoms/core/attachments/clickout.svelte';
+import { containsTarget } from '$svelte-atoms/core/utils/dom.svelte';
 
 export function popover(callback: (node: HTMLElement, bond?: PopoverBond) => any) {
 	const bond = PopoverBond.get();
@@ -12,9 +13,7 @@ export function clickoutPopover(onclickout?: (ev: PointerEvent, atom: PopoverBon
 	return gclickout((ev: PointerEvent) => {
 		if (!atom) return;
 
-		const target = ev.target as Element;
-
-		if (atom.elements.trigger?.contains(target)) {
+		if (containsTarget(atom.elements.trigger, ev.target)) {
 			return;
 		}
 

@@ -1,5 +1,5 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'p', B extends Base = Base">
-	import { HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
+	import { mergeAtomProps, HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
 	import type { DialogDescriptionProps } from './types';
 	import { DialogBond } from './bond.svelte';
 
@@ -11,15 +11,11 @@
 		...restProps
 	}: DialogDescriptionProps<E, B> = $props();
 
-	const bond = DialogBond.get();
+	const bond = DialogBond.getOrThrow('<Dialog.Description /> must be used within a <Dialog.Root />');
 
-	const atom = bond?.description();
+	const atom = bond.atom('description');
 
-	const descriptionProps = $derived({
-		preset: preset ?? atom?.preset,
-		...atom?.spread,
-		...restProps
-	});
+	const descriptionProps = $derived(mergeAtomProps(atom, preset, restProps));
 </script>
 
 <HtmlAtom

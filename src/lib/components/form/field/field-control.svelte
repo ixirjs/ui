@@ -1,5 +1,5 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
+	import { HtmlAtom, mergeAtomProps, type Base } from '$svelte-atoms/core/components/atom';
 	import { FieldBond } from './bond.svelte';
 	import type { FieldControlProps } from '../types';
 
@@ -23,13 +23,7 @@
 	
 	const atom = bond?.atom('control');
 
-	const controlProps = $derived.by(() => {
-		return {
-			preset: preset ?? atom?.preset,
-			...(atom?.spread ?? {}),
-			...restProps
-		};
-	});
+	const controlProps = $derived(mergeAtomProps(atom, preset, restProps));
 
 	function handleInput(
 		ev: InputEvent,
@@ -57,8 +51,9 @@
 
 		bond.state.props.value = value
 		bond.state.props.files = files
-		bond.state.props.date = date
-		bond.state.props.number = number
+		// field-control is type-agnostic (props are loosely typed); narrow at the bond boundary.
+		bond.state.props.date = date as Date | null
+		bond.state.props.number = number as number
 		bond.state.props.checked = checked = detail?.checked ?? false;
 	}
 </script>

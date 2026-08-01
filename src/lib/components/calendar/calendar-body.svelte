@@ -1,9 +1,8 @@
 <script lang="ts">
-	import { backInOut } from 'svelte/easing';
 	import CalendarDay from './calendar-day.svelte';
 	import { CalendarBond } from './bond.svelte';
 	import { cn } from '$svelte-atoms/core/utils';
-	import { HtmlAtom } from '../atom';
+	import { mergePresetProps, HtmlAtom } from '../atom';
 
 	const calendarBond = CalendarBond.get();
 
@@ -12,87 +11,42 @@
 	let {
 		class: klass = '',
 		weekday,
-		preset = 'calendar.body',
+		preset = undefined,
+		// When false, off-month padding days (trailing prev-month / leading next-month)
+		// are not rendered as real days — fully-off-month weeks are dropped and the
+		// remaining boundary off-month cells become inert placeholders. Use this for
+		// multi-month / range views where those dates already appear in the adjacent panel.
+		outsideDays = true,
 		children = undefined,
 		...restProps
 	} = $props();
 
-	const bodyProps = $derived({
-		...calendarBond?.body(),
-		...restProps
+	// Days to lay out: with outsideDays the full 6-week grid; otherwise drop any week
+	// that is entirely off-month (the redundant all-next/prev-month row) while keeping
+	// 7-day alignment intact. Boundary off-month days are kept here and rendered as
+	// blank placeholders below so the columns stay put.
+	const visibleDays = $derived.by(() => {
+		const days = currentMonth?.days ?? [];
+		if (outsideDays) return days;
+
+		const weeks = [];
+		for (let i = 0; i < days.length; i += 7) {
+			weeks.push(days.slice(i, i + 7));
+		}
+		return weeks.filter((week) => week.some((day) => !day.offmonth)).flat();
 	});
 
-	// const generator = function (pivot: Date, start: Date, end?: Date) {
-	// 	const firstDay = new Date(pivot.getFullYear(), pivot.getMonth(), 1).getDay();
-	// 	const lastMonthDaysCount = monthDays(pivot.getMonth() - 1, pivot.getFullYear());
-	// 	const sample = new Date(
-	// 		pivot.getFullYear(),
-	// 		pivot.getMonth() - 1,
-	// 		lastMonthDaysCount - firstDay
-	// 	);
-
-	// 	const array = [];
-	// 	let next = false,
-	// 		prec = false;
-
-	// 	for (let index = 0; index < 42; index++) {
-	// 		sample.setDate(sample.getDate() + 1);
-
-	// 		prec = pivot.getMonth() > sample.getMonth() || pivot.getFullYear() > sample.getFullYear();
-	// 		next =
-	// 			(pivot.getMonth() < sample.getMonth() && pivot.getFullYear() === sample.getFullYear()) ||
-	// 			(pivot.getMonth() > sample.getMonth() && pivot.getFullYear() < sample.getFullYear());
-
-	// 		array.push({
-	// 			id: sample.getTime(),
-	// 			date: sample.getDate(),
-	// 			offmonth: next || prec,
-	// 			next,
-	// 			prec,
-	// 			today: isToday(sample),
-	// 			week: Math.floor(index / 7),
-	// 			month: sample.getMonth(),
-	// 			disabled: false,
-	// 			weekend: sample.getDay() == 0,
-	// 			name: format(sample, 'iiiii'),
-	// 			selected: start?.getTime() === sample.getTime()
-	// 		});
-	// 	}
-
-	// 	return array;
-	// };
-
-	// const days = $derived(
-	// 	generator(
-	// 		context_calendar.derived.data.pivote,
-	// 		context_calendar.derived.data.start ?? new Date(),
-	// 		context_calendar.derived.data.end
-	// 	)
-	// );
-
-	function monthDays(month: number, year = 2020) {
-		return new Date(year, month + 1, 0).getDate();
-	}
-
-	function scle(node: HTMLElement, { delay = 0, duration = 400, easing = backInOut }) {
-		return {
-			delay,
-			duration,
-			easing,
-			css: (_, u) => {
-				return `transform: scale(${u})`;
-			}
-		};
-	}
+	const bodyProps = $derived(mergePresetProps(preset, 'calendar.body', { ...calendarBond?.body().spread, ...restProps }));
 </script>
 
 <HtmlAtom
-	class={cn('col-span-full grid h-full w-full grid-cols-subgrid', klass)}
-	{preset}
+	class={cn('col-span-full grid w-full grid-cols-subgrid', klass)}
 	{...bodyProps}
 >
-	{#each currentMonth?.days ?? [] as day (day.id)}
-		{#if children}
+	{#each visibleDays as day (day.id)}
+		{#if !outsideDays && day.offmonth}
+			<div aria-hidden="true"></div>
+		{:else if children}
 			{@render children?.({ day })}
 		{:else}
 			<CalendarDay

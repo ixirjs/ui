@@ -22,8 +22,7 @@
 			open: [() => open, (v) => (open = v)],
 			data: () => data,
 			disabled: () => disabled,
-			value: () => value,
-			rest: () => restProps
+			value: () => value
 		},
 		{ preset: () => preset }
 	);
@@ -40,7 +39,6 @@
 </script>
 
 <HtmlAtom
-	{bond}
 	class={['border-border flex w-full flex-col overflow-hidden', '$preset', klass]}
 	{...binding.props}
 	{...restProps}

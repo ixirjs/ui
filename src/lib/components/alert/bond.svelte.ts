@@ -1,11 +1,14 @@
-import { Bond, BondState, type BondStateProps } from '$svelte-atoms/core/shared/bond.svelte';
-import { getContext, setContext } from 'svelte';
+import {
+	bondContextKey,
+	Bond,
+	BondState,
+	type BondStateProps
+} from '$svelte-atoms/core/shared/bond.svelte';
 import { createAttachmentKey } from 'svelte/attachments';
 
 export type AlertBondProps = BondStateProps & {
 	disabled?: boolean;
 	extend?: Record<string, unknown>;
-	readonly rest?: Record<string, unknown>;
 };
 
 export type AlertBondElements = {
@@ -20,15 +23,11 @@ export type AlertBondElements = {
 
 export class AlertBond<
 	State extends AlertBondState<AlertBondProps> = AlertBondState<AlertBondProps>
-> extends Bond<AlertBondProps, State, AlertBondElements> {
-	static CONTEXT_KEY = '@atoms/context/alert';
+> extends Bond<AlertBondProps, State> {
+	static CONTEXT_KEY = bondContextKey('alert');
 
 	constructor(s: State) {
 		super(s);
-	}
-
-	share(): this {
-		return AlertBond.set(this) as this;
 	}
 
 	root(props: Record<string, unknown> = {}) {
@@ -109,18 +108,10 @@ export class AlertBond<
 			}
 		};
 	}
-
-	static get(): AlertBond | undefined {
-		return getContext(AlertBond.CONTEXT_KEY);
-	}
-
-	static set(bond: AlertBond): AlertBond {
-		return setContext(AlertBond.CONTEXT_KEY, bond);
-	}
 }
 
 export class AlertBondState<Props extends AlertBondProps> extends BondState<Props> {
-	constructor(props: () => Props) {
+	constructor(props: Props) {
 		super(props);
 	}
 }

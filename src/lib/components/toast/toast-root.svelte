@@ -1,9 +1,8 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
 	import { HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
-	import { ToastBond, ToastBondState, type ToastBondProps } from './bond.svelte';
-	import { defineProperty, defineState } from '$svelte-atoms/core/utils';
+	import { ToastBond, ToastBondState } from './bond.svelte';
 	import type { ToastRootProps } from './types';
-	import { untrack } from 'svelte';
+	import { bondFactory,bindBond } from '$svelte-atoms/core/shared';
 
 	let {
 		open = $bindable(true),
@@ -11,43 +10,31 @@
 		duration = 0,
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		dismissible: _dismissible,
-		class: klass = '',
-		preset = 'toast',
-		factory = defaultFactory,
+		preset = undefined,
+		factory = bondFactory(ToastBondState, ToastBond),
 		children = undefined,
 		onclose = undefined,
 		...restProps
 	}: ToastRootProps<E, B> = $props();
 
-	const bondProps = defineState<ToastBondProps>(
-		[
-			defineProperty(
-				'open',
-				() => open,
-				(v) => {
-					if (open === v) return;
-					open = v;
-					if (!v) onclose?.();
-				}
-			),
-			defineProperty('rest', () => restProps)
-		],
-		() => ({ disabled })
+	const binding = bindBond<ToastBond>(
+		(props) => factory(props),
+		{
+			open: [() => open, (v) => (open = v)],
+			disabled: () => disabled
+		},
+		{ preset: () => preset }
 	);
+	
+	const bond = binding.bond.share();
 
-	const bond = untrack(() => factory(bondProps)).share();
 
-	function defaultFactory(props: ToastBondProps) {
-		const bondState = new ToastBondState(() => props);
-		return new ToastBond(bondState);
-	}
-
-	const rootProps: Record<string, unknown> = $derived({
-		...bond.root().spread,
+	const rootProps = $derived({
+		...binding.props,
 		...restProps
 	});
 
-	// Auto-dismiss when a positive duration is provided
+	// Auto-dismiss when duration > 0.
 	$effect(() => {
 		if (!open || duration <= 0) return;
 		const handle = setTimeout(() => {
@@ -62,9 +49,6 @@
 </script>
 
 <HtmlAtom
-	{bond}
-	{preset}
-	class={['border-border', '$preset', klass]}
 	{...rootProps}
 >
 	{@render children?.({ toast: bond })}

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { PopoverDialogBond, PopoverDialogBondState, type PopoverDialogBondProps } from './bond.svelte';
 import { PopoverTriggerAtom, PopoverOverlayAtom } from '../popover/bond.svelte';
 import { DialogContentAtom, DialogTitleAtom } from '../dialog/bond.svelte';
-import { ModalRootAtom } from '$svelte-atoms/core/shared/overlay';
+import { ModalRootAtom, FOCUS } from '$svelte-atoms/core/components/overlay';
 
 function makeBond(initial: Partial<PopoverDialogBondProps> = {}) {
 	const props = $state<PopoverDialogBondProps>({ open: false, disabled: false, ...initial });
@@ -27,9 +27,7 @@ describe('PopoverDialogBond — fuse(Popover, Dialog) (§9.4.1)', () => {
 	});
 
 	it('modal focus wins the slot: trappedFocus + restoreFocus "previous" (dialog, not popover)', () => {
-		const focus = makeBond().capability<{ restoreFocus: string; captureFocusOnOpen: boolean }>(
-			'focus'
-		)?.surface;
+		const focus = makeBond().capability(FOCUS)?.surface;
 		expect(focus?.restoreFocus).toBe('previous'); // dialog modal beats popover's 'trigger'
 		expect(focus?.captureFocusOnOpen).toBe(true);
 	});

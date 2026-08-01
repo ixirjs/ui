@@ -1,7 +1,9 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
 	import { InputBond, InputState, type InputStateProps } from './bond.svelte';
-	import { defineProperty, defineState } from '$svelte-atoms/core/utils';
+	import { bondFactory } from '$svelte-atoms/core/shared';
+	import { bindBond } from '$svelte-atoms/core/shared/bind-bond.svelte';
 	import { HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
+	import type { Factory } from '$svelte-atoms/core/types';
 	import type { InputRootProps } from './types';
 
 	let {
@@ -9,51 +11,24 @@
 		value,
 		checked = undefined,
 		files = [],
-		preset = 'input',
+		preset = undefined,
 		children = undefined,
-		factory = _factory,
+		factory = bondFactory(InputState, InputBond),
 		...restProps
 	}: InputRootProps<E, B> = $props();
 
-	const bondProps = defineState<InputStateProps>([
-		defineProperty(
-			'value',
-			() => value,
-			(v) => {
-				value = v;
-			}
-		),
+	const binding = bindBond<InputBond>(
+		(props) => (factory as Factory<InputBond>)(props),
+		{
+			// Bridge HTML-input prop shapes to the bond's domain props (was loose `defineProperty`).
+			value: [() => value as InputStateProps['value'], (v) => { value = v as typeof value; }],
+			checked: [() => checked as InputStateProps['checked'], (v) => { checked = v as typeof checked; }],
+			files: [() => files as InputStateProps['files'], (v) => { files = [...(v ?? [])]; }]
+		},
+		{ preset: () => preset }
+	);
+	const bond = binding.bond.share();
 
-		defineProperty(
-			'checked',
-			() => checked,
-			(v) => {
-				checked = v;
-			}
-		),
-
-		defineProperty(
-			'files',
-			() => files,
-			(v) => {
-				files = [...v];
-			}
-		),
-
-		defineProperty('rest', () => restProps)
-	]);
-	const bond = _factory(bondProps).share();
-
-	const rootProps = $derived({
-		...bond.root(),
-		...restProps
-	});
-
-	function _factory(props: typeof bondProps) {
-		const bondState = new InputState(() => props);
-
-		return new InputBond(bondState);
-	}
 
 	export function getBond() {
 		return bond;
@@ -61,14 +36,13 @@
 </script>
 
 <HtmlAtom
-	{preset}
 	class={[
 		'border-border text-foreground bg-input relative flex h-10 w-auto items-center overflow-hidden rounded-md border',
 		'$preset',
 		klass
 	]}
-	{bond}
-	{...rootProps}
+	{...binding.props}
+	{...restProps}
 >
 	{@render children?.({ input: bond })}
 </HtmlAtom>

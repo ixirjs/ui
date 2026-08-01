@@ -3,10 +3,6 @@ import type { HtmlAtomProps, Base, SnippetProps } from '$svelte-atoms/core/compo
 import type { PortalBond } from '$svelte-atoms/core/components/portal';
 import type { DialogBond, DialogBondProps } from './bond.svelte';
 
-// ============================================================================
-// Dialog Snippet Props (Extensible)
-// ============================================================================
-
 export interface DialogSnippetProps extends SnippetProps {
 	dialog: DialogBond;
 }
@@ -19,7 +15,7 @@ export interface DialogProps<
 > extends HtmlAtomProps<E, B, DialogChildren> {
 	open?: boolean;
 	disabled?: boolean;
-	// Controls backdrop click behaviour. 'modal' closes on backdrop click (default); 'non-modal' keeps it open.
+	// 'modal' closes on backdrop click (default); 'non-modal' keeps it open.
 	type?: 'modal' | 'non-modal' | undefined;
 	portal?: string | PortalBond;
 	factory?: (props: DialogBondProps) => DialogBond;

@@ -1,13 +1,9 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
+	import { HtmlAtom, mergeAtomProps, type Base } from '$svelte-atoms/core/components/atom';
 	import { PopoverBond } from './bond.svelte';
 	import type { PopoverTriggerProps } from './types';
 
-	const bond = PopoverBond.get();
-
-	if (!bond) {
-		throw new Error('<PopoverTrigger /> must be used within a <Popover />');
-	}
+	const bond = PopoverBond.getOrThrow('<PopoverTrigger /> must be used within a <Popover />');
 
 	let {
 		class: klass = '',
@@ -20,12 +16,7 @@
 
 	const atom = bond.atom('trigger');
 
-	const presentation = $derived({ preset: preset ?? atom.preset });
-
-	const triggerProps = $derived({
-		...atom.spread,
-		...restProps
-	});
+	const triggerProps = $derived(mergeAtomProps(atom, preset, restProps));
 
 	function handlePointerEnter(event: PointerEvent) {
 		onpointerenter?.(event);
@@ -41,7 +32,6 @@
 	class={['border-border flex w-fit cursor-pointer rounded-md p-2', '$preset', klass]}
 	type={as === 'button' ? 'button' : undefined}
 	onpointerenter={handlePointerEnter}
-	{...presentation}
 	{...triggerProps}
 >
 	{@render children?.({ popover: bond })}

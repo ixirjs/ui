@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Bond, BondState, BondAtom, type Behavior, type BondStateProps } from './bond.svelte';
-import { clickTrigger } from './overlay/policies/trigger.svelte';
+import { clickTrigger } from '$svelte-atoms/core/components/overlay/policies/trigger.svelte';
 
 // Specs for BondAtom.behavior() — the generic behavior-composition seam.
 // The last describe proves the real ClickTrigger policy works through use() and coexists with the atom's own handler.

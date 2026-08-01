@@ -1,28 +1,28 @@
 <script lang="ts">
-	import type { PortalBond } from './bond.svelte';
-	import { PortalsBond } from './portals/bond.svelte';
+	import type { ActivePortalProps } from './types';
+	import { PortalsBond, resolvePortal } from './portals';
 
-	let { portal, children = undefined } = $props();
+	let { portal, children }: ActivePortalProps = $props();
 
 	const portalsBond = PortalsBond.get();
-	const activePortal = $derived.by(() => {
-		if (typeof portal === 'string') {
-			return portalsBond?.state?.get(portal) ?? undefined;
-		}
 
-		return portal as PortalBond;
+	const activePortal = $derived(resolvePortal(portalsBond, portal));
+
+	// Warn (in an effect, after registration settles) when a string id never resolves.
+	$effect(() => {
+		if (import.meta.env?.DEV && typeof portal === 'string' && !activePortal) {
+			console.warn(
+				`[svelte-atoms] <ActivePortal portal="${portal}">: no portal registered with this id; rendering nothing.`
+			);
+		}
 	});
 
-	
-	if (!portalsBond) {
-		throw new Error('Portals bond is not found');
-	}
-	
+	// Snippet-or-undefined: shares the portal into context from inside the rendered block, so local
+	// enter/exit transitions still play.
 	const content = $derived(activePortal ? proxy : undefined);
-	
-	function proxy(...args: any[]) {
-		activePortal?.share();
 
+	function proxy(...args: unknown[]) {
+		activePortal?.share();
 		return children?.(...args);
 	}
 </script>

@@ -1,6 +1,6 @@
-<script lang="ts" generics="T extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
+<script lang="ts">
 	import { SelectBond } from './bond.svelte';
-	import { HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
+	import { HtmlAtom } from '$svelte-atoms/core/components/atom';
 
 	const bond = SelectBond.get();
 

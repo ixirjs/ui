@@ -1,14 +1,10 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
+	import { mergePresetProps, HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
 	import { Stack } from '../stack';
 	import { StepperBond } from './bond.svelte';
 	import type { StepperBodyProps } from './types';
 
-	const bond = StepperBond.get();
-
-	if (!bond) {
-		throw new Error('Stepper.Body must be used within a Stepper component.');
-	}
+	const bond = StepperBond.getOrThrow('Stepper.Body must be used within a Stepper component.');
 
 	let {
 		class: klass = '',
@@ -18,10 +14,7 @@
 		...restProps
 	}: StepperBodyProps<E, B> = $props();
 
-	const bodyProps = $derived({
-		preset: preset ?? 'stepper.body',
-		...restProps
-	});
+	const bodyProps = $derived(mergePresetProps(preset, 'stepper.body', restProps));
 </script>
 
 <HtmlAtom
@@ -30,6 +23,5 @@
 	class={['stepper-body w-full', '$preset', klass]}
 	{...bodyProps}
 >
-	<!-- Custom body content -->
 	{@render children?.({ stepper: bond })}
 </HtmlAtom>

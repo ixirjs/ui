@@ -39,7 +39,6 @@
 		if (!render) return;
 		if (!isReady) render;
 
-		// Get the computed color from the canvas element
 		computedColor = getComputedStyle(canvasElement).color;
 
 		const qrcode = render(canvasElement);

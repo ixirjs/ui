@@ -4,61 +4,66 @@
 
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
 	import type { HTMLAttributes } from 'svelte/elements';
+	import { bondFactory } from '$svelte-atoms/core/shared';
 	import type { PortalOuterProps } from './types';
-	import { PortalsBond, PortalBond, PortalState, type PortalStateProps } from '.';
-	import { RootBond } from '$svelte-atoms/core/components/root';
+	import { PortalsBond, PortalBond, PortalState } from '.';
 	import { HtmlAtom, type ElementType, type Base } from '$svelte-atoms/core/components/atom';
-	import { defineProperty, defineState } from '$svelte-atoms/core/utils';
+	import { bindBond } from '$svelte-atoms/core/shared/bind-bond.svelte';
+	import type { Factory } from '$svelte-atoms/core/types';
 
 	type Element = ElementType<E>;
 
 	let {
 		class: klass = '',
+		preset = undefined,
 		id,
-		factory = _factory,
+		factory = bondFactory(PortalState, PortalBond),
 		children = undefined,
 		...restProps
 	}: PortalOuterProps<E, B> & HTMLAttributes<Element> = $props();
 
-	const rootBond = RootBond.get();
 	const portalsBond = PortalsBond.get();
 
-	const bondProps = defineState<PortalStateProps>([defineProperty('id', () => id), defineProperty('rest', () => restProps)]);
-	const bond = factory(bondProps).share() as PortalBond;
+	const binding = bindBond<PortalBond>(
+		(props) => (factory as Factory<PortalBond>)(props),
+		{
+			id: () => id
+		},
+		{ preset: () => preset }
+	);
+	const bond = binding.bond.share();
 
-	portalsBond?.state.set(id, bond);
+	// Eager register so descendants (e.g. ActivePortal) resolve this portal within the same render;
+	// `id` is read once at init.
+	// svelte-ignore state_referenced_locally
+	const unregister = portalsBond?.state.register(id, bond);
 
 	$effect(() => {
-		if (rootBond) {
-			rootBond.state.setPortal(id, bond);
-		}
-
 		return () => {
-			portalsBond?.state.delete(id);
+			unregister?.();
 			bond.destroy();
 		};
 	});
 
-	const rootProps = $derived({
-		...bond.root().spread,
-		...restProps
-	});
-
-	function _factory(props: typeof bondProps) {
-		const portalState = new PortalState(() => props);
-		return new PortalBond(portalState);
-	}
 
 	export function getBond() {
 		return bond;
 	}
 </script>
 
+<!--
+	Portal surface: an `absolute inset-0` layer rendered in place (not detached to <body>), so it
+	scrolls and stacks with the host. `pointer-events-none` lets page clicks through (overlays opt
+	back in).
+-->
 <HtmlAtom
-	{bond}
-	preset="portal"
-	class={['border-border pointer-events-none', '$preset', klass]}
-	{...rootProps}
+	class={[
+		'portal-root border-border pointer-events-none absolute inset-0',
+		'$preset',
+		klass
+	]}
+	{...binding.props}
+	{...restProps}
 >
 	{@render children?.()}
 </HtmlAtom>

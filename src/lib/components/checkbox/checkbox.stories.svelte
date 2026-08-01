@@ -3,14 +3,24 @@
 	import { default as CheckboxCmp } from './checkbox.svelte';
 
 	const { Story } = defineMeta({
-		title: 'ATOMS/Checkbox',
+		title: 'Atoms/Checkbox',
 		parameters: {
 			layout: 'centered'
+		},
+		args: {
+			checked: false,
+			indeterminate: false,
+			disabled: false
+		},
+		argTypes: {
+			checked: { control: 'boolean', description: 'Whether the checkbox is checked' },
+			indeterminate: { control: 'boolean', description: 'Whether the checkbox is in an indeterminate (mixed) state' },
+			disabled: { control: 'boolean', description: 'Disable interaction with the checkbox' }
 		}
 	});
 </script>
 
-<script>
+<script lang="ts">
 	// Notification preferences
 	let emailNotifs = $state(true);
 	let pushNotifs = $state(false);
@@ -40,7 +50,16 @@
 	const canSubmit = $derived(acceptTerms && acceptPrivacy);
 </script>
 
-<Story name="Checkbox">
+<Story name="Basic">
+	{#snippet template(args)}
+		<label class="flex cursor-pointer items-center gap-2">
+			<CheckboxCmp {...args} />
+			<span class="text-foreground text-sm">Accept terms and conditions</span>
+		</label>
+	{/snippet}
+</Story>
+
+<Story name="Showcase">
 	<div class="flex flex-col gap-8 p-6" style="width: 420px;">
 		<!-- Settings panel -->
 		<div class="border-border bg-card rounded-lg border">

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { HtmlAtom } from '$svelte-atoms/core/components/atom';
+	import { mergePresetProps, HtmlAtom } from '$svelte-atoms/core/components/atom';
 	import { InputBond } from './bond.svelte';
 	import type { InputFileControlProps } from './types';
 
@@ -13,10 +13,12 @@
 		disabled = false,
 		placeholder = 'Choose file…',
 		triggerContent = undefined,
-		preset = 'input.file',
+		preset = undefined,
 		onchange = undefined,
 		...restProps
 	}: InputFileControlProps = $props();
+
+	const fileControlProps = $derived(mergePresetProps(preset, 'input.file', restProps));
 
 	let inputEl = $state<HTMLInputElement>();
 
@@ -61,11 +63,9 @@
 	{...restProps}
 />
 
-<!-- visible control -->
 <HtmlAtom
 	as="button"
 	type="button"
-	{preset}
 	{disabled}
 	onclick={openPicker}
 	class={[
@@ -73,13 +73,13 @@
 		'$preset',
 		klass
 	]}
+	{...fileControlProps}
 >
 	{#if triggerContent}
 		{@render triggerContent({ files, hasFiles, open: openPicker })}
 	{:else if hasFiles}
-		<!-- file info -->
 		{#if files.length === 1}
-			{@const f = files[0]}
+			{@const f = files[0]!}
 			{@const ext = f.name.split('.').pop()?.toUpperCase() ?? ''}
 			{@const size = formatSize(f.size)}
 			<span class="bg-primary/10 text-primary rounded px-1.5 py-0.5 font-mono text-xs font-medium">
@@ -93,7 +93,6 @@
 				{formatSize(files.reduce((a, f) => a + f.size, 0))}
 			</span>
 		{/if}
-		<!-- clear button -->
 		<button
 			type="button"
 			onclick={clearFiles}
@@ -105,7 +104,6 @@
 			</svg>
 		</button>
 	{:else}
-		<!-- placeholder -->
 		<svg viewBox="0 0 16 16" fill="none" class="text-muted-foreground h-4 w-4 shrink-0" aria-hidden="true">
 			<path d="M2 12V9l4-4 3 3 2-2 3 3v3H2z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
 			<circle cx="11" cy="4" r="1.5" stroke="currentColor" stroke-width="1.2"/>

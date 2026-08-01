@@ -1,13 +1,10 @@
 <script lang="ts" generics="T = unknown, E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
+	import { mergeAtomProps, HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
 	import { setDatagridHeaderContext } from './context';
 	import { DataGridBond } from './bond.svelte';
 	import type { DatagridHeaderProps } from './types';
 
-	const bond = (DataGridBond.get() as DataGridBond<T> | undefined);
-	if (!bond) {
-		throw new Error('DataGrid.Header must be used within DataGrid.Root.');
-	}
+	const bond = DataGridBond.getOrThrow('DataGrid.Header must be used within DataGrid.Root.') as DataGridBond<T>;
 
 	let {
 		class: klass = '',
@@ -19,7 +16,7 @@
 	setDatagridHeaderContext({ isHeader: true });
 
 	const atom = bond.atom('header');
-	const headerProps = $derived({ preset: preset ?? atom.preset, ...atom.spread, ...restProps });
+	const headerProps = $derived(mergeAtomProps(atom, preset, restProps));
 </script>
 
 <HtmlAtom

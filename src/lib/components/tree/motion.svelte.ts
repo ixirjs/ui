@@ -1,13 +1,13 @@
 import { animate } from 'motion';
 import { TreeBond } from './bond.svelte';
 
-export type AnimatePopoverContentParams = {
+export type AnimateTreeBodyParams = {
 	duration?: number;
 	delay?: number;
 	ease?: string;
 };
 
-export function animateTreeBody(params: AnimatePopoverContentParams = {}) {
+export function animateTreeBody(params: AnimateTreeBodyParams = {}) {
 	const bond = TreeBond.get();
 	return (node: HTMLElement) => {
 		const { delay = 0, duration = 0.1, ease } = params;

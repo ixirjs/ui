@@ -47,8 +47,7 @@ export function mergePresetRecords(records: PresetEntryRecord[]): PresetEntryRec
 					? { ...result.defaults, ...record.defaults }
 					: record.defaults;
 
-		// Copy remaining own keys directly — avoids allocating an intermediate `rest` object.
-		// Use hasOwnProperty guard so prototype-chain properties are never copied.
+		// Copy remaining own keys directly (no intermediate `rest`); guard against the prototype chain.
 		for (const key in record) {
 			if (
 				!Object.prototype.hasOwnProperty.call(record, key) ||
@@ -67,7 +66,7 @@ export function mergePresetRecords(records: PresetEntryRecord[]): PresetEntryRec
 	if (compounds.length) result.compounds = compounds;
 	if (attachments.length) result.attachments = attachments;
 
-	// Single merge pass over all variant maps — avoids N-1 intermediate objects
+	// Single merge pass over all variant maps — avoids N-1 intermediate objects.
 	if (variantsList.length) {
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		let merged: Record<string, Record<string, any>> = {};

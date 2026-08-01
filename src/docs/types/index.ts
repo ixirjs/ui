@@ -30,11 +30,11 @@ export interface PropDefinition {
 }
 
 export interface PropsSection {
-	/** Tab label and markdown heading, e.g. "Alert.Root" */
+	// Tab label and markdown heading, e.g. "Alert.Root"
 	label: string;
-	/** Tab value — auto-derived from label if absent */
+	// Tab value — auto-derived from label if absent
 	value?: string;
-	/** Preset key shown below the tab content */
+	// Preset key shown below the tab content
 	presetKey?: string;
 	props: PropDefinition[];
 }

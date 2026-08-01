@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
+	import { clamp as clampRange } from '$svelte-atoms/core/utils/math';
 	import type { SegmentProps } from './shared';
 
 	let {
@@ -19,7 +20,7 @@
 	let el = $state<HTMLSpanElement>();
 	let buffer = $state('');
 
-	const displayPlaceholder = placeholder ?? '—'.repeat(digits);
+	const displayPlaceholder = $derived(placeholder ?? '—'.repeat(digits));
 
 	function getDisplay(): string {
 		if (buffer !== '') return buffer.padStart(digits, '_');
@@ -35,7 +36,7 @@
 	$effect(() => {
 		if (!el) return;
 		const text = getDisplay();
-		void buffer; void value; // reactive deps
+		void buffer; void value; // track as reactive deps
 
 		untrack(() => {
 			requestAnimationFrame(() => {
@@ -56,9 +57,7 @@
 		}
 	});
 
-	function clamp(v: number) {
-		return Math.max(min, Math.min(max, v));
-	}
+	const clamp = (v: number) => clampRange(v, min, max);
 
 	function commitBuffer(buf: string, andAdvance: boolean) {
 		const n = parseInt(buf, 10);

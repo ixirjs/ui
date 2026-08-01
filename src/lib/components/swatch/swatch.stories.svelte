@@ -3,11 +3,29 @@
 	import { Swatch } from '.';
 
 	const { Story } = defineMeta({
-		title: 'ATOMS/Swatch'
+		title: 'Atoms/Swatch',
+		parameters: { layout: 'centered' },
+		args: {
+			color: 'oklch(0.65 0.18 253)',
+		},
+		argTypes: {
+			color: {
+				control: 'text',
+				description:
+					'Any valid CSS color value — named, hex, rgb(), hsl(), oklch(), color(), transparent, or empty string to show the checkerboard placeholder.',
+			},
+		},
 	});
 </script>
 
-<!-- ─── Basic colors ──────────────────────────────────────────────────────── -->
+<!-- Configurable default -->
+<Story name="Basic">
+	{#snippet template(args)}
+		<Swatch {...args} class="size-10 rounded-md" />
+	{/snippet}
+</Story>
+
+<!-- Basic colors -->
 <Story name="Basic Colors">
 	<div class="flex flex-wrap gap-3 p-4">
 		{#each [
@@ -28,7 +46,7 @@
 	</div>
 </Story>
 
-<!-- ─── Sizes ─────────────────────────────────────────────────────────────── -->
+<!-- Sizes -->
 <Story name="Sizes">
 	<div class="flex flex-wrap items-end gap-4 p-4">
 		{#each [
@@ -47,7 +65,7 @@
 	</div>
 </Story>
 
-<!-- ─── Radius variants ───────────────────────────────────────────────────── -->
+<!-- Radius variants -->
 <Story name="Radius">
 	<div class="flex flex-wrap items-center gap-4 p-4">
 		{#each [
@@ -67,7 +85,7 @@
 	</div>
 </Story>
 
-<!-- ─── Alpha / transparency ──────────────────────────────────────────────── -->
+<!-- Alpha / transparency -->
 <Story name="Alpha">
 	<div class="flex flex-wrap items-end gap-4 p-4">
 		{#each [

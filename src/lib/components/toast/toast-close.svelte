@@ -4,14 +4,14 @@
 >
 	import { Icon } from '$svelte-atoms/core/components/icon';
 	import Close from '$svelte-atoms/core/icons/icon-close.svelte';
-	import { HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
+	import { mergeAtomProps, HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
 	import { ToastBond } from './bond.svelte';
 	import type { ToastCloseProps } from './types';
 
 	let {
 		class: klass = '',
 		as = 'button' as E,
-		preset = 'toast.close',
+		preset = undefined,
 		children = undefined,
 		onclick = undefined,
 		...restProps
@@ -19,10 +19,9 @@
 
 	const bond = ToastBond.get();
 
-	const closeProps = $derived({
-		...(bond?.dismiss().spread ?? {}),
-		...restProps
-	});
+	const atom = bond?.dismiss();
+
+	const closeProps = $derived(mergeAtomProps(atom, preset, restProps));
 
 	function onclick_(ev: MouseEvent) {
 		(onclick as ((ev: MouseEvent) => void) | undefined)?.(ev);
@@ -34,7 +33,6 @@
 <HtmlAtom
 	{as}
 	{bond}
-	{preset}
 	class={['cursor-pointer text-current h-6', '$preset', klass]}
 	{...closeProps}
 	onclick={onclick_}

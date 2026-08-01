@@ -3,8 +3,17 @@ export {
 	BondState,
 	BondAtom,
 	bondContextKey,
+	capabilityKey,
+	sharedCapabilityKey,
+	decorateCapability,
 	type Behavior,
 	type Capability,
+	type CapabilityInfo,
+	type CapabilityDecoration,
+	type CapabilityKey,
+	type SurfaceOf,
+	type RoleContexts,
+	type KnownRole,
 	type BondClass,
 	type BondElements,
 	type BondStateProps,
@@ -12,6 +21,8 @@ export {
 	type AtomRegistry
 } from './bond.svelte';
 export { bindBond, BondBinding, type BondBindingOptions } from './bind-bond.svelte';
+export { bondFactory } from './bond-factory';
+export { useCapabilities } from './use-capabilities.svelte';
 export { Collection } from './collection.svelte';
 export {
 	collectionCapability,
@@ -35,6 +46,7 @@ export { fuse, type FuseSpec, type AtomsOf, type MergeAtoms } from './fuse.svelt
 export {
 	createSelection,
 	selectionCapability,
+	SELECTION,
 	type SelectionModel,
 	type SelectionBacking,
 	type SelectionProjectionOptions
@@ -47,13 +59,19 @@ export {
 export {
 	createRovingFocus,
 	rovingCapability,
+	ROVING,
 	type RovingFocus,
 	type RovingBacking,
 	type RovingProjectionOptions
 } from './capabilities/roving-focus.svelte';
 export {
+	navigationCapability,
+	type NavigationProjectionOptions
+} from './capabilities/navigation.svelte';
+export {
 	createInput,
 	inputCapability,
+	INPUT,
 	type InputModel,
 	type InputField,
 	type InputProjectionOptions
@@ -61,6 +79,7 @@ export {
 export {
 	triggerContentLink,
 	labelledControl,
+	TRIGGER_CONTENT,
 	type TriggerContentOptions,
 	type LabelledControlOptions
 } from './capabilities/relationship.svelte';

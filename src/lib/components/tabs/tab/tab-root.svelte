@@ -4,11 +4,8 @@
 	import { TabsBond } from '../bond.svelte';
 	import { type Snippet } from 'svelte';
 
-	const tabsBond = TabsBond.get();
-
-	if (!tabsBond) {
-		throw new Error('TabRoot must be used within a Tabs component.');
-	}
+	// Assert we're inside a <Tabs> (throws otherwise); the bond itself isn't needed here.
+	TabsBond.getOrThrow('TabRoot must be used within a Tabs component.');
 
 	let {
 		value,

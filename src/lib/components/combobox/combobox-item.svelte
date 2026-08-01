@@ -2,11 +2,7 @@
 	import { ComboboxBond } from './bond.svelte';
 	import { Item } from '$svelte-atoms/core/components/select/atoms';
 
-	const bond = ComboboxBond.get() as ComboboxBond;
-
-	if (!bond) {
-		throw new Error('Combobox atom was not found');
-	}
+	const bond = ComboboxBond.getOrThrow('Combobox atom was not found') as ComboboxBond;
 
 	let {
 		class: klass = '',

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { mergePresetProps } from '$svelte-atoms/core/components/atom';
 	import { HtmlAtom } from '../atom';
 	import { DatePickerBond } from './bond.svelte';
 	import { CalendarBond } from '../calendar/bond.svelte';
@@ -10,16 +11,16 @@
 
 	let {
 		class: klass = '',
-		preset = 'datepicker.header',
-		children,
+		preset = undefined,
 		...restProps
 	}: DatePickerHeaderProps = $props();
+
+	const headerProps = $derived(mergePresetProps(preset, 'datepicker.header', restProps));
 
 	const calendarBondProps = $derived(datePickerBond?.state?.props);
 
 	const pivote = $derived(calendarBondProps?.pivote ?? new Date());
 
-	// Format month and year
 	const monthName = $derived(pivote.toLocaleDateString('en-US', { month: 'long' }));
 	const year = $derived(pivote.getFullYear());
 
@@ -40,10 +41,8 @@
 <HtmlAtom
 	as="nav"
 	class={['border-border flex items-center justify-between gap-2 border-b p-2', '$preset', klass]}
-	{preset}
-	{...restProps}
+	{...headerProps}
 >
-	<!-- Previous Month Button -->
 	<button
 		type="button"
 		class="hover:bg-foreground/10 active:bg-foreground/20 flex size-8 cursor-pointer items-center justify-center rounded-md transition-colors"
@@ -66,7 +65,6 @@
 		</Icon>
 	</button>
 
-	<!-- Month and Year Display -->
 	<button
 		class="text-foreground h-full flex-1 cursor-pointer text-center text-sm font-semibold"
 		onclick={handleMonthPicker}
@@ -75,7 +73,6 @@
 		{year}
 	</button>
 
-	<!-- Next Month Button -->
 	<button
 		type="button"
 		class="hover:bg-foreground/10 active:bg-foreground/20 flex size-8 cursor-pointer items-center justify-center rounded-md transition-colors"

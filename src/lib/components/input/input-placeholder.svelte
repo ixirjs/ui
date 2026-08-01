@@ -15,16 +15,18 @@
 	let {
 		class: klass = '',
 		children = undefined,
+		preset = undefined,
 		...restProps
 	}: HtmlAtomProps<E, B> & HTMLAttributes<Element> = $props();
 
 	const placeholderProps = $derived({
-		...bond?.placeholder(),
+		preset: preset ?? bond?.atom('placeholder').preset ?? 'input.placeholder',
+		...(bond?.atom('placeholder').spread ?? {}),
 		...restProps
 	});
 
 	const shouldShowPlaceholder = $derived.by(() => {
-		const type = bond?.elements?.input?.type ?? '';
+		const type = (bond?.elements?.input as HTMLInputElement | undefined)?.type ?? '';
 
 		if (['radio', 'checkbox'].includes(type)) {
 			return false;
@@ -40,13 +42,12 @@
 
 {#if shouldShowPlaceholder}
 	<HtmlAtom
-		preset="input.placeholder"
 		class={[
 			'text-muted-foreground pointer-events-none absolute inset-0 flex h-full w-full items-center px-1 leading-1 outline-none',
 			'$preset',
 			klass
 		]}
-		style="left:{bond?.elements?.input?.offsetLeft ?? 0}px"
+		style="left:{(bond?.elements?.input as HTMLInputElement | undefined)?.offsetLeft ?? 0}px"
 		{...placeholderProps}
 	>
 		{@render children?.()}

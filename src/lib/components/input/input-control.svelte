@@ -1,13 +1,10 @@
 <script lang="ts" generics="B extends Base = Base">
 	import { on } from '$svelte-atoms/core/attachments/event.svelte';
-	import { getPreset } from '$svelte-atoms/core/context';
-	import { resolvePreset } from '$svelte-atoms/core/components/atom';
+	import { resolveControlPreset, INPUT_FIELD_CLASS, writeInputValue } from './shared';
 	import { cn, toClassValue } from '$svelte-atoms/core/utils';
-	import type { PresetModuleName } from '$svelte-atoms/core/context/preset.svelte';
 	import type { Base } from '$svelte-atoms/core/components/atom';
 	import { InputBond } from './bond.svelte';
 	import type { InputControlProps } from './types';
-	import { untrack } from 'svelte';
 
 	const bond = InputBond.get();
 
@@ -25,24 +22,20 @@
 		...restProps
 	}: InputControlProps<B> = $props();
 
-	const preset = resolvePreset(getPreset(untrack(() => presetKey) as PresetModuleName)?.apply(bond, [bond]));
+	const preset = resolveControlPreset(() => presetKey, bond);
 
 	const valueProps = $derived({
-		...(bond?.input?.() ?? {}),
+		...(bond?.atom('input').spread ?? {}),
 		...restProps
 	});
+
+	// Single source of truth for the change/input detail payload (reads current bindable values).
+	const changeDetail = (event: Event) => ({ value, files, date, number, checked, event });
 
 	function handleChange(ev: CustomEvent) {
 		if (!onchange) return;
 
-		onchange?.(ev, {
-			value: value,
-			files: files,
-			date: date,
-			number: number,
-			checked: checked,
-			event: ev
-		});
+		onchange?.(ev, changeDetail(ev));
 	}
 
 	function handleInput(ev: InputEvent) {
@@ -58,20 +51,7 @@
 			date = currentTarget.valueAsDate;
 		}
 
-		oninput?.(ev, {
-			value: value,
-			files: files,
-			date: date,
-			number: number,
-			checked: checked,
-			event: ev
-		});
-	}
-
-	function toFileList(files: File[]) {
-		const dataTransfer = new DataTransfer();
-		files.forEach((file) => dataTransfer.items.add(file));
-		return dataTransfer.files;
+		oninput?.(ev, changeDetail(ev));
 	}
 </script>
 
@@ -80,13 +60,12 @@
 		() => value,
 		(v) => {
 			value = v;
-			if (bond) {
-				bond.state.props.value = v;
-			}
+			// Write through the bond's InputModel rather than poking `props.value` directly.
+			writeInputValue(bond, v);
 		}
 	}
 	class={cn(
-		'text-foreground placeholder:text-muted-foreground h-full w-full flex-1 bg-transparent px-2 leading-1 outline-none',
+		INPUT_FIELD_CLASS,
 		preset?.class,
 		toClassValue(klass, bond)
 	)}

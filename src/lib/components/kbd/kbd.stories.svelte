@@ -1,14 +1,36 @@
 <script module>
 	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { Kbd, Shortcut } from '.';
 
 	const { Story } = defineMeta({
-		title: 'ATOMS/Kbd'
+		title: 'Atoms/Kbd',
+		parameters: { layout: 'centered' },
+		args: {
+			key: 'Enter',
+			separator: '+'
+		},
+		argTypes: {
+			key: {
+				control: 'select',
+				options: ['Enter', 'Esc', 'Tab', 'Shift', 'Ctrl', 'Alt', '⌘', '↑', '↓', '←', '→', 'Backspace', 'Delete', 'Space'],
+				description: 'The key label to display inside the Kbd element'
+			},
+			separator: {
+				control: 'text',
+				description: 'Separator rendered between keys in a Shortcut (default "+")'
+			}
+		}
 	});
 </script>
 
-<script lang="ts">
-	import { Kbd, Shortcut } from '.';
-</script>
+<Story name="Basic">
+	{#snippet template(args)}
+		<div class="flex items-center gap-4">
+			<Kbd>{args.key}</Kbd>
+			<Shortcut keys={['Ctrl', args.key]} separator={args.separator} />
+		</div>
+	{/snippet}
+</Story>
 
 <Story name="Single Key">
 	{#snippet template()}

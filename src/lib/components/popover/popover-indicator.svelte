@@ -5,7 +5,7 @@
 	import { HtmlAtom } from '$svelte-atoms/core/components/atom';
 	import { PopoverBond } from './bond.svelte';
 
-	const bond = PopoverBond.get();
+	const bond = PopoverBond.getOrThrow('<Popover.Indicator /> must be used within a <Popover />');
 
 	let {
 		class: klass = '',

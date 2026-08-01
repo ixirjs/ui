@@ -3,9 +3,10 @@ import { BondState, BondAtom, type BondStateProps } from './bond.svelte';
 import { Collection } from './collection.svelte';
 import { defineBond } from './define-bond.svelte';
 import { fuse } from './fuse.svelte';
-import { createSelection, selectionCapability } from './capabilities/selection.svelte';
-import { createRovingFocus, rovingCapability } from './capabilities/roving-focus.svelte';
-import { trappedFocus, focusOnOpen } from './overlay/policies/focus.svelte';
+import { createSelection, selectionCapability, SELECTION } from './capabilities/selection.svelte';
+import { createRovingFocus, rovingCapability, ROVING } from './capabilities/roving-focus.svelte';
+import { collectionSlot } from './capabilities/collection.svelte';
+import { trappedFocus, focusOnOpen, FOCUS } from '$svelte-atoms/core/components/overlay/policies/focus.svelte';
 
 class FState extends BondState<BondStateProps> {
 	values = $state<string[]>([]);
@@ -61,8 +62,8 @@ describe('fuse — bond + bond = bond (the closure property)', () => {
 
 	it('concatenates capabilities from every part', () => {
 		const bond = new Fused(new FState());
-		expect(bond.capability('roving')).toBeDefined(); // from Triggerable
-		expect(bond.capability('selection')).toBeDefined(); // from Listbox
+		expect(bond.capability(ROVING)).toBeDefined(); // from Triggerable
+		expect(bond.capability(SELECTION)).toBeDefined(); // from Listbox
 	});
 
 	it('takes a fresh rebrand identity (namespace / CONTEXT_KEY)', () => {
@@ -87,14 +88,12 @@ describe('fuse — bond + bond = bond (the closure property)', () => {
 		const bond = new Refused(new FState());
 		expect(bond.trigger()).toBeInstanceOf(TriggerAtom); // inherited through Fused
 		expect(bond.extra()).toBeInstanceOf(ExtraAtom);
-		expect(bond.capability('selection')).toBeDefined(); // carried through
+		expect(bond.capability(SELECTION)).toBeDefined(); // carried through
 	});
 
 	it('later parts win on capability-SLOT collision (the PopoverDialog focus resolution)', () => {
-		// Mirrors `fuse(Popover, Dialog)`: both parts bring slot 'focus'; the modal
-		// (later) part's TrappedFocus must override the positioned FocusOnOpen. Works
-		// because `BondState.capability()` is last-wins-per-slot (§13.1) and `fuse` registers
-		// the concatenated capabilities through it.
+		// Mirrors `fuse(Popover, Dialog)`: both parts bring slot 'focus'; the later (modal)
+		// TrappedFocus wins over FocusOnOpen because capability() is last-wins-per-slot (§13.1).
 		const PositionedLike = defineBond<{ trigger: typeof TriggerAtom }, FState>({
 			name: 'positioned-like',
 			atoms: { trigger: TriggerAtom },
@@ -107,7 +106,7 @@ describe('fuse — bond + bond = bond (the closure property)', () => {
 		});
 		const Fused2 = fuse({ name: 'positioned-modal', parts: [PositionedLike, ModalLike] });
 		const bond = new Fused2(new FState());
-		const focus = bond.capability<{ restoreFocus: string }>('focus')?.surface;
+		const focus = bond.capability(FOCUS)?.surface;
 		expect(focus?.restoreFocus).toBe('previous'); // modal (later) won the slot
 	});
 
@@ -117,7 +116,7 @@ describe('fuse — bond + bond = bond (the closure property)', () => {
 		const bond = new Fused(new FState());
 		const items = bond.state.collection<{ id: string }>('item');
 		expect(items).toBeInstanceOf(Collection);
-		expect(bond.capability('collection:item')?.surface).toBe(items);
+		expect(bond.capability(collectionSlot('item'))?.surface).toBe(items);
 	});
 
 	it('parts share one collection instance — unchanged: it lives on the one shared State', () => {
@@ -127,7 +126,7 @@ describe('fuse — bond + bond = bond (the closure property)', () => {
 		expect(bond.state.collection('item')).toBe(state.collection('item'));
 		const item = { id: 'x' };
 		state.collection<{ id: string }>('item').attach('x', item);
-		const surface = bond.capability('collection:item')?.surface as Collection<{ id: string }>;
+		const surface = bond.capability(collectionSlot('item'))?.surface as Collection<{ id: string }>;
 		expect(surface.get('x')).toBe(item); // visible across parts, as it always was
 	});
 
@@ -144,7 +143,7 @@ describe('fuse — bond + bond = bond (the closure property)', () => {
 		const Refused = fuse({ name: 'refused-coll', parts: [Fused, Extra] });
 		const bond = new Refused(new FState());
 		const items = bond.state.collection('item');
-		expect(bond.capability('collection:item')?.surface).toBe(items);
+		expect(bond.capability(collectionSlot('item'))?.surface).toBe(items);
 	});
 
 	it('later parts win on atom-key collision (resolve)', () => {

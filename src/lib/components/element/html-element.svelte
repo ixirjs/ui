@@ -23,9 +23,9 @@
 	}: HtmlElementProps<T> & Omit<HTMLAttributes<Element>, keyof HtmlElementProps<T>> = $props();
 
 	let node = $state<Element>();
-	// If enter animation is defined, we want to wait for it first before running animate
+	// with an enter transition, defer animate() until it ends
 	let hasEntered = $state(!(untrack(() => enter) ?? false));
-	// Track whether initial() has been applied — must only fire once at mount
+	// guards initial() to a single mount-time invocation
 	let hasInitialized = false;
 
 	$effect(() => {
@@ -50,14 +50,13 @@
 		node = n;
 	};
 
-	const finalKlass = $derived(cn(toClassValue(klass)));
+	const finalKlass = $derived(cn('border-border',toClassValue(klass)));
 	const hasTransitions = $derived(!!(enter ?? exit));
 	const transitionSnippet = $derived(
 		!hasTransitions ? bareElement : global ? globalTransition : localTransition
 	);
 
-	// Only include onintroend/onexitend when transitions are active —
-	// avoids attaching handlers that can never fire on bare elements.
+	// attach transition-end handlers only when transitions exist — they can't fire on a bare element
 	const elementProps = $derived.by(() => {
 		const base = { ...restProps };
 		if (hasTransitions) {

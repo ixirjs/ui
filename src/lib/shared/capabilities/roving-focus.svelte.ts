@@ -1,4 +1,7 @@
-import type { Behavior, Capability } from '../bond.svelte';
+import { sharedCapabilityKey, type Behavior, type Capability } from '../bond.svelte';
+
+// Public slot key — surface type travels with the key, so `capability(ROVING)` is typed (no cast).
+export const ROVING = sharedCapabilityKey<RovingFocus>('@svelte-atoms/cap:roving');
 
 // RovingFocus — "which item is highlighted": a moving active index with next/previous/first/last/goto.
 // Distinct from SelectionModel (what's committed). Owns its own $state for the index;
@@ -102,7 +105,7 @@ export function rovingCapability<T = unknown>(
 ): Capability<RovingFocus<T>> {
 	const toDomId = options.itemDomId ?? ((id: string) => id);
 	return {
-		slot: 'roving',
+		slot: ROVING,
 		surface: roving,
 		behavior(role, ctx): Behavior | undefined {
 			if (role === 'container') {

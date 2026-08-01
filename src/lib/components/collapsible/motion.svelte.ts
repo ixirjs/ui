@@ -15,7 +15,6 @@ export function animateCollapsibleBody(params: AnimateCollapsibleBodyParams = {}
 
 		const isOpen = bond?.state.props.open ?? false;
 
-		// animate(node, { opacity: +isOpen }, { duration, ease, delay });
 		animate(
 			node,
 			{

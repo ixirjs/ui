@@ -122,7 +122,7 @@ export class FieldRootAtom extends BondAtom<FieldBondView, HTMLElement> {
 
 	override get attrs() {
 		const hasErrors = this.bond.state.errors.length > 0;
-		// The group is labelled by the field's label — resolved from the atom that declared the role.
+		// Group is labelled by the atom that declared the 'label' role.
 		return {
 			...super.attrs,
 			role: 'group',
@@ -188,7 +188,6 @@ export class FieldBondState<
 	constructor(props: Props) {
 		super(props);
 		// label ↔ control a11y linkage: control gets aria-labelledby, label gets `for`.
-		// Validation attrs (aria-invalid/errormessage/…) stay on the control atom.
 		this.capability(labelledControl({ nativeFor: true }));
 	}
 

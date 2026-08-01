@@ -3,20 +3,14 @@ import type { HtmlAtomProps, Base, SnippetProps } from '$svelte-atoms/core/compo
 import type { Factory } from '$svelte-atoms/core/types';
 import type { AlertBond } from './bond.svelte';
 
-// ============================================================================
-// Alert Snippet Props (Extensible)
-// ============================================================================
-
+// Alert Snippet Props
 export interface AlertSnippetProps extends SnippetProps {
 	alert: AlertBond;
 }
 
 export type AlertChildren = Snippet<[AlertSnippetProps]>;
 
-// ============================================================================
 // Alert Root Props
-// ============================================================================
-
 export interface AlertRootProps<
 	E extends keyof HTMLElementTagNameMap = 'div',
 	B extends Base = Base
@@ -28,9 +22,7 @@ export interface AlertRootProps<
 	factory?: Factory<AlertBond>;
 }
 
-// ============================================================================
 // Alert Sub-component Props
-// ============================================================================
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface AlertContentProps<

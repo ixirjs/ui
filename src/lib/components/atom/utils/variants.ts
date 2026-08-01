@@ -14,8 +14,7 @@ import {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyVariantDefinition = VariantDefinition<any>;
 
-// Returns the effective value for `key` under defaults-then-props: own props key wins
-// (even undefined), avoids a `{ ...defaults, ...props }` spread on every call.
+// Effective value for `key`: own props key wins (even undefined), else defaults — no spread.
 function effectivePropValue(
 	props: Record<string, unknown>,
 	defaults: Record<string, unknown> | undefined,
@@ -64,16 +63,13 @@ export function resolveVariants(
 ): ResolvedProps {
 	const { variants: variantMap, compounds, defaults, class: baseClass } = def;
 
-	// Defaults participate via `effectivePropValue` (props-then-defaults reads)
-	// instead of a `{ ...defaults, ...props }` spread — the spread allocated on
-	// every call, including cache hits.
+	// Defaults read via effectivePropValue rather than a spread that would allocate on every call.
 	const effectiveDefaults = hasOwnKeysCached(defaults)
 		? (defaults as Record<string, unknown>)
 		: undefined;
 	const variantKeys = getCachedOwnKeys(variantMap as object | undefined);
 
-	// Fast path: no variants or compounds — cached per `def` reference so
-	// repeated renders return the SAME object (preserves downstream identity).
+	// Fast path: no variants or compounds — cached per `def` so renders return the SAME object.
 	if (variantKeys.length === 0 && !compounds?.length) {
 		const fastMap = getDefCacheMap(def as unknown as object, bond);
 		const fastHit = lruGet(fastMap, '');
@@ -274,11 +270,8 @@ function setPlainFnEntry(
 
 function snapshotPrimitiveProps(props: Record<string, unknown>): string | null {
 	let s = '';
-	// Insertion order, unsorted: a component instance's rest-props keys keep a
-	// stable order across re-renders, which is all the snapshot comparison
-	// needs. A differently-ordered (but equal) props object would only cause a
-	// spurious cache miss — recompute, not corruption — so sorting bought
-	// nothing but a per-render allocation + O(n log n).
+	// Unsorted: rest-props key order is stable across re-renders; a reordered-but-equal object
+	// only causes a spurious cache miss (recompute, not corruption), so sorting buys nothing.
 	const keys = Object.keys(props);
 	for (const k of keys) {
 		const v = props[k];
@@ -295,8 +288,7 @@ function snapshotPrimitiveProps(props: Record<string, unknown>): string | null {
 	return s;
 }
 
-// Resolves locally-supplied `variants` to a ResolvedProps object.
-// Handles VARIANT_DEF_TAG functions, plain functions (snapshot-cached), and raw VariantDefinition objects.
+// Resolves local `variants`: VARIANT_DEF_TAG functions, plain functions (snapshot-cached), or raw defs.
 export function resolveLocalVariants(
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	variants: any,

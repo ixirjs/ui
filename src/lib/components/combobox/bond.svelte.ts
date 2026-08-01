@@ -1,9 +1,9 @@
 import { type PopoverDomElements } from '$svelte-atoms/core/components/popover/bond.svelte';
 import {
-	DropdownBond,
-	DropdownBondState,
-	type DropdownStateProps
-} from '$svelte-atoms/core/components/dropdown/bond.svelte';
+	SelectBond as DropdownBond,
+	SelectBondState as DropdownBondState,
+	type SelectStateProps as DropdownStateProps
+} from '$svelte-atoms/core/components/select/bond.svelte';
 import { BondAtom } from '$svelte-atoms/core/shared/bond.svelte';
 import {
 	defineBond,
@@ -42,7 +42,11 @@ export class ComboboxBondState extends DropdownBondState<ComboboxBondProps> {
 						set: (v) => this.selection.select(v ? [v] : [])
 					}
 				}),
-				{ itemDomId: (id) => this.itemDomId(id) }
+				{
+					itemDomId: (id) => this.itemDomId(id),
+					expanded: () => this.isOpen,
+					disabled: () => this.isDisabled
+				}
 			)
 		);
 	}

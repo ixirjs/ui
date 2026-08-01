@@ -8,9 +8,9 @@
 		presetKey,
 		children,
 	}: {
-		/** Sub-section heading, e.g. "Accordion.Root" */
+		// Sub-section heading, e.g. "Accordion.Root"
 		title: string;
-		/** Preset key shown as a secondary label, e.g. "accordion.item" */
+		// Preset key shown as a secondary label, e.g. "accordion.item"
 		presetKey?: string;
 		children: Snippet;
 	} = $props();

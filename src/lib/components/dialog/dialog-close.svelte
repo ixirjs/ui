@@ -4,11 +4,11 @@
 >
 	import { Icon } from '$svelte-atoms/core/components/icon';
 	import Close from '$svelte-atoms/core/icons/icon-close.svelte';
-	import { HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
+	import { mergePresetProps, HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
 	import { DialogBond } from './bond.svelte';
 	import type { DialogCloseButtonProps } from './types';
 
-	const bond = DialogBond.get();
+	const bond = DialogBond.getOrThrow('<Dialog.Close /> must be used within a <Dialog.Root />');
 
 	let {
 		class: klass = '',
@@ -19,10 +19,7 @@
 		...restProps
 	}: DialogCloseButtonProps<E, B> = $props();
 
-	const closeProps = $derived({
-		preset: preset ?? 'dialog.close-button',
-		...restProps
-	});
+	const closeProps = $derived(mergePresetProps(preset, 'dialog.close-button', restProps));
 
 	function onclick_(ev: MouseEvent) {
 		onclick?.(ev);
@@ -30,7 +27,7 @@
 			return;
 		}
 
-		bond?.state.close();
+		bond.state.close();
 	}
 </script>
 
@@ -42,7 +39,7 @@
 	{...closeProps}
 >
 	{#if children}
-		{@render children?.()}
+		{@render children?.({ dialog: bond })}
 	{:else}
 		<Icon>
 			<Close />

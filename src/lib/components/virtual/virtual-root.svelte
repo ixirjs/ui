@@ -16,7 +16,6 @@
 		...restProps
 	}: VirtualListViewportProps<T> = $props();
 
-	// Internal state
 	let start = $state(0);
 	let end = $state(0);
 
@@ -30,7 +29,7 @@
 	let bottom = $state(0);
 	let viewportHeight = $state(0);
 
-	// Height management with exponential moving average
+	// Estimated heights via exponential moving average (for unmeasured/dynamic-height items).
 	let heightMap: number[] = $state([]);
 	let averageHeight = $state(itemHeight || 50);
 	let heightSampleCount = $state(0);
@@ -38,7 +37,6 @@
 	let rows: HTMLElement[] = $state([]);
 	let mounted = $state(false);
 
-	// trigger initial refresh
 	onMount(() => {
 		if (!contentElement) return;
 
@@ -46,7 +44,7 @@
 
 		mounted = true;
 
-		// Give the browser time to render and measure the viewport
+		// Defer one tick so the browser renders and the viewport can be measured.
 		setTimeout(() => {
 			if (viewportElement) {
 				viewportHeight = viewportElement.offsetHeight;
@@ -61,7 +59,6 @@
 		if (mounted) refresh();
 	});
 
-	// Handle scroll to specific index
 	$effect(() => {
 		if (scrollToIndex !== undefined && viewportElement && mounted) {
 			scrollToItem(scrollToIndex);
@@ -73,19 +70,17 @@
 
 		const { scrollTop } = viewportElement;
 
-		// Call user's onScroll callback
 		onScroll?.(scrollTop);
 
 		await refresh();
 	}, 1000 / 60);
 
-	// Improved height estimation using exponential moving average
 	function updateAverageHeight(newHeight: number) {
 		if (heightSampleCount < 1) {
 			averageHeight = newHeight;
 			heightSampleCount = 1;
 		} else {
-			// Exponential moving average with alpha = 0.1 for stability
+			// EMA capped at alpha = 0.1 for stability.
 			const alpha = Math.min(0.1, 1 / heightSampleCount);
 			averageHeight = alpha * newHeight + (1 - alpha) * averageHeight;
 			heightSampleCount++;
@@ -101,16 +96,15 @@
 
 		const { scrollTop } = viewportElement;
 
-		// Calculate visible range with overscan buffer
+		// Visible range plus overscan buffer.
 		const startIndex = Math.max(0, findStartIndex(scrollTop) - overscan);
 		const endIndex = Math.min(data.length, findEndIndex(scrollTop, startIndex) + overscan);
 
 		start = startIndex;
 		end = endIndex;
 
-		await tick(); // Wait for DOM update
+		await tick();
 
-		// Update height measurements for visible items
 		updateHeights();
 		updatePadding();
 	}
@@ -131,12 +125,12 @@
 		let index = startIndex;
 		let accumulatedHeight = 0;
 
-		// Start from the scroll position
+		// Seed accumulator with the total height of items before startIndex.
 		for (let i = 0; i < startIndex; i++) {
 			accumulatedHeight += getItemHeight(i);
 		}
 
-		// Use a minimum viewport height to ensure we render enough items initially
+		// Floor the viewport height so the initial render emits enough rows.
 		const effectiveViewportHeight = Math.max(viewportHeight, 800);
 
 		while (index < data.length && accumulatedHeight <= scrollTop + effectiveViewportHeight) {
@@ -152,7 +146,6 @@
 
 		rows = Array.from(contentElement.getElementsByClassName('virtual-list-row')) as HTMLElement[];
 
-		// Update heights for currently rendered items
 		rows.forEach((row, i) => {
 			const actualIndex = start + i;
 			const measuredHeight = itemHeight || row.offsetHeight;
@@ -167,13 +160,13 @@
 	}
 
 	function updatePadding() {
-		// Calculate top padding (sum of heights above visible area)
+		// Spacer height for the items above the visible window.
 		let topPadding = 0;
 		for (let i = 0; i < start; i++) {
 			topPadding += getItemHeight(i);
 		}
 
-		// Calculate bottom padding (estimated heights below visible area)
+		// Spacer height for the items below the visible window.
 		let bottomPadding = 0;
 		for (let i = end; i < data.length; i++) {
 			bottomPadding += getItemHeight(i);

@@ -1,14 +1,15 @@
-<script lang="ts" generics="T extends keyof HTMLElementTagNameMap = 'ul', B extends Base = Base">
-	import { HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
+<script lang="ts" generics="T extends keyof HTMLElementTagNameMap = 'ul'">
+	import { mergePresetProps, HtmlAtom } from '$svelte-atoms/core/components/atom';
 
-	let { class: klass = '', as = 'ul' as T, children = undefined, ...restProps } = $props();
+	let { class: klass = '', as = 'ul' as T, preset = undefined, children = undefined, ...restProps } = $props();
+
+	const rootProps = $derived(mergePresetProps(preset, 'list.root', restProps));
 </script>
 
 <HtmlAtom
 	{as}
-	preset="list.root"
-	class={['border-border flex flex-col', '$preset', klass]}
-	{...restProps}
+	class={['flex flex-col', '$preset', klass]}
+	{...rootProps}
 >
 	{@render children?.()}
 </HtmlAtom>

@@ -1,17 +1,16 @@
-import { getContext, setContext, untrack } from 'svelte';
+import { BondAtom } from '$svelte-atoms/core/shared/bond.svelte';
+import { defineBond, type ViewOf, type BondOf } from '$svelte-atoms/core/shared/define-bond.svelte';
 import {
-	Bond,
-	BondState,
-	BondAtom,
-	type BondStateProps
-} from '$svelte-atoms/core/shared/bond.svelte';
-import { getElementId } from '$svelte-atoms/core/utils/dom.svelte';
+	createDisclosure,
+	type Disclosure
+} from '$svelte-atoms/core/shared/capabilities/disclosure.svelte';
+import {
+	DisclosureState,
+	type DisclosureStateProps
+} from '$svelte-atoms/core/shared/capabilities/disclosure-state.svelte';
+import { labelledControl } from '$svelte-atoms/core/shared/capabilities/relationship.svelte';
 
-export type ToastBondProps = BondStateProps & {
-	open: boolean;
-	disabled: boolean;
-	readonly rest?: Record<string, unknown>;
-};
+export type ToastBondProps = DisclosureStateProps;
 
 export type ToastBondElements = {
 	root: HTMLElement;
@@ -20,25 +19,25 @@ export type ToastBondElements = {
 	close: HTMLElement;
 };
 
-export class ToastRootAtom extends BondAtom<ToastBond> {
-	constructor(bond: ToastBond) {
+// Minimal bond view for atoms — avoids atom↔bond circularity through defineBond. See §12.2.
+type ToastBondView = ViewOf<ToastBondState>;
+
+export class ToastRootAtom extends BondAtom<ToastBondView> {
+	constructor(bond: ToastBondView) {
 		super(bond, 'root');
 	}
 
 	override get attrs() {
-		const props = untrack(() => this.bond.state?.props);
+		const props = this.bond.state?.props;
 		const isOpen = props?.open ?? false;
 		const isDisabled = props?.disabled ?? false;
-		const titleId = getElementId(this.bond.id, 'toast-title');
-		const descriptionId = getElementId(this.bond.id, 'toast-description');
 
+		// aria-labelledby/describedby come from labelledControl (role:'control'); emitted when those atoms exist.
 		return {
 			...super.attrs,
 			role: 'status',
 			'aria-live': 'polite',
 			'aria-atomic': 'true',
-			'aria-labelledby': titleId,
-			'aria-describedby': descriptionId,
 			'aria-disabled': isDisabled ? 'true' : 'false',
 			'data-open': isOpen,
 			'data-state': isOpen ? 'open' : 'closed'
@@ -46,34 +45,22 @@ export class ToastRootAtom extends BondAtom<ToastBond> {
 	}
 }
 
-export class ToastTitleAtom extends BondAtom<ToastBond> {
-	constructor(bond: ToastBond) {
+export class ToastTitleAtom extends BondAtom<ToastBondView> {
+	constructor(bond: ToastBondView) {
 		super(bond, 'title');
 	}
-
-	override get attrs() {
-		return {
-			...super.attrs,
-			id: getElementId(this.bond.id, 'toast-title')
-		};
-	}
+	// id is the default atom id (`toast-title-${bond.id}`), registered via .role('label').
 }
 
-export class ToastDescriptionAtom extends BondAtom<ToastBond> {
-	constructor(bond: ToastBond) {
+export class ToastDescriptionAtom extends BondAtom<ToastBondView> {
+	constructor(bond: ToastBondView) {
 		super(bond, 'description');
 	}
-
-	override get attrs() {
-		return {
-			...super.attrs,
-			id: getElementId(this.bond.id, 'toast-description')
-		};
-	}
+	// id is the default atom id (`toast-description-${bond.id}`), registered via .role('description').
 }
 
-export class ToastCloseAtom extends BondAtom<ToastBond> {
-	constructor(bond: ToastBond) {
+export class ToastCloseAtom extends BondAtom<ToastBondView> {
+	constructor(bond: ToastBondView) {
 		super(bond, 'close');
 	}
 
@@ -104,72 +91,51 @@ export class ToastCloseAtom extends BondAtom<ToastBond> {
 	}
 }
 
-export class ToastBond<
-	State extends ToastBondState<ToastBondProps> = ToastBondState<ToastBondProps>
-> extends Bond<ToastBondProps, State, ToastBondElements> {
-	static CONTEXT_KEY = '@atoms/context/toast';
+// Toast bond via defineBond (§12): roles, key alias dismiss↔close, labelledControl capability — all generated.
+export const ToastBond = defineBond<
+	{
+		root: { atom: typeof ToastRootAtom; role: 'control' };
+		title: { atom: typeof ToastTitleAtom; role: 'label' };
+		description: { atom: typeof ToastDescriptionAtom; role: 'description' };
+		dismiss: { atom: typeof ToastCloseAtom; key: 'close' };
+	},
+	ToastBondState
+>({
+	name: 'toast',
+	atoms: {
+		root: { atom: ToastRootAtom, role: 'control' },
+		title: { atom: ToastTitleAtom, role: 'label' },
+		description: { atom: ToastDescriptionAtom, role: 'description' },
+		dismiss: { atom: ToastCloseAtom, key: 'close' }
+	},
+	// a11y link (§11.3): root→aria-labelledby (title) + aria-describedby (description) via role registry.
+	capabilities: () => [labelledControl()]
+});
 
-	constructor(s: State) {
-		super(s, 'toast');
-	}
+// ToastBond works as both value (new ToastBond(state)) and type (ToastBond | undefined). See §12.2.
+export type ToastBond = BondOf<typeof ToastBond>;
 
-	share(): this {
-		return ToastBond.set(this) as this;
-	}
-
-	/** Handle for granular access to root attrs and attachment */
-	root() {
-		return this.atom('root', () => new ToastRootAtom(this));
-	}
-
-	/** Handle for granular access to title attrs and attachment */
-	title() {
-		return this.atom('title', () => new ToastTitleAtom(this));
-	}
-
-	/** Handle for granular access to description attrs and attachment */
-	description() {
-		return this.atom('description', () => new ToastDescriptionAtom(this));
-	}
-
-	/** Handle for granular access to close button attrs, handlers, and attachment */
-	dismiss() {
-		return this.atom('close', () => new ToastCloseAtom(this));
-	}
-
-	static get(): ToastBond | undefined {
-		return getContext(ToastBond.CONTEXT_KEY);
-	}
-
-	static set(bond: ToastBond): ToastBond {
-		return setContext(ToastBond.CONTEXT_KEY, bond);
-	}
-}
-
-export class ToastBondState<Props extends ToastBondProps> extends BondState<Props> {
-	constructor(props: () => Props) {
-		super(props);
-	}
-
-	get isOpen() {
-		return this.props.open;
-	}
+export class ToastBondState<
+	Props extends ToastBondProps = ToastBondProps
+> extends DisclosureState<Props> {
+	// Storage stays in props.open. isOpen/close inherited; open/toggle override to add the disabled guard.
+	readonly disclosure: Disclosure = createDisclosure({
+		get: () => this.props.open,
+		set: (v) => (this.props.open = v)
+	});
 
 	get isDisabled() {
 		return this.props.disabled;
 	}
 
+	// `disabled` is the bond's own guard, layered around the shared disclosure.
 	open() {
 		if (this.props.disabled) return;
-		this.props.open = true;
-	}
-
-	close() {
-		this.props.open = false;
+		this.disclosure.open();
 	}
 
 	toggle() {
 		if (this.props.disabled) return;
-		this.props.open = !this.props.open;
+		this.disclosure.toggle();
 	}
 }

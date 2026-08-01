@@ -7,7 +7,7 @@
 		title: string;
 		description?: string;
 		code?: string;
-		/** Lazy component file loader — renders the example .svelte file in the preview area */
+		// Lazy component file loader — renders the example .svelte file in the preview area
 		component?: ExampleLoader;
 		children?: Snippet;
 	};

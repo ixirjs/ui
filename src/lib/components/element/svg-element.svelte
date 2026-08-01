@@ -25,7 +25,7 @@
 	}: SvgElementProps<T> & Omit<SVGAttributes<Element>, keyof SvgElementProps<T>> = $props();
 
 	let node = $state<Element>();
-	// If enter animation is defined, we want to wait for it first beafore running animate
+	// with an enter transition, defer animate() until it ends
 	let hasEntered = $state(!(untrack(() => enter) ?? false));
 
 	$effect(() => {

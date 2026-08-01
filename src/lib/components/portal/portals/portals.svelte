@@ -1,15 +1,19 @@
 <script lang="ts">
-	import type { PortalsStateProps } from './bond.svelte';
+	import type { PortalsProps, PortalsStateProps } from './bond.svelte';
 	import { PortalsBond, PortalsState } from './bond.svelte';
-	import { defineProperty, defineState } from '$svelte-atoms/core/utils';
+	import { bindBond } from '$svelte-atoms/core/shared/bind-bond.svelte';
+	import type { Factory } from '$svelte-atoms/core/types';
 
-	let { id, factory = _factory, children = undefined } = $props();
+	let { id, factory = defaultFactory, children = undefined }: PortalsProps = $props();
 
-	const bondProps = defineState<PortalsStateProps>([defineProperty('id', () => id)]);
-	const bond = factory(bondProps) as PortalsBond;
+	const binding = bindBond<PortalsBond>(
+		(props) => (factory as Factory<PortalsBond>)(props),
+		{ id: () => id }
+	);
+	const bond = binding.bond.share();
 
-	function _factory(props: typeof bondProps) {
-		const bondState = new PortalsState(() => props);
+	function defaultFactory(props: PortalsStateProps) {
+		const bondState = new PortalsState(props);
 		return new PortalsBond(bondState).share();
 	}
 </script>

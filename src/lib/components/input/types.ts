@@ -1,13 +1,15 @@
 import type { Base, HtmlAtomProps, SnippetProps } from '../atom';
 import type { Snippet } from 'svelte';
 import type { Override } from '$svelte-atoms/core/types';
+import type { ClassValue } from '$svelte-atoms/core/utils';
+import type { InputBond } from './bond.svelte';
 
-// ============================================================================
-// Input Snippet Props (Extensible)
-// ============================================================================
+// Input Snippet Props
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface InputSnippetProps extends SnippetProps {}
+export interface InputSnippetProps extends SnippetProps {
+	// `Input.Root` renders `children` with `{ input }`.
+	input: InputBond;
+}
 
 export type InputChildren = Snippet<[InputSnippetProps]>;
 
@@ -51,7 +53,7 @@ interface InputControlBaseProps {
 	date?: Date | null;
 	number?: number;
 	checked?: boolean;
-	class?: string;
+	class?: ClassValue | ClassValue[];
 	type?: InputControlType | null;
 	children?: InputChildren;
 }
@@ -62,7 +64,7 @@ export interface InputControlProps<B extends Base = Base> extends Override<
 	InputControlBaseProps
 > {}
 
-// ── Number Control ────────────────────────────────────────────────────────
+// Number Control
 
 export interface InputNumber12HourControlProps {
 	hourFormat: 12;
@@ -77,41 +79,33 @@ export interface InputNumber24HourControlProps {
 }
 
 export interface InputNumberControlProps {
-	/** Current numeric value */
 	number?: number;
-	/**
-	 * Step increment/decrement amount
-	 * @default 1
-	 */
+	min?: number;
+	max?: number;
+	// default 1
 	step?: number;
 	disabled?: boolean;
 	placeholder?: string;
+	preset?: string;
 	showControls?: boolean;
-	/** Custom decrement button snippet */
 	decrement?: Snippet<[{ action: () => void; disabled: boolean }]>;
-	/** Custom increment button snippet */
 	increment?: Snippet<[{ action: () => void; disabled: boolean }]>;
 	onchange?: (ev?: Event, options?: { number: number }) => void;
 }
 
-// ── Time Control ──────────────────────────────────────────────────────────
-export interface InputNumberControlProps {
-	/** HH:MM or HH:MM:SS string (always 24h format internally) */
+// Time Control
+export interface InputTimeControlProps {
+	// HH:MM or HH:MM:SS, always 24h internally
 	value?: string;
-	/** Optional Date object to sync time with (bindable) */
+	// Date to sync time with (bindable)
 	date?: Date | undefined;
-	/**
-	 * Hour display format
-	 * @default 24
-	 */
+	// default 24
 	hourFormat?: 12 | 24;
-	/** Show the seconds segment
-	 * @default false
-	 */
+	// default false
 	withSeconds?: boolean;
-	/** Minimum allowed time as HH:MM string (e.g. "08:00") */
+	// HH:MM, e.g. "08:00"
 	min?: string;
-	/** Maximum allowed time as HH:MM string (e.g. "18:00") */
+	// HH:MM, e.g. "18:00"
 	max?: string;
 	disabled?: boolean;
 	readonly?: boolean;
@@ -122,17 +116,13 @@ export interface InputNumberControlProps {
 }
 
 export interface InputDateTimeControlProps {
-	/** datetime-local string value (YYYY-MM-DDTHH:MM or YYYY-MM-DDTHH:MM:SS) */
+	// YYYY-MM-DDTHH:MM or YYYY-MM-DDTHH:MM:SS
 	value?: string;
-	/** Parsed Date object (bindable, derived from value) */
+	// bindable, derived from value
 	date?: Date | null;
-	/** Render mode: 'datetime' shows date + time segments, 'date' shows date segments only
-	 * @default 'datetime'
-	 */
+	// 'datetime' shows date + time segments
 	mode?: 'datetime';
-	/** Show the seconds segment
-	 * @default false
-	 */
+	// default false
 	withSeconds?: boolean;
 	disabled?: boolean;
 	readonly?: boolean;
@@ -143,13 +133,13 @@ export interface InputDateTimeControlProps {
 }
 
 export interface InputDateControlProps {
-	/** date string value (YYYY-MM-DD) */
+	// YYYY-MM-DD
 	value?: string;
-	/** Parsed Date object (bindable, derived from value) */
+	// bindable, derived from value
 	date?: Date | null;
-	/** Always 'date' — set this to use date-only mode */
+	// 'date' selects date-only mode
 	mode: 'date';
-	/** Ignored in date mode, kept for API compatibility */
+	// ignored in date mode, kept for API compatibility
 	withSeconds?: boolean;
 	disabled?: boolean;
 	readonly?: boolean;
@@ -160,22 +150,24 @@ export interface InputDateControlProps {
 }
 
 export interface InputFileControlProps {
-	/** Selected files (bindable) */
+	// bindable
 	files?: File[];
-	/** Accepted MIME types / extensions (e.g. "image/*,.pdf") */
+	// MIME types / extensions, e.g. "image/*,.pdf"
 	accept?: string;
 	multiple?: boolean;
 	disabled?: boolean;
 	placeholder?: string;
 	class?: string;
 	preset?: string;
-	/** Custom trigger content snippet */
 	triggerContent?: Snippet<[{ files: File[]; hasFiles: boolean; open: () => void }]>;
 	onchange?: (ev: Event, options: { files: File[] }) => void;
 }
 
-export interface InputUrlControlProps {
-	/** Full URL string */
+// Single source of truth for the shared string-value text-control prop shape: the bindable
+// string `value`, the standard field flags, and the `{ value }` change/input handlers. The
+// plain string controls (url/email/text/password) extend this; controls with a richer detail
+// payload (currency, location, …) stay bespoke.
+export interface TextControlPropsBase {
 	value?: string;
 	placeholder?: string;
 	disabled?: boolean;
@@ -186,61 +178,34 @@ export interface InputUrlControlProps {
 	oninput?: (ev: Event, options: { value: string }) => void;
 }
 
-export interface InputEmailControlProps {
-	/** Email address string */
-	value?: string;
-	placeholder?: string;
-	disabled?: boolean;
-	readonly?: boolean;
-	class?: string;
-	preset?: string;
-	onchange?: (ev: Event, options: { value: string }) => void;
-	oninput?: (ev: Event, options: { value: string }) => void;
-}
+export type InputUrlControlProps = TextControlPropsBase;
 
-export interface InputTextControlProps {
-	/** Text value */
-	value?: string;
-	/**
-	 * Input type. Supports `text`, `search`, and `password`.
-	 * For a dedicated password control with a show/hide toggle, use `Input.PasswordControl`.
-	 * @default 'text'
-	 */
+export type InputEmailControlProps = TextControlPropsBase;
+
+export interface InputTextControlProps extends TextControlPropsBase {
+	// default 'text'; use Input.PasswordControl for the show/hide toggle
 	type?: 'text' | 'search' | 'password';
-	placeholder?: string;
-	disabled?: boolean;
-	readonly?: boolean;
-	class?: string;
-	preset?: string;
-	onchange?: (ev: Event, options: { value: string }) => void;
-	oninput?: (ev: Event, options: { value: string }) => void;
+}
+
+export interface InputPasswordControlProps extends TextControlPropsBase {
+	// show/hide toggle state (bindable)
+	visible?: boolean;
+	// custom show/hide toggle button content
+	toggleContent?: Snippet<[{ visible: boolean; toggle: () => void; disabled: boolean }]>;
 }
 
 export interface InputLocationControlProps {
-	/**
-	 * Raw string representation of the coordinate pair (e.g. "40.7128, -74.0060").
-	 * Bindable — the component normalises pasted / typed input into this form.
-	 */
+	// raw coords e.g. "40.7128, -74.0060", bindable, normalised on input/paste
 	value?: string;
-	/** Latitude in decimal degrees (bindable, derived from value) */
-	lat?: number;
-	/** Longitude in decimal degrees (bindable, derived from value) */
-	lng?: number;
-	/**
-	 * Display / overlay format.
-	 * - `"dd"`  — decimal degrees (default): `40.712800°, -74.006000°`
-	 * - `"dms"` — degrees, minutes, seconds: `40°42'46.08"N, 74°00'21.60"W`
-	 */
+	// decimal degrees, bindable, derived from value
+	lat?: number | undefined;
+	// decimal degrees, bindable, derived from value
+	lng?: number | undefined;
+	// 'dd' decimal degrees (default), 'dms' degrees/minutes/seconds
 	format?: 'dd' | 'dms';
-	/**
-	 * Number of decimal places shown in `"dd"` mode.
-	 * @default 6
-	 */
+	// decimal places in 'dd' mode (default 6)
 	precision?: number;
-	/**
-	 * Show the crosshair "locate me" button (uses `navigator.geolocation`).
-	 * @default true
-	 */
+	// crosshair "locate me" button via navigator.geolocation (default true)
 	locate?: boolean;
 	placeholder?: string;
 	disabled?: boolean;
@@ -257,28 +222,21 @@ export interface InputLocationControlProps {
 	) => void;
 }
 
+// One overlay span rendered by the phone control's `span` snippet.
+export type PhoneSpanType = 'country' | 'area' | 'prefix' | 'line' | 'other' | 'lit' | 'empty';
+export interface PhoneSpan {
+	text: string;
+	class: string;
+	style?: string;
+	type: PhoneSpanType;
+}
+
 export interface InputPhoneControlProps {
-	/** Clean digits only (no format chars). In free mode: full string. */
+	// Clean digits only (no format chars); full string in free mode
 	value?: string;
-	/**
-	 * Input mask — `#` = required digit, `[#]` = optional digit, all other chars are literals.
-	 *
-	 * Optional digits and the literals between them are hidden when empty,
-	 * shown as normal once filled. Digits fill left-to-right across all slots.
-	 *
-	 * Examples:
-	 *   "(###) ###-####"               → fixed US format
-	 *   "(+[#][#][#]) ### ###-####"    → 1–3 digit country code, rest fixed
-	 *   "+[#][#][#] (###) ###-####"    → international with optional country digits
-	 */
+	// Input mask: `#` = required digit, `[#]` = optional digit, other chars are literals
 	format?: string;
-	/**
-	 * Optional segment color map — defines how digit slots are grouped and colored.
-	 * Keys are segment names, values are digit counts.
-	 * Must sum to the total number of `#` in format.
-	 * Example: { country: 1, area: 3, prefix: 3, line: 4 }
-	 * Available segment names: country (blue), area (bold), prefix, line, other
-	 */
+	// Segment color map keyed by name with digit counts; must sum to total `#` in format
 	segments?: Record<string, number>;
 	placeholder?: string;
 	disabled?: boolean;
@@ -287,43 +245,24 @@ export interface InputPhoneControlProps {
 	preset?: string;
 	onchange?: (ev: Event, options: { value: string }) => void;
 	oninput?: (ev: Event, options: { value: string }) => void;
-	/**
-	 * Optional snippet to render each overlay span.
-	 * - `text`: the characters in this span
-	 * - `class`: default Tailwind class (can be ignored)
-	 * - `type`: segment type — `'country' | 'area' | 'prefix' | 'line' | 'other' | 'lit' | 'empty'`
-	 * @example
-	 * ```svelte
-	 * {#snippet span({ text, class, type })}
-	 *   <span class={type === 'country' ? 'text-green-500' : class}>{text}</span>
-	 * {/snippet}
-	 * ```
-	 */
+	// renders each overlay span (text, class, type)
 	span?: Snippet<[PhoneSpan]>;
 }
 
 export interface InputCurrencyControlProps {
-	/** Raw decimal string value (bindable) e.g. "1234.50" */
+	// raw decimal string, bindable, e.g. "1234.50"
 	value?: string;
-	/** Parsed number amount (bindable) */
+	// parsed amount, bindable
 	amount?: number | undefined;
-	/** ISO 4217 currency code
-	 * @default 'USD'
-	 */
+	// ISO 4217, default 'USD'
 	currency?: string;
-	/** BCP 47 locale for formatting
-	 * @default 'en-US'
-	 */
+	// BCP 47, default 'en-US'
 	locale?: string;
-	/** Decimal precision
-	 * @default 2
-	 */
+	// default 2
 	precision?: number;
-	/** Minimum allowed amount */
 	min?: number;
-	/** Maximum allowed amount */
 	max?: number;
-	/** Step size for arrow up/down. Defaults to 10^(-precision) */
+	// arrow up/down step, defaults to 10^(-precision)
 	step?: number;
 	placeholder?: string;
 	disabled?: boolean;
@@ -334,25 +273,19 @@ export interface InputCurrencyControlProps {
 	oninput?: (ev: Event, options: { value: string; amount: number | undefined }) => void;
 }
 
-// ── Color Control — types live in ./color/types.ts ────────────────────────
-export type { InputColorControlExtendProps, InputColorControlProps } from './color/types';
+// Color Control — types live in ./color/types.ts
+export type { InputColorControlProps } from './color/types';
 
 export interface InputOtpControlProps {
-	/** Current OTP value — a string of entered characters (bindable) */
+	// entered characters, bindable
 	value?: string;
-	/** Number of slots
-	 * @default 6
-	 */
+	// default 6
 	length?: number;
-	/** Character type constraint
-	 * @default 'numeric'
-	 */
+	// default 'numeric'
 	type?: 'numeric' | 'alpha' | 'alphanumeric';
-	/** Group slots visually with a separator every N slots (e.g. 3 for "123—456") */
+	// separator every N slots (e.g. 3 for "123—456")
 	groupSize?: number;
-	/** Placeholder character shown in empty slots
-	 * @default '·'
-	 */
+	// empty-slot placeholder char (default '·')
 	placeholder?: string;
 	disabled?: boolean;
 	readonly?: boolean;
@@ -360,6 +293,6 @@ export interface InputOtpControlProps {
 	preset?: string;
 	onchange?: (ev: Event, options: { value: string }) => void;
 	oninput?: (ev: Event, options: { value: string }) => void;
-	/** Fired when all slots are filled */
+	// fires when all slots are filled
 	oncomplete?: (value: string) => void;
 }

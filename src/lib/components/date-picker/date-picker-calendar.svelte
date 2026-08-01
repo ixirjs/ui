@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { mergePresetProps } from '$svelte-atoms/core/components/atom';
 	import { Content } from '../popover/atoms';
 	import {
 		Root,
@@ -18,16 +19,17 @@
 
 	let {
 		class: klass = '',
-		preset = 'datepicker.calendar',
-		children: childrenProp,
-		Header = DatePickerHeader,
-		Weekdays = CalendarHeader,
-		Body = CalendarBody,
-		Day = CalendarDay,
-		Months = DatePickerMonths,
-		Years = DatePickerYears,
+		preset = undefined,
+		header: Header = DatePickerHeader,
+		weekdays: Weekdays = CalendarHeader,
+		body: Body = CalendarBody,
+		day: Day = CalendarDay,
+		months: Months = DatePickerMonths,
+		years: Years = DatePickerYears,
 		...restProps
 	}: DatePickerCalendarProps = $props();
+
+	const calendarProps = $derived(mergePresetProps(preset, 'datepicker.calendar', restProps));
 
 	function handleChange(_: CustomEvent, { range, pivote }: { range: CalendarRange; pivote: Date }) {
 		if (!datePickerBond) return;
@@ -41,8 +43,7 @@
 	class={['relative overflow-hidden p-0 max-w-[96svw] md:max-w-xs', klass]}
 	base={Root}
 	onchange={handleChange}
-	{preset}
-	{...restProps}
+	{...calendarProps}
 >
 	<HtmlAtom base={Header} class="col-span-full" />
 	<HtmlAtom base={Weekdays} class="border-0" />

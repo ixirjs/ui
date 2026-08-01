@@ -94,7 +94,7 @@ export class MyComponentBond extends Bond<
   ]);
 
   const bond = new MyComponentBond(
-    new MyComponentState(() => bondProps)
+    new MyComponentState(bondProps)
   ).share();
 <\x2Fscript>
 
@@ -126,7 +126,7 @@ export class MyComponentBond extends Bond<
 </button>`;
 
 	const factoryCode = `let {
-  factory = _factory,
+  factory = defaultFactory,
   open = $bindable(false),
   disabled = false
 } = $props();
@@ -139,8 +139,8 @@ const bondProps = defineState<MyComponentStateProps>([
 // factory prop lets callers swap in a custom Bond subclass
 const bond = factory(bondProps).share();
 
-function _factory(props: typeof bondProps) {
-  return new MyComponentBond(new MyComponentState(() => props));
+function defaultFactory(props: typeof bondProps) {
+  return new MyComponentBond(new MyComponentState(props));
 }`;
 
 	const reactivePropsCode = `import { defineState, defineProperty } from '@svelte-atoms/core';
@@ -148,15 +148,15 @@ function _factory(props: typeof bondProps) {
 let open = $bindable(false);
 let disabled = false;
 
-// defineProperty creates a reactive getter/setter on the props object.
-// BondState receives a function — so only the properties actually read
-// inside the Bond trigger updates, giving you fine-grained reactivity.
+// defineProperty makes each prop a reactive getter/setter cell on the props
+// object. BondState reads through those cells — so only the properties actually
+// read inside the Bond trigger updates, giving you fine-grained reactivity.
 const bondProps = defineState<DialogBondProps>([
   defineProperty('open',     () => open,     (v) => { open = v; }),
   defineProperty('disabled', () => disabled)
 ]);
 
-const state = new DialogBondState(() => bondProps);`;
+const state = new DialogBondState(bondProps);`;
 
 	const bondStateArchCode = `export class TabsBondState extends BondState<TabsBondProps> {
   #items = new SvelteMap<string, TabBond>();

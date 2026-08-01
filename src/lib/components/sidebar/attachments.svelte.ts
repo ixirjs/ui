@@ -1,3 +1,4 @@
+import { clickAction } from '$svelte-atoms/core/attachments/event.svelte';
 import { SidebarBond } from './bond.svelte';
 
 export function slideover(callback: (node: HTMLElement, bond?: SidebarBond) => any) {
@@ -6,23 +7,6 @@ export function slideover(callback: (node: HTMLElement, bond?: SidebarBond) => a
 }
 
 export function toggleSidebar(onclick?: (ev: MouseEvent) => any) {
-	const atom = SidebarBond.get();
-
-	return (node: HTMLElement) => {
-		const _onclick = (ev: MouseEvent) => {
-			onclick?.(ev);
-
-			if (ev.defaultPrevented) {
-				return;
-			}
-
-			atom?.state.toggle();
-		};
-
-		node.addEventListener('click', _onclick);
-
-		return () => {
-			node.removeEventListener('click', _onclick);
-		};
-	};
+	const bond = SidebarBond.get();
+	return clickAction(() => bond?.state.toggle(), onclick);
 }

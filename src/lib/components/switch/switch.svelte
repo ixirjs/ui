@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { HTMLAttributes } from 'svelte/elements';
-	import { HtmlAtom } from '$svelte-atoms/core/components/atom';
+	import { mergePresetProps, HtmlAtom } from '$svelte-atoms/core/components/atom';
 	import type { SwitchProps } from './types';
 
 	let {
@@ -10,12 +10,14 @@
 		id,
 		name,
 		value,
-		preset = 'switch',
+		preset = undefined,
 		onclick = undefined,
 		onchange = undefined,
 		children = undefined,
 		...restProps
 	}: SwitchProps & HTMLAttributes<HTMLButtonElement> = $props();
+
+	const switchProps = $derived(mergePresetProps(preset, 'switch', restProps));
 
 	function handleClick(ev: MouseEvent) {
 		if (disabled) return;
@@ -30,11 +32,10 @@
 </script>
 
 <HtmlAtom
-	{preset}
 	as="button"
 	type="button"
 	class={[
-		'switch-root border-border bg-input outline-primary relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border transition-colors duration-200 outline-0 outline-offset-2',
+		'switch-root bg-input outline-primary relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border transition-colors duration-200 outline-0 outline-offset-2',
 		checked && 'bg-foreground',
 		disabled && 'cursor-not-allowed opacity-50',
 		'$preset',
@@ -45,7 +46,7 @@
 	aria-disabled={disabled || undefined}
 	data-checked={checked}
 	onclick={handleClick}
-	{...restProps}
+	{...switchProps}
 >
 	<input
 		{id}

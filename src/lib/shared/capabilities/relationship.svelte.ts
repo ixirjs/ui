@@ -1,5 +1,12 @@
-import type { Behavior, Capability } from '../bond.svelte';
+import { capabilityKey, sharedCapabilityKey, type Behavior, type Capability } from '../bond.svelte';
 import type { Disclosure } from './disclosure.svelte';
+
+// Public slot key — surface type travels with the key, so `capability(TRIGGER_CONTENT)` is typed.
+export const TRIGGER_CONTENT = sharedCapabilityKey<Disclosure>('@svelte-atoms/cap:trigger-content');
+
+// Private slot key (not exported from the public barrel): labelledControl is a behavior-only linkage
+// nobody retrieves by key, so it stays unforgeable — the private seam (#2). ADR 0005 D6.
+export const LABELLED = capabilityKey('labelled');
 
 // Reusable a11y linkage between roles. Where atoms must cross-reference each other's ids
 // (label/control, trigger/content, tab/tabpanel, …), the wiring resolves siblings via
@@ -20,7 +27,7 @@ export function triggerContentLink(
 	options: TriggerContentOptions = {}
 ): Capability<Disclosure> {
 	return {
-		slot: 'trigger-content',
+		slot: TRIGGER_CONTENT,
 		surface: disclosure,
 		behavior(role): Behavior | undefined {
 			if (role === 'trigger') {
@@ -56,7 +63,7 @@ export interface LabelledControlOptions {
 // the sibling is absent. Slot 'labelled'.
 export function labelledControl(options: LabelledControlOptions = {}): Capability<void> {
 	return {
-		slot: 'labelled',
+		slot: LABELLED,
 		surface: undefined,
 		behavior(role): Behavior | undefined {
 			if (role === 'control') {

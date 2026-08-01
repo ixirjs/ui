@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { getPreset } from '$svelte-atoms/core/context';
+	import { resolveControlPreset } from '../shared';
 	import { cn, toClassValue } from '$svelte-atoms/core/utils';
-	import type { PresetModuleName } from '$svelte-atoms/core/context/preset.svelte';
+	import { clamp } from '$svelte-atoms/core/utils/math';
 	import { untrack } from 'svelte';
 	import { InputBond } from '../bond.svelte';
 	import type { InputDateTimeControlProps, InputDateControlProps } from '../types';
@@ -11,13 +11,12 @@
 		maxDaysInMonth, mergeParts,
 		type DateTimeParts,
 	} from './shared';
-	import { resolvePreset } from '$svelte-atoms/core/components/atom';
 
 	const bond = InputBond.get();
 
 	let {
 		class: klass = '',
-		value = $bindable(),
+		value = $bindable(''),
 		date = $bindable<Date | null>(null),
 		mode = 'datetime',
 		withSeconds = false,
@@ -32,20 +31,17 @@
 	const isDateOnly = $derived(mode === 'date');
 	const resolvedPresetKey = $derived(presetKey ?? (isDateOnly ? 'input.date' : 'input.datetime'));
 
-	const preset = resolvePreset(getPreset(untrack(() => resolvedPresetKey) as PresetModuleName)?.apply(bond, [bond]));
+	const preset = resolveControlPreset(() => resolvedPresetKey, bond);
 
-	// ── Parsed state ($derived from value prop) ───────────────────────────
 	const parsedParts = $derived(
 		isDateOnly ? parseDateString(value) : parseDateTimeString(value)
 	);
 
-	// ── Draft parts: source of truth for segment rendering ────────────────
-	// Segments write here immediately (even when the full value can't be built yet).
-	// Synced from parsedParts when value changes externally.
+	// Source of truth for segment rendering: segments write here immediately,
+	// even when the full value can't yet be built. Synced from external value changes.
 	let draftParts = $state<DateTimeParts>({});
 
 	$effect(() => {
-		// Sync draft from external value changes (but don't overwrite mid-edit)
 		const p = parsedParts;
 		untrack(() => { draftParts = { ...p }; });
 	});
@@ -54,7 +50,6 @@
 
 	const maxDay = $derived(maxDaysInMonth(month, year));
 
-	// ── Segment refs ───────────────────────────────────────────────────────
 	let segMonth   = $state<{ focus(): void }>();
 	let segDay     = $state<{ focus(): void }>();
 	let segYear    = $state<{ focus(): void }>();
@@ -70,7 +65,6 @@
 				: [segMonth, segDay, segYear, segHours, segMinutes]
 	);
 
-	// ── Emit ───────────────────────────────────────────────────────────────
 	function emit(ev: Event | undefined, overrides: DateTimeParts = {}) {
 		// Always update draft so segments don't revert
 		const merged = mergeParts(draftParts, overrides);
@@ -80,7 +74,7 @@
 			? buildDateValue(merged)
 			: buildDateTimeValue(merged, withSeconds);
 
-		// Only update value/date when a complete, valid string can be built
+		// Only emit when a complete, valid string can be built
 		if (!v || v === value) return;
 
 		value = v;
@@ -93,12 +87,10 @@
 		else    oninput?.(undefined as unknown as Event, detail);
 	}
 
-	// ── Focus navigation ──────────────────────────────────────────────────
 	function moveFocus(from: number, dir: -1 | 1) {
 		segments[from + dir]?.focus();
 	}
 
-	// ── Paste ──────────────────────────────────────────────────────────────
 	function handlePaste(ev: ClipboardEvent) {
 		ev.preventDefault();
 		const text = ev.clipboardData?.getData('text') ?? '';
@@ -108,11 +100,11 @@
 			const m = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
 			if (!m) return;
 			const yr = parseInt(m[1]!, 10);
-			const mo = Math.min(12, Math.max(1, parseInt(m[2]!, 10)));
+			const mo = clamp(parseInt(m[2]!, 10), 1, 12);
 			emit(ev, {
 				year:  yr,
 				month: mo,
-				day:   Math.min(maxDaysInMonth(mo, yr), Math.max(1, parseInt(m[3]!, 10))),
+				day:   clamp(parseInt(m[3]!, 10), 1, maxDaysInMonth(mo, yr)),
 			});
 			return;
 		}
@@ -121,12 +113,12 @@
 		if (!m) return;
 		const overrides: DateTimeParts = {
 			year:    parseInt(m[1]!, 10),
-			month:   Math.min(12, Math.max(1, parseInt(m[2]!, 10))),
+			month:   clamp(parseInt(m[2]!, 10), 1, 12),
 		};
 		// Clamp day to actual max for the parsed month/year
 		const parsedYear  = overrides.year;
 		const parsedMonth = overrides.month;
-		overrides.day     = Math.min(maxDaysInMonth(parsedMonth, parsedYear), Math.max(1, parseInt(m[3]!, 10)));
+		overrides.day     = clamp(parseInt(m[3]!, 10), 1, maxDaysInMonth(parsedMonth, parsedYear));
 		overrides.hours   = m[4] ? Math.min(23, parseInt(m[4], 10)) : 0;
 		overrides.minutes = m[5] ? Math.min(59, parseInt(m[5], 10)) : 0;
 		if (withSeconds && m[6]) overrides.seconds = Math.min(59, parseInt(m[6], 10));

@@ -4,19 +4,24 @@
 
 <script lang="ts">
 	import { cn, defineState, defineProperty } from '$svelte-atoms/core/utils';
+	import { bindBond } from '$svelte-atoms/core/shared/bind-bond.svelte';
+	import { bondFactory } from '$svelte-atoms/core/shared';
 	import { ActivePortal, Portal, Portals } from '$svelte-atoms/core/components/portal';
-	import { HtmlAtom as Atom } from '$svelte-atoms/core/components/atom';
+	import { mergePresetProps, HtmlAtom as Atom } from '$svelte-atoms/core/components/atom';
 	import { HtmlElement, SvgElement } from '$svelte-atoms/core/components/element';
-	import { RootBond, RootBondState, type RootStateProps } from './bond.svelte';
+	import { RootBond, RootBondState } from './bond.svelte';
 	import type { RootProps } from './types';
 
 	let {
 		class: klass = '',
 		base = undefined,
+		preset = undefined,
 		children = undefined,
 		portal = undefined,
 		...restProps
 	}: RootProps = $props();
+
+	const atomProps = $derived(mergePresetProps(preset, 'root', restProps));
 
 	let html: typeof HtmlElement | undefined = $state(HtmlElement);
 	let svg: typeof SvgElement | undefined = $state(undefined);
@@ -47,30 +52,31 @@
 		})
 	]);
 
-	const bondProps = defineState<RootStateProps>([defineProperty('renderers', () => renderers)]);
-
-	const bondState = new RootBondState(() => bondProps);
-	const bond = new RootBond(bondState).share();
+	const binding = bindBond<RootBond>(
+		bondFactory(RootBondState, RootBond),
+		{ renderers: () => renderers }
+	);
+	const bond = binding.bond.share();
 </script>
 
 <Portals id="root">
 	<Atom
-		{@attach (node) => {
+		{@attach (node: HTMLElement) => {
 			bond.rootElement = node;
 		}}
 		{base}
-		preset="root"
 		class={cn(
 			'atom-root bg-background text-foreground relative flex h-full w-full flex-1 flex-col items-start justify-stretch font-sans',
 			'$preset',
 			klass
 		)}
-		{...restProps}
+		{...atomProps}
 	>
 		{#if portal}
 			{@render portal?.()}
 		{:else}
-			<Portal.Outer id="root.l0" class="pointer-events-none absolute inset-0 z-10 overflow-hidden">
+			<!-- Absolute surface over the root atom; the soft containment boundary for overlays. -->
+			<Portal.Outer id="root.l0">
 				<Portal.Inner />
 			</Portal.Outer>
 		{/if}

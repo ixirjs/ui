@@ -5,10 +5,6 @@ import type { PortalBond } from './bond.svelte';
 import type { RootPortals } from '$svelte-atoms/core/components/root/root.svelte';
 import type { HtmlElementTagName } from '$svelte-atoms/core/components/element';
 
-// ============================================================================
-// Portal Snippet Props (Extensible)
-// ============================================================================
-
 export interface PortalSnippetProps extends SnippetProps {
 	portal: PortalBond;
 }
@@ -28,6 +24,12 @@ export type PortalOuterProps<
 	B extends Base = Base
 > = HtmlAtomProps<E, B, PortalChildren> & {
 	id: RootPortals | (string & {});
+	children?: Snippet;
+};
+
+export type ActivePortalProps = {
+	// Portal to make active for descendants: a registry id or a PortalBond instance.
+	portal: RootPortals | (string & {}) | PortalBond;
 	children?: Snippet;
 };
 

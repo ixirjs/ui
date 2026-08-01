@@ -1,9 +1,11 @@
 <script lang="ts">
-	import { HtmlAtom } from '$svelte-atoms/core/components/atom';
+	import { mergePresetProps, HtmlAtom } from '$svelte-atoms/core/components/atom';
+	import { resizeObserver } from '$svelte-atoms/core/attachments/resize-observer.svelte';
 	import type { ContainerProps } from './types';
 
 	let {
 		class: klass = '',
+		preset = undefined,
 		type = 'inline-size',
 		name = undefined,
 		clientWidth = $bindable(0),
@@ -14,31 +16,23 @@
 
 	const containerTypeStype = $derived(type ? `container-type: ${type};` : '');
 	const containerNameStyle = $derived(name ? `container-name: ${name};` : '');
+
+	const containerProps = $derived(mergePresetProps(preset, 'container', restProps));
 </script>
 
 <HtmlAtom
-	{@attach (node) => {
+	{@attach (node: HTMLElement) => {
 		const updateSize = () => {
 			clientWidth = node.clientWidth;
 			clientHeight = node.clientHeight;
 		};
 		updateSize();
 
-		const resizeObserver = new ResizeObserver(() => {
-			updateSize();
-		});
-		resizeObserver.observe(node);
-
-		return {
-			destroy() {
-				resizeObserver.disconnect();
-			}
-		};
+		return resizeObserver(updateSize)(node);
 	}}
-	preset="container"
 	class={['border-border', '$preset', klass]}
 	style={[containerTypeStype, containerNameStyle].filter(Boolean).join('; ')}
-	{...restProps}
+	{...containerProps}
 >
 	{@render children?.({ clientWidth, clientHeight })}
 </HtmlAtom>

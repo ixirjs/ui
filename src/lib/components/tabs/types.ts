@@ -4,10 +4,7 @@ import type { Factory } from '$svelte-atoms/core/types';
 import type { TabsBond } from './bond.svelte';
 import type { TabBond } from './tab/bond.svelte';
 
-// ============================================================================
-// Tabs Snippet Props (Extensible)
-// ============================================================================
-
+// Snippet props
 export interface TabsSnippetProps extends SnippetProps {
 	tabs: TabsBond;
 }
@@ -34,7 +31,7 @@ export interface TabHeaderProps<
 	E extends keyof HTMLElementTagNameMap = 'button',
 	B extends Base = Base
 > extends HtmlAtomProps<E, B, TabChildren> {
-	onpointerdown?: (ev: PointerEvent, context: { tab?: TabBond<unknown> }) => void;
+	onclick?: (ev: PointerEvent, context: { tab?: TabBond<unknown> }) => void;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type

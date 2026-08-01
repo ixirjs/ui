@@ -6,11 +6,7 @@
 		for: target = 'both',
 		children,
 	}: {
-		/** Which render mode this content should appear in.
-		 *  - `"html"`     — only rendered in the visual/browser page
-		 *  - `"markdown"` — only rendered in the LLM text output
-		 *  - `"both"`     — always rendered (default)
-		 */
+		// Render mode gate: "html" = browser only, "markdown" = LLM output only, "both" = always (default)
 		for?: DocMode | 'both';
 		children: Snippet;
 	} = $props();

@@ -1,13 +1,9 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { HtmlAtom as Atom, type Base } from '$svelte-atoms/core/components/atom';
+	import { mergeAtomProps, HtmlAtom as Atom, type Base } from '$svelte-atoms/core/components/atom';
 	import { StepBond } from './bond.svelte';
 	import type { StepIndicatorProps } from './types';
 	
-	const bond = StepBond.get();
-
-	if(!bond) {
-		throw new Error('StepIndicator must be used within a Step component');
-	}	
+	const bond = StepBond.getOrThrow('StepIndicator must be used within a Step component');
 
 	let {
 		class: klass = '',
@@ -19,11 +15,7 @@
 
 	const atom = bond.atom('indicator');
 
-	const indicatorProps = $derived({
-		preset: preset ?? atom.preset,
-		...atom?.spread,
-		...restProps
-	});
+	const indicatorProps = $derived(mergeAtomProps(atom, preset, restProps));
 
 	const index = $derived(bond?.state?.props?.index ?? 0);
 </script>

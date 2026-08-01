@@ -1,9 +1,8 @@
-<!-- LLM Documentation Access Component -->
 <script lang="ts">
 	import { Button } from '$lib/components/button';
 
 	interface Props {
-		/** The path to the llms.txt endpoint for this page */
+		// Path to the llms.txt endpoint for this page
 		llmPath: string;
 	}
 

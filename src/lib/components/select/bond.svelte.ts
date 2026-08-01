@@ -18,7 +18,7 @@ import {
 	selectionCapability,
 	type SelectionModel
 } from '$svelte-atoms/core/shared/capabilities/selection.svelte';
-import { clickTrigger, clearThenClose } from '$svelte-atoms/core/shared/overlay';
+import { clickTrigger, clearThenClose } from '$svelte-atoms/core/components/overlay';
 import type { SelectItemAtom } from './item/bond.svelte';
 
 export type SelectStateProps = DropdownMenuBondProps & {
@@ -56,20 +56,21 @@ export class SelectBondState<
 
 	constructor(props: Props) {
 		super(props); // DropdownMenuBondState registers the roving capability
-		// Option selection-reflection projection (role:'item'): aria-selected +
-		// data-selected. `interactive: false` — the item keeps its own click (select +
-		// close the listbox), so the projection only reflects state. See §11.3.
+		// Option selection reflection (role:'item'): aria-selected + data-selected only.
+		// `interactive: false` — the item keeps its own click (select + close). See §11.3.
 		this.capability(selectionCapability(this.#selection, { interactive: false }));
-		// Filter input: a Select may render a `Query` box that plays role 'input' (`'query'`
-		// target). The text is the bond-owned `query` prop (the `createBondFilter` source);
-		// `aria-activedescendant` maps the roving id via the listbox's own scheme. Select is
-		// filter-only — no `value` field (Combobox overrides with a value control, last-wins).
+		// Filter input (role 'input'/'query'): text is the bond-owned `query` prop (the
+		// `createBondFilter` source). Filter-only — no `value` field; Combobox adds one (last-wins).
 		this.capability(
 			inputCapability(
 				createInput({
 					query: { get: () => this.props.query ?? '', set: (v) => (this.props.query = v) }
 				}),
-				{ itemDomId: (id) => this.itemDomId(id) }
+				{
+					itemDomId: (id) => this.itemDomId(id),
+					expanded: () => this.isOpen,
+					disabled: () => this.isDisabled
+				}
 			)
 		);
 	}
@@ -154,8 +155,8 @@ class SelectQueryAtom extends BondAtom<SelectBondView, HTMLInputElement> {
 	}
 }
 
-// SelectBond — flat composition over `DropdownMenuBond`; overrides content (listbox), adds placeholder/value/query atoms,
-// re-registers trigger with `aria-haspopup='listbox'`; `ClearThenClose` clears query on Escape.
+// SelectBond — flat composition over `DropdownMenuBond`: listbox content, placeholder/value/query
+// atoms, trigger `aria-haspopup='listbox'`, `ClearThenClose` clears query on Escape.
 export const SelectBond = defineBond<
 	{
 		content: { atom: typeof SelectContentAtom; role: 'container' };

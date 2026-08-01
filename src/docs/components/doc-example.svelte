@@ -10,9 +10,9 @@
 		description = undefined,
 		code = undefined,
 		lang = 'svelte',
-		/** Lazy component loader from createExampleLoader(). Renders the example file in HTML mode. */
+		// Lazy component loader from createExampleLoader(). Renders the example file in HTML mode.
 		component = undefined,
-		/** Inline preview — fallback when no component loader is provided */
+		// Inline preview — fallback when no component loader is provided.
 		children = undefined,
 	}: {
 		title: string;

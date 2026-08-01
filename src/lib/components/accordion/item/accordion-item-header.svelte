@@ -1,5 +1,5 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
+	import { mergeAtomProps, HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
 	import { AccordionItemBond } from './bond.svelte';
 	import type { AccordionItemHeaderProps } from './types';
 
@@ -15,11 +15,7 @@
 
 	const atom = bond?.atom('header');
 
-	const headerProps = $derived({
-		preset: preset ?? atom?.preset,
-		...atom?.spread,
-		...restProps
-	});
+	const headerProps = $derived(mergeAtomProps(atom, preset, restProps));
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->

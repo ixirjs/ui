@@ -140,3 +140,24 @@ describe('SelectionModel<T> — reactivity', () => {
 		dispose();
 	});
 });
+
+describe('SelectionModel<T> — iterable protocol (#4)', () => {
+	it('iterates committed values in storage order; spreads and destructures', () => {
+		const { backing } = makeBacking<string>(['a', 'b']);
+		const sel = createSelection(backing);
+		expect([...sel]).toEqual(['a', 'b']);
+
+		const out: string[] = [];
+		for (const v of sel) out.push(v);
+		expect(out).toEqual(['a', 'b']);
+	});
+
+	it('reflects live commits — a fresh iteration sees the updated set', () => {
+		const { backing } = makeBacking<string>([]);
+		const sel = createSelection(backing);
+		expect([...sel]).toEqual([]);
+		sel.select('a');
+		sel.select('b');
+		expect([...sel]).toEqual(['a', 'b']);
+	});
+});

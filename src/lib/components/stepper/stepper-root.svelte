@@ -1,9 +1,8 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { bindBond } from '$svelte-atoms/core/shared/bind-bond.svelte';
+	import { bindBond, bondFactory } from '$svelte-atoms/core/shared';
 	import { HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
-	import { StepperBond, StepperState, type StepperStateProps } from './bond.svelte';
+	import { StepperBond, StepperState } from './bond.svelte';
 	import type { StepperRootProps } from './types';
-	import type { Factory } from '$svelte-atoms/core/types';
 
 	let {
 		step = $bindable(0),
@@ -12,7 +11,7 @@
 		orientation = 'horizontal',
 		class: klass = '',
 		children = undefined,
-		factory = defaultFactory as Factory<StepperBond>,
+		factory = bondFactory(StepperState, StepperBond),
 		preset = undefined,
 		...restProps
 	}: StepperRootProps<E, B> = $props();
@@ -23,17 +22,11 @@
 			step: [() => step, (v) => { step = v; }],
 			linear: () => linear,
 			disabled: () => disabled,
-			orientation: () => orientation,
-			rest: () => restProps
+			orientation: () => orientation
 		},
 		{ preset: () => preset }
 	);
 	const bond = binding.bond.share();
-
-	function defaultFactory(props: StepperStateProps) {
-		const bondState = new StepperState(props);
-		return new StepperBond(bondState);
-	}
 
 	export function getBond() {
 		return bond;

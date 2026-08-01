@@ -1,17 +1,14 @@
 <script lang="ts">
-	import { getPreset } from '$svelte-atoms/core/context';
-	import { resolvePreset } from '$svelte-atoms/core/components/atom';
+	import { resolveControlPreset, writeInputValue } from './shared';
 	import { cn, toClassValue } from '$svelte-atoms/core/utils';
-	import type { PresetModuleName } from '$svelte-atoms/core/context/preset.svelte';
-	import { untrack } from 'svelte';
 	import { InputBond } from './bond.svelte';
-	import type { InputPhoneControlProps } from './types';
+	import type { InputPhoneControlProps, PhoneSpan as Span, PhoneSpanType as SpanType } from './types';
 
 	const bond = InputBond.get();
 
 	let {
 		class: klass = '',
-		value = $bindable(),
+		value = $bindable(''),
 		format = undefined,
 		segments: segmentMap = undefined,
 		placeholder = '+_ (___) ___-____',
@@ -24,21 +21,16 @@
 		...restProps
 	}: InputPhoneControlProps = $props();
 
-	const preset = resolvePreset(getPreset(untrack(() => presetKey) as PresetModuleName)?.apply(bond, [bond]));
+	const preset = resolveControlPreset(() => presetKey, bond);
 
 	let inputEl = $state<HTMLInputElement>();
 	let scrollLeft = $state(0);
 	let isFocused = $state(false);
 
-	// ── Format token parser ────────────────────────────────────────────────
-	// Tokens:
-	//   { type: 'digit', optional: false }  →  # (required)
-	//   { type: 'digit', optional: true }   →  [#] (optional)
-	//   { type: 'lit', char, optional }     →  literal char, may belong to optional group
-	//
-	// Optional group: [#] tokens and the literals between them form a group.
-	// A group's literals are shown only if at least one digit in the group is filled.
-	// Literals outside any [#] group are always shown.
+	// Format token parser
+	// `#` = required digit, `[#]` = optional digit, anything else = literal.
+	// A literal is "optional" when bounded by optional digits on both sides;
+	// optional literals/digits render only once an optional digit in the group is filled.
 
 	type Token =
 		| { type: 'digit'; optional: boolean; slotIndex: number }
@@ -48,7 +40,7 @@
 		const tokens: Token[] = [];
 		let i = 0;
 		let slotIndex = 0;
-		// First pass: lex tokens
+		// lex tokens
 		while (i < fmt.length) {
 			if (fmt[i] === '[' && fmt[i + 1] === '#' && fmt[i + 2] === ']') {
 				tokens.push({ type: 'digit', optional: true, slotIndex: slotIndex++ });
@@ -62,9 +54,7 @@
 			}
 		}
 
-		// Second pass: mark literals as optional if they sit between optional digit slots
-		// Rule: a literal is optional if the nearest digit token on both sides is optional.
-		// We scan left and right from each literal to find its bounding digit tokens.
+		// a literal is optional iff the nearest digit on both sides is optional
 		for (let j = 0; j < tokens.length; j++) {
 			const t = tokens[j]!;
 			if (t.type !== 'lit') continue;
@@ -87,8 +77,8 @@
 	const tokens = $derived(format ? parseFormat(format) : []);
 	const maxDigits = $derived(tokens.filter(t => t.type === 'digit').length);
 
-	// ── Build masked string from digits + tokens ───────────────────────────
-	// empty: what to show for an unfilled required slot ('_' for display, '' for measuring)
+	// Build masked string from digits + tokens
+	// empty: filler for an unfilled required slot ('_' to display, '' to measure)
 	function buildMasked(digits: string, empty = '_'): string {
 		let out = '';
 		for (const t of tokens) {
@@ -101,12 +91,10 @@
 				}
 				// optional + unfilled = emit nothing
 			} else {
-				// Literal — show only if not optional, or if optional and at least
-				// one adjacent optional digit slot is filled
 				if (!t.optional) {
 					out += t.char;
 				} else {
-					// Show if surrounding optional slots have any filled digits
+					// optional literal shows only if any optional slot is filled
 					const adjacentFilled = tokens.some(
 						tok => tok.type === 'digit' && tok.optional && digits[tok.slotIndex] !== undefined
 					);
@@ -117,7 +105,7 @@
 		return out;
 	}
 
-	// Position in the masked string of the next empty slot for `filledCount` digits
+	// Position of the next empty slot in the masked string
 	function nextCursorPos(digits: string): number {
 		const anyOptFilled = tokens.some(
 			t => t.type === 'digit' && t.optional && digits[t.slotIndex] !== undefined
@@ -137,7 +125,7 @@
 		return pos; // all filled
 	}
 
-	// ── Segment color map ─────────────────────────────────────────────────
+	// Segment color map
 	const segmentColors: Record<string, string> = {
 		country: 'var(--input-hl-accent, var(--foreground))',
 		area:    'var(--foreground)',
@@ -157,9 +145,7 @@
 		return kinds;
 	});
 
-	// ── Overlay spans ─────────────────────────────────────────────────────
-	type SpanType = 'country' | 'area' | 'prefix' | 'line' | 'other' | 'lit' | 'empty';
-	type Span = { text: string; class: string; type: SpanType };
+	// Overlay spans — PhoneSpan/PhoneSpanType are the single source of truth in ./types.
 
 	const overlaySpans = $derived.by<Span[]>(() => {
 		if (!format) return [];
@@ -187,7 +173,7 @@
 			}
 		}
 
-		// Merge consecutive spans with same type (preserves type for snippet)
+		// merge consecutive same-type spans (keeps type for the snippet)
 		return spans.reduce<Span[]>((acc, s) => {
 			const last = acc[acc.length - 1];
 			if (last && last.type === s.type) { last.text += s.text; return acc; }
@@ -195,25 +181,25 @@
 		}, []);
 	});
 
-	// ── Sync external value → display + caret ────────────────────────────
+	// Sync external value → display + caret
 	$effect(() => {
 		if (!format || !inputEl) return;
 		const masked = (value || isFocused) ? buildMasked(value) : '';
 		if (inputEl.value !== masked) inputEl.value = masked;
-		// Always re-place caret after any value/focus change, via rAF to beat the browser
+		// re-place caret via rAF to beat the browser's own placement
 		if (isFocused) {
 			const pos = nextCursorPos(value);
 			requestAnimationFrame(() => inputEl?.setSelectionRange(pos, pos));
 		}
 	});
 
-	// ── Input handler ──────────────────────────────────────────────────────
+	// Input handler
 	function handleInput(ev: Event) {
 		const input = ev.currentTarget as HTMLInputElement;
 
 		if (!format) {
 			value = input.value;
-			if (bond) bond.state.props.value = value;
+			writeInputValue(bond, value);
 			oninput?.(ev, { value });
 			return;
 		}
@@ -222,7 +208,7 @@
 		input.value = buildMasked(digits);
 		scrollLeft = input.scrollLeft;
 		value = digits;
-		if (bond) bond.state.props.value = value;
+		writeInputValue(bond, value);
 		oninput?.(ev, { value });
 	}
 
@@ -234,14 +220,13 @@
 			const next = value.slice(0, -1);
 			if (inputEl) inputEl.value = next ? buildMasked(next) : buildMasked('');
 			value = next;
-			if (bond) bond.state.props.value = value;
+			writeInputValue(bond, value);
 			oninput?.(undefined as unknown as Event, { value });
 		} else if (ev.key === 'Delete') {
 			ev.preventDefault();
-			// Clear from cursor position forward — find which digit slot the cursor is at
+			// clear forward from the digit slot at/after the cursor
 			if (!value || !inputEl) return;
 			const pos = inputEl.selectionStart ?? 0;
-			// Find digit slot index at or after cursor in the rendered string
 			let charPos = 0;
 			for (const t of tokens) {
 				if (t.type === 'digit') {
@@ -251,7 +236,7 @@
 						const next = value.slice(0, t.slotIndex);
 						if (inputEl) inputEl.value = next ? buildMasked(next) : buildMasked('');
 						value = next;
-						if (bond) bond.state.props.value = value;
+						writeInputValue(bond, value);
 						oninput?.(undefined as unknown as Event, { value });
 						return;
 					}
@@ -264,11 +249,11 @@
 				}
 			}
 		} else if (
-			ev.key.length === 1 &&      // printable character
-			!ev.ctrlKey && !ev.metaKey && // not a shortcut
-			!/\d/.test(ev.key)            // not a digit
+			ev.key.length === 1 &&
+			!ev.ctrlKey && !ev.metaKey &&
+			!/\d/.test(ev.key)
 		) {
-			// Block non-digit printable keys — no input event fires, caret stays put
+			// block non-digit printable keys: no input event, caret stays put
 			ev.preventDefault();
 		}
 	}
@@ -277,29 +262,29 @@
 		onchange?.(ev, { value });
 	}
 
-	// ── Paste handler ──────────────────────────────────────────────────────
+	// Paste handler
 	function handlePaste(ev: ClipboardEvent) {
 		ev.preventDefault();
 		const pasted = ev.clipboardData?.getData('text') ?? '';
 
 		if (!format) {
-			// Free mode: insert pasted text at caret position
+			// free mode: insert at caret
 			const input = ev.currentTarget as HTMLInputElement;
 			const start = input.selectionStart ?? value.length;
 			const end   = input.selectionEnd   ?? value.length;
 			value = value.slice(0, start) + pasted + value.slice(end);
-			if (bond) bond.state.props.value = value;
+			writeInputValue(bond, value);
 			oninput?.(ev, { value });
 			onchange?.(ev, { value });
 			return;
 		}
 
-		// Mask mode: strip all non-digits from pasted text, clamp to maxDigits
+		// mask mode: keep digits only, clamp to maxDigits
 		const digits = pasted.replace(/\D/g, '').slice(0, maxDigits);
 		if (!digits) return;
 		value = digits;
 		if (inputEl) inputEl.value = buildMasked(digits);
-		if (bond) bond.state.props.value = value;
+		writeInputValue(bond, value);
 		oninput?.(ev, { value });
 		onchange?.(ev, { value });
 	}
@@ -308,7 +293,7 @@
 		if (!format || !inputEl) return;
 		isFocused = true;
 		if (!value) inputEl.value = buildMasked('');
-		// $effect will handle caret placement via rAF
+		// $effect places the caret via rAF
 	}
 
 	function handleBlur() {
@@ -322,14 +307,14 @@
 	}
 </script>
 
-{#snippet defaultSpan(span: Span, index: number)}
+{#snippet defaultSpan(span: Span, _index: number)}
 	<span style={span.style}>{span.text}</span>
 {/snippet}
 
 {#if format}
 	<span class="relative flex h-full w-full flex-1 items-center overflow-hidden">
 
-		<!-- Coloured overlay -->
+		<!-- coloured overlay (mirrors the input, no caret) -->
 		<span
 			aria-hidden="true"
 			class={cn(
@@ -345,7 +330,7 @@
 			</span>
 		</span>
 
-		<!-- Real input — transparent text, visible caret, empty when no value -->
+		<!-- real input: transparent text, visible caret -->
 		<input
 			bind:this={inputEl}
 			type="text"

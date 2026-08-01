@@ -6,7 +6,16 @@
 		parameters: {
 			layout: 'centered'
 		},
-		args: {}
+		args: {
+			value: 'c'
+		},
+		argTypes: {
+			value: {
+				control: 'select',
+				options: ['a', 'b', 'c'],
+				description: 'The value of the topmost (front) item — bindable, updates reactively'
+			}
+		}
 	});
 </script>
 
@@ -37,7 +46,37 @@
 	}
 </script>
 
-<Story name="Stack">
+<Story name="Basic">
+	{#snippet template(args)}
+		<div class="relative" style="width: 340px; height: 240px;">
+			<Stack.Root {...args} class="relative h-full w-full">
+				<Stack.Item
+					value="a"
+					class="absolute flex items-center justify-center rounded-xl bg-linear-to-br from-sky-300 to-blue-500 text-white shadow-lg"
+					style="width: 180px; height: 120px; top: 20px; left: 20px;"
+				>
+					<span class="text-sm font-semibold drop-shadow">Layer A</span>
+				</Stack.Item>
+				<Stack.Item
+					value="b"
+					class="absolute flex items-center justify-center rounded-xl bg-linear-to-br from-pink-400 to-rose-500 text-white shadow-lg"
+					style="width: 180px; height: 120px; top: 60px; left: 80px;"
+				>
+					<span class="text-sm font-semibold drop-shadow">Layer B</span>
+				</Stack.Item>
+				<Stack.Item
+					value="c"
+					class="absolute flex items-center justify-center rounded-xl bg-linear-to-br from-violet-400 to-purple-600 text-white shadow-lg"
+					style="width: 180px; height: 120px; top: 100px; left: 140px;"
+				>
+					<span class="text-sm font-semibold drop-shadow">Layer C</span>
+				</Stack.Item>
+			</Stack.Root>
+		</div>
+	{/snippet}
+</Story>
+
+<Story name="Layer Manager">
 	<div class="flex gap-6 p-6" style="width: 820px;">
 		<!-- Layer panel (left) -->
 		<div class="border-border bg-card flex w-60 shrink-0 flex-col rounded-lg border">

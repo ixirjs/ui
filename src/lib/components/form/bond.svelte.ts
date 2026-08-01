@@ -11,7 +11,6 @@ export type FormProps<Extension extends Record<string, unknown> = Record<string,
 		renderless?: boolean;
 		validator?: unknown;
 		extend: Extension;
-		readonly rest?: Record<string, unknown>;
 	};
 
 export type FormElements = {

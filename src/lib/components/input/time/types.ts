@@ -1,8 +1,5 @@
-/**
- * Types for the input/time sub-module.
- */
+// Types for the input/time sub-module.
 
-// ── Segment ────────────────────────────────────────────────────────────────
 export interface SegmentProps {
 	value?: number | undefined;
 	min: number;
@@ -14,11 +11,10 @@ export interface SegmentProps {
 	class?: string;
 	onchange?: (value: number | undefined) => void;
 	onfocusmove?: (dir: -1 | 1) => void;
-	/** Fired when ArrowUp/Down wraps past min/max */
+	// Fired when ArrowUp/Down wraps past min/max.
 	onrollover?: (dir: 1 | -1) => void;
 }
 
-// ── Time-only parts ────────────────────────────────────────────────────────
 export interface TimeParts {
 	hh?: number;
 	mm?: number;
@@ -26,7 +22,6 @@ export interface TimeParts {
 	period?: 'AM' | 'PM';
 }
 
-// ── DateTime parts ─────────────────────────────────────────────────────────
 export interface DateTimeParts {
 	year?: number;
 	month?: number;
@@ -36,7 +31,6 @@ export interface DateTimeParts {
 	seconds?: number;
 }
 
-// ── Loose variant for segment onchange callbacks ───────────────────────────
-// Segment fires (number | undefined); exactOptionalPropertyTypes rejects that
-// as a direct Parts key.  Strip undefined values before spreading.
+// Loose variant for segment onchange callbacks: Segment fires (number | undefined),
+// which exactOptionalPropertyTypes rejects as a direct Parts key. Strip undefined before spreading.
 export type LooseParts<T> = { [K in keyof T]: number | undefined };

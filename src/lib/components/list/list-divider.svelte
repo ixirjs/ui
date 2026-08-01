@@ -1,19 +1,15 @@
-<script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
+<script lang="ts">
+	import { mergePresetProps } from '$svelte-atoms/core/components/atom';
 	import { Divider } from '$svelte-atoms/core/components/divider';
-	import { toClassValue } from '$svelte-atoms/core/utils';
-	import type { Base } from '$svelte-atoms/core/components/atom';
+	import { cn, toClassValue } from '$svelte-atoms/core/utils';
 
-	let { class: klass = '', vertical = false, children = undefined, ...restProps } = $props();
+	let { class: klass = '', preset = undefined, vertical = false, children = undefined, ...restProps } = $props();
+
+	const dividerProps = $derived(mergePresetProps(preset, 'list.divider', restProps));
 </script>
 
 <Divider
-	preset="list.divider"
-	class={[
-		!vertical && 'my-1',
-		vertical && 'mx-1',
-		'$preset',
-		toClassValue.apply(null, [klass, {}])
-	]}
+	class={cn(!vertical && 'my-1', vertical && 'mx-1', toClassValue(klass, {}))}
 	{vertical}
-	{...restProps}
+	{...dividerProps}
 />

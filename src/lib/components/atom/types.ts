@@ -5,15 +5,10 @@ import type { PresetKey } from '$svelte-atoms/core/context/preset.svelte';
 import type { Bond } from '$svelte-atoms/core/shared';
 import type { VariantDefinition } from '$svelte-atoms/core/utils';
 
-// ============================================================================
-// Base Component/Snippet Types (Extensible)
-// ============================================================================
-
-// Base type for component-based implementations
+// Base component/snippet types
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type ComponentBase = Component<any, any, any>;
 
-// Base type for snippet-based implementations
 export type SnippetBase = Snippet;
 
 // Permissive snippet type used as a generic constraint where the snippet's arguments
@@ -27,35 +22,23 @@ export type Base<Args extends unknown[] = []> = Args extends [
 	Record<string, any>,
 	...unknown[]
 ]
-	? ComponentBase // Treat as component if args is an object
+	? ComponentBase
 	: Args extends []
-		? SnippetBase | ComponentBase // Empty args or void
+		? SnippetBase | ComponentBase
 		: Args extends unknown[]
-			? SnippetBase // Array of args
+			? SnippetBase
 			: never;
-
-// ============================================================================
-// Snippet Props (Base for extensible snippet contexts)
-// ============================================================================
 
 // Base interface for snippet context props. Extend to type the snippet argument.
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface SnippetProps {}
 
-// ============================================================================
-// Variants (Support both static and dynamic)
-// ============================================================================
-
-// Variant configuration - can be static or dynamic
+// Variant configuration — static VariantDefinition or dynamic function.
 export type Variants =
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	| VariantDefinition<any>
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	| ((bond: Bond, variantProps: Record<string, any>) => Record<string, any>);
-
-// ============================================================================
-// Atom Props (Core, Extensible)
-// ============================================================================
 
 // Base props for HTML atom components. Extend HtmlAtomProps<'tagname'> to add typed slots/children.
 export interface HtmlAtomProps<
@@ -64,10 +47,9 @@ export interface HtmlAtomProps<
 	B extends Base<any> = Base,
 	Children extends Snippet<unknown[]> = Snippet
 > extends HtmlElementProps<E, Children> {
-	// Optional Bond for state management & context
 	bond?: Bond | undefined;
 
-	// Base component or snippet to render (can be overridden)
+	// Base component or snippet to render.
 	base?: B | undefined;
 
 	// Preset key or ordered fallback chain (first registered key wins).

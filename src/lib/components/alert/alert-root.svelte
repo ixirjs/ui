@@ -1,35 +1,31 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { defineProperty, defineState } from '$svelte-atoms/core/utils';
-	import { HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
-	import { AlertBond, AlertBondState, type AlertBondProps } from './bond.svelte';
+	import { bondFactory,bindBond } from '$svelte-atoms/core/shared';
+	import { mergePresetProps, HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
+	import { AlertBond, AlertBondState } from './bond.svelte';
 	import type { AlertRootProps } from './types';
 	import './alert.css';
 
 	let {
 		class: klass = '',
-		preset = 'alert',
+		preset = undefined,
 		disabled = false,
 		extend = {},
-		factory = _factory,
+		factory = bondFactory(AlertBondState, AlertBond),
 		children,
 		...restProps
 	}: AlertRootProps<E, B> = $props();
 
-	const bondProps = defineState<AlertBondProps>(
-		[defineProperty('disabled', () => disabled), defineProperty('rest', () => restProps)],
-		() => ({ disabled, extend })
+	const binding = bindBond<AlertBond>(
+		(props) => factory(props),
+		{
+			disabled: () => disabled,
+			extend: () => extend
+		}
 	);
-	const bond = factory(bondProps).share();
+	const bond = binding.bond.share();
 
-	const rootProps = $derived({
-		...bond.root(),
-		...restProps
-	});
+	const rootProps = $derived(mergePresetProps(preset, 'alert', { ...bond.root(), ...restProps }));
 
-	function _factory(props: typeof bondProps) {
-		const bondState = new AlertBondState(() => props);
-		return new AlertBond(bondState);
-	}
 
 	export function getBond() {
 		return bond;
@@ -37,12 +33,9 @@
 </script>
 
 <HtmlAtom
-	{preset}
 	class={[
 		'alert border-border relative flex gap-1 rounded-md border p-4 transition-all duration-200',
-		// Base styles
 		'bg-background text-foreground',
-		// State styles
 		{
 			'pointer-events-none opacity-50': disabled
 		},

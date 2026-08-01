@@ -6,9 +6,23 @@
 	import FormRoot from '../form-root.svelte';
 
 	const { Story } = defineMeta({
-		title: 'ATOMS/Form/Field',
+		title: 'Atoms/Form/Field',
 		parameters: {
 			layout: 'centered'
+		},
+		args: {
+			disabled: false,
+			readonly: false
+		},
+		argTypes: {
+			disabled: {
+				control: 'boolean',
+				description: 'Disable the field and its control'
+			},
+			readonly: {
+				control: 'boolean',
+				description: 'Make the field and its control read-only'
+			}
 		}
 	});
 </script>
@@ -18,12 +32,6 @@
 	import { ZodAdapter } from './validation-adapters';
 
 	const validator = new ZodAdapter();
-	const commonFieldProps = {
-		disabled: false,
-		readonly: false,
-		extend: {},
-		parse: () => {}
-	};
 
 	const usernameSchema = z
 		.string()
@@ -36,15 +44,44 @@
 		notifyByEmail: z.boolean()
 	});
 
+	let defaultUsername = $state('');
 	let username = $state('');
 	let displayName = $state('');
 	let notifyByEmail = $state(false);
 </script>
 
+<Story name="Basic">
+	{#snippet template(args)}
+		<div class="bg-card border-border w-115 rounded-xl border p-5">
+			<Field.Root
+				{...args}
+				name="username"
+				schema={usernameSchema}
+				validator={validator}
+				value={defaultUsername}
+				extend={{}}
+			>
+				<Field.Label>Username</Field.Label>
+				<Input.Root>
+					<Field.Control
+						base={Input.TextControl as unknown as never}
+						bind:value={defaultUsername}
+						placeholder="svelte-wizard"
+					/>
+				</Input.Root>
+				<Field.HelperText>Use 3 to 20 characters with letters, numbers, or dashes.</Field.HelperText>
+			</Field.Root>
+			<p class="text-muted-foreground mt-3 text-xs">Current value: {defaultUsername || '(empty)'}</p>
+		</div>
+	{/snippet}
+</Story>
+
 <Story name="Standalone Field Validation">
 	<div class="bg-card border-border w-115 rounded-xl border p-5">
 		<Field.Root
-			{...commonFieldProps}
+			disabled={false}
+			readonly={false}
+			extend={{}}
 			name="username"
 			schema={usernameSchema}
 			validator={validator}
@@ -66,7 +103,7 @@
 
 <Story name="Field Inside Form">
 	<FormRoot class="bg-card border-border flex w-140 flex-col gap-4 rounded-xl border p-5" {validator}>
-		<Field.Root {...commonFieldProps} name="displayName" schema={profileSchema.shape.displayName} value={displayName}>
+		<Field.Root disabled={false} readonly={false} extend={{}} name="displayName" schema={profileSchema.shape.displayName} value={displayName}>
 			<Field.Label>Display Name</Field.Label>
 			<Input.Root>
 				<Field.Control base={Input.TextControl as unknown as never} bind:value={displayName} placeholder="Maya L" />
@@ -74,7 +111,7 @@
 			<Field.HelperText>Shown in comments, mentions, and activity feeds.</Field.HelperText>
 		</Field.Root>
 
-		<Field.Root {...commonFieldProps} name="notifyByEmail" schema={profileSchema.shape.notifyByEmail} value={notifyByEmail}>
+		<Field.Root disabled={false} readonly={false} extend={{}} name="notifyByEmail" schema={profileSchema.shape.notifyByEmail} value={notifyByEmail}>
 			<label class="flex items-start gap-2">
 				<div class="pt-0.5">
 					<Field.Control base={Checkbox as unknown as never} bind:checked={notifyByEmail} />

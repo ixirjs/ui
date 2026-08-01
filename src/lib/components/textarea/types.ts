@@ -1,10 +1,6 @@
 import type { HtmlAtomProps, Base, SnippetProps } from '$svelte-atoms/core/components/atom';
 import type { Snippet } from 'svelte';
 
-// ============================================================================
-// Textarea Snippet Props (Extensible)
-// ============================================================================
-
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface TextareaSnippetProps extends SnippetProps {}
 

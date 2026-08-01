@@ -1,9 +1,6 @@
 <script lang="ts">
-	import { getPreset } from '$svelte-atoms/core/context';
-	import { resolvePreset } from '$svelte-atoms/core/components/atom';
+	import { resolveControlPreset, writeInputValue } from './shared';
 	import { cn, toClassValue } from '$svelte-atoms/core/utils';
-	import type { PresetModuleName } from '$svelte-atoms/core/context/preset.svelte';
-	import { untrack } from 'svelte';
 	import { InputBond } from './bond.svelte';
 	import type { InputLocationControlProps } from './types';
 
@@ -11,7 +8,7 @@
 
 	let {
 		class: klass = '',
-		value = $bindable(),
+		value = $bindable(''),
 		lat = $bindable<number | undefined>(undefined),
 		lng = $bindable<number | undefined>(undefined),
 		format = 'dd',
@@ -26,7 +23,7 @@
 		...restProps
 	}: InputLocationControlProps = $props();
 
-	const preset = resolvePreset(getPreset(untrack(() => presetKey) as PresetModuleName)?.apply(bond, [bond]));
+	const preset = resolveControlPreset(() => presetKey, bond);
 
 	let inputEl = $state<HTMLInputElement>();
 	let scrollLeft = $state(0);
@@ -34,17 +31,14 @@
 	let locationError = $state<string | undefined>(undefined);
 	let isFocused = $state(false);
 
-	// ── Coord parsing ──────────────────────────────────────────────────────
+	// Coord parsing
 	type ParsedCoords = { lat: number; lng: number } | null;
 
-	/**
-	 * Accepts: "lat, lng" | "lat lng" | "lat;lng"
-	 * Numbers may be signed decimals or have a trailing N/S/E/W suffix.
-	 */
+	// Accepts: "lat, lng" | "lat lng" | "lat;lng" — signed decimals or N/S/E/W suffix.
 	function parseCoords(raw: string): ParsedCoords {
 		if (!raw.trim()) return null;
 
-		// Strip degree/minute/second symbols for DMS pasting, then extract numeric parts
+		// Strip degree/minute/second symbols so pasted DMS parses too.
 		const clean = raw.replace(/[°'"]/g, ' ').trim();
 		const parts = clean.split(/[\s,;]+/).filter(Boolean);
 		if (parts.length < 2) return null;
@@ -66,7 +60,7 @@
 	const isValidLat = (v: number) => v >= -90 && v <= 90;
 	const isValidLng = (v: number) => v >= -180 && v <= 180;
 
-	// ── Overlay segment types ──────────────────────────────────────────────
+	// Overlay segment types
 	type SegmentKind =
 		| 'lat-val' | 'lat-min' | 'lat-sec' | 'lat-dir'
 		| 'lng-val' | 'lng-min' | 'lng-sec' | 'lng-dir'
@@ -88,7 +82,7 @@
 		'error':   'color: var(--input-hl-error, var(--destructive))',
 	};
 
-	// ── DMS helpers ────────────────────────────────────────────────────────
+	// DMS helpers
 	function toDms(deg: number, hemi: 'lat' | 'lng') {
 		const abs = Math.abs(deg);
 		const d = Math.floor(abs);
@@ -100,7 +94,7 @@
 		return { d, m, s, dir: deg >= 0 ? pos : neg };
 	}
 
-	// ── Build overlay segments ─────────────────────────────────────────────
+	// Build overlay segments
 	function buildSegments(raw: string): Segment[] {
 		if (!raw.trim()) return [];
 
@@ -135,7 +129,6 @@
 			segs.push({ text: '"',                            kind: 'symbol' });
 			segs.push({ text: nd.dir,                         kind: 'lng-dir' });
 		} else {
-			// Decimal degrees
 			segs.push({ text: lt.toFixed(precision), kind: latOk ? 'lat-val' : 'error' });
 			segs.push({ text: '°',                  kind: 'symbol' });
 			segs.push({ text: ',  ',                kind: 'sep' });
@@ -154,7 +147,7 @@
 		isValidLng(parsedCoords.lng)
 	);
 
-	// ── Sync value → lat/lng props ─────────────────────────────────────────
+	// Sync value → lat/lng props
 	$effect(() => {
 		const coords = parseCoords(value);
 		if (coords && isValidLat(coords.lat) && isValidLng(coords.lng)) {
@@ -166,18 +159,18 @@
 		}
 	});
 
-	// ── Sync lat/lng props → value string (external writes) ───────────────
+	// Sync lat/lng props → value string (external writes)
 	$effect(() => {
 		if (lat !== undefined && lng !== undefined) {
 			const current = parseCoords(value);
 			if (current?.lat !== lat || current?.lng !== lng) {
 				value = `${lat}, ${lng}`;
-				if (bond) bond.state.props.value = value;
+				writeInputValue(bond, value);
 			}
 		}
 	});
 
-	// ── Geolocation ────────────────────────────────────────────────────────
+	// Geolocation
 	function handleLocate() {
 		if (!navigator?.geolocation || locating || disabled || readonly) return;
 		locating = true;
@@ -190,7 +183,7 @@
 				lat = lt;
 				lng = ln;
 				value = `${lt}, ${ln}`;
-				if (bond) bond.state.props.value = value;
+				writeInputValue(bond, value);
 				onchange?.(new Event('change'), { lat, lng, value });
 			},
 			(err) => {
@@ -201,11 +194,11 @@
 		);
 	}
 
-	// ── Input / change handlers ────────────────────────────────────────────
+	// Input / change handlers
 	function handleInput(ev: Event) {
 		const input = ev.currentTarget as HTMLInputElement;
 		value = input.value;
-		if (bond) bond.state.props.value = value;
+		writeInputValue(bond, value);
 		syncScroll();
 		oninput?.(ev, { lat, lng, value });
 	}
@@ -226,11 +219,10 @@
 		isFocused = false;
 	}
 
-	// ── Paste: normalise common coordinate formats ─────────────────────────
+	// Paste: normalise common coordinate formats
 	function handlePaste(ev: ClipboardEvent) {
 		ev.preventDefault();
 		const pasted = ev.clipboardData?.getData('text') ?? '';
-		// Accept "lat, lng", "lat lng", "lat;lng", even with degree symbols
 		const coords = parseCoords(pasted);
 		if (coords) {
 			value = `${coords.lat}, ${coords.lng}`;
@@ -238,7 +230,7 @@
 			value = pasted;
 		}
 		if (inputEl) inputEl.value = value;
-		if (bond) bond.state.props.value = value;
+		writeInputValue(bond, value);
 		oninput?.(new Event('input'), { lat, lng, value });
 	}
 </script>
@@ -267,7 +259,7 @@
 		</span>
 	{/if}
 
-	<!-- Real <input> — transparent text in display mode, visible in input mode -->
+	<!-- Real <input> — transparent in display mode, visible while focused -->
 	<input
 		bind:this={inputEl}
 		type="text"
@@ -310,7 +302,7 @@
 			onclick={handleLocate}
 			tabindex={-1}
 		>
-			<!-- Crosshair / target icon (lucide-style) -->
+			<!-- Crosshair icon -->
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
 				width="14"

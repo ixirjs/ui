@@ -1,16 +1,12 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { type Base } from '$svelte-atoms/core/components/atom';
+	import { mergeAtomProps, type Base } from '$svelte-atoms/core/components/atom';
 	import { TabBond } from './bond.svelte';
 	import { TabsBond } from '../bond.svelte';
 	import type { TabBodyProps } from '../types';
 	import { Stack } from '../../stack';
 
-	const tabBond = TabBond.get();
+	const tabBond = TabBond.getOrThrow('TabBody must be used within a Tab');
 	const tabsBond = TabsBond.get();
-
-	if (!tabBond) {
-		throw new Error('TabBody must be used within a Tab');
-	}
 
 	let {
 		class: klass = '',
@@ -21,15 +17,11 @@
 
 	const atom = tabBond.atom('body');
 
-	const contentProps = $derived({
-		preset: preset ?? atom?.preset,
-		...atom?.spread,
-		...restProps
-	});
+	const contentProps = $derived(mergeAtomProps(atom, preset, restProps));
 
 	const value = $derived(tabBond?.state.props.value);
 
-	// Register content snippet with props and children with tabs on mount
+	// Register content snippet with tabs while mounted.
 	$effect.pre(() => {
 		if(!value) return;
 		if(!tabBond) return;
@@ -60,4 +52,4 @@
 	</Stack.Item>
 {/snippet}
 
-<!-- Content is teleported to Tabs.Content, so we don't render anything here -->
+<!-- Content is teleported to Tabs.Content; nothing rendered here. -->

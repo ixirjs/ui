@@ -292,6 +292,34 @@
 	--scrollbar-thumb-hover: oklch(0.45 0 0);
 }
 
+/* ─── Global thin, minimalist scrollbar ─────────────────────────── */
+* {
+	scrollbar-width: thin;
+	scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+*::-webkit-scrollbar {
+	width: 6px;
+	height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+	background: var(--scrollbar-track);
+}
+
+*::-webkit-scrollbar-thumb {
+	background: var(--scrollbar-thumb);
+	border-radius: 9999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+	background: var(--scrollbar-thumb-hover);
+}
+
+*::-webkit-scrollbar-corner {
+	background: transparent;
+}
+
 /* ─── Display font for headings ─────────────────────────────────── */
 @layer base {
 	h1,
@@ -320,3 +348,4 @@ h4[id] {
 		scroll-margin-top: 7.5rem;
 	}
 }
+

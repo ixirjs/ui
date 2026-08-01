@@ -2,7 +2,7 @@
 	import { animate as motion } from 'motion';
 	import { Icon } from '$svelte-atoms/core/components/icon';
 	import IconArrowDown from '$svelte-atoms/core/icons/icon-arrow-down.svelte';
-	import { HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
+	import { mergeAtomProps, HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
 	import { AccordionItemBond } from './bond.svelte';
 	import type { AccordionItemIndicatorProps } from './types';
 
@@ -18,11 +18,7 @@
 
 	const atom = bond?.atom('indicator');
 
-	const indicatorProps = $derived({
-		preset: preset ?? atom?.preset,
-		...atom?.spread,
-		...restProps
-	});
+	const indicatorProps = $derived(mergeAtomProps(atom, preset, restProps));
 
 	function _animate(node: HTMLElement) {
 		return motion(node, { rotate: 180 * +isOpen }, { duration: 0.3, ease: 'anticipate' });
@@ -30,6 +26,7 @@
 </script>
 
 <HtmlAtom
+	animate={_animate}
 	class={['border-border pointer-events-none flex items-center justify-center', '$preset', klass]}
 	{...indicatorProps}
 >

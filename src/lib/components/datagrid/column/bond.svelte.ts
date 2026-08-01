@@ -56,7 +56,7 @@ class DataGridColumnBondBase extends Bond<DataGridColumnBondProps, DataGridColum
 	}
 
 	get index(): number {
-		const el = this.elements.root;
+		const el = this.elements.root as Element | undefined;
 		return el ? Array.from(el.parentElement?.children ?? []).indexOf(el) : -1;
 	}
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Bond, BondState, BondAtom, type BondStateProps } from './bond.svelte';
 import { defineBond } from './define-bond.svelte';
-import { createSelection, selectionCapability } from './capabilities/selection.svelte';
+import { createSelection, selectionCapability, SELECTION } from './capabilities/selection.svelte';
 
 class TState extends BondState<BondStateProps> {
 	values = $state<string[]>([]);
@@ -55,7 +55,7 @@ describe('defineBond', () => {
 
 	it('registers the spec capabilities on the bond', () => {
 		const bond = new Defined(new TState());
-		const selection = bond.capability('selection');
+		const selection = bond.capability(SELECTION);
 		expect(selection).toBeDefined();
 		// the surface is the same instance the state holds
 		expect(selection?.surface).toBe((bond.state as TState).selection);
@@ -79,7 +79,7 @@ describe('defineBond', () => {
 		});
 		const bond = new Plain(new TState());
 		expect(bond.root()).toBeInstanceOf(RootAtom);
-		expect(bond.capability('selection')).toBeUndefined();
+		expect(bond.capability(SELECTION)).toBeUndefined();
 	});
 });
 
@@ -139,9 +139,7 @@ describe('defineBond v2 — atom spec affordances', () => {
 	});
 
 	it('methods: attaches non-atom instance methods, typed via the `M` generic', () => {
-		// Fully-inferred call (no explicit type args) → `methods` are reflected in the
-		// instance type, so `bond.ping()` needs no cast. (When a bond specifies explicit
-		// type args, surface methods via the value+type-duality alias intersection instead.)
+		// Fully-inferred call: `methods` show up in the instance type, so `bond.ping()` needs no cast (explicit type args would require the duality-alias intersection instead).
 		const WithMethods = defineBond({
 			name: 'with-methods',
 			atoms: { root: RootAtom },
@@ -194,7 +192,7 @@ describe('defineBond v3 — `extends` (single-parent spec inheritance)', () => {
 
 	it('inherits parent capabilities (registered by the parent ctor via super)', () => {
 		const bond = new Child(new TState());
-		expect(bond.capability('selection')).toBeDefined();
+		expect(bond.capability(SELECTION)).toBeDefined();
 	});
 
 	it('inherits + can override parent methods', () => {

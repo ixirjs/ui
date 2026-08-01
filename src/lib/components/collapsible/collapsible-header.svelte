@@ -1,5 +1,5 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
+	import { mergeAtomProps, HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
 	import type { CollapsibleHeaderProps } from './types';
 	import { CollapsibleBond } from './bond.svelte';
 
@@ -14,11 +14,7 @@
 
 	const atom = bond?.atom('header');
 
-	const collapsibleProps = $derived({
-		preset: preset ?? atom?.preset,
-		...atom?.spread,
-		...restProps
-	});
+	const collapsibleProps = $derived(mergeAtomProps(atom, preset, restProps));
 </script>
 
 <HtmlAtom

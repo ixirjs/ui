@@ -27,7 +27,8 @@ export function toClassValue(
 	...args: unknown[]
 ): SvelteClassValue {
 	if (typeof input === 'function') {
-		return (input as ClassValueFunction).apply(this, args);
+		// Variadic cast: ClassValueFunction's required `bond` first param rejects a plain unknown[] apply.
+		return (input as (...args: unknown[]) => SvelteClassValue).apply(this, args);
 	}
 
 	return input ?? '';

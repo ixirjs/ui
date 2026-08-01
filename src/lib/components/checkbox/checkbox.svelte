@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Icon } from '$svelte-atoms/core/components/icon';
-	import { HtmlAtom } from '$svelte-atoms/core/components/atom';
+	import { mergePresetProps, HtmlAtom } from '$svelte-atoms/core/components/atom';
 	import CheckmarkRegularIcon from '$svelte-atoms/core/icons/icon-checkmark.svelte';
 	import type { CheckboxProps } from './types';
 	import { animateCheckboxIndicator } from './motion';
@@ -26,13 +26,15 @@
 		onblur,
 		onfocus,
 		onclick = undefined,
+		preset = undefined,
 		...restProps
 	}: CheckboxProps = $props();
+
+	const checkboxRootProps = $derived(mergePresetProps(preset, 'checkbox', restProps));
 
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	let checkboxElement: HTMLInputElement | undefined = $state();
 
-	// Computed state for visual representation
 	const isChecked = $derived(checked === true);
 	const isIndeterminate = $derived(indeterminate === true);
 	const showCheckmark = $derived(isChecked && !isIndeterminate);
@@ -53,30 +55,26 @@
 
 	function handleClick(ev: MouseEvent) {
 		if (disabled) return;
-		
-		// Check if click originated from the hidden input (via label click)
-		// If so, the input's bind:checked will handle the toggle
-		console.log(ev.target);
+
+		// Click forwarded by the native input (e.g. clicking surrounding <label> text); bind:checked already owns that toggle.
 		if (ev.target === checkboxElement) {
 			return;
 		}
 
-		// Let user's onclick handler run first
 		onclick?.(ev);
 
-		// If user prevented default, don't toggle
 		if (ev.defaultPrevented) {
 			return;
 		}
 
-		// Handle indeterminate → checked → unchecked cycle
+		// We own the toggle below. preventDefault stops an ancestor <label> from forwarding this click to the
+		// hidden input and toggling a second time; stopPropagation would NOT, since forwarding is a default action.
+		ev.preventDefault();
+
 		if (indeterminate) {
-			// Indeterminate → checked
 			indeterminate = false;
 			checked = true;
 		} else {
-			// Checked → unchecked or unchecked → checked
-			ev.stopPropagation(); // Prevent click from bubbling to label and toggling again
 			checked = !checked;
 		}
 
@@ -129,7 +127,6 @@
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <Input.Root
-	preset="checkbox"
 	as="div"
 	class={[
 		'checkbox-root aspect-square shrink-0 text-foreground h-5 w-fit cursor-pointer rounded-sm outline-0 outline-offset-2 transition-colors duration-100',
@@ -144,7 +141,7 @@
 	{exit}
 	{initial}
 	onclick={handleClick}
-	{...restProps}
+	{...checkboxRootProps}
 >
 	<input
 		bind:this={checkboxElement}

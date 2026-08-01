@@ -1,13 +1,9 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'p', B extends Base = Base">
-	import { HtmlAtom as Atom, type Base } from '$svelte-atoms/core/components/atom';
+	import { mergeAtomProps, HtmlAtom as Atom, type Base } from '$svelte-atoms/core/components/atom';
 	import { StepBond } from './bond.svelte';
 	import type { StepDescriptionProps } from './types';
 
-	const bond = StepBond.get();
-
-	if(!bond) {
-		throw new Error('StepDescription must be used within a Step component.');
-	}
+	const bond = StepBond.getOrThrow('StepDescription must be used within a Step component.');
 
 	let {
 		class: klass = '',
@@ -19,11 +15,7 @@
 
 	const atom = bond.atom('description');
 
-	const descriptionProps = $derived({
-		preset: preset ?? atom.preset,
-		...atom?.spread,
-		...restProps
-	});
+	const descriptionProps = $derived(mergeAtomProps(atom, preset, restProps));
 </script>
 
 <Atom

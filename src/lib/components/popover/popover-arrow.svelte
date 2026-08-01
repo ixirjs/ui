@@ -1,14 +1,10 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
 	import { animate as motion } from 'motion';
-	import { HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
+	import { HtmlAtom, mergeAtomProps, type Base } from '$svelte-atoms/core/components/atom';
 	import { PopoverBond } from './bond.svelte';
 	import type { PopoverArrowProps } from './types';
 
-	const bond = PopoverBond.get();
-
-	if (!bond) {
-		throw new Error('');
-	}
+	const bond = PopoverBond.getOrThrow('');
 
 	let {
 		class: klass = '',
@@ -22,18 +18,12 @@
 
 	const atom = bond.atom('arrow');
 
-	const presentation = $derived({ preset: preset ?? atom.preset });
-
 	const position = $derived(bond.state.position);
 	const middlewareArrowData = $derived(position?.middlewareData?.arrow);
 	const side = $derived(position?.placement?.split('-')[0] ?? 'top');
 
-	const arrowProps = $derived({
-		...atom.spread,
-		...restProps
-	} as Record<string, unknown>);
+	const arrowProps = $derived(mergeAtomProps(atom, preset, restProps));
 
-	// Rotation based on placement side
 	const rotation = $derived.by(() => {
 		switch (side) {
 			case 'top':
@@ -84,7 +74,6 @@
 	{fallback}
 	class={['text-border border-border pointer-events-none absolute opacity-0', '$preset', klass]}
 	style="{side}: 100%;"
-	{...presentation}
 	{...arrowProps}
 >
 	{#if children}

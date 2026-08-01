@@ -3,12 +3,31 @@
 	import { Alert as AAlert } from './index';
 	import { Button } from '$svelte-atoms/core/components/button';
 	import { Icon } from '$svelte-atoms/core/components/icon';
-	import { cn } from '$svelte-atoms/core/utils';
 
 	const { Story } = defineMeta({
 		title: 'Atoms/Alert',
 		parameters: {
 			layout: 'fullscreen'
+		},
+		args: {
+			variant: 'info',
+			dismissible: false,
+			disabled: false
+		},
+		argTypes: {
+			variant: {
+				control: 'select',
+				options: ['info', 'success', 'warning', 'error'],
+				description: 'Visual style conveying the intent of the alert'
+			},
+			dismissible: {
+				control: 'boolean',
+				description: 'Whether the alert can be dismissed by the user'
+			},
+			disabled: {
+				control: 'boolean',
+				description: 'Disables all interaction with the alert'
+			}
 		}
 	});
 </script>
@@ -17,7 +36,7 @@
 	let dismissedState = $state(false);
 	let autoHideState = $state(false);
 
-	// Auto-hide demo
+	// Auto-hide after 5s once shown.
 	$effect(() => {
 		if (autoHideState) {
 			const timer = setTimeout(() => {
@@ -28,27 +47,43 @@
 	});
 </script>
 
-{#snippet alertLayout({ children, class: klass, ...args })}
-	{@const gridTemplateAreas = `"icon title close-button" ". description description" "content content content" "actions actions actions"`}
-	{@const gridTemplateColumns = `auto 1fr auto`}
 
-	<div
-		{...args}
-		class={cn(klass, 'grid items-center')}
-		style:grid-template-areas={gridTemplateAreas}
-		style:grid-template-columns={gridTemplateColumns}
-	>
-		{@render children?.()}
-	</div>
-{/snippet}
+<Story name="Basic">
+	{#snippet template(args)}
+		<div class="p-8">
+			<AAlert.Root {...args}>
+				<AAlert.Icon>
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<circle cx="12" cy="12" r="10"></circle>
+						<path d="M12 16v-4M12 8h.01"></path>
+					</svg>
+				</AAlert.Icon>
+				<AAlert.Title>New Feature Available</AAlert.Title>
+				<AAlert.Description>
+					We've added dark mode support to your dashboard. Try it out in the settings panel.
+				</AAlert.Description>
+				<AAlert.Content></AAlert.Content>
+				{#if args.dismissible}
+					<AAlert.CloseButton>
+						<Icon class="h-full">
+							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+								<line x1="18" y1="6" x2="6" y2="18"></line>
+								<line x1="6" y1="6" x2="18" y2="18"></line>
+							</svg>
+						</Icon>
+					</AAlert.CloseButton>
+				{/if}
+			</AAlert.Root>
+		</div>
+	{/snippet}
+</Story>
 
 <Story name="All Variants">
 	<div class="space-y-6 p-8">
 		<div class="space-y-4">
 			<h2 class="text-2xl font-bold">Alert Variants</h2>
 
-			<!-- Info Alert -->
-			<AAlert.Root base={alertLayout} variant="info">
+			<AAlert.Root variant="info">
 				<AAlert.Icon>
 					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 						<circle cx="12" cy="12" r="10"></circle>
@@ -62,8 +97,7 @@
 				<AAlert.Content></AAlert.Content>
 			</AAlert.Root>
 
-			<!-- Success Alert -->
-			<AAlert.Root base={alertLayout} variant="success">
+			<AAlert.Root variant="success">
 				<AAlert.Icon>
 					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 						<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
@@ -77,8 +111,7 @@
 				<AAlert.Content></AAlert.Content>
 			</AAlert.Root>
 
-			<!-- Warning Alert -->
-			<AAlert.Root base={alertLayout} variant="warning">
+			<AAlert.Root variant="warning">
 				<AAlert.Icon>
 					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 						<path
@@ -96,8 +129,7 @@
 				<AAlert.Content></AAlert.Content>
 			</AAlert.Root>
 
-			<!-- Error Alert -->
-			<AAlert.Root base={alertLayout} variant="error">
+			<AAlert.Root variant="error">
 				<AAlert.Icon>
 					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 						<circle cx="12" cy="12" r="10"></circle>
@@ -120,7 +152,7 @@
 		<div class="space-y-4">
 			<h2 class="text-2xl font-bold">Dismissible Alerts</h2>
 
-			<AAlert.Root base={alertLayout} variant="info" dismissible bind:dismissed={dismissedState}>
+			<AAlert.Root variant="info" dismissible dismissed={dismissedState}>
 				<AAlert.Icon>
 					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 						<circle cx="12" cy="12" r="10"></circle>
@@ -146,7 +178,7 @@
 				<Button onclick={() => (dismissedState = false)}>Restore Alert</Button>
 			{/if}
 
-			<AAlert.Root base={alertLayout} variant="warning" dismissible>
+			<AAlert.Root variant="warning" dismissible>
 				<AAlert.Icon>
 					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 						<path
@@ -179,7 +211,7 @@
 		<div class="space-y-4">
 			<h2 class="text-2xl font-bold">Alerts with Action Buttons</h2>
 
-			<AAlert.Root base={alertLayout} variant="info">
+			<AAlert.Root variant="info">
 				<AAlert.Icon>
 					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 						<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
@@ -198,7 +230,7 @@
 				<AAlert.Content></AAlert.Content>
 			</AAlert.Root>
 
-			<AAlert.Root base={alertLayout} variant="error" dismissible>
+			<AAlert.Root variant="error" dismissible>
 				<AAlert.Icon>
 					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 						<circle cx="12" cy="12" r="10"></circle>
@@ -225,7 +257,7 @@
 				</AAlert.CloseButton>
 			</AAlert.Root>
 
-			<AAlert.Root base={alertLayout} variant="success">
+			<AAlert.Root variant="success">
 				<AAlert.Icon>
 					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 						<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
@@ -276,7 +308,7 @@
 			<h2 class="text-2xl font-bold">Real-World Use Cases</h2>
 
 			<!-- Newsletter Subscription -->
-			<AAlert.Root base={alertLayout} variant="success" dismissible>
+			<AAlert.Root variant="success" dismissible>
 				<AAlert.Icon>
 					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 						<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"
@@ -300,7 +332,7 @@
 			</AAlert.Root>
 
 			<!-- API Rate Limit -->
-			<AAlert.Root base={alertLayout} variant="warning">
+			<AAlert.Root variant="warning">
 				<AAlert.Icon>
 					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 						<circle cx="12" cy="12" r="10"></circle>
@@ -319,7 +351,7 @@
 			</AAlert.Root>
 
 			<!-- Maintenance Notice -->
-			<AAlert.Root base={alertLayout} variant="info">
+			<AAlert.Root variant="info">
 				<AAlert.Icon>
 					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 						<path
@@ -339,7 +371,7 @@
 			</AAlert.Root>
 
 			<!-- Security Alert -->
-			<AAlert.Root base={alertLayout} variant="error" dismissible>
+			<AAlert.Root variant="error" dismissible>
 				<AAlert.Icon>
 					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 						<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
@@ -367,7 +399,7 @@
 			</AAlert.Root>
 
 			<!-- Trial Ending -->
-			<AAlert.Root base={alertLayout} variant="warning" dismissible>
+			<AAlert.Root variant="warning" dismissible>
 				<AAlert.Icon>
 					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 						<rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>

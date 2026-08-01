@@ -1,10 +1,10 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
 	import { bindBond } from '$svelte-atoms/core/shared/bind-bond.svelte';
+	import { bondFactory } from '$svelte-atoms/core/shared';
 	import { HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
 	import {
 		AccordionItemBond,
-		AccordionItemBondState,
-		type AccordionItemBondProps
+		AccordionItemBondState
 	} from './bond.svelte';
 	import type { AccordionItemRootProps } from './types';
 
@@ -13,7 +13,7 @@
 		value,
 		data = undefined,
 		disabled = false,
-		factory = defaultFactory,
+		factory = bondFactory(AccordionItemBondState, AccordionItemBond),
 		children = undefined,
 		preset = undefined,
 		...restProps
@@ -30,10 +30,6 @@
 	);
 	const bond = binding.bond.share();
 
-	function defaultFactory(props: AccordionItemBondProps) {
-		const accordionItemState = new AccordionItemBondState(props);
-		return new AccordionItemBond(accordionItemState);
-	}
 
 	export function getBond() {
 		return bond;

@@ -1,7 +1,6 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'dialog', B extends Base = Base">
 	import { type Base } from '$svelte-atoms/core/components/atom';
-	import { useFocusRestore, type OverlayView } from '$svelte-atoms/core/shared/overlay';
-	import { bindBond } from '$svelte-atoms/core/shared';
+	import { bindBond, useCapabilities } from '$svelte-atoms/core/shared';
 	import { PopoverDialogBond, PopoverDialogBondState } from './bond.svelte';
 	import type { PopoverDialogRootProps } from './types';
 
@@ -20,13 +19,16 @@
 		{
 			open: [() => open, (v) => (open = v)],
 			disabled: () => disabled,
+			// Vestigial: element-less context root, no typed channel to forward restProps.
 			rest: () => restProps
 		}
 	);
 	const bond = binding.bond.share();
 
-	// Focus capture/restore reacts to `open` (restores to the trigger's prior focus on close).
-	useFocusRestore(bond as unknown as OverlayView);
+	// Run capability setups — focus capture/restore reacts to `open`, restoring to the trigger's
+	// prior focus on close, via the focus capability's setup() (ADR 0010).
+	useCapabilities(bond);
+	// Topmost-open-overlay Escape coordination (ADR 0009 D1/D2).
 
 	export function getBond() {
 		return bond;

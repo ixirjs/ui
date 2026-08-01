@@ -5,11 +5,7 @@
 	import { Chip } from '../chip';
 	import { HtmlAtom as Atom } from '../atom';
 
-	const bond = SelectBond.get();
-
-	if (!bond) {
-		throw new Error('SelectSelection must be used within a Select');
-	}
+	const bond = SelectBond.getOrThrow('SelectSelection must be used within a Select');
 
 	const isMultiple = $derived(bond.state.props.multiple);
 

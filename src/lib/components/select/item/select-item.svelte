@@ -4,11 +4,7 @@
 	import { SelectBond } from '../bond.svelte';
 	import { List } from '../../list';
 
-	const select = SelectBond.get();
-
-	if (!select) {
-		throw new Error('<SelectItem> must be used within a <Select>.');
-	}
+	const select = SelectBond.getOrThrow('<SelectItem> must be used within a <Select>.');
 
 	const ID = $props.id();
 
@@ -27,27 +23,23 @@
 	// `select.item` preset from the bond's canonical item atom instead.
 	const presentation = $derived({ preset: preset ?? select.item().preset });
 
-	// Create reactive props object for the atom
 	const itemProps = $derived({
 		id,
 		value,
 		data
 	} as SelectItemAtomProps<D>);
 
-	// Create the atom instance
 	const atom = new SelectItemAtom<D>(itemProps, select);
 
-	// Derived reactive properties
 	const isHighlighted = $derived(atom.isHighlighted);
 	const isSelected = $derived(atom.isSelected);
 
-	// Merge atom attrs with custom props
 	const itemAttrs = $derived({
 		...atom.spread,
 		...restProps
 	});
 
-	// Register item with select state and handle mounting
+	// Register into select state; unregister on teardown.
 	$effect.pre(() => {
 		select.state.registerItem(ID, atom);
 

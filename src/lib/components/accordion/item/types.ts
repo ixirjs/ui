@@ -3,10 +3,7 @@ import type { HtmlAtomProps, Base, SnippetProps } from '$svelte-atoms/core/compo
 import type { Factory } from '$svelte-atoms/core/types';
 import type { AccordionItemBond } from './bond.svelte';
 
-// ============================================================================
-// Accordion Item Snippet Props (Extensible)
-// ============================================================================
-
+// Accordion Item Snippet Props
 export interface AccordionItemSnippetProps extends SnippetProps {
 	accordionItem: AccordionItemBond;
 }

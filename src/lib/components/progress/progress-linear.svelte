@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { HTMLAttributes } from 'svelte/elements';
-	import { HtmlAtom } from '$svelte-atoms/core/components/atom';
+	import { mergePresetProps, HtmlAtom } from '$svelte-atoms/core/components/atom';
+	import { clamp } from '$svelte-atoms/core/utils/math';
 	import type { ProgressLinearProps } from './types';
 	import { HtmlElement } from '../element';
 
@@ -8,12 +9,14 @@
 		class: klass = '',
 		value = null,
 		max = 100,
-		preset = 'progress.linear',
+		preset = undefined,
 		...restProps
 	}: ProgressLinearProps & HTMLAttributes<HTMLDivElement> = $props();
 
+	const linearProps = $derived(mergePresetProps(preset, 'progress.linear', restProps));
+
 	const isIndeterminate = $derived(value === null || value === undefined);
-	const percent = $derived(isIndeterminate ? null : Math.min(100, Math.max(0, (value! / max) * 100)));
+	const percent = $derived(isIndeterminate ? null : clamp((value! / max) * 100, 0, 100));
 </script>
 
 {#snippet defaultLinearFill({ percent: p }: { percent: number | null })}
@@ -30,7 +33,6 @@
 {/snippet}
 
 <HtmlAtom
-	{preset}
 	as="div"
 	class={['progress-root flex flex-col gap-1', '$preset', klass]}
 	role="progressbar"
@@ -42,7 +44,7 @@
 	data-value={isIndeterminate ? undefined : value ?? undefined}
 	data-max={max}
 	data-completed={!isIndeterminate && percent === 100}
-	{...restProps}
+	{...linearProps}
 >
 	<HtmlElement
 		preset="progress.linear.track"

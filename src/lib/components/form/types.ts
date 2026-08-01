@@ -7,9 +7,7 @@ import type { FieldBond, FieldStateProps } from './field/bond.svelte';
 type SnippetProps = Record<string, unknown>;
 type Schema = unknown;
 
-// ============================================================================
-// Form Snippet Props (Extensible)
-// ============================================================================
+// Snippet props
 
 export interface FormSnippetProps extends SnippetProps {
 	form: FormBond;
@@ -25,6 +23,8 @@ export type FieldChildren = Snippet<[FieldSnippetProps]>;
 
 interface CommonProps {
 	factory?: Factory<FormBond>;
+	// Validation adapter/schema forwarded to the form bond (typed `unknown` there).
+	validator?: unknown;
 }
 
 export interface FormRootProps<B extends Base = Base>

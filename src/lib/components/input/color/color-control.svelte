@@ -1,9 +1,7 @@
 <script lang="ts">
-	import { getPreset } from '$svelte-atoms/core/context';
-	import { resolvePreset } from '$svelte-atoms/core/components/atom';
+	import { resolveControlPreset } from '../shared';
+	import { clamp } from '$svelte-atoms/core/utils/math';
 	import { cn, toClassValue } from '$svelte-atoms/core/utils';
-	import type { PresetModuleName } from '$svelte-atoms/core/context/preset.svelte';
-	import { untrack } from 'svelte';
 	import { InputBond } from '../bond.svelte';
 	import type { InputColorControlProps } from './types';
 	import type { ColorFormat, ChannelValues, ChannelDef } from './types';
@@ -14,7 +12,7 @@
 
 	let {
 		class: klass = '',
-		value = $bindable(),
+		value = $bindable(''),
 		format: formatProp = undefined,
 		alpha: showAlpha = false,
 		placeholder = 'oklch(0.5 0.2 250deg)',
@@ -26,14 +24,13 @@
 		...restProps
 	}: InputColorControlProps = $props();
 
-	const preset = resolvePreset(getPreset(untrack(() => presetKey) as PresetModuleName)?.apply(bond, [bond]));
+	const preset = resolveControlPreset(() => presetKey, bond);
 
-	// ── Active format ─────────────────────────────────────────────────────
 	const activeFormat = $derived<ColorFormat>(formatProp ?? detectFormat(value) ?? 'hex');
 	const def = $derived(FORMAT_DEFS[activeFormat]);
 
-	// ── Parsed channels ───────────────────────────────────────────────────
 	const parsed = $derived(parseColor(value));
+	// Only adopt parsed channels/alpha when they match the active format.
 	const channels = $derived<ChannelValues>(
 		parsed?.format === activeFormat ? parsed.channels : {}
 	);
@@ -41,27 +38,24 @@
 		parsed?.format === activeFormat ? parsed.alpha : undefined
 	);
 
-	// Whether to render the alpha segment
 	const hasAlpha = $derived(def.alpha && (showAlpha || alpha !== undefined));
 
-	// Alpha channel definition (stable, not inline)
+	// Stable (non-inline) reference so the segment doesn't see a new channel each render.
 	const alphaDef: ChannelDef = { id: 'alpha', label: 'Alpha', kind: 'float', min: 0, max: 1, precision: 2 };
 
-	// ── Segment refs ──────────────────────────────────────────────────────
 	let segRefs = $state<Array<{ focus(): void } | undefined>>([]);
 
 	const segCount = $derived(def.channels.length + (hasAlpha ? 1 : 0));
 
 	function focusSeg(i: number) {
-		segRefs[Math.max(0, Math.min(segCount - 1, i))]?.focus();
+		segRefs[clamp(i, 0, segCount - 1)]?.focus();
 	}
 
-	// ── Keep bond in sync ────────────────────────────────────────────────
+	// Mirror the bindable value onto the bond state.
 	$effect(() => {
 		if (bond) bond.state.props.value = value;
 	});
 
-	// ── Emit helpers ─────────────────────────────────────────────────────
 	function emitLive(built: string) {
 		value = built;
 		if (bond) bond.state.props.value = built;
@@ -74,14 +68,12 @@
 		onchange?.(ev, { value: built });
 	}
 
-	// ── Channel change (live, from segment oninput) ───────────────────────
 	function handleChannelChange(channelId: string, val: number | string | undefined) {
 		const newChannels = channelId === 'alpha' ? channels : { ...channels, [channelId]: val };
 		const newAlpha    = channelId === 'alpha' ? (val as number | undefined) : alpha;
 		emitLive(buildColor(activeFormat, newChannels, newAlpha));
 	}
 
-	// ── Channel commit (on blur/Enter from segment) ───────────────────────
 	function handleChannelCommit(ev: Event, channelId: string, val: number | string | undefined) {
 		const newChannels = channelId === 'alpha' ? channels : { ...channels, [channelId]: val };
 		const newAlpha    = channelId === 'alpha' ? (val as number | undefined) : alpha;

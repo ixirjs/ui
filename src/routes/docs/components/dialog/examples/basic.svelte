@@ -1,12 +1,13 @@
 <script lang="ts">
 	import { Dialog } from '$lib/components/dialog';
 	import { Button } from '$lib/components/button';
+
+	// Dialog is controlled via the `open` prop. For a built-in trigger, use PopoverDialog.
+	let open = $state(false);
 </script>
 
-<Dialog.Root>
-	{#snippet trigger({ dialog })}
-		<Button {...dialog.trigger()}>Open Dialog</Button>
-	{/snippet}
+<Button onclick={() => (open = true)}>Open Dialog</Button>
+<Dialog.Root bind:open>
 	{#snippet children({ dialog })}
 		<Dialog.Content>
 			<Dialog.Header>

@@ -5,9 +5,7 @@ export interface PropDefinition {
 	description: string;
 }
 
-/**
- * Converts prop definitions to markdown table format
- */
+// Converts prop definitions to a markdown table.
 export function propsToMarkdown(props: PropDefinition[]): string {
 	if (!props || props.length === 0) return '';
 
@@ -26,10 +24,7 @@ export function propsToMarkdown(props: PropDefinition[]): string {
 	return markdown;
 }
 
-/**
- * Injects props into markdown content by replacing placeholders
- * Placeholders format: {{propName}}
- */
+// Replaces {{propName}} placeholders in markdown with rendered prop tables.
 export function injectPropsIntoMarkdown(
 	markdown: string,
 	propsMap: Record<string, PropDefinition[]>
@@ -45,10 +40,7 @@ export function injectPropsIntoMarkdown(
 	return result;
 }
 
-/**
- * Converts markdown content to LLM-friendly text format
- * Keeps markdown syntax as-is since LLMs parse it well
- */
+// Strips HTML comments and collapses excess blank lines; keeps markdown syntax intact.
 export function markdownToLLM(markdown: string): string {
 	let text = markdown;
 
@@ -64,13 +56,9 @@ export function markdownToLLM(markdown: string): string {
 	return text;
 }
 
-/**
- * Reads markdown files from the docs directory
- */
+// Fetches a markdown file by URL; returns empty string on failure.
 export async function readMarkdownFile(filePath: string): Promise<string> {
 	try {
-		// In production, you might want to use a different approach
-		// This is a placeholder - adjust based on your build setup
 		const response = await fetch(filePath);
 		if (!response.ok) throw new Error(`Failed to fetch ${filePath}`);
 		return await response.text();
@@ -80,9 +68,7 @@ export async function readMarkdownFile(filePath: string): Promise<string> {
 	}
 }
 
-/**
- * Generate LLM-friendly documentation metadata
- */
+// Generates a standard LLM doc header with title, description, and version.
 export function generateLLMHeader(title: string, description: string, version = '1.0.0-alpha.30') {
 	return `# ${title}
 

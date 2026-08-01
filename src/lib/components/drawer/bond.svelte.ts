@@ -4,11 +4,13 @@ import {
 	ModalRootAtom,
 	ModalContentAtom,
 	OverlayState,
+	OverlayBond,
 	modalCapabilities,
+	TRIGGER,
 	type ModalOverlayElements,
 	type OverlayStateProps,
 	type OverlayView
-} from '$svelte-atoms/core/shared/overlay';
+} from '$svelte-atoms/core/components/overlay';
 
 export type DrawerBondProps<T extends Record<string, unknown> = Record<string, unknown>> =
 	OverlayStateProps & {
@@ -25,10 +27,10 @@ export type DrawerBondElements = ModalOverlayElements & {
 	backdrop?: HTMLElement;
 };
 
-// Narrow view type breaks the atom↔bond cycle through defineBond; no base class — overlay behaviour from capabilities (§13).
+// Narrow view type breaks the atom↔bond cycle through defineBond (§13).
 type DrawerBondView = OverlayView & { state: DrawerBondState };
 
-// Extends ModalRootAtom; overlays aria-hidden and data-active on the modal ARIA contract.
+// Overlays aria-hidden and data-active on the modal ARIA contract.
 export class DrawerRootAtom extends ModalRootAtom<DrawerBondView> {
 	override get attrs() {
 		const isOpen = this.bond.state.isOpen;
@@ -138,7 +140,7 @@ export class DrawerBondState<
 	Props extends DrawerBondProps = DrawerBondProps
 > extends OverlayState<Props> {}
 
-// Controlled slide-out modal (no trigger — use PopoverDialog for that). Focus-trap + escape from modalCapabilities(); trigger capability filtered out.
+// Controlled slide-out modal (no trigger — use PopoverDialog for that); modalCapabilities() minus trigger.
 export const DrawerBond = defineBond<
 	{
 		root: typeof DrawerRootAtom;
@@ -150,10 +152,12 @@ export const DrawerBond = defineBond<
 		footer: typeof DrawerFooterAtom;
 		backdrop: typeof DrawerBackdropAtom;
 	},
-	DrawerBondState
+	DrawerBondState,
+	typeof OverlayBond
 >({
 	name: 'drawer',
-	capabilities: () => modalCapabilities().filter((c) => c.slot !== 'trigger'),
+	base: OverlayBond,
+	capabilities: () => modalCapabilities().filter((c) => c.slot !== TRIGGER),
 	atoms: {
 		root: DrawerRootAtom,
 		content: DrawerContentAtom,
@@ -166,5 +170,4 @@ export const DrawerBond = defineBond<
 	}
 });
 
-// Instance type of the drawer bond — paired with the const above (value + type).
 export type DrawerBond = BondOf<typeof DrawerBond>;

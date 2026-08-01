@@ -1,5 +1,5 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'p', B extends Base = Base">
-	import { HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
+	import { mergePresetProps, HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
 	import { FieldBond } from './bond.svelte';
 	import type { FieldTextProps } from '../types';
 
@@ -13,7 +13,7 @@
 		...restProps
 	}: FieldTextProps<E, B> = $props();
 
-	const helperTextProps = $derived({ preset: preset ?? 'field.helper-text', ...restProps });
+	const helperTextProps = $derived(mergePresetProps(preset, 'field.helper-text', restProps));
 </script>
 
 <HtmlAtom

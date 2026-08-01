@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { Bond, BondState, BondAtom, bondContextKey, type BondStateProps } from '../bond.svelte';
-import { createSelection, selectionCapability } from './selection.svelte';
+import { Bond, BondState, BondAtom, bondContextKey, capabilityKey, type BondStateProps } from '../bond.svelte';
+import { createSelection, selectionCapability, SELECTION } from './selection.svelte';
 
 // End-to-end proof of the role stitch: atom declares .role(...), bond folds in capability
 // projections — the atom binds to a capability surface, never to a concrete component.
@@ -99,15 +99,18 @@ describe('role stitch — selection projected onto an atom', () => {
 		expect(b.spread['aria-selected']).toBeUndefined();
 	});
 
-	it('bond.capability(slot) retrieves the held surface', () => {
+	it('bond.capability(key) retrieves the held surface', () => {
 		const bond = makeBond();
-		expect(bond.capability('selection')?.surface).toBe(bond.state.selection);
-		expect(bond.capability('nope')).toBeUndefined();
+		expect(bond.capability(SELECTION)?.surface).toBe(bond.state.selection);
+		expect(bond.capability(capabilityKey('nope'))).toBeUndefined();
 	});
 });
 
 describe('slot resolution — use() is last-wins-per-slot (§13.1)', () => {
-	const cap = (slot: string, tag: string) => ({
+	// Test-local slot keys; identity (not string) drives find/last-wins.
+	const SLOT_A = capabilityKey<string>('slot-a');
+	const SLOT_B = capabilityKey<string>('slot-b');
+	const cap = (slot: symbol, tag: string) => ({
 		slot,
 		surface: tag,
 		behavior: () => ({ attrs: () => ({ 'data-tag': tag }) })
@@ -115,9 +118,9 @@ describe('slot resolution — use() is last-wins-per-slot (§13.1)', () => {
 
 	it('re-registering a slot REPLACES the prior capability (override seam)', () => {
 		const bond = new TestBond(new TestState());
-		bond.capability(cap('focus', 'first'));
-		bond.capability(cap('focus', 'second'));
-		expect(bond.capability('focus')?.surface).toBe('second');
+		bond.capability(cap(SLOT_A, 'first'));
+		bond.capability(cap(SLOT_A, 'second'));
+		expect(bond.capability(SLOT_A)?.surface).toBe('second');
 		// only the survivor projects onto an atom
 		const atom = new TestAtom(bond, 'a').role('surface');
 		expect(atom.spread['data-tag']).toBe('second');
@@ -125,9 +128,9 @@ describe('slot resolution — use() is last-wins-per-slot (§13.1)', () => {
 
 	it('distinct slots both register (no-op for non-collisions)', () => {
 		const bond = new TestBond(new TestState());
-		bond.capability(cap('trigger', 'T'));
-		bond.capability(cap('escape', 'E'));
-		expect(bond.capability('trigger')?.surface).toBe('T');
-		expect(bond.capability('escape')?.surface).toBe('E');
+		bond.capability(cap(SLOT_A, 'T'));
+		bond.capability(cap(SLOT_B, 'E'));
+		expect(bond.capability(SLOT_A)?.surface).toBe('T');
+		expect(bond.capability(SLOT_B)?.surface).toBe('E');
 	});
 });

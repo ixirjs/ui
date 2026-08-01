@@ -1,16 +1,13 @@
 <script lang="ts">
-	import { getPreset } from '$svelte-atoms/core/context';
-	import { resolvePreset } from '$svelte-atoms/core/components/atom';
+	import { resolveControlPreset, INPUT_FIELD_CLASS, writeInputValue } from './shared';
 	import { cn, toClassValue } from '$svelte-atoms/core/utils';
-	import type { PresetModuleName } from '$svelte-atoms/core/context/preset.svelte';
 	import { InputBond } from './bond.svelte';
 	import type { InputTextControlProps } from './types';
-	import { untrack } from 'svelte';
 
 	const bond = InputBond.get();
 
 	let {
-		value = $bindable(),
+		value = $bindable(''),
 		class: klass = '',
 		placeholder = '',
 		disabled = false,
@@ -21,7 +18,7 @@
 		...restProps
 	}: InputTextControlProps = $props();
 
-	const preset = resolvePreset(getPreset(untrack(() => presetKey) as PresetModuleName)?.apply(bond, [bond]));
+	const preset = resolveControlPreset(() => presetKey, bond);
 
 	function handleChange(ev: Event) {
 		onchange?.(ev, { value });
@@ -37,7 +34,7 @@
 			return;
 		}
 
-		if (bond) bond.state.props.value = value;
+		writeInputValue(bond, value);
 	}
 </script>
 
@@ -46,7 +43,7 @@
 		() => value,
 		(v) => {
 			value = v;
-			if (bond) bond.state.props.value = v;
+			writeInputValue(bond, v);
 		}
 	}
 	type='text'
@@ -54,7 +51,7 @@
 	{disabled}
 	{readonly}
 	class={cn(
-		'text-foreground placeholder:text-muted-foreground h-full w-full flex-1 bg-transparent px-2 leading-1 outline-none',
+		INPUT_FIELD_CLASS,
 		preset?.class,
 		toClassValue(klass, bond)
 	)}

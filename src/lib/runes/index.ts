@@ -1,3 +1,4 @@
+export { mediaQuery } from './media-query.svelte';
 export { colorScheme, type ColorScheme } from './color-scheme.svelte';
 export { reducedMotion } from './reduced-motion.svelte';
 export { container } from './container.svelte';

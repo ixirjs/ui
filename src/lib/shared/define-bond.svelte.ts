@@ -35,7 +35,7 @@ export type BondBaseClass = abstract new (...args: any[]) => Bond;
 // Shape a bond must satisfy to be a parts: part. DefinedBondClass satisfies it; hand-written bonds via a spec getter.
 export type FusablePart = {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	readonly spec: BondSpec<any>;
+	readonly spec: BondSpec<any, any>;
 	readonly CONTEXT_KEY?: string;
 	readonly CONTEXT_KEYS?: readonly string[];
 };
@@ -103,6 +103,7 @@ export type DefinedBondClass<
 	// Transitive context-key list from parts: path; absent on non-composed bonds.
 	readonly CONTEXT_KEYS?: readonly string[];
 	get(): DefinedBond<A, State, Base, M> | undefined;
+	getOrThrow(message?: string): DefinedBond<A, State, Base, M>;
 	set(bond: DefinedBond<A, State, Base, M>): DefinedBond<A, State, Base, M>;
 	// The spec this bond was defined from — the seam Fusion composes over (§9).
 	readonly spec: BondSpec<A, Base>;

@@ -18,4 +18,4 @@ export {
 	// The filter box — `Select.Query` resolves the combobox bond via the shared popover
 	// context, so it drives the inherited `query` field (separate from the value `Control`).
 	Query
-} from '../dropdown/atoms';
+} from '../select/atoms';

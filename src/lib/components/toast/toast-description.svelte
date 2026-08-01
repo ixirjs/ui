@@ -1,29 +1,25 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'p', B extends Base = Base">
-	import { HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
+	import { mergeAtomProps, HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
 	import { ToastBond } from './bond.svelte';
 	import type { ToastDescriptionProps } from './types';
 
 	let {
-		class: klass = '',
 		as = 'p' as E,
-		preset = 'toast.description',
+		preset = undefined,
 		children = undefined,
 		...restProps
 	}: ToastDescriptionProps<E, B> = $props();
 
 	const bond = ToastBond.get();
 
-	const descriptionProps = $derived({
-		...(bond?.description().spread ?? {}),
-		...restProps
-	});
+	const atom = bond?.description();
+
+	const descriptionProps = $derived(mergeAtomProps(atom, preset, restProps));
 </script>
 
 <HtmlAtom
 	{as}
 	{bond}
-	{preset}
-	class={['$preset', klass]}
 	{...descriptionProps}
 >
 	{@render children?.({ toast: bond })}

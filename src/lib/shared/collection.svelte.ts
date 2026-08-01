@@ -30,6 +30,12 @@ export class Collection<T> {
 		return Array.from(this.#items.entries());
 	}
 
+	// Iterable protocol — `for (const [id, value] of collection)`, `[...collection]`, destructuring.
+	// Yields [id, value] entries in insertion order (mirrors Map); reactive via the backing SvelteMap.
+	[Symbol.iterator](): IterableIterator<[string, T]> {
+		return this.#items[Symbol.iterator]();
+	}
+
 	get(id: string): T | undefined {
 		return this.#items.get(id);
 	}

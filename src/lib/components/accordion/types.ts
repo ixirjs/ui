@@ -3,20 +3,14 @@ import type { HtmlAtomProps, Base, SnippetProps } from '$svelte-atoms/core/compo
 import type { Factory } from '$svelte-atoms/core/types';
 import type { AccordionBond } from './bond.svelte';
 
-// ============================================================================
-// Accordion Snippet Props (Extensible)
-// ============================================================================
-
+// Accordion Snippet Props
 export interface AccordionSnippetProps extends SnippetProps {
 	accordion: AccordionBond;
 }
 
 export type AccordionChildren = Snippet<[AccordionSnippetProps]>;
 
-// ============================================================================
 // Accordion Root Props
-// ============================================================================
-
 export interface AccordionRootProps<
 	E extends keyof HTMLElementTagNameMap = 'div',
 	B extends Base = Base

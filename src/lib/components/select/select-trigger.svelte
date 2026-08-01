@@ -4,11 +4,7 @@
 	import { SelectBond } from './bond.svelte';
 	import type { SelectTriggerProps } from './types';
 
-	const bond = SelectBond.get();
-
-	if (!bond) {
-		throw new Error('select atom was not found');
-	}
+	const bond = SelectBond.getOrThrow('select atom was not found');
 
 	let {
 		class: klass = '',

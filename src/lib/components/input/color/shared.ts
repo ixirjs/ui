@@ -1,6 +1,6 @@
-import type { ColorFormat, ChannelDef } from './types';
+import type { ColorFormat, ChannelDef, ChannelValues } from './types';
 
-// ── Color space names used inside color() ──────────────────────────────────
+// Color spaces valid inside the CSS color() function.
 export const COLOR_FN_SPACES: ColorFormat[] = [
 	'display-p3',
 	'srgb',
@@ -12,18 +12,15 @@ export const COLOR_FN_SPACES: ColorFormat[] = [
 	'xyz-d65'
 ];
 
-// ── Format definitions ─────────────────────────────────────────────────────
-
 export interface FormatDef {
 	format: ColorFormat;
-	/** CSS function name, e.g. 'rgb', 'hsl', 'color' */
+	// CSS function name, e.g. 'rgb', 'hsl', 'color'
 	fn: string;
-	/** For color() format — the colorspace argument */
+	// Colorspace argument for color()
 	colorspace?: string;
-	/** Separator between channels: ' ' (modern) or ', ' (legacy) */
+	// Channel separator: ' ' (modern) or ', ' (legacy)
 	sep: ' ' | ', ';
 	channels: ChannelDef[];
-	/** Whether alpha channel is supported */
 	alpha: boolean;
 }
 
@@ -229,19 +226,14 @@ export const FORMAT_DEFS: Record<ColorFormat, FormatDef> = {
 	}
 };
 
-// ── Channel values map ─────────────────────────────────────────────────────
-
-export type ChannelValues = Record<string, number | string | undefined>;
-
-// ── Parse a CSS color string → { format, channels, alpha } ────────────────
-
+/** Parse a CSS color string into its format, channel values, and alpha. */
 export function parseColor(
 	raw: string
 ): { format: ColorFormat; channels: ChannelValues; alpha: number | undefined } | undefined {
 	const s = raw.trim();
 	if (!s) return undefined;
 
-	// Named color — single word, only letters (e.g. red, cornflowerblue, transparent)
+	// Named color — single all-letters word (red, cornflowerblue, transparent)
 	if (/^[a-zA-Z]+$/.test(s)) {
 		return { format: 'named', channels: { name: s }, alpha: undefined };
 	}
@@ -273,8 +265,9 @@ export function parseColor(
 	const fnM = s.match(/^([a-z-]+)\((.+)\)$/i);
 	if (!fnM) return undefined;
 
-	const fn = fnM[1].toLowerCase();
-	const body = fnM[2];
+	// Both capture groups are required by the regex above, so they're present when fnM matched.
+	const fn = fnM[1]!.toLowerCase();
+	const body = fnM[2]!;
 
 	// color(colorspace …)
 	if (fn === 'color') {
@@ -333,8 +326,7 @@ function parseChannelValue(t: string): number | undefined {
 	return isNaN(n) ? undefined : n;
 }
 
-// ── Build a CSS color string from format + channels ────────────────────────
-
+/** Build a CSS color string from a format, channel values, and alpha. */
 export function buildColor(
 	format: ColorFormat,
 	channels: ChannelValues,
@@ -387,8 +379,7 @@ export function buildColor(
 	return `${def.fn}(${vals.join(sep)}${alphaStr})`;
 }
 
-// ── Detect format from a raw string ───────────────────────────────────────
-
+/** Detect the color format of a raw CSS string, if parseable. */
 export function detectFormat(raw: string): ColorFormat | undefined {
 	return parseColor(raw)?.format;
 }

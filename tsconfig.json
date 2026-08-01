@@ -17,7 +17,7 @@
 		"module": "esnext",
 		"moduleResolution": "bundler",
 		"target": "ES2022",
-		"lib": ["ES2022", "DOM", "DOM.Iterable"],
+		"lib": ["ES2022", "ESNext.Disposable", "DOM", "DOM.Iterable"],
 		"verbatimModuleSyntax": true
 	}
 }

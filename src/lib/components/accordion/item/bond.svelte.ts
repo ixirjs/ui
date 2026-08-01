@@ -23,7 +23,7 @@ export type AccordionItemBondElements = {
 	indicator: HTMLElement;
 };
 
-// Bond view the item atoms type against — breaks the atom↔bond cycle via defineBond (§12.2).
+// Breaks the atom↔bond cycle via defineBond (§12.2).
 type AccordionItemBondView = ViewOf<AccordionItemBondState>;
 
 export class AccordionItemRootAtom extends BondAtom<AccordionItemBondView> {
@@ -37,10 +37,8 @@ export class AccordionItemRootAtom extends BondAtom<AccordionItemBondView> {
 		};
 	}
 
-		// Register into parent accordion's item collection on mount; cleanup unregisters on destroy.
-	// Attached from the atom (not state.mount()) so the collection holds the real bond.
+	// Registered from the atom (not state.mount()) so the collection holds the real bond, not the view.
 	override onmount() {
-		// `this.bond` is the view; the runtime instance is the full bond the collection holds.
 		return this.bond.state.parent?.attachItem(this.bond.id, this.bond as AccordionItemBond);
 	}
 }
@@ -125,8 +123,7 @@ export class AccordionItemIndicatorAtom extends BondAtom<AccordionItemBondView> 
 	}
 }
 
-// AccordionItemBond via defineBond (§6). header/body carry trigger↔content roles;
-// preset path is `accordion.item` (dotted), distinct from the DOM namespace `accordion-item`.
+// preset path `accordion.item` (dotted) is distinct from the DOM namespace `accordion-item` (§6).
 export const AccordionItemBond = defineBond<
 	{
 		root: typeof AccordionItemRootAtom;
@@ -146,7 +143,6 @@ export const AccordionItemBond = defineBond<
 	}
 });
 
-// Instance type of the accordion-item bond — paired with the const above.
 export type AccordionItemBond = BondOf<typeof AccordionItemBond>;
 
 export class AccordionItemBondState extends BondState<AccordionItemBondProps> {
@@ -164,9 +160,7 @@ export class AccordionItemBondState extends BondState<AccordionItemBondProps> {
 		if (!this.#parent) {
 			throw new Error('AccordionItemAtom must be used within an AccordionAtom context.');
 		}
-		// trigger↔content a11y link (§11.3): header (role:'trigger') gets aria-expanded +
-		// aria-controls; body (role:'content') gets aria-labelledby + role=region. Ids
-		// resolved via the role registry, replacing the hand-wired `accordion-*-${id}`.
+		// trigger↔content a11y link (§11.3): header gets aria-expanded/aria-controls, body gets aria-labelledby/role=region; ids resolved via the role registry.
 		this.capability(triggerContentLink(this.#disclosure, { contentRole: 'region' }));
 	}
 
@@ -188,7 +182,7 @@ export class AccordionItemBondState extends BondState<AccordionItemBondProps> {
 		);
 	}
 
-	// The narrow parent contract this item depends on (not the whole bond).
+	// Narrow parent contract, not the whole bond.
 	get parent(): IAccordion | undefined {
 		return this.#parent;
 	}

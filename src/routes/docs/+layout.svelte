@@ -59,6 +59,7 @@
 			children: [
 				{ title: 'Atoms', href: '/docs/atoms' },
 				{ title: 'Bonds', href: '/docs/bonds' },
+				{ title: 'Extending & Fusing', href: '/docs/extending' },
 				{ title: 'Preset System', href: '/docs/preset' },
 				{ title: 'Styling', href: '/docs/styling' },
 				{ title: 'Accessibility', href: '/docs/accessibility' }

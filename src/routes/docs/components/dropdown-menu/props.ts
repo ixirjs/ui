@@ -32,49 +32,49 @@ export const dropdownMenuItemProps: PropDefinition[] = [
 	},
 	{
 		name: 'onmount',
-		type: '((this: DropdownMenuItemController) => void) | undefined',
+		type: '((this: DropdownMenuItemAtom) => void) | undefined',
 		default: 'undefined',
 		description: 'Function called when element is mounted'
 	},
 	{
 		name: 'ondestroy',
-		type: '((this: DropdownMenuItemController) => void) | undefined',
+		type: '((this: DropdownMenuItemAtom) => void) | undefined',
 		default: 'undefined',
 		description: 'Function called when element is destroyed'
 	},
 	{
 		name: 'animate',
-		type: '((this: DropdownMenuItemController) => any) | undefined',
+		type: '((this: DropdownMenuItemAtom) => any) | undefined',
 		default: 'undefined',
 		description: 'Animation configuration'
 	},
 	{
 		name: 'enter',
-		type: '((this: DropdownMenuItemController) => any) | undefined',
+		type: '((this: DropdownMenuItemAtom) => any) | undefined',
 		default: 'undefined',
 		description: 'Transition function for entering'
 	},
 	{
 		name: 'exit',
-		type: '((this: DropdownMenuItemController) => any) | undefined',
+		type: '((this: DropdownMenuItemAtom) => any) | undefined',
 		default: 'undefined',
 		description: 'Transition function for exiting'
 	},
 	{
 		name: 'initial',
-		type: '((this: DropdownMenuItemController) => any) | undefined',
+		type: '((this: DropdownMenuItemAtom) => any) | undefined',
 		default: 'undefined',
 		description: 'Initial state configuration'
 	},
 	{
 		name: 'factory',
-		type: '(() => DropdownMenuItemController) | undefined',
+		type: '(() => DropdownMenuItemAtom) | undefined',
 		default: 'undefined',
-		description: 'Factory function to create a custom DropdownMenuItemController instance'
+		description: 'Factory function to create a custom DropdownMenuItemAtom instance'
 	},
 	{
 		name: 'children',
-		type: 'Snippet<[{ dropdownMenuItem: DropdownMenuItemController; }]> | undefined',
+		type: 'Snippet<[{ dropdownMenuItem: DropdownMenuItemAtom; }]> | undefined',
 		default: 'undefined',
 		description: 'Render prop for children'
 	},

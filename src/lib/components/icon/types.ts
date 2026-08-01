@@ -1,9 +1,7 @@
 import type { Component, Snippet } from 'svelte';
 import type { HtmlAtomProps, Base, SnippetProps } from '$svelte-atoms/core/components/atom';
 
-// ============================================================================
-// Icon Snippet Props (Extensible)
-// ============================================================================
+// Icon snippet props
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface IconSnippetProps extends SnippetProps {}

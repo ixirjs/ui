@@ -13,7 +13,8 @@ import {
 	rovingCapability,
 	type RovingFocus
 } from '$svelte-atoms/core/shared/capabilities/roving-focus.svelte';
-import { clickTrigger } from '$svelte-atoms/core/shared/overlay';
+import { navigationCapability } from '$svelte-atoms/core/shared/capabilities/navigation.svelte';
+import { clickTrigger } from '$svelte-atoms/core/components/overlay';
 import type { DropdownMenuItemControllerInterface } from './item/controller.svelte';
 
 export type DropdownMenuBondProps = PopoverStateProps;
@@ -22,12 +23,13 @@ export type DropdownMenuBondElements = PopoverDomElements;
 
 // Item union: a per-instance BondAtom (dropdown-menu or subclass like SelectItemAtom) or a controller facade.
 export type DropdownMenuItem =
+	// `BondAtom<any, any>`: items are heterogeneous (HTMLElement-bound atoms like SelectItemAtom),
+	// and the element type is irrelevant to menu membership — widening avoids the `#behaviorAttachments`
+	// node-type contravariance that rejects `BondAtom<_, HTMLElement>` against the default union member.
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	DropdownMenuItemControllerInterface<Record<string, any>> | BondAtom;
+	DropdownMenuItemControllerInterface<Record<string, any>> | BondAtom<any, any>;
 
-// State first — it references DropdownMenuItemAtom only in type positions (a class
-// type is usable module-wide before its value declaration), which lets the atoms below
-// type `this.bond` against a view that includes this state (the atom↔bond cycle break).
+// Declared before the atoms so they can type `this.bond` against a view including this state (atom↔bond cycle break).
 export class DropdownMenuBondState<
 	Props extends DropdownMenuBondProps = DropdownMenuBondProps
 > extends PopoverState<Props> {
@@ -48,6 +50,8 @@ export class DropdownMenuBondState<
 				orientation: 'vertical'
 			})
 		);
+		// Arrow-key navigation projected onto content + trigger (replaces hand-rolled per-atom keydown).
+		this.capability(navigationCapability(this.#roving, { roles: ['container', 'trigger'] }));
 	}
 
 	// Maps a roving id to its DOM element id for aria-activedescendant.
@@ -99,31 +103,11 @@ export class DropdownMenuContentAtom extends PopoverContentAtom<DropdownMenuBond
 	}
 
 	override get attrs() {
-		// `aria-activedescendant` + `aria-orientation` come from the roving capability
-		// projection (role:'container'); only the role is component-specific.
+		// `aria-activedescendant` + `aria-orientation` come from the roving capability projection
+		// (role:'container'); Arrow-key navigation from the navigation capability. Only the role is component-specific.
 		return {
 			...super.attrs,
 			role: this.contentRole
-		};
-	}
-
-	override get handlers() {
-		const superHandlers = super.handlers as { onkeydown?: (ev: KeyboardEvent) => void };
-		return {
-			...superHandlers,
-			onkeydown: (ev: KeyboardEvent) => {
-				superHandlers.onkeydown?.(ev);
-
-				if (ev.defaultPrevented) return;
-
-				if (ev.key === 'ArrowDown') {
-					this.bond.state.roving.next();
-				}
-
-				if (ev.key === 'ArrowUp') {
-					this.bond.state.roving.previous();
-				}
-			}
 		};
 	}
 }
@@ -137,14 +121,8 @@ export class DropdownMenuTriggerAtom extends PopoverTriggerAtom<DropdownMenuBond
 		return {
 			...superHandlers,
 			onkeydown: (ev: KeyboardEvent) => {
-				if (ev.key === 'ArrowDown') {
-					this.bond.state.roving.next();
-				}
-
-				if (ev.key === 'ArrowUp') {
-					this.bond.state.roving.previous();
-				}
-
+				// Arrow navigation comes from the navigation capability (role:'trigger'); this handles
+				// activation of the highlighted item only.
 				if (
 					(ev.key === 'Enter' || ev.key === ' ') &&
 					this.bond.state.props.open &&

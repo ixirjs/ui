@@ -1,13 +1,14 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
+	import { mergeAtomProps, HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
 	import { TreeBond } from './bond.svelte';
 	import type { TreeBodyProps } from './types';
 	import { animateTreeBody } from './motion.svelte';
 
-	const bond = TreeBond.get();
+	const bond = TreeBond.getOrThrow('<Tree.Body /> must be used within a <Tree.Root />');
 
 	let {
 		class: klass = '',
+		preset = undefined,
 		children = undefined,
 		fallback = {
 			animate: animateTreeBody(),
@@ -16,16 +17,14 @@
 		...restProps
 	}: TreeBodyProps<E, B> = $props();
 
-	const bodyProps = $derived({
-		...bond?.body().spread,
-		...restProps
-	});
+	const atom = bond.atom('body');
+
+	const bodyProps = $derived(mergeAtomProps(atom, preset, restProps));
 </script>
 
 <HtmlAtom
 	{bond}
-	preset="tree.body"
-	class={['border-border pl-4', '$preset', klass]}
+	class={['pl-4', '$preset', klass]}
 	{fallback}
 	{...bodyProps}
 >

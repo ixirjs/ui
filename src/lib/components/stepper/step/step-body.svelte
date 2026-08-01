@@ -23,7 +23,7 @@
 		...restProps
 	});
 
-	// Register content snippet with props and children with stepper on mount
+	// Register content snippet with the stepper while mounted.
 	$effect(() => {
 		if (stepBond && stepperBond && children) {
 			const index = stepBond.state.props.index;
@@ -36,4 +36,4 @@
 	});
 </script>
 
-<!-- Content is teleported to Stepper.Content, so we don't render anything here -->
+<!-- Content is teleported to Stepper.Content; nothing rendered here. -->

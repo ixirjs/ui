@@ -1,4 +1,5 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
+	import { mergePresetProps } from '$svelte-atoms/core/components/atom';
 	import type { Base } from '$svelte-atoms/core/components/atom';
 	import type { HTMLAttributes } from 'svelte/elements';
 	import { Trigger } from '../popover/atoms';
@@ -8,11 +9,7 @@
 
 	type ElementType = HTMLElementTagNameMap[E];
 
-	const bond = DropdownMenuBond.get();
-
-	if (!bond) {
-		throw new Error('<ContextMenu.Trigger /> must be used within a <ContextMenu.Root />');
-	}
+	const bond = DropdownMenuBond.getOrThrow('<ContextMenu.Trigger /> must be used within a <ContextMenu.Root />');
 
 	const dropdownMenuBond = bond;
 
@@ -26,7 +23,7 @@
 		...restProps
 	}: HTMLAttributes<ElementType> & ContextMenuTriggerProps<E, B> = $props();
 
-	const triggerProps = $derived({ preset: preset ?? 'context-menu.trigger', ...restProps });
+	const triggerProps = $derived(mergePresetProps(preset, 'context-menu.trigger', restProps));
 
 	function handleContextMenu(ev: MouseEvent) {
 		ev.preventDefault();

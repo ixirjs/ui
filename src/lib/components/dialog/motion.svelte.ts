@@ -14,7 +14,7 @@ export function animateDialogContent(params: AnimateDialogContentParams = {}) {
 	let mounted = false;
 
 	return (node: HTMLElement) => {
-		// Read bond inside the callback — safe at any call site, not just during component init
+		// Read bond inside the callback so it works outside component init
 		const bond = DialogBond.get();
 
 		const isOpen = bond?.state.props.open ?? false;

@@ -9,8 +9,8 @@ class TestState extends BondState<BondStateProps> {}
 describe('collectionCapability — identity & surface', () => {
 	it('slots at `collection:<kind>` and surfaces the Collection', () => {
 		const cap = collectionCapability<string>('item');
-		expect(cap.slot).toBe('collection:item');
 		expect(cap.slot).toBe(collectionSlot('item'));
+		expect(cap.slot.description).toBe('@svelte-atoms/cap:collection:item');
 		expect(cap.surface).toBeInstanceOf(Collection);
 		expect(cap.surface.kind).toBe('item');
 	});
@@ -27,7 +27,7 @@ describe('BondState.collection — registry unification', () => {
 		const items = state.collection('item');
 		expect(items).toBeInstanceOf(Collection);
 		// Same instance is reachable through the capability seam — one registry.
-		expect(state.capability('collection:item')?.surface).toBe(items);
+		expect(state.capability(collectionSlot('item'))?.surface).toBe(items);
 	});
 
 	it('caches per kind (same instance on repeat access) and namespaces by kind', () => {
@@ -45,6 +45,25 @@ describe('BondState.collection — registry unification', () => {
 		expect(state.collection<{ id: string }>('item').get('a')).toBe(a);
 		cleanup();
 		expect(state.collection<{ id: string }>('item').has('a')).toBe(false);
+	});
+});
+
+describe('Collection — iterable protocol (#4)', () => {
+	it('iterates [id, value] entries in insertion order; spreads and destructures', () => {
+		const col = new Collection<{ id: string }>('item');
+		const a = { id: 'a' };
+		const b = { id: 'b' };
+		col.attach('a', a);
+		col.attach('b', b);
+
+		expect([...col]).toEqual([
+			['a', a],
+			['b', b]
+		]);
+
+		const out: string[] = [];
+		for (const [id, value] of col) out.push(`${id}:${value.id}`);
+		expect(out).toEqual(['a:a', 'b:b']);
 	});
 });
 

@@ -1,3 +1,5 @@
+import { resizeObserver } from '$svelte-atoms/core/attachments/resize-observer.svelte';
+
 export function container() {
 	let element = $state<HTMLElement>();
 	let size = $state<{ width: number; height: number }>();
@@ -5,18 +7,12 @@ export function container() {
 	$effect(() => {
 		if (!element) return;
 
-		const observer = new ResizeObserver(() => {
+		return resizeObserver(() => {
 			size = {
 				width: element!.clientWidth,
 				height: element!.clientHeight
 			};
-		});
-
-		observer.observe(element);
-
-		return () => {
-			observer.disconnect();
-		};
+		})(element);
 	});
 
 	return {

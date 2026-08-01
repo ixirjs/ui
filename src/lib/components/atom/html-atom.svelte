@@ -31,8 +31,7 @@
 		() => bond
 	);
 
-	// Each stage call goes through the orchestrator; reactivity granularity is
-	// preserved because each $derived reads only the props its stage needs.
+	// One $derived per cascade stage so each tracks only the props its stage reads.
 	const preset = $derived.by(() =>
 		resolvers.resolvePreset(presetKey as PresetModuleName | PresetModuleName[], bond, getPreset)
 	);
@@ -54,9 +53,7 @@
 
 	const baseIsSnippet = $derived(resolvers.isSnippetBase(finalBase));
 
-	// Track the renderer component and its props as INDEPENDENT signals.
-	// Component identity only flips when base/atom change; prop changes
-	// don't drag the component identity with them.
+	// Component identity and props as independent signals — identity only flips when base/atom change.
 	const RendererComponent = $derived(
 		baseIsSnippet ? (SnippetRenderer as unknown as Component) : ((finalBase ?? atom) as Component)
 	);

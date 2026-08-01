@@ -1,22 +1,20 @@
-import {
-	Bond,
-	BondState,
-	BondAtom,
-	type BondStateProps
-} from '$svelte-atoms/core/shared/bond.svelte';
-import { getContext, setContext, tick, untrack } from 'svelte';
+import { Bond, BondState, BondAtom, type BondStateProps } from '$svelte-atoms/core/shared/bond.svelte';
+import { defineBond, type BondOf, type ViewOf } from '$svelte-atoms/core/shared';
+import { tick, untrack } from 'svelte';
 
 export type StackStateProps = BondStateProps & {
 	value?: string;
-	readonly rest?: Record<string, unknown>;
 };
 
 export type StackElements = {
 	root?: HTMLElement;
 };
 
-export class StackRootAtom extends BondAtom<StackBond> {
-	constructor(bond: StackBond) {
+// Bond shape the stack atoms type `this.bond` against — breaks the atom↔bond cycle.
+type StackBondView = ViewOf<StackState>;
+
+export class StackRootAtom extends BondAtom<StackBondView> {
+	constructor(bond: StackBondView) {
 		super(bond, 'root');
 	}
 
@@ -29,10 +27,10 @@ export class StackRootAtom extends BondAtom<StackBond> {
 	}
 }
 
-export class StackItemAtom extends BondAtom<StackBond> {
+export class StackItemAtom extends BondAtom<StackBondView> {
 	#value: string;
 
-	constructor(bond: StackBond, value: string) {
+	constructor(bond: StackBondView, value: string) {
 		super(bond, `item-${value}`);
 		this.#value = value;
 	}
@@ -48,38 +46,32 @@ export class StackItemAtom extends BondAtom<StackBond> {
 	}
 }
 
-export class StackBond extends Bond<StackStateProps, StackState, StackElements> {
-	static CONTEXT_KEY = '@atoms/context/stack';
-
-	constructor(state: StackState) {
-		super(state);
-	}
-
-	share(): this {
-		return StackBond.set(this) as this;
-	}
-
-	root() {
-		return this.atom('root', () => new StackRootAtom(this));
-	}
-
+// Hand-written base for StackBond — provides the per-value dynamic `item()` atom via `registerAtom`.
+class StackBondBase extends Bond<StackStateProps, StackState> {
 	item(value: string) {
-		return this.atom(`item-${value}`, () => new StackItemAtom(this, value));
-	}
-
-	static get(): StackBond | undefined {
-		return getContext(StackBond.CONTEXT_KEY);
-	}
-
-	static set(bond: StackBond): StackBond {
-		return setContext(StackBond.CONTEXT_KEY, bond);
+		const key = `item:${value}`;
+		// Register the per-value factory as an instance atom, then resolve via the shared atom seam.
+		this.registerAtom(key, (b) => new StackItemAtom(b as StackBondView, value));
+		return this.atom(key) as StackItemAtom;
 	}
 }
+
+// StackBond — `defineBond` over `StackBondBase`; z-order lives on `StackState`.
+export const StackBond = defineBond<{ root: typeof StackRootAtom }, StackState, typeof StackBondBase>(
+	{
+		name: 'stack',
+		base: StackBondBase,
+		atoms: { root: StackRootAtom }
+	}
+);
+
+// Instance type of the stack bond — paired with the `const` above.
+export type StackBond = BondOf<typeof StackBond>;
 
 export class StackState extends BondState<StackStateProps> {
 	#order = $state<{ id: string; index: number }[]>([]);
 
-	constructor(props: () => StackStateProps) {
+	constructor(props: StackStateProps) {
 		super(props);
 
 		$effect(() => {

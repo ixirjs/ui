@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DialogBond, DialogBondState, type DialogBondProps } from './bond.svelte';
-import { ignoreEscape, type FocusPolicySurface } from '$svelte-atoms/core/shared/overlay';
+import { ignoreEscape, FOCUS } from '$svelte-atoms/core/components/overlay';
 
 // Bond-seam specs: assert atom.spread, state methods, atom identity, strategy substitution. No DOM rendering.
 
@@ -58,8 +58,7 @@ describe('Strategy substitution via capabilities (slot resolution)', () => {
 	it('overriding the escape capability with IgnoreEscape: Escape does not close', () => {
 		const props = $state<DialogBondProps>({ open: true, disabled: false });
 		const bond = new DialogBond(new DialogBondState(props));
-		// last-wins-per-slot replaces the bundle's CloseOnEscape (before the root atom
-		// is built, so .role('surface') folds the new one).
+		// last-wins-per-slot replaces the bundle's CloseOnEscape (before the root atom is built)
 		bond.capability(ignoreEscape);
 
 		const onkeydown = bond.root().spread.onkeydown as (ev: KeyboardEvent) => void;
@@ -69,7 +68,7 @@ describe('Strategy substitution via capabilities (slot resolution)', () => {
 
 	it('default focus policy is trappedFocus (restoreFocus:previous, captureFocusOnOpen:true)', () => {
 		const { bond } = makeBond();
-		const focus = bond.capability<FocusPolicySurface>('focus')?.surface;
+		const focus = bond.capability(FOCUS)?.surface;
 		expect(focus?.restoreFocus).toBe('previous');
 		expect(focus?.captureFocusOnOpen).toBe(true);
 	});

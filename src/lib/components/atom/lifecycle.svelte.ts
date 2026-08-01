@@ -5,10 +5,8 @@ import type { Bond } from '$svelte-atoms/core/shared/bond.svelte';
 // symbol-keyed props, and so the phase is recoverable from the symbol without a registry.
 const LIFECYCLE_PREFIX = '@svelte-atoms/lifecycle:';
 
-// When a LifecycleAttachment runs (all handled by runLifecycle in HtmlAtom):
-// - `init` — synchronously before mount, the earliest reliable hook;
-// - `mount` — when the element is in the DOM; `destroy` — on teardown.
-// `init`/`mount` may return a cleanup; client-only (symbol props are dropped during SSR).
+// Phase a lifecycle callback fires at: `init` (sync, before mount), `mount` (in DOM),
+// `destroy` (teardown). Client-only — symbol props are dropped during SSR.
 export type LifecycleType = 'init' | 'mount' | 'destroy';
 
 // A lifecycle callback: receives the atom's bond; `init`/`mount` may return a cleanup.
@@ -18,13 +16,11 @@ function buildKey(type: LifecycleType) {
 	return [LIFECYCLE_PREFIX, type].join('/');
 }
 
-// Phantom brand carrying the lifecycle phase into the type system (no runtime value).
+// Phantom brands carrying phase and bond type into the type system (no runtime value).
 declare const phaseBrand: unique symbol;
-// Phantom brand carrying the target bond type into the type system (no runtime value).
 declare const bondBrand: unique symbol;
 
-// A lifecycle key with phase T and bond B in the type system; subtype of symbol at runtime.
-// ADR 0005 D2.
+// A lifecycle key with phase T and bond B in the type system; a symbol at runtime. ADR 0005 D2.
 export type LifecycleKey<T extends LifecycleType = 'init', B extends Bond = Bond> = symbol & {
 	readonly [phaseBrand]: T;
 	readonly [bondBrand]: B;
@@ -54,8 +50,7 @@ function hasMintedKeys(): boolean {
 
 const LIFECYCLE_TYPES = ['init', 'mount', 'destroy'] as const satisfies readonly LifecycleType[];
 
-// Description → phase map built once so the hot path (lifecycleType, run per symbol prop) is
-// an allocation-free O(1) lookup instead of rebuilding key strings.
+// Description → phase map built once so lifecycleType (run per symbol prop) is an O(1) lookup.
 const TYPE_BY_DESCRIPTION = new Map<string, LifecycleType>(
 	LIFECYCLE_TYPES.map((type) => [buildKey(type), type])
 );
@@ -89,8 +84,7 @@ const NO_LIFECYCLE: ExtractedLifecycle = Object.freeze({
 	keys: EMPTY_KEYS
 });
 
-// Collect every lifecycle callback from a props object grouped by phase in a single pass.
-// Non-function values are skipped.
+// Collect every lifecycle callback from a props object, grouped by phase. Non-functions skipped.
 export function getLifecycleProps<B extends Bond = Bond>(
 	props: Record<PropertyKey, unknown>
 ): LifecycleProps<B> {
@@ -122,8 +116,7 @@ function extractLifecycle<B extends Bond = Bond>(
 	return { phases, keys };
 }
 
-// Pick one phase's callbacks out of a grouped LifecycleProps — typed accessor so callers
-// scan props once and slice per phase.
+// Pick one phase's callbacks out of a grouped LifecycleProps.
 export function getLifecyclePropsByType<B extends Bond = Bond>(
 	type: LifecycleType,
 	props: LifecycleProps<B>
@@ -159,8 +152,7 @@ export function runLifecycle<P extends Record<PropertyKey, unknown>, B extends B
 
 	const { init, mount, destroy } = phases;
 
-	// `init` — fires once, synchronously, before mount; the bond is read untracked. Keep only
-	// the callbacks that returned a cleanup.
+	// `init` — fires once, synchronously, before mount; bond read untracked. Keep returned cleanups.
 	const initialBond = untrack(getBond);
 	const initCleanups = init
 		.map((fn) => fn(initialBond))

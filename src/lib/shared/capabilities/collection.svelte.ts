@@ -1,14 +1,16 @@
-import type { Behavior, Capability } from '../bond.svelte';
+import { sharedCapabilityKey, type Behavior, type Capability, type CapabilityKey } from '../bond.svelte';
 import { Collection } from '../collection.svelte';
 
-// Slot prefix for collections; collection('item') registers at slot 'collection:item'.
-const COLLECTION_SLOT_PREFIX = 'collection:';
+// Slot-key prefix for collections; collection('item') registers at slot key for 'collection:item'.
+const COLLECTION_SLOT_PREFIX = '@svelte-atoms/cap:collection:';
 
-export const collectionSlot = (kind: string): string => `${COLLECTION_SLOT_PREFIX}${kind}`;
+// Parametric slot key per kind — Symbol.for so repeated calls (and duplicate library copies) resolve
+// to one key by identity, preserving find/last-wins semantics across the family.
+export const collectionSlot = (kind: string): CapabilityKey<Collection<unknown>> =>
+	sharedCapabilityKey<Collection<unknown>>(`${COLLECTION_SLOT_PREFIX}${kind}`);
 
 export interface CollectionProjectionOptions {
-	// Opt into positional ARIA: item role → aria-posinset/setsize/data-index; container role → aria-setsize.
-	// Default false (surface-only, no emitted attrs). Enable per component once id↔role-ctx contract is verified.
+	// Opt into positional ARIA (item → posinset/setsize/data-index, container → setsize). Default false (surface-only).
 	positional?: boolean;
 }
 
@@ -17,8 +19,7 @@ export type CollectionCapability<T> = Capability<Collection<T>> & {
 	readonly surface: Collection<T>;
 };
 
-// Children registry as a first-class Capability (collection:<kind>); lives in the same #capabilities home as selection/roving.
-// Collection is created here and cached per slot (last-wins-per-slot).
+// Children registry as a first-class Capability (collection:<kind>), alongside selection/roving. Cached per slot (last-wins).
 export function collectionCapability<T>(
 	kind: string,
 	options: CollectionProjectionOptions = {}
@@ -39,7 +40,7 @@ export function collectionCapability<T>(
 			return {
 				attrs: () => {
 					const index = collection.indexOf(id);
-					// aria-* are 1-based; data-index is 0-based CSS hook; both omitted until id is registered.
+					// aria-* 1-based, data-index 0-based; both omitted until the id registers.
 					return {
 						'aria-posinset': index < 0 ? undefined : index + 1,
 						'aria-setsize': collection.size,

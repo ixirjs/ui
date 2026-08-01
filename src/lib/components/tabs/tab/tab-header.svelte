@@ -4,13 +4,9 @@
 >
 	import type { TabHeaderProps } from '../types';
 	import { TabBond } from './bond.svelte';
-	import { HtmlAtom as Atom, type Base } from '$svelte-atoms/core/components/atom';
+	import { mergeAtomProps, HtmlAtom as Atom, type Base } from '$svelte-atoms/core/components/atom';
 
-	const bond = TabBond.get();
-
-	if(!bond) {
-		throw new Error('TabHeader must be used within a Tab component.');
-	}
+	const bond = TabBond.getOrThrow('TabHeader must be used within a Tab component.');
 
 	const isActive = $derived(bond?.state.isActive);
 	const isDisabled = $derived(bond?.state.props.disabled);
@@ -26,16 +22,12 @@
 
 	const atom = bond.atom('header');
 
-	const headerProps = $derived({
-		preset: preset ?? atom.preset,
-		...atom?.spread,
-		...restProps
-	});
+	const headerProps = $derived(mergeAtomProps(atom, preset, restProps));
 
 	function handleClick(ev: PointerEvent) {
 		if (isDisabled) return;
 
-		onclick?.(ev, { ...(bond ? { tab: bond } : {}) });
+		onclick?.(ev, { tab: bond });
 
 		if (ev.defaultPrevented) {
 			return;
@@ -60,5 +52,5 @@
 	onclick={handleClick}
 	{...headerProps}
 >
-	{@render children?.({ ...(bond ? { tab: bond } : {}) })}
+	{@render children?.({ tab: bond })}
 </Atom>

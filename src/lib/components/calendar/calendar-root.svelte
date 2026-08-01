@@ -1,15 +1,16 @@
 <script lang="ts">
-	import { cn, defineProperty, defineState } from '$svelte-atoms/core/utils';
+	import { cn } from '$svelte-atoms/core/utils';
 	import { addMonths, format, isToday, startOfDay, subMonths } from 'date-fns';
 	import type { CalendarRange, CalendarRootProps, Day, Month } from './types';
-	import { CalendarBond, CalendarBondState, type CalendarBondProps } from './bond.svelte';
-	import { HtmlAtom } from '../atom';
+	import { CalendarBond, CalendarBondState } from './bond.svelte';
+	import { mergePresetProps, HtmlAtom } from '../atom';
 
 	import './calendar.css';
+	import { bondFactory,bindBond } from '$svelte-atoms/core/shared';
 
 	let {
 		class: klass = '',
-		preset = 'calendar',
+		preset = undefined,
 		value = $bindable(),
 		range = $bindable([undefined, undefined]),
 		pivote = $bindable(new Date()),
@@ -20,7 +21,7 @@
 		type = 'single',
 		extend = {},
 		onchange = undefined,
-		factory = _factory,
+		factory = bondFactory(CalendarBondState, CalendarBond),
 		children = undefined,
 		...restProps
 	}: CalendarRootProps = $props();
@@ -120,18 +121,17 @@
 		return new Date(year, month + 1, 0).getDate();
 	}
 
-	const bondProps = defineState<CalendarBondProps>(
-		[
-			defineProperty(
-				'range',
+	const binding = bindBond<CalendarBond>(
+		(props) => factory(props),
+		{
+			range: [
 				() => range,
 				(v: CalendarRange) => {
 					range = v;
 					onchange?.(new CustomEvent('change'), { range, pivote });
 				}
-			),
-			defineProperty(
-				'value',
+			],
+			value: [
 				() => range?.[0],
 				(v) => {
 					if (range?.[0]) {
@@ -139,68 +139,53 @@
 					}
 					onchange?.(new CustomEvent('change'), { range, pivote });
 				}
-			),
-			defineProperty(
-				'pivote',
+			],
+			pivote: [
 				() => pivote,
-				(v: Date) => {
-					pivote = v;
+				(v) => {
+					pivote = v as Date;
 					onchange?.(new CustomEvent('change'), { range, pivote });
 				}
-			),
-			defineProperty(
-				'start',
+			],
+			start: [
 				() => range?.[0],
-				(v: Date) => {
+				(v) => {
 					range[0] = v;
 					onchange?.(new CustomEvent('change'), { range, pivote });
 				}
-			),
-			defineProperty(
-				'end',
+			],
+			end: [
 				() => range?.[1],
 				(v: Date | undefined) => {
 					range[1] = v;
 					onchange?.(new CustomEvent('change'), { range, pivote });
 				}
-			),
-			defineProperty(
-				'min',
+			],
+			min: [
 				() => min,
 				(v: Date | undefined) => (min = v)
-			),
-			defineProperty(
-				'max',
+			],
+			max: [
 				() => max,
 				(v: Date | undefined) => (max = v)
-			),
-			defineProperty('type', () => type ?? 'single'),
-			defineProperty('nextMonth', () => monthNext),
-			defineProperty('currentMonth', () => monthCurrent),
-			defineProperty('previousMonth', () => monthPrevious),
-			defineProperty('rest', () => restProps)
-		]
+			],
+			type: () => type ?? 'single',
+			nextMonth: () => monthNext,
+			currentMonth: () => monthCurrent,
+			previousMonth: () => monthPrevious
+		},
+		{ preset: () => preset }
 	);
+	const bond = binding.bond.share();
 
-	const bond = factory(bondProps).share();
+	const rootProps = $derived(mergePresetProps(preset, 'calendar', { ...bond.root().spread, ...restProps }));
 
-	const rootProps = $derived({
-		...bond.root(),
-		...restProps
-	});
-
-	function _factory(props: typeof bondProps) {
-		const popoverState = new CalendarBondState(() => props);
-		const popoverBond = new CalendarBond(popoverState);
-
-		return popoverBond;
-	}
 
 	export function getBond() {
 		return bond;
 	}
 </script>
 
-<HtmlAtom {preset} class={cn('h-full w-full', klass)} data-atom="calendar-root" {...rootProps}>
+<HtmlAtom class={cn('h-fit w-full gap-px', klass)} data-atom="calendar-root" {...rootProps}>
 	{@render children?.({ calendar: bond })}
 </HtmlAtom>

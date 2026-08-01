@@ -2,7 +2,7 @@
 	import type { HTMLAttributes } from 'svelte/elements';
 	import type { DrawerBodyProps } from './types';
 	import { DrawerBond } from './bond.svelte';
-	import { HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
+	import { mergeAtomProps, HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
 
 	type Element = HTMLElementTagNameMap[E];
 
@@ -16,11 +16,7 @@
 
 	const atom = bond?.body();
 
-	const bodyProps = $derived({
-		preset: preset ?? atom?.preset,
-		...atom?.spread,
-		...restProps
-	});
+	const bodyProps = $derived(mergeAtomProps(atom, preset, restProps));
 </script>
 
 <HtmlAtom

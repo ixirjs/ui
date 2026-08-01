@@ -1,5 +1,3 @@
-// ── Color format namespace ─────────────────────────────────────────────────
-
 export type ColorFormat =
 	| 'named'
 	| 'hex'
@@ -19,8 +17,6 @@ export type ColorFormat =
 	| 'xyz-d50'
 	| 'xyz-d65';
 
-// ── Channel definition ─────────────────────────────────────────────────────
-
 export type ChannelKind =
 	| 'integer' // 0–255 integer (rgb channels)
 	| 'float' // decimal, typically 0–1
@@ -36,13 +32,14 @@ export interface ChannelDef {
 	kind: ChannelKind;
 	min: number;
 	max: number;
-	/** Decimal precision for display/editing */
 	precision?: number;
-	/** Suffix shown after the value (e.g. '%', 'deg') */
+	// Suffix shown after the value (e.g. '%', 'deg')
 	suffix?: string;
 }
 
-// ── Segment props ──────────────────────────────────────────────────────────
+// Parsed channel values keyed by channel id (e.g. `{ r: 'FF', g: '00', b: 'AA' }` for hex,
+// `{ h: 210, s: 50, l: 40 }` for hsl). Values are string or number; `undefined` for unset channels.
+export type ChannelValues = Record<string, number | string | undefined>;
 
 export interface ColorSegmentProps {
 	value: number | string | undefined;
@@ -50,39 +47,27 @@ export interface ColorSegmentProps {
 	disabled?: boolean;
 	readonly?: boolean;
 	class?: string;
-	/** Fired on every live change (Arrow up/down, typing) */
+	// Fired on every live change (arrow up/down, typing)
 	onchange?: (value: number | string | undefined) => void;
-	/** Fired on blur / Enter — use for onchange semantics */
+	// Fired on blur / Enter (commit)
 	oncommit?: (ev: Event, value: number | string | undefined) => void;
 	onfocusmove?: (dir: 1 | -1) => void;
 }
 
-// ── Component props ────────────────────────────────────────────────────────
-
 export interface InputColorControlProps {
-	/**
-	 * Raw CSS color string (bindable). Format is auto-detected from value.
-	 * Supports: hex, rgb/rgba, hsl/hsla, hwb, lab, lch, oklab, oklch,
-	 * color(display-p3 …), color(srgb …), color(rec2020 …), etc.
-	 */
+	// Raw CSS color string (bindable); format auto-detected
 	value?: string;
-	/**
-	 * Override the active format namespace. When set, segments always render
-	 * for this format regardless of what the value string looks like.
-	 */
+	// Override the active format; segments render for this format regardless of value
 	format?: ColorFormat;
-	/**
-	 * When true, always show the alpha channel segment even if the current
-	 * value has no alpha component.
-	 */
+	// Always show the alpha segment even when value has no alpha component
 	alpha?: boolean;
 	placeholder?: string;
 	disabled?: boolean;
 	readonly?: boolean;
 	class?: string;
 	preset?: string;
-	/** Fired on every channel edit (live). */
+	// Fired on every channel edit (live)
 	oninput?: (ev: Event, options: { value: string }) => void;
-	/** Fired on blur / Enter (commit). */
+	// Fired on blur / Enter (commit)
 	onchange?: (ev: Event, options: { value: string }) => void;
 }

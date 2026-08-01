@@ -1,18 +1,19 @@
-<script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
+<script lang="ts">
+	import { mergePresetProps, HtmlAtom } from '$svelte-atoms/core/components/atom';
 	import { toClassValue } from '$svelte-atoms/core/utils';
 
-	let { class: klass = '', children = undefined, ...restProps } = $props();
+	let { class: klass = '', preset = undefined, children = undefined, ...restProps } = $props();
+
+	const groupProps = $derived(mergePresetProps(preset, 'list.group', restProps));
 </script>
 
 <HtmlAtom
-	preset="list.group"
 	class={[
 		'rounded-b-inherit rounded-t-inherit border-border flex flex-col',
 		'$preset',
-		toClassValue.apply(null, [klass, {}])
+		toClassValue(klass, {})
 	]}
-	{...restProps}
+	{...groupProps}
 >
 	{@render children?.()}
 </HtmlAtom>

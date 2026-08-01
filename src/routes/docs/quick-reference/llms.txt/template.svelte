@@ -286,7 +286,7 @@
 
 {codeBlock(`<!-- WRONG -->
 <script>
-  const state = new DropdownState(() => ({ ... }));
+  const state = new DropdownState({ ... });
   const dropdown = new DropdownBond(state);
 </script>`, 'svelte')}
 

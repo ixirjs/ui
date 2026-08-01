@@ -3,10 +3,7 @@ import type { HtmlAtomProps, Base, SnippetProps } from '$svelte-atoms/core/compo
 import type { Factory } from '$svelte-atoms/core/types';
 import type { StepBond } from './bond.svelte';
 
-// ============================================================================
-// Step Snippet Props (Extensible)
-// ============================================================================
-
+// Snippet props
 export interface StepSnippetProps extends SnippetProps {
 	step: StepBond;
 }

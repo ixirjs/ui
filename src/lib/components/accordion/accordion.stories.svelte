@@ -1,69 +1,151 @@
 <script module>
 	import { defineMeta } from '@storybook/addon-svelte-csf';
 	import { Accordion as AAccordion, AccordionItem } from '.';
-	import { createLifecycleKey } from '../atom';
 
-	// More on how to set up stories at: https://storybook.js.org/docs/writing-stories
 	const { Story } = defineMeta({
 		title: 'Atoms/Accordion',
-		// This component will have an automatically generated Autodocs entry: https://storybook.js.org/docs/writing-docs/autodocs
 
 		parameters: {
-			// More on how to position stories at: https://storybook.js.org/docs/configure/story-layout
-			layout: 'fullscreen'
+			layout: 'centered'
 		},
-		args: {}
+		args: {
+			collapsible: false,
+			multiple: false,
+			disabled: false
+		},
+		argTypes: {
+			collapsible: {
+				control: 'boolean',
+				description: 'Allow all items to be collapsed (no forced-open item)'
+			},
+			multiple: {
+				control: 'boolean',
+				description: 'Allow more than one item to be open at the same time'
+			},
+			disabled: {
+				control: 'boolean',
+				description: 'Disable interaction for all accordion items'
+			}
+		}
 	});
 </script>
 
-<script lang="ts">
-</script>
-
-<Story name="Accordion" args={{ collapsible: false, multiple: false, disabled: false }}>
+<Story name="Basic">
 	{#snippet template(args)}
-		<AAccordion class="backdrop-blur-sm" {...args}>
+		<AAccordion class="w-96 backdrop-blur-sm" {...args}>
 			<AccordionItem.Root>
 				<AccordionItem.Header>
-					<div>Hello Atomic UI 1</div>
+					<div>Getting Started</div>
 					<AccordionItem.Indicator class="ml-auto" />
 				</AccordionItem.Header>
 
 				<AccordionItem.Body>
-					<div class="p-2">
-						Mauris et habitasse cubilia potenti at condimentum iaculis nam. Ante fusce litora
-						tristique letius libero. Curabitur vitae cursus consectetur feugiat aenean viverra vel
-						dolor diam nascetur.
+					<div class="p-3 text-sm">
+						Learn the basics and get up to speed quickly. This section covers installation,
+						configuration, and your first component.
 					</div>
 				</AccordionItem.Body>
 			</AccordionItem.Root>
 
 			<AccordionItem.Root>
 				<AccordionItem.Header>
-					<div>Hello Atomic UI 2</div>
+					<div>Configuration</div>
 					<AccordionItem.Indicator class="ml-auto" />
 				</AccordionItem.Header>
 
 				<AccordionItem.Body>
-					<div class="p-2">
-						Mauris et habitasse cubilia potenti at condimentum iaculis nam. Ante fusce litora
-						tristique letius libero. Curabitur vitae cursus consectetur feugiat aenean viverra vel
-						dolor diam nascetur.
+					<div class="p-3 text-sm">
+						Customize the component to fit your needs. Adjust presets, variants, and layout options
+						through the atom configuration system.
 					</div>
 				</AccordionItem.Body>
 			</AccordionItem.Root>
 
 			<AccordionItem.Root>
 				<AccordionItem.Header>
-					<div>Hello Atomic UI 3</div>
+					<div>Advanced Usage</div>
 					<AccordionItem.Indicator class="ml-auto" />
 				</AccordionItem.Header>
 
 				<AccordionItem.Body>
-					<div class="p-2">
-						Mauris et habitasse cubilia potenti at condimentum iaculis nam. Ante fusce litora
-						tristique letius libero. Curabitur vitae cursus consectetur feugiat aenean viverra vel
-						dolor diam nascetur.
+					<div class="p-3 text-sm">
+						Explore advanced patterns such as controlled state, custom factories, and nested
+						accordions for complex UI requirements.
 					</div>
+				</AccordionItem.Body>
+			</AccordionItem.Root>
+		</AAccordion>
+	{/snippet}
+</Story>
+
+<Story name="Multiple">
+	{#snippet template(args)}
+		<AAccordion class="w-96" multiple collapsible {...args}>
+			<AccordionItem.Root>
+				<AccordionItem.Header>
+					<div>Section One</div>
+					<AccordionItem.Indicator class="ml-auto" />
+				</AccordionItem.Header>
+
+				<AccordionItem.Body>
+					<div class="p-3 text-sm">
+						Multiple items can be expanded simultaneously. Toggle any header to expand or collapse.
+					</div>
+				</AccordionItem.Body>
+			</AccordionItem.Root>
+
+			<AccordionItem.Root>
+				<AccordionItem.Header>
+					<div>Section Two</div>
+					<AccordionItem.Indicator class="ml-auto" />
+				</AccordionItem.Header>
+
+				<AccordionItem.Body>
+					<div class="p-3 text-sm">
+						This item can be open alongside Section One. The collapsible flag also allows both to be
+						closed.
+					</div>
+				</AccordionItem.Body>
+			</AccordionItem.Root>
+
+			<AccordionItem.Root>
+				<AccordionItem.Header>
+					<div>Section Three</div>
+					<AccordionItem.Indicator class="ml-auto" />
+				</AccordionItem.Header>
+
+				<AccordionItem.Body>
+					<div class="p-3 text-sm">
+						A third independent section. Expand all three at once to verify multi-open behaviour.
+					</div>
+				</AccordionItem.Body>
+			</AccordionItem.Root>
+		</AAccordion>
+	{/snippet}
+</Story>
+
+<Story name="Disabled">
+	{#snippet template(args)}
+		<AAccordion class="w-96" disabled {...args}>
+			<AccordionItem.Root>
+				<AccordionItem.Header>
+					<div>Unavailable Section</div>
+					<AccordionItem.Indicator class="ml-auto" />
+				</AccordionItem.Header>
+
+				<AccordionItem.Body>
+					<div class="p-3 text-sm">This content is not reachable while the accordion is disabled.</div>
+				</AccordionItem.Body>
+			</AccordionItem.Root>
+
+			<AccordionItem.Root>
+				<AccordionItem.Header>
+					<div>Another Locked Section</div>
+					<AccordionItem.Indicator class="ml-auto" />
+				</AccordionItem.Header>
+
+				<AccordionItem.Body>
+					<div class="p-3 text-sm">All items are non-interactive when disabled is set on the root.</div>
 				</AccordionItem.Body>
 			</AccordionItem.Root>
 		</AAccordion>

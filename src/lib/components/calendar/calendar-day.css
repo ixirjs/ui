@@ -1,6 +1,0 @@
-.calendar-day:nth-child(7n + 1) {
-	border-left: none;
-}
-.calendar-day:nth-last-child(-n + 7) {
-	border-bottom: none;
-}

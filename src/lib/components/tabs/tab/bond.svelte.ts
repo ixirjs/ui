@@ -21,7 +21,7 @@ export type TabBondElement = {
 	description: HTMLElement;
 };
 
-// Bond shape the tab atoms type `this.bond` against — breaks the atom↔bond cycle via `defineBond`.
+// Atoms type `this.bond` against TabBondBase — breaks the atom↔bond cycle.
 class TabHeaderAtom extends BondAtom<TabBondBase, HTMLElement> {
 	constructor(bond: TabBondBase) {
 		super(bond, 'header');
@@ -117,7 +117,7 @@ class TabBondBase extends Bond<TabBondProps<unknown>, TabBondState> {
 	}
 
 	get text() {
-		return this.elements?.header?.innerText ?? '';
+		return (this.elements?.header as HTMLElement | undefined)?.innerText ?? '';
 	}
 
 	mount() {
@@ -159,6 +159,7 @@ interface TabBondConstructor {
 	new <T = unknown>(state: TabBondState<T>): TabBond<T>;
 	readonly CONTEXT_KEY: string;
 	get<T = unknown>(): TabBond<T> | undefined;
+	getOrThrow<T = unknown>(message?: string): TabBond<T>;
 	set<T = unknown>(bond: TabBond<T>): TabBond<T>;
 }
 

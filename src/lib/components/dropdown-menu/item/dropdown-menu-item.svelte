@@ -1,18 +1,12 @@
 <script
 	lang="ts"
-	generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base"
 >
-	import type { Base } from '$svelte-atoms/core/components/atom';
 	import { DropdownMenuItemAtom, type DropdownMenuItemAtomProps } from './bond.svelte';
 	import { DropdownMenuBond } from '../bond.svelte';
 	import type { DropdownMenuItemProps } from './types';
 	import { List } from '../../list';
 
-	const menu = DropdownMenuBond.get();
-
-	if (!menu) {
-		throw new Error('<DropdownMenuItem> must be used within a <DropdownMenu>.');
-	}
+	const menu = DropdownMenuBond.getOrThrow('<DropdownMenuItem> must be used within a <DropdownMenu>.');
 
 	const ID = $props.id();
 	let {
@@ -29,17 +23,14 @@
 	// `dropdown-menu.item` preset from the bond's canonical item atom instead.
 	const presentation = $derived({ preset: preset ?? menu.item().preset });
 
-	// Create reactive props object for the atom
 	const itemProps = $derived<DropdownMenuItemAtomProps>({
 		id,
 		disabled
 	});
 
-	// Create the atom instance
 	const atom = new DropdownMenuItemAtom<typeof menu>(itemProps, menu);
 
-	// Merge atom spread (attrs + handlers + element attachment + roving projection)
-	// with custom props.
+	// Atom spread (attrs + handlers + element attachment + roving projection) plus custom props.
 	const itemAttrs = $derived({
 		...atom.spread,
 		...restProps

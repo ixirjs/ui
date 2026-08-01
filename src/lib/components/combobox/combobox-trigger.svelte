@@ -1,13 +1,8 @@
-<script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
+<script lang="ts">
 	import { ComboboxBond } from './bond.svelte';
 	import { Trigger } from '$svelte-atoms/core/components/select/atoms';
-	import type { Base } from '$svelte-atoms/core/components/atom';
 
-	const bond = ComboboxBond.get();
-
-	if (!bond) {
-		throw new Error('Combobox atom was not found');
-	}
+	const bond = ComboboxBond.getOrThrow('Combobox atom was not found');
 
 	let {
 		class: klass = '',

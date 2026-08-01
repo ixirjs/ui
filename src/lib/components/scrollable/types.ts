@@ -1,11 +1,11 @@
 import type { Snippet } from 'svelte';
 import type { HtmlAtomProps, Base, SnippetProps } from '$svelte-atoms/core/components/atom';
 import type { Factory, Override } from '$svelte-atoms/core/types';
+import type { PresetKey } from '$svelte-atoms/core/context/preset.svelte';
 import type { ScrollableBond } from './bond.svelte';
 
-// ============================================================================
-// Scrollable Snippet Props (Extensible)
-// ============================================================================
+// `Override` collapses HtmlAtomProps' named props into its index signature, so
+// `preset` must be re-declared on each Props interface below to keep its type.
 
 export interface ScrollableSnippetProps extends SnippetProps {
 	scrollable: ScrollableBond;
@@ -26,25 +26,29 @@ export interface ScrollableRootProps<
 	clientHeight?: number;
 	disabled?: boolean;
 	open?: boolean;
+	preset?: PresetKey;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface ScrollableContainerProps<
 	E extends keyof HTMLElementTagNameMap = 'div',
 	B extends Base = Base
-> extends Override<HtmlAtomProps<E, B, ScrollableChildren>, { children?: Snippet }> {}
+> extends Override<HtmlAtomProps<E, B, ScrollableChildren>, { children?: Snippet }> {
+	preset?: PresetKey;
+}
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface ScrollableContentProps<
 	E extends keyof HTMLElementTagNameMap = 'div',
 	B extends Base = Base
-> extends Override<HtmlAtomProps<E, B, ScrollableChildren>, { children?: Snippet }> {}
+> extends Override<HtmlAtomProps<E, B, ScrollableChildren>, { children?: Snippet }> {
+	preset?: PresetKey;
+}
 
 export interface ScrollableTrackProps<
 	E extends keyof HTMLElementTagNameMap = 'div',
 	B extends Base = Base
 > extends Override<HtmlAtomProps<E, B, ScrollableChildren>, { children?: Snippet }> {
 	orientation: 'horizontal' | 'vertical';
+	preset?: PresetKey;
 }
 
 export interface ScrollableThumbProps<
@@ -52,4 +56,5 @@ export interface ScrollableThumbProps<
 	B extends Base = Base
 > extends Override<HtmlAtomProps<E, B, ScrollableChildren>, { children?: Snippet }> {
 	orientation: 'horizontal' | 'vertical';
+	preset?: PresetKey;
 }

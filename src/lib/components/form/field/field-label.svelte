@@ -1,5 +1,5 @@
 <script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'label', B extends Base = Base">
-	import { HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
+	import { mergeAtomProps, HtmlAtom, type Base } from '$svelte-atoms/core/components/atom';
 	import { FieldBond } from './bond.svelte';
 	import type { FieldLabelProps } from '../types';
 
@@ -14,11 +14,7 @@
 
 	const atom = bond?.atom('label');
 
-	const labelProps = $derived({
-		preset: preset ?? atom?.preset,
-		...(atom?.spread ?? {}),
-		...restProps
-	});
+	const labelProps = $derived(mergeAtomProps(atom, preset, restProps));
 </script>
 
 <HtmlAtom class={['flex', '$preset', klass]} {...labelProps}>

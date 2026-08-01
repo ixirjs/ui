@@ -7,9 +7,7 @@ import type { ClassValue } from 'svelte/elements';
 import type { SelectItemController } from './item';
 import type { SelectItemAtom } from './item/bond.svelte';
 
-// ============================================================================
-// Select Snippet Props (Extensible)
-// ============================================================================
+// Snippet props (extensible)
 
 export interface SelectSnippetProps extends SnippetProps {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any

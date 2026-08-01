@@ -11,62 +11,28 @@ export interface SliderChangeDetails {
 }
 
 export interface SliderProps extends HtmlAtomProps<'div'> {
-	/**
-	 * Current value
-	 */
 	value?: number;
-	/**
-	 * Minimum value
-	 * @default 0
-	 */
+	// Default: 0.
 	min?: number;
-	/**
-	 * Maximum value
-	 * @default 100
-	 */
+	// Default: 100.
 	max?: number;
-	/**
-	 * Step increment
-	 * @default 1
-	 */
+	// Step increment. Default: 1.
 	step?: number;
-	/**
-	 * Whether the slider is disabled
-	 */
 	disabled?: boolean;
-	/**
-	 * The id forwarded to the hidden input
-	 */
+	// Forwarded to the hidden input.
 	id?: string;
-	/**
-	 * The name forwarded to the hidden input
-	 */
+	// Forwarded to the hidden input.
 	name?: string;
-	/**
-	 * Orientation of the slider
-	 * @default 'horizontal'
-	 */
+	// Default: `'horizontal'`.
 	orientation?: 'horizontal' | 'vertical';
-	/**
-	 * Custom thumb — replaces the default circular thumb.
-	 * Receives `{ value, percent }` and is rendered inside the positioned thumb wrapper.
-	 */
+	// Custom thumb snippet; replaces the default circular thumb; receives `{ value, percent }`.
 	thumbContent?: Snippet<[{ value: number; percent: number }]>;
-	/**
-	 * Custom track — replaces the default track + fill bar.
-	 * Receives `{ value, percent, min, max }`.
-	 */
+	// Custom track snippet; replaces the default track + fill bar; receives `{ value, percent, min, max }`.
 	trackContent?: Snippet<[{ value: number; percent: number; min: number; max: number }]>;
-	/**
-	 * Child content (e.g. label rendered after the slider root)
-	 */
+	// Child content (e.g. label rendered after the slider root).
 	children?: Snippet<[]>;
-	/**
-	 * Change handler (fires on release)
-	 */
+	// Change handler — fires on release.
 	onchange?: (ev?: Event, options?: SliderChangeDetails) => void;
-	/**
-	 * Input handler (fires continuously while dragging)
-	 */
+	// Input handler — fires continuously while dragging.
 	oninput?: (ev?: Event, options?: SliderChangeDetails) => void;
 }

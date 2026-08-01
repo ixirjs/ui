@@ -3,11 +3,7 @@
 	import { Selections } from '../select/atoms';
 	import type { ComboboxSelectionsProps } from './types';
 
-	const bond = ComboboxBond.get();
-
-	if (!bond) {
-		throw new Error('ComboboxSelections must be used within a Combobox');
-	}
+	const bond = ComboboxBond.getOrThrow('ComboboxSelections must be used within a Combobox');
 
 	let { ...restProps }: ComboboxSelectionsProps = $props();
 

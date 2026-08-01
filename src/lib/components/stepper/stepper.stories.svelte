@@ -1,16 +1,33 @@
 <script module>
 	import { defineMeta } from '@storybook/addon-svelte-csf';
 
-	// More on how to set up stories at: https://storybook.js.org/docs/writing-stories
+	// https://storybook.js.org/docs/writing-stories
 	const { Story } = defineMeta({
 		title: 'Atoms/Stepper',
-		// This component will have an automatically generated Autodocs entry: https://storybook.js.org/docs/writing-docs/autodocs
-
 		parameters: {
-			// More on how to position stories at: https://storybook.js.org/docs/configure/story-layout
+			// https://storybook.js.org/docs/configure/story-layout
 			layout: 'fullscreen'
 		},
-		args: {}
+		args: {
+			linear: false,
+			disabled: false,
+			orientation: 'horizontal'
+		},
+		argTypes: {
+			linear: {
+				control: 'boolean',
+				description: 'Enforce linear progression — only next/previous navigation is allowed'
+			},
+			disabled: {
+				control: 'boolean',
+				description: 'Disable all steps and navigation controls'
+			},
+			orientation: {
+				control: 'select',
+				options: ['horizontal', 'vertical'],
+				description: 'Layout orientation of the step indicators'
+			}
+		}
 	});
 </script>
 
@@ -21,7 +38,7 @@
 	import type { StepperBond } from './bond.svelte';
 	import { animate } from 'motion'
 	import { Stack } from '../stack';
-	
+
 	const steps = $state([
 		{
 			header: 'Account Information',
@@ -46,7 +63,7 @@
 		}
 	]);
 	let activeStepIndex = $state(0);
-	
+
 	function handleNext(stepper: StepperBond) {
 		stepper.state.navigation.next();
 	}
@@ -60,8 +77,104 @@
 	}
 </script>
 
+<Story name="Basic">
+	{#snippet template(args)}
+		<div class="p-8">
+			<Stepper.Root bind:step={activeStepIndex} {...args}>
+				{#snippet children({ stepper })}
+					<!-- Header: Step indicators -->
+					<Stepper.Header class="flex justify-between">
+						{#each steps as stepData, i (i)}
+							<Step.Root index={i} header={stepData.header} body={stepData.body}>
+								{#snippet children({ step })}
+									{@const isActive = step?.state?.isActive}
+
+									<Step.Header class="flex flex-col gap-2 flex-1">
+										<div class="flex items-center w-full">
+											<Step.Indicator />
+											<Step.Separator class="" />
+										</div>
+
+										<div class="flex flex-col pr-4">
+											<Step.Title class={isActive
+														? 'text-foreground font-semibold'
+														: 'text-muted-foreground'}>
+												{stepData?.header}
+												{#if stepData?.optional}
+													<span class="text-xs">(Optional)</span>
+												{/if}
+											</Step.Title>
+
+											<Step.Description class={['text-xs text-muted-foreground']}>
+												{stepData?.body}
+											</Step.Description>
+										</div>
+									</Step.Header>
+
+									<!-- Step Content (shown in Stepper.Body when active) -->
+									<Step.Body>
+										<h3 class="text-xl font-semibold mb-4">
+											Step {i + 1}: {stepData.header}
+										</h3>
+										<p class="text-muted-foreground mb-6">{stepData.body}</p>
+
+										<div class="text-sm text-muted-foreground">
+											Content for {stepData.header} step...
+										</div>
+									</Step.Body>
+								{/snippet}
+							</Step.Root>
+						{/each}
+					</Stepper.Header>
+
+					<!-- Body: Automatically renders active step content -->
+					<Stepper.Body class="my-6">
+						<Textarea.Root base={Stack.Root} class="overflow-hidden">
+							<Stepper.Content
+								base={Stack.Item}
+								class="min-h-50 flex flex-col p-6"
+								enter={(node) => {
+									const duration = 0.4;
+									animate(node, { opacity: [0, 1], y: [20, 0] }, { duration });
+									return { duration: duration * 1000 };
+								}}
+								exit={(node) => {
+									const duration = 0.3;
+									animate(node, { opacity: [1, 0], y: [0, 0] }, { duration });
+									return { duration: duration * 1000 };
+								}}
+							/>
+						</Textarea.Root>
+					</Stepper.Body>
+
+					<!-- Footer: Navigation buttons -->
+					<Stepper.Footer class="flex justify-between">
+						<Button
+							variant="outline"
+							disabled={stepper.state.isFirstStep}
+							onclick={() => handlePrevious(stepper)}
+						>
+							Previous
+						</Button>
+
+						<div class="flex gap-2">
+							<Button variant="ghost" onclick={() => handleReset(stepper)}>Reset</Button>
+
+							{#if stepper.state.isLastStep}
+								<Button onclick={() => alert('Complete!')}>Complete</Button>
+							{:else}
+								<Button onclick={() => handleNext(stepper)}>Next</Button>
+							{/if}
+						</div>
+					</Stepper.Footer>
+				{/snippet}
+			</Stepper.Root>
+		</div>
+	{/snippet}
+</Story>
+
 <Story name="Horizontal" args={{}}>
-	<Stepper.Root bind:step= {activeStepIndex} linear={true}>
+	<Stepper.Root bind:step={activeStepIndex} linear={true}>
 		{#snippet children({ stepper })}
 			<!-- Header: Step indicators -->
 			<Stepper.Header class="flex justify-between">
@@ -98,7 +211,7 @@
 										Step {i + 1}: {stepData.header}
 									</h3>
 									<p class="text-muted-foreground mb-6">{stepData.body}</p>
-									
+
 									<!-- Actual step content would go here -->
 									<div class="text-sm text-muted-foreground">
 										Content for {stepData.header} step...
@@ -112,8 +225,8 @@
 			<!-- Body: Automatically renders active step content -->
 			<Stepper.Body class="my-6">
 				<Textarea.Root base={Stack.Root} class="overflow-hidden">
-					<Stepper.Content 
-						base={Stack.Item} 
+					<Stepper.Content
+						base={Stack.Item}
 						class="min-h-50 flex flex-col p-6"
 						enter={(node)=> {
 							const duration = 0.4;
@@ -171,7 +284,7 @@
 										<div class="flex gap-2">
 											<div class="flex flex-col">
 												<Step.Indicator class="" />
-												<Step.Separator class="w-[2px] min-h-10 translate-x-[15px]" />
+												<Step.Separator class="w-0.5 min-h-10 translate-x-3.75" />
 											</div>
 											<div class="flex flex-col">
 												<Step.Title>
@@ -180,9 +293,9 @@
 														<span class="text-xs">(Optional)</span>
 													{/if}
 												</Step.Title>
-	
+
 												<Step.Description>
-													{stepData}
+													{stepData.body}
 												</Step.Description>
 											</div>
 										</div>
@@ -190,7 +303,7 @@
 									</Step.Header>
 
 									<!-- Step Content (shown in Stepper.Body when active) -->
-									<Step.Body  
+									<Step.Body
 										enter={(node)=> {
 											const duration = 0.4;
 											animate(node, { opacity: [0, 1], y: [20, 0] }, { duration });
@@ -206,7 +319,7 @@
 											Step {i + 1}: {stepData.header}
 										</h3>
 										<p class="text-muted-foreground mb-6">{stepData.body}</p>
-										
+
 										<!-- Actual step content would go here -->
 										<div class="text-sm text-muted-foreground">
 											Content for {stepData.header} step...
@@ -220,8 +333,8 @@
 					<!-- Body: Automatically renders active step content -->
 					<Stepper.Body class="h-full">
 						<Textarea.Root base={Stack.Root} class="overflow-hidden h-full min-w-96">
-							<Stepper.Content 
-								base={Stack.Item} 
+							<Stepper.Content
+								base={Stack.Item}
 								class="min-h-50 flex flex-col p-6"
 								enter={(node)=> {
 									const duration = 0.4;
