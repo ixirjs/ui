@@ -21,21 +21,24 @@
 	const tabsBond = TabsBond.get();
 	const value = $derived(tabBond.props.value);
 
-	// Register content snippet with tabs while mounted.
-	$effect.pre(() => {
-		if (!value) return;
-		if (!tabBond) return;
-		if (!tabsBond) return;
-
+	// Register synchronously, like TabRoot's `bond.mount()`, so `Tabs.Content` has this tab's
+	// content during SSR too — `$effect.pre` never runs server-side, so registering only inside
+	// it left every panel's body empty until hydration (`value` is this instance's keyed identity
+	// and never changes post-mount, so a one-time registration is exactly as live as the effect
+	// version was).
+	// svelte-ignore state_referenced_locally
+	if (value && tabBond && tabsBond) {
 		tabsBond.registerTabContent(value, {
 			render: body,
 			props: {
 				children
 			}
 		});
+	}
 
+	$effect.pre(() => {
 		return () => {
-			tabsBond.unregisterTabContent(value);
+			if (value && tabsBond) tabsBond.unregisterTabContent(value);
 		};
 	});
 </script>
