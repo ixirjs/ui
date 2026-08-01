@@ -63,6 +63,17 @@ const buttonVariants = {
 	}
 } as const;
 
+// Kept separate from `buttonVariants`: badge reuses that object for its own `variant` dimension,
+// and a badge has no documented `size` prop — merging size in would let a stray `size` on a
+// Badge silently apply button padding.
+const buttonSizeVariants = {
+	size: {
+		sm: { class: 'px-2.5 py-1.5 text-xs' },
+		md: { class: 'px-3 py-2 text-sm' },
+		lg: { class: 'px-4 py-2.5 text-base' }
+	}
+} as const;
+
 const alertVariants = {
 	variant: {
 		primary: { class: 'border-primary/30 bg-primary/10 text-primary' },
@@ -120,8 +131,8 @@ const styledEntries = {
 			interaction.focus,
 			interaction.control
 		],
-		buttonVariants,
-		{ variant: 'primary' }
+		{ ...buttonVariants, ...buttonSizeVariants },
+		{ variant: 'primary', size: 'md' }
 	),
 	card: entry(layout.stack, surface.card, 'gap-4 p-4 shadow-sm'),
 	'card.header': entry(layout.stack, 'gap-1'),
