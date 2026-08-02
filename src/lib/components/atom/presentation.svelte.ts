@@ -32,7 +32,7 @@ export type PresentationOptions<E extends Element = Element> = {
 	as?: (() => unknown) | undefined;
 	base?: (() => unknown) | undefined;
 	/** Additional known component props used to select preset variants without leaking them as attrs. */
-	variantProps?: (() => Record<string, unknown>) | undefined;
+	variantProps?: (() => Record<string, unknown> | undefined) | undefined;
 	/** Explicit consumer motion, kept separate from the rest-props proxy. */
 	motion?: (() => Motion<E> | null | undefined) | undefined;
 	/** Optional per-instance layer, resolved after variants and before consumer attrs. */

@@ -49,14 +49,10 @@
 
 	const el = usePartElement(root, () => ({
 		class: ['flex w-full flex-1 flex-col', '$preset', klass],
-		...root.props,
+		variantProps: root.props,
 		...restProps,
 		onchange
 	}));
 </script>
 
-{#snippet body()}
-	{@render children?.({ tabs: bond })}
-{/snippet}
-
-{@render partElement(el, body)}
+{@render partElement(el, children, { tabs: bond })}

@@ -207,8 +207,4 @@
 	}));
 </script>
 
-{#snippet body()}
-	{@render children?.({ calendar: bond })}
-{/snippet}
-
-{@render partElement(el, body)}
+{@render partElement(el, children, { calendar: bond })}

@@ -24,8 +24,4 @@
 	}));
 </script>
 
-{#snippet body()}
-	{@render children?.({ step: part.bond })}
-{/snippet}
-
-{@render partElement(el, body)}
+{@render partElement(el, children, { step: part.bond })}

@@ -90,11 +90,10 @@ type SelectorKeyCacheEntry = {
 	keys: ReadonlySet<string>;
 };
 
-// Keyed on the `variants` map, NOT on the record that holds it. `stabilizePresetRecord` keys its
-// result per (entry, bond), so a preset record is a fresh reference for every rendered Bond and
-// caching on it misses every time — measured at ~12% across every bonded layer, since the miss
-// allocates a Set per rendered part. The map itself is one of the `RETAINED_FIELDS` that
-// stabilization deliberately grafts forward precisely so field-keyed caches like this one hit.
+// Keyed on the `variants` map, NOT on the record that holds it. A preset record can be a fresh
+// reference per resolve (entry factories may rebuild it), so caching on the record misses every
+// time — measured at ~12% across every bonded layer when it did, since the miss allocates a Set
+// per rendered part. The variants map inside the record is the reference that survives.
 //
 // `compounds` is validated as a sibling rather than keyed on, mirroring `presetDefCache`: a
 // reactive entry can swap compounds while retaining the same map.

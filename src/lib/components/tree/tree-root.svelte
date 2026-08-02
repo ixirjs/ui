@@ -47,13 +47,9 @@
 
 	const el = usePartElement(root, () => ({
 		class: ['flex flex-col', '$preset', klass],
-		...root.props,
+		variantProps: root.props,
 		...restProps
 	}));
 </script>
 
-{#snippet body()}
-	{@render children?.({ tree: bond })}
-{/snippet}
-
-{@render partElement(el, body)}
+{@render partElement(el, children, { tree: bond })}

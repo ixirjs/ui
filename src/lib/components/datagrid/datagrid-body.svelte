@@ -28,8 +28,4 @@
 	}));
 </script>
 
-{#snippet body()}
-	{@render children?.({ datagrid: bond })}
-{/snippet}
-
-{@render partElement(el, body)}
+{@render partElement(el, children, { datagrid: bond })}

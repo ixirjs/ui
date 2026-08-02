@@ -42,8 +42,4 @@
 	}));
 </script>
 
-{#snippet body()}
-	{@render children?.({ accordionItem: bond })}
-{/snippet}
-
-{@render partElement(el, body)}
+{@render partElement(el, children, { accordionItem: bond })}

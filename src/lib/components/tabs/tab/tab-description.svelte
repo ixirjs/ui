@@ -24,8 +24,4 @@
 	}));
 </script>
 
-{#snippet body()}
-	{@render children?.({ tab: part.bond })}
-{/snippet}
-
-{@render partElement(el, body)}
+{@render partElement(el, children, { tab: part.bond })}

@@ -44,6 +44,8 @@
 		// the element untouched. Only the string branch copies, and it is off the per-part path.
 		part?: DirectPart | string | null | undefined;
 		atom?: PresentableAtom;
+		// Bond state props used to select preset variants without landing on the DOM as attributes.
+		variantProps?: Record<string, unknown> | undefined;
 	};
 
 	// `Omit` cannot remove a key here: ElementProps extends Record<string, unknown>, so `keyof` is
@@ -72,6 +74,7 @@
 		part = undefined,
 		atom: atomProp = undefined,
 		variants = undefined,
+		variantProps = undefined,
 		defaults = undefined,
 		motion: motionProp = undefined,
 		oninit = undefined,
@@ -118,6 +121,7 @@
 		bond: resolvedBond,
 		instance: resolvedPresetLayer,
 		variants: () => variants,
+		variantProps: () => variantProps,
 		defaults: () => defaults,
 		class: () => klass,
 		as: () => as,
@@ -174,6 +178,16 @@
 	}
 </script>
 
+<!-- Literal-div fast path: `<svelte:element>` emits three hydration-anchor comments per element
+     while a static tag emits none, and `div` is the default and overwhelmingly common tag. The
+     branch rides the render ternary's existing dynamic callee, so it adds no anchor of its own.
+     See docs/research/hydration-anchor-diet-2026-08.md. -->
+{#snippet nativeDiv()}
+	<div class={withDefaultBorder(toClassValue(presentation.class))} {...presentation.attrs}>
+		{@render (children as Snippet | undefined)?.()}
+	</div>
+{/snippet}
+
 {#snippet native()}
 	<svelte:element
 		this={String(presentation.as ?? 'div')}
@@ -188,4 +202,8 @@
 	<RendererComponent {...getRendererProps()} children={forwardChildren} />
 {/snippet}
 
-{@render (useNativeRenderer() ? native : renderer)()}
+{@render (useNativeRenderer()
+	? (presentation.as ?? 'div') === 'div'
+		? nativeDiv
+		: native
+	: renderer)()}

@@ -49,13 +49,9 @@
 	const el = usePartElement(root, () => ({
 		// This part declares no base classes; `''` is exactly HtmlAtom's own `class` default.
 		class: '',
-		...root.props,
+		variantProps: root.props,
 		...restProps
 	}));
 </script>
 
-{#snippet body()}
-	{@render children?.({ toast: bond })}
-{/snippet}
-
-{@render partElement(el, body)}
+{@render partElement(el, children, { toast: bond })}

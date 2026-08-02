@@ -19,8 +19,4 @@
 	}));
 </script>
 
-{#snippet body()}
-	{@render children?.({ drawer: bond })}
-{/snippet}
-
-{@render partElement(el, body)}
+{@render partElement(el, children, { drawer: bond })}

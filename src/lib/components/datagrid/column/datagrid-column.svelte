@@ -95,9 +95,5 @@
 </script>
 
 {#if !hidden}
-	{#snippet body()}
-		{@render children?.({ column: bond })}
-	{/snippet}
-
-	{@render partElement(el, body)}
+	{@render partElement(el, children, { column: bond })}
 {/if}

@@ -68,8 +68,4 @@
 	}));
 </script>
 
-{#snippet body()}
-	{@render children?.({ card: bond })}
-{/snippet}
-
-{@render partElement(el, body)}
+{@render partElement(el, children, { card: bond })}

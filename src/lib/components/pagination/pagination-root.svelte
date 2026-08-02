@@ -46,13 +46,9 @@
 		as,
 		class: ['pagination', '$preset', klass],
 		'aria-label': label,
-		...root.props,
+		variantProps: root.props,
 		...restProps
 	}));
 </script>
 
-{#snippet body()}
-	{@render children?.({ pagination: bond })}
-{/snippet}
-
-{@render partElement(el, body)}
+{@render partElement(el, children, { pagination: bond })}

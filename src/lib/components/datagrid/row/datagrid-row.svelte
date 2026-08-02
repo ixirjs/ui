@@ -22,7 +22,6 @@
 		data = undefined,
 		factory = undefined,
 		children = undefined,
-		onclick = undefined,
 		...restProps
 	}: DatagridRowProps<T, E, B> = $props();
 
@@ -55,11 +54,8 @@
 	const unmount = untrack(() => (isHeader ? undefined : bond.mount()));
 	$effect(() => unmount);
 
-	function handleClick(event: MouseEvent) {
-		const onClick = onclick as ((event: MouseEvent) => void) | undefined;
-		onClick?.(event);
-	}
-
+	// Consumer `onclick` rides restProps: the removed wrapper only forwarded it, costing a closure
+	// and a live listener on every row even when no consumer handler existed.
 	const el = usePartElement(root, () => ({
 		class: [
 			'datagrid-row items-center border-b bg-transparent',
@@ -70,13 +66,8 @@
 			klass
 		],
 		...restProps,
-		style: `--rows:${rows}`,
-		onclick: handleClick
+		style: `--rows:${rows}`
 	}));
 </script>
 
-{#snippet body()}
-	{@render children?.({ row: bond })}
-{/snippet}
-
-{@render partElement(el, body)}
+{@render partElement(el, children, { row: bond })}

@@ -30,8 +30,4 @@
 	}));
 </script>
 
-{#snippet body()}
-	{@render children?.({ tree: part.bond })}
-{/snippet}
-
-{@render partElement(el, body)}
+{@render partElement(el, children, { tree: part.bond })}

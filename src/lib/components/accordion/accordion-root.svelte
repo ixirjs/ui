@@ -65,13 +65,9 @@
 
 	const el = usePartElement(root, () => ({
 		class: ['bg-card border-border flex list-none flex-col', '$preset', klass],
-		...root.props,
+		variantProps: root.props,
 		...restProps
 	}));
 </script>
 
-{#snippet body()}
-	{@render children?.({ accordion: bond })}
-{/snippet}
-
-{@render partElement(el, body)}
+{@render partElement(el, children, { accordion: bond })}

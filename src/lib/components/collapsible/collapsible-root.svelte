@@ -48,13 +48,9 @@
 
 	const el = usePartElement(root, () => ({
 		class: ['border-border flex w-full flex-col overflow-hidden', '$preset', klass],
-		...root.props,
+		variantProps: root.props,
 		...restProps
 	}));
 </script>
 
-{#snippet body()}
-	{@render children?.({ collapsible: bond })}
-{/snippet}
-
-{@render partElement(el, body)}
+{@render partElement(el, children, { collapsible: bond })}

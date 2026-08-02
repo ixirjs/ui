@@ -1,43 +1,49 @@
 {
 	"machine": "AMD Ryzen 9 PRO 8945HS w/ Radeon 780M Graphics ×16",
 	"node": "v24.13.1",
-	"recorded": "2026-08-01",
+	"recorded": "2026-08-02",
 	"layers": {
 		"plain": {
-			"micros": 0.21,
-			"gcShare": 14.254,
+			"micros": 0.27,
+			"gcShare": 0.712,
 			"bytesPerCard": 356,
 			"sha": "666f19e09e6a"
 		},
 		"htmlatom": {
-			"micros": 12.04,
-			"gcShare": 0.23,
-			"bytesPerCard": 538,
-			"sha": "0019ef11f10f"
+			"micros": 12.13,
+			"gcShare": 0.252,
+			"bytesPerCard": 475,
+			"sha": "4e614fd9e00f"
 		},
 		"card": {
-			"micros": 33.86,
-			"gcShare": 0.25,
-			"bytesPerCard": 708,
-			"sha": "9ab4f5be40fc"
+			"micros": 33.31,
+			"gcShare": 0.212,
+			"bytesPerCard": 638,
+			"sha": "4f66a9f3a5fe"
 		},
 		"collapsible": {
-			"micros": 49.73,
-			"gcShare": 0.22,
-			"bytesPerCard": 667,
-			"sha": "9fd851b8717e"
+			"micros": 57.31,
+			"gcShare": 0.165,
+			"bytesPerCard": 583,
+			"sha": "04972e38df74"
 		},
 		"datagrid": {
-			"micros": 34.47,
-			"gcShare": 0.181,
-			"bytesPerCard": 906,
-			"sha": "4b4294fdbc9f"
+			"micros": 29.15,
+			"gcShare": 0.151,
+			"bytesPerCard": 755,
+			"sha": "7ee58f259131"
 		},
 		"tree": {
-			"micros": 62.75,
-			"gcShare": 0.235,
-			"bytesPerCard": 690,
-			"sha": "203fad40d727"
+			"micros": 70.59,
+			"gcShare": 0.18,
+			"bytesPerCard": 570,
+			"sha": "af6a7d95a52e"
+		},
+		"card-preset": {
+			"micros": 37.67,
+			"gcShare": 0.172,
+			"bytesPerCard": 682,
+			"sha": "61d738d9b55c"
 		}
 	}
 }

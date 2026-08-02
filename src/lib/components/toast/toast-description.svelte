@@ -24,8 +24,4 @@
 	}));
 </script>
 
-{#snippet body()}
-	{@render children?.({ toast: part.bond })}
-{/snippet}
-
-{@render partElement(el, body)}
+{@render partElement(el, children, { toast: part.bond })}

@@ -1,3 +1,4 @@
+import { BROWSER } from 'esm-env';
 import type { ClassValue } from 'svelte/elements';
 import type { Bond } from '$ixirjs/ui/shared/bond';
 import type { PresetKey, PresetLike } from '$ixirjs/ui/preset';
@@ -58,6 +59,7 @@ const NAMED_PROPS: ReadonlySet<string> = new Set([
 	'as',
 	'base',
 	'variants',
+	'variantProps',
 	'defaults',
 	'motion',
 	'oninit',
@@ -101,6 +103,9 @@ function elementAttrs(source: PartElementProps): Record<string, unknown> {
 		if (!Object.hasOwn(source, key) || NAMED_PROPS.has(key)) continue;
 		rest[key] = source[key];
 	}
+	// `part` is the seam handle only when it is an object; a string is the CSS shadow-part
+	// attribute and must reach the element — the same discrimination HtmlAtom applies.
+	if (typeof source.part === 'string') rest.part = source.part;
 	// Attachment keys and lifecycle callbacks ride symbol keys and must survive the split.
 	const symbolSource = source as Record<string | symbol, unknown>;
 	for (const symbol of Object.getOwnPropertySymbols(source)) {
@@ -113,30 +118,73 @@ export function usePartElement(seam: PartElementSeam, config: PartElementConfig)
 	// Same init-scoped read HtmlAtom performs: a Root may override the default renderer.
 	const rootBond = RootBond.get();
 
+	// Server fast path: a server render is a single pass with no invalidations, so the config can
+	// only ever be evaluated once — the two `$derived` below and their `once()` wrappers are pure
+	// overhead there. The presentation seam already resolves eagerly server-side for the same
+	// reason (see createPresentation's server branch).
+	if (!BROWSER) {
+		const props = config();
+		const attrs = elementAttrs(props);
+		return buildPartElement(
+			seam,
+			rootBond,
+			() => props,
+			() => attrs
+		);
+	}
+
 	// One config call per invalidation, shared by every axis below. The thunk returns a fresh
 	// object (it spreads the part's rest props), so calling it once per presentation getter would
 	// allocate ten times per resolution — the reason this module carries the runes extension.
+	// `elementAttrs` runs inside the snapshot's own tracked evaluation instead of holding a second
+	// signal: the snapshot was its only consumer, so the extra `$derived` bought no memoization —
+	// just one more signal on every rendered part (rows × cells of them in a grid).
 	const props = $derived(config());
-	const attrs = $derived(elementAttrs(props));
+	return buildPartElement(
+		seam,
+		rootBond,
+		() => props,
+		() => elementAttrs(props)
+	);
+}
 
+/** The Root shape `native()` consults; structural so both passes share one builder. */
+type PartElementRoot = { props?: { renderers?: { html?: unknown } } } | undefined;
+
+function buildPartElement(
+	seam: PartElementSeam,
+	rootBond: PartElementRoot,
+	props: () => PartElementProps,
+	attrs: () => Record<string, unknown>
+): PartElement {
 	const presentation = createPresentation({
 		// Explicit props win over the seam, exactly as they do on HtmlAtom.
-		preset: () => (props.preset as PresetKey | undefined) ?? seam.preset,
-		bond: () => (props.bond as Bond | undefined) ?? seam.bond,
-		instance: () => (props.presetLayer as PresetLike | undefined) ?? seam.presetLayer,
-		class: () => props.class as ClassValue,
-		as: () => props.as,
-		base: () => props.base,
-		variants: () => props.variants as never,
-		defaults: () => props.defaults as Record<string, unknown> | undefined,
-		motion: () => props.motion as never,
-		restProps: () => mergeAtomPresentationProps((props.atom as PresentableAtom) ?? seam.atom, attrs)
+		preset: () => (props().preset as PresetKey | undefined) ?? seam.preset,
+		bond: () => (props().bond as Bond | undefined) ?? seam.bond,
+		instance: () => (props().presetLayer as PresetLike | undefined) ?? seam.presetLayer,
+		class: () => props().class as ClassValue,
+		as: () => props().as,
+		base: () => props().base,
+		variants: () => props().variants as never,
+		// Bond state props ride this axis to select preset variants without leaking onto the DOM
+		// as attributes — roots pass `variantProps: root.props` instead of spreading `...root.props`.
+		variantProps: () => props().variantProps as Record<string, unknown> | undefined,
+		defaults: () => props().defaults as Record<string, unknown> | undefined,
+		motion: () => props().motion as never,
+		restProps: () => {
+			// Atom-less seam (static leaves like DataGrid.Cell): nothing to merge — forward the
+			// element attrs by reference, exactly as HtmlAtom's atom-less branch forwards restProps.
+			const atom = (props().atom as PresentableAtom) ?? seam.atom;
+			return atom ? mergeAtomPresentationProps(atom, attrs()) : attrs();
+		}
 	});
 
 	// Symbol lifecycle callbacks are classified once at init — that is their documented contract
 	// (see runLifecycle). Presence routes the part through HtmlAtom so lifecycle handling keeps a
-	// single owner and can never double-fire.
-	const initLifecycle = getLifecycleProps(config() as Record<PropertyKey, unknown>);
+	// single owner and can never double-fire. Classification reads the shared props evaluation, so
+	// it costs no second config() call on either pass — the old shape re-evaluated the thunk here,
+	// allocating one extra props object per rendered part.
+	const initLifecycle = getLifecycleProps(props() as Record<PropertyKey, unknown>);
 	const hasLifecycleCallbacks = initLifecycle.mount.length > 0 || initLifecycle.destroy.length > 0;
 
 	return {
@@ -146,17 +194,18 @@ export function usePartElement(seam: PartElementSeam, config: PartElementConfig)
 			if (rootBond?.props?.renderers?.html) return false;
 			// `base` selects a renderer component or snippet; `oninit` is HtmlAtom's init hook.
 			// Both are read off the config, since neither survives into the resolved attrs.
-			if (props.base !== undefined || props.oninit !== undefined) return false;
+			const config = props();
+			if (config.base !== undefined || config.oninit !== undefined) return false;
 			if (presentation.base !== undefined) return false;
 			// Emptiness by early exit — same shape as HtmlAtom's check.
 			for (const _ in presentation.motion) return false;
-			const attrs = presentation.attrs;
+			const resolved = presentation.attrs;
 			return !(
-				'onmount' in attrs ||
-				'ondestroy' in attrs ||
-				'onintroend' in attrs ||
-				'onexitend' in attrs ||
-				'global' in attrs
+				'onmount' in resolved ||
+				'ondestroy' in resolved ||
+				'onintroend' in resolved ||
+				'onexitend' in resolved ||
+				'global' in resolved
 			);
 		},
 		tag: () => String(presentation.as ?? 'div'),
@@ -165,7 +214,7 @@ export function usePartElement(seam: PartElementSeam, config: PartElementConfig)
 		richProps() {
 			// Cold path by construction. The part's own object already IS HtmlAtom's prop shape, so
 			// it forwards as-is; only the seam handle is added, and explicit keys still win over it.
-			return { part: seam, ...props };
+			return { part: seam, ...props() };
 		}
 	};
 }

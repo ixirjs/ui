@@ -20,8 +20,4 @@
 	const el = usePartElement(part, () => ({ class: ['flex', '$preset', klass], ...restProps }));
 </script>
 
-{#snippet body()}
-	{@render children?.({ field: bond })}
-{/snippet}
-
-{@render partElement(el, body)}
+{@render partElement(el, children, { field: bond })}

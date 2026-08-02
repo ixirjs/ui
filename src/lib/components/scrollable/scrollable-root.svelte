@@ -91,13 +91,9 @@
 	const el = usePartElement(root, () => ({
 		as: 'div',
 		class: ['scrollable-root relative box-content overflow-hidden', '$preset', klass],
-		...root.props,
+		variantProps: root.props,
 		...restProps
 	}));
 </script>
 
-{#snippet body()}
-	{@render children?.({ scrollable: bond })}
-{/snippet}
-
-{@render partElement(el, body)}
+{@render partElement(el, children, { scrollable: bond })}

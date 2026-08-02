@@ -23,8 +23,4 @@
 	}));
 </script>
 
-{#snippet body()}
-	{@render children?.({ dialog: bond })}
-{/snippet}
-
-{@render partElement(el, body)}
+{@render partElement(el, children, { dialog: bond })}

@@ -60,13 +60,9 @@
 			'$preset',
 			klass
 		],
-		...root.props,
+		variantProps: root.props,
 		...restProps
 	}));
 </script>
 
-{#snippet body()}
-	{@render children?.({ input: bond })}
-{/snippet}
-
-{@render partElement(el, body)}
+{@render partElement(el, children, { input: bond })}

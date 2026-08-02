@@ -48,9 +48,10 @@ import { cpus } from 'node:os';
 import Ablation, { type AblationLayer } from './ablation.test.svelte';
 import DatagridAblation from './datagrid-ablation.test.svelte';
 import TreeAblation from './tree-ablation.test.svelte';
+import PresetAblation from './preset-ablation.test.svelte';
 
 /** Layers measured here: the card ladder plus the standalone collection fixture. */
-type BenchLayer = AblationLayer | 'datagrid' | 'tree';
+type BenchLayer = AblationLayer | 'datagrid' | 'tree' | 'card-preset';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const FIXTURES: Record<BenchLayer, any> = {
@@ -59,7 +60,8 @@ const FIXTURES: Record<BenchLayer, any> = {
 	card: Ablation,
 	collapsible: Ablation,
 	datagrid: DatagridAblation,
-	tree: TreeAblation
+	tree: TreeAblation,
+	'card-preset': PresetAblation
 };
 
 /** Standalone layers have their own component and take no `layer` prop. */
@@ -118,7 +120,7 @@ const LADDER: BenchLayer[] = ['plain', 'htmlatom', 'card', 'collapsible'];
  * unit is a three-cell row, which is the collection shape — one Bond and root Atom per row plus
  * static cell components — that no ladder rung exercises.
  */
-const STANDALONE: BenchLayer[] = ['datagrid', 'tree'];
+const STANDALONE: BenchLayer[] = ['datagrid', 'tree', 'card-preset'];
 
 const LAYERS: BenchLayer[] = [...LADDER, ...STANDALONE];
 
@@ -128,7 +130,16 @@ const LAYERS: BenchLayer[] = [...LADDER, ...STANDALONE];
  * the layer is over almost before a collection can be attributed to it. Its *fingerprint* is still
  * gated — if the hand-written control markup changes, every comparison built on it is invalid.
  */
-const BUDGETED = new Set<BenchLayer>(['htmlatom', 'card', 'collapsible', 'datagrid', 'tree']);
+const BUDGETED = new Set<BenchLayer>([
+	'htmlatom',
+	'card',
+	'collapsible',
+	'datagrid',
+	'tree',
+	// The card layer as an application actually renders it: defaultPreset installed. Its delta
+	// against `card` is the preset pipeline's per-card cost, which the bare ladder never pays.
+	'card-preset'
+]);
 const BASELINE_PATH = join(process.cwd(), 'src/lib/test/perf/ssr-baseline.json');
 
 const args = new Set(process.argv.slice(2));
