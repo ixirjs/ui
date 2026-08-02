@@ -17,10 +17,10 @@
 	}));
 </script>
 
+{@render partElement(el, body)}
+
 {#snippet body()}
 	{#each (currentMonth?.days ?? []).filter((d: NonNullable<typeof currentMonth>['days'][number]) => d.week == 1) as day, i (i)}
 		<CalendarWeekDay index={i} isWeekend={day.weekend}>{day.name}</CalendarWeekDay>
 	{/each}
 {/snippet}
-
-{@render partElement(el, body)}

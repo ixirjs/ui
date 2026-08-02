@@ -43,6 +43,29 @@ bun run test:e2e      # playwright
 
 - Files, components, directories: kebab-case. Variables/functions: camelCase.
 - Commit messages: short, present tense, no filenames.
+- **Conditionals dispatch a snippet; they do not open an `{#if}` block.**
+
+  ```
+  {@render (children ?? fallback)(arg)}       consumer-or-default
+  {@render (cond ? branchA : branchB)()}      two outcomes
+  {@render (cond ? branch : undefined)?.()}   optional — compiles to `?? noop`
+  ```
+
+  An `{#if}` block emits two hydration anchors (live comment nodes at runtime), a render tag
+  emits one, and a snippet branch is `EFFECT_TRANSPARENT` so consumer content keeps reacting to
+  an outer block's enter/exit — an `{#if}` branch is transparent only as an `{:else if}`.
+  `{#if children}{@render children()}{/if}` is just `{@render children?.()}`. Rationale and the
+  measured per-construct cost table: `docs/research/hydration-anchor-diet-2026-08.md`.
+
+  Four things that bite when writing them: TypeScript narrowing does **not** cross into a snippet
+  body (assert, and name the dispatch that proves it); a snippet written among a component's
+  children is passed to it as a **prop**, not defined locally; `{@const}` does not survive its
+  block (hoist to `$derived`); a snippet used inside `{#each}` takes the item as a parameter.
+
+- **Snippets are declared at the bottom of the template**, after the markup and before any
+  `<style>`, ordered by first use (a snippet only another snippet dispatches follows its
+  referrer). Snippets that are component props stay where they are passed — they are arguments,
+  not declarations.
 
 ---
 

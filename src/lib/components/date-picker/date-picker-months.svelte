@@ -75,7 +75,9 @@
 	}
 </script>
 
-{#if datePicker.isMonthsPickerOpen}
+{@render (datePicker.isMonthsPickerOpen ? monthsPicker : undefined)?.()}
+
+{#snippet monthsPicker()}
 	<HtmlAtom
 		class={['absolute inset-0 z-1 flex flex-col gap-2 bg-inherit opacity-0', '$preset', klass]}
 		enter={(node) => {
@@ -135,4 +137,4 @@
 			</div>
 		</HtmlAtom>
 	</HtmlAtom>
-{/if}
+{/snippet}

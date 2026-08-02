@@ -37,7 +37,5 @@
 		}}
 	/>
 
-	{#if hasError}
-		{@render children?.()}
-	{/if}
+	{@render (hasError ? children : undefined)?.()}
 </HtmlAtom>

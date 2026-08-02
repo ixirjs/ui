@@ -27,11 +27,6 @@
 	const content = $derived(src ? sourceSnippet : children);
 </script>
 
-{#snippet sourceSnippet()}
-	{@const Src = src}
-	<Src />
-{/snippet}
-
 <HtmlAtom
 	class={[
 		'icon inline-flex aspect-square h-6 items-center justify-center leading-none text-current',
@@ -42,3 +37,8 @@
 >
 	{@render content?.()}
 </HtmlAtom>
+
+{#snippet sourceSnippet()}
+	{@const Src = src}
+	<Src />
+{/snippet}

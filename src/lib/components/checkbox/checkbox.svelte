@@ -83,51 +83,6 @@
 	}
 </script>
 
-{#snippet indeterminateSnippet()}
-	<HtmlAtom
-		preset="checkbox.indeterminate"
-		presetLayer={presets?.indeterminate}
-		class={[
-			'checkbox-indeterminate pointer-events-none flex size-full scale-50 items-center justify-center rounded-inherit bg-current'
-		]}
-		base={indeterminateContent}
-		enter={animateCheckboxIndicator()}
-		exit={animateCheckboxIndicator()}
-	/>
-{/snippet}
-
-{#snippet customCheckedSnippet()}
-	<HtmlAtom
-		preset="checkbox.checkmark"
-		presetLayer={presets?.checkmark}
-		class={[
-			'checkbox-indicator text-accent pointer-events-none flex h-full content-center items-center justify-center overflow-hidden p-0.5'
-		]}
-		base={checkedContent}
-		enter={animateCheckboxIndicator()}
-		exit={animateCheckboxIndicator()}
-	/>
-{/snippet}
-
-{#snippet defaultCheckedSnippet()}
-	<HtmlAtom
-		preset="checkbox.checkmark"
-		presetLayer={presets?.checkmark}
-		class={[
-			'checkbox-indicator text-accent pointer-events-none flex h-full content-center items-center justify-center overflow-hidden p-0.5'
-		]}
-		enter={animateCheckboxIndicator()}
-		exit={animateCheckboxIndicator()}
-	>
-		<Icon class="h-full p-0" src={CheckmarkRegularIcon} />
-	</HtmlAtom>
-{/snippet}
-
-{#snippet checkedSnippet()}
-	{@const content = checkedContent ? customCheckedSnippet : defaultCheckedSnippet}
-	{@render content?.()}
-{/snippet}
-
 <Input.Root
 	as="div"
 	class={[
@@ -166,3 +121,48 @@
 
 	{@render overlayContent?.()}
 </Input.Root>
+
+{#snippet indeterminateSnippet()}
+	<HtmlAtom
+		preset="checkbox.indeterminate"
+		presetLayer={presets?.indeterminate}
+		class={[
+			'checkbox-indeterminate pointer-events-none flex size-full scale-50 items-center justify-center rounded-inherit bg-current'
+		]}
+		base={indeterminateContent}
+		enter={animateCheckboxIndicator()}
+		exit={animateCheckboxIndicator()}
+	/>
+{/snippet}
+
+{#snippet checkedSnippet()}
+	{@const content = checkedContent ? customCheckedSnippet : defaultCheckedSnippet}
+	{@render content?.()}
+{/snippet}
+
+{#snippet customCheckedSnippet()}
+	<HtmlAtom
+		preset="checkbox.checkmark"
+		presetLayer={presets?.checkmark}
+		class={[
+			'checkbox-indicator text-accent pointer-events-none flex h-full content-center items-center justify-center overflow-hidden p-0.5'
+		]}
+		base={checkedContent}
+		enter={animateCheckboxIndicator()}
+		exit={animateCheckboxIndicator()}
+	/>
+{/snippet}
+
+{#snippet defaultCheckedSnippet()}
+	<HtmlAtom
+		preset="checkbox.checkmark"
+		presetLayer={presets?.checkmark}
+		class={[
+			'checkbox-indicator text-accent pointer-events-none flex h-full content-center items-center justify-center overflow-hidden p-0.5'
+		]}
+		enter={animateCheckboxIndicator()}
+		exit={animateCheckboxIndicator()}
+	>
+		<Icon class="h-full p-0" src={CheckmarkRegularIcon} />
+	</HtmlAtom>
+{/snippet}

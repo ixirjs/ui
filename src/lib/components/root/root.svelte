@@ -66,9 +66,7 @@
 		)}
 		{...atomProps}
 	>
-		{#if portal}
-			{@render portal?.()}
-		{/if}
+		{@render portal?.()}
 
 		{@render children?.()}
 	</PortalHost>

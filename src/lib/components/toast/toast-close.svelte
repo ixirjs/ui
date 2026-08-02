@@ -59,12 +59,12 @@
 	}));
 </script>
 
+{@render partElement(el, body)}
+
 {#snippet body()}
-	{#if children}
-		{@render children({ toast: bond })}
-	{:else}
-		<Icon class="h-full" src={Close} />
-	{/if}
+	{@render (children ?? fallback)({ toast: bond })}
 {/snippet}
 
-{@render partElement(el, body)}
+{#snippet fallback()}
+	<Icon class="h-full" src={Close} />
+{/snippet}

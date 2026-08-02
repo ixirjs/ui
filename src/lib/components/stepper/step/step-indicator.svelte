@@ -34,16 +34,18 @@
 	}));
 </script>
 
+{@render partElement(el, body)}
+
 {#snippet body()}
-	{#if children}
-		{@render children?.({ step: part.bond })}
-	{:else if part.bond.isCompleted}
-		<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-			<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-		</svg>
-	{:else}
-		{index + 1}
-	{/if}
+	{@render (children ?? (part.bond.isCompleted ? completedMark : ordinal))({ step: part.bond })}
 {/snippet}
 
-{@render partElement(el, body)}
+{#snippet completedMark()}
+	<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+		<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+	</svg>
+{/snippet}
+
+{#snippet ordinal()}
+	{index + 1}
+{/snippet}

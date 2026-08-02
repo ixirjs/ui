@@ -38,8 +38,12 @@
 	}
 </script>
 
-{#if targetElement && portalBond}
+{@render (targetElement && portalBond ? teleported : undefined)?.()}
+
+<!-- `portalBond!` is proven by the dispatch below, which renders this only when it is present;
+     TypeScript narrowing does not cross into a snippet body. -->
+{#snippet teleported()}
 	<HtmlAtom {@attach teleport} as={as as E} {base} {...restProps}>
-		{@render children?.({ portal: portalBond })}
+		{@render children?.({ portal: portalBond! })}
 	</HtmlAtom>
-{/if}
+{/snippet}

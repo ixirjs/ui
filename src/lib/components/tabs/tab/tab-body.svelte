@@ -43,6 +43,8 @@
 	});
 </script>
 
+<!-- Content is teleported to Tabs.Content; nothing rendered here. -->
+
 {#snippet body({
 	children = undefined,
 	selected = false,
@@ -70,5 +72,3 @@
 		})}
 	</Stack.Item>
 {/snippet}
-
-<!-- Content is teleported to Tabs.Content; nothing rendered here. -->

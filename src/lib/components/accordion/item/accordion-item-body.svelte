@@ -27,6 +27,8 @@
 	const content = $derived(isOpen ? body : undefined);
 </script>
 
+{@render content?.(bond!)}
+
 {#snippet body(accordionItem: AccordionItemBond)}
 	<HtmlAtom
 		bond={accordionItem}
@@ -40,5 +42,3 @@
 		{@render children?.({ accordionItem })}
 	</HtmlAtom>
 {/snippet}
-
-{@render content?.(bond!)}

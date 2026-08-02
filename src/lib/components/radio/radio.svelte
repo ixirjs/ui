@@ -107,24 +107,6 @@
 	}
 </script>
 
-{#snippet defaultCheckedContent()}
-	<Stack.Item
-		value="indicator"
-		class="rounded-inherit pointer-events-none size-full scale-[0.6] bg-current"
-		enter={animateRadioIndicatorIn()}
-		exit={animateRadioIndicatorOut()}
-	/>
-{/snippet}
-
-{#snippet customCheckedContent()}
-	<HtmlAtom
-		class="rounded-inherit pointer-events-none size-full scale-[0.6] bg-current"
-		base={checkedContent}
-		enter={animateRadioIndicatorIn()}
-		exit={animateRadioIndicatorOut()}
-	/>
-{/snippet}
-
 <Stack.Root
 	class={[
 		'text-foreground bg-input box-border inline-flex aspect-square size-4 max-h-fit max-w-fit cursor-pointer place-items-center rounded-full border border-border p-0',
@@ -152,3 +134,21 @@
 
 	{@render checkedContentSnippet?.()}
 </Stack.Root>
+
+{#snippet customCheckedContent()}
+	<HtmlAtom
+		class="rounded-inherit pointer-events-none size-full scale-[0.6] bg-current"
+		base={checkedContent}
+		enter={animateRadioIndicatorIn()}
+		exit={animateRadioIndicatorOut()}
+	/>
+{/snippet}
+
+{#snippet defaultCheckedContent()}
+	<Stack.Item
+		value="indicator"
+		class="rounded-inherit pointer-events-none size-full scale-[0.6] bg-current"
+		enter={animateRadioIndicatorIn()}
+		exit={animateRadioIndicatorOut()}
+	/>
+{/snippet}

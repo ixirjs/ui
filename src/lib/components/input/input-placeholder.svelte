@@ -41,6 +41,8 @@
 	}));
 </script>
 
-{#if shouldShowPlaceholder}
+{@render (shouldShowPlaceholder ? placeholder : undefined)?.()}
+
+{#snippet placeholder()}
 	{@render partElement(el, children)}
-{/if}
+{/snippet}

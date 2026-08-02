@@ -179,71 +179,6 @@
 	]);
 </script>
 
-<!--
-	Shared nav header snippet — reused by every compact story.
-	Svelte 5 lexical scoping makes it available inside all <Story> content below.
--->
-{#snippet monthNavHeader(pivote: Date, onPrev: () => void, onNext: () => void)}
-	<div class="flex items-center justify-between px-4 py-3 border-b border-border">
-		<button
-			aria-label="Previous month"
-			class="flex items-center justify-center w-7 h-7 rounded-md hover:bg-accent transition-colors text-muted-foreground hover:text-foreground"
-			onclick={onPrev}
-		>
-			<svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5"
-				><path d="M15 18l-6-6 6-6" stroke-linecap="round" stroke-linejoin="round" /></svg
-			>
-		</button>
-		<span class="text-sm font-semibold">{monthYear(pivote)}</span>
-		<button
-			aria-label="Next month"
-			class="flex items-center justify-center w-7 h-7 rounded-md hover:bg-accent transition-colors text-muted-foreground hover:text-foreground"
-			onclick={onNext}
-		>
-			<svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5"
-				><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round" /></svg
-			>
-		</button>
-	</div>
-{/snippet}
-
-<!--
-	Shared start-to-end readout. Reused by every range story so each one shows
-	its live selection without repeating ~30 lines of near-identical markup.
--->
-{#snippet rangeReadout(range: CalendarRange)}
-	<div class="flex items-center gap-2 text-sm">
-		<div class="flex flex-col items-center gap-1">
-			<span class="text-[10px] text-muted-foreground uppercase tracking-widest font-medium"
-				>Start</span
-			>
-			<span
-				class="px-4 py-2 rounded-lg border border-border bg-muted/50 font-medium min-w-32 text-center"
-			>
-				{range[0] ? mediumDay(range[0]) : '—'}
-			</span>
-		</div>
-		<svg
-			viewBox="0 0 24 24"
-			class="w-4 h-4 text-muted-foreground mt-5"
-			fill="none"
-			stroke="currentColor"
-			stroke-width="2"
-			><path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" /></svg
-		>
-		<div class="flex flex-col items-center gap-1">
-			<span class="text-[10px] text-muted-foreground uppercase tracking-widest font-medium"
-				>End</span
-			>
-			<span
-				class="px-4 py-2 rounded-lg border border-border bg-muted/50 font-medium min-w-32 text-center"
-			>
-				{range[1] ? mediumDay(range[1]) : '—'}
-			</span>
-		</div>
-	</div>
-{/snippet}
-
 <!-- ─── Default: configurable via Storybook controls ─────────────────────── -->
 <Story name="Basic">
 	{#snippet template(args: { type: 'single' | 'range'; outsideDays: boolean })}
@@ -1023,3 +958,68 @@
 		</div>
 	{/snippet}
 </Story>
+
+<!--
+	Shared nav header snippet — reused by every compact story.
+	Svelte 5 lexical scoping makes it available inside all <Story> content below.
+-->
+{#snippet monthNavHeader(pivote: Date, onPrev: () => void, onNext: () => void)}
+	<div class="flex items-center justify-between px-4 py-3 border-b border-border">
+		<button
+			aria-label="Previous month"
+			class="flex items-center justify-center w-7 h-7 rounded-md hover:bg-accent transition-colors text-muted-foreground hover:text-foreground"
+			onclick={onPrev}
+		>
+			<svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5"
+				><path d="M15 18l-6-6 6-6" stroke-linecap="round" stroke-linejoin="round" /></svg
+			>
+		</button>
+		<span class="text-sm font-semibold">{monthYear(pivote)}</span>
+		<button
+			aria-label="Next month"
+			class="flex items-center justify-center w-7 h-7 rounded-md hover:bg-accent transition-colors text-muted-foreground hover:text-foreground"
+			onclick={onNext}
+		>
+			<svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5"
+				><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round" /></svg
+			>
+		</button>
+	</div>
+{/snippet}
+
+<!--
+	Shared start-to-end readout. Reused by every range story so each one shows
+	its live selection without repeating ~30 lines of near-identical markup.
+-->
+{#snippet rangeReadout(range: CalendarRange)}
+	<div class="flex items-center gap-2 text-sm">
+		<div class="flex flex-col items-center gap-1">
+			<span class="text-[10px] text-muted-foreground uppercase tracking-widest font-medium"
+				>Start</span
+			>
+			<span
+				class="px-4 py-2 rounded-lg border border-border bg-muted/50 font-medium min-w-32 text-center"
+			>
+				{range[0] ? mediumDay(range[0]) : '—'}
+			</span>
+		</div>
+		<svg
+			viewBox="0 0 24 24"
+			class="w-4 h-4 text-muted-foreground mt-5"
+			fill="none"
+			stroke="currentColor"
+			stroke-width="2"
+			><path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" /></svg
+		>
+		<div class="flex flex-col items-center gap-1">
+			<span class="text-[10px] text-muted-foreground uppercase tracking-widest font-medium"
+				>End</span
+			>
+			<span
+				class="px-4 py-2 rounded-lg border border-border bg-muted/50 font-medium min-w-32 text-center"
+			>
+				{range[1] ? mediumDay(range[1]) : '—'}
+			</span>
+		</div>
+	</div>
+{/snippet}

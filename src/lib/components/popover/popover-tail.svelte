@@ -133,19 +133,19 @@
 	{...tailProps}
 	style={tailStyle}
 >
-	{#if children}
-		{@render children({ popover: bond })}
-	{:else}
-		<svg
-			class=""
-			width={tailCross}
-			height={tailMain}
-			viewBox={tailViewBox}
-			fill="none"
-			xmlns="http://www.w3.org/2000/svg"
-			style="position: absolute; top: 50%; left: 50%; display: block; transform: translate(-50%, -50%) var(--sa-popover-tail-transform); transform-origin: center;"
-		>
-			<path d={tailPath} fill="var(--sa-popover-tail-fill, currentColor)" />
-		</svg>
-	{/if}
+	{@render (children ?? fallback)({ popover: bond })}
 </HtmlAtom>
+
+{#snippet fallback()}
+	<svg
+		class=""
+		width={tailCross}
+		height={tailMain}
+		viewBox={tailViewBox}
+		fill="none"
+		xmlns="http://www.w3.org/2000/svg"
+		style="position: absolute; top: 50%; left: 50%; display: block; transform: translate(-50%, -50%) var(--sa-popover-tail-transform); transform-origin: center;"
+	>
+		<path d={tailPath} fill="var(--sa-popover-tail-fill, currentColor)" />
+	</svg>
+{/snippet}

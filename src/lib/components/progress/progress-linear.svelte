@@ -18,18 +18,6 @@
 	const percent = $derived(isIndeterminate ? null : clamp((value! / max) * 100, 0, 100));
 </script>
 
-{#snippet defaultLinearFill({ percent: p }: { percent: number | null })}
-	<HtmlElement
-		preset="progress.linear.fill"
-		as="div"
-		class={[
-			'progress-fill bg-foreground h-full rounded-full transition-[width] duration-300',
-			isIndeterminate && 'animate-progress-indeterminate w-1/3'
-		]}
-		style={p !== null ? `width: ${p}%` : undefined}
-	/>
-{/snippet}
-
 <HtmlAtom
 	as="div"
 	class={['progress-root flex flex-col gap-1', '$preset', klass]}
@@ -52,6 +40,18 @@
 		{@render defaultLinearFill({ percent })}
 	</HtmlElement>
 </HtmlAtom>
+
+{#snippet defaultLinearFill({ percent: p }: { percent: number | null })}
+	<HtmlElement
+		preset="progress.linear.fill"
+		as="div"
+		class={[
+			'progress-fill bg-foreground h-full rounded-full transition-[width] duration-300',
+			isIndeterminate && 'animate-progress-indeterminate w-1/3'
+		]}
+		style={p !== null ? `width: ${p}%` : undefined}
+	/>
+{/snippet}
 
 <style>
 	@keyframes progress-indeterminate {

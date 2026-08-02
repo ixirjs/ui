@@ -31,9 +31,14 @@
 	{...restProps}
 	{part}
 >
-	{#if children && bond}
-		{@render children({ accordionItem: bond })}
-	{:else}
-		<Icon src={IconArrowDown} />
-	{/if}
+	{@render (children && bond ? consumerIndicator : defaultIndicator)()}
 </HtmlAtom>
+
+<!-- `bond!` is proven by the dispatch above; narrowing does not cross into a snippet body. -->
+{#snippet consumerIndicator()}
+	{@render children?.({ accordionItem: bond! })}
+{/snippet}
+
+{#snippet defaultIndicator()}
+	<Icon src={IconArrowDown} />
+{/snippet}

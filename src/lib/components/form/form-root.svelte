@@ -35,10 +35,10 @@
 	const content = $derived(renderless ? children : renderfull);
 </script>
 
+{@render content?.({ form: bond })}
+
 {#snippet renderfull({ form }: { form: FormBond })}
 	<HtmlAtom bond={form} class={['$preset', klass]} as="form" {...formProps}>
 		{@render children?.({ form })}
 	</HtmlAtom>
 {/snippet}
-
-{@render content?.({ form: bond })}

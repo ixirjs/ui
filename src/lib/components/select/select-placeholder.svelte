@@ -27,6 +27,8 @@
 	}));
 </script>
 
-{#if !hasValue}
+{@render (!hasValue ? placeholder : undefined)?.()}
+
+{#snippet placeholder()}
 	{@render partElement(el, children)}
-{/if}
+{/snippet}

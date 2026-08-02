@@ -79,13 +79,7 @@
 		)}
 	>
 		<span style="transform: translateX(-{scrollLeft}px)">
-			{#if segments.length}
-				{#each segments as seg (seg.kind + seg.text)}
-					<span style={kindStyle[seg.kind]}>{seg.text}</span>
-				{/each}
-			{:else}
-				<span class="text-muted-foreground">{placeholder}</span>
-			{/if}
+			{@render (segments.length ? segmentSpans : placeholderSpan)()}
 		</span>
 	</span>
 
@@ -111,3 +105,13 @@
 		onscroll={syncScroll}
 	/>
 </span>
+
+{#snippet segmentSpans()}
+	{#each segments as seg (seg.kind + seg.text)}
+		<span style={kindStyle[seg.kind]}>{seg.text}</span>
+	{/each}
+{/snippet}
+
+{#snippet placeholderSpan()}
+	<span class="text-muted-foreground">{placeholder}</span>
+{/snippet}

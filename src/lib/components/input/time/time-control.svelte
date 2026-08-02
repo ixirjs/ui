@@ -216,72 +216,75 @@
 		}}
 	/>
 
-	{#if withSeconds}
-		<span class="text-muted-foreground select-none">:</span>
-		<Segment
-			bind:this={segSeconds}
-			value={ss}
-			min={0}
-			max={59}
-			digits={2}
-			placeholder="SS"
-			{disabled}
-			{readonly}
-			onvaluechange={(v, context) => {
-				const o: TimeParts = {};
-				if (v !== undefined) o.ss = v;
-				emit(context.event, o);
-			}}
-			onfocusmove={(dir) => (dir === -1 ? segMinutes?.focus() : undefined)}
-			onrollover={(dir, context) => {
-				const nextMM =
-					dir === 1
-						? mm !== undefined && mm >= 59
-							? 0
-							: (mm ?? 0) + 1
-						: mm !== undefined && mm <= 0
-							? 59
-							: (mm ?? 59) - 1;
-				const wrapsHour = (dir === 1 && nextMM === 0) || (dir === -1 && nextMM === 59);
-				const override: TimeParts = { mm: nextMM };
-				if (wrapsHour && displayHours !== undefined) {
-					const maxH = hourFormat === 12 ? 12 : 23;
-					const minH = hourFormat === 12 ? 1 : 0;
-					const nextDisplayH =
-						dir === 1
-							? displayHours >= maxH
-								? minH
-								: displayHours + 1
-							: displayHours <= minH
-								? maxH
-								: displayHours - 1;
-					override.hh =
-						hourFormat === 12 ? displayToInternal(nextDisplayH, p ?? 'AM') : nextDisplayH;
-				}
-				emit(context.event, override);
-			}}
-		/>
-	{/if}
+	{@render (withSeconds ? secondsField : undefined)?.()}
 
-	{#if hourFormat === 12}
-		<span class="ml-1 select-none"> </span>
-		<span
-			role="spinbutton"
-			tabindex={disabled ? -1 : 0}
-			aria-label="AM/PM"
-			aria-valuenow={p === 'AM' ? 0 : 1}
-			aria-valuemin={0}
-			aria-valuemax={1}
-			aria-valuetext={p}
-			class={cn(
-				'ml-auto inline-flex min-w-[3ch] cursor-pointer items-center justify-center px-0.5 font-sans text-sm font-medium',
-				'focus:bg-foreground/10 focus:outline-none',
-				disabled && 'cursor-not-allowed opacity-50'
-			)}
-			onclick={togglePeriod}
-			onkeydown={handlePeriodKey}
-		>
-			{p ?? '--'}
-		</span>
-	{/if}
+	{@render (hourFormat === 12 ? meridiemField : undefined)?.()}
 </span>
+
+{#snippet secondsField()}
+	<span class="text-muted-foreground select-none">:</span>
+	<Segment
+		bind:this={segSeconds}
+		value={ss}
+		min={0}
+		max={59}
+		digits={2}
+		placeholder="SS"
+		{disabled}
+		{readonly}
+		onvaluechange={(v, context) => {
+			const o: TimeParts = {};
+			if (v !== undefined) o.ss = v;
+			emit(context.event, o);
+		}}
+		onfocusmove={(dir) => (dir === -1 ? segMinutes?.focus() : undefined)}
+		onrollover={(dir, context) => {
+			const nextMM =
+				dir === 1
+					? mm !== undefined && mm >= 59
+						? 0
+						: (mm ?? 0) + 1
+					: mm !== undefined && mm <= 0
+						? 59
+						: (mm ?? 59) - 1;
+			const wrapsHour = (dir === 1 && nextMM === 0) || (dir === -1 && nextMM === 59);
+			const override: TimeParts = { mm: nextMM };
+			if (wrapsHour && displayHours !== undefined) {
+				const maxH = hourFormat === 12 ? 12 : 23;
+				const minH = hourFormat === 12 ? 1 : 0;
+				const nextDisplayH =
+					dir === 1
+						? displayHours >= maxH
+							? minH
+							: displayHours + 1
+						: displayHours <= minH
+							? maxH
+							: displayHours - 1;
+				override.hh = hourFormat === 12 ? displayToInternal(nextDisplayH, p ?? 'AM') : nextDisplayH;
+			}
+			emit(context.event, override);
+		}}
+	/>
+{/snippet}
+
+{#snippet meridiemField()}
+	<span class="ml-1 select-none"> </span>
+	<span
+		role="spinbutton"
+		tabindex={disabled ? -1 : 0}
+		aria-label="AM/PM"
+		aria-valuenow={p === 'AM' ? 0 : 1}
+		aria-valuemin={0}
+		aria-valuemax={1}
+		aria-valuetext={p}
+		class={cn(
+			'ml-auto inline-flex min-w-[3ch] cursor-pointer items-center justify-center px-0.5 font-sans text-sm font-medium',
+			'focus:bg-foreground/10 focus:outline-none',
+			disabled && 'cursor-not-allowed opacity-50'
+		)}
+		onclick={togglePeriod}
+		onkeydown={handlePeriodKey}
+	>
+		{p ?? '--'}
+	</span>
+{/snippet}

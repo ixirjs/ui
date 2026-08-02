@@ -225,29 +225,94 @@
 		onfocusmove={(dir) => moveFocus(2, dir)}
 	/>
 
-	{#if !isDateOnly}
-		<span class="text-muted-foreground mx-1 select-none">·</span>
-	{/if}
+	{@render (!isDateOnly ? dateTimeSeparator : undefined)?.()}
 
 	<!-- Time: HH : MM [: SS] (datetime mode only) -->
-	{#if !isDateOnly}
-		<Segment
-			bind:this={segHours}
-			value={hours}
-			min={0}
-			max={23}
-			digits={2}
-			placeholder="HH"
-			{disabled}
-			{readonly}
-			onvaluechange={(v, context) => {
-				const o: DateTimeParts = {};
-				if (v !== undefined) o.hours = v;
-				emit(context.event, o);
-			}}
-			onfocusmove={(dir) => moveFocus(3, dir)}
-			onrollover={(dir, context) => {
-				// hours rollover advances/retreats day
+	{@render (!isDateOnly ? timeSegments : undefined)?.()}
+</span>
+
+{#snippet dateTimeSeparator()}
+	<span class="text-muted-foreground mx-1 select-none">·</span>
+{/snippet}
+
+{#snippet timeSegments()}
+	<Segment
+		bind:this={segHours}
+		value={hours}
+		min={0}
+		max={23}
+		digits={2}
+		placeholder="HH"
+		{disabled}
+		{readonly}
+		onvaluechange={(v, context) => {
+			const o: DateTimeParts = {};
+			if (v !== undefined) o.hours = v;
+			emit(context.event, o);
+		}}
+		onfocusmove={(dir) => moveFocus(3, dir)}
+		onrollover={(dir, context) => {
+			// hours rollover advances/retreats day
+			const curDay = day ?? 1;
+			const curMonth = month ?? 1;
+			const curYear = year ?? new Date().getFullYear();
+			const curMax = maxDaysInMonth(curMonth, curYear);
+			let nextDay = curDay + dir;
+			let nextMonth = curMonth;
+			let nextYear = curYear;
+			if (nextDay > curMax) {
+				nextDay = 1;
+				nextMonth++;
+			}
+			if (nextDay < 1) {
+				nextMonth--;
+				nextDay = maxDaysInMonth(nextMonth < 1 ? 12 : nextMonth, curYear);
+			}
+			if (nextMonth > 12) {
+				nextMonth = 1;
+				nextYear++;
+			}
+			if (nextMonth < 1) {
+				nextMonth = 12;
+				nextYear--;
+			}
+			emit(context.event, {
+				year: nextYear,
+				month: nextMonth,
+				day: nextDay,
+				hours: dir === 1 ? 0 : 23
+			});
+		}}
+	/>
+	<span class="text-muted-foreground select-none">:</span>
+	<Segment
+		bind:this={segMinutes}
+		value={minutes}
+		min={0}
+		max={59}
+		digits={2}
+		placeholder="MM"
+		{disabled}
+		{readonly}
+		onvaluechange={(v, context) => {
+			const o: DateTimeParts = {};
+			if (v !== undefined) o.minutes = v;
+			emit(context.event, o);
+		}}
+		onfocusmove={(dir) => moveFocus(4, dir)}
+		onrollover={(dir, context) => {
+			// minutes rollover advances/retreats hours
+			const nextHH =
+				dir === 1
+					? hours !== undefined && hours >= 23
+						? 0
+						: (hours ?? 0) + 1
+					: hours !== undefined && hours <= 0
+						? 23
+						: (hours ?? 23) - 1;
+			const override: DateTimeParts = { minutes: dir === 1 ? 0 : 59, hours: nextHH };
+			// if hours also wrap, advance day
+			if ((dir === 1 && nextHH === 0) || (dir === -1 && nextHH === 23)) {
 				const curDay = day ?? 1;
 				const curMonth = month ?? 1;
 				const curYear = year ?? new Date().getFullYear();
@@ -271,32 +336,46 @@
 					nextMonth = 12;
 					nextYear--;
 				}
-				emit(context.event, {
-					year: nextYear,
-					month: nextMonth,
-					day: nextDay,
-					hours: dir === 1 ? 0 : 23
-				});
-			}}
-		/>
-		<span class="text-muted-foreground select-none">:</span>
-		<Segment
-			bind:this={segMinutes}
-			value={minutes}
-			min={0}
-			max={59}
-			digits={2}
-			placeholder="MM"
-			{disabled}
-			{readonly}
-			onvaluechange={(v, context) => {
-				const o: DateTimeParts = {};
-				if (v !== undefined) o.minutes = v;
-				emit(context.event, o);
-			}}
-			onfocusmove={(dir) => moveFocus(4, dir)}
-			onrollover={(dir, context) => {
-				// minutes rollover advances/retreats hours
+				override.day = nextDay;
+				override.month = nextMonth;
+				override.year = nextYear;
+			}
+			emit(context.event, override);
+		}}
+	/>
+	{@render (withSeconds ? secondsSegment : undefined)?.()}
+{/snippet}
+
+{#snippet secondsSegment()}
+	<span class="text-muted-foreground select-none">:</span>
+	<Segment
+		bind:this={segSeconds}
+		value={seconds}
+		min={0}
+		max={59}
+		digits={2}
+		placeholder="SS"
+		{disabled}
+		{readonly}
+		onvaluechange={(v, context) => {
+			const o: DateTimeParts = {};
+			if (v !== undefined) o.seconds = v;
+			emit(context.event, o);
+		}}
+		onfocusmove={(dir) => moveFocus(5, dir)}
+		onrollover={(dir, context) => {
+			// seconds rollover advances/retreats minutes (batched)
+			const nextMM =
+				dir === 1
+					? minutes !== undefined && minutes >= 59
+						? 0
+						: (minutes ?? 0) + 1
+					: minutes !== undefined && minutes <= 0
+						? 59
+						: (minutes ?? 59) - 1;
+			const override: DateTimeParts = { seconds: dir === 1 ? 0 : 59, minutes: nextMM };
+			// if minutes also wrap, advance hours
+			if ((dir === 1 && nextMM === 0) || (dir === -1 && nextMM === 59)) {
 				const nextHH =
 					dir === 1
 						? hours !== undefined && hours >= 23
@@ -305,82 +384,9 @@
 						: hours !== undefined && hours <= 0
 							? 23
 							: (hours ?? 23) - 1;
-				const override: DateTimeParts = { minutes: dir === 1 ? 0 : 59, hours: nextHH };
-				// if hours also wrap, advance day
-				if ((dir === 1 && nextHH === 0) || (dir === -1 && nextHH === 23)) {
-					const curDay = day ?? 1;
-					const curMonth = month ?? 1;
-					const curYear = year ?? new Date().getFullYear();
-					const curMax = maxDaysInMonth(curMonth, curYear);
-					let nextDay = curDay + dir;
-					let nextMonth = curMonth;
-					let nextYear = curYear;
-					if (nextDay > curMax) {
-						nextDay = 1;
-						nextMonth++;
-					}
-					if (nextDay < 1) {
-						nextMonth--;
-						nextDay = maxDaysInMonth(nextMonth < 1 ? 12 : nextMonth, curYear);
-					}
-					if (nextMonth > 12) {
-						nextMonth = 1;
-						nextYear++;
-					}
-					if (nextMonth < 1) {
-						nextMonth = 12;
-						nextYear--;
-					}
-					override.day = nextDay;
-					override.month = nextMonth;
-					override.year = nextYear;
-				}
-				emit(context.event, override);
-			}}
-		/>
-		{#if withSeconds}
-			<span class="text-muted-foreground select-none">:</span>
-			<Segment
-				bind:this={segSeconds}
-				value={seconds}
-				min={0}
-				max={59}
-				digits={2}
-				placeholder="SS"
-				{disabled}
-				{readonly}
-				onvaluechange={(v, context) => {
-					const o: DateTimeParts = {};
-					if (v !== undefined) o.seconds = v;
-					emit(context.event, o);
-				}}
-				onfocusmove={(dir) => moveFocus(5, dir)}
-				onrollover={(dir, context) => {
-					// seconds rollover advances/retreats minutes (batched)
-					const nextMM =
-						dir === 1
-							? minutes !== undefined && minutes >= 59
-								? 0
-								: (minutes ?? 0) + 1
-							: minutes !== undefined && minutes <= 0
-								? 59
-								: (minutes ?? 59) - 1;
-					const override: DateTimeParts = { seconds: dir === 1 ? 0 : 59, minutes: nextMM };
-					// if minutes also wrap, advance hours
-					if ((dir === 1 && nextMM === 0) || (dir === -1 && nextMM === 59)) {
-						const nextHH =
-							dir === 1
-								? hours !== undefined && hours >= 23
-									? 0
-									: (hours ?? 0) + 1
-								: hours !== undefined && hours <= 0
-									? 23
-									: (hours ?? 23) - 1;
-						override.hours = nextHH;
-					}
-					emit(context.event, override);
-				}}
-			/>
-		{/if}
-	{/if}
-</span>
+				override.hours = nextHH;
+			}
+			emit(context.event, override);
+		}}
+	/>
+{/snippet}

@@ -62,6 +62,11 @@
 	let segRefs = $state<Array<{ focus(): void } | undefined>>([]);
 
 	const segCount = $derived(def.channels.length + (hasAlpha ? 1 : 0));
+	// Hoisted from template {@const}s: the format snippets below are declared at top level and
+	// cannot inherit a block-scoped const.
+	const isHexFmt = $derived(activeFormat === 'hex');
+	const isNamedFmt = $derived(activeFormat === 'named');
+	const alphaIdx = $derived(def.channels.length);
 
 	function focusSeg(i: number) {
 		segRefs[clamp(i, 0, segCount - 1)]?.focus();
@@ -110,120 +115,115 @@
 	)}
 	{...preset.attrs}
 >
-	{#if value || def}
-		{@const isHexFmt = activeFormat === 'hex'}
-		{@const isNamedFmt = activeFormat === 'named'}
-		{@const alphaIdx = def.channels.length}
-
-		<!-- Named: single plain-text input -->
-		{#if isNamedFmt}
-			<input
-				type="text"
-				spellcheck={false}
-				autocomplete="off"
-				value={String(channels['name'] ?? '')}
-				placeholder="e.g. red, cornflowerblue"
-				{disabled}
-				{readonly}
-				class="min-w-[12ch] bg-transparent font-mono text-sm text-foreground outline-none placeholder:text-muted-foreground"
-				oninput={(event) => {
-					oninput?.(event);
-					if (event.defaultPrevented) return;
-					const next = (event.currentTarget as HTMLInputElement).value.replace(/\s/g, '');
-					commitValue(next, event, 'input');
-				}}
-				onchange={(event) => {
-					onchange?.(event);
-					if (event.defaultPrevented) return;
-					const next = (event.currentTarget as HTMLInputElement).value.replace(/\s/g, '');
-					commitValue(next, event, 'change');
-				}}
-			/>
-
-			<!-- Hex: # prefix then R G B [A] -->
-		{:else if isHexFmt}
-			<span class="select-none font-mono text-sm text-muted-foreground">#</span>
-			{#each def.channels as ch, i (ch.id)}
-				<Segment
-					bind:this={segRefs[i]}
-					value={channels[ch.id]}
-					channel={ch}
-					{disabled}
-					{readonly}
-					{oninput}
-					{onchange}
-					onvaluechange={(v, context) => handleChannelChange(ch.id, v, context)}
-					oncommit={(v, context) => handleChannelCommit(ch.id, v, context)}
-					onfocusmove={(dir) => focusSeg(i + dir)}
-				/>
-			{/each}
-			{#if hasAlpha}
-				<span class="mx-0.5 select-none font-mono text-sm text-muted-foreground/50">·</span>
-				<Segment
-					bind:this={segRefs[alphaIdx]}
-					value={alpha}
-					channel={alphaDef}
-					{disabled}
-					{readonly}
-					{oninput}
-					{onchange}
-					onvaluechange={(v, context) => handleChannelChange('alpha', v, context)}
-					oncommit={(v, context) => handleChannelCommit('alpha', v, context)}
-					onfocusmove={(dir) => focusSeg(alphaIdx + dir)}
-				/>
-			{/if}
-
-			<!-- Functional: fn( ch sep ch sep ch [/ alpha] ) -->
-		{:else}
-			<span class="select-none font-mono text-sm text-blue-500 dark:text-blue-400">{def.fn}</span>
-			{#if def.colorspace}
-				<span class="select-none font-mono text-sm text-muted-foreground">(</span>
-				<span class="mr-1 select-none font-mono text-sm text-violet-500 dark:text-violet-400"
-					>{def.colorspace}</span
-				>
-			{:else}
-				<span class="select-none font-mono text-sm text-muted-foreground">(</span>
-			{/if}
-
-			{#each def.channels as ch, i (ch.id)}
-				{#if i > 0}
-					<span class="select-none font-mono text-sm text-muted-foreground/50"
-						>{def.sep.trim() || ' '}</span
-					>
-				{/if}
-				<Segment
-					bind:this={segRefs[i]}
-					value={channels[ch.id]}
-					channel={ch}
-					{disabled}
-					{readonly}
-					{oninput}
-					{onchange}
-					onvaluechange={(v, context) => handleChannelChange(ch.id, v, context)}
-					oncommit={(v, context) => handleChannelCommit(ch.id, v, context)}
-					onfocusmove={(dir) => focusSeg(i + dir)}
-				/>
-			{/each}
-
-			{#if hasAlpha}
-				<span class="mx-0.5 select-none font-mono text-sm text-muted-foreground">/</span>
-				<Segment
-					bind:this={segRefs[alphaIdx]}
-					value={alpha}
-					channel={alphaDef}
-					{disabled}
-					{readonly}
-					{oninput}
-					{onchange}
-					onvaluechange={(v, context) => handleChannelChange('alpha', v, context)}
-					oncommit={(v, context) => handleChannelCommit('alpha', v, context)}
-					onfocusmove={(dir) => focusSeg(alphaIdx + dir)}
-				/>
-			{/if}
-
-			<span class="select-none font-mono text-sm text-muted-foreground">)</span>
-		{/if}
-	{:else}
-		<span class="font-mono text-sm text-muted-foreground">{placeholder}</span>
-	{/if}
+	{@render (value || def
+		? isNamedFmt
+			? namedInput
+			: isHexFmt
+				? hexFormat
+				: functionalFormat
+		: placeholderText)()}
 </span>
+
+<!-- Named: single plain-text input -->
+{#snippet namedInput()}
+	<input
+		type="text"
+		spellcheck={false}
+		autocomplete="off"
+		value={String(channels['name'] ?? '')}
+		placeholder="e.g. red, cornflowerblue"
+		{disabled}
+		{readonly}
+		class="text-foreground placeholder:text-muted-foreground min-w-[12ch] bg-transparent font-mono text-sm outline-none"
+		oninput={(event) => {
+			oninput?.(event);
+			if (event.defaultPrevented) return;
+			const next = (event.currentTarget as HTMLInputElement).value.replace(/\s/g, '');
+			commitValue(next, event, 'input');
+		}}
+		onchange={(event) => {
+			onchange?.(event);
+			if (event.defaultPrevented) return;
+			const next = (event.currentTarget as HTMLInputElement).value.replace(/\s/g, '');
+			commitValue(next, event, 'change');
+		}}
+	/>
+{/snippet}
+
+<!-- Hex: # prefix then R G B [A] -->
+{#snippet hexFormat()}
+	<span class="text-muted-foreground font-mono text-sm select-none">#</span>
+	{#each def.channels as ch, i (ch.id)}
+		{@render channelSegment(ch, i)}
+	{/each}
+	{@render (hasAlpha ? hexAlpha : undefined)?.()}
+{/snippet}
+
+<!-- Declared outside the {#each}, so it takes the channel and index it renders. -->
+{#snippet channelSegment(ch: ChannelDef, i: number)}
+	<Segment
+		bind:this={segRefs[i]}
+		value={channels[ch.id]}
+		channel={ch}
+		{disabled}
+		{readonly}
+		{oninput}
+		{onchange}
+		onvaluechange={(v, context) => handleChannelChange(ch.id, v, context)}
+		oncommit={(v, context) => handleChannelCommit(ch.id, v, context)}
+		onfocusmove={(dir) => focusSeg(i + dir)}
+	/>
+{/snippet}
+
+{#snippet hexAlpha()}
+	<span class="text-muted-foreground/50 mx-0.5 font-mono text-sm select-none">·</span>
+	{@render alphaSegment()}
+{/snippet}
+
+{#snippet alphaSegment()}
+	<Segment
+		bind:this={segRefs[alphaIdx]}
+		value={alpha}
+		channel={alphaDef}
+		{disabled}
+		{readonly}
+		{oninput}
+		{onchange}
+		onvaluechange={(v, context) => handleChannelChange('alpha', v, context)}
+		oncommit={(v, context) => handleChannelCommit('alpha', v, context)}
+		onfocusmove={(dir) => focusSeg(alphaIdx + dir)}
+	/>
+{/snippet}
+
+<!-- Functional: fn( ch sep ch sep ch [/ alpha] ) -->
+{#snippet functionalFormat()}
+	<span class="font-mono text-sm text-blue-500 select-none dark:text-blue-400">{def.fn}</span>
+	<span class="text-muted-foreground font-mono text-sm select-none">(</span>
+	{@render (def.colorspace ? colorspaceLabel : undefined)?.()}
+	{#each def.channels as ch, i (ch.id)}
+		{@render (i > 0 ? channelSeparator : undefined)?.()}
+		{@render channelSegment(ch, i)}
+	{/each}
+	{@render (hasAlpha ? functionalAlpha : undefined)?.()}
+	<span class="text-muted-foreground font-mono text-sm select-none">)</span>
+{/snippet}
+
+{#snippet colorspaceLabel()}
+	<span class="mr-1 font-mono text-sm text-violet-500 select-none dark:text-violet-400"
+		>{def.colorspace}</span
+	>
+{/snippet}
+
+{#snippet channelSeparator()}
+	<span class="text-muted-foreground/50 font-mono text-sm select-none">{def.sep.trim() || ' '}</span
+	>
+{/snippet}
+
+{#snippet functionalAlpha()}
+	<span class="text-muted-foreground mx-0.5 font-mono text-sm select-none">/</span>
+	{@render alphaSegment()}
+{/snippet}
+
+{#snippet placeholderText()}
+	<span class="text-muted-foreground font-mono text-sm">{placeholder}</span>
+{/snippet}

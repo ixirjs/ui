@@ -142,6 +142,8 @@
 	}
 </script>
 
+{@render (!hasTransitions ? bareElement : global ? globalTransition : localTransition)()}
+
 {#snippet bareElement()}
 	<svelte:element
 		this={finalAs}
@@ -181,5 +183,3 @@
 		{@render children?.()}
 	</svelte:element>
 {/snippet}
-
-{@render (!hasTransitions ? bareElement : global ? globalTransition : localTransition)()}

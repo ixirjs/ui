@@ -178,15 +178,11 @@
 	}
 </script>
 
-<!-- Literal-div fast path: `<svelte:element>` emits three hydration-anchor comments per element
-     while a static tag emits none, and `div` is the default and overwhelmingly common tag. The
-     branch rides the render ternary's existing dynamic callee, so it adds no anchor of its own.
-     See docs/research/hydration-anchor-diet-2026-08.md. -->
-{#snippet nativeDiv()}
-	<div class={withDefaultBorder(toClassValue(presentation.class))} {...presentation.attrs}>
-		{@render (children as Snippet | undefined)?.()}
-	</div>
-{/snippet}
+{@render (useNativeRenderer()
+	? (presentation.as ?? 'div') === 'div'
+		? nativeDiv
+		: native
+	: renderer)()}
 
 {#snippet native()}
 	<svelte:element
@@ -202,8 +198,12 @@
 	<RendererComponent {...getRendererProps()} children={forwardChildren} />
 {/snippet}
 
-{@render (useNativeRenderer()
-	? (presentation.as ?? 'div') === 'div'
-		? nativeDiv
-		: native
-	: renderer)()}
+<!-- Literal-div fast path: `<svelte:element>` emits three hydration-anchor comments per element
+     while a static tag emits none, and `div` is the default and overwhelmingly common tag. The
+     branch rides the render ternary's existing dynamic callee, so it adds no anchor of its own.
+     See docs/research/hydration-anchor-diet-2026-08.md. -->
+{#snippet nativeDiv()}
+	<div class={withDefaultBorder(toClassValue(presentation.class))} {...presentation.attrs}>
+		{@render (children as Snippet | undefined)?.()}
+	</div>
+{/snippet}

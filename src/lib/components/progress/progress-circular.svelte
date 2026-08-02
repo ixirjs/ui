@@ -24,28 +24,6 @@
 	);
 </script>
 
-{#snippet defaultCircularFill()}
-	<SvgElement
-		as="circle"
-		preset="progress.circular.fill"
-		cx="24"
-		cy="24"
-		r={radius}
-		fill="none"
-		stroke-width="4"
-		stroke-linecap="round"
-		stroke-dasharray={circumference}
-		stroke-dashoffset={strokeDashoffset}
-		class={[
-			'stroke-foreground origin-center duration-300',
-			!isIndeterminate && 'transition-[stroke-dashoffset]',
-			isIndeterminate && 'animate-progress-circular-indeterminate'
-		]
-			.filter(Boolean)
-			.join(' ')}
-	/>
-{/snippet}
-
 <HtmlAtom
 	as="div"
 	class={[
@@ -78,6 +56,28 @@
 		{@render defaultCircularFill()}
 	</svg>
 </HtmlAtom>
+
+{#snippet defaultCircularFill()}
+	<SvgElement
+		as="circle"
+		preset="progress.circular.fill"
+		cx="24"
+		cy="24"
+		r={radius}
+		fill="none"
+		stroke-width="4"
+		stroke-linecap="round"
+		stroke-dasharray={circumference}
+		stroke-dashoffset={strokeDashoffset}
+		class={[
+			'stroke-foreground origin-center duration-300',
+			!isIndeterminate && 'transition-[stroke-dashoffset]',
+			isIndeterminate && 'animate-progress-circular-indeterminate'
+		]
+			.filter(Boolean)
+			.join(' ')}
+	/>
+{/snippet}
 
 <style>
 	@keyframes progress-circular-spin {

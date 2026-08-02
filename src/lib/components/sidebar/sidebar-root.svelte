@@ -41,7 +41,9 @@
 </script>
 
 <!-- `overlay` is structural — the in-flow path intentionally has no portal or elevation. -->
-{#if asOverlay}
+{@render (asOverlay ? overlaySurface : inlineContent)()}
+
+{#snippet overlaySurface()}
 	<PortalSurface
 		owner={bond}
 		band="modal"
@@ -49,8 +51,10 @@
 		z-index={zindex}
 		class={['pointer-events-none fixed inset-0', klass]}
 	>
-		{@render children?.({ sidebar: bond })}
+		{@render inlineContent()}
 	</PortalSurface>
-{:else}
+{/snippet}
+
+{#snippet inlineContent()}
 	{@render children?.({ sidebar: bond })}
-{/if}
+{/snippet}

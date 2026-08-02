@@ -17,9 +17,14 @@
 	let content = $derived(children ?? defaultChildren);
 </script>
 
-{#snippet separatorContent()}
-	<span class="text-muted-foreground text-xs">{separator}</span>
-{/snippet}
+<HtmlAtom
+	as="span"
+	class={['shortcut inline-flex items-center gap-1', '$preset', klass]}
+	aria-label={keys.join(' ' + separator + ' ')}
+	{...shortcutProps}
+>
+	{@render content()}
+</HtmlAtom>
 
 {#snippet defaultChildren()}
 	{#each keys as key, i (key)}
@@ -30,11 +35,6 @@
 	{/each}
 {/snippet}
 
-<HtmlAtom
-	as="span"
-	class={['shortcut inline-flex items-center gap-1', '$preset', klass]}
-	aria-label={keys.join(' ' + separator + ' ')}
-	{...shortcutProps}
->
-	{@render content()}
-</HtmlAtom>
+{#snippet separatorContent()}
+	<span class="text-muted-foreground text-xs">{separator}</span>
+{/snippet}

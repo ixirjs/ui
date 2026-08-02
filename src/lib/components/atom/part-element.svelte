@@ -25,6 +25,12 @@
 	{@render (el.native() ? (el.tag() === 'div' ? nativeDiv : native) : component)(el, body, bodyArg)}
 {/snippet}
 
+{#snippet native(el: PartElement, body?: PartBody, bodyArg?: unknown)}
+	<svelte:element this={el.tag()} class={el.class()} {...el.attrs()}>
+		{@render body?.(bodyArg)}
+	</svelte:element>
+{/snippet}
+
 <!-- The literal-div fast path. `<svelte:element>` costs three hydration-anchor comments per
      element (before-tag, inner-close, after-tag — see `element()` in svelte's server internals);
      a static tag costs none, and `div` is what nearly every part renders. The branch lives inside
@@ -35,12 +41,6 @@
 	<div class={el.class()} {...el.attrs()}>
 		{@render body?.(bodyArg)}
 	</div>
-{/snippet}
-
-{#snippet native(el: PartElement, body?: PartBody, bodyArg?: unknown)}
-	<svelte:element this={el.tag()} class={el.class()} {...el.attrs()}>
-		{@render body?.(bodyArg)}
-	</svelte:element>
 {/snippet}
 
 {#snippet component(el: PartElement, body?: PartBody, bodyArg?: unknown)}

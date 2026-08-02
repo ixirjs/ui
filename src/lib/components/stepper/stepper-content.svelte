@@ -26,6 +26,8 @@
 	const content = $derived(activeStepContent && activeStep ? body : undefined);
 </script>
 
+{@render content?.(activeStepContent!)}
+
 {#snippet body(stepContent: StepContentSnippet)}
 	<HtmlAtom
 		{bond}
@@ -38,5 +40,3 @@
 		{/key}
 	</HtmlAtom>
 {/snippet}
-
-{@render content?.(activeStepContent!)}

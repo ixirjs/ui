@@ -29,7 +29,9 @@
 	const trackProps = $derived(mergeAtomProps(atom, preset ?? 'scrollable.track', restProps));
 </script>
 
-{#if (isOpen || isScrolling) && hasScroll}
+{@render ((isOpen || isScrolling) && hasScroll ? track : undefined)?.()}
+
+{#snippet track()}
 	<HtmlAtom
 		{bond}
 		as="div"
@@ -43,4 +45,4 @@
 	>
 		{@render children?.()}
 	</HtmlAtom>
-{/if}
+{/snippet}

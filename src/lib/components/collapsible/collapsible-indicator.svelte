@@ -30,9 +30,9 @@
 	{...restProps}
 	{part}
 >
-	{#if children}
-		{@render children?.({ collapsible: part.bond })}
-	{:else}
-		<Icon src={IconArrowDown} />
-	{/if}
+	{@render (children ?? fallback)({ collapsible: part.bond })}
 </HtmlAtom>
+
+{#snippet fallback()}
+	<Icon src={IconArrowDown} />
+{/snippet}

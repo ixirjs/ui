@@ -123,25 +123,7 @@
 
 <span class="relative flex h-full w-full flex-1 items-center overflow-hidden">
 	<!-- Display mode overlay (hidden while focused) -->
-	{#if !isFocused}
-		<span
-			aria-hidden="true"
-			class={cn(
-				'pointer-events-none absolute inset-0 flex items-center overflow-hidden whitespace-pre px-2 font-mono text-sm',
-				preset.class
-			)}
-		>
-			<span style="transform: translateX(-{scrollLeft}px)">
-				{#if segments.length}
-					{#each segments as seg, i (i)}
-						<span style={LOCATION_SEGMENT_STYLES[seg.kind]}>{seg.text}</span>
-					{/each}
-				{:else}
-					<span class="text-muted-foreground">{placeholder}</span>
-				{/if}
-			</span>
-		</span>
-	{/if}
+	{@render (!isFocused ? segmentOverlay : undefined)?.()}
 
 	<!-- Real <input> — transparent in display mode, visible while focused -->
 	<input
@@ -171,3 +153,27 @@
 		onblur={handleBlur}
 	/>
 </span>
+
+{#snippet segmentOverlay()}
+	<span
+		aria-hidden="true"
+		class={cn(
+			'pointer-events-none absolute inset-0 flex items-center overflow-hidden whitespace-pre px-2 font-mono text-sm',
+			preset.class
+		)}
+	>
+		<span style="transform: translateX(-{scrollLeft}px)">
+			{@render (segments.length ? segmentSpans : placeholderSpan)()}
+		</span>
+	</span>
+{/snippet}
+
+{#snippet segmentSpans()}
+	{#each segments as seg, i (i)}
+		<span style={LOCATION_SEGMENT_STYLES[seg.kind]}>{seg.text}</span>
+	{/each}
+{/snippet}
+
+{#snippet placeholderSpan()}
+	<span class="text-muted-foreground">{placeholder}</span>
+{/snippet}

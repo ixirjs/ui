@@ -80,6 +80,8 @@
 	}
 </script>
 
+{@render activeCheckbox()}
+
 {#snippet headerCheckbox()}
 	<Checkbox
 		{...value !== undefined ? { value: value as string } : {}}
@@ -104,5 +106,3 @@
 		{...checkboxProps}
 	/>
 {/snippet}
-
-{@render activeCheckbox()}

@@ -45,10 +45,6 @@
 	}
 </script>
 
-{#snippet defaultThumb({ props }: SwitchThumbSnippetProps)}
-	<span {...props}></span>
-{/snippet}
-
 <HtmlAtom
 	as="button"
 	type="button"
@@ -83,6 +79,8 @@
 	{@render (thumbContent ?? defaultThumb)({ checked, props: thumbProps })}
 </HtmlAtom>
 
-{#if children}
-	{@render children()}
-{/if}
+{@render children?.()}
+
+{#snippet defaultThumb({ props }: SwitchThumbSnippetProps)}
+	<span {...props}></span>
+{/snippet}

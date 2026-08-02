@@ -41,21 +41,21 @@
 	}));
 </script>
 
+{@render partElement(el, body)}
+
 {#snippet body()}
-	{#if children}
-		{@render children({ alert: bond! })}
-	{:else}
-		<Icon class="h-full">
-			<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-				<path
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					stroke-width="2"
-					d="M6 18L18 6M6 6l12 12"
-				/>
-			</svg>
-		</Icon>
-	{/if}
+	{@render (children ?? fallback)({ alert: bond! })}
 {/snippet}
 
-{@render partElement(el, body)}
+{#snippet fallback()}
+	<Icon class="h-full">
+		<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+			<path
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				stroke-width="2"
+				d="M6 18L18 6M6 6l12 12"
+			/>
+		</svg>
+	</Icon>
+{/snippet}

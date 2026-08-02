@@ -30,10 +30,13 @@
 	}));
 </script>
 
+{@render partElement(el, body)}
+
 {#snippet body()}
-	{#if bond}
-		{@render children?.({ accordionItem: bond })}
-	{/if}
+	{@render (bond ? headerContent : undefined)?.()}
 {/snippet}
 
-{@render partElement(el, body)}
+<!-- `bond!` is proven by the dispatch above; narrowing does not cross into a snippet body. -->
+{#snippet headerContent()}
+	{@render children?.({ accordionItem: bond! })}
+{/snippet}

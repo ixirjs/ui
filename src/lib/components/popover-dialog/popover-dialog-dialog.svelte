@@ -63,8 +63,11 @@
 	{...rootProps}
 >
 	<ActivePortal {portal}>
-		{#if bond}
-			{@render children?.({ popoverDialog: bond })}
-		{/if}
+		{@render (bond ? dialogContent : undefined)?.()}
 	</ActivePortal>
 </PortalSurface>
+
+<!-- `bond!` is proven by the dispatch above; narrowing does not cross into a snippet body. -->
+{#snippet dialogContent()}
+	{@render children?.({ popoverDialog: bond! })}
+{/snippet}

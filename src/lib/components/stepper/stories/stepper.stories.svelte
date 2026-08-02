@@ -78,59 +78,6 @@
 	}
 </script>
 
-<!-- Shared step content, teleported into Stepper.Body when its step is active. -->
-{#snippet stepBody(stepData: StepData, i: number)}
-	<Step.Body>
-		<h3 class="text-xl font-semibold mb-4">Step {i + 1}: {stepData.header}</h3>
-		<p class="text-muted-foreground mb-6">{stepData.body}</p>
-		<div class="text-sm text-muted-foreground">Content for {stepData.header} step.</div>
-	</Step.Body>
-{/snippet}
-
-<!-- Shared navigation footer — identical across orientations. -->
-{#snippet navFooter(stepper: StepperBond)}
-	<Stepper.Footer class="flex justify-between">
-		<Button
-			variant="outline"
-			disabled={stepper.isFirstStep}
-			onclick={() => handlePrevious(stepper)}
-		>
-			Previous
-		</Button>
-		<div class="flex gap-2">
-			<Button variant="ghost" onclick={() => handleReset(stepper)}>Reset</Button>
-			{#if stepper.isLastStep}
-				<Button onclick={() => alert('Complete!')}>Complete</Button>
-			{:else}
-				<Button onclick={() => handleNext(stepper)}>Next</Button>
-			{/if}
-		</div>
-	</Stepper.Footer>
-{/snippet}
-
-<!-- Shared horizontal step indicator + title. -->
-{#snippet horizontalStep(stepData: StepData, i: number)}
-	<Step.Root index={i} header={stepData.header} body={stepData.body}>
-		{#snippet children({ step })}
-			{@const isActive = step?.isActive}
-			<Step.Header class="flex flex-col gap-2 flex-1">
-				<div class="flex items-center w-full">
-					<Step.Indicator />
-					<Step.Separator />
-				</div>
-				<div class="flex flex-col pr-4">
-					<Step.Title class={isActive ? 'text-foreground font-semibold' : 'text-muted-foreground'}>
-						{stepData.header}
-						{#if stepData.optional}<span class="text-xs">(Optional)</span>{/if}
-					</Step.Title>
-					<Step.Description>{stepData.body}</Step.Description>
-				</div>
-			</Step.Header>
-			{@render stepBody(stepData, i)}
-		{/snippet}
-	</Step.Root>
-{/snippet}
-
 <!-- Real-world: a multi-step checkout wizard driven by the Storybook controls. -->
 <Story name="Basic">
 	{#snippet template(args)}
@@ -223,3 +170,56 @@
 		{/snippet}
 	</Stepper.Root>
 </Story>
+
+<!-- Shared horizontal step indicator + title. -->
+{#snippet horizontalStep(stepData: StepData, i: number)}
+	<Step.Root index={i} header={stepData.header} body={stepData.body}>
+		{#snippet children({ step })}
+			{@const isActive = step?.isActive}
+			<Step.Header class="flex flex-col gap-2 flex-1">
+				<div class="flex items-center w-full">
+					<Step.Indicator />
+					<Step.Separator />
+				</div>
+				<div class="flex flex-col pr-4">
+					<Step.Title class={isActive ? 'text-foreground font-semibold' : 'text-muted-foreground'}>
+						{stepData.header}
+						{#if stepData.optional}<span class="text-xs">(Optional)</span>{/if}
+					</Step.Title>
+					<Step.Description>{stepData.body}</Step.Description>
+				</div>
+			</Step.Header>
+			{@render stepBody(stepData, i)}
+		{/snippet}
+	</Step.Root>
+{/snippet}
+
+<!-- Shared step content, teleported into Stepper.Body when its step is active. -->
+{#snippet stepBody(stepData: StepData, i: number)}
+	<Step.Body>
+		<h3 class="text-xl font-semibold mb-4">Step {i + 1}: {stepData.header}</h3>
+		<p class="text-muted-foreground mb-6">{stepData.body}</p>
+		<div class="text-sm text-muted-foreground">Content for {stepData.header} step.</div>
+	</Step.Body>
+{/snippet}
+
+<!-- Shared navigation footer — identical across orientations. -->
+{#snippet navFooter(stepper: StepperBond)}
+	<Stepper.Footer class="flex justify-between">
+		<Button
+			variant="outline"
+			disabled={stepper.isFirstStep}
+			onclick={() => handlePrevious(stepper)}
+		>
+			Previous
+		</Button>
+		<div class="flex gap-2">
+			<Button variant="ghost" onclick={() => handleReset(stepper)}>Reset</Button>
+			{#if stepper.isLastStep}
+				<Button onclick={() => alert('Complete!')}>Complete</Button>
+			{:else}
+				<Button onclick={() => handleNext(stepper)}>Next</Button>
+			{/if}
+		</div>
+	</Stepper.Footer>
+{/snippet}

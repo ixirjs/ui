@@ -147,28 +147,6 @@
 	}
 </script>
 
-{#snippet defaultTrack({ props }: SliderTrackContentProps)}
-	<div {...props}>
-		<div {...fillProps}></div>
-	</div>
-{/snippet}
-
-{#snippet defaultThumb()}
-	<div
-		class="bg-foreground border-border h-full w-full rounded-full shadow-sm shadow-black/50"
-	></div>
-{/snippet}
-
-{#snippet thumbWrapper()}
-	<div {...thumbProps}>
-		{@render (thumbContent ?? defaultThumb)({
-			value: normalizedValue,
-			percent,
-			props: thumbProps
-		})}
-	</div>
-{/snippet}
-
 <HtmlAtom
 	as="div"
 	class={[
@@ -219,3 +197,25 @@
 </HtmlAtom>
 
 {@render children?.()}
+
+{#snippet defaultTrack({ props }: SliderTrackContentProps)}
+	<div {...props}>
+		<div {...fillProps}></div>
+	</div>
+{/snippet}
+
+{#snippet thumbWrapper()}
+	<div {...thumbProps}>
+		{@render (thumbContent ?? defaultThumb)({
+			value: normalizedValue,
+			percent,
+			props: thumbProps
+		})}
+	</div>
+{/snippet}
+
+{#snippet defaultThumb()}
+	<div
+		class="bg-foreground border-border h-full w-full rounded-full shadow-sm shadow-black/50"
+	></div>
+{/snippet}

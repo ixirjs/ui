@@ -4,44 +4,44 @@
 	"recorded": "2026-08-02",
 	"layers": {
 		"plain": {
-			"micros": 0.27,
-			"gcShare": 0.712,
+			"micros": 0.26,
+			"gcShare": 0.725,
 			"bytesPerCard": 356,
 			"sha": "666f19e09e6a"
 		},
 		"htmlatom": {
-			"micros": 12.13,
-			"gcShare": 0.252,
+			"micros": 12.01,
+			"gcShare": 0.223,
 			"bytesPerCard": 475,
 			"sha": "4e614fd9e00f"
 		},
 		"card": {
-			"micros": 33.31,
-			"gcShare": 0.212,
+			"micros": 34.11,
+			"gcShare": 0.204,
 			"bytesPerCard": 638,
 			"sha": "4f66a9f3a5fe"
 		},
 		"collapsible": {
-			"micros": 57.31,
-			"gcShare": 0.165,
+			"micros": 58.93,
+			"gcShare": 0.161,
 			"bytesPerCard": 583,
 			"sha": "04972e38df74"
 		},
 		"datagrid": {
-			"micros": 29.15,
-			"gcShare": 0.151,
-			"bytesPerCard": 755,
-			"sha": "7ee58f259131"
+			"micros": 29.16,
+			"gcShare": 0.166,
+			"bytesPerCard": 725,
+			"sha": "e217614d6dd2"
 		},
 		"tree": {
-			"micros": 70.59,
-			"gcShare": 0.18,
+			"micros": 74.91,
+			"gcShare": 0.185,
 			"bytesPerCard": 570,
 			"sha": "af6a7d95a52e"
 		},
 		"card-preset": {
-			"micros": 37.67,
-			"gcShare": 0.172,
+			"micros": 36.8,
+			"gcShare": 0.19,
 			"bytesPerCard": 682,
 			"sha": "61d738d9b55c"
 		}

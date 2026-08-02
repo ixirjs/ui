@@ -94,6 +94,8 @@
 	}));
 </script>
 
-{#if !hidden}
+{@render (!hidden ? columnElement : undefined)?.()}
+
+{#snippet columnElement()}
 	{@render partElement(el, children, { column: bond })}
-{/if}
+{/snippet}

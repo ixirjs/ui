@@ -45,9 +45,9 @@
 	{...restProps}
 	{part}
 >
-	{#if children}
-		{@render children?.()}
-	{:else}
-		{selection?.label}
-	{/if}
+	{@render (children ?? fallback)()}
 </HtmlAtom>
+
+{#snippet fallback()}
+	{selection?.label}
+{/snippet}

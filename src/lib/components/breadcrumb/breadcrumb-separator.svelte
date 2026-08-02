@@ -19,9 +19,9 @@
 	data-kind="breadcrumb-separator"
 	{...separatorProps}
 >
-	{#if children}
-		{@render children?.()}
-	{:else}
-		/
-	{/if}
+	{@render (children ?? fallback)()}
 </HtmlAtom>
+
+{#snippet fallback()}
+	/
+{/snippet}

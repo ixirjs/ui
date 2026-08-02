@@ -103,22 +103,6 @@
 	const checkClass = 'text-primary h-4 w-4 shrink-0 opacity-0 data-on:opacity-100';
 </script>
 
-<!-- The selected-state checkmark: an inline SVG icon that fades in via `data-on`. -->
-{#snippet check(on: boolean)}
-	<svg
-		viewBox="0 0 24 24"
-		fill="none"
-		stroke="currentColor"
-		stroke-width="2"
-		stroke-linecap="round"
-		stroke-linejoin="round"
-		class={checkClass}
-		data-on={on ? '' : undefined}
-	>
-		<path d="M20 6 9 17l-5-5" />
-	</svg>
-{/snippet}
-
 <!-- Default — fully configurable via Storybook controls (multiple, disabled, placement). -->
 <Story name="Basic">
 	{#snippet template(args)}
@@ -437,3 +421,19 @@
 		</ASelect.Root>
 	</div>
 </Story>
+
+<!-- The selected-state checkmark: an inline SVG icon that fades in via `data-on`. -->
+{#snippet check(on: boolean)}
+	<svg
+		viewBox="0 0 24 24"
+		fill="none"
+		stroke="currentColor"
+		stroke-width="2"
+		stroke-linecap="round"
+		stroke-linejoin="round"
+		class={checkClass}
+		data-on={on ? '' : undefined}
+	>
+		<path d="M20 6 9 17l-5-5" />
+	</svg>
+{/snippet}

@@ -27,9 +27,9 @@
 >
 	{@render children?.()}
 
-	{#if closeButton}
-		{@render closeButton?.()}
-	{:else}
-		<ChipCloseButton {icon} onclick={ondismiss} />
-	{/if}
+	{@render (closeButton ?? defaultCloseButton)()}
 </HtmlAtom>
+
+{#snippet defaultCloseButton()}
+	<ChipCloseButton {icon} onclick={ondismiss} />
+{/snippet}

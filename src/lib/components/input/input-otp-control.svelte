@@ -175,13 +175,11 @@
 	{onchange}
 >
 	{#each slots as slotVal, i (i)}
-		{#if groupSize !== undefined && i > 0 && i % groupSize === 0}
-			{#if bond}
-				<span class="bg-border h-5 w-px shrink-0 select-none"></span>
-			{:else}
-				<span class="text-muted-foreground select-none px-0.5">—</span>
-			{/if}
-		{/if}
+		{@render (groupSize !== undefined && i > 0 && i % groupSize === 0
+			? bond
+				? groupRule
+				: groupDash
+			: undefined)?.()}
 
 		<!-- Sizing wrapper — aspect-ratio doesn't apply to <input> elements -->
 		<div class={cn('shrink-0', bond ? 'h-full flex-1' : 'h-10 w-7')}>
@@ -219,3 +217,11 @@
 		</div>
 	{/each}
 </span>
+
+{#snippet groupRule()}
+	<span class="bg-border h-5 w-px shrink-0 select-none"></span>
+{/snippet}
+
+{#snippet groupDash()}
+	<span class="text-muted-foreground px-0.5 select-none">—</span>
+{/snippet}

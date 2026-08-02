@@ -21,8 +21,9 @@
 
 <Lazy {...loadedProps as unknown as Props} />
 
-{#if err && error}
-	{@render error?.(err)}
-{:else if !Lazy}
-	{@render loading?.()}
-{/if}
+{@render (err && error ? errorContent : !Lazy ? loading : undefined)?.()}
+
+<!-- `err!` is proven by the dispatch above; narrowing does not cross into a snippet body. -->
+{#snippet errorContent()}
+	{@render error?.(err!)}
+{/snippet}

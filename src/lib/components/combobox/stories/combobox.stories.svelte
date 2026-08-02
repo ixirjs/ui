@@ -73,13 +73,6 @@
 		'text-foreground placeholder:text-muted-foreground min-w-24 flex-1 bg-transparent text-sm outline-none';
 </script>
 
-<!-- Selected-state check icon, reused by the item lists below. -->
-{#snippet checkIcon()}
-	<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="size-3.5">
-		<path d="M20 6 9 17l-5-5" />
-	</svg>
-{/snippet}
-
 <!-- 0. Default — configurable via Storybook controls. Supports both single and multiple modes. -->
 <Story name="Basic">
 	{#snippet template(args)}
@@ -292,3 +285,10 @@
 		<p class="text-muted-foreground text-xs">Selected: <code>{many.join(', ') || '—'}</code></p>
 	</div>
 </Story>
+
+<!-- Selected-state check icon, reused by the item lists below. -->
+{#snippet checkIcon()}
+	<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="size-3.5">
+		<path d="M20 6 9 17l-5-5" />
+	</svg>
+{/snippet}

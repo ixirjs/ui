@@ -46,21 +46,32 @@
 	const isMultiple = $derived(bond.props.multiple);
 </script>
 
-{#if isMultiple && selections.length}
+{@render (isMultiple && selections.length
+	? multipleSelections
+	: children && selections[0]
+		? consumerSelection
+		: selections[0]
+			? singleLabel
+			: undefined)?.()}
+
+{#snippet multipleSelections()}
 	<HtmlAtom class={['flex flex-wrap items-center gap-2', klass]} {...restProps}>
-		{#if children}
-			{@render children?.({ selections: selections, selection: selections[0] })}
-		{:else}
-			{#each selections as selection (selection.id)}
-				<Selection {selection}>
-					{selection.label}
-				</Selection>
-			{/each}
-		{/if}
+		{@render (children ? consumerSelection : selectionChips)()}
 	</HtmlAtom>
-{:else if children && selections[0]}
-	{@render children?.({ selections: selections, selection: selections[0] })}
-{:else if selections[0]}
-	{@const selection = selections[0]}
-	{selection.label}
-{/if}
+{/snippet}
+
+{#snippet consumerSelection()}
+	{@render children?.({ selections, selection: selections[0] })}
+{/snippet}
+
+{#snippet selectionChips()}
+	{#each selections as selection (selection.id)}
+		<Selection {selection}>
+			{selection.label}
+		</Selection>
+	{/each}
+{/snippet}
+
+{#snippet singleLabel()}
+	{selections[0]?.label}
+{/snippet}

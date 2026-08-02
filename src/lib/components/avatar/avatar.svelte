@@ -35,21 +35,31 @@
 	data-error={hasError}
 	{...avatarProps}
 >
-	{#if typeof src === 'string'}
-		<div class="absolute inset-0 flex items-center justify-center">
-			<div>{getInitials(alt)}</div>
-		</div>
-		<img
-			class="icare-avatar-image z-[1] h-full w-full"
-			{alt}
-			role="presentation"
-			aria-hidden="true"
-			{src}
-			onerror={() => {
-				hasError = true;
-			}}
-		/>
-	{:else}
-		<Icon aria-hidden="true" class="fui-avatar-icon h-full p-[4px] text-current" {src} />
-	{/if}
+	{@render (typeof src === 'string' ? imageAvatar : iconAvatar)()}
 </HtmlAtom>
+
+<!-- `src as string` restores the `typeof` narrowing the dispatch performs; narrowing does not
+     cross into a snippet body. -->
+{#snippet imageAvatar()}
+	<div class="absolute inset-0 flex items-center justify-center">
+		<div>{getInitials(alt)}</div>
+	</div>
+	<img
+		class="icare-avatar-image z-[1] h-full w-full"
+		{alt}
+		role="presentation"
+		aria-hidden="true"
+		src={src as string}
+		onerror={() => {
+			hasError = true;
+		}}
+	/>
+{/snippet}
+
+{#snippet iconAvatar()}
+	<Icon
+		aria-hidden="true"
+		class="fui-avatar-icon h-full p-[4px] text-current"
+		src={src as Exclude<typeof src, string>}
+	/>
+{/snippet}

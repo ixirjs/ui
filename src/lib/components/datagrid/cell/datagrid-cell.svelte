@@ -52,22 +52,34 @@
 	);
 </script>
 
-<!-- One flat branch block instead of the `partElement` snippet: a cell is the highest-volume
-     unit in the library (rows × columns of them), its children take arguments (so `partElement`
-     would need a wrapper snippet), and every extra block or render hop in the per-cell template
-     emits hydration-anchor comments — ~2 nodes and ~100 bytes per 7-cell row at grid scale. The
-     single {#if}/{:else if} keeps anchor count at the old HtmlAtom path's level while dropping
-     its component boundary; HtmlAtom remains the rich-path owner. -->
-{#if isHidden}{:else if el.native() && el.tag() === 'div'}
-	<!-- Literal div: a branch in the same block costs nothing, while `<svelte:element>` costs
-	     three anchor comments per cell — the highest-volume element in the library. -->
+<!-- Snippet dispatch instead of an {#if} chain or the `partElement` snippet: a cell is the
+     highest-volume unit in the library (rows × columns of them), and hydration anchors are DOM
+     nodes. Measured per cell: an {#if} block costs 2 anchor comments, `partElement`'s internal
+     dispatch costs 2, one computed-callee render costs 1 — and a hidden cell renders just that
+     one anchor. The literal-div branch is the common case (`<svelte:element>` alone costs 3).
+     The dispatch reads the same reactive state the branches did, so server and client pick the
+     same snippet. HtmlAtom remains the rich-path owner.
+     See docs/research/hydration-anchor-diet-2026-08.md. -->
+{@render (isHidden
+	? undefined
+	: el.native()
+		? el.tag() === 'div'
+			? divCell
+			: anyCell
+		: richCell)?.()}
+
+{#snippet divCell()}
 	<div class={el.class()} {...el.attrs()}>{@render children?.({ datagrid: bond })}</div>
-{:else if el.native()}
+{/snippet}
+
+{#snippet anyCell()}
 	<svelte:element this={el.tag()} class={el.class()} {...el.attrs()}
 		>{@render children?.({ datagrid: bond })}</svelte:element
 	>
-{:else}
+{/snippet}
+
+{#snippet richCell()}
 	<HtmlAtom {...el.richProps()}>
 		{@render children?.({ datagrid: bond })}
 	</HtmlAtom>
-{/if}
+{/snippet}

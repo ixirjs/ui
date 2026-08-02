@@ -1,5 +1,6 @@
 <script lang="ts">
 	import CalendarDay from './calendar-day.svelte';
+	import type { Day } from './types';
 	import { CalendarBond } from './bond.svelte';
 	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
 	import { usePart } from '$ixirjs/ui/shared';
@@ -45,21 +46,23 @@
 	}));
 </script>
 
+{@render partElement(el, body)}
+
 {#snippet body()}
 	{#each visibleDays as day (day.id)}
-		{#if !outsideDays && day.offmonth}
-			<div aria-hidden="true"></div>
-		{:else if children}
-			{@render children?.({ day })}
-		{:else}
-			<CalendarDay
-				{day}
-				onclick={() => {
-					calendarBond?.selectStart(new Date(day.date));
-				}}
-			/>
-		{/if}
+		{@render (!outsideDays && day.offmonth ? hiddenDay : children ? consumerDay : defaultDay)(day)}
 	{/each}
 {/snippet}
 
-{@render partElement(el, body)}
+<!-- Declared outside the {#each}, so each takes the day it renders. -->
+{#snippet hiddenDay()}
+	<div aria-hidden="true"></div>
+{/snippet}
+
+{#snippet consumerDay(day: Day)}
+	{@render children?.({ day })}
+{/snippet}
+
+{#snippet defaultDay(day: Day)}
+	<CalendarDay {day} onclick={() => calendarBond?.selectStart(new Date(day.date))} />
+{/snippet}

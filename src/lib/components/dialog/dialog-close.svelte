@@ -60,14 +60,14 @@
 	}));
 </script>
 
+{@render partElement(el, body)}
+
 {#snippet body()}
-	{#if children}
-		{@render children?.({ dialog: bond })}
-	{:else}
-		<Icon>
-			<Close />
-		</Icon>
-	{/if}
+	{@render (children ?? fallback)({ dialog: bond })}
 {/snippet}
 
-{@render partElement(el, body)}
+{#snippet fallback()}
+	<Icon>
+		<Close />
+	</Icon>
+{/snippet}

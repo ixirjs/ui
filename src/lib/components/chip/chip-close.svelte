@@ -26,9 +26,9 @@
 	{onclick}
 	{...chipCloseButtonProps}
 >
-	{#if icon}
-		{@render icon?.()}
-	{:else}
-		<Icon src={CloseIcon} class="h-full" />
-	{/if}
+	{@render (icon ?? defaultIcon)()}
 </HtmlAtom>
+
+{#snippet defaultIcon()}
+	<Icon src={CloseIcon} class="h-full" />
+{/snippet}

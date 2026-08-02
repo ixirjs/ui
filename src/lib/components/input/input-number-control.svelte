@@ -75,6 +75,32 @@
 	}
 </script>
 
+<!-- Render -->
+
+{@render decrementSnippet?.({ action: handleDecrement, disabled: !canDecrement })}
+
+<input
+	type="number"
+	value={number ?? ''}
+	{min}
+	{max}
+	{step}
+	{disabled}
+	{placeholder}
+	class={cn(
+		'input-number-field text-foreground placeholder:text-muted-foreground h-full w-full flex-1 bg-transparent text-center text-sm outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none',
+		presentation.class
+	)}
+	{...presentation.attrs}
+	oninput={handleInput}
+	onchange={handleChange}
+	aria-valuemin={min}
+	aria-valuemax={max}
+	aria-valuenow={number}
+/>
+
+{@render incrementSnippet?.({ action: handleIncrement, disabled: !canIncrement })}
+
 <!-- Default part snippets -->
 
 {#snippet defaultDecrement({
@@ -116,29 +142,3 @@
 		</svg>
 	</button>
 {/snippet}
-
-<!-- Render -->
-
-{@render decrementSnippet?.({ action: handleDecrement, disabled: !canDecrement })}
-
-<input
-	type="number"
-	value={number ?? ''}
-	{min}
-	{max}
-	{step}
-	{disabled}
-	{placeholder}
-	class={cn(
-		'input-number-field text-foreground placeholder:text-muted-foreground h-full w-full flex-1 bg-transparent text-center text-sm outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none',
-		presentation.class
-	)}
-	{...presentation.attrs}
-	oninput={handleInput}
-	onchange={handleChange}
-	aria-valuemin={min}
-	aria-valuemax={max}
-	aria-valuenow={number}
-/>
-
-{@render incrementSnippet?.({ action: handleIncrement, disabled: !canIncrement })}

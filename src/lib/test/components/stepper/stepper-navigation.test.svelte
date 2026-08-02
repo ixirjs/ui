@@ -11,12 +11,6 @@
 	let activeStep = $state(0);
 </script>
 
-{#snippet stepBody(stepData: (typeof steps)[number], index: number)}
-	<Step.Body>
-		<p data-testid="step-content">Step {index + 1}: {stepData.body}</p>
-	</Step.Body>
-{/snippet}
-
 <Stepper.Root bind:step={activeStep} linear>
 	<Stepper.Header>
 		{#each steps as stepData, index (index)}
@@ -38,3 +32,9 @@
 		{/snippet}
 	</Stepper.Footer>
 </Stepper.Root>
+
+{#snippet stepBody(stepData: (typeof steps)[number], index: number)}
+	<Step.Body>
+		<p data-testid="step-content">Step {index + 1}: {stepData.body}</p>
+	</Step.Body>
+{/snippet}

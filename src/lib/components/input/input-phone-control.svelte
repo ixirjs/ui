@@ -172,11 +172,9 @@
 	}
 </script>
 
-{#snippet defaultSpan(span: Span, _index: number)}
-	<span style={span.style}>{span.text}</span>
-{/snippet}
+{@render (format ? formattedInput : freeInput)()}
 
-{#if format}
+{#snippet formattedInput()}
 	<span class="relative flex h-full w-full flex-1 items-center overflow-hidden">
 		<!-- coloured overlay (mirrors the input, no caret) -->
 		<span
@@ -216,7 +214,13 @@
 			onblur={handleBlur}
 		/>
 	</span>
-{:else}
+{/snippet}
+
+{#snippet defaultSpan(span: Span, _index: number)}
+	<span style={span.style}>{span.text}</span>
+{/snippet}
+
+{#snippet freeInput()}
 	<!-- Free mode: plain input -->
 	<input
 		bind:this={inputEl}
@@ -237,4 +241,4 @@
 		onchange={handleChange}
 		onpaste={handlePaste}
 	/>
-{/if}
+{/snippet}

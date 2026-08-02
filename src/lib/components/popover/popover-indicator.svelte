@@ -34,13 +34,13 @@
 	class={['border-border flex h-5 items-center justify-center', '$preset', klass]}
 	{...indicatorProps}
 >
-	{#if children}
-		{@render children?.({ popover: bond })}
-	{:else}
-		<Icon
-			class="h-full"
-			src={IconArrowDown}
-			animate={(node) => animate(node, { rotate: 180 * +isOpen }, { duration: 0.2 })}
-		/>
-	{/if}
+	{@render (children ?? fallback)({ popover: bond })}
 </HtmlAtom>
+
+{#snippet fallback()}
+	<Icon
+		class="h-full"
+		src={IconArrowDown}
+		animate={(node) => animate(node, { rotate: 180 * +isOpen }, { duration: 0.2 })}
+	/>
+{/snippet}

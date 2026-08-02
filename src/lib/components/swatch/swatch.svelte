@@ -17,11 +17,15 @@
 	{...swatchProps}
 >
 	<span aria-hidden="true" class="checkerboard absolute inset-[0.5px] rounded-inherit"></span>
-	{#if !isEmpty}
-		<span aria-hidden="true" class="fill absolute -inset-px" style="background-color: {color};"
-		></span>
-	{/if}
+	{@render (!isEmpty ? fill : undefined)?.()}
 </HtmlAtom>
+
+<!-- Declared at template top level, not inside <HtmlAtom>: a snippet written among a
+     component's children is passed to it as a prop, not defined as a local snippet. -->
+{#snippet fill()}
+	<span aria-hidden="true" class="fill absolute -inset-px" style="background-color: {color};"
+	></span>
+{/snippet}
 
 <style>
 	:global(.swatch) {

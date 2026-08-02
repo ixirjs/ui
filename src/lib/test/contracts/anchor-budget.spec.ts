@@ -44,7 +44,7 @@ describe('hydration-anchor budget (comments per rendered unit)', () => {
 	});
 
 	it('datagrid row (Bond row + three cells)', () => {
-		expect(marginalComments(DatagridAblation, (n) => ({ n }))).toBe(23);
+		expect(marginalComments(DatagridAblation, (n) => ({ n }))).toBe(20);
 	});
 
 	// The library-free control: if this moves, Svelte's own anchor emission changed (compiler

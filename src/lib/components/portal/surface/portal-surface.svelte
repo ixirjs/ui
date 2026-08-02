@@ -102,6 +102,8 @@
 	}
 </script>
 
+{@render content?.()}
+
 {#snippet ui()}
 	<HtmlAtom
 		{@attach teleport}
@@ -119,5 +121,3 @@
 		</ActivePortal>
 	</HtmlAtom>
 {/snippet}
-
-{@render content?.()}

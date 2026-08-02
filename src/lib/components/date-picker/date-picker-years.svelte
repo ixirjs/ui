@@ -91,7 +91,9 @@
 	}
 </script>
 
-{#if datePicker.isYearsPickerOpen}
+{@render (datePicker.isYearsPickerOpen ? yearsPicker : undefined)?.()}
+
+{#snippet yearsPicker()}
 	<HtmlAtom
 		class={['absolute inset-0 z-2 flex flex-col gap-2 bg-inherit opacity-0', '$preset', klass]}
 		enter={(node) => {
@@ -193,4 +195,4 @@
 			</div>
 		</HtmlAtom>
 	</HtmlAtom>
-{/if}
+{/snippet}

@@ -92,18 +92,16 @@
 	{onclick}
 	{...dayProps}
 >
-	{#if children}
-		{@render children({
-			calendar: calendarBond!
-		})}
-	{:else}
-		<div
-			class={cn(
-				'value flex items-center justify-center size-full transition-colors duration-100',
-				day.today && ['outline-primary outline-2', isSelected && 'outline-offset-3']
-			)}
-		>
-			<span>{day.dayOfMonth}</span>
-		</div>
-	{/if}
+	{@render (children ?? defaultDay)({ calendar: calendarBond! })}
 </HtmlAtom>
+
+{#snippet defaultDay()}
+	<div
+		class={cn(
+			'value flex items-center justify-center size-full transition-colors duration-100',
+			day.today && ['outline-primary outline-2', isSelected && 'outline-offset-3']
+		)}
+	>
+		<span>{day.dayOfMonth}</span>
+	</div>
+{/snippet}

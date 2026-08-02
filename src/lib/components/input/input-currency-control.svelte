@@ -143,30 +143,7 @@
 
 <span class="relative flex h-full w-full flex-1 items-center overflow-hidden">
 	<!-- Display overlay — shown while blurred -->
-	{#if !isFocused}
-		<span
-			aria-hidden="true"
-			class="pointer-events-none absolute inset-0 flex items-center overflow-hidden px-2 font-mono text-sm"
-			style="white-space: pre;"
-		>
-			{#if formattedParts.length}
-				{#each formattedParts as part (part)}
-					<span
-						class={cn(
-							part.type === 'currency' && 'text-muted-foreground font-normal',
-							part.type === 'integer' && 'text-foreground font-medium',
-							part.type === 'decimal' && 'text-muted-foreground',
-							part.type === 'fraction' && 'text-foreground/70',
-							part.type === 'group' && 'text-muted-foreground/60',
-							part.type === 'literal' && 'text-muted-foreground/60'
-						)}>{part.value}</span
-					>
-				{/each}
-			{:else}
-				<span class="text-muted-foreground">{placeholder}</span>
-			{/if}
-		</span>
-	{/if}
+	{@render (!isFocused ? formattedOverlay : undefined)?.()}
 
 	<!-- Native input — transparent while blurred, visible while focused -->
 	<input
@@ -196,3 +173,32 @@
 		onpaste={handlePaste}
 	/>
 </span>
+
+{#snippet formattedOverlay()}
+	<span
+		aria-hidden="true"
+		class="pointer-events-none absolute inset-0 flex items-center overflow-hidden px-2 font-mono text-sm"
+		style="white-space: pre;"
+	>
+		{@render (formattedParts.length ? partSpans : placeholderSpan)()}
+	</span>
+{/snippet}
+
+{#snippet partSpans()}
+	{#each formattedParts as part (part)}
+		<span
+			class={cn(
+				part.type === 'currency' && 'text-muted-foreground font-normal',
+				part.type === 'integer' && 'text-foreground font-medium',
+				part.type === 'decimal' && 'text-muted-foreground',
+				part.type === 'fraction' && 'text-foreground/70',
+				part.type === 'group' && 'text-muted-foreground/60',
+				part.type === 'literal' && 'text-muted-foreground/60'
+			)}>{part.value}</span
+		>
+	{/each}
+{/snippet}
+
+{#snippet placeholderSpan()}
+	<span class="text-muted-foreground">{placeholder}</span>
+{/snippet}
