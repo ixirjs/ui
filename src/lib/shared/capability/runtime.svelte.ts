@@ -3,15 +3,24 @@ import type { CapabilitySetupResult } from './capability';
 export type RuntimeCapability = {
 	readonly slot: symbol;
 	readonly requires?: readonly symbol[];
+	readonly setup?: unknown;
 };
 
-type RuntimeOptions<C extends RuntimeCapability> = {
-	missingRequirement: (capability: C, requirement: symbol) => string;
-	cycle: (capabilities: readonly C[]) => string;
-	alreadyActive: () => string;
-	disposed: () => string;
-	disposalFailed: () => string;
-	activationFailed: () => string;
+/** How a host names itself in a diagnostic; evaluated only when a message is actually built. */
+export type RuntimeHostLabel = () => string;
+
+/**
+ * Error-message table for one host kind. Static and shared across every host of that kind — the
+ * label travels as a call argument, so constructing a runtime allocates no per-host message
+ * closures (six of them, previously, for strings only ever read on error paths).
+ */
+export type RuntimeMessages<C extends RuntimeCapability> = {
+	missingRequirement: (label: RuntimeHostLabel, capability: C, requirement: symbol) => string;
+	cycle: (label: RuntimeHostLabel, capabilities: readonly C[]) => string;
+	alreadyActive: (label: RuntimeHostLabel) => string;
+	disposed: (label: RuntimeHostLabel) => string;
+	disposalFailed: (label: RuntimeHostLabel) => string;
+	activationFailed: (label: RuntimeHostLabel) => string;
 };
 
 /** Internal lifecycle engine shared by Bond and Atom capability hosts. */
@@ -24,10 +33,12 @@ export class CapabilityRuntime<C extends RuntimeCapability, Owner> {
 	#sealed = false;
 	#ordered: readonly C[] | undefined;
 	#destroyRoot: (() => void) | undefined;
-	readonly #options: RuntimeOptions<C>;
+	readonly #messages: RuntimeMessages<C>;
+	readonly #label: RuntimeHostLabel;
 
-	constructor(options: RuntimeOptions<C>) {
-		this.#options = options;
+	constructor(messages: RuntimeMessages<C>, label: RuntimeHostLabel) {
+		this.#messages = messages;
+		this.#label = label;
 	}
 
 	get capabilities(): readonly C[] {
@@ -87,13 +98,26 @@ export class CapabilityRuntime<C extends RuntimeCapability, Owner> {
 		beforeSetups: readonly (() => CapabilitySetupResult)[] = []
 	): void {
 		if (this.#status === 'active' || this.#status === 'activating') {
-			throw new Error(this.#options.alreadyActive());
+			throw new Error(this.#messages.alreadyActive(this.#label));
 		}
-		if (this.#status === 'disposed') throw new Error(this.#options.disposed());
+		if (this.#status === 'disposed') throw new Error(this.#messages.disposed(this.#label));
 
 		// Resolve the complete graph before setup starts. Missing requirements and cycles are
 		// construction errors, not partially-live runtime states.
 		const ordered = this.order();
+
+		// A Bond whose capabilities are all role/behavior-only (no `setup`) — e.g. Card's
+		// `labelledControl` — has nothing for `$effect.root` to own: no setup to run, no teardown
+		// to schedule. Skipping the scope allocation entirely is safe because `destroy()` already
+		// treats an absent `#destroyRoot` as a no-op.
+		if (
+			beforeSetups.length === 0 &&
+			ordered.every((capability) => capability.setup === undefined)
+		) {
+			this.#status = 'active';
+			return;
+		}
+
 		this.#status = 'activating';
 		let rollbackFailed = false;
 
@@ -113,12 +137,15 @@ export class CapabilityRuntime<C extends RuntimeCapability, Owner> {
 					const cleanupErrors = disposeLifo(teardowns);
 					if (cleanupErrors.length > 0) {
 						rollbackFailed = true;
-						throw new AggregateError([error, ...cleanupErrors], this.#options.activationFailed());
+						throw new AggregateError(
+							[error, ...cleanupErrors],
+							this.#messages.activationFailed(this.#label)
+						);
 					}
 					throw error;
 				}
 
-				return () => throwDisposalErrors(teardowns, this.#options.disposalFailed());
+				return () => throwDisposalErrors(teardowns, this.#messages.disposalFailed(this.#label));
 			});
 			this.#status = 'active';
 		} catch (error) {
@@ -172,7 +199,7 @@ export class CapabilityRuntime<C extends RuntimeCapability, Owner> {
 			for (const requirement of requirements) {
 				const dependency = this.#slots.get(requirement);
 				if (dependency === undefined) {
-					throw new Error(this.#options.missingRequirement(capability, requirement));
+					throw new Error(this.#messages.missingRequirement(this.#label, capability, requirement));
 				}
 				indegree[index] = indegree[index]! + 1;
 				dependants[dependency]!.push(index);
@@ -197,7 +224,7 @@ export class CapabilityRuntime<C extends RuntimeCapability, Owner> {
 
 		if (ordered.length !== count) {
 			const cycle = this.#capabilities.filter((_, index) => indegree[index]! > 0);
-			throw new Error(this.#options.cycle(cycle));
+			throw new Error(this.#messages.cycle(this.#label, cycle));
 		}
 		return ordered;
 	}

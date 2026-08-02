@@ -418,7 +418,7 @@ export class Atom<
 		return (this.#capabilityRuntime ??= new CapabilityRuntime<
 			HostedAtomCapability<B, E>,
 			{ atom: Atom<B, E>; bond: B | undefined }
-		>(capabilityRuntimeMessages<HostedAtomCapability<B, E>>('atom', () => this.name)));
+		>(capabilityRuntimeMessages<HostedAtomCapability<B, E>>('atom'), () => this.name));
 	}
 
 	#hasProjectedRole(role: string, ctx: unknown): boolean {
@@ -541,6 +541,19 @@ export function defineAtom(
 
 // Spread merging.
 
+// The `source`/`nextSource` labels only feed DEV conflict diagnostics, but an inline literal
+// allocates on every behavior of every spread build in production too. One frozen object per
+// layer pair keeps the wording and costs nothing per merge (same trick as MERGE_ATOM_LAYER in
+// presentation-props.ts).
+const BOND_BEHAVIOR_LAYER = Object.freeze({
+	source: 'bond behavior',
+	nextSource: 'capability behavior'
+});
+const ATOM_BEHAVIOR_LAYER = Object.freeze({
+	source: 'atom behavior',
+	nextSource: 'atom capability'
+});
+
 function mergeBehaviors<B extends Bond, E extends Element | BondVirtualElement>(
 	bond: B,
 	baseAttrs: Record<string, unknown>,
@@ -552,16 +565,10 @@ function mergeBehaviors<B extends Bond, E extends Element | BondVirtualElement>(
 
 	for (const behavior of behaviors) {
 		if (behavior.attrs) {
-			attrs = mergeAttributeLayer(attrs, behavior.attrs(bond), {
-				source: 'bond behavior',
-				nextSource: 'capability behavior'
-			});
+			attrs = mergeAttributeLayer(attrs, behavior.attrs(bond), BOND_BEHAVIOR_LAYER);
 		}
 		if (behavior.handlers) {
-			handlers = mergeHandlerLayer(handlers, behavior.handlers(bond), {
-				source: 'bond behavior',
-				nextSource: 'capability behavior'
-			});
+			handlers = mergeHandlerLayer(handlers, behavior.handlers(bond), BOND_BEHAVIOR_LAYER);
 		}
 	}
 
@@ -584,16 +591,10 @@ function mergeNodeBehaviors<
 
 	for (const behavior of behaviors) {
 		if (behavior.attrs) {
-			attrs = mergeAttributeLayer(attrs, behavior.attrs(node, bond), {
-				source: 'atom behavior',
-				nextSource: 'atom capability'
-			});
+			attrs = mergeAttributeLayer(attrs, behavior.attrs(node, bond), ATOM_BEHAVIOR_LAYER);
 		}
 		if (behavior.handlers) {
-			handlers = mergeHandlerLayer(handlers, behavior.handlers(node, bond), {
-				source: 'atom behavior',
-				nextSource: 'atom capability'
-			});
+			handlers = mergeHandlerLayer(handlers, behavior.handlers(node, bond), ATOM_BEHAVIOR_LAYER);
 		}
 	}
 

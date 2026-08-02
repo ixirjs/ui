@@ -19,7 +19,8 @@ export abstract class CapabilityRegistry {
 	abstract get id(): string;
 
 	readonly #runtime = new CapabilityRuntime<Capability, Bond>(
-		capabilityRuntimeMessages<Capability>('bond', () => this.id)
+		capabilityRuntimeMessages<Capability>('bond'),
+		() => this.id
 	);
 	#validated = false;
 

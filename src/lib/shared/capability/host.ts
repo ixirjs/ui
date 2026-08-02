@@ -1,7 +1,7 @@
 import { DEV } from 'esm-env';
 import { slotName } from './capability';
 import type { CapabilityEnvelope, CapabilityMetadata } from './capability';
-import type { CapabilityRuntime, RuntimeCapability } from './runtime.svelte';
+import type { CapabilityRuntime, RuntimeCapability, RuntimeMessages } from './runtime.svelte';
 
 /**
  * The one implementation of everything a capability host does around {@link CapabilityRuntime}.
@@ -22,54 +22,51 @@ export type HostLabel = () => string;
 
 // ─── Runtime error messages ───────────────────────────────────────────────────
 
-type RuntimeMessages<C extends RuntimeCapability> = {
-	missingRequirement: (capability: C, requirement: symbol) => string;
-	cycle: (capabilities: readonly C[]) => string;
-	alreadyActive: () => string;
-	disposed: () => string;
-	disposalFailed: () => string;
-	activationFailed: () => string;
-};
-
 /** Diagnostic name for one capability. */
 function capabilityLabel(capability: RuntimeCapability): string {
 	return slotName(capability.slot);
 }
 
+function quoted(capabilities: readonly RuntimeCapability[]): string {
+	return capabilities.map((capability) => `"${capabilityLabel(capability)}"`).join(' -> ');
+}
+
+// Two shared frozen tables replace the per-host closure sets: this factory used to allocate six
+// message closures (plus a helper and the carrying object) for every Bond and every
+// capability-bearing Atom — for strings only ever read on error paths. The host label now travels
+// as a call argument instead of being closed over. Every message stays byte-identical to the one
+// its host emitted before (asserted by `lifecycle.svelte.spec.ts` and `atom.svelte.spec.ts`).
+const BOND_RUNTIME_MESSAGES: RuntimeMessages<RuntimeCapability> = Object.freeze({
+	missingRequirement: (label, capability, requirement) =>
+		`[ixirjs] capability "${capabilityLabel(capability)}" requires slot "${slotName(requirement)}", which is not registered in "${label()}".`,
+	cycle: (label, capabilities) =>
+		`[ixirjs] capability setup dependency cycle in "${label()}": ${quoted(capabilities)}.`,
+	alreadyActive: (label) =>
+		`[ixirjs] capabilities for "${label()}" are already active; exactly one lifecycle owner is allowed.`,
+	disposed: (label) =>
+		`[ixirjs] capabilities for "${label()}" were disposed and cannot be activated again.`,
+	disposalFailed: (label) => `[ixirjs] capability disposal failed in "${label()}".`,
+	activationFailed: (label) => `[ixirjs] capability activation failed in "${label()}".`
+});
+
+const ATOM_RUNTIME_MESSAGES: RuntimeMessages<RuntimeCapability> = Object.freeze({
+	missingRequirement: (label, capability, requirement) =>
+		`[ixirjs] Atom("${label()}") capability "${capabilityLabel(capability)}" requires slot "${slotName(requirement)}", which is not registered.`,
+	cycle: (label, capabilities) =>
+		`[ixirjs] atom capability setup dependency cycle on Atom("${label()}"): ${quoted(capabilities)}.`,
+	alreadyActive: (label) =>
+		`[ixirjs] capabilities for Atom("${label()}") are already active; exactly one lifecycle owner is allowed.`,
+	disposed: (label) =>
+		`[ixirjs] capabilities for Atom("${label()}") were disposed and cannot be activated again.`,
+	disposalFailed: (label) => `[ixirjs] atom capability disposal failed on Atom("${label()}").`,
+	activationFailed: (label) => `[ixirjs] atom capability activation failed on Atom("${label()}").`
+});
+
 export function capabilityRuntimeMessages<C extends RuntimeCapability>(
-	kind: HostKind,
-	label: HostLabel
+	kind: HostKind
 ): RuntimeMessages<C> {
-	const quoted = (capabilities: readonly C[]) =>
-		capabilities.map((capability) => `"${capabilityLabel(capability)}"`).join(' -> ');
-
-	if (kind === 'bond') {
-		return {
-			missingRequirement: (capability, requirement) =>
-				`[ixirjs] capability "${capabilityLabel(capability)}" requires slot "${slotName(requirement)}", which is not registered in "${label()}".`,
-			cycle: (capabilities) =>
-				`[ixirjs] capability setup dependency cycle in "${label()}": ${quoted(capabilities)}.`,
-			alreadyActive: () =>
-				`[ixirjs] capabilities for "${label()}" are already active; exactly one lifecycle owner is allowed.`,
-			disposed: () =>
-				`[ixirjs] capabilities for "${label()}" were disposed and cannot be activated again.`,
-			disposalFailed: () => `[ixirjs] capability disposal failed in "${label()}".`,
-			activationFailed: () => `[ixirjs] capability activation failed in "${label()}".`
-		};
-	}
-
-	return {
-		missingRequirement: (capability, requirement) =>
-			`[ixirjs] Atom("${label()}") capability "${capabilityLabel(capability)}" requires slot "${slotName(requirement)}", which is not registered.`,
-		cycle: (capabilities) =>
-			`[ixirjs] atom capability setup dependency cycle on Atom("${label()}"): ${quoted(capabilities)}.`,
-		alreadyActive: () =>
-			`[ixirjs] capabilities for Atom("${label()}") are already active; exactly one lifecycle owner is allowed.`,
-		disposed: () =>
-			`[ixirjs] capabilities for Atom("${label()}") were disposed and cannot be activated again.`,
-		disposalFailed: () => `[ixirjs] atom capability disposal failed on Atom("${label()}").`,
-		activationFailed: () => `[ixirjs] atom capability activation failed on Atom("${label()}").`
-	};
+	// Messages only read `capability.slot`, so widening the table's C to the caller's is safe.
+	return (kind === 'bond' ? BOND_RUNTIME_MESSAGES : ATOM_RUNTIME_MESSAGES) as RuntimeMessages<C>;
 }
 
 // ─── Registration ─────────────────────────────────────────────────────────────

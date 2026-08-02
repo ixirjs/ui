@@ -180,11 +180,18 @@ export function defineBond<const S extends BondSpec>(spec: S): DefinedBondClass<
 
 	// A subclass's parent constructor has already registered the parent's capabilities, so an
 	// `extends:` child must only register its own. A `parts:` composition has no such constructor
-	// chain and registers every member's.
-	const constructorCapabilities = (state: Bond): Capability[] =>
-		parent
-			? (ownCapabilities?.(state) ?? [])
-			: [...inheritedCapabilityFns.flatMap((fn) => fn(state)), ...(ownCapabilities?.(state) ?? [])];
+	// chain and registers every member's. Whether any source exists at all is known at definition
+	// time — most families register capabilities in their base class constructor instead, and the
+	// old shape allocated up to three arrays per Bond construction just to produce an empty list.
+	const inheritsCapabilities = !parent && inheritedCapabilityFns.length > 0;
+	const hasConstructorCapabilities = inheritsCapabilities || ownCapabilities !== undefined;
+	const constructorCapabilities = (state: Bond): Capability[] => {
+		if (!inheritsCapabilities) return ownCapabilities?.(state) ?? [];
+		const out: Capability[] = [];
+		for (const fn of inheritedCapabilityFns) out.push(...fn(state));
+		if (ownCapabilities) out.push(...ownCapabilities(state));
+		return out;
+	};
 
 	// ─── Decision 2: the class to extend and how its constructor reaches `super` ───
 	const BaseClass = ((composed ? spec.base : (spec.extends ?? spec.base)) ??
@@ -198,8 +205,10 @@ export function defineBond<const S extends BondSpec>(spec: S): DefinedBondClass<
 			if (parent) super(props as BondStateProps);
 			else super(props as BondStateProps, spec.name);
 			// The bond itself is the state host, so capability factories receive it directly.
-			for (const capability of constructorCapabilities(this)) {
-				this.capability(capability);
+			if (hasConstructorCapabilities) {
+				for (const capability of constructorCapabilities(this)) {
+					this.capability(capability);
+				}
 			}
 		}
 

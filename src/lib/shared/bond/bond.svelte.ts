@@ -27,8 +27,6 @@ export abstract class Bond<Props extends BondPropsBase = BondPropsBase> extends 
 
 	constructor(props: Props = {} as Props, name?: string) {
 		super();
-		// Cross-copy identity brand; read by static [Symbol.hasInstance].
-		Object.defineProperty(this, BOND_BRAND, { value: true });
 		this.#props = (props ?? {}) as Props;
 		this.#id = this.#props.id ?? generateId();
 		this.#name = name ?? '';
@@ -142,6 +140,13 @@ export abstract class Bond<Props extends BondPropsBase = BondPropsBase> extends 
 		return ordinaryHasInstance(this, value);
 	}
 }
+
+// Cross-copy identity brand, read by `[Symbol.hasInstance]` above via `in` — which walks the
+// prototype chain, so one prototype-level definition brands every instance. The previous
+// per-instance `defineProperty` in the constructor forced a hidden-class transition on every Bond
+// construction. Duplicate package copies brand their own prototype with the same registered
+// symbol (`Symbol.for`), so cross-copy `instanceof` is unchanged.
+Object.defineProperty(Bond.prototype, BOND_BRAND, { value: true });
 
 function getBondContext<T extends Bond>(cls: BondClass<T>): T | undefined {
 	return getContext(cls.CONTEXT_KEY);

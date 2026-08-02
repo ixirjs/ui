@@ -32,12 +32,18 @@ export class Collection<T> {
 		return (this.#values ??= Array.from(this.#items.values()));
 	}
 
+	// Same cache shape as `#values` — these were the two remaining per-read `Array.from` walks.
+	#keys: readonly string[] | undefined;
+	#entries: readonly [string, T][] | undefined;
+
 	get keys(): readonly string[] {
-		return Array.from(this.#items.keys());
+		void this.#items.size;
+		return (this.#keys ??= Array.from(this.#items.keys()));
 	}
 
 	get entries(): readonly [string, T][] {
-		return Array.from(this.#items.entries());
+		void this.#items.size;
+		return (this.#entries ??= Array.from(this.#items.entries()));
 	}
 
 	[Symbol.iterator](): IterableIterator<[string, T]> {
@@ -56,6 +62,8 @@ export class Collection<T> {
 		if (this.#items.delete(id)) {
 			this.#indexesDirty = true;
 			this.#values = undefined;
+			this.#keys = undefined;
+			this.#entries = undefined;
 		}
 	}
 
@@ -78,6 +86,8 @@ export class Collection<T> {
 		// Dirty on replacement too: the values cache holds the value, not just the ordering.
 		if (!had) this.#indexesDirty = true;
 		this.#values = undefined;
+		this.#keys = undefined;
+		this.#entries = undefined;
 		return () => {
 			// Only delete if our value is still registered — guards re-mounts that overwrote it.
 			if (untrack(() => this.#items.get(id)) === value) this.delete(id);
@@ -88,6 +98,8 @@ export class Collection<T> {
 		this.#items.clear();
 		this.#indexes.clear();
 		this.#values = undefined;
+		this.#keys = undefined;
+		this.#entries = undefined;
 		this.#indexesDirty = true;
 	}
 

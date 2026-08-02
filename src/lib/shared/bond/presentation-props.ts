@@ -17,12 +17,21 @@ export type PresentableAtom =
 // path passes this shared frozen object and allocates nothing.
 const MERGE_ATOM_LAYER = Object.freeze({ nextIsUser: true });
 
+// The no-consumer-id binding, shared: every part without an `id` prop — the overwhelming case —
+// used to allocate a fresh closure per merge just to answer `undefined`. Binding the shared thunk
+// still clears a stale prior binding when a consumer id is later removed.
+const NO_CONSUMER_ID = () => undefined;
+
 // Native presentation hosts need the Atom merge without tunnelling the preset selector into attrs.
 export function mergeAtomPresentationProps(
 	atom: PresentableAtom,
 	restProps: Record<string, unknown>
 ): Record<string | symbol, unknown> {
-	atom?.bindId?.(() => (typeof restProps.id === 'string' ? restProps.id : undefined));
+	atom?.bindId?.(
+		restProps.id === undefined
+			? NO_CONSUMER_ID
+			: () => (typeof restProps.id === 'string' ? restProps.id : undefined)
+	);
 	return mergeSpreadProps(
 		atom?.presentationSpread ?? atom?.spread,
 		stripDefaultLayerProps(restProps),
