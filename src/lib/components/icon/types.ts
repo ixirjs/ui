@@ -1,17 +1,22 @@
 import type { Component, Snippet } from 'svelte';
-import type { HtmlAtomProps, Base, SnippetProps } from '$ixirjs/ui/components/atom';
+import type {
+	RenderProps,
+	Base,
+	SnippetProps,
+	HtmlElementTagName
+} from '$ixirjs/ui/components/atom';
 
 // Icon snippet props
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface IconSnippetProps extends SnippetProps {}
 
 export type IconChildren = Snippet<[IconSnippetProps]>;
 
 export interface IconProps<
 	Src extends Component = Component,
-	E extends keyof HTMLElementTagNameMap = 'div',
+	E extends HtmlElementTagName = 'div',
 	B extends Base = Base
-> extends HtmlAtomProps<E, B, IconChildren> {
+> extends RenderProps<E, B, IconChildren> {
+	/** Icon component to render. No icon set is bundled — pass one from any library, or supply an SVG as children instead. */
 	src?: Src;
 }
