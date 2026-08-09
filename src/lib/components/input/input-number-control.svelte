@@ -1,11 +1,8 @@
 <script lang="ts">
 	import type { HTMLAttributes } from 'svelte/elements';
-	import { InputBond } from './bond.svelte';
 	import { cn } from '$ixirjs/ui/utils';
-	import { inputChangeContext, resolveControlPreset, writeInputNumber } from './shared';
+	import { useControl, toFiniteNumber } from './shared';
 	import type { InputNumberControlProps } from './types';
-
-	const bond = InputBond.get();
 
 	let {
 		class: klass = '',
@@ -25,13 +22,12 @@
 		...restProps
 	}: InputNumberControlProps & HTMLAttributes<HTMLDivElement> = $props();
 
-	const presentation = resolveControlPreset(
-		() => presetKey,
-		bond,
-		() => restProps,
-		() => klass,
-		() => ({ disabled, min, max, step })
-	);
+	const control = useControl({
+		preset: () => presetKey,
+		restProps: () => restProps,
+		class: () => klass ?? '',
+		variantProps: () => ({ disabled, min, max, step })
+	});
 	const numberValue = $derived(number ?? 0);
 
 	const canDecrement = $derived(!disabled && (min === undefined || numberValue - step >= min));
@@ -43,35 +39,24 @@
 	function handleDecrement(event?: MouseEvent) {
 		if (!canDecrement) return;
 		number = parseFloat((numberValue - step).toPrecision(10));
-		writeInputNumber(bond, number);
-		onnumberchange?.(number, inputChangeContext(bond, event, 'decrement'));
+		control.setValue(number);
+		control.notify(onnumberchange, number, event, 'decrement');
 	}
 
 	function handleIncrement(event?: MouseEvent) {
 		if (!canIncrement) return;
 		number = parseFloat((numberValue + step).toPrecision(10));
-		writeInputNumber(bond, number);
-		onnumberchange?.(number, inputChangeContext(bond, event, 'increment'));
+		control.setValue(number);
+		control.notify(onnumberchange, number, event, 'increment');
 	}
 
 	function handleInput(event: Event) {
 		oninput?.(event);
 		if (event.defaultPrevented) return;
 
-		const input = event.currentTarget as HTMLInputElement;
-		number =
-			input.value.trim() === '' || Number.isNaN(input.valueAsNumber)
-				? undefined
-				: input.valueAsNumber;
-		writeInputNumber(bond, number);
-		onnumberchange?.(
-			number,
-			inputChangeContext(bond, event, number === undefined ? 'clear' : 'input')
-		);
-	}
-
-	function handleChange(event: Event) {
-		onchange?.(event);
+		number = toFiniteNumber(event.currentTarget as HTMLInputElement);
+		control.setValue(number);
+		control.notify(onnumberchange, number, event, number === undefined ? 'clear' : 'input');
 	}
 </script>
 
@@ -89,15 +74,14 @@
 	{placeholder}
 	class={cn(
 		'input-number-field text-foreground placeholder:text-muted-foreground h-full w-full flex-1 bg-transparent text-center text-sm outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none',
-		presentation.class
+		control.class
 	)}
-	{...presentation.attrs}
+	{...control.attrs}
 	oninput={handleInput}
-	onchange={handleChange}
-	aria-valuemin={min}
-	aria-valuemax={max}
-	aria-valuenow={number}
+	{onchange}
 />
+<!-- No `aria-value*` here: `min`/`max`/`value` on a native number input already carry them, and
+     the attributes are not valid on its implicit role. -->
 
 {@render incrementSnippet?.({ action: handleIncrement, disabled: !canIncrement })}
 

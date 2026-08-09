@@ -1,12 +1,10 @@
 <script lang="ts">
-	import { inputChangeContext, resolveControlPreset, writeInputValue } from './shared';
-	import { cn, toClassValue } from '$ixirjs/ui/utils';
+	import { useControl, INPUT_DISABLED_CLASS, INPUT_OVERLAY_FIELD_CLASS } from './shared';
+	import { cn } from '$ixirjs/ui/utils';
+	import SegmentOverlay from './segment-overlay.svelte';
 	import { clamp as clampRange } from '$ixirjs/ui/utils/math';
-	import { untrack } from 'svelte';
-	import { InputBond } from './bond.svelte';
+	import { createParsedValue } from './parsed-value.svelte';
 	import type { InputCurrencyControlProps } from './types';
-
-	const bond = InputBond.get();
 
 	let {
 		class: klass = '',
@@ -28,12 +26,14 @@
 		...restProps
 	}: InputCurrencyControlProps = $props();
 
-	const preset = resolveControlPreset(
-		() => presetKey,
-		bond,
-		() => restProps,
-		() => toClassValue(klass, bond)
-	);
+	const control = useControl({
+		preset: () => presetKey,
+		restProps: () => restProps,
+		class: () => klass,
+		// The element is `type="text"` (it holds a locale edit string), but `value` is always a
+		// plain decimal — so `bond.number` should treat this as a number control.
+		type: () => 'number'
+	});
 
 	let inputEl = $state<HTMLInputElement>();
 	let isFocused = $state(false);
@@ -70,27 +70,26 @@
 		return n.toFixed(precision).replace('.', separators.decimal);
 	}
 
-	// Sole writer of `amount` + `value`.
-	function commit(n: number | undefined) {
-		amount = n !== undefined ? clamp(n) : undefined;
-		value = amount !== undefined ? amount.toFixed(precision) : '';
-		writeInputValue(bond, value);
-	}
+	const parsedValue = createParsedValue({
+		raw: { get: () => value, set: (next) => (value = next) },
+		parsed: { get: () => amount, set: (next) => (amount = next) },
+		parse: (raw) => {
+			if (!raw.trim()) return { value: undefined };
+			const parsed = parseRaw(raw);
+			return parsed === undefined ? undefined : { value: clamp(parsed) };
+		},
+		format: (parsed) => (parsed === undefined ? '' : clamp(parsed).toFixed(precision)),
+		preferRaw: (raw) => raw.trim() !== '',
+		onRawChange: (raw) => control.setValue(raw)
+	});
 
 	function commitAndNotify(n: number | undefined, event: Event, reason: string) {
 		const previousValue = value;
-		commit(n);
+		parsedValue.setParsed(n === undefined ? undefined : clamp(n));
 		if (Object.is(previousValue, value)) return;
 
-		onvaluechange?.(value, inputChangeContext(bond, event, reason, { amount }));
+		control.notify(onvaluechange, value, event, reason, { amount });
 	}
-
-	// Seed `amount` from the `value` string when the parent supplies only `value`.
-	$effect(() => {
-		untrack(() => {
-			if (amount === undefined && value) commit(parseRaw(value));
-		});
-	});
 
 	// Display overlay parts
 	const formattedParts = $derived(
@@ -102,6 +101,20 @@
 					maximumFractionDigits: precision
 				}).formatToParts(amount)
 			: []
+	);
+
+	// Intl part types map to classes; the overlay renders them as ordinary spans.
+	const PART_CLASS: Record<string, string> = {
+		currency: 'text-muted-foreground font-normal',
+		integer: 'text-foreground font-medium',
+		decimal: 'text-muted-foreground',
+		fraction: 'text-foreground/70',
+		group: 'text-muted-foreground/60',
+		literal: 'text-muted-foreground/60'
+	};
+
+	const overlaySpans = $derived(
+		formattedParts.map((part) => ({ text: part.value, class: PART_CLASS[part.type] }))
 	);
 
 	function handleFocus() {
@@ -141,6 +154,11 @@
 	}
 </script>
 
+<!--
+  The <input> below is this control's own: it holds the locale edit string (`toEditString(amount)`)
+  rather than `value`, and three handlers write `inputEl.value` imperatively. Only the overlay is
+  shared — see the note in segment-overlay.svelte for why that is the seam and the field is not.
+-->
 <span class="relative flex h-full w-full flex-1 items-center overflow-hidden">
 	<!-- Display overlay — shown while blurred -->
 	{@render (!isFocused ? formattedOverlay : undefined)?.()}
@@ -157,14 +175,14 @@
 		{disabled}
 		{readonly}
 		class={cn(
-			'relative h-full w-full flex-1 bg-transparent px-2 font-mono text-sm caret-foreground outline-none',
+			INPUT_OVERLAY_FIELD_CLASS,
 			isFocused
 				? 'text-foreground placeholder:text-muted-foreground'
 				: 'text-transparent placeholder:text-transparent',
-			disabled && 'cursor-not-allowed opacity-50',
-			preset.class
+			disabled && INPUT_DISABLED_CLASS,
+			control.class
 		)}
-		{...preset.attrs}
+		{...control.attrs}
 		oninput={handleInput}
 		{onchange}
 		onfocus={handleFocus}
@@ -175,30 +193,5 @@
 </span>
 
 {#snippet formattedOverlay()}
-	<span
-		aria-hidden="true"
-		class="pointer-events-none absolute inset-0 flex items-center overflow-hidden px-2 font-mono text-sm"
-		style="white-space: pre;"
-	>
-		{@render (formattedParts.length ? partSpans : placeholderSpan)()}
-	</span>
-{/snippet}
-
-{#snippet partSpans()}
-	{#each formattedParts as part (part)}
-		<span
-			class={cn(
-				part.type === 'currency' && 'text-muted-foreground font-normal',
-				part.type === 'integer' && 'text-foreground font-medium',
-				part.type === 'decimal' && 'text-muted-foreground',
-				part.type === 'fraction' && 'text-foreground/70',
-				part.type === 'group' && 'text-muted-foreground/60',
-				part.type === 'literal' && 'text-muted-foreground/60'
-			)}>{part.value}</span
-		>
-	{/each}
-{/snippet}
-
-{#snippet placeholderSpan()}
-	<span class="text-muted-foreground">{placeholder}</span>
+	<SegmentOverlay spans={overlaySpans} {placeholder} />
 {/snippet}

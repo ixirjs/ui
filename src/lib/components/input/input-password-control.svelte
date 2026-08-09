@@ -1,15 +1,7 @@
 <script lang="ts">
-	import {
-		resolveControlPreset,
-		INPUT_FIELD_CLASS,
-		inputChangeContext,
-		writeInputValue
-	} from './shared';
+	import { useControl, INPUT_FIELD_CLASS } from './shared';
 	import { cn } from '$ixirjs/ui/utils';
-	import { InputBond } from './bond.svelte';
 	import type { InputPasswordControlProps } from './types';
-
-	const bond = InputBond.get();
 
 	let {
 		value = $bindable(''),
@@ -27,49 +19,39 @@
 		...restProps
 	}: InputPasswordControlProps = $props();
 
-	const preset = resolveControlPreset(
-		() => presetKey,
-		bond,
-		() => restProps,
-		() => klass,
-		() => ({ disabled, readonly, visible })
-	);
-
-	function handleChange(event: Event) {
-		onchange?.(event);
-	}
+	const control = useControl({
+		preset: () => presetKey,
+		restProps: () => restProps,
+		class: () => klass,
+		variantProps: () => ({ disabled, readonly, visible })
+	});
 
 	function handleInput(event: Event) {
 		oninput?.(event);
 		if (event.defaultPrevented) return;
 
 		value = (event.currentTarget as HTMLInputElement).value;
-		writeInputValue(bond, value);
-		onvaluechange?.(value, inputChangeContext(bond, event, 'input'));
+		control.setValue(value);
+		control.notify(onvaluechange, value, event, 'input');
 	}
 
 	function toggle(event?: MouseEvent) {
 		if (disabled) return;
 		visible = !visible;
-		onvisiblechange?.(visible, inputChangeContext(bond, event, 'toggle', { value }));
+		control.notify(onvisiblechange, visible, event, 'toggle', { value });
 	}
 </script>
 
+<!-- `value` is an attribute, not a binding: `handleInput` below is the sole writer. -->
 <input
-	bind:value={
-		() => value,
-		(v) => {
-			value = v;
-			writeInputValue(bond, v);
-		}
-	}
+	{value}
 	type={visible ? 'text' : 'password'}
 	{placeholder}
 	{disabled}
 	{readonly}
-	class={cn(INPUT_FIELD_CLASS, preset.class)}
-	{...preset.attrs}
-	onchange={handleChange}
+	class={cn(INPUT_FIELD_CLASS, control.class)}
+	{...control.attrs}
+	{onchange}
 	oninput={handleInput}
 />
 

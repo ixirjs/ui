@@ -1,17 +1,11 @@
 <script lang="ts">
-	import {
-		inputChangeContext,
-		resolveControlPreset,
-		writeInputValue
-	} from '$ixirjs/ui/components/input/shared';
-	import { cn, toClassValue } from '$ixirjs/ui/utils';
+	import { useControl, INPUT_DISABLED_CLASS } from '$ixirjs/ui/components/input/shared';
+	import HiddenInput from '../hidden-input.svelte';
+	import { cn } from '$ixirjs/ui/utils';
 	import { clamp } from '$ixirjs/ui/utils/math';
 	import { untrack } from 'svelte';
-	import { InputBond } from '$ixirjs/ui/components/input/bond.svelte';
-	import type {
-		InputDateTimeControlProps,
-		InputDateControlProps
-	} from '$ixirjs/ui/components/input/types';
+	import { createParsedValue } from '../parsed-value.svelte';
+	import type { DateTimeControlImplProps } from './types';
 	import Segment from './segment.svelte';
 	import {
 		parseDateTimeString,
@@ -20,14 +14,15 @@
 		buildDateValue,
 		maxDaysInMonth,
 		mergeParts,
+		addMonth,
+		carryDateTime,
 		type DateTimeParts
 	} from './shared';
-
-	const bond = InputBond.get();
 
 	let {
 		class: klass = '',
 		value = $bindable(''),
+		name = undefined,
 		date = $bindable<Date | null>(null),
 		mode = 'datetime',
 		withSeconds = false,
@@ -38,17 +33,42 @@
 		oninput = undefined,
 		onvaluechange = undefined,
 		...restProps
-	}: InputDateTimeControlProps | InputDateControlProps = $props();
+	}: DateTimeControlImplProps = $props();
 
 	const isDateOnly = $derived(mode === 'date');
 	const resolvedPresetKey = $derived(presetKey ?? (isDateOnly ? 'input.date' : 'input.datetime'));
 
-	const preset = resolveControlPreset(
-		() => resolvedPresetKey,
-		bond,
-		() => restProps,
-		() => toClassValue(klass, bond)
-	);
+	// Registers the segment wrapper; the declared type follows `mode`, which is why it is an
+	// accessor rather than a value.
+	const control = useControl({
+		preset: () => resolvedPresetKey,
+		restProps: () => restProps,
+		class: () => klass,
+		type: () => (isDateOnly ? 'date' : 'datetime-local')
+	});
+
+	const parsedValue = createParsedValue<string, Date | null>({
+		raw: { get: () => value, set: (next) => (value = next) },
+		parsed: { get: () => date, set: (next) => (date = next) },
+		parse: (raw) => {
+			if (!raw) return { value: null };
+			const parsed = new Date(isDateOnly ? `${raw}T00:00:00` : raw);
+			return Number.isNaN(parsed.getTime()) ? undefined : { value: parsed };
+		},
+		format: (parsed) => {
+			if (!parsed) return '';
+			const pad = (part: number) => String(part).padStart(2, '0');
+			const datePart = `${String(parsed.getFullYear()).padStart(4, '0')}-${pad(parsed.getMonth() + 1)}-${pad(parsed.getDate())}`;
+			if (isDateOnly) return datePart;
+			const time = `${pad(parsed.getHours())}:${pad(parsed.getMinutes())}`;
+			return withSeconds
+				? `${datePart}T${time}:${pad(parsed.getSeconds())}`
+				: `${datePart}T${time}`;
+		},
+		preferRaw: (raw) => raw !== '',
+		equalsParsed: (left, right) => left?.getTime() === right?.getTime(),
+		onRawChange: (raw) => control.setValue(raw)
+	});
 
 	const parsedParts = $derived(isDateOnly ? parseDateString(value) : parseDateTimeString(value));
 
@@ -92,13 +112,19 @@
 		// Only emit when a complete, valid string can be built
 		if (!v || v === value) return;
 
-		value = v;
-		date = new Date(isDateOnly ? v + 'T00:00:00' : v);
-		if (isNaN(date.getTime())) date = null;
-		writeInputValue(bond, value);
-
-		onvaluechange?.(value, inputChangeContext(bond, ev, 'input', { date }));
+		parsedValue.setRaw(v);
+		control.notify(onvaluechange, value, ev, 'input', { date });
 	}
+
+	// Every segment reports `number | undefined`; only a defined value is worth merging, and an
+	// undefined one still re-emits so the draft survives. Six copies of the same three lines.
+	function emitPart(key: keyof DateTimeParts) {
+		return (v: number | undefined, context: { event?: Event }) =>
+			emit(context.event, v === undefined ? {} : { [key]: v });
+	}
+
+	// The year a rollover carries from when the year segment is still empty.
+	const currentYear = new Date().getFullYear();
 
 	function moveFocus(from: number, dir: -1 | 1) {
 		segments[from + dir]?.focus();
@@ -142,10 +168,12 @@
 <span
 	class={cn(
 		'flex h-full items-center gap-0 px-2 font-mono',
-		disabled && 'cursor-not-allowed opacity-50',
-		preset.class
+		disabled && INPUT_DISABLED_CLASS,
+		control.class
 	)}
-	{...preset.attrs}
+	role="group"
+	aria-label={mode === 'date' ? 'Date' : 'Date and time'}
+	{...control.attrs}
 	onpaste={handlePaste}
 	{oninput}
 	{onchange}
@@ -160,17 +188,11 @@
 		placeholder="MM"
 		{disabled}
 		{readonly}
-		onvaluechange={(v, context) => {
-			const o: DateTimeParts = {};
-			if (v !== undefined) o.month = v;
-			emit(context.event, o);
-		}}
+		onvaluechange={emitPart('month')}
 		onfocusmove={(dir) => moveFocus(0, dir)}
 		onrollover={(dir, context) => {
-			// month rollover advances/retreats year
-			const nextYear = (year ?? new Date().getFullYear()) + dir;
-			const nextMonth = dir === 1 ? 1 : 12;
-			emit(context.event, { year: nextYear, month: nextMonth });
+			// month rollover advances/retreats the year
+			emit(context.event, { year: (year ?? currentYear) + dir, month: dir === 1 ? 1 : 12 });
 		}}
 	/>
 	<span class="text-muted-foreground select-none">/</span>
@@ -183,28 +205,13 @@
 		placeholder="DD"
 		{disabled}
 		{readonly}
-		onvaluechange={(v, context) => {
-			const o: DateTimeParts = {};
-			if (v !== undefined) o.day = v;
-			emit(context.event, o);
-		}}
+		onvaluechange={emitPart('day')}
 		onfocusmove={(dir) => moveFocus(1, dir)}
 		onrollover={(dir, context) => {
-			// day rollover advances/retreats month (and year if needed)
-			const curMonth = month ?? 1;
-			const curYear = year ?? new Date().getFullYear();
-			let nextMonth = curMonth + dir;
-			let nextYear = curYear;
-			if (nextMonth > 12) {
-				nextMonth = 1;
-				nextYear++;
-			}
-			if (nextMonth < 1) {
-				nextMonth = 12;
-				nextYear--;
-			}
-			const nextDay = dir === 1 ? 1 : maxDaysInMonth(nextMonth, nextYear);
-			emit(context.event, { year: nextYear, month: nextMonth, day: nextDay });
+			// day rollover advances/retreats the month, landing on its first or last day
+			const next = addMonth({ year, month }, dir, currentYear);
+			const day = dir === 1 ? 1 : maxDaysInMonth(next.month, next.year);
+			emit(context.event, { ...next, day });
 		}}
 	/>
 	<span class="text-muted-foreground select-none">/</span>
@@ -217,11 +224,7 @@
 		placeholder="YYYY"
 		{disabled}
 		{readonly}
-		onvaluechange={(v, context) => {
-			const o: DateTimeParts = {};
-			if (v !== undefined) o.year = v;
-			emit(context.event, o);
-		}}
+		onvaluechange={emitPart('year')}
 		onfocusmove={(dir) => moveFocus(2, dir)}
 	/>
 
@@ -230,6 +233,8 @@
 	<!-- Time: HH : MM [: SS] (datetime mode only) -->
 	{@render (!isDateOnly ? timeSegments : undefined)?.()}
 </span>
+
+<HiddenInput {name} {value} />
 
 {#snippet dateTimeSeparator()}
 	<span class="text-muted-foreground mx-1 select-none">·</span>
@@ -245,44 +250,10 @@
 		placeholder="HH"
 		{disabled}
 		{readonly}
-		onvaluechange={(v, context) => {
-			const o: DateTimeParts = {};
-			if (v !== undefined) o.hours = v;
-			emit(context.event, o);
-		}}
+		onvaluechange={emitPart('hours')}
 		onfocusmove={(dir) => moveFocus(3, dir)}
-		onrollover={(dir, context) => {
-			// hours rollover advances/retreats day
-			const curDay = day ?? 1;
-			const curMonth = month ?? 1;
-			const curYear = year ?? new Date().getFullYear();
-			const curMax = maxDaysInMonth(curMonth, curYear);
-			let nextDay = curDay + dir;
-			let nextMonth = curMonth;
-			let nextYear = curYear;
-			if (nextDay > curMax) {
-				nextDay = 1;
-				nextMonth++;
-			}
-			if (nextDay < 1) {
-				nextMonth--;
-				nextDay = maxDaysInMonth(nextMonth < 1 ? 12 : nextMonth, curYear);
-			}
-			if (nextMonth > 12) {
-				nextMonth = 1;
-				nextYear++;
-			}
-			if (nextMonth < 1) {
-				nextMonth = 12;
-				nextYear--;
-			}
-			emit(context.event, {
-				year: nextYear,
-				month: nextMonth,
-				day: nextDay,
-				hours: dir === 1 ? 0 : 23
-			});
-		}}
+		onrollover={(dir, context) =>
+			emit(context.event, carryDateTime(draftParts, 'hours', dir, currentYear))}
 	/>
 	<span class="text-muted-foreground select-none">:</span>
 	<Segment
@@ -294,54 +265,10 @@
 		placeholder="MM"
 		{disabled}
 		{readonly}
-		onvaluechange={(v, context) => {
-			const o: DateTimeParts = {};
-			if (v !== undefined) o.minutes = v;
-			emit(context.event, o);
-		}}
+		onvaluechange={emitPart('minutes')}
 		onfocusmove={(dir) => moveFocus(4, dir)}
-		onrollover={(dir, context) => {
-			// minutes rollover advances/retreats hours
-			const nextHH =
-				dir === 1
-					? hours !== undefined && hours >= 23
-						? 0
-						: (hours ?? 0) + 1
-					: hours !== undefined && hours <= 0
-						? 23
-						: (hours ?? 23) - 1;
-			const override: DateTimeParts = { minutes: dir === 1 ? 0 : 59, hours: nextHH };
-			// if hours also wrap, advance day
-			if ((dir === 1 && nextHH === 0) || (dir === -1 && nextHH === 23)) {
-				const curDay = day ?? 1;
-				const curMonth = month ?? 1;
-				const curYear = year ?? new Date().getFullYear();
-				const curMax = maxDaysInMonth(curMonth, curYear);
-				let nextDay = curDay + dir;
-				let nextMonth = curMonth;
-				let nextYear = curYear;
-				if (nextDay > curMax) {
-					nextDay = 1;
-					nextMonth++;
-				}
-				if (nextDay < 1) {
-					nextMonth--;
-					nextDay = maxDaysInMonth(nextMonth < 1 ? 12 : nextMonth, curYear);
-				}
-				if (nextMonth > 12) {
-					nextMonth = 1;
-					nextYear++;
-				}
-				if (nextMonth < 1) {
-					nextMonth = 12;
-					nextYear--;
-				}
-				override.day = nextDay;
-				override.month = nextMonth;
-				override.year = nextYear;
-			}
-			emit(context.event, override);
-		}}
+		onrollover={(dir, context) =>
+			emit(context.event, carryDateTime(draftParts, 'minutes', dir, currentYear))}
 	/>
 	{@render (withSeconds ? secondsSegment : undefined)?.()}
 {/snippet}
@@ -357,36 +284,9 @@
 		placeholder="SS"
 		{disabled}
 		{readonly}
-		onvaluechange={(v, context) => {
-			const o: DateTimeParts = {};
-			if (v !== undefined) o.seconds = v;
-			emit(context.event, o);
-		}}
+		onvaluechange={emitPart('seconds')}
 		onfocusmove={(dir) => moveFocus(5, dir)}
-		onrollover={(dir, context) => {
-			// seconds rollover advances/retreats minutes (batched)
-			const nextMM =
-				dir === 1
-					? minutes !== undefined && minutes >= 59
-						? 0
-						: (minutes ?? 0) + 1
-					: minutes !== undefined && minutes <= 0
-						? 59
-						: (minutes ?? 59) - 1;
-			const override: DateTimeParts = { seconds: dir === 1 ? 0 : 59, minutes: nextMM };
-			// if minutes also wrap, advance hours
-			if ((dir === 1 && nextMM === 0) || (dir === -1 && nextMM === 59)) {
-				const nextHH =
-					dir === 1
-						? hours !== undefined && hours >= 23
-							? 0
-							: (hours ?? 0) + 1
-						: hours !== undefined && hours <= 0
-							? 23
-							: (hours ?? 23) - 1;
-				override.hours = nextHH;
-			}
-			emit(context.event, override);
-		}}
+		onrollover={(dir, context) =>
+			emit(context.event, carryDateTime(draftParts, 'seconds', dir, currentYear))}
 	/>
 {/snippet}

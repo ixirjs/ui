@@ -13,7 +13,7 @@
 		[key: string]: unknown;
 	} = $props();
 
-	const colorValue = $derived(String(bond?.props?.value ?? ''));
+	const colorValue = $derived(bond?.value.get() ?? '');
 </script>
 
 <SwatchComponent

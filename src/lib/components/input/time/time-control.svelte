@@ -1,13 +1,10 @@
 <script lang="ts">
-	import {
-		inputChangeContext,
-		resolveControlPreset,
-		writeInputValue
-	} from '$ixirjs/ui/components/input/shared';
-	import { cn, toClassValue } from '$ixirjs/ui/utils';
+	import { useControl, INPUT_DISABLED_CLASS } from '$ixirjs/ui/components/input/shared';
+	import HiddenInput from '../hidden-input.svelte';
+	import { cn } from '$ixirjs/ui/utils';
 	import { untrack } from 'svelte';
-	import { InputBond } from '$ixirjs/ui/components/input/bond.svelte';
 	import type { StateChangeContext } from '$ixirjs/ui/types';
+	import { createParsedValue } from '../parsed-value.svelte';
 	import type {
 		InputTimeControlProps,
 		InputNumber24HourControlProps,
@@ -21,14 +18,14 @@
 		mergeParts,
 		displayToInternal,
 		internalToDisplay,
+		stepWrap,
 		type TimeParts
 	} from './shared';
-
-	const bond = InputBond.get();
 
 	let {
 		class: klass = '',
 		value = $bindable(''),
+		name = undefined,
 		date = $bindable<Date | undefined>(undefined),
 		hourFormat = 24,
 		withSeconds = false,
@@ -42,20 +39,47 @@
 		onvaluechange = undefined,
 		...restProps
 	}: InputTimeControlProps &
-		(InputNumber24HourControlProps | InputNumber12HourControlProps) = $props();
+		(
+			| InputNumber12HourControlProps
+			| (Omit<InputNumber24HourControlProps, 'hourFormat'> & { hourFormat?: 24 })
+		) = $props();
 
-	const preset = resolveControlPreset(
-		() => presetKey,
-		bond,
-		() => restProps,
-		() => toClassValue(klass, bond)
-	);
+	// Registers the segment wrapper. It is not an <input>, so the semantic type is declared.
+	const control = useControl({
+		preset: () => presetKey,
+		restProps: () => restProps,
+		class: () => klass,
+		type: () => 'time'
+	});
 
-	// External value always wins over local edits.
+	const parsedValue = createParsedValue<string, Date | undefined>({
+		raw: { get: () => value, set: (next) => (value = next) },
+		parsed: { get: () => date, set: (next) => (date = next) },
+		parse: (raw) => {
+			if (!raw) return { value: undefined };
+			const parsed = parseTimeString(raw);
+			if (parsed.hh === undefined || parsed.mm === undefined) return undefined;
+			if (!date) return { value: undefined };
+			const next = new Date(date);
+			next.setHours(parsed.hh, parsed.mm, withSeconds ? (parsed.ss ?? 0) : 0, 0);
+			return { value: next };
+		},
+		format: (parsed) =>
+			parsed
+				? buildTimeValue(
+						{ hh: parsed.getHours(), mm: parsed.getMinutes(), ss: parsed.getSeconds() },
+						withSeconds
+					)
+				: '',
+		preferRaw: (raw) => raw !== '',
+		equalsParsed: (left, right) => left?.getTime() === right?.getTime(),
+		onRawChange: (raw) => control.setValue(raw)
+	});
+
 	const parts = $derived(
 		parseTimeString(
 			value,
-			untrack(() => date ?? undefined),
+			untrack(() => date),
 			hourFormat
 		)
 	);
@@ -73,31 +97,45 @@
 		const raw = buildTimeValue(clamped, withSeconds);
 		if (!raw) return;
 
-		// Sync bound date prop in place
-		if (date && clamped.hh !== undefined && clamped.mm !== undefined) {
-			// Local Date mutated before assignment; reactivity comes from `date = nd`, not in-place mutation.
-			// eslint-disable-next-line svelte/prefer-svelte-reactivity
-			const nd = new Date(date);
-			nd.setHours(clamped.hh, clamped.mm, withSeconds ? (clamped.ss ?? 0) : 0, 0);
-			if (nd.getTime() !== date.getTime()) date = nd;
-		}
-
 		if (raw === value) return;
 
-		value = raw;
-		writeInputValue(bond, value);
-
-		onvaluechange?.(value, inputChangeContext(bond, ev, 'input', { date }));
+		parsedValue.setRaw(raw);
+		control.notify(onvaluechange, value, ev, 'input', { date });
 	}
 
-	// Convert display hours to internal 24h before emitting.
+	function hourOverride(displayH: number, dir?: 1 | -1): TimeParts {
+		if (hourFormat === 24) return { hh: displayH };
+		let period = p ?? 'AM';
+		if (
+			(dir === 1 && displayHours === 11 && displayH === 12) ||
+			(dir === -1 && displayHours === 12 && displayH === 11)
+		) {
+			period = period === 'AM' ? 'PM' : 'AM';
+		}
+		return { hh: displayToInternal(displayH, period), period };
+	}
+
+	// Convert display hours to internal 24h before emitting, including the AM/PM boundary.
 	function handleHoursChange(displayH: number | undefined, context: StateChangeContext) {
 		if (displayH === undefined) {
 			emit(context.event);
 			return;
 		}
-		const internal = hourFormat === 12 ? displayToInternal(displayH, p ?? 'AM') : displayH;
-		emit(context.event, { hh: internal });
+		const key = context.event instanceof KeyboardEvent ? context.event.key : '';
+		const dir = key === 'ArrowUp' ? 1 : key === 'ArrowDown' ? -1 : undefined;
+		emit(context.event, hourOverride(displayH, dir));
+	}
+
+	// Segments report `number | undefined`; only a defined value is worth merging.
+	function emitPart(key: keyof TimeParts) {
+		return (v: number | undefined, context: { event?: Event }) =>
+			emit(context.event, v === undefined ? {} : { [key]: v });
+	}
+
+	// Step the displayed hour past its bound, in whichever format is active.
+	function stepDisplayHours(dir: 1 | -1): number | undefined {
+		if (displayHours === undefined) return undefined;
+		return stepWrap(displayHours, hourFormat === 12 ? 1 : 0, hourFormat === 12 ? 12 : 23, dir);
 	}
 
 	function togglePeriod(event?: MouseEvent | KeyboardEvent) {
@@ -157,10 +195,12 @@
 <span
 	class={cn(
 		'inline-flex h-full flex-1 items-center gap-0 px-2 font-mono',
-		disabled && 'cursor-not-allowed opacity-50',
-		preset.class
+		disabled && INPUT_DISABLED_CLASS,
+		control.class
 	)}
-	{...preset.attrs}
+	role="group"
+	aria-label="Time"
+	{...control.attrs}
 	onpaste={handlePaste}
 	{oninput}
 	{onchange}
@@ -189,11 +229,7 @@
 		placeholder="MM"
 		{disabled}
 		{readonly}
-		onvaluechange={(v, context) => {
-			const o: TimeParts = {};
-			if (v !== undefined) o.mm = v;
-			emit(context.event, o);
-		}}
+		onvaluechange={emitPart('mm')}
 		onfocusmove={(dir) => {
 			if (dir === 1 && withSeconds) segSeconds?.focus();
 			else if (dir === 1 && hourFormat === 12) {
@@ -201,18 +237,8 @@
 			} else if (dir === -1) segHours?.focus();
 		}}
 		onrollover={(dir, context) => {
-			if (displayHours === undefined) return;
-			const maxH = hourFormat === 12 ? 12 : 23;
-			const minH = hourFormat === 12 ? 1 : 0;
-			const nextDisplayH =
-				dir === 1
-					? displayHours >= maxH
-						? minH
-						: displayHours + 1
-					: displayHours <= minH
-						? maxH
-						: displayHours - 1;
-			handleHoursChange(nextDisplayH, context);
+			const next = stepDisplayHours(dir);
+			if (next !== undefined) handleHoursChange(next, context);
 		}}
 	/>
 
@@ -220,6 +246,8 @@
 
 	{@render (hourFormat === 12 ? meridiemField : undefined)?.()}
 </span>
+
+<HiddenInput {name} {value} />
 
 {#snippet secondsField()}
 	<span class="text-muted-foreground select-none">:</span>
@@ -232,37 +260,15 @@
 		placeholder="SS"
 		{disabled}
 		{readonly}
-		onvaluechange={(v, context) => {
-			const o: TimeParts = {};
-			if (v !== undefined) o.ss = v;
-			emit(context.event, o);
-		}}
+		onvaluechange={emitPart('ss')}
 		onfocusmove={(dir) => (dir === -1 ? segMinutes?.focus() : undefined)}
 		onrollover={(dir, context) => {
-			const nextMM =
-				dir === 1
-					? mm !== undefined && mm >= 59
-						? 0
-						: (mm ?? 0) + 1
-					: mm !== undefined && mm <= 0
-						? 59
-						: (mm ?? 59) - 1;
-			const wrapsHour = (dir === 1 && nextMM === 0) || (dir === -1 && nextMM === 59);
-			const override: TimeParts = { mm: nextMM };
-			if (wrapsHour && displayHours !== undefined) {
-				const maxH = hourFormat === 12 ? 12 : 23;
-				const minH = hourFormat === 12 ? 1 : 0;
-				const nextDisplayH =
-					dir === 1
-						? displayHours >= maxH
-							? minH
-							: displayHours + 1
-						: displayHours <= minH
-							? maxH
-							: displayHours - 1;
-				override.hh = hourFormat === 12 ? displayToInternal(nextDisplayH, p ?? 'AM') : nextDisplayH;
-			}
-			emit(context.event, override);
+			const nextMM = stepWrap(mm, 0, 59, dir);
+			const nextH = nextMM === (dir === 1 ? 0 : 59) ? stepDisplayHours(dir) : undefined;
+			emit(context.event, {
+				mm: nextMM,
+				...(nextH === undefined ? {} : hourOverride(nextH, dir))
+			});
 		}}
 	/>
 {/snippet}
@@ -280,7 +286,7 @@
 		class={cn(
 			'ml-auto inline-flex min-w-[3ch] cursor-pointer items-center justify-center px-0.5 font-sans text-sm font-medium',
 			'focus:bg-foreground/10 focus:outline-none',
-			disabled && 'cursor-not-allowed opacity-50'
+			disabled && INPUT_DISABLED_CLASS
 		)}
 		onclick={togglePeriod}
 		onkeydown={handlePeriodKey}

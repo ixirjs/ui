@@ -6,10 +6,13 @@
   `parseSegments`-derived `segments` and per-kind `kindStyle`.
 -->
 <script lang="ts">
-	import { cn, toClassValue, type ClassValue } from '$ixirjs/ui/utils';
-	import type { PresentationSnapshot } from '$ixirjs/ui/components/atom/presentation.svelte';
-	import { inputChangeContext, writeInputValue } from './shared';
-	import type { InputBond } from './bond.svelte';
+	import {
+		INPUT_DISABLED_CLASS,
+		INPUT_OVERLAY_FIELD_CLASS
+	} from '$ixirjs/ui/components/input/shared';
+	import { cn, type ClassValue } from '$ixirjs/ui/utils';
+	import SegmentOverlay from './segment-overlay.svelte';
+	import type { InputControlHandle } from './shared';
 
 	type Segment = { text: string; kind: string };
 
@@ -22,8 +25,8 @@
 		disabled = false,
 		readonly = false,
 		class: klass = '',
-		preset = undefined,
-		bond = undefined,
+		overlayWhen = true,
+		control,
 		onchange = undefined,
 		oninput = undefined,
 		onvaluechange = undefined,
@@ -37,16 +40,23 @@
 		disabled?: boolean;
 		readonly?: boolean;
 		class?: ClassValue;
-		preset?: PresentationSnapshot | undefined;
-		bond?: InputBond | undefined;
+		// Whether the coloured overlay is up. `false` hands the field back to the native input —
+		// real text, real placeholder. Callers that only colour while blurred (location) drive this
+		// from their own focus state; the always-on callers (email, url) leave it alone.
+		overlayWhen?: boolean;
+		control: InputControlHandle;
 		onchange?: ((event: Event) => void) | undefined;
 		oninput?: ((event: Event) => void) | undefined;
-		onvaluechange?: import('$ixirjs/ui/types').StateChangeCallback<string, InputBond> | undefined;
+		onvaluechange?:
+			| import('$ixirjs/ui/types').StateChangeCallback<string, import('./bond.svelte').InputBond>
+			| undefined;
 		[key: string]: unknown;
 	} = $props();
 
 	let inputEl = $state<HTMLInputElement>();
 	let scrollLeft = $state(0);
+
+	const spans = $derived(segments.map((seg) => ({ text: seg.text, style: kindStyle[seg.kind] })));
 
 	// Keep the overlay scrolled in lockstep with the real input.
 	function syncScroll() {
@@ -58,32 +68,17 @@
 		if (event.defaultPrevented) return;
 
 		value = (event.currentTarget as HTMLInputElement).value;
-		writeInputValue(bond, value);
+		control.setValue(value);
 		syncScroll();
-		onvaluechange?.(value, inputChangeContext(bond, event, 'input'));
-	}
-
-	function handleChange(event: Event) {
-		onchange?.(event);
+		control.notify(onvaluechange, value, event, 'input');
 	}
 </script>
 
 <span class="relative flex h-full w-full flex-1 items-center overflow-hidden">
 	<!-- Coloured overlay — scrolls with the input -->
-	<span
-		aria-hidden="true"
-		class={cn(
-			'pointer-events-none absolute inset-0 flex items-center overflow-hidden whitespace-pre px-2 font-mono text-sm',
-			preset?.class,
-			toClassValue(klass, bond)
-		)}
-	>
-		<span style="transform: translateX(-{scrollLeft}px)">
-			{@render (segments.length ? segmentSpans : placeholderSpan)()}
-		</span>
-	</span>
+	{@render (overlayWhen ? overlay : undefined)?.()}
 
-	<!-- Real input — transparent text, visible caret -->
+	<!-- Real input — transparent text while the overlay is up, visible caret either way -->
 	<input
 		bind:this={inputEl}
 		{type}
@@ -92,26 +87,22 @@
 		{disabled}
 		{readonly}
 		class={cn(
-			'relative h-full w-full flex-1 bg-transparent px-2 font-mono text-sm text-transparent caret-foreground outline-none',
-			'placeholder:text-transparent',
-			disabled && 'cursor-not-allowed',
-			preset?.class,
-			toClassValue(klass, bond)
+			INPUT_OVERLAY_FIELD_CLASS,
+			overlayWhen
+				? 'text-transparent placeholder:text-transparent'
+				: 'text-foreground placeholder:text-muted-foreground',
+			disabled && INPUT_DISABLED_CLASS,
+			control.class,
+			klass
 		)}
-		{...preset?.attrs}
+		{...control.attrs}
 		{...restProps}
 		oninput={handleInput}
-		onchange={handleChange}
+		{onchange}
 		onscroll={syncScroll}
 	/>
 </span>
 
-{#snippet segmentSpans()}
-	{#each segments as seg (seg.kind + seg.text)}
-		<span style={kindStyle[seg.kind]}>{seg.text}</span>
-	{/each}
-{/snippet}
-
-{#snippet placeholderSpan()}
-	<span class="text-muted-foreground">{placeholder}</span>
+{#snippet overlay()}
+	<SegmentOverlay {spans} {scrollLeft} {placeholder} class={[control.class, klass]} />
 {/snippet}

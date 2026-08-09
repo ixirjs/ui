@@ -2,7 +2,7 @@
 	import { defineMeta } from '@storybook/addon-svelte-csf';
 	import { Input as MyInput } from '..';
 	import { Label } from '$ixirjs/ui/components/label';
-	import { OtpControl } from '$ixirjs/ui/components/input/atoms';
+	import { PinControl } from '$ixirjs/ui/components/input/atoms';
 	import { Icon } from '$ixirjs/ui/components/icon';
 	import { Button } from '$ixirjs/ui/components/button';
 
@@ -50,8 +50,8 @@
 	let urlValue = $state('');
 	let phoneValue = $state('');
 	let locationValue = $state('');
-	let otpValue = $state('');
-	let otpCompleted = $state(false);
+	let pinValue = $state('');
+	let pinCompleted = $state(false);
 	let currencyValue = $state('');
 	let currencyAmount = $state<number | undefined>(undefined);
 	let colorValue = $state('');
@@ -83,6 +83,8 @@
 	}
 
 	let today = $state(new Date());
+
+	let submitted = $state<string[]>([]);
 </script>
 
 <Story
@@ -382,7 +384,7 @@
 		<div class="flex flex-col gap-1">
 			<Label>Date only</Label>
 			<MyInput.Root class="w-48">
-				<MyInput.DateControl mode="date" bind:value={dateValue} bind:date={dateDate} />
+				<MyInput.DateControl bind:value={dateValue} bind:date={dateDate} />
 			</MyInput.Root>
 			<p class="text-muted-foreground text-sm">
 				String: {dateValue || '(none)'}<br />
@@ -393,21 +395,21 @@
 		<div class="flex flex-col gap-1">
 			<Label>Disabled</Label>
 			<MyInput.Root class="w-48">
-				<MyInput.DateControl mode="date" value="2025-06-15" disabled />
+				<MyInput.DateControl value="2025-06-15" disabled />
 			</MyInput.Root>
 		</div>
 
 		<div class="flex flex-col gap-1">
 			<Label>Readonly</Label>
 			<MyInput.Root class="w-48">
-				<MyInput.DateControl mode="date" value="2025-06-15" readonly />
+				<MyInput.DateControl value="2025-06-15" readonly />
 			</MyInput.Root>
 		</div>
 
 		<div class="flex flex-col gap-1">
 			<Label>Pre-filled</Label>
 			<MyInput.Root class="w-48">
-				<MyInput.DateControl mode="date" bind:value={dateValue} bind:date={dateDate} />
+				<MyInput.DateControl bind:value={dateValue} bind:date={dateDate} />
 			</MyInput.Root>
 			<button
 				class="text-muted-foreground hover:text-foreground w-fit text-sm underline"
@@ -715,22 +717,26 @@
 	</div>
 </Story>
 
-<!-- OTP Control -->
-<Story name="OTP Control" parameters={{ layout: 'fullscreen' }}>
+<!--
+	Pin Control. The visible cells are aria-hidden decoration painted behind one real, transparent
+	<input> that spans the field — so paste, undo, iOS one-time-code autofill and password managers
+	all work without a line of code here. Try pasting "123456" into any of these.
+-->
+<Story name="Pin Control" parameters={{ layout: 'fullscreen' }}>
 	<div class="flex flex-col gap-6 p-4">
 		<div class="flex flex-col gap-2">
 			<Label>Inside Input.Root (integrated)</Label>
 			<MyInput.Root class="w-72">
-				<MyInput.OtpControl
-					bind:value={otpValue}
+				<MyInput.PinControl
+					bind:value={pinValue}
 					oncomplete={() => {
-						otpCompleted = true;
+						pinCompleted = true;
 					}}
 				/>
 			</MyInput.Root>
 			<p class="text-muted-foreground text-sm">
-				Value: <span class="text-foreground font-mono">{otpValue || '(none)'}</span>
-				{#if otpCompleted}
+				Value: <span class="text-foreground font-mono">{pinValue || '(none)'}</span>
+				{#if pinCompleted}
 					<span class="text-emerald-600 font-medium ml-2 inline-flex items-center gap-1">
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
@@ -752,38 +758,38 @@
 		<div class="flex flex-col gap-2">
 			<Label>Inside Input.Root — grouped (3+3)</Label>
 			<MyInput.Root class="w-64">
-				<MyInput.OtpControl length={6} groupSize={3} />
+				<MyInput.PinControl length={6} groupSize={3} />
 			</MyInput.Root>
 		</div>
 
 		<div class="flex flex-col gap-2">
 			<Label>Standalone — individual boxes (default)</Label>
-			<OtpControl
+			<PinControl
 				length={6}
 				oncomplete={() => {
-					otpCompleted = true;
+					pinCompleted = true;
 				}}
 			/>
 		</div>
 
 		<div class="flex flex-col gap-2">
 			<Label>Standalone — 4-digit PIN</Label>
-			<OtpControl length={4} placeholder="○" />
+			<PinControl length={4} placeholder="○" />
 		</div>
 
 		<div class="flex flex-col gap-2">
 			<Label>Standalone — 8-char alphanumeric grouped (4+4)</Label>
-			<OtpControl length={8} type="alphanumeric" groupSize={4} />
+			<PinControl length={8} type="alphanumeric" groupSize={4} />
 		</div>
 
 		<div class="flex flex-col gap-2">
 			<Label>Disabled</Label>
-			<OtpControl length={6} value="123456" disabled />
+			<PinControl length={6} value="123456" disabled />
 		</div>
 
 		<div class="flex flex-col gap-2">
 			<Label>Readonly</Label>
-			<OtpControl length={6} value="123456" readonly />
+			<PinControl length={6} value="123456" readonly />
 		</div>
 	</div>
 </Story>
@@ -898,4 +904,47 @@
 			</div>
 		</div>
 	</div>
+</Story>
+
+<!--
+	The composite controls render spans, not a named <input>, so on their own they submit nothing.
+	Given a `name` they mount a hidden input alongside — this posts through a plain <form> with no
+	JS binding at all. The readout is built from FormData, so it shows what a server would receive.
+-->
+<Story name="Form Submission" parameters={{ layout: 'fullscreen' }}>
+	<form
+		class="flex w-96 flex-col gap-4 p-4"
+		onsubmit={(event) => {
+			event.preventDefault();
+			submitted = [...new FormData(event.currentTarget)].map(([k, v]) => `${k}=${v}`);
+		}}
+	>
+		<div class="flex flex-col gap-1">
+			<Label>Time</Label>
+			<MyInput.Root class="h-9">
+				<MyInput.TimeControl name="time" value="09:30" />
+			</MyInput.Root>
+		</div>
+
+		<div class="flex flex-col gap-1">
+			<Label>Colour</Label>
+			<MyInput.Root class="h-9 gap-2">
+				<MyInput.ColorSwatch />
+				<MyInput.ColorControl name="colour" value="#1a2b3c" />
+			</MyInput.Root>
+		</div>
+
+		<div class="flex flex-col gap-1">
+			<Label>Pin — its own input is named, so no shim is mounted</Label>
+			<MyInput.Root class="w-72">
+				<MyInput.PinControl name="pin" length={4} />
+			</MyInput.Root>
+		</div>
+
+		<Button type="submit">Submit</Button>
+
+		<code class="text-muted-foreground text-xs">
+			{submitted.length ? submitted.join(' · ') : '(not submitted)'}
+		</code>
+	</form>
 </Story>

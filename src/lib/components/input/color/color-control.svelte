@@ -1,23 +1,18 @@
 <script lang="ts">
-	import {
-		inputChangeContext,
-		resolveControlPreset,
-		writeInputValue
-	} from '$ixirjs/ui/components/input/shared';
+	import { useControl, INPUT_DISABLED_CLASS } from '$ixirjs/ui/components/input/shared';
 	import { clamp } from '$ixirjs/ui/utils/math';
-	import { cn, toClassValue } from '$ixirjs/ui/utils';
-	import { InputBond } from '$ixirjs/ui/components/input/bond.svelte';
+	import HiddenInput from '../hidden-input.svelte';
+	import { cn } from '$ixirjs/ui/utils';
 	import type { StateChangeContext } from '$ixirjs/ui/types';
 	import type { InputColorControlProps } from './types';
 	import type { ColorFormat, ChannelValues, ChannelDef } from './types';
 	import Segment from './segment.svelte';
 	import { FORMAT_DEFS, parseColor, buildColor, detectFormat } from './shared';
 
-	const bond = InputBond.get();
-
 	let {
 		class: klass = '',
 		value = $bindable(''),
+		name = undefined,
 		format: formatProp = undefined,
 		alpha: showAlpha = false,
 		placeholder = 'oklch(0.5 0.2 250deg)',
@@ -30,12 +25,12 @@
 		...restProps
 	}: InputColorControlProps = $props();
 
-	const preset = resolveControlPreset(
-		() => presetKey,
-		bond,
-		() => restProps,
-		() => toClassValue(klass, bond)
-	);
+	const control = useControl({
+		preset: () => presetKey,
+		restProps: () => restProps,
+		class: () => klass,
+		type: () => 'color'
+	});
 
 	const activeFormat = $derived<ColorFormat>(formatProp ?? detectFormat(value) ?? 'hex');
 	const def = $derived(FORMAT_DEFS[activeFormat]);
@@ -72,50 +67,38 @@
 		segRefs[clamp(i, 0, segCount - 1)]?.focus();
 	}
 
-	// Mirror the bindable value onto the bond state.
-	$effect(() => {
-		writeInputValue(bond, value);
-	});
-
 	function commitValue(built: string, event: Event | undefined, reason: string) {
 		const changed = built !== value;
 		value = built;
-		writeInputValue(bond, built);
-		if (changed) {
-			onvaluechange?.(value, inputChangeContext(bond, event, reason));
-		}
+		control.setValue(built);
+		if (changed) control.notify(onvaluechange, value, event, reason);
 	}
 
-	function handleChannelChange(
+	// One writer for both the per-keystroke `onvaluechange` and the on-blur `oncommit`; they only
+	// ever differed in the reason they report.
+	function handleChannel(
 		channelId: string,
 		val: number | string | undefined,
-		context: StateChangeContext
+		context: StateChangeContext,
+		reason: 'input' | 'commit'
 	) {
 		const newChannels = channelId === 'alpha' ? channels : { ...channels, [channelId]: val };
 		const newAlpha = channelId === 'alpha' ? (val as number | undefined) : alpha;
-		commitValue(buildColor(activeFormat, newChannels, newAlpha), context.event, 'input');
-	}
-
-	function handleChannelCommit(
-		channelId: string,
-		val: number | string | undefined,
-		context: StateChangeContext
-	) {
-		const newChannels = channelId === 'alpha' ? channels : { ...channels, [channelId]: val };
-		const newAlpha = channelId === 'alpha' ? (val as number | undefined) : alpha;
-		commitValue(buildColor(activeFormat, newChannels, newAlpha), context.event, 'commit');
+		commitValue(buildColor(activeFormat, newChannels, newAlpha), context.event, reason);
 	}
 </script>
 
 <span
 	class={cn(
 		'inline-flex h-full items-center gap-0.5 px-2',
-		disabled && 'cursor-not-allowed opacity-50',
-		preset.class
+		disabled && INPUT_DISABLED_CLASS,
+		control.class
 	)}
-	{...preset.attrs}
+	role="group"
+	aria-label="Color"
+	{...control.attrs}
 >
-	{@render (value || def
+	{@render (value
 		? isNamedFmt
 			? namedInput
 			: isHexFmt
@@ -123,6 +106,8 @@
 				: functionalFormat
 		: placeholderText)()}
 </span>
+
+<HiddenInput {name} {value} />
 
 <!-- Named: single plain-text input -->
 {#snippet namedInput()}
@@ -169,8 +154,8 @@
 		{readonly}
 		{oninput}
 		{onchange}
-		onvaluechange={(v, context) => handleChannelChange(ch.id, v, context)}
-		oncommit={(v, context) => handleChannelCommit(ch.id, v, context)}
+		onvaluechange={(v, context) => handleChannel(ch.id, v, context, 'input')}
+		oncommit={(v, context) => handleChannel(ch.id, v, context, 'commit')}
 		onfocusmove={(dir) => focusSeg(i + dir)}
 	/>
 {/snippet}
@@ -189,8 +174,8 @@
 		{readonly}
 		{oninput}
 		{onchange}
-		onvaluechange={(v, context) => handleChannelChange('alpha', v, context)}
-		oncommit={(v, context) => handleChannelCommit('alpha', v, context)}
+		onvaluechange={(v, context) => handleChannel('alpha', v, context, 'input')}
+		oncommit={(v, context) => handleChannel('alpha', v, context, 'commit')}
 		onfocusmove={(dir) => focusSeg(alphaIdx + dir)}
 	/>
 {/snippet}

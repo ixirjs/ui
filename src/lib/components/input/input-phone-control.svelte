@@ -1,11 +1,11 @@
 <script lang="ts">
 	import {
-		inputChangeContext,
-		resolveControlPreset,
-		writeInputValue
+		useControl,
+		INPUT_DISABLED_CLASS,
+		INPUT_OVERLAY_FIELD_CLASS
 	} from '$ixirjs/ui/components/input/shared';
-	import { cn, toClassValue } from '$ixirjs/ui/utils';
-	import { InputBond } from '$ixirjs/ui/components/input/bond.svelte';
+	import { cn } from '$ixirjs/ui/utils';
+	import SegmentOverlay from './segment-overlay.svelte';
 	import {
 		buildPhoneMasked,
 		deletePhoneDigitsFromCursor,
@@ -19,8 +19,6 @@
 		InputPhoneControlProps,
 		PhoneSpan as Span
 	} from '$ixirjs/ui/components/input/types';
-
-	const bond = InputBond.get();
 
 	let {
 		class: klass = '',
@@ -38,12 +36,11 @@
 		...restProps
 	}: InputPhoneControlProps = $props();
 
-	const preset = resolveControlPreset(
-		() => presetKey,
-		bond,
-		() => restProps,
-		() => toClassValue(klass, bond)
-	);
+	const control = useControl({
+		preset: () => presetKey,
+		restProps: () => restProps,
+		class: () => klass
+	});
 
 	let inputEl = $state<HTMLInputElement>();
 	let scrollLeft = $state(0);
@@ -79,8 +76,8 @@
 
 	function commitValue(next: string, event: Event, reason: string) {
 		value = next;
-		writeInputValue(bond, value);
-		onvaluechange?.(value, inputChangeContext(bond, event, reason));
+		control.setValue(value);
+		control.notify(onvaluechange, value, event, reason);
 	}
 
 	// Input handler
@@ -129,10 +126,6 @@
 		}
 	}
 
-	function handleChange(event: Event) {
-		onchange?.(event);
-	}
-
 	// Paste handler
 	function handlePaste(ev: ClipboardEvent) {
 		ev.preventDefault();
@@ -172,24 +165,17 @@
 	}
 </script>
 
+<!--
+  The <input> below is this control's own: it holds the *masked* text while `value` holds bare
+  digits, and six handlers write `inputEl.value` imperatively. Only the overlay is shared — see the
+  note in segment-overlay.svelte for why that is the seam and the field is not.
+-->
 {@render (format ? formattedInput : freeInput)()}
 
 {#snippet formattedInput()}
 	<span class="relative flex h-full w-full flex-1 items-center overflow-hidden">
 		<!-- coloured overlay (mirrors the input, no caret) -->
-		<span
-			aria-hidden="true"
-			class={cn(
-				'pointer-events-none absolute inset-0 flex items-center overflow-hidden whitespace-pre px-2 font-mono text-sm',
-				preset.class
-			)}
-		>
-			<span style="transform: translateX(-{scrollLeft}px)">
-				{#each overlaySpans as span, i (span)}
-					{@render (spanSnippet ?? defaultSpan)(span, i)}
-				{/each}
-			</span>
-		</span>
+		<SegmentOverlay spans={overlaySpans} {scrollLeft} class={control.class} span={spanSnippet} />
 
 		<!-- real input: transparent text, visible caret -->
 		<input
@@ -199,25 +185,21 @@
 			{disabled}
 			{readonly}
 			class={cn(
-				'relative h-full w-full flex-1 bg-transparent px-2 font-mono text-sm text-transparent caret-foreground outline-none',
-				'placeholder:text-transparent',
-				disabled && 'cursor-not-allowed opacity-50',
-				preset.class
+				INPUT_OVERLAY_FIELD_CLASS,
+				'text-transparent placeholder:text-transparent',
+				disabled && INPUT_DISABLED_CLASS,
+				control.class
 			)}
-			{...preset.attrs}
+			{...control.attrs}
 			oninput={handleInput}
 			onkeydown={handleKeydown}
-			onchange={handleChange}
+			{onchange}
 			onpaste={handlePaste}
 			onscroll={syncScroll}
 			onfocus={handleFocus}
 			onblur={handleBlur}
 		/>
 	</span>
-{/snippet}
-
-{#snippet defaultSpan(span: Span, _index: number)}
-	<span style={span.style}>{span.text}</span>
 {/snippet}
 
 {#snippet freeInput()}
@@ -233,12 +215,12 @@
 		class={cn(
 			'h-full w-full flex-1 bg-transparent px-2 font-mono text-sm outline-none',
 			'text-foreground placeholder:text-muted-foreground',
-			disabled && 'cursor-not-allowed opacity-50',
-			preset.class
+			disabled && INPUT_DISABLED_CLASS,
+			control.class
 		)}
-		{...preset.attrs}
+		{...control.attrs}
 		oninput={handleInput}
-		onchange={handleChange}
+		{onchange}
 		onpaste={handlePaste}
 	/>
 {/snippet}

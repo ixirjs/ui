@@ -6,16 +6,12 @@
 		LOCATION_SEGMENT_STYLES,
 		parseLocationCoords
 	} from '$ixirjs/ui/components/input/location';
-	import {
-		inputChangeContext,
-		resolveControlPreset,
-		writeInputValue
-	} from '$ixirjs/ui/components/input/shared';
-	import { cn, toClassValue } from '$ixirjs/ui/utils';
-	import { InputBond } from '$ixirjs/ui/components/input/bond.svelte';
+	import { useControl } from '$ixirjs/ui/components/input/shared';
+	import SegmentedField from '$ixirjs/ui/components/input/segmented-field.svelte';
+	import type { InputBond as InputBondType } from '$ixirjs/ui/components/input/bond.svelte';
 	import type { InputLocationControlProps } from '$ixirjs/ui/components/input/types';
-
-	const bond = InputBond.get();
+	import type { StateChangeContext } from '$ixirjs/ui/types';
+	import { createParsedValue } from './parsed-value.svelte';
 
 	let {
 		class: klass = '',
@@ -34,146 +30,81 @@
 		...restProps
 	}: InputLocationControlProps = $props();
 
-	const preset = resolveControlPreset(
-		() => presetKey,
-		bond,
-		() => restProps,
-		() => toClassValue(klass, bond)
-	);
+	// No `class` here: `klass` goes to <SegmentedField>, which folds it against the bond itself.
+	const control = useControl({
+		preset: () => presetKey,
+		restProps: () => restProps
+	});
 
-	let inputEl = $state<HTMLInputElement>();
-	let scrollLeft = $state(0);
 	let isFocused = $state(false);
 
 	const segments = $derived(buildLocationSegments(value, { format, precision }));
 
-	// Sync value → lat/lng props
-	$effect(() => {
-		const coords = parseLocationCoords(value);
-		if (coords && isValidLatitude(coords.lat) && isValidLongitude(coords.lng)) {
-			lat = coords.lat;
-			lng = coords.lng;
-		} else if (!value.trim()) {
-			lat = undefined;
-			lng = undefined;
-		}
-	});
-
-	// Sync lat/lng props → value string (external writes)
-	$effect(() => {
-		if (lat !== undefined && lng !== undefined) {
-			const current = parseLocationCoords(value);
-			if (current?.lat !== lat || current?.lng !== lng) {
-				value = `${lat}, ${lng}`;
-				writeInputValue(bond, value);
+	type Coordinates = { lat: number | undefined; lng: number | undefined };
+	const parsedValue = createParsedValue<string, Coordinates>({
+		raw: { get: () => value, set: (next) => (value = next) },
+		parsed: {
+			get: () => ({ lat, lng }),
+			set: (next) => {
+				lat = next.lat;
+				lng = next.lng;
 			}
-		}
+		},
+		parse: (raw) => {
+			if (!raw.trim()) return { value: { lat: undefined, lng: undefined } };
+			const coords = parseLocationCoords(raw);
+			return coords && isValidLatitude(coords.lat) && isValidLongitude(coords.lng)
+				? { value: coords }
+				: undefined;
+		},
+		format: (coords) =>
+			coords.lat === undefined || coords.lng === undefined ? value : `${coords.lat}, ${coords.lng}`,
+		preferRaw: (raw) => raw.trim() !== '',
+		equalsParsed: (left, right) => left.lat === right.lat && left.lng === right.lng,
+		onRawChange: (raw) => control.setValue(raw)
 	});
 
-	function commitValue(next: string, event: Event, reason: string) {
-		value = next;
-		const coords = parseLocationCoords(value);
-		if (coords && isValidLatitude(coords.lat) && isValidLongitude(coords.lng)) {
-			lat = coords.lat;
-			lng = coords.lng;
-		} else if (!value.trim()) {
-			lat = undefined;
-			lng = undefined;
-		}
-
-		writeInputValue(bond, value);
-		onvaluechange?.(value, inputChangeContext(bond, event, reason, { lat, lng }));
+	// SegmentedField owns the value write and the bond write; this adds the coordinate sync and
+	// the lat/lng detail the location control's own callback contract promises.
+	function handleValueChange(next: string, context: StateChangeContext<InputBondType>) {
+		parsedValue.setRaw(next);
+		onvaluechange?.(next, { ...context, lat, lng });
 	}
 
-	// Input / change handlers
-	function handleInput(event: Event) {
-		oninput?.(event);
-		if (event.defaultPrevented) return;
-
-		commitValue((event.currentTarget as HTMLInputElement).value, event, 'input');
-		syncScroll();
-	}
-
-	function handleChange(event: Event) {
-		onchange?.(event);
-	}
-
-	function syncScroll() {
-		scrollLeft = inputEl?.scrollLeft ?? 0;
-	}
-
-	function handleFocus() {
-		isFocused = true;
-	}
-
-	function handleBlur() {
-		isFocused = false;
-	}
-
-	// Paste: normalise common coordinate formats
+	// Paste: normalise common coordinate formats before it reaches the field.
 	function handlePaste(ev: ClipboardEvent) {
 		ev.preventDefault();
 		const pasted = ev.clipboardData?.getData('text') ?? '';
 		const coords = parseLocationCoords(pasted);
 		const next = coords ? `${coords.lat}, ${coords.lng}` : pasted;
-		if (inputEl) inputEl.value = next;
-		commitValue(next, ev, 'paste');
+
+		parsedValue.setRaw(next);
+		control.notify(onvaluechange, next, ev, 'paste', { lat, lng });
 	}
 </script>
 
-<span class="relative flex h-full w-full flex-1 items-center overflow-hidden">
-	<!-- Display mode overlay (hidden while focused) -->
-	{@render (!isFocused ? segmentOverlay : undefined)?.()}
-
-	<!-- Real <input> — transparent in display mode, visible while focused -->
-	<input
-		bind:this={inputEl}
-		type="text"
-		inputmode="decimal"
-		autocomplete="off"
-		spellcheck={false}
-		bind:value
-		{placeholder}
-		{disabled}
-		{readonly}
-		class={cn(
-			'relative h-full w-full flex-1 bg-transparent px-2 font-mono text-sm caret-foreground outline-none',
-			isFocused
-				? 'text-foreground placeholder:text-muted-foreground'
-				: 'text-transparent placeholder:text-transparent',
-			disabled && 'cursor-not-allowed opacity-50',
-			preset.class
-		)}
-		{...preset.attrs}
-		oninput={handleInput}
-		onchange={handleChange}
-		onscroll={syncScroll}
-		onpaste={handlePaste}
-		onfocus={handleFocus}
-		onblur={handleBlur}
-	/>
-</span>
-
-{#snippet segmentOverlay()}
-	<span
-		aria-hidden="true"
-		class={cn(
-			'pointer-events-none absolute inset-0 flex items-center overflow-hidden whitespace-pre px-2 font-mono text-sm',
-			preset.class
-		)}
-	>
-		<span style="transform: translateX(-{scrollLeft}px)">
-			{@render (segments.length ? segmentSpans : placeholderSpan)()}
-		</span>
-	</span>
-{/snippet}
-
-{#snippet segmentSpans()}
-	{#each segments as seg, i (i)}
-		<span style={LOCATION_SEGMENT_STYLES[seg.kind]}>{seg.text}</span>
-	{/each}
-{/snippet}
-
-{#snippet placeholderSpan()}
-	<span class="text-muted-foreground">{placeholder}</span>
-{/snippet}
+<!--
+  Two layers: transparent-text <input> on top (caret, selection, native editing) over a coloured
+  overlay <span>, shown only while blurred. Markup and scroll-sync live in <SegmentedField>.
+-->
+<SegmentedField
+	type="text"
+	inputmode="decimal"
+	autocomplete="off"
+	spellcheck={false}
+	bind:value
+	{segments}
+	kindStyle={LOCATION_SEGMENT_STYLES}
+	overlayWhen={!isFocused}
+	{placeholder}
+	{disabled}
+	{readonly}
+	class={klass}
+	{control}
+	{onchange}
+	{oninput}
+	onvaluechange={handleValueChange}
+	onpaste={handlePaste}
+	onfocus={() => (isFocused = true)}
+	onblur={() => (isFocused = false)}
+/>

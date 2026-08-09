@@ -1,6 +1,6 @@
-import type { PresetKey } from '$ixirjs/ui/preset';
 import type { StateChangeCallback } from '$ixirjs/ui/types';
 import type { InputBond } from '$ixirjs/ui/components/input/bond.svelte';
+import type { ControlPropsBase } from '$ixirjs/ui/components/input/types';
 export type ColorFormat =
 	| 'named'
 	| 'hex'
@@ -45,36 +45,45 @@ export interface ChannelDef {
 export type ChannelValues = Record<string, number | string | undefined>;
 
 export interface ColorSegmentProps {
+	/** Current value of the control. */
 	value: number | string | undefined;
+	/** The colour channel this segment edits — its key, range and formatting. */
 	channel: ChannelDef;
+	/** Disables the control: it stops responding and is removed from the tab order. */
 	disabled?: boolean;
+	/** Renders the current value but blocks editing. Unlike `disabled`, it stays focusable. */
 	readonly?: boolean;
+	/** Additional classes, merged after the preset so they win. */
 	class?: string;
 	// Native contenteditable callbacks remain event-only.
+	/** Native change event, fired when the value is committed. */
 	onchange?: ((event: Event) => void) | undefined;
+	/** Native input event, fired on every keystroke. */
 	oninput?: ((event: Event) => void) | undefined;
-	// Fired on every live semantic change (arrow up/down, typing).
+	/** Called when the segment’s value changes. */
 	onvaluechange?: StateChangeCallback<number | string | undefined>;
-	// Fired on blur / Enter after the value commits.
+	/** Called when editing of this segment finishes, so the parent can normalise the colour. */
 	oncommit?: StateChangeCallback<number | string | undefined>;
+	/** Requests focus move to the previous or next segment, driving arrow-key navigation. */
 	onfocusmove?: (dir: 1 | -1) => void;
 }
 
-export interface InputColorControlProps {
+export type InputColorControlProps = ControlPropsBase & InputColorControlOwnProps;
+
+export interface InputColorControlOwnProps {
 	// Raw CSS color string (bindable); format auto-detected
+	/** Bindable CSS color string. */
 	value?: string;
 	// Override the active format; segments render for this format regardless of value
+	/** Override the active format. */
 	format?: ColorFormat;
 	// Always show the alpha segment even when value has no alpha component
+	/**
+	 * Always show the alpha channel segment.
+	 * @default false
+	 */
 	alpha?: boolean;
-	placeholder?: string;
-	disabled?: boolean;
-	readonly?: boolean;
-	class?: string;
-	preset?: PresetKey;
-	// Native DOM callbacks retain event-only semantics.
-	oninput?: (event: Event) => void;
-	onchange?: (event: Event) => void;
 	// Fired after the color value has committed.
+	/** Semantic color value callback with event, bond, and reason context. */
 	onvaluechange?: StateChangeCallback<string, InputBond>;
 }

@@ -51,10 +51,6 @@ export function isValidLongitude(value: number): boolean {
 	return value >= -180 && value <= 180;
 }
 
-export function locationCoordsValid(coords: ParsedLocationCoords): boolean {
-	return coords !== null && isValidLatitude(coords.lat) && isValidLongitude(coords.lng);
-}
-
 export function buildLocationSegments(
 	raw: string,
 	options: { format?: LocationFormat; precision?: number } = {}

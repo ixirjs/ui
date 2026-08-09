@@ -13,12 +13,12 @@ import type {
 	InputStateChangeCallback,
 	PortalSurfaceProps as RootPortalSurfaceProps,
 	PortalTarget as RootPortalTarget,
+	RenderProps,
 	SelectItemProps as RootSelectItemProps,
 	SortBy,
 	StateChangeCallback,
 	StateChangeContext
 } from '@ixirjs/ui';
-import type { HtmlAtomProps } from '@ixirjs/ui/components/atom';
 import {
 	Combobox,
 	type ComboboxItemProps,
@@ -37,7 +37,7 @@ import type {
 	ContextMenuTriggerProps
 } from '@ixirjs/ui/components/context-menu';
 import type { DropdownMenuItemProps } from '@ixirjs/ui/components/dropdown-menu';
-import type { FormRootProps } from '@ixirjs/ui/components/form';
+import { defineSchema, type FormRootProps } from '@ixirjs/ui/components/form';
 import type {
 	FieldChildren,
 	FieldControlChangeDetails,
@@ -146,15 +146,15 @@ export type ListExportsEveryRenderedPartProps = [
 	ListDividerProps
 ];
 
-export type ContainerUsesDivHtmlAtomProps = Assert<
-	ContainerProps extends HtmlAtomProps<'div', never, ContainerChildren> ? true : false
+export type ContainerUsesDivRenderProps = Assert<
+	ContainerProps extends RenderProps<'div', never, ContainerChildren> ? true : false
 >;
 
 type Option = { label: string };
 
 const renderlessFormProps = {
 	renderless: true,
-	validator: {}
+	mode: 'manual'
 } satisfies FormRootProps;
 
 // @ts-expect-error Renderless forms do not render an element or accept element props.
@@ -163,12 +163,12 @@ const invalidRenderlessFormProps: FormRootProps = {
 	class: 'not-rendered'
 };
 
+// A field takes a Standard Schema directly — no adapter, and no `validator` prop to hang one on.
+// `FieldRootProps` inherits an index signature, so this only fails loudly once roadmap 1.7 removes
+// it; the assignment below is the part that has to keep type-checking.
 const fieldRootProps = {
-	validator: {
-		validate(_schema: unknown, value: unknown) {
-			return { success: true as const, data: value, errors: [] };
-		}
-	}
+	schema: defineSchema<string>((value) => (value.length > 2 ? undefined : 'Too short')),
+	mode: 'blur'
 } satisfies FieldRootProps;
 
 const listGroupProps = {} satisfies ListGroupProps;

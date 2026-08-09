@@ -4,7 +4,7 @@ export type PhoneMaskToken =
 	| { type: 'digit'; optional: boolean; slotIndex: number }
 	| { type: 'lit'; char: string; optional: boolean };
 
-export const PHONE_SEGMENT_COLORS: Record<string, string> = {
+const PHONE_SEGMENT_COLORS: Record<string, string> = {
 	country: 'var(--input-hl-accent, var(--foreground))',
 	area: 'var(--foreground)',
 	prefix: 'var(--input-hl-secondary, var(--foreground))',

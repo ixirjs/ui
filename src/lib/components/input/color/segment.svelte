@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { INPUT_DISABLED_CLASS } from '$ixirjs/ui/components/input/shared';
 	// This segment is a `contenteditable` field whose text is managed imperatively: setting
 	// `textContent` (rather than binding it) is required to avoid Svelte re-rendering fighting the
 	// caret position on every keystroke. The no-dom-manipulating rule doesn't fit this pattern.
@@ -51,6 +52,18 @@
 	});
 
 	const hasValue = $derived(value !== undefined);
+
+	// The spinbutton contract wants a number. Hex channels carry their value as a two-digit
+	// string, so they are read back through base 16 rather than exposed as text.
+	const numericValue = $derived.by(() => {
+		if (value === undefined) return undefined;
+		const n = isHex
+			? parseInt(String(value), 16)
+			: typeof value === 'string'
+				? parseFloat(value)
+				: value;
+		return isNaN(n) ? undefined : n;
+	});
 
 	let isFocused = $state(false);
 
@@ -234,18 +247,20 @@
 	tabindex={disabled ? -1 : 0}
 	contenteditable={!disabled && !readonly ? 'plaintext-only' : undefined}
 	spellcheck={false}
+	aria-valuemin={channel.min}
+	aria-valuemax={channel.max}
+	aria-valuenow={numericValue}
+	aria-valuetext={displayText}
 	aria-label={channel.label}
 	aria-disabled={disabled}
+	style="min-width: {minWidth}ch"
 	class={[
 		'inline-flex items-center justify-center px-0.5 text-center font-mono tabular-nums text-sm',
-		`min-w-[${minWidth}ch]`,
 		'focus:bg-foreground/10 focus:outline-none focus:rounded-sm',
 		hasValue ? 'text-foreground' : 'text-muted-foreground',
-		disabled && 'cursor-not-allowed opacity-50',
+		disabled && INPUT_DISABLED_CLASS,
 		klass
-	]
-		.filter(Boolean)
-		.join(' ')}
+	]}
 	onfocus={handleFocus}
 	onblur={handleBlur}
 	oninput={(event) => oninput?.(event)}

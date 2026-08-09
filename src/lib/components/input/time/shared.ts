@@ -60,7 +60,7 @@ export function internalToDisplay(h: number): number {
 }
 
 // Seconds since midnight — used for min/max clamping.
-export function timeToSeconds(h = 0, m = 0, s = 0): number {
+function timeToSeconds(h = 0, m = 0, s = 0): number {
 	return h * 3600 + m * 60 + s;
 }
 
@@ -154,4 +154,86 @@ export function buildDateTimeValue(parts: DateTimeParts, withSeconds: boolean): 
 export function maxDaysInMonth(month?: number, year?: number): number {
 	if (!month) return 31;
 	return new Date(year ?? 2000, month, 0).getDate();
+}
+
+// Rollover arithmetic — one copy each, shared by every `onrollover` handler in time-control and
+// datetime-control. Both were written out inline three to six times.
+
+// Step one unit past a bound and wrap. An unset value starts at the bound it is stepping away from,
+// so the first ArrowUp on an empty minute segment gives 1 and the first ArrowDown gives 58.
+export function stepWrap(cur: number | undefined, min: number, max: number, dir: 1 | -1): number {
+	const from = cur ?? (dir === 1 ? min : max);
+	if (dir === 1) return from >= max ? min : from + 1;
+	return from <= min ? max : from - 1;
+}
+
+export type CalendarParts = {
+	year?: number | undefined;
+	month?: number | undefined;
+	day?: number | undefined;
+};
+
+// Move the month by one, carrying the year.
+export function addMonth(
+	parts: CalendarParts,
+	dir: 1 | -1,
+	fallbackYear: number
+): { year: number; month: number } {
+	let year = parts.year ?? fallbackYear;
+	let month = (parts.month ?? 1) + dir;
+	if (month > 12) {
+		month = 1;
+		year++;
+	}
+	if (month < 1) {
+		month = 12;
+		year--;
+	}
+	return { year, month };
+}
+
+// Move the day by one, carrying month and year. Stepping back into the previous month lands on that
+// month's real last day — including February of the year actually carried into.
+export function addDay(
+	parts: CalendarParts,
+	dir: 1 | -1,
+	fallbackYear: number
+): { year: number; month: number; day: number } {
+	const year = parts.year ?? fallbackYear;
+	const month = parts.month ?? 1;
+	const day = (parts.day ?? 1) + dir;
+
+	if (day > maxDaysInMonth(month, year)) {
+		return { ...addMonth({ year, month }, 1, fallbackYear), day: 1 };
+	}
+	if (day < 1) {
+		const prev = addMonth({ year, month }, -1, fallbackYear);
+		return { ...prev, day: maxDaysInMonth(prev.month, prev.year) };
+	}
+	return { year, month, day };
+}
+
+/** Carry a wrapped clock segment through every higher date/time unit. */
+export function carryDateTime(
+	parts: DateTimeParts,
+	rolled: 'seconds' | 'minutes' | 'hours',
+	dir: 1 | -1,
+	fallbackYear: number
+): DateTimeParts {
+	const date = new Date(0);
+	date.setUTCFullYear(parts.year ?? fallbackYear, (parts.month ?? 1) - 1, parts.day ?? 1);
+	date.setUTCHours(parts.hours ?? 0, parts.minutes ?? 0, parts.seconds ?? 0, 0);
+
+	if (rolled === 'seconds') date.setUTCMinutes(date.getUTCMinutes() + dir);
+	else if (rolled === 'minutes') date.setUTCHours(date.getUTCHours() + dir);
+	else date.setUTCDate(date.getUTCDate() + dir);
+
+	return {
+		year: date.getUTCFullYear(),
+		month: date.getUTCMonth() + 1,
+		day: date.getUTCDate(),
+		hours: date.getUTCHours(),
+		minutes: date.getUTCMinutes(),
+		seconds: date.getUTCSeconds()
+	};
 }

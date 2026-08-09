@@ -1,8 +1,8 @@
-<script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
+<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
 	import { InputBond, type InputStateProps } from './bond.svelte';
 	import { useRoot } from '$ixirjs/ui/shared';
-	import { type Base } from '$ixirjs/ui/components/atom';
-	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
+	import { type Base, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
 	import type { Factory } from '$ixirjs/ui/types';
 	import type { InputRootProps } from './types';
 
@@ -50,11 +50,9 @@
 	);
 	const bond = root.bond;
 
-	export function getBond() {
-		return bond;
-	}
+	export const getBond = root.getBond;
 
-	const el = usePartElement(root, () => ({
+	const el = Kernel.element(root, () => ({
 		class: [
 			'text-foreground bg-input relative flex h-10 w-auto items-center overflow-hidden rounded-md border',
 			'$preset',
@@ -65,4 +63,12 @@
 	}));
 </script>
 
-{@render partElement(el, children, { input: bond })}
+{@render Kernel.render(el)(
+	el.tag(),
+	el.class(),
+	el.attrs(),
+	children,
+	{ input: bond },
+	el.motion(),
+	el
+)}

@@ -1,16 +1,8 @@
 <script lang="ts" generics="B extends Base = Base">
-	import {
-		resolveControlPreset,
-		INPUT_FIELD_CLASS,
-		inputChangeContext,
-		writeInputChecked,
-		writeInputFiles,
-		writeInputRawValue
-	} from './shared';
+	import { useControl, INPUT_FIELD_CLASS, toFiniteNumber } from './shared';
 	import { cn } from '$ixirjs/ui/utils';
-	import type { Base } from '$ixirjs/ui/components/atom';
-	import { usePart } from '$ixirjs/ui/shared';
-	import { InputBond } from './bond.svelte';
+	import type { Base, BasePropsOf } from '$ixirjs/ui/components/atom';
+	import { DATE_INPUT_TYPES } from './bond.svelte';
 	import type { InputControlProps } from './types';
 	import type { PresetLike } from '$ixirjs/ui/preset';
 
@@ -35,32 +27,19 @@
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		children = undefined,
 		...restProps
-	}: InputControlProps<B> = $props();
+	}: InputControlProps<B> & BasePropsOf<B> = $props();
 
-	// Native input presentation stays with its adapter; usePart owns context, Atom identity,
-	// registration, roles, and teardown.
-	const part = usePart(InputBond, 'input', {}, { context: 'optional' });
-	const bond = part.bond;
-	const preset = resolveControlPreset(
-		() => presetKey,
-		bond,
-		() => restProps,
-		() => klass,
-		undefined,
-		() => presetLayer as PresetLike | undefined
-	);
-
-	const valueProps = $derived({
-		...part.atom.spread,
-		...preset.attrs
+	const control = useControl({
+		preset: () => presetKey,
+		restProps: () => restProps,
+		class: () => klass,
+		instance: () => presetLayer as PresetLike | undefined
 	});
+
+	const valueProps = $derived(control.attrs);
 
 	function changeDetails() {
 		return { value, files, date, number, checked };
-	}
-
-	function handleChange(event: Event) {
-		onchange?.(event);
 	}
 
 	function handleInput(event: Event & { currentTarget: EventTarget & HTMLInputElement }) {
@@ -72,59 +51,52 @@
 
 		if (inputType === 'file') {
 			files = Array.from(input.files ?? []);
-			writeInputFiles(bond, files);
-			onfileschange?.(files, inputChangeContext(bond, event, 'input', changeDetails()));
+			control.setFiles(files);
+			control.notify(onfileschange, files, event, 'input', changeDetails());
 			return;
 		}
 
-		value =
-			inputType === 'number'
-				? input.value.trim() === '' || Number.isNaN(input.valueAsNumber)
-					? undefined
-					: input.valueAsNumber
-				: input.value;
-		writeInputRawValue(bond, value);
+		value = inputType === 'number' ? toFiniteNumber(input) : input.value;
+		control.setValue(value);
 
 		if (inputType === 'number') {
-			number =
-				input.value.trim() === '' || Number.isNaN(input.valueAsNumber)
-					? undefined
-					: input.valueAsNumber;
-			onnumberchange?.(
+			number = toFiniteNumber(input);
+			control.notify(
+				onnumberchange,
 				number,
-				inputChangeContext(bond, event, number === undefined ? 'clear' : 'input', changeDetails())
+				event,
+				number === undefined ? 'clear' : 'input',
+				changeDetails()
 			);
 		}
 
-		if (['date', 'time', 'datetime-local', 'month', 'week'].includes(inputType)) {
+		if (DATE_INPUT_TYPES.includes(inputType)) {
 			date = input.valueAsDate;
-			ondatechange?.(date, inputChangeContext(bond, event, 'input', changeDetails()));
+			control.notify(ondatechange, date, event, 'input', changeDetails());
 		}
 
 		if (inputType === 'checkbox' || inputType === 'radio') {
 			checked = input.checked;
-			writeInputChecked(bond, checked);
-			oncheckedchange?.(checked, inputChangeContext(bond, event, 'input', changeDetails()));
+			control.setChecked(checked);
+			control.notify(oncheckedchange, checked, event, 'input', changeDetails());
 		}
 
-		onvaluechange?.(
+		control.notify(
+			onvaluechange,
 			value,
-			inputChangeContext(
-				bond,
-				event,
-				inputType === 'number' && number === undefined ? 'clear' : 'input',
-				changeDetails()
-			)
+			event,
+			inputType === 'number' && number === undefined ? 'clear' : 'input',
+			changeDetails()
 		);
 	}
 </script>
 
 <input
-	class={cn(INPUT_FIELD_CLASS, preset.class)}
+	class={cn(INPUT_FIELD_CLASS, control.class)}
 	{...valueProps}
 	type={type ?? 'text'}
 	value={type === 'file' ? undefined : value}
 	{checked}
-	onchange={handleChange}
+	{onchange}
 	oninput={handleInput}
 />

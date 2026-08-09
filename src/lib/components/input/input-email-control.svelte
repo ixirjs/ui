@@ -1,10 +1,8 @@
 <script lang="ts">
-	import { resolveControlPreset } from './shared';
+	import { useControl } from './shared';
 	import SegmentedField from './segmented-field.svelte';
-	import { InputBond } from './bond.svelte';
+	import { parseEmailSegments, type EmailSegmentKind } from './segments';
 	import type { InputEmailControlProps } from './types';
-
-	const bond = InputBond.get();
 
 	let {
 		class: klass = '',
@@ -19,45 +17,15 @@
 		...restProps
 	}: InputEmailControlProps = $props();
 
-	const preset = resolveControlPreset(
-		() => presetKey,
-		bond,
-		() => restProps
-	);
+	// No `class` here: `klass` goes to <SegmentedField>, which folds it against the bond itself.
+	const control = useControl({
+		preset: () => presetKey,
+		restProps: () => restProps
+	});
 
-	// Parse email into segments
-	type Segment = { text: string; kind: 'local' | 'at' | 'domain' | 'tld' | 'plain' };
+	const segments = $derived(parseEmailSegments(value));
 
-	function parseSegments(raw: string): Segment[] {
-		if (!raw) return [];
-
-		const atIdx = raw.indexOf('@');
-		if (atIdx === -1) return [{ text: raw, kind: 'plain' }];
-
-		const local = raw.slice(0, atIdx);
-		const domain = raw.slice(atIdx + 1);
-		const segs: Segment[] = [];
-
-		if (local) segs.push({ text: local, kind: 'local' });
-		segs.push({ text: '@', kind: 'at' });
-
-		if (domain) {
-			// Split domain into base + TLD on the last dot.
-			const lastDot = domain.lastIndexOf('.');
-			if (lastDot !== -1 && lastDot < domain.length - 1) {
-				segs.push({ text: domain.slice(0, lastDot), kind: 'domain' });
-				segs.push({ text: domain.slice(lastDot), kind: 'tld' });
-			} else {
-				segs.push({ text: domain, kind: 'domain' });
-			}
-		}
-
-		return segs;
-	}
-
-	const segments = $derived(parseSegments(value));
-
-	const kindStyle: Record<Segment['kind'], string> = {
+	const kindStyle: Record<EmailSegmentKind, string> = {
 		local: 'color: var(--input-hl-primary, var(--foreground)); font-weight: 500',
 		at: 'color: var(--input-hl-muted, var(--foreground))',
 		domain: 'color: var(--input-hl-secondary, var(--foreground))',
@@ -75,10 +43,8 @@
 	{disabled}
 	{readonly}
 	class={klass}
-	{preset}
-	{bond}
+	{control}
 	{onchange}
 	{oninput}
 	{onvaluechange}
-	{...restProps}
 />

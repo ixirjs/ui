@@ -1,11 +1,13 @@
 <script lang="ts">
-	import { mergePresetProps, HtmlAtom } from '$ixirjs/ui/components/atom';
-	import { InputBond } from './bond.svelte';
-	import { inputChangeContext, writeInputFiles } from './shared';
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
+	import { mergePresetProps } from '$ixirjs/ui/components/atom';
+	import { useControl } from './shared';
 	import type { InputFileControlProps } from './types';
 
-	const bond = InputBond.get();
-
+	// The Atom goes on the hidden native input, not the visible trigger: that input is the control
+	// the bond should hold, and it is what reports `type === 'file'` to Input.Placeholder. The
+	// The trigger uses Kernel.static as a preset-driven presentational element — the Button shape,
+	// not a bonded part.
 	let {
 		class: klass = '',
 		files = $bindable<File[]>([]),
@@ -21,7 +23,12 @@
 		...restProps
 	}: InputFileControlProps = $props();
 
-	const fileControlProps = $derived(mergePresetProps(preset, 'input.file', restProps));
+	// restProps belongs to the hidden native input — that is the real form control, and what
+	// consumers target with `name`, `required`, `data-testid` and friends. The visible trigger is
+	// presentation, so it gets the preset only; spreading restProps onto both put the consumer's
+	// `id`/`aria-*`/`data-*` on two elements at once.
+	const control = useControl({ preset: () => undefined, restProps: () => restProps });
+	const fileControlProps = $derived(mergePresetProps(preset, 'input.file', {}));
 
 	let inputEl = $state<HTMLInputElement>();
 
@@ -39,8 +46,8 @@
 		if (event.defaultPrevented) return;
 
 		files = Array.from((event.currentTarget as HTMLInputElement).files ?? []);
-		writeInputFiles(bond, files);
-		onfileschange?.(files, inputChangeContext(bond, event, 'change'));
+		control.setFiles(files);
+		control.notify(onfileschange, files, event, 'change');
 	}
 
 	function openPicker() {
@@ -51,9 +58,23 @@
 		event.stopPropagation();
 		files = [];
 		if (inputEl) inputEl.value = '';
-		writeInputFiles(bond, files);
-		onfileschange?.(files, inputChangeContext(bond, event, 'clear'));
+		control.setFiles(files);
+		control.notify(onfileschange, files, event, 'clear');
 	}
+
+	// Element seam instead of a component boundary; key order matches the previous call exactly.
+	const el = Kernel.element(Kernel.static, () => ({
+		as: 'button',
+		type: 'button',
+		disabled,
+		onclick: openPicker,
+		class: [
+			'text-foreground flex h-full w-full flex-1 cursor-pointer items-center gap-2 bg-transparent px-2 text-left outline-none disabled:cursor-not-allowed',
+			'$preset',
+			klass
+		],
+		...fileControlProps
+	}));
 </script>
 
 <!-- hidden native file input -->
@@ -64,29 +85,24 @@
 	{multiple}
 	{disabled}
 	class="sr-only"
+	{...control.attrs}
 	onchange={handleChange}
 	{oninput}
-	{...restProps}
 />
 
-<HtmlAtom
-	as="button"
-	type="button"
-	{disabled}
-	onclick={openPicker}
-	class={[
-		'text-foreground flex h-full w-full flex-1 cursor-pointer items-center gap-2 bg-transparent px-2 text-left outline-none disabled:cursor-not-allowed',
-		'$preset',
-		klass
-	]}
-	{...fileControlProps}
->
-	{@render (triggerContent ?? (hasFiles ? filesSummary : emptyPrompt))({
+{@render Kernel.render(el)(
+	el.tag(),
+	el.class(),
+	el.attrs(),
+	triggerContent ?? (hasFiles ? filesSummary : emptyPrompt),
+	{
 		files,
 		hasFiles,
 		open: openPicker
-	})}
-</HtmlAtom>
+	},
+	el.motion(),
+	el
+)}
 
 {#snippet filesSummary()}
 	{@render (files.length === 1 ? singleFile : multipleFiles)()}

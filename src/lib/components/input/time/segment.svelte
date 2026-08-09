@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { INPUT_DISABLED_CLASS } from '$ixirjs/ui/components/input/shared';
 	// This segment is a `contenteditable` field whose text is managed imperatively: setting
 	// `textContent` (rather than binding it) is required to avoid Svelte re-rendering fighting the
 	// caret position on every keystroke. The no-dom-manipulating rule doesn't fit this pattern.
@@ -28,40 +29,29 @@
 
 	const displayPlaceholder = $derived(placeholder ?? '—'.repeat(digits));
 
-	function getDisplay(): string {
-		if (buffer !== '') return buffer.padStart(digits, '_');
-		if (value !== undefined) return String(value).padStart(digits, '0');
-		return displayPlaceholder;
-	}
+	const isEmpty = $derived(value === undefined && buffer === '');
 
-	function isEmpty(): boolean {
-		return value === undefined && buffer === '';
-	}
+	const display = $derived(
+		buffer !== ''
+			? buffer.padStart(digits, '_')
+			: value !== undefined
+				? String(value).padStart(digits, '0')
+				: displayPlaceholder
+	);
 
-	// Update DOM imperatively to avoid focus loss
+	// Rendered once (plain const, not reactive) so SSR/first paint show the real value instead of a
+	// placeholder that the effect below then swaps out a frame later.
+	const initialDisplay = untrack(() => display);
+
+	// Only the text is written imperatively — binding it would fight the caret on every keystroke.
+	// aria-*, data-empty and the empty/filled colour are ordinary attributes in the markup below.
 	$effect(() => {
-		if (!el) return;
-		const text = getDisplay();
-		void buffer;
-		void value; // track as reactive deps
-
+		const text = display;
 		untrack(() => {
 			requestAnimationFrame(() => {
 				if (el && el.textContent !== text) el.textContent = text;
 			});
 		});
-
-		el.setAttribute('aria-valuetext', text);
-		el.setAttribute('aria-valuenow', value !== undefined ? String(value) : '');
-		el.setAttribute('data-empty', String(isEmpty()));
-
-		if (isEmpty()) {
-			el.classList.remove('text-foreground');
-			el.classList.add('text-muted-foreground');
-		} else {
-			el.classList.remove('text-muted-foreground');
-			el.classList.add('text-foreground');
-		}
 	});
 
 	const clamp = (v: number) => clampRange(v, min, max);
@@ -152,22 +142,23 @@
 	contenteditable={!disabled && !readonly}
 	aria-valuemin={min}
 	aria-valuemax={max}
+	aria-valuenow={value}
+	aria-valuetext={display}
 	aria-label={placeholder}
 	aria-disabled={disabled}
+	data-empty={isEmpty}
 	class={[
 		'inline-flex min-w-[2ch] items-center justify-center px-0.5 text-center font-mono tabular-nums',
 		'focus:bg-foreground/10 focus:outline-none',
-		'text-muted-foreground',
-		disabled && 'cursor-not-allowed opacity-50',
+		isEmpty ? 'text-muted-foreground' : 'text-foreground',
+		disabled && INPUT_DISABLED_CLASS,
 		klass
-	]
-		.filter(Boolean)
-		.join(' ')}
+	]}
 	oninput={(event) => oninput?.(event)}
 	onchange={(event) => onchange?.(event)}
 	onkeydown={handleKeydown}
 	onpaste={(ev) => ev.preventDefault()}
 	onblur={(event) => {
 		if (buffer) commitBuffer(buffer, false, event);
-	}}>{displayPlaceholder}</span
+	}}>{initialDisplay}</span
 >

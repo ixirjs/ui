@@ -3,7 +3,6 @@ import {
 	buildLocationSegments,
 	isValidLatitude,
 	isValidLongitude,
-	locationCoordsValid,
 	parseLocationCoords
 } from '$ixirjs/ui/components/input/location';
 
@@ -25,8 +24,6 @@ describe('location input helpers', () => {
 		expect(isValidLatitude(91)).toBe(false);
 		expect(isValidLongitude(180)).toBe(true);
 		expect(isValidLongitude(-181)).toBe(false);
-		expect(locationCoordsValid({ lat: 40, lng: -74 })).toBe(true);
-		expect(locationCoordsValid({ lat: 95, lng: -74 })).toBe(false);
 	});
 
 	it('builds decimal-degree overlay segments with configured precision', () => {
