@@ -1,10 +1,14 @@
-<script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
+<script module lang="ts">
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
+	import { AccordionItemBond } from './bond.svelte';
+	const PART = Kernel.part(AccordionItemBond, 'indicator', { class: '' });
+</script>
+
+<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
 	import { animate } from '$ixirjs/ui/shared';
 	import { Icon } from '$ixirjs/ui/components/icon';
 	import IconArrowDown from '$ixirjs/ui/icons/icon-arrow-down.svelte';
-	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
-	import { usePart } from '$ixirjs/ui/shared';
-	import { AccordionItemBond } from './bond.svelte';
+	import { type Base, type BasePropsOf, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
 	import type { AccordionItemIndicatorProps } from './types';
 
 	let {
@@ -12,27 +16,40 @@
 		children = undefined,
 		preset = undefined,
 		...restProps
-	}: AccordionItemIndicatorProps<E, B> = $props();
+	}: AccordionItemIndicatorProps<E, B> & BasePropsOf<B> = $props();
 
-	const part = usePart(AccordionItemBond, 'indicator', () => restProps, {
-		preset: () => preset
-	});
+	const part = Kernel.node(PART, () => ({ preset }), { context: 'required' });
 	const bond = part.bond;
 	const isOpen = $derived(bond.isOpen ?? false);
 
 	function _animate(node: HTMLElement) {
 		return animate(node, { rotate: 180 * +isOpen }, { duration: 0.3, ease: 'anticipate' });
 	}
+
+	// Driver-only motion routes straight to HtmlElement.
+	const el = Kernel.element(
+		{ atom: part.atom, bond: part.bond, preset: part.preset, presetLayer: part.presetLayer },
+		() => ({
+			animate: _animate,
+			class: [
+				'border-border pointer-events-none flex items-center justify-center',
+				'$preset',
+				klass
+			],
+			...restProps
+		})
+	);
 </script>
 
-<HtmlAtom
-	animate={_animate}
-	class={['border-border pointer-events-none flex items-center justify-center', '$preset', klass]}
-	{...restProps}
-	{part}
->
-	{@render (children && bond ? consumerIndicator : defaultIndicator)()}
-</HtmlAtom>
+{@render Kernel.render(el)(
+	el.tag(),
+	el.class(),
+	el.attrs(),
+	children && bond ? consumerIndicator : defaultIndicator,
+	undefined,
+	el.motion(),
+	el
+)}
 
 <!-- `bond!` is proven by the dispatch above; narrowing does not cross into a snippet body. -->
 {#snippet consumerIndicator()}

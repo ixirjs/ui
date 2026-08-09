@@ -9,7 +9,7 @@ export type AnimateTreeBodyParams = {
 	ease?: Easing | Easing[];
 };
 
-export function animateTreeBody(params: AnimateTreeBodyParams = {}) {
+function animateTreeBody(params: AnimateTreeBodyParams = {}) {
 	const bond = TreeBond.get();
 	return (node: HTMLElement) => {
 		const { delay = 0, duration = DURATION.normal / 1000, ease = 'circOut' } = params;
@@ -30,13 +30,10 @@ export function animateTreeBody(params: AnimateTreeBodyParams = {}) {
 }
 
 /**
- * Attachment form of the body motion. See `attachCollapsibleBodyMotion` for the rationale: a part
- * that declares a motion phase is routed through the `HtmlElement` adapter, costing an extra
- * component instance per rendered part — on the server too, where no phase can run. An attachment
- * reaches the element as a symbol key in the ordinary props spread and keeps the part on
- * `HtmlAtom`'s native renderer in both environments.
+ * Attachment form of the body motion. A symbol-keyed attachment handles this animate-only path
+ * without a HtmlElement motion driver.
  *
- * Behavior matches the adapter for the animate-only case: `initial` once at mount, untracked so it
+ * Behavior runs `initial` once at mount, untracked so it
  * registers no dependency, then the animate phase inside the attachment's own effect, re-running
  * whenever the disclosure state it reads changes.
  */

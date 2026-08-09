@@ -209,4 +209,26 @@ describe('RovingFocus — reactive over the injected list', () => {
 		setIds(['a', 'b']);
 		expect(r.activeId).toBe('b');
 	});
+
+	// The index lookup is memoised against the id list. A `$state` array is mutable in place, so one
+	// identity can outlive its contents — the cache must be confirmed, not merely keyed.
+	it('reports a fresh index when the id list is mutated in place', () => {
+		const ids = $state(['a', 'b', 'c']);
+		const r = createRovingFocus({ ids: () => ids });
+		r.goto('c');
+		expect(r.activeIndex).toBe(2);
+
+		// Same array instance, contents shifted: the answer must move with the item.
+		ids.unshift('z');
+		expect(r.activeIndex).toBe(3);
+
+		ids.splice(0, 2);
+		expect(r.activeIndex).toBe(1);
+		expect(r.activeId).toBe('c');
+
+		// Removed entirely: a stale cache would point at whatever now sits at that index.
+		ids.splice(ids.indexOf('c'), 1);
+		expect(r.activeIndex).toBe(-1);
+		expect(r.activeId).toBeNull();
+	});
 });

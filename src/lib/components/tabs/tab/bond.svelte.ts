@@ -1,18 +1,8 @@
 import { TabsBond, type ITabs } from '$ixirjs/ui/components/tabs/bond.svelte';
-import { internCapabilityFactory } from '$ixirjs/ui/shared/capability/intern';
 import { portal } from '$ixirjs/ui/attachments/portal.svelte';
 import { Bond, defineAtom, type BondStateProps } from '$ixirjs/ui/shared/bond';
 import { defineBond, type BondOf } from '$ixirjs/ui/shared';
-import {
-	defineAtomCapability,
-	sharedCapabilityKey,
-	type AtomHost
-} from '$ixirjs/ui/shared/capability';
 import { tabPanelLink } from '$ixirjs/ui/shared/capability/models/relationship.svelte';
-
-// -----------------------------------------------------------------------------
-// Public types
-// -----------------------------------------------------------------------------
 
 export type TabBondProps<
 	T,
@@ -24,102 +14,56 @@ export type TabBondProps<
 	extend: S;
 };
 
-export type TabBondElement = {
-	header: HTMLElement;
-	body: HTMLElement;
-	description: HTMLElement;
-};
-
-// -----------------------------------------------------------------------------
-// Capability slots and shared helpers
-// -----------------------------------------------------------------------------
-
-const TAB_HEADER = sharedCapabilityKey<void>({ owner: '@ixirjs/tab', name: 'header', version: 1 });
-const TAB_BODY = sharedCapabilityKey<void>({ owner: '@ixirjs/tab', name: 'body', version: 1 });
-
 // Atoms type `this.bond` against TabBondBase to break the atom<->bond cycle.
 
-// -----------------------------------------------------------------------------
-// Atom definitions
-// -----------------------------------------------------------------------------
+export const TabHeaderAtom = defineAtom<TabBondBase>('header', {
+	slot: '@ixirjs/tab:header',
+	docs: 'Tab header selected/disabled projection, activation, and header portal.',
+	attrs: (_node, bond) => ({
+		'aria-disabled': bond?.props.disabled ?? false,
+		'data-controler-id': bond?.tabs?.id,
+		'data-active': bond?.isActive,
+		// Roving tabindex (APG tabs): Tab enters the tablist once, arrows move between tabs.
+		tabindex: bond?.isActive ? 0 : -1
+	}),
+	handlers: (_node, bond) => ({
+		onclick: () => {
+			if (bond?.props.disabled) return;
+			bond?.select();
+		}
+	}),
+	onmount: (node, _host, bond) => {
+		const headerElement = bond?.tabs?.headerElement;
 
-export const TabHeaderAtom = defineAtom<TabBondBase>('header', (atom, bond) => {
+		if (typeof HTMLElement === 'undefined' || !(node instanceof HTMLElement)) return;
+
+		if (!headerElement) {
+			node.hidden = true;
+			return;
+		}
+
+		return portal(headerElement)(node);
+	},
 	// `role('item', value)` opts this header into the parent's selection capability.
-	atom.role('item', bond.value);
-	atom.role('tab');
-	atom.capability(tabHeaderPresentation());
+	setup: (atom, bond) => {
+		atom.role('item', bond?.value);
+		atom.role('tab');
+	}
 });
-export type TabHeaderAtom = InstanceType<typeof TabHeaderAtom>;
 
-export const TabBodyAtom = defineAtom<TabBondBase>('body', (atom) => {
-	atom.role('tabpanel');
-	atom.capability(tabBodyPresentation());
+export const TabBodyAtom = defineAtom<TabBondBase>('body', {
+	slot: '@ixirjs/tab:body',
+	docs: 'Tab body active-state projection.',
+	attrs: (_node, bond) => ({
+		'data-active': bond?.isActive
+	}),
+	setup: (atom) => atom.role('tabpanel')
 });
-export type TabBodyAtom = InstanceType<typeof TabBodyAtom>;
 
 export const TabDescriptionAtom = defineAtom<TabBondBase>('description');
-export type TabDescriptionAtom = InstanceType<typeof TabDescriptionAtom>;
-
-// -----------------------------------------------------------------------------
-// Atom capabilities
-// -----------------------------------------------------------------------------
-
-const tabHeaderPresentation = internCapabilityFactory(function tabHeaderPresentation() {
-	return defineAtomCapability<void, AtomHost, TabBondBase>({
-		slot: TAB_HEADER,
-		meta: {
-			projects: ['header'],
-			docs: 'Tab header selected/disabled projection, activation, and header portal.'
-		},
-		attach: {
-			attrs: (_node, bond) => ({
-				'aria-disabled': bond?.props.disabled ?? false,
-				'data-controler-id': bond?.tabs?.id,
-				'data-active': bond?.isActive
-			}),
-			handlers: (_node, bond) => ({
-				onclick: () => {
-					if (bond?.props.disabled) return;
-					bond?.select();
-				}
-			}),
-			onmount: (node, _host, bond) => {
-				const headerElement = bond?.tabs?.headerElement;
-
-				if (typeof HTMLElement === 'undefined' || !(node instanceof HTMLElement)) return;
-
-				if (!headerElement) {
-					node.hidden = true;
-					return;
-				}
-
-				return portal(headerElement)(node);
-			}
-		}
-	});
-});
-
-const tabBodyPresentation = internCapabilityFactory(function tabBodyPresentation() {
-	return defineAtomCapability<void, AtomHost, TabBondBase>({
-		slot: TAB_BODY,
-		meta: {
-			projects: ['body'],
-			docs: 'Tab body active-state projection.'
-		},
-		attach: {
-			attrs: (_node, bond) => ({
-				'data-active': bond?.isActive
-			})
-		}
-	});
-});
 
 // Hand-written base for TabBond. Parent-tabs capture, selection projection,
 // and value/text/mount helpers live on the Bond instance.
-
-// -----------------------------------------------------------------------------
-// Bond implementation
-// -----------------------------------------------------------------------------
 
 class TabBondBase extends Bond<TabBondProps<unknown>> {
 	#parent: ITabs | undefined;
@@ -174,10 +118,6 @@ class TabBondBase extends Bond<TabBondProps<unknown>> {
 	}
 }
 
-// -----------------------------------------------------------------------------
-// Bond spec and constructor facade
-// -----------------------------------------------------------------------------
-
 export const TabBond = defineBond({
 	name: 'tab',
 	base: TabBondBase,
@@ -188,15 +128,7 @@ export const TabBond = defineBond({
 	}
 });
 
-// -----------------------------------------------------------------------------
-// Public types
-// -----------------------------------------------------------------------------
-
 export type TabBond<T = unknown> = BondOf<typeof TabBond> & {
 	readonly props: TabBondProps<T>;
 	readonly tabs: ITabs<T> | undefined;
 };
-
-// -----------------------------------------------------------------------------
-// Bond spec and constructor facade
-// -----------------------------------------------------------------------------

@@ -1,12 +1,6 @@
 import { AccordionBond, type IAccordion } from '$ixirjs/ui/components/accordion/bond.svelte';
-import { internCapabilityFactory } from '$ixirjs/ui/shared/capability/intern';
 import { Bond, defineAtom, type BondStateProps } from '$ixirjs/ui/shared/bond';
 import { defineBond, type BondOf } from '$ixirjs/ui/shared';
-import {
-	defineAtomCapability,
-	sharedCapabilityKey,
-	type AtomHost
-} from '$ixirjs/ui/shared/capability';
 import {
 	createDisclosure,
 	disclosureCapability,
@@ -15,10 +9,6 @@ import {
 import { triggerContentLink } from '$ixirjs/ui/shared/capability/models/relationship.svelte';
 import { isBrowser } from '$ixirjs/ui/utils/dom.svelte';
 
-// -----------------------------------------------------------------------------
-// Public types
-// -----------------------------------------------------------------------------
-
 export type AccordionItemBondProps = BondStateProps & {
 	value?: string;
 	disabled: boolean;
@@ -26,17 +16,6 @@ export type AccordionItemBondProps = BondStateProps & {
 	collapsible: boolean;
 	data?: unknown;
 };
-
-export type AccordionItemBondElements = {
-	root: HTMLElement;
-	header: HTMLElement;
-	body: HTMLElement;
-	indicator: HTMLElement;
-};
-
-// -----------------------------------------------------------------------------
-// Bond implementation
-// -----------------------------------------------------------------------------
 
 export class AccordionItemBondBase extends Bond<AccordionItemBondProps> {
 	#parent: IAccordion | undefined;
@@ -54,6 +33,9 @@ export class AccordionItemBondBase extends Bond<AccordionItemBondProps> {
 			throw new Error('AccordionItemAtom must be used within an AccordionAtom context.');
 		}
 		this.capability(disclosureCapability(this.#disclosure));
+		// Same capability instances as the parent's — the header atom projects them under
+		// role 'header' (arrow/Home/End keydown lives on the header, not on the root container).
+		for (const capability of this.#parent.keyboardCapabilities()) this.capability(capability);
 		// trigger↔content a11y link: header gets aria-expanded/aria-controls, body gets aria-labelledby/role=region; ids resolved via the role registry.
 		this.capability(triggerContentLink({ contentRole: 'region' }));
 	}
@@ -98,172 +80,77 @@ export class AccordionItemBondBase extends Bond<AccordionItemBondProps> {
 	}
 }
 
-// -----------------------------------------------------------------------------
-// Internal types
-// -----------------------------------------------------------------------------
-
-type AccordionItemBondView = AccordionItemBondBase;
-
-// -----------------------------------------------------------------------------
-// Capability slots and shared helpers
-// -----------------------------------------------------------------------------
-
-const ACCORDION_ITEM_ROOT = sharedCapabilityKey<void>({
-	owner: '@ixirjs/accordion-item',
-	name: 'root',
-	version: 1
-});
-const ACCORDION_ITEM_HEADER = sharedCapabilityKey<void>({
-	owner: '@ixirjs/accordion-item',
-	name: 'header',
-	version: 1
-});
-const ACCORDION_ITEM_BODY = sharedCapabilityKey<void>({
-	owner: '@ixirjs/accordion-item',
-	name: 'body',
-	version: 1
-});
-const ACCORDION_ITEM_INDICATOR = sharedCapabilityKey<void>({
-	owner: '@ixirjs/accordion-item',
-	name: 'indicator',
-	version: 1
+export const AccordionItemRootAtom = defineAtom<AccordionItemBondBase>('root', {
+	slot: '@ixirjs/accordion-item:root',
+	docs: 'Registers a mounted accordion item with its parent accordion collection.',
+	onmount: (_element, _node, bond) => bond?.parent?.attachItem(bond.id, bond)
 });
 
-// -----------------------------------------------------------------------------
-// Atom definitions
-// -----------------------------------------------------------------------------
+export const AccordionItemHeaderAtom = defineAtom<AccordionItemBondBase>('header', {
+	slot: '@ixirjs/accordion-item:header',
+	docs: 'Accordion item header button semantics and activation policy.',
+	attrs: (node, bond) => {
+		const isButtonElement = isBrowser() && node.element instanceof HTMLButtonElement;
+		const isDisabled = bond?.isDisabled ?? false;
+		const isActive = bond?.isActive ?? false;
 
-export const AccordionItemRootAtom = defineAtom<AccordionItemBondView>('root', (atom) => {
-	atom.capability(accordionItemRegistration());
-});
-export type AccordionItemRootAtom = InstanceType<typeof AccordionItemRootAtom>;
-
-export const AccordionItemHeaderAtom = defineAtom<AccordionItemBondView>('header', (atom) => {
-	atom.capability(accordionItemHeaderPresentation());
-});
-export type AccordionItemHeaderAtom = InstanceType<typeof AccordionItemHeaderAtom>;
-
-export const AccordionItemBodyAtom = defineAtom<AccordionItemBondView>('body', (atom) => {
-	atom.capability(accordionItemBodyPresentation());
-});
-export type AccordionItemBodyAtom = InstanceType<typeof AccordionItemBodyAtom>;
-
-export const AccordionItemIndicatorAtom = defineAtom<AccordionItemBondView>('indicator', (atom) => {
-	atom.capability(accordionItemIndicatorPresentation());
-});
-export type AccordionItemIndicatorAtom = InstanceType<typeof AccordionItemIndicatorAtom>;
-
-// -----------------------------------------------------------------------------
-// Helpers
-// -----------------------------------------------------------------------------
-
-const accordionItemRegistration = internCapabilityFactory(function accordionItemRegistration() {
-	return defineAtomCapability<void, AtomHost, AccordionItemBondView>({
-		slot: ACCORDION_ITEM_ROOT,
-		meta: {
-			projects: ['root'],
-			docs: 'Registers a mounted accordion item with its parent accordion collection.'
+		// aria-controls + aria-expanded come from the trigger↔content link.
+		return {
+			'aria-disabled': isDisabled,
+			'aria-selected': isActive,
+			role: isButtonElement ? undefined : 'button',
+			// Roving tabindex over the headers — the focused header, not the open one. Keying it to
+			// `isActive` left a fully-collapsed accordion with no tabbable header at all.
+			tabindex: bond?.parent?.focusedId === bond?.id ? 0 : -1,
+			disabled: isButtonElement ? isDisabled : undefined
+		};
+	},
+	setup: (atom) => atom.role('header'),
+	handlers: (_node, bond) => ({
+		onfocus: () => {
+			if (bond) bond.parent?.notifyFocused(bond.id);
 		},
-		attach: {
-			onmount: (_element, _node, bond) => bond?.parent?.attachItem(bond.id, bond)
+		onpointerdown: (ev: PointerEvent) => {
+			if (!bond) return;
+			if (bond.isDisabled) return;
+			if (ev.defaultPrevented) return;
+
+			if (bond.parent?.multiple) {
+				bond.toggle();
+			} else {
+				if (bond.parent?.collapsible) {
+					const values = bond.parent?.values ?? [];
+					const isActive = bond.isActive;
+					bond.parent?.close([...values]);
+					if (!isActive) {
+						bond.open();
+					}
+				} else {
+					bond.open();
+				}
+			}
 		}
-	});
+	})
 });
 
-// -----------------------------------------------------------------------------
-// Atom capabilities
-// -----------------------------------------------------------------------------
+export const AccordionItemBodyAtom = defineAtom<AccordionItemBondBase>('body', {
+	slot: '@ixirjs/accordion-item:body',
+	docs: 'Accordion item body visibility projection.',
+	attrs: (_node, bond) => ({
+		// aria-labelledby + role=region come from the trigger↔content link.
+		'aria-hidden': !bond?.isOpen
+	})
+});
 
-const accordionItemHeaderPresentation = internCapabilityFactory(
-	function accordionItemHeaderPresentation() {
-		return defineAtomCapability<void, AtomHost, AccordionItemBondView>({
-			slot: ACCORDION_ITEM_HEADER,
-			meta: {
-				projects: ['header'],
-				docs: 'Accordion item header button semantics and activation policy.'
-			},
-			attach: {
-				attrs: (node, bond) => {
-					const isButtonElement = isBrowser() && node.element instanceof HTMLButtonElement;
-					const isDisabled = bond?.isDisabled ?? false;
-					const isActive = bond?.isActive ?? false;
-
-					// aria-controls + aria-expanded come from the trigger↔content link.
-					return {
-						'aria-disabled': isDisabled,
-						'aria-selected': isActive,
-						role: isButtonElement ? undefined : 'button',
-						tabindex: isActive ? 0 : -1,
-						disabled: isButtonElement ? isDisabled : undefined
-					};
-				},
-				handlers: (_node, bond) => ({
-					onpointerdown: (ev: PointerEvent) => {
-						if (!bond) return;
-						if (bond.isDisabled) return;
-						if (ev.defaultPrevented) return;
-
-						if (bond.parent?.multiple) {
-							bond.toggle();
-						} else {
-							if (bond.parent?.collapsible) {
-								const values = bond.parent?.values ?? [];
-								const isActive = bond.isActive;
-								bond.parent?.close([...values]);
-								if (!isActive) {
-									bond.open();
-								}
-							} else {
-								bond.open();
-							}
-						}
-					}
-				})
-			}
-		});
-	}
-);
-
-const accordionItemBodyPresentation = internCapabilityFactory(
-	function accordionItemBodyPresentation() {
-		return defineAtomCapability<void, AtomHost, AccordionItemBondView>({
-			slot: ACCORDION_ITEM_BODY,
-			meta: {
-				projects: ['body'],
-				docs: 'Accordion item body visibility projection.'
-			},
-			attach: {
-				attrs: (_node, bond) => ({
-					// aria-labelledby + role=region come from the trigger↔content link.
-					'aria-hidden': !bond?.isOpen
-				})
-			}
-		});
-	}
-);
-
-const accordionItemIndicatorPresentation = internCapabilityFactory(
-	function accordionItemIndicatorPresentation() {
-		return defineAtomCapability<void, AtomHost, AccordionItemBondView>({
-			slot: ACCORDION_ITEM_INDICATOR,
-			meta: {
-				projects: ['indicator'],
-				docs: 'Accordion item indicator relationship metadata.'
-			},
-			attach: {
-				attrs: (_node, bond) => ({
-					'data-controled-by': bond?.accordionId ?? ''
-				})
-			}
-		});
-	}
-);
+export const AccordionItemIndicatorAtom = defineAtom<AccordionItemBondBase>('indicator', {
+	slot: '@ixirjs/accordion-item:indicator',
+	docs: 'Accordion item indicator relationship metadata.',
+	attrs: (_node, bond) => ({
+		'data-controled-by': bond?.accordionId ?? ''
+	})
+});
 
 // preset path `accordion.item` (dotted) is distinct from the DOM namespace `accordion-item`.
-
-// -----------------------------------------------------------------------------
-// Bond spec and constructor facade
-// -----------------------------------------------------------------------------
 
 export const AccordionItemBond = defineBond({
 	name: 'accordion-item',

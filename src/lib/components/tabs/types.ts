@@ -1,5 +1,10 @@
 import type { Snippet } from 'svelte';
-import type { HtmlAtomProps, Base, SnippetProps } from '$ixirjs/ui/components/atom';
+import type {
+	RenderProps,
+	Base,
+	SnippetProps,
+	HtmlElementTagName
+} from '$ixirjs/ui/components/atom';
 import type { Factory, StateChangeCallback } from '$ixirjs/ui/types';
 import type { PresetLike } from '$ixirjs/ui/preset';
 import type { BondPresetLayers } from '$ixirjs/ui/shared/bond';
@@ -35,60 +40,65 @@ export interface TabPresets extends BondPresetLayers {
 }
 
 export interface TabRootProps {
+	/** Current value of the control. */
 	value: string;
+	/** Disables the control: it stops responding and is removed from the tab order. */
 	disabled?: boolean;
+	/** Arbitrary payload carried on the Bond, returned by lookups and snippet props. */
 	data?: unknown;
+	/** Replaces the Bond constructor, so a family can be extended or fused. */
 	factory?: Factory<TabBond>;
 	/** Per-instance presentation overrides for the Tab Bond. */
 	presets?: TabPresets | undefined;
+	/** Content of this part. */
 	children?: Snippet<[{ tab: TabBond }]>;
 }
 
 export interface TabsRootProps<
 	D extends string = string,
-	E extends keyof HTMLElementTagNameMap = 'div',
+	E extends HtmlElementTagName = 'div',
 	B extends Base = Base
-> extends HtmlAtomProps<E, B, TabsChildren> {
+> extends RenderProps<E, B, TabsChildren> {
+	/** Active tab value */
 	value?: D;
+	/** Factory */
 	factory?: Factory<TabsBond>;
 	/** Per-instance presentation overrides for the parent Tabs Bond. */
 	presets?: TabsPresets | undefined;
 	// Semantic selection callback; native `onchange` remains a DOM event callback.
+	/** Semantic callback fired after the active value commits. Receives `(value, { bond? })`. */
 	onvaluechange?: StateChangeCallback<D | undefined, TabsBond> | undefined;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface TabHeaderProps<
-	E extends keyof HTMLElementTagNameMap = 'button',
+	E extends HtmlElementTagName = 'button',
 	B extends Base = Base
-> extends HtmlAtomProps<E, B, TabChildren> {}
+> extends RenderProps<E, B, TabChildren> {
+	/** Native click callback. Receives only the DOM event. */
+	onclick?: ((event: MouseEvent) => void) | undefined;
+}
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface TabBodyProps<
-	E extends keyof HTMLElementTagNameMap = 'div',
+	E extends HtmlElementTagName = 'div',
 	B extends Base = Base
-> extends HtmlAtomProps<E, B, TabChildren> {}
+> extends RenderProps<E, B, TabChildren> {}
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface TabDescriptionProps<
-	E extends keyof HTMLElementTagNameMap = 'p',
+	E extends HtmlElementTagName = 'p',
 	B extends Base = Base
-> extends HtmlAtomProps<E, B, TabChildren> {}
+> extends RenderProps<E, B, TabChildren> {}
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface TabsHeaderProps<
-	E extends keyof HTMLElementTagNameMap = 'div',
+	E extends HtmlElementTagName = 'div',
 	B extends Base = Base
-> extends HtmlAtomProps<E, B, TabsChildren> {}
+> extends RenderProps<E, B, TabsChildren> {}
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface TabsBodyProps<
-	E extends keyof HTMLElementTagNameMap = 'div',
+	E extends HtmlElementTagName = 'div',
 	B extends Base = Base
-> extends HtmlAtomProps<E, B, TabsChildren> {}
+> extends RenderProps<E, B, TabsChildren> {}
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface TabsContentProps<
-	E extends keyof HTMLElementTagNameMap = 'div',
+	E extends HtmlElementTagName = 'div',
 	B extends Base = Base
-> extends HtmlAtomProps<E, B, TabsChildren> {}
+> extends RenderProps<E, B, TabsChildren> {}

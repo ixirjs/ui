@@ -1,16 +1,12 @@
 import {
-	defineProjectionCapability,
+	defineCapability,
 	sharedCapabilityKey,
 	type Capability,
 	type CapabilityKey
 } from '$ixirjs/ui/shared/capability/capability';
 
 // Surface type travels with the key — capability(ROVING) is typed without a cast.
-export const ROVING = sharedCapabilityKey<RovingFocus>({
-	owner: '@ixirjs/cap',
-	name: 'roving',
-	version: 1
-});
+export const ROVING = sharedCapabilityKey<RovingFocus>('@ixirjs/cap:roving');
 
 const rovingSlot = <T>(): CapabilityKey<RovingFocus<T>> => ROVING as CapabilityKey<RovingFocus<T>>;
 
@@ -44,21 +40,48 @@ export interface RovingBacking<T = unknown> {
 	item?(id: string): T | undefined;
 	// Wrap past the ends. Default `true`.
 	wrap?: boolean;
+	// Controlled active id. Supply it when the highlight *is* some other state the bond already
+	// owns — tabs highlight the selected tab, so an internal cell would immediately drift from
+	// `props.value` on click. Omit it and the roving owns its own `$state`.
+	active?: { get(): string | null; set(id: string | null): void };
 }
 
 // Build a RovingFocus over an injected ordered id list.
 // Owns the active id; derives the index live so insertions/removals preserve identity when possible.
 export function createRovingFocus<T = unknown>(backing: RovingBacking<T>): RovingFocus<T> {
 	const wrap = backing.wrap ?? true;
-	let active = $state<string | null>(null);
+	const own = $state<{ id: string | null }>({ id: null });
+	const cell = backing.active ?? { get: () => own.id, set: (id) => (own.id = id) };
 
 	const ids = (): readonly string[] => backing.ids();
 	const idAt = (i: number): string | null => ids()[i] ?? null;
-	const indexOfActive = (): number => (active === null ? -1 : ids().indexOf(active));
-	const activeId = (): string | null => (indexOfActive() < 0 ? null : active);
+
+	// The `item` role projection reads `activeId` once per rendered item, so a window of twenty items
+	// costs twenty scans of the id list — invisible at twenty ids, not at the ten thousand a
+	// virtualized list feeds from data. Memoising the last (list, id) pair collapses them to one
+	// lookup; an `ids()` that allocates per call just misses and pays today's cost.
+	//
+	// Confirmed against the list, not merely keyed on its identity: a `$state` array is mutable in
+	// place, so a push or reorder moves the contents while the identity holds. Re-reading the one
+	// remembered slot is O(1) and settles it.
+	let lastIds: readonly string[] | undefined;
+	let lastId: string | null = null;
+	let lastIndex = -1;
+	const indexOfActive = (): number => {
+		const id = cell.get();
+		if (id === null) return -1;
+		const current = ids();
+		if (current === lastIds && id === lastId && current[lastIndex] === id) return lastIndex;
+		lastIds = current;
+		lastId = id;
+		lastIndex = current.indexOf(id);
+		return lastIndex;
+	};
+	const activeId = (): string | null => (indexOfActive() < 0 ? null : cell.get());
+	// Reads back through the cell: a controlled owner may reject or normalize the write.
 	const set = (i: number): string | null => {
-		active = idAt(i);
-		return active;
+		cell.set(idAt(i));
+		return activeId();
 	};
 
 	return {
@@ -95,8 +118,8 @@ export function createRovingFocus<T = unknown>(backing: RovingBacking<T>): Rovin
 			return set(n ? n - 1 : -1);
 		},
 		goto(id: string) {
-			active = ids().includes(id) ? id : null;
-			return active;
+			cell.set(ids().includes(id) ? id : null);
+			return activeId();
 		},
 		clear() {
 			set(-1);
@@ -120,7 +143,7 @@ export function rovingCapability<T = unknown>(
 	options: RovingProjectionOptions = {}
 ): Capability<RovingFocus<T>> {
 	const toDomId = options.itemDomId ?? ((id: string) => id);
-	return defineProjectionCapability<RovingFocus<T>>({
+	return defineCapability<RovingFocus<T>>({
 		slot: rovingSlot<T>(),
 		surface: roving,
 		meta: {

@@ -4,10 +4,8 @@ import { tick } from 'svelte';
 import Probe from '$ixirjs/ui/test/components/tree/tree-motion-probe.test.svelte';
 
 /**
- * Tree's body and indicator both carry their open/close motion as attachments rather than
- * `defaults` motion phases, so neither part is routed through the `HtmlElement` adapter. A node has
- * two such parts, which is why this family gained the most from the change. These tests pin what
- * the migration had to preserve, since nothing else would catch its loss.
+ * Tree's body and indicator carry open/close motion as attachments, keeping both on native leaves.
+ * These tests pin mount initialization and disclosure-driven updates.
  */
 describe('Tree node motion', () => {
 	const parts = (screen: { container: HTMLElement }) => ({

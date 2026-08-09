@@ -1,10 +1,14 @@
-<script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { createAttachmentKey } from 'svelte/attachments';
-	import { type Base } from '$ixirjs/ui/components/atom';
-	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
-	import { animate as runAnimation, usePart } from '$ixirjs/ui/shared';
-	import { stopMotion } from '$ixirjs/ui/components/element/motion-host';
+<script module lang="ts">
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
 	import { TreeBond } from './bond.svelte';
+	const PART = Kernel.part(TreeBond, 'indicator', { class: '' });
+</script>
+
+<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
+	import { createAttachmentKey } from 'svelte/attachments';
+	import { type Base, type BasePropsOf, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
+	import { animate as runAnimation } from '$ixirjs/ui/shared';
+	import { stopMotion } from '$ixirjs/ui/components/element/motion-host';
 	import type { TreeIndicatorProps } from './types';
 
 	let {
@@ -13,16 +17,13 @@
 		preset = undefined,
 		children = undefined,
 		...restProps
-	}: TreeIndicatorProps<E, B> = $props();
+	}: TreeIndicatorProps<E, B> & BasePropsOf<B> = $props();
 
-	const part = usePart(TreeBond, 'indicator', () => restProps, {
-		preset: () => preset
-	});
+	const part = Kernel.node(PART, () => ({ preset }), { context: 'required' });
 	const isOpen = $derived(part.bond.isOpen);
 
 	// An attachment rather than a `defaults` motion phase — see `attachTreeBodyMotion`. There is no
-	// `initial` phase here, so the rotation simply runs on mount and again on every toggle, exactly
-	// as the adapter drove it. Key minted once at init.
+	// `initial` phase here, so rotation runs on mount and every toggle. Key minted once at init.
 	function motion(node: HTMLElement) {
 		const controller = runAnimation(
 			node,
@@ -33,11 +34,19 @@
 	}
 	const motionKey = createAttachmentKey();
 
-	const el = usePartElement(part, () => ({
+	const el = Kernel.element(part, () => ({
 		class: ['aspect-square h-fit', '$preset', klass],
 		[motionKey]: motion,
 		...restProps
 	}));
 </script>
 
-{@render partElement(el, children, { tree: part.bond })}
+{@render Kernel.render(el)(
+	el.tag(),
+	el.class(),
+	el.attrs(),
+	children,
+	{ tree: part.bond },
+	el.motion(),
+	el
+)}

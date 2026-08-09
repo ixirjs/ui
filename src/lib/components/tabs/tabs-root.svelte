@@ -1,12 +1,12 @@
 <script
 	lang="ts"
-	generics="D extends string, E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base"
+	generics="D extends string, E extends HtmlElementTagName = 'div', B extends Base = Base"
 >
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
 	import { onMount } from 'svelte';
 	import { TabsBond } from './bond.svelte';
 	import { controlledProp, useRoot } from '$ixirjs/ui/shared';
-	import { type Base } from '$ixirjs/ui/components/atom';
-	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
+	import { type Base, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
 	import type { TabsRootProps } from './types';
 
 	const ID = $props.id();
@@ -43,11 +43,9 @@
 		callbacksReady = true;
 	});
 
-	export function getBond() {
-		return bond;
-	}
+	export const getBond = root.getBond;
 
-	const el = usePartElement(root, () => ({
+	const el = Kernel.element(root, () => ({
 		class: ['flex w-full flex-1 flex-col', '$preset', klass],
 		variantProps: root.props,
 		...restProps,
@@ -55,4 +53,12 @@
 	}));
 </script>
 
-{@render partElement(el, children, { tabs: bond })}
+{@render Kernel.render(el)(
+	el.tag(),
+	el.class(),
+	el.attrs(),
+	children,
+	{ tabs: bond },
+	el.motion(),
+	el
+)}

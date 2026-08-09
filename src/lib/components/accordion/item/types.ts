@@ -1,5 +1,10 @@
 import type { Snippet } from 'svelte';
-import type { HtmlAtomProps, Base, SnippetProps } from '$ixirjs/ui/components/atom';
+import type {
+	RenderProps,
+	Base,
+	SnippetProps,
+	HtmlElementTagName
+} from '$ixirjs/ui/components/atom';
 import type { Factory } from '$ixirjs/ui/types';
 import type { PresetLike } from '$ixirjs/ui/preset';
 import type { BondPresetLayers } from '$ixirjs/ui/shared/bond';
@@ -21,32 +26,36 @@ export interface AccordionItemPresets extends BondPresetLayers {
 }
 
 export interface AccordionItemRootProps<
-	E extends keyof HTMLElementTagNameMap = 'div',
+	E extends HtmlElementTagName = 'div',
 	B extends Base = Base
-> extends HtmlAtomProps<E, B, AccordionItemChildren> {
+> extends RenderProps<E, B, AccordionItemChildren> {
+	/** Unique identifier for this accordion item. Used to control open state programmatically. */
 	value?: string;
+	/** Arbitrary payload carried on the Bond, returned by lookups and snippet props. */
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	data?: any;
+	/**
+	 * Disable this accordion item individually
+	 * @default false
+	 */
 	disabled?: boolean;
+	/** Custom factory for the item bond, enabling advanced behavioral customization */
 	factory?: Factory<AccordionItemBond>;
 	/** Per-instance presentation overrides for the Accordion item Bond. */
 	presets?: AccordionItemPresets | undefined;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface AccordionItemHeaderProps<
-	E extends keyof HTMLElementTagNameMap = 'div',
+	E extends HtmlElementTagName = 'div',
 	B extends Base = Base
-> extends HtmlAtomProps<E, B, AccordionItemChildren> {}
+> extends RenderProps<E, B, AccordionItemChildren> {}
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface AccordionItemBodyProps<
-	E extends keyof HTMLElementTagNameMap = 'div',
+	E extends HtmlElementTagName = 'div',
 	B extends Base = Base
-> extends HtmlAtomProps<E, B, AccordionItemChildren> {}
+> extends RenderProps<E, B, AccordionItemChildren> {}
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface AccordionItemIndicatorProps<
-	E extends keyof HTMLElementTagNameMap = 'div',
+	E extends HtmlElementTagName = 'div',
 	B extends Base = Base
-> extends HtmlAtomProps<E, B, AccordionItemChildren> {}
+> extends RenderProps<E, B, AccordionItemChildren> {}

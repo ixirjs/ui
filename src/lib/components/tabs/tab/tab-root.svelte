@@ -33,9 +33,7 @@
 	const unmount = bond.mount();
 	$effect.pre(() => unmount);
 
-	export function getBond() {
-		return bond;
-	}
+	export const getBond = root.getBond;
 </script>
 
 {@render children?.({ tab: bond })}

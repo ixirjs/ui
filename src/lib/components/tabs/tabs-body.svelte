@@ -1,8 +1,12 @@
-<script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { type Base } from '$ixirjs/ui/components/atom';
-	import { usePart } from '$ixirjs/ui/shared';
-	import { Stack } from '$ixirjs/ui/components/stack';
+<script module lang="ts">
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
 	import { TabsBond } from './bond.svelte';
+	const PART = Kernel.part(TabsBond, 'body', { class: '' });
+</script>
+
+<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
+	import { type Base, type BasePropsOf, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
+	import { Stack } from '$ixirjs/ui/components/stack';
 	import type { TabsBodyProps } from './types';
 
 	let {
@@ -11,10 +15,11 @@
 		children,
 		preset = undefined,
 		...restProps
-	}: TabsBodyProps<E, B> = $props();
+	}: TabsBodyProps<E, B> & BasePropsOf<B> = $props();
 
-	const part = usePart(TabsBond, 'body', () => restProps, {
-		preset: () => preset
+	const part = Kernel.node(PART, () => ({ preset }), {
+		context: 'required',
+		rest: () => restProps
 	});
 	const value = $derived(part.bond.props.value);
 </script>

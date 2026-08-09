@@ -1,11 +1,16 @@
-<script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { mergePresetProps, type Base } from '$ixirjs/ui/components/atom';
+<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
+	import {
+		mergePresetProps,
+		type Base,
+		type BasePropsOf,
+		type HtmlElementTagName
+	} from '$ixirjs/ui/components/atom';
 	import { TabsBond } from './bond.svelte';
 	import type { TabsContentProps } from './types';
 
 	const bond = TabsBond.get();
 
-	let { preset = undefined, ...restProps }: TabsContentProps<E, B> = $props();
+	let { preset = undefined, ...restProps }: TabsContentProps<E, B> & BasePropsOf<B> = $props();
 
 	const value = $derived(bond?.props.value);
 	const items = $derived(Array.from(bond?.tabContents ?? []));
