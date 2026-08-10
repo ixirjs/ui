@@ -4,14 +4,12 @@ import {
 	FieldBond,
 	FieldControlAtom,
 	FieldDescriptionAtom,
+	FieldErrorAtom,
 	FieldLabelAtom,
-	FieldRootAtom,
-	type ValidationAdapter
+	FieldRootAtom
 } from './bond.svelte';
-import {
-	VALIDATION,
-	type ValidationResult
-} from '$ixirjs/ui/shared/capability/models/validation.svelte';
+import { VALIDATION } from '$ixirjs/ui/shared/capability/models/validation.svelte';
+import { defineSchema } from '$ixirjs/ui/shared/validation';
 import { STATUS } from '$ixirjs/ui/shared/capability/models/status.svelte';
 
 // Unit verification of the role stitch; FieldBond avoids getContext so it's constructable in tests.
@@ -19,7 +17,7 @@ function makeField() {
 	return FieldBond.create({ disabled: false, readonly: false, extend: {} });
 }
 
-function fieldAtom(bond: FieldBond, key: 'root' | 'label' | 'control' | 'description') {
+function fieldAtom(bond: FieldBond, key: 'root' | 'label' | 'control' | 'description' | 'error') {
 	const atom =
 		key === 'root'
 			? new FieldRootAtom(bond)
@@ -27,7 +25,9 @@ function fieldAtom(bond: FieldBond, key: 'root' | 'label' | 'control' | 'descrip
 				? new FieldLabelAtom(bond).role('label')
 				: key === 'control'
 					? new FieldControlAtom(bond).role('control')
-					: new FieldDescriptionAtom(bond).role('description');
+					: key === 'error'
+						? new FieldErrorAtom(bond).role('error')
+						: new FieldDescriptionAtom(bond).role('description');
 	bond.register(atom, { key });
 	return atom;
 }
@@ -65,7 +65,12 @@ describe('FieldBond — label ↔ control linkage via labelledControl', () => {
 	it('registers validation and status as Layer 1 capabilities', () => {
 		const bond = makeField();
 
-		expect(bond.capability(VALIDATION)?.surface).toBe(bond.validation);
+		// The published surface is the merged view, not the field's own model: a form-level error
+		// routed to this field must reach anything reading the VALIDATION slot, not just `Field.Error`.
+		const surface = bond.capability(VALIDATION)?.surface;
+		expect(surface).not.toBe(bond.validation);
+		expect(surface?.errors).toEqual(bond.errors);
+		expect(surface?.isInvalid).toBe(bond.isInvalid);
 		expect(bond.capability(VALIDATION)?.meta).toMatchObject({
 			projects: ['control', 'error']
 		});
@@ -76,21 +81,16 @@ describe('FieldBond — label ↔ control linkage via labelledControl', () => {
 	});
 
 	it('validation updates control attrs and error message linkage through capabilities', () => {
-		const validator: ValidationAdapter<unknown, unknown> = {
-			validate: (): ValidationResult => ({
-				success: false,
-				errors: [{ path: [], message: 'Required' }]
-			})
-		};
 		const bond = FieldBond.create({
 			disabled: false,
 			readonly: false,
 			extend: {},
-			schema: {},
-			validator
+			schema: defineSchema(() => 'Required')
 		});
 		const control = fieldAtom(bond, 'control');
-		const description = fieldAtom(bond, 'description');
+		// The error message target is its own part now — the helper text (`description`) no longer
+		// doubles as it, so `aria-errormessage` points at error text rather than at prose.
+		const error = fieldAtom(bond, 'error');
 
 		expect(control.spread['aria-invalid']).toBe('false');
 		expect(control.spread['aria-errormessage']).toBeUndefined();
@@ -98,7 +98,7 @@ describe('FieldBond — label ↔ control linkage via labelledControl', () => {
 		bond.validate();
 		expect(control.spread['aria-invalid']).toBe('true');
 		expect(control.spread['data-invalid']).toBe('');
-		expect(control.spread['aria-errormessage']).toBe(description.spread.id);
+		expect(control.spread['aria-errormessage']).toBe(error.spread.id);
 	});
 
 	it('resolves regardless of which atom is created first (reactive registry)', () => {
@@ -138,5 +138,22 @@ describe('FieldBond — label ↔ control linkage via labelledControl', () => {
 		for (const part of ['root', 'label', 'control', 'description']) {
 			expect(bond.nodesByPart(part)).toEqual([]);
 		}
+	});
+});
+
+// `required` is a field-level status like disabled and readonly, and belongs on the control, not
+// only on the wrapping group.
+describe('FieldBond — required projects onto the control', () => {
+	it('emits aria-required only when the field is required', () => {
+		const optional = fieldAtom(makeField(), 'control');
+		expect(optional.spread['aria-required']).toBeUndefined();
+
+		const bond = FieldBond.create({
+			disabled: false,
+			readonly: false,
+			required: true,
+			extend: {}
+		});
+		expect(fieldAtom(bond, 'control').spread['aria-required']).toBe('true');
 	});
 });

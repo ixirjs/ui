@@ -1,121 +1,31 @@
 import { Bond, defineAtom, type BondStateProps } from '$ixirjs/ui/shared/bond';
-import { internCapabilityFactory } from '$ixirjs/ui/shared/capability/intern';
 import { defineBond, type BondOf } from '$ixirjs/ui/shared';
-import {
-	defineAtomCapability,
-	sharedCapabilityKey,
-	type AtomHost
-} from '$ixirjs/ui/shared/capability';
 import {
 	labelledControl,
 	errorMessageLink
 } from '$ixirjs/ui/shared/capability/models/relationship.svelte';
 import {
 	createValidation,
+	isPromise,
 	validationCapability,
 	type ValidationError,
 	type ValidationModel,
 	type ValidationResult
 } from '$ixirjs/ui/shared/capability/models/validation.svelte';
 import { createStatus, statusCapability } from '$ixirjs/ui/shared/capability/models/status.svelte';
-
-// -----------------------------------------------------------------------------
-// Public types
-// -----------------------------------------------------------------------------
+import { standardSchemaSource, type StandardSchemaV1 } from '$ixirjs/ui/shared/validation';
+import { FormBond, type ValidationMode } from '$ixirjs/ui/components/form/bond.svelte';
 
 export type { ValidationError, ValidationResult };
 
-export interface ValidationAdapter<Schema, Value> {
-	validate(schema: Schema, value: Value): ValidationResult<Value>;
-	validateAsync?(schema: Schema, value: Value): Promise<ValidationResult<Value>>;
-}
-
-// -----------------------------------------------------------------------------
-// Internal types
-// -----------------------------------------------------------------------------
-
-type ZodLikeIssue = {
-	path?: (string | number)[];
-	message?: string;
-	code?: string;
-};
-
-type ZodLikeSchema = {
-	parse: (value: unknown) => unknown;
-	parseAsync?: (value: unknown) => Promise<unknown>;
-};
-
-// -----------------------------------------------------------------------------
-// Helpers
-// -----------------------------------------------------------------------------
-
-function isZodLikeError(error: unknown): error is { issues: ZodLikeIssue[] } {
-	return (
-		typeof error === 'object' &&
-		error !== null &&
-		'issues' in error &&
-		Array.isArray((error as { issues?: unknown }).issues)
-	);
-}
-
-function toValidationError(issue: ZodLikeIssue): ValidationError {
-	return {
-		path: issue.path || [],
-		message: issue.message || 'Validation error',
-		...(issue.code ? { code: issue.code } : {})
-	};
-}
-
-export class ZodValidationAdapter<T extends ZodLikeSchema> implements ValidationAdapter<
-	T,
-	unknown
-> {
-	validate(schema: T, value: unknown): ValidationResult {
-		try {
-			const data = schema.parse(value);
-			return { success: true, data, errors: [] };
-		} catch (error: unknown) {
-			if (isZodLikeError(error)) {
-				return {
-					success: false,
-					errors: error.issues.map(toValidationError)
-				};
-			}
-			throw error;
-		}
-	}
-
-	async validateAsync(schema: T, value: unknown): Promise<ValidationResult> {
-		if (!schema.parseAsync) {
-			return this.validate(schema, value);
-		}
-
-		try {
-			const data = await schema.parseAsync(value);
-			return { success: true, data, errors: [] };
-		} catch (error: unknown) {
-			if (isZodLikeError(error)) {
-				return {
-					success: false,
-					errors: error.issues.map(toValidationError)
-				};
-			}
-			throw error;
-		}
-	}
-}
-
-// -----------------------------------------------------------------------------
-// Public types
-// -----------------------------------------------------------------------------
-
 export type FieldStateProps<
 	Extension extends Record<string, unknown> = Record<string, unknown>,
-	Schema = unknown,
 	Value = unknown
 > = BondStateProps & {
 	disabled: boolean;
 	readonly: boolean;
+	// Optional, unlike disabled/readonly: absent reads as false, so existing constructors stand.
+	required?: boolean;
 	name?: string;
 	value?: Value;
 	files?: File[];
@@ -123,42 +33,55 @@ export type FieldStateProps<
 	number?: number;
 	checked?: boolean;
 	type?: string;
-	schema?: Schema;
-	validator?: ValidationAdapter<Schema, Value>;
+	/** A Standard Schema checked against this field's value alone, independent of the form's. */
+	schema?: StandardSchemaV1;
+	/** Overrides the form's trigger mode for this field. */
+	mode?: ValidationMode;
 	onvalidation?: (result: ValidationResult<Value>) => void;
 	extend: Extension;
 };
 
-export type FieldDomElements = {
-	root: HTMLElement;
-	label: HTMLElement;
-	control: HTMLElement;
-	description: HTMLElement;
-};
-
-// -----------------------------------------------------------------------------
-// Bond implementation
-// -----------------------------------------------------------------------------
+/** What caused a validation attempt. `shouldValidateOn` turns this into a yes or no. */
+export type ValidationTrigger = 'input' | 'blur' | 'submit';
 
 export class FieldBondBase<Props extends FieldStateProps = FieldStateProps> extends Bond<Props> {
-	readonly validation: ValidationModel = createValidation({
-		validate: () => this.#runValidation(),
-		validateAsync: () => this.#runValidationAsync()
-	});
+	/** Results from this field's own `schema`. Form-level errors are merged in by `errors`. */
+	readonly validation: ValidationModel = createValidation({ run: () => this.#run() });
+
+	/**
+	 * The parent form, when there is one. A Field works standalone; everything that reads this
+	 * treats absence as "no form-level errors, default mode".
+	 */
+	readonly form: FormBond | undefined;
+
 	readonly status = createStatus({
 		disabled: () => this.props.disabled,
-		readonly: () => this.props.readonly
+		readonly: () => this.props.readonly,
+		required: () => this.props.required ?? false,
+		invalid: () => this.isInvalid,
+		touched: () => this.isTouched,
+		dirty: () => this.isDirty
 	});
+
+	#touched = $state(false);
+	#initial: unknown;
 
 	constructor(props: Props, name = 'field') {
 		super(props, name);
+		this.form = FormBond.getOptional<FormBond>();
+		this.#initial = props.value;
+
 		// A labelled, validated field. Declared here rather than behind a recipe: field is the only
-		// caller, and the recipe's own status default was already overridden by `status` below.
+		// caller, and the recipe's own status default was already overridden by `status` above.
 		this.registerCapabilities([
 			labelledControl({ nativeFor: true }),
 			statusCapability(this.status, { roles: ['control'] }),
-			validationCapability(this.validation),
-			errorMessageLink({ invalid: () => this.validation.isInvalid })
+			// The merged view, not `this.validation` — otherwise a form-level error would style and
+			// announce nothing, because the field's own model never saw it.
+			validationCapability(this.#mergedValidation()),
+			// `live` promotes the error node to role="alert". Safe here because `Field.Error` renders
+			// only while the field is invalid, so the alert fires when the error appears, not on mount.
+			errorMessageLink({ invalid: () => this.isInvalid, live: true })
 		]);
 	}
 
@@ -182,58 +105,80 @@ export class FieldBondBase<Props extends FieldStateProps = FieldStateProps> exte
 		return this.props.checked;
 	}
 
-	get errors() {
+	/** Errors from this field's own schema, before the form's are merged in. */
+	get ownErrors(): readonly ValidationError[] {
 		return this.validation.errors;
 	}
 
-	get isValidating() {
+	/**
+	 * Everything wrong with this field, from either direction: its own schema, and the slice of the
+	 * form's errors whose path matches this field's `name`.
+	 */
+	get errors(): readonly ValidationError[] {
+		const own = this.validation.errors;
+		const fromForm = this.form?.errorsFor(this.props.name) ?? [];
+		if (fromForm.length === 0) return own;
+		return own.length === 0 ? fromForm : [...own, ...fromForm];
+	}
+
+	get isInvalid(): boolean {
+		return this.errors.length > 0;
+	}
+
+	get isValidating(): boolean {
 		return this.validation.isValidating;
 	}
 
-	validate(): ValidationResult {
-		return this.validation.validate();
+	get isTouched(): boolean {
+		return this.#touched;
 	}
 
-	async validateASync(): Promise<ValidationResult> {
-		return this.validation.validateAsync();
+	/** Whether the value has moved since the field mounted or was last reset. */
+	get isDirty(): boolean {
+		return !Object.is(this.value, this.#initial);
+	}
+
+	get mode(): ValidationMode {
+		return this.props.mode ?? this.form?.mode ?? 'touched';
+	}
+
+	/** The trigger policy, in one place, so the control and the root cannot disagree. */
+	shouldValidateOn(trigger: ValidationTrigger): boolean {
+		const mode = this.mode;
+		if (mode === 'manual') return false;
+		if (trigger === 'submit') return true;
+		if (mode === 'submit') return false;
+		if (mode === 'input') return true;
+		if (mode === 'blur') return trigger === 'blur';
+		// 'touched': blur always, then live once the user has actually been here.
+		return trigger === 'blur' || this.isTouched || this.form?.isSubmitted === true;
+	}
+
+	markTouched(): void {
+		this.#touched = true;
+	}
+
+	resetInteraction(): void {
+		this.#touched = false;
+		this.#initial = this.value;
+	}
+
+	validate(): ValidationResult | Promise<ValidationResult> {
+		return this.validation.validate();
 	}
 
 	clear() {
 		this.validation.clear();
 	}
 
-	#runValidation(): ValidationResult {
-		const { schema, validator, value, onvalidation } = this.props;
-
-		if (!schema || !validator) {
-			const result: ValidationResult = { success: true, data: value, errors: [] };
-			onvalidation?.(result);
-			return result;
-		}
-
-		const result = validator.validate(schema, value);
-
-		onvalidation?.(result);
-
-		return result;
-	}
-
-	async #runValidationAsync(): Promise<ValidationResult> {
-		const { schema, validator, value, onvalidation } = this.props;
-
-		if (!schema || !validator) {
-			const result: ValidationResult = { success: true, data: value, errors: [] };
-			onvalidation?.(result);
-			return result;
-		}
-
-		const result = validator.validateAsync
-			? await validator.validateAsync(schema, value)
-			: validator.validate(schema, value);
-
-		onvalidation?.(result);
-
-		return result;
+	/** Runs on the trigger the current `mode` allows; a no-op otherwise. */
+	validateOn(trigger: ValidationTrigger): void {
+		if (!this.shouldValidateOn(trigger)) return;
+		void this.validate();
+		// A form-level schema owns cross-field rules, so this field's slice of them is only as fresh
+		// as the last form run. Re-run the form source alone — not its fan-out, which would validate
+		// every sibling on one field's blur.
+		if (this.form?.props.schema || this.form?.props.source?.validate) void this.form.validateSelf();
 	}
 
 	toJSON() {
@@ -242,73 +187,82 @@ export class FieldBondBase<Props extends FieldStateProps = FieldStateProps> exte
 			value: this.value
 		};
 	}
+
+	/** A read-through view over `errors`, so every consumer of the VALIDATION slot sees both sources. */
+	#mergedValidation(): ValidationModel {
+		// eslint-disable-next-line @typescript-eslint/no-this-alias
+		const field = this;
+		return {
+			get errors() {
+				return field.errors;
+			},
+			get isInvalid() {
+				return field.isInvalid;
+			},
+			get isValidating() {
+				return field.isValidating;
+			},
+			validate: () => this.validate(),
+			set: (result) => this.validation.set(result),
+			clear: () => this.clear()
+		};
+	}
+
+	#run(): ValidationResult | Promise<ValidationResult> {
+		const { schema, value, onvalidation } = this.props;
+
+		if (!schema) {
+			const result: ValidationResult = { data: value, errors: [] };
+			onvalidation?.(result);
+			return result;
+		}
+
+		// The field's own value, not a values object: `z.string().min(3)` on a field means the value.
+		const outcome = standardSchemaSource(schema).validate!(value);
+		if (isPromise(outcome)) {
+			return outcome.then((result) => {
+				onvalidation?.(result);
+				return result;
+			});
+		}
+
+		onvalidation?.(outcome);
+		return outcome;
+	}
 }
 
-// -----------------------------------------------------------------------------
-// Internal types
-// -----------------------------------------------------------------------------
+export const FieldRootAtom = defineAtom<FieldBondBase>('root', {
+	slot: '@ixirjs/field:root',
+	docs: 'Field root group labelling and validation state projection.',
+	attrs: (_node, bond) => {
+		const hasErrors = (bond?.errors.length ?? 0) > 0;
+		// Prefer the error message when there is one, but fall back to the helper text: a field
+		// with errors and no `Field.Error` rendered still has something to describe it.
+		const described = hasErrors
+			? (bond?.nodeByRole('error') ?? bond?.nodeByRole('description'))
+			: bond?.nodeByRole('description');
 
-type FieldBondView = FieldBondBase;
-
-// -----------------------------------------------------------------------------
-// Capability slots and shared helpers
-// -----------------------------------------------------------------------------
-
-const FIELD_ROOT = sharedCapabilityKey<void>({ owner: '@ixirjs/field', name: 'root', version: 1 });
-
-// -----------------------------------------------------------------------------
-// Atom definitions
-// -----------------------------------------------------------------------------
-
-export const FieldRootAtom = defineAtom<FieldBondView>('root', (atom) => {
-	atom.capability(fieldRootPresentation());
+		return {
+			role: 'group',
+			'aria-labelledby': bond?.nodeByRole('label')?.id,
+			'aria-describedby': described?.id,
+			'aria-invalid': `${hasErrors}`
+		};
+	}
 });
-export type FieldRootAtom = InstanceType<typeof FieldRootAtom>;
 
-export const FieldLabelAtom = defineAtom<FieldBondView>('label');
-export type FieldLabelAtom = InstanceType<typeof FieldLabelAtom>;
+export const FieldLabelAtom = defineAtom<FieldBondBase>('label');
 // `for` and id come from the labelledControl link (role:'label', nativeFor).
 
-export const FieldControlAtom = defineAtom<FieldBondView>('control');
-export type FieldControlAtom = InstanceType<typeof FieldControlAtom>;
+export const FieldControlAtom = defineAtom<FieldBondBase>('control');
 
-export const FieldDescriptionAtom = defineAtom<FieldBondView>('description', (atom) => {
-	atom.role('error');
-});
-export type FieldDescriptionAtom = InstanceType<typeof FieldDescriptionAtom>;
+export const FieldDescriptionAtom = defineAtom<FieldBondBase>('description');
 
-// -----------------------------------------------------------------------------
-// Atom capabilities
-// -----------------------------------------------------------------------------
-
-const fieldRootPresentation = internCapabilityFactory(function fieldRootPresentation() {
-	return defineAtomCapability<void, AtomHost, FieldBondView>({
-		slot: FIELD_ROOT,
-		meta: {
-			projects: ['root'],
-			docs: 'Field root group labelling and validation state projection.'
-		},
-		attach: {
-			attrs: (_node, bond) => {
-				const hasErrors = (bond?.errors.length ?? 0) > 0;
-				const description = bond?.nodeByRole(hasErrors ? 'error' : 'description')?.id;
-
-				return {
-					role: 'group',
-					'aria-labelledby': bond?.nodeByRole('label')?.id,
-					'aria-describedby': description,
-					'aria-invalid': `${hasErrors}`
-				};
-			}
-		}
-	});
-});
+// The error message target. Separate from the description: the helper text used to claim the
+// 'error' role too, which pointed `aria-errormessage` at prose that is not the error.
+export const FieldErrorAtom = defineAtom<FieldBondBase>('error');
 
 // FieldBond — label/control fold in the labelled-control link via their roles; validation lives on the Bond.
-
-// -----------------------------------------------------------------------------
-// Bond spec and constructor facade
-// -----------------------------------------------------------------------------
 
 export const FieldBond = defineBond({
 	name: 'field',
@@ -317,7 +271,8 @@ export const FieldBond = defineBond({
 		root: FieldRootAtom,
 		label: { atom: FieldLabelAtom, role: 'label' },
 		control: { atom: FieldControlAtom, role: 'control' },
-		description: { atom: FieldDescriptionAtom, role: 'description' }
+		description: { atom: FieldDescriptionAtom, role: 'description' },
+		error: { atom: FieldErrorAtom, role: 'error' }
 	}
 });
 

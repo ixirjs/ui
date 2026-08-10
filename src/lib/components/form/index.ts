@@ -2,16 +2,29 @@ export * from './types';
 export { Root as Form } from './atoms';
 export { Field } from './field';
 
+export type { FieldStateProps, ValidationTrigger } from './field/bond.svelte';
+export type { ValidationMode } from './bond.svelte';
+
+export {
+	superformsSource,
+	type SuperFormLike,
+	type ReadableLike
+} from './sources/superforms.svelte';
+
+// The validation contract itself is shared, not Form-specific — re-exported here because Form is
+// where consumers meet it.
+export {
+	defineSchema,
+	errorRecordSource,
+	errorsForPath,
+	flattenErrorRecord,
+	isStandardSchema,
+	standardSchemaSource,
+	type ErrorRecord,
+	type StandardSchemaV1,
+	type ValidationSource
+} from '$ixirjs/ui/shared/validation';
 export type {
 	ValidationError,
-	ValidationResult,
-	ValidationAdapter,
-	FieldStateProps
-} from './field/bond.svelte';
-
-export { ZodValidationAdapter } from './field/bond.svelte';
-export {
-	YupValidationAdapter,
-	JoiValidationAdapter,
-	CustomValidationAdapter
-} from './validation-adapters';
+	ValidationResult
+} from '$ixirjs/ui/shared/capability/models/validation.svelte';

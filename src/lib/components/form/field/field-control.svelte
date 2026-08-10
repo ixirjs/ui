@@ -1,7 +1,11 @@
-<script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
-	import { usePart } from '$ixirjs/ui/shared';
+<script module lang="ts">
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
 	import { FieldBond } from './bond.svelte';
+	const PART = Kernel.part(FieldBond, 'control', { class: '' });
+</script>
+
+<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
+	import { type Base, type BasePropsOf, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
 	import type { StateChangeContext } from '$ixirjs/ui/types';
 	import type {
 		FieldControlChangeDetails,
@@ -20,17 +24,16 @@
 		children = undefined,
 		oninput = undefined,
 		onchange = undefined,
+		onblur = undefined,
 		onvaluechange = undefined,
 		onnumberchange = undefined,
 		onfileschange = undefined,
 		ondatechange = undefined,
 		oncheckedchange = undefined,
 		...restProps
-	}: FieldControlProps<E, B> = $props();
+	}: FieldControlProps<E, B> & BasePropsOf<B> = $props();
 
-	const part = usePart(FieldBond, 'control', () => restProps, {
-		preset: () => preset
-	});
+	const part = Kernel.node(PART, () => ({ preset }), { context: 'required' });
 	const bond = part.bond;
 	const name = $derived(bond.props.name);
 
@@ -43,6 +46,9 @@
 		// Field.Control is type-agnostic; undefined means the active control has no numeric value.
 		bond.props.number = number as number;
 		bond.props.checked = checked;
+		// Every semantic change handler funnels through here, so this is the one place the 'input'
+		// trigger has to live. `validateOn` is a no-op unless the field's mode allows it.
+		bond.validateOn('input');
 	}
 
 	function callbackContext(context: IncomingContext) {
@@ -70,6 +76,14 @@
 
 	function handleChange(event: Event) {
 		onchange?.(event);
+	}
+
+	// The missing half of the trigger story: leaving a control is what marks it visited, which is
+	// what the default 'touched' mode waits for before it will show anything.
+	function handleBlur(event: FocusEvent) {
+		bond.markTouched();
+		bond.validateOn('blur');
+		onblur?.(event);
 	}
 
 	function handleValueChange(next: unknown, context: IncomingContext) {
@@ -110,27 +124,39 @@
 		commitBond();
 		oncheckedchange?.(checked, callbackContext(context));
 	}
+
+	// The ordinary control reaches a native leaf unless the consumer supplies `base`.
+	const el = Kernel.element(
+		{ atom: part.atom, bond, preset: part.preset, presetLayer: part.presetLayer },
+		() => ({
+			class: ['flex items-center', '$preset', klass],
+			...restProps,
+			base,
+			value,
+			checked,
+			number,
+			date,
+			...(files === undefined ? {} : { files }),
+			name,
+			bond,
+			oninput: handleInput,
+			onchange: handleChange,
+			onblur: handleBlur,
+			onvaluechange: handleValueChange,
+			onnumberchange: handleNumberChange,
+			onfileschange: handleFilesChange,
+			ondatechange: handleDateChange,
+			oncheckedchange: handleCheckedChange
+		})
+	);
 </script>
 
-<HtmlAtom
-	class={['flex items-center', '$preset', klass]}
-	{...restProps}
-	{part}
-	{base}
-	{value}
-	{checked}
-	{number}
-	{date}
-	{...files === undefined ? {} : { files }}
-	{name}
-	{bond}
-	oninput={handleInput}
-	onchange={handleChange}
-	onvaluechange={handleValueChange}
-	onnumberchange={handleNumberChange}
-	onfileschange={handleFilesChange}
-	ondatechange={handleDateChange}
-	oncheckedchange={handleCheckedChange}
->
-	{@render children?.({ field: bond })}
-</HtmlAtom>
+{@render Kernel.render(el)(
+	el.tag(),
+	el.class(),
+	el.attrs(),
+	children,
+	{ field: bond },
+	el.motion(),
+	el
+)}

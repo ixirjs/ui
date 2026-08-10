@@ -1,23 +1,21 @@
-<script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'label', B extends Base = Base">
-	import { type Base } from '$ixirjs/ui/components/atom';
-	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
-	import { usePart } from '$ixirjs/ui/shared';
+<script lang="ts" generics="E extends HtmlElementTagName = 'label', B extends Base = Base">
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
+	import { type Base, type BasePropsOf, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
+	import { definePart } from '$ixirjs/ui/components/atom/define-part.svelte';
 	import { FieldBond } from './bond.svelte';
 	import type { FieldLabelProps } from '$ixirjs/ui/components/form/types';
 
-	let {
-		class: klass = '',
-		preset = undefined,
-		children = undefined,
-		...restProps
-	}: FieldLabelProps<E, B> = $props();
+	const props: FieldLabelProps<E, B> & BasePropsOf<B> = $props();
 
-	const part = usePart(FieldBond, 'label', () => restProps, {
-		preset: () => preset
-	});
-	const bond = part.bond;
-
-	const el = usePartElement(part, () => ({ class: ['flex', '$preset', klass], ...restProps }));
+	const el = definePart(FieldBond, 'label', () => props, { class: 'flex' });
 </script>
 
-{@render partElement(el, children, { field: bond })}
+{@render Kernel.render(el)(
+	el.tag(),
+	el.class(),
+	el.attrs(),
+	props.children,
+	{ field: el.bond },
+	el.motion(),
+	el
+)}

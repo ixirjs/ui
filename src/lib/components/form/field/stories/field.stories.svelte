@@ -29,9 +29,6 @@
 
 <script lang="ts">
 	import { z } from 'zod';
-	import { ZodAdapter } from '$ixirjs/ui/components/form/field/validation-adapters';
-
-	const validator = new ZodAdapter();
 
 	const usernameSchema = z
 		.string()
@@ -57,7 +54,6 @@
 				{...args}
 				name="username"
 				schema={usernameSchema}
-				{validator}
 				value={defaultUsername}
 				extend={{}}
 			>
@@ -71,6 +67,7 @@
 				</Input.Root>
 				<Field.HelperText>Use 3 to 20 characters with letters, numbers, or dashes.</Field.HelperText
 				>
+				<Field.Error />
 			</Field.Root>
 			<p class="text-muted-foreground mt-3 text-xs">
 				Current value: {defaultUsername || '(empty)'}
@@ -87,7 +84,6 @@
 			extend={{}}
 			name="username"
 			schema={usernameSchema}
-			{validator}
 			value={username}
 		>
 			<Field.Label>Username</Field.Label>
@@ -99,13 +95,14 @@
 				/>
 			</Input.Root>
 			<Field.HelperText>Use 3 to 20 characters with letters, numbers, or dashes.</Field.HelperText>
+			<Field.Error />
 		</Field.Root>
 		<p class="text-muted-foreground mt-3 text-xs">Current value: {username || '(empty)'}</p>
 	</div>
 </Story>
 
 <Story name="Field Inside Form">
-	<FormRoot class="flex w-140 flex-col gap-4 p-5" {validator}>
+	<FormRoot class="flex w-140 flex-col gap-4 p-5">
 		<Field.Root
 			disabled={false}
 			readonly={false}
@@ -123,6 +120,7 @@
 				/>
 			</Input.Root>
 			<Field.HelperText>Shown in comments, mentions, and activity feeds.</Field.HelperText>
+			<Field.Error />
 		</Field.Root>
 
 		<Field.Root
@@ -139,6 +137,7 @@
 				</div>
 				<Field.Label class="text-sm">Receive product updates by email</Field.Label>
 			</label>
+			<Field.Error />
 		</Field.Root>
 
 		<pre class="bg-muted text-muted-foreground overflow-x-auto rounded p-2 text-xs">

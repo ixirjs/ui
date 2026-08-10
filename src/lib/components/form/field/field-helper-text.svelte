@@ -1,29 +1,25 @@
-<script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'p', B extends Base = Base">
-	import { type Base } from '$ixirjs/ui/components/atom';
-	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
-	import { usePart } from '$ixirjs/ui/shared';
+<script lang="ts" generics="E extends HtmlElementTagName = 'p', B extends Base = Base">
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
+	import { type Base, type BasePropsOf, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
+	import { definePart } from '$ixirjs/ui/components/atom/define-part.svelte';
 	import { FieldBond } from './bond.svelte';
 	import type { FieldTextProps } from '$ixirjs/ui/components/form/types';
 
-	let {
-		class: klass = '',
-		as = 'p' as E,
-		children = undefined,
-		preset = undefined,
-		...restProps
-	}: FieldTextProps<E, B> = $props();
+	const props: FieldTextProps<E, B> & BasePropsOf<B> = $props();
 
-	const part = usePart(FieldBond, 'description', () => restProps, {
-		message: '<Field.HelperText /> must be used within a <Field.Root />',
-		preset: () => preset ?? 'field.helper-text'
+	const el = definePart(FieldBond, 'description', () => props, {
+		as: 'p',
+		class: 'text-muted-foreground mt-1 text-xs',
+		message: '<Field.HelperText /> must be used within a <Field.Root />'
 	});
-	const bond = part.bond;
-
-	const el = usePartElement(part, () => ({
-		as,
-		class: ['text-muted-foreground mt-1 text-xs', '$preset', klass],
-		...restProps
-	}));
 </script>
 
-{@render partElement(el, children, { field: bond })}
+{@render Kernel.render(el)(
+	el.tag(),
+	el.class(),
+	el.attrs(),
+	props.children,
+	{ field: el.bond },
+	el.motion(),
+	el
+)}
