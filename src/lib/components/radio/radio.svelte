@@ -1,8 +1,9 @@
 <script lang="ts" generics="T = string">
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
 	import { RadioGroupBond, type RadioCheckedChangeListener } from './bond.svelte';
 	import { Stack } from '$ixirjs/ui/components/stack';
 	import { toClassValue } from '$ixirjs/ui/utils';
-	import { mergePresetProps, HtmlAtom } from '$ixirjs/ui/components/atom';
+	import { mergePresetProps } from '$ixirjs/ui/components/atom';
 	import { animateRadioIndicatorIn, animateRadioIndicatorOut } from './motion.svelte';
 	import type { RadioProps } from './types';
 
@@ -105,6 +106,15 @@
 		if (!radioGroupBond) pendingStandaloneEvent = event;
 		if (!select(event) && !radioGroupBond) pendingStandaloneEvent = undefined;
 	}
+
+	// Element seam instead of a component boundary. Declared here, not in the snippet: the seam owns
+	// effects and must be created during init, and a snippet body is not init.
+	const customIndicatorEl = Kernel.element(Kernel.static, () => ({
+		class: 'rounded-inherit pointer-events-none size-full scale-[0.6] bg-current',
+		base: checkedContent,
+		enter: animateRadioIndicatorIn(),
+		exit: animateRadioIndicatorOut()
+	}));
 </script>
 
 <Stack.Root
@@ -136,12 +146,15 @@
 </Stack.Root>
 
 {#snippet customCheckedContent()}
-	<HtmlAtom
-		class="rounded-inherit pointer-events-none size-full scale-[0.6] bg-current"
-		base={checkedContent}
-		enter={animateRadioIndicatorIn()}
-		exit={animateRadioIndicatorOut()}
-	/>
+	{@render Kernel.render(customIndicatorEl)(
+		customIndicatorEl.tag(),
+		customIndicatorEl.class(),
+		customIndicatorEl.attrs(),
+		undefined,
+		undefined,
+		customIndicatorEl.motion(),
+		customIndicatorEl
+	)}
 {/snippet}
 
 {#snippet defaultCheckedContent()}

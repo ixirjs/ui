@@ -8,7 +8,10 @@ function makePortal(initial: Partial<PortalBondProps> = {}) {
 
 // Mount a real node by invoking its (symbol-keyed) attachment — the same path the
 // `{...atom.spread}` wiring takes in a component.
-function mount(atom: PortalRootAtom | PortalInnerAtom, node: HTMLElement) {
+function mount(
+	atom: InstanceType<typeof PortalRootAtom | typeof PortalInnerAtom>,
+	node: HTMLElement
+) {
 	const attachments = atom.attachments as Record<symbol, (n: HTMLElement) => void>;
 	const key = Object.getOwnPropertySymbols(attachments)[0]!;
 	attachments[key]!(node);

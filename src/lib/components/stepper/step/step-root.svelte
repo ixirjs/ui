@@ -1,6 +1,6 @@
-<script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
+<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
 	import { useRoot } from '$ixirjs/ui/shared';
-	import { type Base } from '$ixirjs/ui/components/atom';
+	import { type Base, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
 	import { StepBond } from './bond.svelte';
 	import type { StepRootProps } from './types';
 	import { onDestroy } from 'svelte';
@@ -8,7 +8,7 @@
 	const ID = $props.id();
 
 	// Step.Root is renderless (registration-only — it renders `children`, not an element), so there is
-	// no host element to forward the inherited HtmlAtomProps (class/preset/…) onto; they're intentionally unused.
+	// no host element to forward the inherited RenderProps (class/preset/…) onto; they're intentionally unused.
 	// eslint-disable-next-line svelte/no-unused-props
 	let {
 		index,
@@ -39,9 +39,7 @@
 		unmountStep?.();
 	});
 
-	export function getBond() {
-		return bond;
-	}
+	export const getBond = () => bond;
 </script>
 
 {@render children?.({ step: bond })}

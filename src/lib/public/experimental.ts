@@ -33,7 +33,6 @@ export type {
 	DefinedBond,
 	DefinedBondClass,
 	FusablePart,
-	MethodsOf,
 	PartsOf,
 	SpecOf
 } from '$ixirjs/ui/shared/authoring/define.svelte';
@@ -117,14 +116,6 @@ export {
 	LONG_PRESS_POLICY,
 	REORDER_DRAG_POLICY
 } from '$ixirjs/ui/shared/capability/models/interaction-policies/gestures.svelte';
-export {
-	activationPolicy,
-	clearPolicy,
-	focusTrigger,
-	ACTIVATION_POLICY,
-	CLEAR_POLICY,
-	FOCUS_TRIGGER
-} from '$ixirjs/ui/shared/capability/models/interaction-policies/activation.svelte';
 export type {
 	DragAxis,
 	DragPolicyDetail,
@@ -141,17 +132,11 @@ export {
 	MUTATION_OBSERVER
 } from '$ixirjs/ui/shared/capability/models/bond-effects/observers.svelte';
 export {
-	scrollMeasurementCapability,
 	documentDragCapability,
-	SCROLL_MEASUREMENT,
 	DOCUMENT_DRAG
 } from '$ixirjs/ui/shared/capability/models/bond-effects/measurement.svelte';
 export {
-	mediaQueryCapability,
-	reducedMotionCapability,
 	pointerModalityCapability,
-	MEDIA_QUERY,
-	REDUCED_MOTION,
 	POINTER_MODALITY
 } from '$ixirjs/ui/shared/capability/models/bond-effects/environment.svelte';
 export {

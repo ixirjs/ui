@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { Bond, Atom, capabilityKey, defineCapability } from './index';
+import { Bond, Atom } from './index';
+import { capabilityKey, defineCapability } from '$ixirjs/ui/shared/capability';
 
 // Specs for Bond.namespace and Atom.preset — the seam for <namespace>.<atom> preset key resolution. See CONTEXT.md §preset.
 

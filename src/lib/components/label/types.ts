@@ -1,14 +1,19 @@
 import type { Snippet } from 'svelte';
-import type { HtmlAtomProps, Base, SnippetProps } from '$ixirjs/ui/components/atom';
+import type {
+	RenderProps,
+	Base,
+	SnippetProps,
+	HtmlElementTagName
+} from '$ixirjs/ui/components/atom';
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface LabelSnippetProps extends SnippetProps {}
 
 export type LabelChildren = Snippet<[LabelSnippetProps]>;
 
 export interface LabelProps<
-	E extends keyof HTMLElementTagNameMap = 'label',
+	E extends HtmlElementTagName = 'label',
 	B extends Base = Base
-> extends HtmlAtomProps<E, B, LabelChildren> {
+> extends RenderProps<E, B, LabelChildren> {
+	/** The id of the form element this label is associated with. Maps to the HTML `for` attribute. */
 	for?: string | null;
 }

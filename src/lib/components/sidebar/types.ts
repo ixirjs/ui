@@ -1,7 +1,12 @@
 import type { Snippet } from 'svelte';
 import type { Factory, StateChangeCallback } from '$ixirjs/ui/types';
 import type { SidebarBond } from './bond.svelte';
-import type { Base, HtmlAtomProps, SnippetProps } from '$ixirjs/ui/components/atom';
+import type {
+	Base,
+	RenderProps,
+	SnippetProps,
+	HtmlElementTagName
+} from '$ixirjs/ui/components/atom';
 import type { PortalBond, ZIndexInput } from '$ixirjs/ui/components/portal';
 
 // Sidebar Snippet Props
@@ -13,10 +18,21 @@ export interface SidebarSnippetProps extends SnippetProps {
 export type SidebarChildren = Snippet<[SidebarSnippetProps]>;
 
 export type SidebarRootProps = {
+	/** Additional classes, merged after the preset so they win. */
 	class?: string;
+	/** Stacking elevation for the sidebar surface. Takes a named layer rather than a raw number so overlays stay ordered. */
 	'z-index'?: ZIndexInput;
+	/**
+	 * Whether the sidebar panel is currently open. Bindable for two-way control.
+	 * @default false
+	 */
 	open?: boolean;
+	/**
+	 * Disables the sidebar from being opened or closed.
+	 * @default false
+	 */
 	disabled?: boolean;
+	/** Width of the sidebar panel. Accepts CSS values (e.g., "320px", "20rem") or numeric pixel values. */
 	width?: string | number;
 	/**
 	 * Render as a portal-owned modal surface instead of an in-flow rail.
@@ -25,13 +41,15 @@ export type SidebarRootProps = {
 	overlay?: boolean;
 	/** Portal target when `overlay` is set; defaults through explicit → ambient → root. */
 	portal?: string | PortalBond;
+	/** Custom factory for creating the sidebar bond instance. */
 	factory?: Factory<SidebarBond>;
+	/** Called after a real open-state transition commits. */
 	onopenchange?: StateChangeCallback<boolean, SidebarBond> | undefined;
+	/** Content of this part. */
 	children?: SidebarChildren;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface SidebarContentProps<
-	E extends keyof HTMLElementTagNameMap,
+	E extends HtmlElementTagName,
 	B extends Base = Base
-> extends HtmlAtomProps<E, B, SidebarChildren> {}
+> extends RenderProps<E, B, SidebarChildren> {}

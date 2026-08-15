@@ -1,8 +1,10 @@
 <script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
 	import { DEV } from 'esm-env';
 	import type { HTMLAttributes } from 'svelte/elements';
 	import type { TeleportProps } from '$ixirjs/ui/components/portal/types';
-	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import { createAttachmentKey } from 'svelte/attachments';
+	import { type Base, type BasePropsOf } from '$ixirjs/ui/components/atom';
 	import type { HtmlElementTagName, HtmlElementType } from '$ixirjs/ui/components/element';
 	import { PortalBond } from '$ixirjs/ui/components/portal/instance/bond.svelte';
 	import {
@@ -14,8 +16,13 @@
 
 	type Element = HtmlElementType<E>;
 
-	let { portal, as, base, children, ...restProps }: TeleportProps<E, B> & HTMLAttributes<Element> =
-		$props();
+	let {
+		portal,
+		as,
+		base,
+		children,
+		...restProps
+	}: TeleportProps<E, B> & HTMLAttributes<Element> & BasePropsOf<B> = $props();
 
 	const portalsBond = PortalsBond.get();
 	const ambientPortal = $derived(PortalBond.get());
@@ -36,6 +43,20 @@
 	function teleport(node: HTMLElement) {
 		return port(node, targetElement);
 	}
+
+	// `{@attach}` is markup syntax; the seam takes a props object, so the attachment rides its own
+	// key. Minted once per instance so the node is not re-ported on every invalidation.
+	const teleportKey = createAttachmentKey();
+
+	// Element seam instead of a component boundary; key order matches the previous call exactly.
+	// `base` keeps this on the escalating branch when a consumer passes one — the seam decides that,
+	// rather than the call site committing to a component boundary either way.
+	const el = Kernel.element(Kernel.static, () => ({
+		[teleportKey]: teleport,
+		as: as as E,
+		base,
+		...restProps
+	}));
 </script>
 
 {@render (targetElement && portalBond ? teleported : undefined)?.()}
@@ -43,7 +64,13 @@
 <!-- `portalBond!` is proven by the dispatch below, which renders this only when it is present;
      TypeScript narrowing does not cross into a snippet body. -->
 {#snippet teleported()}
-	<HtmlAtom {@attach teleport} as={as as E} {base} {...restProps}>
-		{@render children?.({ portal: portalBond! })}
-	</HtmlAtom>
+	{@render Kernel.render(el)(
+		el.tag(),
+		el.class(),
+		el.attrs(),
+		children,
+		{ portal: portalBond! },
+		el.motion(),
+		el
+	)}
 {/snippet}

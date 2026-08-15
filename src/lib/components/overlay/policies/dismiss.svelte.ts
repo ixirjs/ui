@@ -1,20 +1,18 @@
 import { on } from 'svelte/events';
-import { defineCapability, sharedCapabilityKey, type Capability } from '$ixirjs/ui/shared/bond';
+import {
+	defineCapability,
+	sharedCapabilityKey,
+	type Capability
+} from '$ixirjs/ui/shared/capability';
 import { containsTarget, isBrowser } from '$ixirjs/ui/utils/dom.svelte';
 import type { OverlayView } from '$ixirjs/ui/components/overlay/types';
 import { isTopOverlay } from './escape-stack.svelte';
 import { closeOverlay, overlayIsDisabled, overlayIsOpen } from './overlay-view';
 
-export const OUTSIDE_PRESS = sharedCapabilityKey<OutsidePressSurface>({
-	owner: '@ixirjs/cap',
-	name: 'outside-press',
-	version: 1
-});
-export const BACKDROP_PRESS = sharedCapabilityKey<BackdropPressHandler>({
-	owner: '@ixirjs/cap',
-	name: 'backdrop-press',
-	version: 1
-});
+export const OUTSIDE_PRESS = sharedCapabilityKey<OutsidePressSurface>('@ixirjs/cap:outside-press');
+export const BACKDROP_PRESS = sharedCapabilityKey<BackdropPressHandler>(
+	'@ixirjs/cap:backdrop-press'
+);
 
 export type DismissPressEvent = MouseEvent | PointerEvent;
 export type DismissRole = 'content' | 'trigger' | 'surface' | 'backdrop';

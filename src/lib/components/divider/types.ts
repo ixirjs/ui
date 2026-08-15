@@ -1,9 +1,17 @@
-import type { HtmlAtomProps, Base } from '$ixirjs/ui/components/atom';
+import type { RenderProps, Base, HtmlElementTagName } from '$ixirjs/ui/components/atom';
 
 export interface DividerProps<
-	E extends keyof HTMLElementTagNameMap = 'div',
+	E extends HtmlElementTagName = 'div',
 	B extends Base = Base
-> extends HtmlAtomProps<E, B> {
+> extends RenderProps<E, B> {
+	/**
+	 * Vertical
+	 * @default false
+	 */
 	vertical?: boolean;
+	/**
+	 * Transparent
+	 * @default false
+	 */
 	transparent?: boolean;
 }

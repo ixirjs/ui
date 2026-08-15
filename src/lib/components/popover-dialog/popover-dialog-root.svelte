@@ -1,8 +1,5 @@
-<script
-	lang="ts"
-	generics="E extends keyof HTMLElementTagNameMap = 'dialog', B extends Base = Base"
->
-	import type { Base } from '$ixirjs/ui/components/atom';
+<script lang="ts" generics="E extends HtmlElementTagName = 'dialog', B extends Base = Base">
+	import type { Base, HtmlElementTagName } from '$ixirjs/ui/components/atom';
 	import { controlledProp, useRoot } from '$ixirjs/ui/shared';
 	import { PopoverDialogBond } from './bond.svelte';
 	import type { PopoverDialogRootProps } from './types';
@@ -38,9 +35,7 @@
 	);
 	const bond = root.bond;
 
-	export function getBond() {
-		return bond;
-	}
+	export const getBond = root.getBond;
 </script>
 
 {@render children?.({ popoverDialog: bond })}

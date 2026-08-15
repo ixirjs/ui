@@ -7,10 +7,6 @@ import type { OverlayView } from '$ixirjs/ui/components/overlay/types';
 import { Bond, type BondStateProps } from '$ixirjs/ui/shared/bond';
 import { defineBond, type BondOf } from '$ixirjs/ui/shared';
 
-// -----------------------------------------------------------------------------
-// Public types
-// -----------------------------------------------------------------------------
-
 export type PortalsStateProps = BondStateProps & {
 	id: string;
 };
@@ -22,10 +18,6 @@ export type PortalsProps = {
 };
 
 // The single portal registry for a tree — every portal registers here, all consumers resolve from it.
-
-// -----------------------------------------------------------------------------
-// Bond implementation
-// -----------------------------------------------------------------------------
 
 type OverlayScope = PortalBond | undefined;
 
@@ -188,10 +180,6 @@ function hasBandScope(
 }
 
 // Context-only registry bond (no atoms); the portal map lives on PortalsBondBase.
-
-// -----------------------------------------------------------------------------
-// Bond spec and constructor facade
-// -----------------------------------------------------------------------------
 
 export const PortalsBond = defineBond({
 	name: 'portals',

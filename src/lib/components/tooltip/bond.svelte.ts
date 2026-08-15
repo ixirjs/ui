@@ -5,15 +5,7 @@ import {
 } from '$ixirjs/ui/components/popover/bond.svelte';
 import { defineBond, type BondOf } from '$ixirjs/ui/shared';
 
-// -----------------------------------------------------------------------------
-// Public types
-// -----------------------------------------------------------------------------
-
 export type TooltipBondProps = PopoverBondProps;
-
-// -----------------------------------------------------------------------------
-// Bond spec and constructor facade
-// -----------------------------------------------------------------------------
 
 // TooltipBond — Popover re-branded as `tooltip`.
 //
@@ -30,7 +22,7 @@ export type TooltipBondProps = PopoverBondProps;
 // are needed — the shared popover atoms pick up the tooltip preset namespace automatically.
 // Inlined deliberately: `defineBond<const S>` infers `parts` as a tuple only from a literal
 // argument. A hoisted spec widens it to an array, which makes `AtomsOf` resolve every inherited
-// slot to `never` and blocks `usePart` on slots the runtime spec merge does provide.
+// slot to `never` and blocks `Kernel.part` on slots the runtime spec merge does provide.
 export const TooltipBond = defineBond({
 	parts: [PopoverBond],
 	name: 'tooltip',

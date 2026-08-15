@@ -3,7 +3,6 @@ import type { SnippetProps } from '$ixirjs/ui/components/atom';
 
 // Lazy snippet props
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface LazySnippetProps extends SnippetProps {}
 
 export type LazyChildren = Snippet;
@@ -13,8 +12,11 @@ export type LazyChildren = Snippet;
 export type LazyComponentProps = Record<string, any>;
 
 export interface LazyOwnProps<Props extends LazyComponentProps> {
+	/** Resolves to the component to render — typically a bare `import()`. */
 	promise: Promise<Component<Props>>;
+	/** Rendered when the import rejects. Give it `role="alert"`; a failed import is a real failure. */
 	error?: Snippet<[error: unknown]>;
+	/** Rendered while the import is in flight. Give it `role="status"` and reserve the final layout. */
 	loading?: Snippet;
 }
 

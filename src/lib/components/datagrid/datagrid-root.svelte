@@ -1,10 +1,10 @@
 <script
 	lang="ts"
-	generics="T = unknown, E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base"
+	generics="T = unknown, E extends HtmlElementTagName = 'div', B extends Base = Base"
 >
-	import { controlledProp, useRoot } from '@ixirjs/ui/shared';
-	import { type Base } from '$ixirjs/ui/components/atom';
-	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
+	import { controlledProp, useRoot } from '$ixirjs/ui/shared';
+	import { type Base, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
 	import { DataGridBond } from './bond.svelte';
 	import type { DatagridRootProps } from './types';
 	import './datagrid.css';
@@ -49,16 +49,22 @@
 	);
 	const bond = root.bond as DataGridBond<T>;
 
-	export function getBond() {
-		return bond;
-	}
+	export const getBond = () => bond;
 
-	const el = usePartElement(root, () => ({
+	const el = Kernel.element(root, () => ({
 		class: ['datagrid-root w-full gap-x-0 gap-y-0', '$preset', klass],
-		// `style` was an explicit attribute after the rest spread on HtmlAtom, so it still wins.
+		// Structural grid columns win over a consumer style attribute.
 		...restProps,
 		style: `--template-columns:${bond.template || fallbackTemplate}`
 	}));
 </script>
 
-{@render partElement(el, children, { datagrid: bond })}
+{@render Kernel.render(el)(
+	el.tag(),
+	el.class(),
+	el.attrs(),
+	children,
+	{ datagrid: bond },
+	el.motion(),
+	el
+)}

@@ -11,36 +11,12 @@ export type AtomValue<T> = T | ((node: AtomHost, bond: Bond | undefined) => T);
 export type AtomElement = Element | BondVirtualElement;
 export type AtomTeardown = Disposable | (() => void) | void;
 
-export const ELEMENT_REF = sharedCapabilityKey<void>({
-	owner: '@ixirjs/atom',
-	name: 'element-ref',
-	version: 1
-});
-export const PRESSABLE = sharedCapabilityKey<void>({
-	owner: '@ixirjs/atom',
-	name: 'pressable',
-	version: 1
-});
-export const FOCUSABLE = sharedCapabilityKey<void>({
-	owner: '@ixirjs/atom',
-	name: 'focusable',
-	version: 1
-});
-export const DATA_STATE = sharedCapabilityKey<void>({
-	owner: '@ixirjs/atom',
-	name: 'data-state',
-	version: 1
-});
-export const ARIA_ROLE = sharedCapabilityKey<void>({
-	owner: '@ixirjs/atom',
-	name: 'aria-role',
-	version: 1
-});
-export const MOTION = sharedCapabilityKey<void>({
-	owner: '@ixirjs/atom',
-	name: 'motion',
-	version: 1
-});
+export const ELEMENT_REF = sharedCapabilityKey<void>('@ixirjs/atom:element-ref');
+export const PRESSABLE = sharedCapabilityKey<void>('@ixirjs/atom:pressable');
+export const FOCUSABLE = sharedCapabilityKey<void>('@ixirjs/atom:focusable');
+export const DATA_STATE = sharedCapabilityKey<void>('@ixirjs/atom:data-state');
+export const ARIA_ROLE = sharedCapabilityKey<void>('@ixirjs/atom:aria-role');
+export const MOTION = sharedCapabilityKey<void>('@ixirjs/atom:motion');
 
 export type ElementRefCallback = (
 	element: AtomElement | undefined,

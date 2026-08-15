@@ -5,11 +5,7 @@ import {
 	type CapabilityKey
 } from '$ixirjs/ui/shared/capability/capability';
 
-export const VALIDATION = sharedCapabilityKey<ValidationModel>({
-	owner: '@ixirjs/cap',
-	name: 'validation',
-	version: 1
-});
+export const VALIDATION = sharedCapabilityKey<ValidationModel>('@ixirjs/cap:validation');
 
 const validationSlot = <T>(): CapabilityKey<ValidationModel<T>> =>
 	VALIDATION as CapabilityKey<ValidationModel<T>>;
@@ -21,54 +17,58 @@ export interface ValidationError {
 }
 
 export interface ValidationResult<T = unknown> {
-	success: boolean;
-	data?: T;
-	errors: ValidationError[];
+	data?: T | undefined;
+	errors: readonly ValidationError[];
 }
 
 export interface ValidationBacking<T = unknown> {
-	validate?: () => ValidationResult<T>;
-	validateAsync?: () => Promise<ValidationResult<T>>;
+	/** May return synchronously or resolve later; a Standard Schema is allowed to do either. */
+	run?: () => ValidationResult<T> | Promise<ValidationResult<T>>;
 }
 
 export interface ValidationModel<T = unknown> {
 	readonly errors: readonly ValidationError[];
 	readonly isInvalid: boolean;
 	readonly isValidating: boolean;
-	validate(): ValidationResult<T>;
-	validateAsync(): Promise<ValidationResult<T>>;
+	/**
+	 * One entry point rather than a `validate`/`validateAsync` pair: Standard Schema returns
+	 * sync-or-promise, so the split only forced every caller to know which kind it had. A sync
+	 * schema still costs no promise; `await validate()` works for both.
+	 */
+	validate(): ValidationResult<T> | Promise<ValidationResult<T>>;
+	/** Publish a result the model did not produce — externally owned errors. */
+	set(result: ValidationResult<T>): void;
 	clear(): void;
 }
 
+export function isPromise<T>(value: T | Promise<T>): value is Promise<T> {
+	return typeof (value as { then?: unknown } | null)?.then === 'function';
+}
+
+// No `success` flag: `errors.length` is the single source of truth, and a second representation of
+// the same fact is a desync waiting to happen — the deleted Yup adapter reported `success: false`
+// with an empty error list, which every reader downstream saw as valid.
 function ok<T = unknown>(): ValidationResult<T> {
-	return { success: true, errors: [] };
+	return { errors: [] };
 }
 
 export function createValidation<T = unknown>(
 	backing: ValidationBacking<T> = {}
 ): ValidationModel<T> {
-	let errors = $state<ValidationError[]>([]);
+	let errors = $state<readonly ValidationError[]>([]);
 	let isValidating = $state(false);
-	let validationRequest = 0;
+	// Bumped by every entry point, so a slow run that lost the race is discarded rather than
+	// overwriting whatever superseded it.
+	let request = 0;
 
 	function apply(result: ValidationResult<T>): ValidationResult<T> {
-		errors = result.errors;
+		errors = [...result.errors];
 		return result;
-	}
-
-	function invalidateAsyncValidation(): void {
-		validationRequest++;
-		isValidating = false;
-	}
-
-	function validate(): ValidationResult<T> {
-		invalidateAsyncValidation();
-		return apply(backing.validate?.() ?? ok<T>());
 	}
 
 	return {
 		get errors() {
-			return [...errors];
+			return errors;
 		},
 		get isInvalid() {
 			return errors.length > 0;
@@ -76,21 +76,36 @@ export function createValidation<T = unknown>(
 		get isValidating() {
 			return isValidating;
 		},
-		validate,
-		async validateAsync() {
-			if (!backing.validateAsync) return validate();
+		validate() {
+			const current = ++request;
+			isValidating = false;
 
-			const request = ++validationRequest;
+			const outcome = backing.run?.() ?? ok<T>();
+			if (!isPromise(outcome)) return apply(outcome);
+
 			isValidating = true;
-			try {
-				const result = await backing.validateAsync();
-				return request === validationRequest ? apply(result) : result;
-			} finally {
-				if (request === validationRequest) isValidating = false;
-			}
+			return outcome.then(
+				(result) => {
+					if (current !== request) return result;
+					isValidating = false;
+					return apply(result);
+				},
+				(error: unknown) => {
+					// A schema that throws is a bug in the schema, not a validation failure. Reporting
+					// it as "no errors" is what made the deleted Yup adapter silently pass.
+					if (current === request) isValidating = false;
+					throw error;
+				}
+			);
+		},
+		set(result) {
+			request++;
+			isValidating = false;
+			apply(result);
 		},
 		clear() {
-			invalidateAsyncValidation();
+			request++;
+			isValidating = false;
 			errors = [];
 		}
 	};

@@ -2,9 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { render } from 'svelte/server';
 import { createLifecycleKey } from './lifecycle.svelte';
 import Fixture from '$ixirjs/ui/test/components/atom/lifecycle-ssr-fixture.test.svelte';
+import SeamFixture from '$ixirjs/ui/test/components/atom/lifecycle-seam-fixture.test.svelte';
 
 // SSR contract: no symbol-keyed phase fires during server render. Svelte's server rest_props
-// copies Object.keys() only, so symbol-keyed props are dropped before reaching the atom (same as
+// copies Object.keys() only, so symbol-keyed props are dropped before reaching Kernel (same as
 // svelte/attachments). mount/destroy fire on the client during hydration instead; init-time logic
 // runs server-side only via the string-keyed `oninit` prop (covered below).
 describe('runLifecycle — SSR', () => {
@@ -48,5 +49,37 @@ describe('runLifecycle — SSR', () => {
 		expect(body).toContain('hello-ssr');
 		// Fired synchronously on the server; cleanup stays pending for client teardown only.
 		expect(calls).toEqual(['init']);
+	});
+
+	describe('through a bonded Kernel node', () => {
+		it('fires oninit exactly once during SSR and never its cleanup', () => {
+			let calls = 0;
+			let cleanups = 0;
+			const oninit = () => {
+				calls += 1;
+				return () => {
+					cleanups += 1;
+				};
+			};
+
+			const { body } = render(SeamFixture, { props: { oninit } });
+
+			expect(calls).toBe(1);
+			expect(cleanups).toBe(0);
+			expect(body).toContain('hello-seam');
+		});
+
+		it('never fires symbol phases on the server', () => {
+			const mount = createLifecycleKey('mount');
+			const destroy = createLifecycleKey('destroy');
+			let fired = 0;
+			const bump = () => {
+				fired += 1;
+			};
+
+			render(SeamFixture, { props: { lifecycleProps: { [mount]: bump, [destroy]: bump } } });
+
+			expect(fired).toBe(0);
+		});
 	});
 });

@@ -1,14 +1,14 @@
-import { defineCapability, sharedCapabilityKey, type Capability } from '$ixirjs/ui/shared/bond';
+import {
+	defineCapability,
+	sharedCapabilityKey,
+	type Capability
+} from '$ixirjs/ui/shared/capability';
 import type { OverlayView, OverlayKnobs } from '$ixirjs/ui/components/overlay/types';
 import { focus, focusTrap as tabTrap } from '$ixirjs/ui/utils/dom.svelte';
 import { useFocusRestore } from './focus-restore.svelte';
 import { overlayIsModal, overlayIsOpen, overlayNode } from './overlay-view';
 
-export const FOCUS = sharedCapabilityKey<FocusPolicySurface>({
-	owner: '@ixirjs/cap',
-	name: 'focus',
-	version: 1
-});
+export const FOCUS = sharedCapabilityKey<FocusPolicySurface>('@ixirjs/cap:focus');
 
 export type FocusPolicySurface = {
 	readonly restoreFocus?: OverlayKnobs['restoreFocus'];

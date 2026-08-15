@@ -2,7 +2,6 @@
 export type * from './public/types';
 export { Accordion, AccordionItem } from './components/accordion';
 export { Alert } from './components/alert';
-export { HtmlAtom } from './components/atom';
 export { Avatar } from './components/avatar';
 export { Badge } from './components/badge';
 export { Breadcrumb } from './components/breadcrumb';
@@ -21,10 +20,17 @@ export { Dialog } from './components/dialog';
 export { Divider } from './components/divider';
 export { Drawer } from './components/drawer';
 export { DropdownMenu } from './components/dropdown-menu';
-export { Field, Form } from './components/form';
+export {
+	Field,
+	Form,
+	defineSchema,
+	errorRecordSource,
+	standardSchemaSource,
+	superformsSource
+} from './components/form';
 export { Icon } from './components/icon';
 export { Image } from './components/image';
-export { Input, OtpInput } from './components/input';
+export { Input, PinInput, OtpInput } from './components/input';
 export { Kbd, Shortcut } from './components/kbd';
 export { Label } from './components/label';
 export { Lazy } from './components/lazy';
@@ -52,3 +58,7 @@ export { Toast, Toaster } from './components/toast';
 export { Tooltip } from './components/tooltip';
 export { Tree } from './components/tree';
 export { setPreset } from './preset';
+
+// Headless windowing for a list of any length. Not a component — three spreads that wire an existing
+// viewport, spacer and item, so the markup stays the caller's.
+export { createVirtual, type VirtualOptions, type Virtualizer, type VirtualItem } from './runes';

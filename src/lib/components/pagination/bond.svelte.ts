@@ -7,10 +7,6 @@ import {
 } from '$ixirjs/ui/shared/capability/models/pagination.svelte';
 import type { BondStateProps } from '$ixirjs/ui/shared/bond';
 
-// -----------------------------------------------------------------------------
-// Public types
-// -----------------------------------------------------------------------------
-
 export type PaginationStateProps = BondStateProps & {
 	disabled?: boolean;
 	/** 1-based current page. */
@@ -20,42 +16,15 @@ export type PaginationStateProps = BondStateProps & {
 	total?: number;
 };
 
-export type PaginationDomElements = {
-	root: HTMLElement;
-	previous: HTMLElement;
-	next: HTMLElement;
-};
-
-// -----------------------------------------------------------------------------
-// Internal types
-// -----------------------------------------------------------------------------
-
-type PaginationBondView = PaginationBondBase;
-
-// -----------------------------------------------------------------------------
-// Atom definitions
-// -----------------------------------------------------------------------------
-
 // Roles, not hand-written attributes: the page data attributes, `aria-disabled` at each boundary,
 // and both click handlers are projected by the shared paginationCapability.
-export const PaginationRootAtom = defineAtom<PaginationBondView>('root', (atom) =>
-	atom.role('container')
-);
-export type PaginationRootAtom = InstanceType<typeof PaginationRootAtom>;
+const PaginationRootAtom = defineAtom<PaginationBondBase>('root', (atom) => atom.role('container'));
 
-export const PaginationPreviousAtom = defineAtom<PaginationBondView>('previous', (atom) =>
+const PaginationPreviousAtom = defineAtom<PaginationBondBase>('previous', (atom) =>
 	atom.role('previous')
 );
-export type PaginationPreviousAtom = InstanceType<typeof PaginationPreviousAtom>;
 
-export const PaginationNextAtom = defineAtom<PaginationBondView>('next', (atom) =>
-	atom.role('next')
-);
-export type PaginationNextAtom = InstanceType<typeof PaginationNextAtom>;
-
-// -----------------------------------------------------------------------------
-// Bond implementation
-// -----------------------------------------------------------------------------
+const PaginationNextAtom = defineAtom<PaginationBondBase>('next', (atom) => atom.role('next'));
 
 const DEFAULT_PAGE_SIZE = 10;
 
@@ -119,10 +88,6 @@ class PaginationBondBase extends Bond<PaginationStateProps> {
 		this.pagination.previousPage();
 	}
 }
-
-// -----------------------------------------------------------------------------
-// Bond spec and constructor facade
-// -----------------------------------------------------------------------------
 
 const paginationSpec = {
 	name: 'pagination',

@@ -1,13 +1,23 @@
 import type { Snippet } from 'svelte';
-import type { HtmlAtomProps, Base, SnippetProps } from '$ixirjs/ui/components/atom';
+import type {
+	RenderProps,
+	Base,
+	SnippetProps,
+	HtmlElementTagName
+} from '$ixirjs/ui/components/atom';
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface LinkSnippetProps extends SnippetProps {}
 
 export type LinkChildren = Snippet<[LinkSnippetProps]>;
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface LinkProps<
-	E extends keyof HTMLElementTagNameMap = 'a',
+	E extends HtmlElementTagName = 'a',
 	B extends Base = Base
-> extends HtmlAtomProps<E, B, LinkChildren> {}
+> extends RenderProps<E, B, LinkChildren> {
+	/** The URL the link navigates to. */
+	href?: string | undefined;
+	/** Where to open the linked URL. Use "_blank" for external links. */
+	target?: string | undefined;
+	/** Relationship between the current document and the linked URL. Use "noopener noreferrer" for external links. */
+	rel?: string | undefined;
+}

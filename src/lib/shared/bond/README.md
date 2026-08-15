@@ -22,11 +22,11 @@ capabilities.
 
 ## Usage Notes
 
-- Rendered parts create Atoms with `createAtomInstance(...)`; ordinary `defineBond` slots can use the higher-level `usePart(...)` authoring helper.
+- Ordinary `defineBond` slots compile through `Kernel.part(...)` and bind through `Kernel.node(...)`; repeated/runtime-polymorphic parts create Atoms with `createAtomInstance(...)` by exception.
 - `defineAtom('key')` keeps a Bond-required constructor; `defineAtom({ key, namespace, preset, id, bond? })` creates an optionally bonded class with standalone identity fallbacks.
 - Read rendered atoms with `bond.nodeByPart(...)`, `bond.nodesByPart(...)`, or `bond.nodeByRole(...)`. These lookups never create detached runtime objects.
 - A single part rejects duplicate registration; mark repeated parts `{ cardinality: 'many' }`.
-- Definitions do not expose Atom factory methods. Rendered parts use `createAtomInstance(...)` or `usePart(...)`; mounted consumers query `nodeByPart(...)` or `nodeByRole(...)`.
+- Definitions do not expose Atom factory methods. Kernel owns ordinary rendered parts; mounted consumers query `nodeByPart(...)` or `nodeByRole(...)`.
 
 ## Lifecycle
 

@@ -9,8 +9,11 @@
 	let {
 		open = true,
 		onclick = undefined,
-		onopenchange = undefined
-	}: Pick<DialogProps, 'open' | 'onclick' | 'onopenchange'> = $props();
+		onopenchange = undefined,
+		// Anything but `button` has to grow the role and tabindex a button gets for free — see
+		// `dialog-close-handler.svelte.spec.ts`.
+		as = 'button'
+	}: Pick<DialogProps, 'open' | 'onclick' | 'onopenchange'> & { as?: 'button' | 'span' } = $props();
 	let dialogRoot: { getBond(): DialogBond };
 
 	export function getBond(): DialogBond {
@@ -21,7 +24,7 @@
 <Root>
 	<DialogRoot bind:this={dialogRoot} {open} {onclick} {onopenchange}>
 		{#snippet children()}
-			<DialogClose data-testid="dialog-close" />
+			<DialogClose {as} data-testid="dialog-close" />
 			<button data-testid="dialog-attachment-close" {@attach closeDialog()}>Close</button>
 		{/snippet}
 	</DialogRoot>

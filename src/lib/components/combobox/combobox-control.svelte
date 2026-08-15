@@ -1,8 +1,13 @@
+<script module lang="ts">
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
+	import { ComboboxBond } from './bond.svelte';
+	const PART = Kernel.part(ComboboxBond, 'control', { class: '' });
+</script>
+
 <script lang="ts">
 	import { Input } from '$ixirjs/ui/components/input';
-	import { ComboboxBond } from './bond.svelte';
 	import type { ComboboxControlProps } from './types';
-	import { INPUT, usePart } from '@ixirjs/ui/shared';
+	import { INPUT } from '$ixirjs/ui/shared';
 
 	let {
 		value = $bindable(),
@@ -11,8 +16,9 @@
 		...restProps
 	}: ComboboxControlProps = $props();
 
-	const part = usePart(ComboboxBond, 'control', () => restProps, {
-		preset: () => preset
+	const part = Kernel.node(PART, () => ({ preset }), {
+		context: 'required',
+		rest: () => restProps
 	});
 
 	// Trigger control is the `value` box (the `'input'` capability's `value` field): shows the

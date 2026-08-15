@@ -1,14 +1,15 @@
+<script module lang="ts">
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
+	import { PopoverBond } from './bond.svelte';
+	const PART = Kernel.part(PopoverBond, 'indicator', { class: '' });
+</script>
+
 <script lang="ts">
 	import { animate } from '$ixirjs/ui/shared';
 	import { Icon } from '$ixirjs/ui/components/icon';
 	import IconArrowDown from '$ixirjs/ui/icons/icon-arrow-down.svelte';
-	import { HtmlAtom, mergeAtomProps } from '$ixirjs/ui/components/atom';
 	import type { PresetKey } from '$ixirjs/ui/preset';
-	import { createAtomInstance, type Atom } from '$ixirjs/ui/shared/bond';
-	import { createPopoverAtom, PopoverBond } from './bond.svelte';
 	import { overlayIsOpen } from '$ixirjs/ui/components/overlay/policies/overlay-view';
-
-	const bond = PopoverBond.getOrThrow('<Popover.Indicator /> must be used within a <Popover />');
 
 	let {
 		class: klass = '',
@@ -16,26 +17,23 @@
 		children = undefined
 	} = $props();
 
-	const atom = createAtomInstance<Atom<PopoverBond, HTMLElement>, PopoverBond, HTMLElement>(
-		'indicator',
-		{
-			bond,
-			factory: (owner) => createPopoverAtom(owner as PopoverBond, 'indicator')
-		}
-	);
+	const part = Kernel.node(PART, () => ({ preset }), { context: 'required' });
+	const el = Kernel.element(part, () => ({
+		class: ['border-border flex h-5 items-center justify-center', '$preset', klass]
+	}));
 
-	const isOpen = $derived(overlayIsOpen(bond));
-
-	const indicatorProps = $derived(mergeAtomProps(atom, preset, {}, bond.presetLayer('indicator')));
+	const isOpen = $derived(overlayIsOpen(part.bond));
 </script>
 
-<HtmlAtom
-	{bond}
-	class={['border-border flex h-5 items-center justify-center', '$preset', klass]}
-	{...indicatorProps}
->
-	{@render (children ?? fallback)({ popover: bond })}
-</HtmlAtom>
+{@render Kernel.render(el)(
+	el.tag(),
+	el.class(),
+	el.attrs(),
+	children ?? fallback,
+	{ popover: part.bond },
+	el.motion(),
+	el
+)}
 
 {#snippet fallback()}
 	<Icon

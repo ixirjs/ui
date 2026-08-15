@@ -1,8 +1,11 @@
-<script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { type Base } from '$ixirjs/ui/components/atom';
-	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
-	import { usePart } from '$ixirjs/ui/shared';
+<script module lang="ts">
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
 	import { StepBond } from './bond.svelte';
+	const PART = Kernel.part(StepBond, 'separator', { class: '' });
+</script>
+
+<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
+	import { type Base, type BasePropsOf, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
 	import { StepperBond } from '$ixirjs/ui/components/stepper/bond.svelte';
 	import type { StepSeparatorProps } from './types';
 
@@ -11,18 +14,16 @@
 		preset = undefined,
 		children = undefined,
 		...restProps
-	}: StepSeparatorProps<E, B> = $props();
+	}: StepSeparatorProps<E, B> & BasePropsOf<B> = $props();
 
-	const part = usePart(StepBond, 'separator', () => restProps, {
-		preset: () => preset
-	});
+	const part = Kernel.node(PART, () => ({ preset }), { context: 'required' });
 	const stepperBond = StepperBond.getOrThrow(
 		'StepSeparator must be used within a Stepper component.'
 	);
 
 	const isVertical = $derived(stepperBond?.props?.orientation === 'vertical');
 
-	const el = usePartElement(part, () => ({
+	const el = Kernel.element(part, () => ({
 		class: [
 			'flex-1 data-[active=true]:bg-primary data-[completed=true]:bg-primary/70',
 			isVertical ? 'h-8 w-0.5 mx-auto' : 'h-0.5 w-full my-auto',
@@ -34,4 +35,12 @@
 	}));
 </script>
 
-{@render partElement(el, children, { step: part.bond })}
+{@render Kernel.render(el)(
+	el.tag(),
+	el.class(),
+	el.attrs(),
+	children,
+	{ step: part.bond },
+	el.motion(),
+	el
+)}

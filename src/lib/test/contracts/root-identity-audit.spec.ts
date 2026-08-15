@@ -27,11 +27,10 @@ import { describe, expect, it } from 'vitest';
 const BINDING_SEAMS = ['bindBond', 'useRoot'];
 
 /**
- * Authoring exports that are deliberately not Bond-binding seams. `usePart` binds a *descendant*
- * to a Bond its root already owns and seeded; `defineBond` is declaration-time and render
- * nothing. Anything not listed in either set is unclassified and fails.
+ * Authoring exports that are deliberately not Bond-binding seams. `defineBond` is declaration-time
+ * and renders nothing. Anything not listed in either set is unclassified and fails.
  */
-const NON_BINDING_EXPORTS = ['usePart', 'defineBond'];
+const NON_BINDING_EXPORTS = ['defineBond'];
 
 const AUTHORING_BARREL = join(process.cwd(), 'src/lib/shared/authoring/index.ts');
 const COMPONENTS = join(process.cwd(), 'src/lib/components');

@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { mergePresetProps, HtmlAtom } from '$ixirjs/ui/components/atom';
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
+	import { mergePresetProps } from '$ixirjs/ui/components/atom';
 	import { Icon } from '$ixirjs/ui/components/icon';
 	import type { AvatarProps } from './types';
 	import './avatar.css';
@@ -23,20 +24,30 @@
 			.map((d) => d.at(0)?.toUpperCase() ?? '')
 			.join('');
 	}
+
+	// Element seam instead of a component boundary: identical output, one less boundary. Key
+	// order below is the order the previous call had; precedence is object-literal order.
+	const el = Kernel.element(Kernel.static, () => ({
+		class: [
+			'border-border bg-card hover:bg-card/95 active:bg-card/90 relative flex aspect-square h-10 items-center justify-center overflow-hidden rounded-full border text-sm font-semibold',
+			'$preset',
+			klass
+		],
+		'data-type': 'avatar',
+		'data-error': hasError,
+		...avatarProps
+	}));
 </script>
 
-<HtmlAtom
-	class={[
-		'border-border bg-card hover:bg-card/95 active:bg-card/90 relative flex aspect-square h-10 items-center justify-center overflow-hidden rounded-full border text-sm font-semibold',
-		'$preset',
-		klass
-	]}
-	data-type="avatar"
-	data-error={hasError}
-	{...avatarProps}
->
-	{@render (typeof src === 'string' ? imageAvatar : iconAvatar)()}
-</HtmlAtom>
+{@render Kernel.render(el)(
+	el.tag(),
+	el.class(),
+	el.attrs(),
+	typeof src === 'string' ? imageAvatar : iconAvatar,
+	undefined,
+	el.motion(),
+	el
+)}
 
 <!-- `src as string` restores the `typeof` narrowing the dispatch performs; narrowing does not
      cross into a snippet body. -->

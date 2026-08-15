@@ -1,23 +1,15 @@
 import { bondContextKey, Bond, type BondStateProps } from '$ixirjs/ui/shared/bond';
-import type { Component } from 'svelte';
 
-// -----------------------------------------------------------------------------
-// Public types
-// -----------------------------------------------------------------------------
-
+/**
+ * A `renderers` slot ({ html, svg, mathml }) was removed from here. `html` was always the default
+ * `HtmlElement` and only served to push every part off the native render seam; `svg` and `mathml`
+ * were never read. Renderer selection is per element, through the `base` prop.
+ * See docs/research/root-renderer-slot-2026-08.md.
+ */
 export type RootStateProps<T extends Record<string, unknown> = Record<string, unknown>> =
 	BondStateProps & {
-		renderers?: {
-			readonly html?: Component;
-			readonly svg?: Component;
-			readonly mathml?: Component;
-		};
 		extend: T;
 	};
-
-// -----------------------------------------------------------------------------
-// Bond implementation
-// -----------------------------------------------------------------------------
 
 export class RootBond extends Bond<RootStateProps> {
 	static CONTEXT_KEY = bondContextKey('root');

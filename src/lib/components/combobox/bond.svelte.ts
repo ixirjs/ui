@@ -1,22 +1,10 @@
-import { type PopoverDomElements } from '$ixirjs/ui/components/popover/bond.svelte';
-
 import {
 	SelectBond as DropdownBond,
 	SelectBondBase as DropdownBondBase,
 	type SelectStateProps as DropdownStateProps
 } from '$ixirjs/ui/components/select/bond.svelte';
 import { defineAtom } from '$ixirjs/ui/shared/bond';
-import {
-	defineBond,
-	internCapabilityFactory,
-	type BondOf,
-	createInput,
-	inputCapability,
-	defineAtomCapability,
-	sharedCapabilityKey
-} from '@ixirjs/ui/shared';
-// AtomHost is a protocol record, classified experimental (ADR 0008).
-import type { AtomHost } from '$ixirjs/ui/shared/capability';
+import { defineBond, type BondOf, createInput, inputCapability } from '$ixirjs/ui/shared';
 import { SvelteMap } from 'svelte/reactivity';
 import { generateId } from '$ixirjs/ui/shared/bond';
 import type { ComboboxSelection } from './types';
@@ -24,21 +12,9 @@ import type { ComboboxSelection } from './types';
 // Inherits query/ClearThenClose from Select. Combobox overrides the 'input' capability so
 // query (filter box) and value (trigger box) are independent stores, not a shared mirror.
 
-// -----------------------------------------------------------------------------
-// Public types
-// -----------------------------------------------------------------------------
-
 export type ComboboxBondProps = DropdownStateProps;
 
-export type ComboboxBondElements = PopoverDomElements & {
-	control: HTMLInputElement;
-};
-
 // Selection, roving, and the `ClearThenClose` escape are inherited from Select.
-
-// -----------------------------------------------------------------------------
-// Bond implementation
-// -----------------------------------------------------------------------------
 
 export class ComboboxBondBase extends DropdownBondBase<ComboboxBondProps> {
 	#userSelections = new SvelteMap<string, ComboboxSelection>();
@@ -129,83 +105,40 @@ export class ComboboxBondBase extends DropdownBondBase<ComboboxBondProps> {
 
 // Narrow bond view used by ComboboxControlAtom to avoid the atom↔bond cycle.
 
-// -----------------------------------------------------------------------------
-// Internal types
-// -----------------------------------------------------------------------------
+export const ComboboxControlAtom = defineAtom<ComboboxBondBase, HTMLInputElement>('control', {
+	slot: '@ixirjs/combobox:control',
+	docs: 'Combobox control single-selection clearing and multi-selection entry policy.',
+	handlers: (_node, bond) => {
+		const isMultiselect = bond?.props.multiple ?? false;
+		return {
+			// Typing replaces the current single selection; the input capability also writes value.
+			oninput: () => {
+				if (!bond || isMultiselect) return;
+				bond.props.values = [];
+			},
+			onkeydown: (ev: KeyboardEvent) => {
+				if (!bond || bond.isDisabled) return;
 
-type ComboboxBondView = ComboboxBondBase;
-
-// -----------------------------------------------------------------------------
-// Capability slots and shared helpers
-// -----------------------------------------------------------------------------
-
-const COMBOBOX_CONTROL = sharedCapabilityKey<void>({
-	owner: '@ixirjs/combobox',
-	name: 'control',
-	version: 1
-});
-
-// -----------------------------------------------------------------------------
-// Atom definitions
-// -----------------------------------------------------------------------------
-
-export const ComboboxControlAtom = defineAtom<ComboboxBondView, HTMLInputElement>(
-	'control',
-	(atom) => {
-		// Play the 'input' capability's 'value' role (combobox aria-*, oninput→value).
-		// Combobox-specific handlers below chain on top via composeHandlers.
-		atom.role('input', 'value');
-		atom.capability(comboboxControlPresentation());
-	}
-);
-export type ComboboxControlAtom = InstanceType<typeof ComboboxControlAtom>;
-
-// -----------------------------------------------------------------------------
-// Atom capabilities
-// -----------------------------------------------------------------------------
-
-const comboboxControlPresentation = internCapabilityFactory(function comboboxControlPresentation() {
-	return defineAtomCapability<void, AtomHost, ComboboxBondView>({
-		slot: COMBOBOX_CONTROL,
-		meta: {
-			projects: ['control'],
-			docs: 'Combobox control single-selection clearing and multi-selection entry policy.'
-		},
-		attach: {
-			handlers: (_node, bond) => {
-				const isMultiselect = bond?.props.multiple ?? false;
-				return {
-					// Typing replaces the current single selection; the input capability also writes value.
-					oninput: () => {
-						if (!bond || isMultiselect) return;
-						bond.props.values = [];
-					},
-					onkeydown: (ev: KeyboardEvent) => {
-						if (!bond || bond.isDisabled) return;
-
-						if (ev.key === 'Enter' && isMultiselect) {
-							const currentTarget = ev.currentTarget as HTMLInputElement;
-							const value = currentTarget.value.trim();
-							if (value !== '') {
-								bond.addSelection(value);
-							}
-						}
+				if (ev.key === 'Enter' && isMultiselect) {
+					const currentTarget = ev.currentTarget as HTMLInputElement;
+					const value = currentTarget.value.trim();
+					if (value !== '') {
+						bond.addSelection(value);
 					}
-				};
+				}
 			}
-		}
-	});
+		};
+	},
+	// Play the 'input' capability's 'value' role (combobox aria-*, oninput→value).
+	// The handlers above chain on top via composeHandlers.
+	setup: (atom) => atom.role('input', 'value')
 });
-
-// -----------------------------------------------------------------------------
-// Bond spec and constructor facade
-// -----------------------------------------------------------------------------
 
 // ComboboxBond — flat composition over DropdownBond, adds an editable control atom.
 // 'input' capability, ClearThenClose escape, and trigger are all inherited from Select.
 // Inlined deliberately: `defineBond<const S>` infers `parts` as a tuple only from a literal
 // argument. A hoisted spec widens it to an array, which makes `AtomsOf` resolve every inherited
-// slot to `never` and blocks `usePart` on slots the runtime spec merge does provide.
+// slot to `never` and blocks `Kernel.part` on slots the runtime spec merge does provide.
 export const ComboboxBond = defineBond({
 	parts: [DropdownBond],
 	name: 'combobox',

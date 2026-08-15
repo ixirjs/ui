@@ -53,6 +53,15 @@ export class CapabilityRuntime<C extends RuntimeCapability, Owner> {
 		return this.#status === 'active';
 	}
 
+	/**
+	 * Whether activation created a lifecycle owner that must be destroyed. False after the
+	 * setup-free fast path in {@link activate}, where there is no `$effect.root` and `destroy()`
+	 * would only flip status on the way to the collector.
+	 */
+	get hasTeardown(): boolean {
+		return this.#destroyRoot !== undefined;
+	}
+
 	find(slot: symbol): C | undefined {
 		const index = this.#slots.get(slot);
 		return index === undefined ? undefined : this.#capabilities[index];
@@ -245,7 +254,8 @@ export class CapabilityRuntime<C extends RuntimeCapability, Owner> {
 
 const EMPTY_CAPABILITIES: readonly RuntimeCapability[] = Object.freeze([]);
 
-function disposeLifo(teardowns: readonly (() => void)[]): unknown[] {
+/** Runs teardowns newest-first, collecting rather than propagating errors. Shared with `Atom`. */
+export function disposeLifo(teardowns: readonly (() => void)[]): unknown[] {
 	const errors: unknown[] = [];
 	for (let index = teardowns.length - 1; index >= 0; index--) {
 		try {

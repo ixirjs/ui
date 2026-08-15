@@ -1,4 +1,8 @@
-import { defineCapability, sharedCapabilityKey, type Capability } from '$ixirjs/ui/shared/bond';
+import {
+	defineCapability,
+	sharedCapabilityKey,
+	type Capability
+} from '$ixirjs/ui/shared/capability';
 import type { OverlayView, OverlayKnobs } from '$ixirjs/ui/components/overlay/types';
 import {
 	closeOverlay,
@@ -9,7 +13,7 @@ import {
 } from './overlay-view';
 
 // Public slot key for trigger gesture policies (click/hover/contextmenu/manual share the slot, last-wins).
-export const TRIGGER = sharedCapabilityKey({ owner: '@ixirjs/cap', name: 'trigger', version: 1 });
+export const TRIGGER = sharedCapabilityKey('@ixirjs/cap:trigger');
 
 export type HoverTriggerOptions = {
 	// Delay before opening on pointer-enter, ms. Default 200.

@@ -1,11 +1,9 @@
 <script lang="ts">
-	import type { Component } from 'svelte';
-	import { cn, defineState, defineProperty } from '$ixirjs/ui/utils';
+	import { cn } from '$ixirjs/ui/utils';
 	import { useRoot } from '$ixirjs/ui/shared';
 	import { Portals } from '$ixirjs/ui/components/portal';
 	import { PortalHost } from '$ixirjs/ui/components/portal/instance';
 	import { mergePresetProps } from '$ixirjs/ui/components/atom';
-	import { HtmlElement } from '$ixirjs/ui/components/element';
 	import { RootBond } from './bond.svelte';
 	import type { RootProps } from './types';
 
@@ -20,35 +18,11 @@
 		...restProps
 	}: RootProps = $props();
 
-	const atomProps = $derived(mergePresetProps(preset, 'root', restProps));
+	const renderProps = $derived(mergePresetProps(preset, 'root', restProps));
 
-	let svg: Component | undefined = $state(undefined);
-
-	type Renderers = {
-		html?: Component;
-		svg?: Component;
-	};
-
-	const renderers = defineState<Renderers>([
-		defineProperty('html', () => HtmlElement),
-		defineProperty('svg', () => {
-			if (!svg) {
-				import('$ixirjs/ui/components/element/svg-element.svelte').then((mod) => {
-					svg = mod.default;
-				});
-			}
-
-			return svg;
-		})
-	]);
-
-	const root = useRoot(
-		RootBond,
-		{
-			renderers: () => renderers
-		},
-		{ atom: false, id: () => ID }
-	);
+	// Root publishes no renderer registry; each element selects an optional renderer through `base`.
+	// See docs/research/root-renderer-slot-2026-08.md.
+	const root = useRoot(RootBond, {}, { atom: false, id: () => ID });
 	const bond = root.bond;
 </script>
 
@@ -64,7 +38,7 @@
 			'$preset',
 			klass
 		)}
-		{...atomProps}
+		{...renderProps}
 	>
 		{@render portal?.()}
 

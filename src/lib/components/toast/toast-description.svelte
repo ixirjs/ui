@@ -1,27 +1,24 @@
-<script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'p', B extends Base = Base">
-	import { type Base } from '$ixirjs/ui/components/atom';
-	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
+<script lang="ts" generics="E extends HtmlElementTagName = 'p', B extends Base = Base">
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
+	import { type Base, type BasePropsOf, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
+	import { definePart } from '$ixirjs/ui/components/atom/define-part.svelte';
 	import { ToastBond } from './bond.svelte';
 	import type { ToastDescriptionProps } from './types';
-	import { usePart } from '$ixirjs/ui/shared';
 
-	let {
-		as = 'p' as E,
-		preset = undefined,
-		children = undefined,
-		...restProps
-	}: ToastDescriptionProps<E, B> = $props();
+	const props: ToastDescriptionProps<E, B> & BasePropsOf<B> = $props();
 
-	const part = usePart(ToastBond, 'description', () => restProps, {
-		preset: () => preset
+	const el = definePart(ToastBond, 'description', () => props, {
+		as: 'p',
+		class: ''
 	});
-
-	const el = usePartElement(part, () => ({
-		as,
-		// This part declares no base classes; `''` is exactly HtmlAtom's own `class` default.
-		class: '',
-		...restProps
-	}));
 </script>
 
-{@render partElement(el, children, { toast: part.bond })}
+{@render Kernel.render(el)(
+	el.tag(),
+	el.class(),
+	el.attrs(),
+	props.children,
+	{ toast: el.bond },
+	el.motion(),
+	el
+)}

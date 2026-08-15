@@ -1,16 +1,12 @@
 import {
-	defineProjectionCapability,
+	defineCapability,
 	sharedCapabilityKey,
 	type Capability
 } from '$ixirjs/ui/shared/capability/capability';
 import { ROVING } from './roving.svelte';
 
 // Surface type travels with the key — capability(INPUT) is typed without a cast.
-export const INPUT = sharedCapabilityKey<InputModel>({
-	owner: '@ixirjs/cap',
-	name: 'input',
-	version: 1
-});
+export const INPUT = sharedCapabilityKey<InputModel>('@ixirjs/cap:input');
 
 export interface InputField {
 	get(): string;
@@ -71,7 +67,7 @@ export function inputCapability(
 	const isExpanded = options.expanded;
 	const isDisabled = options.disabled ?? (() => false);
 
-	return defineProjectionCapability<InputModel>({
+	return defineCapability<InputModel>({
 		slot: INPUT,
 		requires: [ROVING],
 		surface: model,

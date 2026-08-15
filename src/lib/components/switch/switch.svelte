@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { mergePresetProps, HtmlAtom } from '$ixirjs/ui/components/atom';
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
+	import { mergePresetProps } from '$ixirjs/ui/components/atom';
 	import { createPresentation } from '$ixirjs/ui/components/atom/presentation.svelte';
 	import type { SwitchProps, SwitchThumbSnippetProps } from './types';
 
@@ -43,25 +44,38 @@
 		checked = !checked;
 		oncheckedchange?.(checked, { event });
 	}
+
+	// Element seam instead of a component boundary; key order matches the previous call exactly.
+	const el = Kernel.element(Kernel.static, () => ({
+		as: 'button',
+		type: 'button',
+		class: [
+			'switch-root bg-input outline-primary relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border transition-colors duration-200 outline-0 outline-offset-2',
+			checked && 'bg-foreground',
+			disabled && 'cursor-not-allowed opacity-50',
+			'$preset',
+			klass
+		],
+		role: 'switch',
+		'aria-checked': checked,
+		'aria-disabled': disabled || undefined,
+		'data-checked': checked,
+		onclick: handleClick,
+		...switchProps
+	}));
 </script>
 
-<HtmlAtom
-	as="button"
-	type="button"
-	class={[
-		'switch-root bg-input outline-primary relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border transition-colors duration-200 outline-0 outline-offset-2',
-		checked && 'bg-foreground',
-		disabled && 'cursor-not-allowed opacity-50',
-		'$preset',
-		klass
-	]}
-	role="switch"
-	aria-checked={checked}
-	aria-disabled={disabled || undefined}
-	data-checked={checked}
-	onclick={handleClick}
-	{...switchProps}
->
+{@render Kernel.render(el)(
+	el.tag(),
+	el.class(),
+	el.attrs(),
+	switchBody,
+	undefined,
+	el.motion(),
+	el
+)}
+
+{#snippet switchBody()}
 	<input
 		{id}
 		{name}
@@ -77,7 +91,7 @@
 
 	<!-- Thumb -->
 	{@render (thumbContent ?? defaultThumb)({ checked, props: thumbProps })}
-</HtmlAtom>
+{/snippet}
 
 {@render children?.()}
 

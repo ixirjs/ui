@@ -65,31 +65,37 @@ export interface ElementProps<T extends ElementTagName = ElementTagName> extends
 	HTMLAttributes<ElementType<T> & Element>,
 	'class' | 'style' | keyof HtmlElementEventProps
 > {
+	/** CSS class(es) to apply. Accepts any Svelte `ClassValue`, including arrays and objects. */
 	class?: ClassValue | ClassValue[];
 
-	// polymorphic tag override
+	/** Polymorphic tag override — render as a different HTML element. */
 	as?: T | (string & {});
 
-	// Renderer-owned motion channels. The flat phase props below remain accepted for compatibility.
+	/** Renderer-owned motion channels. The flat phase props below remain accepted for compatibility. */
 	motion?: Motion<ElementType<T>> | null | undefined;
 
-	// emit styles as :global rather than scoped
+	/** Emit styles as `:global` rather than scoped. */
 	global?: boolean;
 
 	// `| undefined` on the lifecycle/transition hooks is required by exactOptionalPropertyTypes:
 	// callers forward these from optional props (value possibly `undefined`), e.g. `<Atom {initial}>`.
-	// runs once on mount, before enter transition
+	/** Runs once on mount, before the enter transition. */
 	initial?: NodeFunction<T> | undefined;
 
+	/** Transition run when the element enters. */
 	enter?: TransitionFunction<ElementType<T>> | undefined;
 
+	/** Transition run when the element exits. */
 	exit?: TransitionFunction<ElementType<T>> | undefined;
 
+	/** Animation applied on each update. */
 	animate?: NodeFunction<T> | undefined;
 
+	/** Called when the element is mounted. */
 	onmount?: NodeFunction<T> | undefined;
 
 	// `| undefined`: see onmount
+	/** Called when the element is destroyed. */
 	ondestroy?: NodeFunction<T> | undefined;
 
 	[key: string]: unknown;
@@ -98,7 +104,9 @@ export interface ElementProps<T extends ElementTagName = ElementTagName> extends
 // HTML element props (with transition events)
 
 export interface HtmlElementEventProps {
+	/** Fires when the enter transition finishes. A real `TransitionEvent`, not the CustomEvent shape Svelte’s HTMLAttributes declares. */
 	onintroend?: (ev: TransitionEvent) => void;
+	/** Fires when the exit transition finishes, after which the element may be removed. */
 	onexitend?: (ev: TransitionEvent) => void;
 }
 
@@ -117,9 +125,13 @@ export interface HtmlElementProps<
 	Children extends Snippet<unknown[]> = Snippet
 >
 	extends ElementProps<T>, HtmlElementEventProps {
+	/** Preset key or ordered fallback chain (first registered key wins). */
 	preset?: PresetKey | undefined;
+	/** Variant definition — a static `VariantDefinition`, or a function receiving bond and props. */
 	variants?: Variants | undefined;
+	/** Default attribute values applied before variants and consumer attributes. */
 	defaults?: Record<string, unknown> | undefined;
+	/** Content rendered inside the element. */
 	children?: Children;
 }
 
@@ -131,8 +143,12 @@ export interface SvgElementProps<
 	Children extends Snippet<unknown[]> = Snippet
 >
 	extends ElementProps<T>, HtmlElementEventProps {
+	/** Preset key to resolve presentation from. Defaults to this part’s own key. */
 	preset?: PresetKey | undefined;
+	/** Variant definition — a static `VariantDefinition`, or a function receiving bond and props. */
 	variants?: Variants | undefined;
+	/** Default attribute values applied before variants and consumer attributes. */
 	defaults?: Record<string, unknown> | undefined;
+	/** Content of this part. */
 	children?: Children;
 }

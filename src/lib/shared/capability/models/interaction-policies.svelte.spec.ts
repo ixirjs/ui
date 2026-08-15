@@ -1,25 +1,15 @@
 import { describe, expect, it, vi } from 'vitest';
 import { Bond, Atom, bondContextKey, type BondStateProps } from '$ixirjs/ui/shared/bond';
-import { defineCapability } from '$ixirjs/ui/shared/capability/capability';
 import {
-	activationPolicy,
-	ACTIVATION_POLICY,
-	clearPolicy,
-	CLEAR_POLICY,
 	createDisclosure,
 	createInput,
 	createSelection,
-	disclosureCapability,
-	focusTrigger,
-	FOCUS_TRIGGER,
-	INPUT,
 	longPressPolicy,
 	LONG_PRESS_POLICY,
 	reorderDragPolicy,
 	REORDER_DRAG_POLICY,
 	resizeHandlePolicy,
 	RESIZE_HANDLE_POLICY,
-	selectionCapability,
 	swipePolicy,
 	SWIPE_POLICY,
 	thumbDragPolicy,
@@ -89,69 +79,6 @@ function event<T extends Event>(overrides: Record<string, unknown> = {}): T {
 }
 
 describe('remaining interaction policy primitives', () => {
-	it('focusTrigger opens on focus and closes on blur through the disclosure surface', () => {
-		const state = new TestState();
-		const bond = new TestBond(state);
-		const cap = focusTrigger();
-		bond.capability(disclosureCapability(state.disclosure));
-		bond.capability(cap);
-		const trigger = bond.addAtom('trigger', 'trigger');
-
-		expect(cap.slot).toBe(FOCUS_TRIGGER);
-		expect(cap.requires).toEqual([expect.any(Symbol)]);
-		expect(cap.meta).toMatchObject({ projects: ['trigger'] });
-
-		(trigger.spread.onfocusin as (ev: FocusEvent) => void)(event<FocusEvent>());
-		expect(state.open).toBe(true);
-
-		(trigger.spread.onfocusout as (ev: FocusEvent) => void)(event<FocusEvent>());
-		expect(state.open).toBe(false);
-	});
-
-	it('activationPolicy handles click and keyboard activation like a button', () => {
-		const onActivate = vi.fn();
-		const bond = new TestBond();
-		const cap = activationPolicy({ onActivate });
-		bond.capability(cap);
-		const control = bond.addAtom('control', 'control');
-
-		expect(cap.slot).toBe(ACTIVATION_POLICY);
-		expect(control.spread.role).toBe('button');
-		expect(control.spread.tabindex).toBe(0);
-
-		(control.spread.onclick as (ev: MouseEvent) => void)(
-			event<MouseEvent>({ type: 'click', isPrimary: false })
-		);
-		(control.spread.onkeydown as (ev: KeyboardEvent) => void)(
-			event<KeyboardEvent>({ key: 'Enter' })
-		);
-		(control.spread.onkeydown as (ev: KeyboardEvent) => void)(
-			event<KeyboardEvent>({ key: 'Enter', repeat: true })
-		);
-		(control.spread.onclick as (ev: MouseEvent) => void)(event<MouseEvent>({ button: 1 }));
-		expect(onActivate).toHaveBeenCalledTimes(2);
-	});
-
-	it('clearPolicy clears known input first, then selection when input is empty', () => {
-		const state = new TestState();
-		const bond = new TestBond(state);
-		bond.capability(defineCapability({ slot: INPUT, surface: state.input }));
-		bond.capability(selectionCapability(state.selection));
-		const cap = clearPolicy();
-		bond.capability(cap);
-		const clear = bond.addAtom('clear', 'clear');
-
-		expect(cap.slot).toBe(CLEAR_POLICY);
-		expect(cap.meta).toMatchObject({ projects: ['clear'] });
-
-		(clear.spread.onclick as (ev: MouseEvent) => void)(event<MouseEvent>());
-		expect(state.text).toBe('');
-		expect(state.selected).toEqual(['a']);
-
-		(clear.spread.onclick as (ev: MouseEvent) => void)(event<MouseEvent>());
-		expect(state.selected).toEqual([]);
-	});
-
 	it('thumbDragPolicy reports pointer drag deltas', () => {
 		const onDrag = vi.fn();
 		const onEnd = vi.fn();

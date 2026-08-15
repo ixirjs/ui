@@ -1,28 +1,24 @@
-<script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'h3', B extends Base = Base">
-	import { type Base } from '$ixirjs/ui/components/atom';
-	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
+<script lang="ts" generics="E extends HtmlElementTagName = 'h3', B extends Base = Base">
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
+	import { type Base, type BasePropsOf, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
+	import { definePart } from '$ixirjs/ui/components/atom/define-part.svelte';
 	import { DrawerBond } from './bond.svelte';
 	import type { SlideoverTitleProps } from './types';
-	import { usePart } from '$ixirjs/ui/shared';
 
-	let {
-		preset = undefined,
-		as = 'h3' as E,
-		children,
-		...restProps
-	}: SlideoverTitleProps<E, B> = $props();
+	const props: SlideoverTitleProps<E, B> & BasePropsOf<B> = $props();
 
-	const part = usePart(DrawerBond, 'title', () => restProps, {
-		preset: () => preset
+	const el = definePart(DrawerBond, 'title', () => props, {
+		as: 'h3',
+		class: ''
 	});
-	const bond = part.bond;
-
-	const el = usePartElement(part, () => ({
-		as,
-		// This part declares no base classes; `''` is exactly HtmlAtom's own `class` default.
-		class: '',
-		...restProps
-	}));
 </script>
 
-{@render partElement(el, children, { drawer: bond })}
+{@render Kernel.render(el)(
+	el.tag(),
+	el.class(),
+	el.attrs(),
+	props.children,
+	{ drawer: el.bond },
+	el.motion(),
+	el
+)}

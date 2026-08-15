@@ -1,4 +1,4 @@
-import { Atom, type BondElements } from '$ixirjs/ui/shared/bond';
+import { Atom } from '$ixirjs/ui/shared/bond';
 import type { OverlayView } from './types';
 import {
 	overlayIsDisabled,
@@ -12,7 +12,7 @@ import {
 	type AtomHost
 } from '$ixirjs/ui/shared/capability';
 
-const MODAL_ROOT = sharedCapabilityKey<void>({ owner: '@ixirjs/modal', name: 'root', version: 1 });
+const MODAL_ROOT = sharedCapabilityKey<void>('@ixirjs/modal:root');
 
 // Root atom for modal overlays. Wires the ARIA dialog contract; .role('surface') folds in escape + focus handlers.
 export class ModalRootAtom<B extends OverlayView = OverlayView> extends Atom<B, HTMLElement> {
@@ -66,13 +66,6 @@ export class ModalContentAtom<B extends OverlayView = OverlayView> extends Atom<
 		this.role('content');
 	}
 }
-
-export type ModalOverlayElements = BondElements & {
-	root?: HTMLElement;
-	content?: HTMLElement;
-	title?: HTMLElement;
-	description?: HTMLElement;
-};
 
 // Dialog/Drawer author via defineBond + modalCapabilities();
 // only the shared modal atoms (root + content) and element shape remain here.

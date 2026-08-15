@@ -1,6 +1,6 @@
-<script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { type Base } from '$ixirjs/ui/components/atom';
-	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
+<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
+	import { type Base, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
 	import { controlledProp, useRoot } from '$ixirjs/ui/shared';
 	import { StackBond } from './bond.svelte';
 	import type { StackRootProps } from './types';
@@ -36,17 +36,14 @@
 			factory: () => factory
 		}
 	);
-	const bond = root.bond;
 
-	export function getBond() {
-		return bond;
-	}
+	export const getBond: () => StackBond = root.getBond;
 
-	const el = usePartElement(root, () => ({
+	const el = Kernel.element(root, () => ({
 		class: ['stack-root', '$preset', klass],
 		variantProps: root.props,
 		...restProps
 	}));
 </script>
 
-{@render partElement(el, children, {})}
+{@render Kernel.render(el)(el.tag(), el.class(), el.attrs(), children, {}, el.motion(), el)}

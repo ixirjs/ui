@@ -7,22 +7,14 @@ import {
 	labelledControl,
 	tabPanelLink,
 	errorMessageLink,
-	activeDescendantLink,
 	rowColumnCellLink,
 	treeItemGroupLink,
-	menuSubmenuRelationship,
-	optionCollectionRelationship,
-	headingSectionRelationship,
 	liveRegionRelationship,
 	TRIGGER_CONTENT,
 	TAB_PANEL,
 	ERROR_MESSAGE,
 	ROW_COLUMN_CELL,
 	TREE_ITEM_GROUP,
-	ACTIVE_DESCENDANT,
-	MENU_SUBMENU,
-	OPTION_COLLECTION,
-	HEADING_SECTION,
 	LIVE_REGION
 } from './relationship.svelte';
 
@@ -30,7 +22,6 @@ class TestState {
 	open = $state(false);
 	selected = $state(false);
 	invalid = $state(false);
-	activeId = $state<string | undefined>();
 	disclosure = createDisclosure({
 		get: () => this.open,
 		set: (v) => (this.open = v)
@@ -254,129 +245,40 @@ describe('treeItemGroupLink — treeitem ↔ child group linkage', () => {
 	});
 });
 
-describe('activeDescendantLink — control/container → active item linkage', () => {
-	it('is annotated as a Layer 1 relationship for active descendant ownership', () => {
-		const cap = activeDescendantLink();
-		expect(cap.slot).toBe(ACTIVE_DESCENDANT);
-		expect(cap.meta).toMatchObject({
-			projects: ['control', 'container', 'item']
-		});
-	});
-
-	it('points control and container roles at the active item id', () => {
-		const state = new TestState();
-		const bond = new TestBond(state);
-		bond.capability(activeDescendantLink({ activeId: () => state.activeId }));
-		const control = bond.addAtom('control', 'control');
-		const container = bond.addAtom('container', 'container');
-		const item = bond.addAtom('item', 'item', 'item-a');
-
-		expect(control.spread['aria-activedescendant']).toBeUndefined();
-		expect(container.spread['aria-activedescendant']).toBeUndefined();
-		state.activeId = item.spread.id as string;
-		expect(control.spread['aria-activedescendant']).toBe(item.spread.id);
-		expect(container.spread['aria-activedescendant']).toBe(item.spread.id);
-	});
-});
-
-describe('menuSubmenuRelationship — menuitem ↔ submenu linkage', () => {
-	it('cross-references ids and reflects expanded state', () => {
-		const state = new TestState();
-		const bond = new TestBond(state);
-		const cap = menuSubmenuRelationship({ expanded: () => state.open });
-		bond.capability(cap);
-		const item = bond.addAtom('item', 'menuitem');
-		const submenu = bond.addAtom('submenu', 'submenu');
-
-		expect(cap.slot).toBe(MENU_SUBMENU);
-		expect(cap.meta).toMatchObject({
-			projects: ['menuitem', 'submenu']
-		});
-		expect(item.spread.role).toBe('menuitem');
-		expect(item.spread['aria-controls']).toBe(submenu.spread.id);
-		expect(item.spread['aria-haspopup']).toBe('menu');
-		expect(item.spread['aria-expanded']).toBe(false);
-		expect(submenu.spread.role).toBe('menu');
-		expect(submenu.spread['aria-labelledby']).toBe(item.spread.id);
-
-		state.open = true;
-		expect(item.spread['aria-expanded']).toBe(true);
-	});
-});
-
-describe('optionCollectionRelationship — option ↔ collection linkage', () => {
-	it('projects collection/option roles and optional ownership ids', () => {
+describe('liveRegionRelationship — live region announcement attrs', () => {
+	it('configures announcement attrs on the default live role', () => {
 		const bond = new TestBond(new TestState());
-		const cap = optionCollectionRelationship({
-			collectionRole: 'radiogroup',
-			optionRole: 'radio',
-			optionIds: () => ['one', 'two']
+		const cap = liveRegionRelationship({
+			politeness: 'assertive',
+			atomic: true,
+			relevant: 'additions text'
 		});
 		bond.capability(cap);
-		const collection = bond.addAtom('collection', 'collection');
-		const option = bond.addAtom('option', 'option');
-
-		expect(cap.slot).toBe(OPTION_COLLECTION);
-		expect(cap.meta).toMatchObject({
-			projects: ['collection', 'option']
-		});
-		expect(collection.spread.role).toBe('radiogroup');
-		expect(collection.spread['aria-owns']).toBe('one two');
-		expect(option.spread.role).toBe('radio');
-	});
-
-	it('owns every registered option when explicit ids are omitted', () => {
-		const bond = new TestBond(new TestState());
-		bond.capability(optionCollectionRelationship());
-		const collection = bond.addAtom('collection', 'collection');
-		const first = bond.addAtom('option', 'option', undefined, 'many');
-		const second = bond.addAtom('option', 'option', undefined, 'many');
-
-		expect(collection.spread['aria-owns']).toBe(`${first.spread.id} ${second.spread.id}`);
-	});
-});
-
-describe('headingSectionRelationship — heading/description → section linkage', () => {
-	it('labels section and surface roles from heading and description ids', () => {
-		const bond = new TestBond(new TestState());
-		const cap = headingSectionRelationship({ targetRole: 'region' });
-		bond.capability(cap);
-		const heading = bond.addAtom('heading', 'heading');
-		const description = bond.addAtom('description', 'description');
-		const section = bond.addAtom('section', 'section');
-		const surface = bond.addAtom('surface', 'surface');
-
-		expect(cap.slot).toBe(HEADING_SECTION);
-		expect(cap.meta).toMatchObject({
-			projects: ['section', 'surface', 'heading', 'description']
-		});
-		expect(section.spread.role).toBe('region');
-		expect(section.spread['aria-labelledby']).toBe(heading.spread.id);
-		expect(section.spread['aria-describedby']).toBe(description.spread.id);
-		expect(surface.spread['aria-labelledby']).toBe(heading.spread.id);
-	});
-});
-
-describe('liveRegionRelationship — labelled live region linkage', () => {
-	it('labels a live region and configures announcement attrs', () => {
-		const bond = new TestBond(new TestState());
-		const cap = liveRegionRelationship({ politeness: 'assertive', relevant: 'additions text' });
-		bond.capability(cap);
-		const title = bond.addAtom('title', 'title');
-		const description = bond.addAtom('description', 'description');
 		const live = bond.addAtom('live', 'live');
-		bond.addAtom('content', 'content');
 
 		expect(cap.slot).toBe(LIVE_REGION);
-		expect(cap.meta).toMatchObject({
-			projects: ['live', 'title', 'description', 'content']
-		});
+		expect(cap.meta).toMatchObject({ projects: ['live'] });
 		expect(live.spread.role).toBe('status');
 		expect(live.spread['aria-live']).toBe('assertive');
 		expect(live.spread['aria-atomic']).toBe('true');
 		expect(live.spread['aria-relevant']).toBe('additions text');
-		expect(live.spread['aria-labelledby']).toBe(title.spread.id);
-		expect(live.spread['aria-describedby']).toBe(description.spread.id);
+	});
+
+	// Toast and Alert announce from the same atom `labelledControl` labels, so the projected role
+	// is configurable and labelling stays with labelledControl.
+	it('announces from a caller-named role and emits only the attrs asked for', () => {
+		const bond = new TestBond(new TestState());
+		bond.capability(labelledControl());
+		bond.capability(liveRegionRelationship({ role: 'control', liveRole: 'alert' }));
+		const label = bond.addAtom('label', 'label');
+		const control = bond.addAtom('control', 'control');
+
+		expect(control.spread.role).toBe('alert');
+		// role="alert" already implies assertive/atomic — neither is duplicated onto the element.
+		expect(control.spread['aria-live']).toBeUndefined();
+		expect(control.spread['aria-atomic']).toBeUndefined();
+		// Labelling still comes from labelledControl, not from the live region.
+		expect(control.spread['aria-labelledby']).toBe(label.spread.id);
 	});
 });
 

@@ -1,7 +1,8 @@
 <script lang="ts">
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
 	import { cn } from '$ixirjs/ui/utils';
 	import { createAtomInstance } from '$ixirjs/ui/shared/bond';
-	import { mergeAtomProps, HtmlAtom } from '$ixirjs/ui/components/atom';
+	import { mergeAtomProps } from '$ixirjs/ui/components/atom';
 	import { CalendarBond } from './bond.svelte';
 	import { untrack } from 'svelte';
 
@@ -17,24 +18,29 @@
 		...restProps
 	} = $props();
 	const atom = calendarBond
-		? createAtomInstance(undefined, {
-				resolveKey: () => `weekday-${index}`,
-				bond: calendarBond,
-				factory: (owner) => owner!.weekDay(index),
-				register: { key: untrack(() => `weekday-${index}`) }
-			})
+		? createAtomInstance(
+				untrack(() => `weekday-${index}`),
+				{
+					bond: calendarBond,
+					factory: (owner) => owner!.weekDay(index)
+				}
+			)
 		: undefined;
 
 	const weekDayProps = $derived(mergeAtomProps(atom, preset ?? 'calendar.weekday', restProps));
+
+	// `mergeAtomProps` already folded the Atom spread into the packet, so Kernel must not read it twice.
+	const el = Kernel.element(
+		{ atom: undefined, bond: calendarBond, preset: undefined, presetLayer: undefined },
+		() => ({
+			class: cn(
+				'calendar-week-day h-fit px-1 py-2 text-center text-sm font-medium data-[weekend=true]:text-primary',
+				klass
+			),
+			'data-weekend': isWeekend,
+			...weekDayProps
+		})
+	);
 </script>
 
-<HtmlAtom
-	class={cn(
-		'calendar-week-day h-fit px-1 py-2 text-center text-sm font-medium data-[weekend=true]:text-primary',
-		klass
-	)}
-	data-weekend={isWeekend}
-	{...weekDayProps}
->
-	{@render children?.()}
-</HtmlAtom>
+{@render Kernel.render(el)(el.tag(), el.class(), el.attrs(), children, undefined, el.motion(), el)}

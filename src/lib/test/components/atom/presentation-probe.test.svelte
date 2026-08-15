@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { setPreset } from '$ixirjs/ui/preset';
-	import { HtmlAtom } from '$ixirjs/ui/components/atom';
+	import KernelElement from '$ixirjs/ui/test/components/atom/kernel-element.test.svelte';
 	import { createPresentation } from '$ixirjs/ui/components/atom/presentation.svelte';
 
 	setPreset({
@@ -25,11 +25,11 @@
 	data-default={lightweight.attrs['data-default'] ?? undefined}
 ></div>
 
-<HtmlAtom
+<KernelElement
 	data-testid="full"
 	as="div"
 	preset="button"
 	class="consumer-class"
 	defaults={{ 'data-default': 'default' }}
 	data-consumer="consumer"
-></HtmlAtom>
+></KernelElement>

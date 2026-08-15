@@ -1,6 +1,7 @@
 <script lang="ts">
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
 	import type { QRCodeBrowser } from '@qrcode-js/browser';
-	import { HtmlAtom, mergePresetProps } from '$ixirjs/ui/components/atom';
+	import { mergePresetProps } from '$ixirjs/ui/components/atom';
 	import type { QRCodeProps } from './types';
 
 	type Render = typeof QRCodeBrowser;
@@ -61,9 +62,25 @@
 
 		qrcode.draw();
 	});
+
+	// Element seam instead of a component boundary; key order matches the previous call exactly.
+	const el = Kernel.element(Kernel.static, () => ({
+		class: ['$preset', klass],
+		...qrCodeProps
+	}));
 </script>
 
-<HtmlAtom class={['$preset', klass]} {...qrCodeProps}>
+{@render Kernel.render(el)(
+	el.tag(),
+	el.class(),
+	el.attrs(),
+	qrCodeBody,
+	undefined,
+	el.motion(),
+	el
+)}
+
+{#snippet qrCodeBody()}
 	<div bind:clientWidth class="size-full">
 		<canvas
 			{@attach (node) => {
@@ -74,4 +91,4 @@
 			height={clientWidth}
 		></canvas>
 	</div>
-</HtmlAtom>
+{/snippet}

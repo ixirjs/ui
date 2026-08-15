@@ -14,13 +14,15 @@
 		capabilities?: readonly AtomCapabilityEntry[];
 	} = $props();
 
-	const node = createAtomInstance(undefined, {
-		resolveKey: () => nodeKey,
-		resolveBond: () => bond,
-		// createAtomInstance reads its inputs once, at construction.
-		required: untrack(() => required),
-		capabilities: untrack(() => capabilities)
-	});
+	// createAtomInstance reads its inputs once, at construction.
+	const node = createAtomInstance(
+		untrack(() => nodeKey),
+		{
+			bond: untrack(() => bond),
+			required: untrack(() => required),
+			capabilities: untrack(() => capabilities)
+		}
+	);
 </script>
 
 <div {...node.spread}></div>

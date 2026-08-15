@@ -1,5 +1,6 @@
 <script lang="ts" generics="T = string">
-	import { mergePresetProps, HtmlAtom } from '$ixirjs/ui/components/atom';
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
+	import { mergePresetProps } from '$ixirjs/ui/components/atom';
 	import { controlledProp, useRoot } from '$ixirjs/ui/shared';
 	import { RadioGroupBond } from './bond.svelte';
 	import type { RadioGroupProps } from './types';
@@ -37,14 +38,15 @@
 		},
 		{ atom: false, id: () => ID, factory: () => (props) => new RadioGroupBond<T>(props) }
 	);
-	const bond = root.bond;
 	const groupProps = $derived(mergePresetProps(preset, 'radio.group', restProps));
 
-	export function getBond(): RadioGroupBond<T> {
-		return bond;
-	}
+	// Element seam instead of a component boundary; key order matches the previous call exactly.
+	const el = Kernel.element(Kernel.static, () => ({
+		class: ['flex flex-col gap-1', '$preset', klass],
+		...groupProps
+	}));
+
+	export const getBond = root.getBond;
 </script>
 
-<HtmlAtom class={['flex flex-col gap-1', '$preset', klass]} {...groupProps}>
-	{@render children?.({})}
-</HtmlAtom>
+{@render Kernel.render(el)(el.tag(), el.class(), el.attrs(), children, {}, el.motion(), el)}

@@ -29,45 +29,35 @@ export type CreateAtomInstanceOptions<
 	B extends Bond = Bond,
 	E extends Element | BondVirtualElement = Element | BondVirtualElement
 > = {
-	/** Plain one-shot input. Resolver names make one-shot lazy resolution explicit. */
-	resolveKey?: () => string;
 	bond?: B | undefined;
-	resolveBond?: () => B | undefined;
 	required?: boolean | string;
 	register?: boolean | NodeRegistrationOptions;
 	factory?: (bond: B | undefined, key: string) => N;
 	capabilities?: readonly AtomCapabilityEntry<N, B, E>[];
-	namespace?: string;
-	preset?: string;
-	id?: string;
 };
 
+/**
+ * Every input is read once, here, at construction — which is why `key` and `bond` are plain values.
+ * The former `resolveKey` / `resolveBond` thunks were invoked on the line that read them, so they
+ * described a laziness that never existed and made 15 call sites write a lambda around a string.
+ */
 export function createAtomInstance<
 	N extends AnyAtom = Atom,
 	B extends Bond = Bond,
 	E extends Element | BondVirtualElement = Element | BondVirtualElement
->(key: string | undefined, options: CreateAtomInstanceOptions<N, B, E> = {}): N {
-	const resolvedKey = options.resolveKey ? options.resolveKey() : key;
-	if (resolvedKey === undefined) throw new Error('[ixirjs] createAtomInstance requires a key.');
-	const bond = options.resolveBond ? options.resolveBond() : options.bond;
+>(key: string, options: CreateAtomInstanceOptions<N, B, E> = {}): N {
+	const bond = options.bond;
 	const required = options.required ?? false;
 	const requiredMessage = typeof required === 'string' ? required : undefined;
 
 	if (required && !bond) {
 		throw new Error(
-			requiredMessage ??
-				`[ixirjs] Atom("${resolvedKey}") requires a Bond context but none was provided.`
+			requiredMessage ?? `[ixirjs] Atom("${key}") requires a Bond context but none was provided.`
 		);
 	}
 
 	const node = untrack(() =>
-		options.factory
-			? options.factory(bond, resolvedKey)
-			: (new Atom(bond, resolvedKey, {
-					...(options.namespace !== undefined ? { namespace: options.namespace } : {}),
-					...(options.preset !== undefined ? { preset: options.preset } : {}),
-					...(options.id !== undefined ? { id: options.id } : {})
-				}) as unknown as N)
+		options.factory ? options.factory(bond, key) : (new Atom(bond, key) as unknown as N)
 	);
 
 	// Almost every rendered part declares no atom capabilities at all. The previous shape allocated
@@ -107,7 +97,7 @@ export function createAtomInstance<
 		// registry, so a per-atom batch would only repeat work per rendered part. The batch remains
 		// for externally-owned bonds (constructed outside the render and reused across renders),
 		// where it is what keeps a second render from tripping single-cardinality registration.
-		if (bond && unregister && !bindingManagedBonds.has(bond)) {
+		if (bond && unregister && !bond.__bindingManaged) {
 			scheduleSsrUnregister(bond, unregister);
 		}
 	} else {
@@ -134,12 +124,9 @@ export function createAtomInstance<
 
 const ssrUnregisterBatches = new WeakMap<Bond, Array<() => void>>();
 
-// Bonds whose SSR teardown a BondBinding owns wholesale (bond.destroy() → registry clear).
-const bindingManagedBonds = new WeakSet<Bond>();
-
 /** Called by BondBinding on the server so bonded atoms skip the redundant unregister batch. */
 export function markBindingManaged(bond: Bond): void {
-	bindingManagedBonds.add(bond);
+	bond.__bindingManaged = true;
 }
 
 function scheduleSsrUnregister(bond: Bond, unregister: () => void): void {

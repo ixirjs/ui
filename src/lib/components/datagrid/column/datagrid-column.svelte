@@ -1,10 +1,10 @@
 <script
 	lang="ts"
-	generics="T = unknown, E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base"
+	generics="T = unknown, E extends HtmlElementTagName = 'div', B extends Base = Base"
 >
-	import { useRoot } from '@ixirjs/ui/shared';
-	import { type Base } from '$ixirjs/ui/components/atom';
-	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
+	import { useRoot } from '$ixirjs/ui/shared';
+	import { type Base, type BasePropsOf, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
 	import { DataGridColumnBond } from './bond.svelte';
 	import type { DatagridColumnProps } from '$ixirjs/ui/components/datagrid/types';
 	import type { Direction } from '$ixirjs/ui/types';
@@ -24,7 +24,7 @@
 		onclick = undefined,
 		onsort = undefined,
 		...restProps
-	}: DatagridColumnProps<T, E, B> = $props();
+	}: DatagridColumnProps<T, E, B> & BasePropsOf<B> = $props();
 
 	const root = useRoot(
 		DataGridColumnBond,
@@ -81,7 +81,7 @@
 		bond.beginSort(event, 'keyboard');
 	}
 
-	const el = usePartElement(root, () => ({
+	const el = Kernel.element(root, () => ({
 		...restProps,
 		class: [
 			'flex cursor-pointer py-1 font-medium select-none',
@@ -97,5 +97,13 @@
 {@render (!hidden ? columnElement : undefined)?.()}
 
 {#snippet columnElement()}
-	{@render partElement(el, children, { column: bond })}
+	{@render Kernel.render(el)(
+		el.tag(),
+		el.class(),
+		el.attrs(),
+		children,
+		{ column: bond },
+		el.motion(),
+		el
+	)}
 {/snippet}

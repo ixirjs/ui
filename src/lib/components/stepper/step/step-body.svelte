@@ -1,7 +1,11 @@
-<script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { type Base } from '$ixirjs/ui/components/atom';
-	import { usePart } from '$ixirjs/ui/shared';
+<script module lang="ts">
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
 	import { StepBond } from './bond.svelte';
+	const PART = Kernel.part(StepBond, 'body', { class: '' });
+</script>
+
+<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
+	import { type Base, type BasePropsOf, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
 	import { StepperBond } from '$ixirjs/ui/components/stepper/bond.svelte';
 	import type { StepContentProps } from './types';
 	import { Stack } from '$ixirjs/ui/components/stack';
@@ -12,10 +16,11 @@
 		children = undefined,
 		preset = undefined,
 		...restProps
-	}: StepContentProps<E, B> = $props();
+	}: StepContentProps<E, B> & BasePropsOf<B> = $props();
 
-	const part = usePart(StepBond, 'body', () => restProps, {
-		preset: () => preset ?? 'stepper.step.content'
+	const part = Kernel.node(PART, () => ({ preset: preset ?? 'stepper.step.content' }), {
+		context: 'required',
+		rest: () => restProps
 	});
 	const stepBond = part.bond;
 	const stepperBond = StepperBond.get();

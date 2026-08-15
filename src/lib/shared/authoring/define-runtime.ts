@@ -12,13 +12,3 @@ export function attachStateFactory(cls: object): void {
 		configurable: true
 	});
 }
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function attachMethod(proto: object, name: string, fn: (...args: any[]) => any) {
-	Object.defineProperty(proto, name, {
-		value: fn,
-		writable: true,
-		configurable: true,
-		enumerable: false
-	});
-}

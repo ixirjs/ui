@@ -1,14 +1,14 @@
-<script
-	lang="ts"
-	generics="E extends keyof HTMLElementTagNameMap = 'button', B extends Base = Base"
->
+<script module lang="ts">
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
+	import { ToastBond } from './bond.svelte';
+	const PART = Kernel.part(ToastBond, 'dismiss', { class: '' });
+</script>
+
+<script lang="ts" generics="E extends HtmlElementTagName = 'button', B extends Base = Base">
 	import { Icon } from '$ixirjs/ui/components/icon';
 	import Close from '$ixirjs/ui/icons/icon-close.svelte';
-	import { type Base } from '$ixirjs/ui/components/atom';
-	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
-	import { ToastBond } from './bond.svelte';
+	import { type Base, type BasePropsOf, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
 	import type { ToastCloseProps } from './types';
-	import { usePart } from '$ixirjs/ui/shared';
 
 	let {
 		class: klass = '',
@@ -18,11 +18,11 @@
 		onclick = undefined,
 		onkeydown = undefined,
 		...restProps
-	}: ToastCloseProps<E, B> = $props();
+	}: ToastCloseProps<E, B> & BasePropsOf<B> = $props();
 
-	const part = usePart(ToastBond, 'dismiss', () => restProps, {
-		message: '<Toast.Close /> must be used within a <Toast.Root />',
-		preset: () => preset
+	const part = Kernel.node(PART, () => ({ preset }), {
+		context: 'required',
+		message: '<Toast.Close /> must be used within a <Toast.Root />'
 	});
 	const bond = part.bond;
 
@@ -49,7 +49,7 @@
 		}
 	}
 
-	const el = usePartElement(part, () => ({
+	const el = Kernel.element(part, () => ({
 		as,
 		class: ['cursor-pointer text-current h-6', '$preset', klass],
 		defaults,
@@ -59,7 +59,7 @@
 	}));
 </script>
 
-{@render partElement(el, body)}
+{@render Kernel.render(el)(el.tag(), el.class(), el.attrs(), body, undefined, el.motion(), el)}
 
 {#snippet body()}
 	{@render (children ?? fallback)({ toast: bond })}

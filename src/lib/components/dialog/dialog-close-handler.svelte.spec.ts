@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import CallbackFixture from '$ixirjs/ui/test/components/dialog/dialog-callback.test.svelte';
+import ToastFixture from '$ixirjs/ui/test/components/toast/toast-callback.test.svelte';
 import type { DialogBond } from './bond.svelte';
 
 // Characterization of the close-button handler contract, written before `<Dialog.Close />` moved
@@ -32,6 +33,36 @@ describe('Dialog.Close — handler composition', () => {
 		document.querySelector<HTMLElement>('[data-testid="dialog-close"]')!.dispatchEvent(event);
 
 		expect(onopenchange).toHaveBeenCalledWith(false, { bond, event, reason: 'close-button' });
+	});
+
+	// `Dialog.Close` and `Toast.Close` compute `type`/`role`/`tabindex` from whether `as` is a button.
+	// Nothing asserted the non-button branch, the one that matters: a `<span>` with no role and no
+	// tabindex is invisible to a screen reader and unreachable by keyboard.
+	it.each([
+		['dialog', CallbackFixture, 'dialog-close'],
+		['toast', ToastFixture, 'toast-close']
+	])('gives a non-button %s close control a button role and a tab stop', (_family, Fixture, id) => {
+		render(Fixture as typeof CallbackFixture, { open: true, as: 'span' });
+		const close = document.querySelector<HTMLElement>(`[data-testid="${id}"]`)!;
+
+		expect(close.tagName).toBe('SPAN');
+		expect(close).toHaveAttribute('role', 'button');
+		expect(close).toHaveAttribute('tabindex', '0');
+		expect(close).not.toHaveAttribute('type');
+	});
+
+	it.each([
+		['dialog', CallbackFixture, 'dialog-close'],
+		['toast', ToastFixture, 'toast-close']
+	])('leaves a real %s button to the platform', (_family, Fixture, id) => {
+		render(Fixture as typeof CallbackFixture, { open: true });
+		const close = document.querySelector<HTMLElement>(`[data-testid="${id}"]`)!;
+
+		// A `<button>` already is one: adding role/tabindex would be redundant ARIA.
+		expect(close.tagName).toBe('BUTTON');
+		expect(close).toHaveAttribute('type', 'button');
+		expect(close).not.toHaveAttribute('role');
+		expect(close).not.toHaveAttribute('tabindex');
 	});
 
 	it('lets a consumer onclick preventDefault to keep the dialog open', () => {

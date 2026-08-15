@@ -14,19 +14,7 @@ const BORDER_DEFAULT = 'border-border';
 export function withDefaultBorder(klass: ClassValue | null | undefined): string {
 	const flat = clsx(klass);
 	if (!flat) return BORDER_DEFAULT;
-	return hasToken(flat, BORDER_DEFAULT) ? flat : `${BORDER_DEFAULT} ${flat}`;
-}
-
-// Whole-token membership test — `border-border` must match as a standalone class, never as a
-// prefix of e.g. `border-border-foo`.
-function hasToken(cls: string, token: string): boolean {
-	let i = cls.indexOf(token);
-	while (i !== -1) {
-		const atStart = i === 0 || cls[i - 1] === ' ';
-		const end = i + token.length;
-		const atEnd = end === cls.length || cls[end] === ' ';
-		if (atStart && atEnd) return true;
-		i = cls.indexOf(token, end);
-	}
-	return false;
+	// Whole-token test — `border-border` must match standalone, never as a prefix of
+	// e.g. `border-border-foo`. Padding both sides makes ' token ' the only match.
+	return ` ${flat} `.includes(` ${BORDER_DEFAULT} `) ? flat : `${BORDER_DEFAULT} ${flat}`;
 }

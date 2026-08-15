@@ -1,8 +1,8 @@
 <script lang="ts">
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
 	import { addMonths, format, isToday, startOfDay, subMonths } from '$ixirjs/ui/utils/date';
 	import type { CalendarRange, CalendarRootProps, Day, Month } from './types';
 	import { CalendarBond } from './bond.svelte';
-	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
 
 	import './calendar.css';
 	import { useRoot } from '$ixirjs/ui/shared';
@@ -196,15 +196,21 @@
 	);
 	const bond = root.bond;
 
-	export function getBond() {
-		return bond;
-	}
+	export const getBond = root.getBond;
 
-	const el = usePartElement(root, () => ({
+	const el = Kernel.element(root, () => ({
 		class: ['h-fit w-full gap-px', '$preset', klass],
 		'data-atom': 'calendar-root',
 		...restProps
 	}));
 </script>
 
-{@render partElement(el, children, { calendar: bond })}
+{@render Kernel.render(el)(
+	el.tag(),
+	el.class(),
+	el.attrs(),
+	children,
+	{ calendar: bond },
+	el.motion(),
+	el
+)}

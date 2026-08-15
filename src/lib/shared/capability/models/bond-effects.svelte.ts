@@ -5,6 +5,5 @@ export * from '$ixirjs/ui/shared/capability/models/bond-effects/observers.svelte
 export type {
 	DocumentSource,
 	EffectGuard,
-	ElementSource,
-	WindowSource
+	ElementSource
 } from '$ixirjs/ui/shared/capability/models/bond-effects/shared';

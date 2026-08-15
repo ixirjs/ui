@@ -1,6 +1,6 @@
 import { getContext, setContext } from 'svelte';
 import { DEV } from 'esm-env';
-import { NodeRegistry } from './node-registry.svelte';
+import { NodeRegistry, type LazyNodeDescriptor, type LazyNodePlan } from './node-registry.svelte';
 import { bondContextKey } from './context';
 import { Atom } from './atom.svelte';
 import { CapabilityRegistry } from './capability-registry';
@@ -16,10 +16,11 @@ import type {
 export abstract class Bond<Props extends BondPropsBase = BondPropsBase> extends CapabilityRegistry {
 	static CONTEXT_KEY = bondContextKey('bond');
 
+	#bindingManaged = false;
 	#id: string;
 	#props: Props;
 	#name: string;
-	#nodes = new NodeRegistry(() => this.name);
+	#nodes = new NodeRegistry(this);
 	// Role lookup is intentionally first-match-wins; warn once if a supposedly unique role is ambiguous.
 	// Allocate the diagnostic set only for Bonds that actually encounter ambiguity.
 	// eslint-disable-next-line svelte/prefer-svelte-reactivity
@@ -30,6 +31,15 @@ export abstract class Bond<Props extends BondPropsBase = BondPropsBase> extends 
 		this.#props = (props ?? {}) as Props;
 		this.#id = this.#props.id ?? generateId();
 		this.#name = name ?? '';
+	}
+
+	/** @internal Whether server teardown is owned wholesale by this Bond's binding. */
+	get __bindingManaged(): boolean {
+		return this.#bindingManaged;
+	}
+
+	set __bindingManaged(value: boolean) {
+		this.#bindingManaged = value;
 	}
 
 	get id() {
@@ -69,9 +79,7 @@ export abstract class Bond<Props extends BondPropsBase = BondPropsBase> extends 
 
 	get elements() {
 		const obj: Record<string, Element | BondVirtualElement | undefined> = {};
-		for (const registration of this.#nodes.values()) {
-			obj[registration.key] = registration.node.element;
-		}
+		for (const entry of this.#nodes.elementValues()) obj[entry.key] = entry.element;
 		return obj;
 	}
 
@@ -83,6 +91,21 @@ export abstract class Bond<Props extends BondPropsBase = BondPropsBase> extends 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	unregister(node: Atom<any, any>): void {
 		this.#nodes.unregister(node);
+	}
+
+	/** @internal Register semantic identity without constructing its Atom. */
+	registerLazyNode<N extends Atom>(plan: LazyNodePlan<N>): LazyNodeDescriptor<N> {
+		return this.#nodes.registerLazy(plan, this);
+	}
+
+	/** @internal Remove a lazy semantic identity whether or not it materialized. */
+	unregisterLazyNode(descriptor: LazyNodeDescriptor): void {
+		this.#nodes.unregisterLazy(descriptor);
+	}
+
+	/** @internal Relationship projection lookup that does not materialize a lazy Atom. */
+	nodeIdByRole(role: string): string | undefined {
+		return this.#nodes.idByRole(role);
 	}
 
 	/** Exact registration-part lookup. */
@@ -126,11 +149,29 @@ export abstract class Bond<Props extends BondPropsBase = BondPropsBase> extends 
 	}
 
 	static get<T extends Bond>(this: BondClass<T>): T | undefined {
-		return getBondContext(this);
+		return getContext<T | undefined>(this.CONTEXT_KEY);
+	}
+
+	/**
+	 * `get()` outside a component initialisation (`getContext` throws there), for a Bond that reads
+	 * its own optional parent — nesting. Three families each wrote this try/catch by hand.
+	 */
+	static getOptional<T extends Bond>(this: BondClass<T>): T | undefined {
+		try {
+			return getContext<T | undefined>(this.CONTEXT_KEY);
+		} catch {
+			return undefined;
+		}
 	}
 
 	static getOrThrow<T extends Bond>(this: BondClass<T>, message?: string): T {
-		return requireBondContext(this, message);
+		const bond = getContext<T | undefined>(this.CONTEXT_KEY);
+		if (!bond) {
+			throw new Error(
+				message ?? '[ixirjs] Bond context missing: component must be used within its provider.'
+			);
+		}
+		return bond;
 	}
 
 	static [Symbol.hasInstance](this: unknown, value: unknown): boolean {
@@ -147,17 +188,3 @@ export abstract class Bond<Props extends BondPropsBase = BondPropsBase> extends 
 // construction. Duplicate package copies brand their own prototype with the same registered
 // symbol (`Symbol.for`), so cross-copy `instanceof` is unchanged.
 Object.defineProperty(Bond.prototype, BOND_BRAND, { value: true });
-
-function getBondContext<T extends Bond>(cls: BondClass<T>): T | undefined {
-	return getContext(cls.CONTEXT_KEY);
-}
-
-function requireBondContext<T extends Bond>(cls: BondClass<T>, message?: string): T {
-	const bond = getBondContext(cls);
-	if (!bond) {
-		throw new Error(
-			message ?? '[ixirjs] Bond context missing: component must be used within its provider.'
-		);
-	}
-	return bond;
-}

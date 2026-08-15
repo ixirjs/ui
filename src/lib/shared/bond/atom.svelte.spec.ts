@@ -1,19 +1,16 @@
 import { describe, expect, expectTypeOf, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
+import { Atom, Bond, defineAtom, type BondStateProps } from './index';
 import {
-	Atom,
-	Bond,
 	capabilityKey,
 	ariaRole,
-	defineAtom,
 	dataState,
 	defineCapability,
 	defineAtomCapability,
 	elementRef,
 	focusable,
-	pressable,
-	type BondStateProps
-} from './index';
+	pressable
+} from '$ixirjs/ui/shared/capability';
 import AtomProbe from '$ixirjs/ui/test/shared/bond/atom-probe.test.svelte';
 
 const MODEL = capabilityKey<{ value: number }>('atom-test-model');

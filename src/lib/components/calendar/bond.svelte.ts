@@ -10,10 +10,6 @@ import {
 } from './atoms.svelte';
 import type { CalendarRange, Day, Month } from './types';
 
-// -----------------------------------------------------------------------------
-// Public types
-// -----------------------------------------------------------------------------
-
 export type CalendarBondProps = BondStateProps & {
 	value?: Date;
 	range: CalendarRange;
@@ -30,28 +26,10 @@ export type CalendarBondProps = BondStateProps & {
 	extend?: Record<string, unknown>;
 };
 
-export type CalendarBondElements = {
-	root: HTMLElement;
-	body: HTMLElement;
-	day: HTMLElement;
-	weekDay: HTMLElement;
-	header: HTMLElement;
-};
-
 // Bond shape the calendar atoms type this.bond against — breaks the atom↔bond cycle.
-
-// -----------------------------------------------------------------------------
-// Internal types
-// -----------------------------------------------------------------------------
-
-type CalendarBondView = CalendarBondBase;
 
 // Hand-written base for CalendarBond — creates data-driven day/weekDay atoms.
 // Static parts (root/body/header) come from the defineBond spec below.
-
-// -----------------------------------------------------------------------------
-// Bond implementation
-// -----------------------------------------------------------------------------
 
 class CalendarBondBase extends Bond<CalendarBondProps> {
 	constructor(props: CalendarBondProps, name = 'calendar') {
@@ -60,12 +38,12 @@ class CalendarBondBase extends Bond<CalendarBondProps> {
 
 	// Per-weekday cell atom, cached by index (0=Sunday..6=Saturday).
 	weekDay(index: number) {
-		return new CalendarWeekDayAtom(this as CalendarBondView, index as WeekdayIndex);
+		return new CalendarWeekDayAtom(this as CalendarBondBase, index as WeekdayIndex);
 	}
 
 	// Per-day cell atom, cached by day.id.
 	day(day: Day) {
-		return new CalendarDayAtom(this as CalendarBondView, day);
+		return new CalendarDayAtom(this as CalendarBondBase, day);
 	}
 
 	selectDate(date: Date) {
@@ -138,10 +116,6 @@ class CalendarBondBase extends Bond<CalendarBondProps> {
 
 // CalendarBond via defineBond: declares root/body/header atoms; day/weekDay live on the base.
 // Selection/navigation logic lives on CalendarBondBase.
-
-// -----------------------------------------------------------------------------
-// Bond spec and constructor facade
-// -----------------------------------------------------------------------------
 
 export const CalendarBond = defineBond({
 	name: 'calendar',

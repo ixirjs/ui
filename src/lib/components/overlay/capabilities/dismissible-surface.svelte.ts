@@ -1,4 +1,4 @@
-import { type Capability } from '$ixirjs/ui/shared/bond';
+import { type Capability } from '$ixirjs/ui/shared/capability';
 import {
 	closeOnEscape,
 	type EscapeHandler

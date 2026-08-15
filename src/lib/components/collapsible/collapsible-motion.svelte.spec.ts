@@ -4,10 +4,8 @@ import { tick } from 'svelte';
 import Probe from '$ixirjs/ui/test/components/collapsible/collapsible-motion-probe.test.svelte';
 
 /**
- * The body's open/close motion is an attachment, not a `defaults` motion phase, so the part stays
- * on `HtmlAtom`'s native renderer instead of the `HtmlElement` adapter. These tests pin the two
- * properties that migration had to preserve, because nothing else would catch their loss: the
- * motion still runs at mount, and it still re-runs when the disclosure state changes.
+ * The body's open/close motion is an attachment, not a `defaults` motion phase. These tests pin
+ * mount initialization and disclosure-driven updates.
  */
 describe('Collapsible body motion', () => {
 	it('applies the closed initial state at mount', async () => {

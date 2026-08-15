@@ -1,5 +1,5 @@
 import {
-	defineProjectionCapability,
+	defineCapability,
 	sharedCapabilityKey,
 	type Behavior,
 	type Capability,
@@ -7,11 +7,7 @@ import {
 } from '$ixirjs/ui/shared/capability/capability';
 
 // Surface type travels with the key — capability(SELECTION) is typed without a cast.
-export const SELECTION = sharedCapabilityKey<SelectionModel<unknown>>({
-	owner: '@ixirjs/cap',
-	name: 'selection',
-	version: 1
-});
+export const SELECTION = sharedCapabilityKey<SelectionModel<unknown>>('@ixirjs/cap:selection');
 
 // One runtime slot holds every SelectionModel<T>; specialize its phantom surface only where T is known.
 const selectionSlot = <T>(): CapabilityKey<SelectionModel<T>> =>
@@ -131,7 +127,7 @@ export function selectionCapability<T>(
 	const interactive = options.interactive ?? true;
 	const itemValue = options.itemValue as ((item: string) => T) | undefined;
 
-	return defineProjectionCapability<SelectionModel<T>>({
+	return defineCapability<SelectionModel<T>>({
 		slot: selectionSlot<T>(),
 		surface: model,
 		meta: {

@@ -1,6 +1,6 @@
-<script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
+<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
 	import { ActivePortal, PortalSurface } from '$ixirjs/ui/components/portal';
-	import type { Base } from '$ixirjs/ui/components/atom';
+	import type { Base, HtmlElementTagName } from '$ixirjs/ui/components/atom';
 	import { mergeAtomProps } from '$ixirjs/ui/components/atom';
 	import { DialogBond } from './bond.svelte';
 	import type { DialogProps } from './types';
@@ -68,9 +68,7 @@
 		});
 	}
 
-	export function getBond() {
-		return bond;
-	}
+	export const getBond = root.getBond;
 </script>
 
 <PortalSurface

@@ -8,39 +8,21 @@ import {
 	type Disclosure
 } from '$ixirjs/ui/shared/capability/models/disclosure.svelte';
 import type { DisclosureStateProps } from '$ixirjs/ui/shared/capability/models/disclosure-state.svelte';
-import { labelledControl } from '$ixirjs/ui/shared/capability/models/relationship.svelte';
+import {
+	labelledControl,
+	liveRegionRelationship
+} from '$ixirjs/ui/shared/capability/models/relationship.svelte';
 import type { StateChangeContext } from '$ixirjs/ui/types';
-
-// -----------------------------------------------------------------------------
-// Public types
-// -----------------------------------------------------------------------------
 
 export type ToastBondProps = DisclosureStateProps & {
 	dismissible?: boolean;
 	duration?: number;
 };
 
-export type ToastBondElements = {
-	root: HTMLElement;
-	title: HTMLElement;
-	description: HTMLElement;
-	close: HTMLElement;
-};
-
 // Minimal bond view for atoms — avoids atom↔bond circularity through defineBond.
 
-// -----------------------------------------------------------------------------
-// Internal types
-// -----------------------------------------------------------------------------
-
-type ToastBondView = ToastBondBase;
-
-// -----------------------------------------------------------------------------
-// Atom definitions
-// -----------------------------------------------------------------------------
-
-export class ToastRootAtom extends Atom<ToastBondView> {
-	constructor(bond: ToastBondView) {
+class ToastRootAtom extends Atom<ToastBondBase> {
+	constructor(bond: ToastBondBase) {
 		super(bond, 'root');
 	}
 
@@ -49,12 +31,10 @@ export class ToastRootAtom extends Atom<ToastBondView> {
 		const isOpen = props?.open ?? false;
 		const isDisabled = props?.disabled ?? false;
 
-		// aria-labelledby/describedby come from labelledControl (role:'control'); emitted when those atoms exist.
+		// role/aria-live/aria-atomic come from liveRegionRelationship, aria-labelledby/describedby
+		// from labelledControl — both project onto role:'control', which is this atom.
 		return {
 			...super.attrs,
-			role: 'status',
-			'aria-live': 'polite',
-			'aria-atomic': 'true',
 			'aria-disabled': isDisabled ? 'true' : 'false',
 			'data-open': isOpen,
 			'data-state': isOpen ? 'open' : 'closed'
@@ -62,22 +42,22 @@ export class ToastRootAtom extends Atom<ToastBondView> {
 	}
 }
 
-export class ToastTitleAtom extends Atom<ToastBondView> {
-	constructor(bond: ToastBondView) {
+class ToastTitleAtom extends Atom<ToastBondBase> {
+	constructor(bond: ToastBondBase) {
 		super(bond, 'title');
 	}
 	// id is the default atom id (`toast-title-${bond.id}`), registered via .role('label').
 }
 
-export class ToastDescriptionAtom extends Atom<ToastBondView> {
-	constructor(bond: ToastBondView) {
+class ToastDescriptionAtom extends Atom<ToastBondBase> {
+	constructor(bond: ToastBondBase) {
 		super(bond, 'description');
 	}
 	// id is the default atom id (`toast-description-${bond.id}`), registered via .role('description').
 }
 
-export class ToastCloseAtom extends Atom<ToastBondView> {
-	constructor(bond: ToastBondView) {
+export class ToastCloseAtom extends Atom<ToastBondBase> {
+	constructor(bond: ToastBondBase) {
 		super(bond, 'close');
 	}
 
@@ -88,10 +68,6 @@ export class ToastCloseAtom extends Atom<ToastBondView> {
 		};
 	}
 }
-
-// -----------------------------------------------------------------------------
-// Bond implementation
-// -----------------------------------------------------------------------------
 
 const TOAST_TIMEOUT = capabilityKey('@ixirjs/toast-timeout');
 
@@ -127,6 +103,12 @@ class ToastBondBase extends Bond<ToastBondProps> {
 		this.registerCapabilities([
 			disclosureCapability(this.disclosure),
 			labelledControl(),
+			liveRegionRelationship({
+				role: 'control',
+				liveRole: 'status',
+				politeness: 'polite',
+				atomic: true
+			}),
 			disclosureClose({
 				disabled: (bond) => (bond as ToastBondBase).props.dismissible === false,
 				stopPropagation: true
@@ -173,10 +155,6 @@ class ToastBondBase extends Bond<ToastBondProps> {
 }
 
 // Toast bond via defineBond: the declaration maps the dismiss slot to the close part and role.
-
-// -----------------------------------------------------------------------------
-// Bond spec and constructor facade
-// -----------------------------------------------------------------------------
 
 export const ToastBond = defineBond({
 	name: 'toast',

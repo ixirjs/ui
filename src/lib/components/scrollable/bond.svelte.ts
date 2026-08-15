@@ -1,14 +1,10 @@
-import { Bond, Atom, type BondStateProps } from '$ixirjs/ui/shared/bond';
+import { Bond, Atom, defineAtom, type BondStateProps } from '$ixirjs/ui/shared/bond';
 import { defineBond, type BondOf } from '$ixirjs/ui/shared';
 import {
 	thumbDragPolicy,
 	trackPressPolicy
 } from '$ixirjs/ui/shared/capability/models/interaction-policies/pointer.svelte';
 import { clamp } from '$ixirjs/ui/utils/math';
-
-// -----------------------------------------------------------------------------
-// Public types
-// -----------------------------------------------------------------------------
 
 export type ScrollableBondProps = BondStateProps & {
 	scrollX: number;
@@ -32,10 +28,6 @@ export type ScrollableBondElements = {
 	thumbX: HTMLElement;
 	thumbY: HTMLElement;
 };
-
-// -----------------------------------------------------------------------------
-// Atom definitions
-// -----------------------------------------------------------------------------
 
 export class ScrollableRootAtom extends Atom<ScrollableBondBase> {
 	constructor(bond: ScrollableBondBase) {
@@ -77,11 +69,7 @@ export class ScrollableContainerAtom extends Atom<ScrollableBondBase> {
 	}
 }
 
-export class ScrollableContentAtom extends Atom<ScrollableBondBase> {
-	constructor(bond: ScrollableBondBase) {
-		super(bond, 'content');
-	}
-}
+export const ScrollableContentAtom = defineAtom<ScrollableBondBase>('content');
 
 // Track atom; axis fixed at construction.
 export class ScrollableTrackAtom extends Atom<ScrollableBondBase> {
@@ -158,10 +146,6 @@ class ScrollableThumbYAtom extends ScrollableThumbAtom {
 }
 
 // Hand-written base: scroll geometry, drag, measurement, and parent-context capture; defineBond extends it.
-
-// -----------------------------------------------------------------------------
-// Bond implementation
-// -----------------------------------------------------------------------------
 
 class ScrollableBondBase extends Bond<ScrollableBondProps> {
 	#parent: ScrollableBond | undefined;
@@ -331,10 +315,6 @@ class ScrollableBondBase extends Bond<ScrollableBondProps> {
 }
 
 // Atoms type `this.bond` against the base to reach geometry/drag methods directly.
-
-// -----------------------------------------------------------------------------
-// Bond spec and constructor facade
-// -----------------------------------------------------------------------------
 
 export const ScrollableBond = defineBond({
 	name: 'scrollable',

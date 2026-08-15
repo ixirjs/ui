@@ -1,24 +1,23 @@
-<script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { type Base } from '$ixirjs/ui/components/atom';
-	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
-	import { usePart } from '@ixirjs/ui/shared';
+<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
+	import { type Base, type BasePropsOf, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
+	import { definePart } from '$ixirjs/ui/components/atom/define-part.svelte';
 	import type { CollapsibleHeaderProps } from './types';
 	import { CollapsibleBond } from './bond.svelte';
 
-	let {
-		class: klass = '',
-		preset = undefined,
-		children = undefined,
-		...restProps
-	}: CollapsibleHeaderProps<E, B> = $props();
+	const props: CollapsibleHeaderProps<E, B> & BasePropsOf<B> = $props();
 
-	const part = usePart(CollapsibleBond, 'header', () => restProps, {
-		preset: () => preset
+	const el = definePart(CollapsibleBond, 'header', () => props, {
+		class: 'border-border flex cursor-pointer items-center gap-2'
 	});
-	const el = usePartElement(part, () => ({
-		class: ['border-border flex cursor-pointer items-center gap-2', '$preset', klass],
-		...restProps
-	}));
 </script>
 
-{@render partElement(el, children, { collapsible: part.bond })}
+{@render Kernel.render(el)(
+	el.tag(),
+	el.class(),
+	el.attrs(),
+	props.children,
+	{ collapsible: el.bond },
+	el.motion(),
+	el
+)}

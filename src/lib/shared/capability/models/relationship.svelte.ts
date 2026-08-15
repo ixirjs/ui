@@ -2,62 +2,20 @@ import {
 	capabilityKey,
 	defineCapability,
 	sharedCapabilityKey,
-	type Capability
+	type Capability,
+	type CapabilityConfig,
+	type CapabilityKey
 } from '$ixirjs/ui/shared/capability/capability';
 import { internCapabilityFactory } from '$ixirjs/ui/shared/capability/intern';
 import type { Bond } from '$ixirjs/ui/shared/bond';
 import { DISCLOSURE } from './disclosure.svelte';
 
-export const TRIGGER_CONTENT = sharedCapabilityKey<void>({
-	owner: '@ixirjs/cap',
-	name: 'trigger-content',
-	version: 1
-});
-export const TAB_PANEL = sharedCapabilityKey<void>({
-	owner: '@ixirjs/cap',
-	name: 'tab-panel',
-	version: 1
-});
-export const ERROR_MESSAGE = sharedCapabilityKey<void>({
-	owner: '@ixirjs/cap',
-	name: 'error-message',
-	version: 1
-});
-export const ROW_COLUMN_CELL = sharedCapabilityKey<void>({
-	owner: '@ixirjs/cap',
-	name: 'row-column-cell',
-	version: 1
-});
-export const TREE_ITEM_GROUP = sharedCapabilityKey<void>({
-	owner: '@ixirjs/cap',
-	name: 'tree-item-group',
-	version: 1
-});
-export const ACTIVE_DESCENDANT = sharedCapabilityKey<void>({
-	owner: '@ixirjs/cap',
-	name: 'active-descendant',
-	version: 1
-});
-export const MENU_SUBMENU = sharedCapabilityKey<void>({
-	owner: '@ixirjs/cap',
-	name: 'menu-submenu',
-	version: 1
-});
-export const OPTION_COLLECTION = sharedCapabilityKey<void>({
-	owner: '@ixirjs/cap',
-	name: 'option-collection',
-	version: 1
-});
-export const HEADING_SECTION = sharedCapabilityKey<void>({
-	owner: '@ixirjs/cap',
-	name: 'heading-section',
-	version: 1
-});
-export const LIVE_REGION = sharedCapabilityKey<void>({
-	owner: '@ixirjs/cap',
-	name: 'live-region',
-	version: 1
-});
+export const TRIGGER_CONTENT = sharedCapabilityKey<void>('@ixirjs/cap:trigger-content');
+export const TAB_PANEL = sharedCapabilityKey<void>('@ixirjs/cap:tab-panel');
+export const ERROR_MESSAGE = sharedCapabilityKey<void>('@ixirjs/cap:error-message');
+export const ROW_COLUMN_CELL = sharedCapabilityKey<void>('@ixirjs/cap:row-column-cell');
+export const TREE_ITEM_GROUP = sharedCapabilityKey<void>('@ixirjs/cap:tree-item-group');
+export const LIVE_REGION = sharedCapabilityKey<void>('@ixirjs/cap:live-region');
 
 // Private slot key (not exported from the public barrel): labelledControl is a behavior-only linkage
 // nobody retrieves by key, so it stays unforgeable — the private seam.
@@ -66,6 +24,34 @@ const LABELLED = capabilityKey<void>('labelled');
 // Reusable a11y linkage between roles. Where atoms must cross-reference each other's ids
 // (label/control, trigger/content, tab/tabpanel, …), the wiring resolves siblings via
 // `bond.nodeByRole(role)`.
+
+/**
+ * Every relationship below is the same descriptor with a different role map: a fixed slot, a
+ * `void` surface (a linkage holds no state — that is why they intern), a docs line, the roles it
+ * projects, and an options bag defaulting to `{}`. Only the projection itself differs, so that is
+ * all a declaration states.
+ *
+ * `projects` comes back from `build` rather than sitting beside `docs` so a relationship can derive
+ * its role list from its options. Every surviving relationship returns a literal list, so this seam
+ * is currently unused flexibility — collapse it if none grows one back.
+ *
+ * This is *not* `defineRoleProjection`: that helper's `attrs(ctx, role)` never receives the Bond,
+ * and every relationship here resolves a sibling through `bond.nodeByRole(...)`.
+ */
+type RelationshipProjection = Pick<CapabilityConfig<void>, 'roles' | 'behavior' | 'requires'> & {
+	projects: readonly string[];
+};
+
+function defineRelationship<O extends object>(
+	slot: CapabilityKey<void>,
+	docs: string,
+	build: (options: O) => RelationshipProjection
+): (options?: O) => Capability<void> {
+	return internCapabilityFactory((options: O = {} as O): Capability<void> => {
+		const { projects, ...projection } = build(options);
+		return defineCapability<void>({ slot, meta: { projects, docs }, ...projection });
+	});
+}
 
 export interface TriggerContentOptions {
 	// `aria-haspopup` on the trigger (menus, listboxes, dialogs). Omitted by default.
@@ -77,16 +63,12 @@ export interface TriggerContentOptions {
 // Trigger ↔ content disclosure linkage — the most repeated a11y pattern.
 // 'trigger' → aria-controls + aria-expanded (+ optional aria-haspopup).
 // 'content' → aria-labelledby (+ optional role). Slot 'trigger-content'.
-export const triggerContentLink = internCapabilityFactory(function triggerContentLink(
-	options: TriggerContentOptions = {}
-): Capability<void> {
-	return defineCapability<void>({
-		slot: TRIGGER_CONTENT,
+export const triggerContentLink = defineRelationship<TriggerContentOptions>(
+	TRIGGER_CONTENT,
+	'ARIA linkage between a disclosure trigger and its controlled content.',
+	(options) => ({
+		projects: ['trigger', 'content'],
 		requires: [DISCLOSURE],
-		meta: {
-			projects: ['trigger', 'content'],
-			docs: 'ARIA linkage between a disclosure trigger and its controlled content.'
-		},
 		roles: {
 			trigger: () => ({
 				attrs: (bond) => {
@@ -109,8 +91,8 @@ export const triggerContentLink = internCapabilityFactory(function triggerConten
 				})
 			})
 		}
-	});
-});
+	})
+);
 
 // Options for `labelledControl`.
 export interface LabelledControlOptions {
@@ -121,24 +103,22 @@ export interface LabelledControlOptions {
 // Label/description → control linkage for the form-field pattern. Projects onto 'control'
 // the ARIA references to its label and description siblings; each reference is omitted when
 // the sibling is absent. Slot 'labelled'.
-export const labelledControl = internCapabilityFactory(function labelledControl(
-	options: LabelledControlOptions = {}
-): Capability<void> {
-	return defineCapability<void>({
-		slot: LABELLED,
-		meta: {
-			projects: ['control', 'label', 'description'],
-			docs: 'ARIA and optional native linkage between labels, descriptions, and controls.'
-		},
+export const labelledControl = defineRelationship<LabelledControlOptions>(
+	LABELLED,
+	'ARIA and optional native linkage between labels, descriptions, and controls.',
+	(options) => ({
+		projects: ['control', 'label', 'description'],
 		roles: {
 			control: () => ({
 				attrs: (bond) => {
 					const label = bond.nodeByRole('label')?.id;
 					const description = bond.nodeByRole('description')?.id;
-					return {
-						...(label ? { 'aria-labelledby': label } : {}),
-						...(description ? { 'aria-describedby': description } : {})
-					};
+					// Built conditionally: the absent-sibling case (every SSR root whose label renders
+					// after it) merges as an empty layer, which `mergeAttributeLayer` returns unchanged.
+					const attrs: Record<string, unknown> = {};
+					if (label) attrs['aria-labelledby'] = label;
+					if (description) attrs['aria-describedby'] = description;
+					return attrs;
 				}
 			}),
 			// nativeFor emits the real `for` attr only when opted in; otherwise the label role is a no-op.
@@ -146,46 +126,44 @@ export const labelledControl = internCapabilityFactory(function labelledControl(
 				options.nativeFor ? { attrs: (bond) => ({ for: bond.nodeByRole('control')?.id }) } : {},
 			description: () => ({})
 		}
-	});
-});
+	})
+);
 
 export interface TabPanelLinkOptions {
 	// Predicate for active tab/panel state. Defaults to active so a bare relationship emits refs.
 	selected?: (bond: Bond) => boolean;
 }
 
-export const tabPanelLink = internCapabilityFactory(function tabPanelLink(
-	options: TabPanelLinkOptions = {}
-): Capability<void> {
-	const selected = (bond: Bond) => options.selected?.(bond) ?? true;
-	return defineCapability<void>({
-		slot: TAB_PANEL,
-		meta: {
+export const tabPanelLink = defineRelationship<TabPanelLinkOptions>(
+	TAB_PANEL,
+	'ARIA linkage between a tab and its controlled tabpanel.',
+	(options) => {
+		const selected = (bond: Bond) => options.selected?.(bond) ?? true;
+		return {
 			projects: ['tab', 'tabpanel'],
-			docs: 'ARIA linkage between a tab and its controlled tabpanel.'
-		},
-		roles: {
-			tab: () => ({
-				attrs: (bond) => ({
-					role: 'tab',
-					'aria-controls': bond.nodeByRole('tabpanel')?.id,
-					'aria-selected': selected(bond)
+			roles: {
+				tab: () => ({
+					attrs: (bond) => ({
+						role: 'tab',
+						'aria-controls': bond.nodeByRole('tabpanel')?.id,
+						'aria-selected': selected(bond)
+					})
+				}),
+				tabpanel: () => ({
+					attrs: (bond) => {
+						const isSelected = selected(bond);
+						return {
+							role: 'tabpanel',
+							'aria-labelledby': bond.nodeByRole('tab')?.id,
+							hidden: isSelected ? undefined : true,
+							tabindex: isSelected ? 0 : -1
+						};
+					}
 				})
-			}),
-			tabpanel: () => ({
-				attrs: (bond) => {
-					const isSelected = selected(bond);
-					return {
-						role: 'tabpanel',
-						'aria-labelledby': bond.nodeByRole('tab')?.id,
-						hidden: isSelected ? undefined : true,
-						tabindex: isSelected ? 0 : -1
-					};
-				}
-			})
-		}
-	});
-});
+			}
+		};
+	}
+);
 
 export interface ErrorMessageLinkOptions {
 	// Predicate for invalid state. Defaults to invalid when an error message atom exists.
@@ -194,38 +172,30 @@ export interface ErrorMessageLinkOptions {
 	live?: boolean;
 }
 
-export const errorMessageLink = internCapabilityFactory(function errorMessageLink(
-	options: ErrorMessageLinkOptions = {}
-): Capability<void> {
-	const invalid = (bond: Bond) => options.invalid?.(bond) ?? Boolean(bond.nodeByRole('error'));
-	return defineCapability<void>({
-		slot: ERROR_MESSAGE,
-		meta: {
+export const errorMessageLink = defineRelationship<ErrorMessageLinkOptions>(
+	ERROR_MESSAGE,
+	'ARIA linkage between a control and its validation error message.',
+	(options) => {
+		const invalid = (bond: Bond) => options.invalid?.(bond) ?? Boolean(bond.nodeByRole('error'));
+		return {
 			projects: ['control', 'error'],
-			docs: 'ARIA linkage between a control and its validation error message.'
-		},
-		roles: {
-			control: () => ({
-				attrs: (bond) => {
-					if (!invalid(bond)) return {};
-					const error = bond.nodeByRole('error')?.id;
-					return {
-						...(error ? { 'aria-errormessage': error, 'aria-invalid': 'true' } : {})
-					};
-				}
-			}),
-			error: () => ({
-				attrs: () => (options.live ? { role: 'alert' } : {})
-			})
-		}
-	});
-});
-
-export type GridCellContext =
-	| string
-	| {
-			headers?: string | readonly string[];
-	  };
+			roles: {
+				control: () => ({
+					attrs: (bond) => {
+						if (!invalid(bond)) return {};
+						const error = bond.nodeByRole('error')?.id;
+						return {
+							...(error ? { 'aria-errormessage': error, 'aria-invalid': 'true' } : {})
+						};
+					}
+				}),
+				error: () => ({
+					attrs: () => (options.live ? { role: 'alert' } : {})
+				})
+			}
+		};
+	}
+);
 
 export interface RowColumnCellLinkOptions {
 	// Override cell header ids when row/column atoms live in sibling child bonds.
@@ -242,15 +212,11 @@ function normalizeHeaders(headers: string | readonly string[] | undefined): stri
 	return joinIds(headers);
 }
 
-export const rowColumnCellLink = internCapabilityFactory(function rowColumnCellLink(
-	options: RowColumnCellLinkOptions = {}
-): Capability<void> {
-	return defineCapability<void>({
-		slot: ROW_COLUMN_CELL,
-		meta: {
-			projects: ['row', 'column', 'cell'],
-			docs: 'ARIA relationship primitives for grid rows, column headers, and cells.'
-		},
+export const rowColumnCellLink = defineRelationship<RowColumnCellLinkOptions>(
+	ROW_COLUMN_CELL,
+	'ARIA relationship primitives for grid rows, column headers, and cells.',
+	(options) => ({
+		projects: ['row', 'column', 'cell'],
 		roles: {
 			row: () => ({ attrs: () => ({ role: 'row' }) }),
 			column: () => ({ attrs: () => ({ role: 'columnheader' }) }),
@@ -273,219 +239,78 @@ export const rowColumnCellLink = internCapabilityFactory(function rowColumnCellL
 				}
 			})
 		}
-	});
-});
-
-export const treeItemGroupLink = internCapabilityFactory(
-	function treeItemGroupLink(): Capability<void> {
-		return defineCapability<void>({
-			slot: TREE_ITEM_GROUP,
-			requires: [DISCLOSURE],
-			meta: {
-				projects: ['treeitem', 'treegroup'],
-				docs: 'ARIA linkage between an expandable tree item and its child group.'
-			},
-			roles: {
-				treeitem: () => ({
-					attrs: (bond) => ({
-						role: 'treeitem',
-						'aria-controls': bond.nodeByRole('treegroup')?.id,
-						'aria-expanded': bond.requireSurface(DISCLOSURE).isOpen
-					})
-				}),
-				treegroup: () => ({
-					attrs: (bond) => ({
-						role: 'group',
-						'aria-labelledby': bond.nodeByRole('treeitem')?.id
-					})
-				})
-			}
-		});
-	}
+	})
 );
 
-export interface ActiveDescendantLinkOptions {
-	targetRoles?: readonly string[];
-	itemRole?: string;
-	activeId?: (bond: Bond) => string | null | undefined;
-}
-
-export const activeDescendantLink = internCapabilityFactory(function activeDescendantLink(
-	options: ActiveDescendantLinkOptions = {}
-): Capability<void> {
-	const targetRoles = options.targetRoles ?? ['control', 'container'];
-	const itemRole = options.itemRole ?? 'item';
-	const projects = [...targetRoles, itemRole];
-
-	return defineCapability<void>({
-		slot: ACTIVE_DESCENDANT,
-		meta: {
-			projects,
-			docs: 'ARIA linkage from a control or container to its active descendant item.'
-		},
-		behavior: (role) => {
-			if (targetRoles.includes(role)) {
-				return {
-					attrs: (bond) => ({
-						'aria-activedescendant': options.activeId
-							? options.activeId(bond)
-							: bond.nodeByRole(itemRole)?.id
-					})
-				};
-			}
-			return role === itemRole ? {} : undefined;
-		}
-	});
-});
-
-export interface MenuSubmenuRelationshipOptions {
-	expanded?: (bond: Bond) => boolean | undefined;
-	haspopup?: 'menu' | 'listbox' | 'dialog' | 'grid' | 'tree' | true;
-	submenuRole?: string;
-}
-
-export const menuSubmenuRelationship = internCapabilityFactory(function menuSubmenuRelationship(
-	options: MenuSubmenuRelationshipOptions = {}
-): Capability<void> {
-	const haspopup = options.haspopup ?? 'menu';
-	const submenuRole = options.submenuRole ?? 'menu';
-
-	return defineCapability<void>({
-		slot: MENU_SUBMENU,
-		meta: {
-			projects: ['menuitem', 'submenu'],
-			docs: 'ARIA linkage between a menu item and its controlled submenu.'
-		},
+export const treeItemGroupLink = defineRelationship(
+	TREE_ITEM_GROUP,
+	'ARIA linkage between an expandable tree item and its child group.',
+	() => ({
+		projects: ['treeitem', 'treegroup'],
+		requires: [DISCLOSURE],
 		roles: {
-			menuitem: () => ({
+			treeitem: () => ({
 				attrs: (bond) => ({
-					role: 'menuitem',
-					'aria-controls': bond.nodeByRole('submenu')?.id,
-					'aria-haspopup': haspopup,
-					'aria-expanded': options.expanded?.(bond)
+					role: 'treeitem',
+					'aria-controls': bond.nodeByRole('treegroup')?.id,
+					'aria-expanded': bond.requireSurface(DISCLOSURE).isOpen
 				})
 			}),
-			submenu: () => ({
+			treegroup: () => ({
 				attrs: (bond) => ({
-					role: submenuRole,
-					'aria-labelledby': bond.nodeByRole('menuitem')?.id
+					role: 'group',
+					'aria-labelledby': bond.nodeByRole('treeitem')?.id
 				})
 			})
 		}
-	});
-});
-
-export interface OptionCollectionRelationshipOptions {
-	collectionRole?: 'listbox' | 'menu' | 'radiogroup' | string;
-	optionRole?: 'option' | 'menuitem' | 'menuitemradio' | 'radio' | string;
-	optionIds?: (bond: Bond) => string | readonly string[] | undefined;
-}
-
-export const optionCollectionRelationship = internCapabilityFactory(
-	function optionCollectionRelationship(
-		options: OptionCollectionRelationshipOptions = {}
-	): Capability<void> {
-		const collectionRole = options.collectionRole ?? 'listbox';
-		const optionRole = options.optionRole ?? 'option';
-
-		return defineCapability<void>({
-			slot: OPTION_COLLECTION,
-			meta: {
-				projects: ['collection', 'option'],
-				docs: 'ARIA role and ownership linkage between an option and its collection.'
-			},
-			roles: {
-				collection: () => ({
-					attrs: (bond) => {
-						const optionIds =
-							normalizeHeaders(options.optionIds?.(bond)) ??
-							joinIds(bond.nodesByPart('option').map((option) => option.id));
-						return {
-							role: collectionRole,
-							...(optionIds ? { 'aria-owns': optionIds } : {})
-						};
-					}
-				}),
-				option: () => ({
-					attrs: () => ({ role: optionRole })
-				})
-			}
-		});
-	}
+	})
 );
 
-export interface HeadingSectionRelationshipOptions {
-	targetRoles?: readonly string[];
-	headingRole?: string;
-	descriptionRole?: string;
-	targetRole?: string;
-}
+// `aria-activedescendant` comes from `rovingCapability` (container role) and `inputCapability`
+// (input role), both of which know which descendant is actually active.
 
-export const headingSectionRelationship = internCapabilityFactory(
-	function headingSectionRelationship(
-		options: HeadingSectionRelationshipOptions = {}
-	): Capability<void> {
-		const targetRoles = options.targetRoles ?? ['section', 'surface'];
-		const headingRole = options.headingRole ?? 'heading';
-		const descriptionRole = options.descriptionRole ?? 'description';
-		const projects = [...targetRoles, headingRole, descriptionRole];
+// An option collection's ARIA comes from the capabilities that own the state behind it:
+// `aria-multiselectable` from `selectionCapability`, `aria-setsize`/`aria-posinset` from
+// `collectionCapability`, and the roles from each atom's own role projection.
 
-		return defineCapability<void>({
-			slot: HEADING_SECTION,
-			meta: {
-				projects,
-				docs: 'ARIA linkage where a heading and description label a section or surface.'
-			},
-			behavior: (role) => {
-				if (targetRoles.includes(role)) {
-					return {
-						attrs: (bond) => ({
-							...(options.targetRole ? { role: options.targetRole } : {}),
-							'aria-labelledby': bond.nodeByRole(headingRole)?.id,
-							'aria-describedby': bond.nodeByRole(descriptionRole)?.id
-						})
-					};
-				}
-				return role === headingRole || role === descriptionRole ? {} : undefined;
-			}
-		});
-	}
-);
+// A heading labelling a section is `labelledControl` with different role names — use that.
 
 export interface LiveRegionRelationshipOptions {
+	// Projected role name to attach to — a surface that is already a 'control' for `labelledControl`
+	// announces from that same atom rather than declaring a second one.
+	role?: string;
+	// ARIA role *value* ('status', 'alert', …).
 	liveRole?: string;
+	// Each announcement attr is emitted only when asked for, so a surface whose implicit role
+	// semantics already carry it (role="alert" implies assertive/atomic) stays free of the duplicate.
 	politeness?: 'off' | 'polite' | 'assertive';
 	atomic?: boolean;
 	relevant?: string;
 }
 
-export const liveRegionRelationship = internCapabilityFactory(function liveRegionRelationship(
-	options: LiveRegionRelationshipOptions = {}
-): Capability<void> {
-	const liveRole = options.liveRole ?? 'status';
-	const politeness = options.politeness ?? 'polite';
-	const atomic = options.atomic ?? true;
+// Announcement attrs only. Labelling a live region is `labelledControl`'s job — projecting
+// aria-labelledby from here too would put two capabilities on the same attribute.
+export const liveRegionRelationship = defineRelationship<LiveRegionRelationshipOptions>(
+	LIVE_REGION,
+	'ARIA live-region announcement attrs for a status or alert surface.',
+	(options) => {
+		const role = options.role ?? 'live';
+		const liveRole = options.liveRole ?? 'status';
 
-	return defineCapability<void>({
-		slot: LIVE_REGION,
-		meta: {
-			projects: ['live', 'title', 'description', 'content'],
-			docs: 'ARIA live-region relationship for announced title, description, and content.'
-		},
-		roles: {
-			live: () => ({
-				attrs: (bond) => ({
-					role: liveRole,
-					'aria-live': politeness,
-					'aria-atomic': atomic ? 'true' : 'false',
-					'aria-relevant': options.relevant,
-					'aria-labelledby': bond.nodeByRole('title')?.id,
-					'aria-describedby': bond.nodeByRole('description')?.id
-				})
-			}),
-			title: () => ({}),
-			description: () => ({}),
-			content: () => ({})
-		}
-	});
-});
+		return {
+			projects: [role],
+			behavior: (projected) =>
+				projected === role
+					? {
+							attrs: () => ({
+								role: liveRole,
+								'aria-live': options.politeness,
+								'aria-atomic':
+									options.atomic === undefined ? undefined : options.atomic ? 'true' : 'false',
+								'aria-relevant': options.relevant
+							})
+						}
+					: undefined
+		};
+	}
+);

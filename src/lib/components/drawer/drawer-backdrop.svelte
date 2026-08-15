@@ -1,24 +1,15 @@
-<script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
+<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
 	import type { SlideoverBackdropProps } from './types';
-	import { type Base } from '$ixirjs/ui/components/atom';
-	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
-	import { usePart } from '$ixirjs/ui/shared';
+	import { type Base, type BasePropsOf, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
+	import { definePart } from '$ixirjs/ui/components/atom/define-part.svelte';
 	import { DrawerBond } from './bond.svelte';
 
-	let {
-		class: klass = '',
-		preset = undefined,
-		...restProps
-	}: SlideoverBackdropProps<E, B> = $props();
+	const props: SlideoverBackdropProps<E, B> & BasePropsOf<B> = $props();
 
-	const part = usePart(DrawerBond, 'backdrop', () => restProps, {
-		preset: () => preset
+	const el = definePart(DrawerBond, 'backdrop', () => props, {
+		class: 'border-border absolute inset-0 bg-black/30'
 	});
-
-	const el = usePartElement(part, () => ({
-		class: ['border-border absolute inset-0 bg-black/30', '$preset', klass],
-		...restProps
-	}));
 </script>
 
-{@render partElement(el)}
+{@render Kernel.render(el)(el.tag(), el.class(), el.attrs(), undefined, undefined, el.motion(), el)}

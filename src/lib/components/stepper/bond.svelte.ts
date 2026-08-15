@@ -1,22 +1,13 @@
 import type { StepBond } from './step/bond.svelte';
 import { Bond, defineAtom, type BondStateProps } from '$ixirjs/ui/shared/bond';
 import { defineBond, type BondOf } from '$ixirjs/ui/shared';
-import { ariaRole } from '$ixirjs/ui/shared/capability';
 import type { Snippet } from 'svelte';
-
-// -----------------------------------------------------------------------------
-// Public types
-// -----------------------------------------------------------------------------
 
 export type StepperBondProps = BondStateProps & {
 	step: number;
 	linear?: boolean;
 	disabled?: boolean;
 	orientation?: 'horizontal' | 'vertical';
-};
-
-export type StepperElements = {
-	root: HTMLElement;
 };
 
 export type StepContentSnippet = {
@@ -34,26 +25,9 @@ export interface IStepper {
 	goto(index: number): void;
 }
 
-// -----------------------------------------------------------------------------
-// Internal types
-// -----------------------------------------------------------------------------
-
-type StepperBondView = StepperBondBase;
-
-// -----------------------------------------------------------------------------
-// Atom definitions
-// -----------------------------------------------------------------------------
-
-export const StepperRootAtom = defineAtom<StepperBondView>('root', (atom) => {
-	atom.capability(ariaRole('group'));
-});
-export type StepperRootAtom = InstanceType<typeof StepperRootAtom>;
+export const StepperRootAtom = defineAtom<StepperBondBase>('root', { role: 'group' });
 
 // Stepper orchestration lives on the Bond instance.
-
-// -----------------------------------------------------------------------------
-// Bond implementation
-// -----------------------------------------------------------------------------
 
 class StepperBondBase extends Bond<StepperBondProps> implements IStepper {
 	constructor(props: StepperBondProps, name = 'stepper') {
@@ -155,10 +129,6 @@ class StepperBondBase extends Bond<StepperBondProps> implements IStepper {
 		this.stepContents.delete(String(index));
 	}
 }
-
-// -----------------------------------------------------------------------------
-// Bond spec and constructor facade
-// -----------------------------------------------------------------------------
 
 export const StepperBond = defineBond({
 	name: 'stepper',

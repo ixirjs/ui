@@ -1,6 +1,11 @@
-<script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
+<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
 	import { ActivePortal, PortalSurface } from '$ixirjs/ui/components/portal';
-	import { mergeAtomProps, type Base } from '$ixirjs/ui/components/atom';
+	import {
+		mergeAtomProps,
+		type Base,
+		type BasePropsOf,
+		type HtmlElementTagName
+	} from '$ixirjs/ui/components/atom';
 	import { createAtomInstance } from '$ixirjs/ui/shared/bond';
 	import { BACKDROP_PRESS } from '$ixirjs/ui/components/overlay';
 	import { DialogRootAtom } from '$ixirjs/ui/components/dialog/bond.svelte';
@@ -15,7 +20,7 @@
 		children = undefined,
 		onclick = undefined,
 		...restProps
-	}: PopoverDialogContentProps<E, B> = $props();
+	}: PopoverDialogContentProps<E, B> & BasePropsOf<B> = $props();
 
 	const bond = PopoverDialogBond.get();
 

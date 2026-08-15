@@ -9,15 +9,13 @@ export type {
 } from '$ixirjs/ui/shared/bond/use-atom.svelte';
 
 export { defineBond } from '$ixirjs/ui/shared/authoring/define.svelte';
-export { usePart } from '$ixirjs/ui/shared/authoring/use-part.svelte';
-export type { UsedPart, UsePartOptions } from '$ixirjs/ui/shared/authoring/use-part.svelte';
 export { useRoot } from '$ixirjs/ui/shared/authoring/use-root.svelte';
 export type { UsedRoot, UseRootOptions } from '$ixirjs/ui/shared/authoring/use-root.svelte';
 export type { BondOf, PropsOf } from '$ixirjs/ui/shared/authoring/define.svelte';
 
 // Descriptor interning: surface-less capability factories are called per rendered part, so an
 // authored family wants the same sharing the built-in ones get.
-export { internCapabilityFactory } from '$ixirjs/ui/shared/capability/intern';
+export { internCapabilityFactory, lazyCapability } from '$ixirjs/ui/shared/capability/intern';
 export {
 	capabilityKey,
 	sharedCapabilityKey,
@@ -55,10 +53,7 @@ export {
 	collectionCapability,
 	collectionSlot
 } from '$ixirjs/ui/shared/capability/models/collection.svelte';
-export type {
-	CollectionCapability,
-	CollectionProjectionOptions
-} from '$ixirjs/ui/shared/capability/models/collection.svelte';
+export type { CollectionCapability } from '$ixirjs/ui/shared/capability/models/collection.svelte';
 export {
 	createSelection,
 	selectionCapability,
@@ -124,47 +119,6 @@ export { DURATION } from '$ixirjs/ui/constants/motion';
 // Same shape as the selection/input/roving models above: a `create*` backing-to-model factory plus
 // a `*Capability` projection. Exported so an authored family composes the same primitives the
 // built-in components do, rather than re-deriving ARIA and data-attribute conventions per family.
-export {
-	createChecked,
-	checkedCapability,
-	CHECKED
-} from '$ixirjs/ui/shared/capability/models/checked.svelte';
-export type {
-	CheckedState,
-	CheckedBacking,
-	CheckedModel,
-	CheckedProjectionOptions
-} from '$ixirjs/ui/shared/capability/models/checked.svelte';
-export {
-	createPressed,
-	pressedCapability,
-	PRESSED
-} from '$ixirjs/ui/shared/capability/models/pressed.svelte';
-export type {
-	PressedBacking,
-	PressedModel,
-	PressedProjectionOptions
-} from '$ixirjs/ui/shared/capability/models/pressed.svelte';
-export {
-	createProgressValue,
-	progressValueCapability,
-	PROGRESS_VALUE
-} from '$ixirjs/ui/shared/capability/models/progress.svelte';
-export type {
-	ProgressValueBacking,
-	ProgressValueModel,
-	ProgressValueProjectionOptions
-} from '$ixirjs/ui/shared/capability/models/progress.svelte';
-export {
-	createRangeValue,
-	rangeValueCapability,
-	RANGE_VALUE
-} from '$ixirjs/ui/shared/capability/models/range.svelte';
-export type {
-	RangeValueBacking,
-	RangeValueModel,
-	RangeValueProjectionOptions
-} from '$ixirjs/ui/shared/capability/models/range.svelte';
 export { createSort, sortCapability, SORT } from '$ixirjs/ui/shared/capability/models/sort.svelte';
 export {
 	createPagination,
@@ -172,32 +126,10 @@ export {
 	PAGINATION
 } from '$ixirjs/ui/shared/capability/models/pagination.svelte';
 export {
-	createLoading,
-	loadingCapability,
-	LOADING
-} from '$ixirjs/ui/shared/capability/models/loading.svelte';
-export {
-	createViewport,
-	viewportCapability,
-	VIEWPORT
-} from '$ixirjs/ui/shared/capability/models/viewport.svelte';
-export type {
-	ViewportBacking,
-	ViewportModel,
-	ViewportSize,
-	ViewportScroll,
-	ViewportRange
-} from '$ixirjs/ui/shared/capability/models/viewport.svelte';
-export {
 	createGeometry,
 	geometryCapability,
 	GEOMETRY
 } from '$ixirjs/ui/shared/capability/models/geometry.svelte';
-export {
-	createDateSelection,
-	dateSelectionCapability,
-	DATE_SELECTION
-} from '$ixirjs/ui/shared/capability/models/date-selection.svelte';
 export {
 	createStatus,
 	statusCapability,
@@ -217,15 +149,3 @@ export {
 	navigationCapability,
 	NAVIGATION
 } from '$ixirjs/ui/shared/capability/models/navigation.svelte';
-
-// Role projections: cross-cutting `disabled` / `orientation` / `aria-current` attributes that
-// otherwise get hand-written per Atom, which is what the AGENTS.md rule against per-atom ARIA
-// exists to prevent.
-export {
-	disabledProjection,
-	orientationProjection,
-	currentProjection,
-	DISABLED_PROJECTION,
-	ORIENTATION_PROJECTION,
-	CURRENT_PROJECTION
-} from '$ixirjs/ui/shared/capability/models/role-projections.svelte';

@@ -1,24 +1,9 @@
 import { StepperBond, type IStepper } from '$ixirjs/ui/components/stepper/bond.svelte';
-import { internCapabilityFactory } from '$ixirjs/ui/shared/capability/intern';
+import { internCapabilityFactory, lazyCapability } from '$ixirjs/ui/shared/capability/intern';
 import { Bond, defineAtom, type BondStateProps } from '$ixirjs/ui/shared/bond';
 import { labelledControl } from '$ixirjs/ui/shared/capability/models/relationship.svelte';
 import { defineBond, type BondOf } from '$ixirjs/ui/shared';
-import {
-	defineAtomCapability,
-	sharedCapabilityKey,
-	type AtomHost,
-	type CapabilityKey
-} from '$ixirjs/ui/shared/capability';
-
-// -----------------------------------------------------------------------------
-// Internal types
-// -----------------------------------------------------------------------------
-
-type StepBondView = StepBondBase;
-
-// -----------------------------------------------------------------------------
-// Public types
-// -----------------------------------------------------------------------------
+import { partCapability, type SharedCapabilityKeyId } from '$ixirjs/ui/shared/capability';
 
 export type StepBondProps = BondStateProps & {
 	index: number;
@@ -28,88 +13,48 @@ export type StepBondProps = BondStateProps & {
 	error: boolean;
 };
 
-export type StepBondElements = {
-	root: HTMLElement;
-	indicator: HTMLElement;
-	header: HTMLElement;
-	title: HTMLElement;
-	description: HTMLElement;
-	body?: HTMLElement;
-	separator?: HTMLElement;
-};
-
-// -----------------------------------------------------------------------------
-// Capability slots and shared helpers
-// -----------------------------------------------------------------------------
-
-const STEP_HEADER_GROUP = sharedCapabilityKey<void>({
-	owner: '@ixirjs/step',
-	name: 'header-group',
-	version: 1
+export const StepIndicatorAtom = defineAtom<StepBondBase>('indicator', {
+	slot: '@ixirjs/step:indicator',
+	docs: 'Step indicator current-step and status projection.',
+	attrs: (_node, bond) => ({
+		'aria-current': bond?.isActive ? ('step' as const) : undefined,
+		...stepStatusAttrs(bond),
+		role: 'presentation' as const
+	})
 });
-const STEP_INDICATOR = sharedCapabilityKey<void>({
-	owner: '@ixirjs/step',
-	name: 'indicator',
-	version: 1
-});
-const STEP_HEADER = sharedCapabilityKey<void>({
-	owner: '@ixirjs/step',
-	name: 'header',
-	version: 1
-});
-const STEP_BODY = sharedCapabilityKey<void>({ owner: '@ixirjs/step', name: 'body', version: 1 });
-const STEP_SEPARATOR = sharedCapabilityKey<void>({
-	owner: '@ixirjs/step',
-	name: 'separator',
-	version: 1
-});
-
-// -----------------------------------------------------------------------------
-// Atom definitions
-// -----------------------------------------------------------------------------
-
-export const StepIndicatorAtom = defineAtom<StepBondView>('indicator', (atom) => {
-	atom.capability(stepIndicatorPresentation());
-});
-export type StepIndicatorAtom = InstanceType<typeof StepIndicatorAtom>;
 
 // The header is the step's rendered container, so the group semantics and the label linkage live
 // here. They were declared on Step.Root, which renders no element of its own — see the note on
 // `atom: false` in step-root.svelte.
-export const StepHeaderAtom = defineAtom<StepBondView>('header', (atom) => {
-	atom.capability(stepStatusPresentation(STEP_HEADER, 'header'));
+export const StepHeaderAtom = defineAtom<StepBondBase>('header', (atom) => {
+	atom.capability(stepStatusPresentation('@ixirjs/step:header', 'header'));
 	atom.capability(stepHeaderGrouping());
 });
-export type StepHeaderAtom = InstanceType<typeof StepHeaderAtom>;
 
-export const StepTitleAtom = defineAtom<StepBondView>('title');
-export type StepTitleAtom = InstanceType<typeof StepTitleAtom>;
+export const StepTitleAtom = defineAtom<StepBondBase>('title');
 
-export const StepDescriptionAtom = defineAtom<StepBondView>('description');
-export type StepDescriptionAtom = InstanceType<typeof StepDescriptionAtom>;
+export const StepDescriptionAtom = defineAtom<StepBondBase>('description');
 
-export const StepBodyAtom = defineAtom<StepBondView>('body', (atom) => {
-	atom.capability(stepStatusPresentation(STEP_BODY, 'body'));
+export const StepBodyAtom = defineAtom<StepBondBase>('body', (atom) => {
+	atom.capability(stepStatusPresentation('@ixirjs/step:body', 'body'));
 });
-export type StepBodyAtom = InstanceType<typeof StepBodyAtom>;
 
-export const StepSeparatorAtom = defineAtom<StepBondView>('separator', (atom) => {
-	atom.capability(stepSeparatorPresentation());
+export const StepSeparatorAtom = defineAtom<StepBondBase>('separator', {
+	slot: '@ixirjs/step:separator',
+	docs: 'Step separator presentation and status projection.',
+	attrs: (_node, bond) => ({
+		'aria-hidden': 'true',
+		role: 'presentation' as const,
+		...stepStatusAttrs(bond)
+	})
 });
-export type StepSeparatorAtom = InstanceType<typeof StepSeparatorAtom>;
 
-// -----------------------------------------------------------------------------
-// Atom capabilities
-// -----------------------------------------------------------------------------
-
-const stepHeaderGrouping = internCapabilityFactory(function stepHeaderGrouping() {
-	return defineAtomCapability<void, AtomHost, StepBondView>({
-		slot: STEP_HEADER_GROUP,
-		meta: {
-			projects: ['header'],
-			docs: 'Step header grouping and disabled projection.'
-		},
-		attach: {
+const stepHeaderGrouping = lazyCapability(() =>
+	partCapability<StepBondBase>(
+		'@ixirjs/step:header-group',
+		'header',
+		'Step header grouping and disabled projection.',
+		{
 			// aria-labelledby / aria-describedby are NOT written here: labelledControl projects them
 			// onto role:'control' from the node registry, so a consumer id on Step.Title is followed.
 			attrs: (_node, bond) => ({
@@ -117,57 +62,18 @@ const stepHeaderGrouping = internCapabilityFactory(function stepHeaderGrouping()
 				'aria-disabled': bond?.isDisabled
 			})
 		}
-	});
-});
+	)
+);
 
-const stepIndicatorPresentation = internCapabilityFactory(function stepIndicatorPresentation() {
-	return defineAtomCapability<void, AtomHost, StepBondView>({
-		slot: STEP_INDICATOR,
-		meta: {
-			projects: ['indicator'],
-			docs: 'Step indicator current-step and status projection.'
-		},
-		attach: {
-			attrs: (_node, bond) => ({
-				'aria-current': bond?.isActive ? ('step' as const) : undefined,
-				...stepStatusAttrs(bond),
-				role: 'presentation' as const
-			})
-		}
-	});
-});
+// One descriptor per (slot, part) pair rather than per rendered step: surface-less, and both
+// arguments are string literals, so the intern cache keys them exactly.
+const stepStatusPresentation = internCapabilityFactory((id: SharedCapabilityKeyId, part: string) =>
+	partCapability<StepBondBase>(id, part, `Step ${part} status projection.`, {
+		attrs: (_node, bond) => stepStatusAttrs(bond)
+	})
+);
 
-function stepStatusPresentation(slot: CapabilityKey<void>, part: string) {
-	return defineAtomCapability<void, AtomHost, StepBondView>({
-		slot,
-		meta: {
-			projects: [part],
-			docs: `Step ${part} status projection.`
-		},
-		attach: {
-			attrs: (_node, bond) => stepStatusAttrs(bond)
-		}
-	});
-}
-
-const stepSeparatorPresentation = internCapabilityFactory(function stepSeparatorPresentation() {
-	return defineAtomCapability<void, AtomHost, StepBondView>({
-		slot: STEP_SEPARATOR,
-		meta: {
-			projects: ['separator'],
-			docs: 'Step separator presentation and status projection.'
-		},
-		attach: {
-			attrs: (_node, bond) => ({
-				'aria-hidden': 'true',
-				role: 'presentation' as const,
-				...stepStatusAttrs(bond)
-			})
-		}
-	});
-});
-
-function stepStatusAttrs(bond: StepBondView | undefined) {
+function stepStatusAttrs(bond: StepBondBase | undefined) {
 	return {
 		'data-active': bond?.isActive,
 		'data-completed': bond?.isCompleted,
@@ -177,10 +83,6 @@ function stepStatusAttrs(bond: StepBondView | undefined) {
 }
 
 // Parent wiring and step status live on the Step bond instance.
-
-// -----------------------------------------------------------------------------
-// Bond implementation
-// -----------------------------------------------------------------------------
 
 class StepBondBase extends Bond<StepBondProps> {
 	#parent?: IStepper;
@@ -232,10 +134,6 @@ class StepBondBase extends Bond<StepBondProps> {
 		}
 	}
 }
-
-// -----------------------------------------------------------------------------
-// Bond spec and constructor facade
-// -----------------------------------------------------------------------------
 
 export const StepBond = defineBond({
 	name: 'step',

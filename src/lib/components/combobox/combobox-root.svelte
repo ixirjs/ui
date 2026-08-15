@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { ComboboxRootProps } from './types';
-	import { controlledProp, useRoot } from '@ixirjs/ui/shared';
+	import { controlledProp, useRoot } from '$ixirjs/ui/shared';
 	import { ComboboxBond, type ComboboxBondProps } from './bond.svelte';
 
 	const ID = $props.id();
@@ -87,9 +87,7 @@
 	);
 	const bond = root.bond;
 
-	export function getBond() {
-		return bond;
-	}
+	export const getBond = root.getBond;
 </script>
 
 {@render children?.({ combobox: bond })}

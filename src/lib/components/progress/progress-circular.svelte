@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { mergePresetProps, HtmlAtom } from '$ixirjs/ui/components/atom';
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
+	import { mergePresetProps } from '$ixirjs/ui/components/atom';
 	import { clamp } from '$ixirjs/ui/utils/math';
 	import type { ProgressCircularProps } from './types';
 	import { SvgElement } from '$ixirjs/ui/components/element';
@@ -22,26 +23,39 @@
 	const strokeDashoffset = $derived(
 		isIndeterminate ? circumference : circumference - (percent! / 100) * circumference
 	);
+
+	// Element seam instead of a component boundary; key order matches the previous call exactly.
+	const el = Kernel.element(Kernel.static, () => ({
+		as: 'div',
+		class: [
+			'progress-root progress-root--circular relative inline-flex items-center justify-center',
+			'$preset',
+			klass
+		],
+		role: 'progressbar',
+		'aria-valuemin': 0,
+		'aria-valuemax': max,
+		'aria-valuenow': isIndeterminate ? undefined : (value ?? undefined),
+		'aria-valuetext': isIndeterminate ? undefined : `${Math.round(percent!)}%`,
+		'data-indeterminate': isIndeterminate,
+		'data-value': isIndeterminate ? undefined : (value ?? undefined),
+		'data-max': max,
+		'data-completed': !isIndeterminate && percent === 100,
+		...circularProps
+	}));
 </script>
 
-<HtmlAtom
-	as="div"
-	class={[
-		'progress-root progress-root--circular relative inline-flex items-center justify-center',
-		'$preset',
-		klass
-	]}
-	role="progressbar"
-	aria-valuemin={0}
-	aria-valuemax={max}
-	aria-valuenow={isIndeterminate ? undefined : (value ?? undefined)}
-	aria-valuetext={isIndeterminate ? undefined : `${Math.round(percent!)}%`}
-	data-indeterminate={isIndeterminate}
-	data-value={isIndeterminate ? undefined : (value ?? undefined)}
-	data-max={max}
-	data-completed={!isIndeterminate && percent === 100}
-	{...circularProps}
->
+{@render Kernel.render(el)(
+	el.tag(),
+	el.class(),
+	el.attrs(),
+	circularBody,
+	undefined,
+	el.motion(),
+	el
+)}
+
+{#snippet circularBody()}
 	<svg viewBox="0 0 48 48" class="h-full w-full -rotate-90" aria-hidden="true">
 		<SvgElement
 			as="circle"
@@ -55,7 +69,7 @@
 		/>
 		{@render defaultCircularFill()}
 	</svg>
-</HtmlAtom>
+{/snippet}
 
 {#snippet defaultCircularFill()}
 	<SvgElement

@@ -1,5 +1,6 @@
-import { Bond, defineAtom, type BondStateProps, type Capability } from '$ixirjs/ui/shared/bond';
-import { defineBond, type BondOf } from '@ixirjs/ui/shared';
+import { Bond, defineAtom, type BondStateProps } from '$ixirjs/ui/shared/bond';
+import type { Capability } from '$ixirjs/ui/shared/capability';
+import { defineBond, type BondOf } from '$ixirjs/ui/shared';
 import { specializeDefinition } from '$ixirjs/ui/shared/authoring/metadata';
 import type { Collection } from '$ixirjs/ui/shared/bond/collection.svelte';
 import {
@@ -16,10 +17,6 @@ import {
 	type SortState
 } from '$ixirjs/ui/shared/capability/models/sort.svelte';
 import type { Direction, StateChangeContext } from '$ixirjs/ui/types';
-
-// -----------------------------------------------------------------------------
-// Public types
-// -----------------------------------------------------------------------------
 
 export type DataGridBondProps<T = unknown> = BondStateProps & {
 	multiple?: boolean;
@@ -62,31 +59,13 @@ export interface IDataGrid<T = unknown> {
 	takeValuesChangeContext(): Pick<StateChangeContext, 'event'>;
 }
 
-// -----------------------------------------------------------------------------
-// Internal types
-// -----------------------------------------------------------------------------
+export const DataGridRootAtom = defineAtom<DataGridBondBase, HTMLElement>('root');
 
-type DataGridBondView = DataGridBondBase;
+export const DataGridHeaderAtom = defineAtom<DataGridBondBase, HTMLElement>('header');
 
-// -----------------------------------------------------------------------------
-// Atom definitions
-// -----------------------------------------------------------------------------
+export const DataGridBodyAtom = defineAtom<DataGridBondBase, HTMLElement>('body');
 
-export const DataGridRootAtom = defineAtom<DataGridBondView, HTMLElement>('root');
-export type DataGridRootAtom = InstanceType<typeof DataGridRootAtom>;
-
-export const DataGridHeaderAtom = defineAtom<DataGridBondView, HTMLElement>('header');
-export type DataGridHeaderAtom = InstanceType<typeof DataGridHeaderAtom>;
-
-export const DataGridBodyAtom = defineAtom<DataGridBondView, HTMLElement>('body');
-export type DataGridBodyAtom = InstanceType<typeof DataGridBodyAtom>;
-
-export const DataGridFooterAtom = defineAtom<DataGridBondView, HTMLElement>('footer');
-export type DataGridFooterAtom = InstanceType<typeof DataGridFooterAtom>;
-
-// -----------------------------------------------------------------------------
-// Bond implementation
-// -----------------------------------------------------------------------------
+export const DataGridFooterAtom = defineAtom<DataGridBondBase, HTMLElement>('footer');
 
 class DataGridBondBase<T = unknown> extends Bond<DataGridBondProps<T>> implements IDataGrid<T> {
 	#valuesChangeContext: Pick<StateChangeContext, 'event'> | undefined;
@@ -236,10 +215,6 @@ class DataGridBondBase<T = unknown> extends Bond<DataGridBondProps<T>> implement
 	}
 }
 
-// -----------------------------------------------------------------------------
-// Bond spec and constructor facade
-// -----------------------------------------------------------------------------
-
 const DataGridBondDefinition = defineBond({
 	name: 'datagrid',
 	base: DataGridBondBase,
@@ -251,10 +226,6 @@ const DataGridBondDefinition = defineBond({
 	}
 });
 
-// -----------------------------------------------------------------------------
-// Public types
-// -----------------------------------------------------------------------------
-
 export type DataGridBond<T = unknown> = BondOf<typeof DataGridBondDefinition> & {
 	readonly __props?: DataGridBondProps<T>;
 	readonly rows: Collection<IDataGridRow<T>>;
@@ -264,10 +235,6 @@ export type DataGridBond<T = unknown> = BondOf<typeof DataGridBondDefinition> & 
 	mountRow(id: string, row: IDataGridRow<T>): () => void;
 	mountColumn(id: string, col: IDataGridColumn): () => void;
 } & IDataGrid<T>;
-
-// -----------------------------------------------------------------------------
-// Bond spec and constructor facade
-// -----------------------------------------------------------------------------
 
 // TS cannot retain a class value's type parameter through `typeof DataGridBondDefinition`; this
 // minimal static facade preserves generic construction and context lookup ergonomics.

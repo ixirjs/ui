@@ -35,9 +35,7 @@
 	);
 	const bond = root.bond;
 
-	export function getBond() {
-		return bond;
-	}
+	export const getBond = root.getBond;
 </script>
 
 <!-- `overlay` is structural — the in-flow path intentionally has no portal or elevation. -->

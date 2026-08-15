@@ -1,10 +1,11 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import { createAtomInstance, type Bond } from '$ixirjs/ui/shared/bond';
 
 	let { bond, events }: { bond: Bond; events: string[] } = $props();
 
 	const atom = createAtomInstance('probe', {
-		resolveBond: () => bond,
+		bond: untrack(() => bond),
 		capabilities: [
 			() => {
 				events.push('setup');
@@ -12,7 +13,7 @@
 			}
 		]
 	});
-	const sibling = createAtomInstance('sibling', { resolveBond: () => bond });
+	const sibling = createAtomInstance('sibling', { bond: untrack(() => bond) });
 </script>
 
 <div data-id={atom.id} data-sibling-id={sibling.id}>probe</div>

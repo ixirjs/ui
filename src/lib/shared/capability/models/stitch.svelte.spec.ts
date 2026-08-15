@@ -1,12 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import {
-	Bond,
-	Atom,
-	bondContextKey,
-	capabilityKey,
-	type BondStateProps
-} from '$ixirjs/ui/shared/bond';
-import { defineCapability } from '$ixirjs/ui/shared/capability/capability';
+import { Bond, Atom, bondContextKey, type BondStateProps } from '$ixirjs/ui/shared/bond';
+import { capabilityKey, defineCapability } from '$ixirjs/ui/shared/capability/capability';
 import { createSelection, selectionCapability, SELECTION } from './selection.svelte';
 
 // End-to-end proof of the role stitch: atom declares .role(...), bond folds in capability

@@ -1,13 +1,7 @@
 import { DEV } from 'esm-env';
 import { untrack } from 'svelte';
 import { SvelteMap } from 'svelte/reactivity';
-import {
-	Atom,
-	Bond,
-	defineAtom,
-	type BondElements,
-	type BondStateProps
-} from '$ixirjs/ui/shared/bond';
+import { Atom, Bond, defineAtom, type BondStateProps } from '$ixirjs/ui/shared/bond';
 import { defineBond, type BondOf } from '$ixirjs/ui/shared';
 import { PortalsBond } from '$ixirjs/ui/components/portal/registry';
 import {
@@ -18,20 +12,11 @@ import {
 	type ZIndexInput
 } from '$ixirjs/ui/components/portal/layering/z-layer.svelte';
 
-// -----------------------------------------------------------------------------
-// Public types
-// -----------------------------------------------------------------------------
-
 export type PortalBondProps = BondStateProps & {
 	id: string;
 };
 
 export type PortalStateProps = PortalBondProps;
-
-export type PortalElements = BondElements & {
-	root?: HTMLElement;
-	inner?: HTMLElement;
-};
 
 export type PortalElevationEntry = {
 	band: LayerInput;
@@ -40,21 +25,13 @@ export type PortalElevationEntry = {
 	'z-index'?: ZIndexInput | undefined;
 };
 
-// -----------------------------------------------------------------------------
-// Bond implementation
-// -----------------------------------------------------------------------------
-
 export class PortalBondBase<Props extends PortalBondProps = PortalBondProps> extends Bond<Props> {
 	#anchors = new SvelteMap<string, () => number>();
 	#portals: PortalsBond | undefined;
 
 	constructor(props: Props) {
 		super(props, 'portal');
-		try {
-			this.#portals = PortalsBond.get();
-		} catch {
-			this.#portals = undefined;
-		}
+		this.#portals = PortalsBond.getOptional();
 	}
 
 	// The teleport sink and floating-ui boundary are the same element.
@@ -114,15 +91,7 @@ export class PortalBondBase<Props extends PortalBondProps = PortalBondProps> ext
 	}
 }
 
-// -----------------------------------------------------------------------------
-// Internal types
-// -----------------------------------------------------------------------------
-
 type PortalBondView = PortalBondBase<PortalBondProps>;
-
-// -----------------------------------------------------------------------------
-// Atom definitions
-// -----------------------------------------------------------------------------
 
 export class PortalRootAtom extends Atom<PortalBondView, HTMLElement> {
 	constructor(bond: PortalBondView) {
@@ -138,11 +107,6 @@ export class PortalRootAtom extends Atom<PortalBondView, HTMLElement> {
 }
 
 export const PortalInnerAtom = defineAtom<PortalBondView, HTMLElement>('inner');
-export type PortalInnerAtom = InstanceType<typeof PortalInnerAtom>;
-
-// -----------------------------------------------------------------------------
-// Bond spec and constructor facade
-// -----------------------------------------------------------------------------
 
 export const PortalBond = defineBond({
 	name: 'portal',

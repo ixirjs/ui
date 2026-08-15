@@ -64,7 +64,6 @@ export type BuiltInPresetModuleMap = { [K in BuiltInPresetName]: PresetEntry };
 
 // This is the single public augmentation seam. Application code extends it through
 // `declare module '@ixirjs/ui/preset'`.
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface PresetModuleMap extends BuiltInPresetModuleMap {}
 
 export type PresetModuleName = keyof PresetModuleMap & string;

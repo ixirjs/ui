@@ -1,9 +1,12 @@
-<script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { createAttachmentKey } from 'svelte/attachments';
-	import { type Base } from '$ixirjs/ui/components/atom';
-	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
-	import { usePart } from '@ixirjs/ui/shared';
+<script module lang="ts">
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
 	import { CollapsibleBond } from './bond.svelte';
+	const PART = Kernel.part(CollapsibleBond, 'body', { class: '' });
+</script>
+
+<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
+	import { createAttachmentKey } from 'svelte/attachments';
+	import { type Base, type BasePropsOf, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
 	import { attachCollapsibleBodyMotion } from './motion.svelte';
 	import type { CollapsibleBodyProps } from './types';
 
@@ -12,23 +15,28 @@
 		preset = undefined,
 		children = undefined,
 		...restProps
-	}: CollapsibleBodyProps<E, B> = $props();
+	}: CollapsibleBodyProps<E, B> & BasePropsOf<B> = $props();
 
-	// An attachment rather than a `defaults` motion phase: identical behavior, but it keeps this
-	// part on the native element path instead of the HtmlElement adapter. See the motion module.
+	// An attachment keeps this animate-only path on a native element leaf. See the motion module.
 	// The key is minted once at init (house rule) — `{@attach}` sugar needs a component/element,
 	// so the attachment rides the rest layer under its own stable symbol.
 	const motion = attachCollapsibleBodyMotion();
 	const motionKey = createAttachmentKey();
 
-	const part = usePart(CollapsibleBond, 'body', () => restProps, {
-		preset: () => preset
-	});
-	const el = usePartElement(part, () => ({
+	const part = Kernel.node(PART, () => ({ preset }), { context: 'required' });
+	const el = Kernel.element(part, () => ({
 		class: ['border-border', '$preset', klass],
 		[motionKey]: motion,
 		...restProps
 	}));
 </script>
 
-{@render partElement(el, children, { collapsible: part.bond })}
+{@render Kernel.render(el)(
+	el.tag(),
+	el.class(),
+	el.attrs(),
+	children,
+	{ collapsible: part.bond },
+	el.motion(),
+	el
+)}

@@ -1,7 +1,7 @@
-<script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
+<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
 	import { controlledProp, useRoot } from '$ixirjs/ui/shared';
-	import { type Base } from '$ixirjs/ui/components/atom';
-	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
+	import { type Base, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
 	import { StepperBond } from './bond.svelte';
 	import type { StepperRootProps } from './types';
 
@@ -42,15 +42,21 @@
 	);
 	const bond = root.bond;
 
-	export function getBond() {
-		return bond;
-	}
+	export const getBond = root.getBond;
 
-	const el = usePartElement(root, () => ({
+	const el = Kernel.element(root, () => ({
 		class: ['flex flex-col', '$preset', klass],
 		variantProps: root.props,
 		...restProps
 	}));
 </script>
 
-{@render partElement(el, children, { stepper: bond })}
+{@render Kernel.render(el)(
+	el.tag(),
+	el.class(),
+	el.attrs(),
+	children,
+	{ stepper: bond },
+	el.motion(),
+	el
+)}

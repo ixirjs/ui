@@ -1,12 +1,13 @@
-<script
-	lang="ts"
-	generics="E extends keyof HTMLElementTagNameMap = 'button', B extends Base = Base"
->
-	import { mergePresetProps } from '$ixirjs/ui/components/atom';
-	import type { Base } from '$ixirjs/ui/components/atom';
-	import { usePart } from '$ixirjs/ui/shared';
-	import { Trigger } from '$ixirjs/ui/components/popover/atoms';
+<script module lang="ts">
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
 	import { ContextMenuBond } from './bond.svelte';
+	const PART = Kernel.part(ContextMenuBond, 'virtual-trigger', { class: '' });
+</script>
+
+<script lang="ts" generics="E extends HtmlElementTagName = 'button', B extends Base = Base">
+	import { mergePresetProps, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
+	import type { Base, BasePropsOf } from '$ixirjs/ui/components/atom';
+	import { Trigger } from '$ixirjs/ui/components/popover/atoms';
 	import type { ContextMenuTriggerProps } from './types';
 	import type { BondVirtualElement } from '$ixirjs/ui/shared/bond';
 
@@ -16,11 +17,12 @@
 		oncontextmenu = undefined,
 		class: klass = '',
 		...restProps
-	}: ContextMenuTriggerProps<E, B> = $props();
+	}: ContextMenuTriggerProps<E, B> & BasePropsOf<B> = $props();
 
 	// The virtual trigger carries no rendered element of its own; the declared slot supplies its
 	// constructor, registration key and role, and this part renders `<Trigger>` instead.
-	const virtualTriggerPart = usePart(ContextMenuBond, 'virtual-trigger', () => ({}), {
+	const virtualTriggerPart = Kernel.node(PART, () => ({}), {
+		context: 'required',
 		message: '<ContextMenu.Trigger /> must be used within a <ContextMenu.Root />'
 	});
 	const bond = virtualTriggerPart.bond;

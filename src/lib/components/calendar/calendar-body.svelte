@@ -1,9 +1,12 @@
+<script module lang="ts">
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
+	import { CalendarBond } from './bond.svelte';
+	const PART = Kernel.part(CalendarBond, 'body', { class: '' });
+</script>
+
 <script lang="ts">
 	import CalendarDay from './calendar-day.svelte';
 	import type { Day } from './types';
-	import { CalendarBond } from './bond.svelte';
-	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
-	import { usePart } from '$ixirjs/ui/shared';
 
 	let {
 		class: klass = '',
@@ -18,9 +21,7 @@
 		...restProps
 	} = $props();
 
-	const part = usePart(CalendarBond, 'body', () => restProps, {
-		preset: () => preset
-	});
+	const part = Kernel.node(PART, () => ({ preset }), { context: 'required' });
 	const calendarBond = part.bond;
 	const currentMonth = $derived(calendarBond.props.currentMonth);
 
@@ -40,13 +41,13 @@
 		return weeks.filter((week) => week.some((day) => !day.offmonth)).flat();
 	});
 
-	const el = usePartElement(part, () => ({
+	const el = Kernel.element(part, () => ({
 		class: ['col-span-full grid w-full grid-cols-subgrid', '$preset', klass],
 		...restProps
 	}));
 </script>
 
-{@render partElement(el, body)}
+{@render Kernel.render(el)(el.tag(), el.class(), el.attrs(), body, undefined, el.motion(), el)}
 
 {#snippet body()}
 	{#each visibleDays as day (day.id)}

@@ -1,7 +1,7 @@
-<script lang="ts" generics="E extends keyof HTMLElementTagNameMap='dialog', B extends Base = Base">
+<script lang="ts" generics="E extends HtmlElementTagName='dialog', B extends Base = Base">
 	import type { HTMLAttributes } from 'svelte/elements';
 	import { ActivePortal, PortalSurface } from '$ixirjs/ui/components/portal';
-	import type { Base } from '$ixirjs/ui/components/atom';
+	import type { Base, HtmlElementTagName } from '$ixirjs/ui/components/atom';
 	import { DrawerBond } from './bond.svelte';
 	import type { SlideoverRootProps } from './types';
 	import { animateDrawerRoot } from './motion.svelte';
@@ -25,7 +25,7 @@
 		'z-index': zindex = undefined,
 		order = undefined,
 		onopenchange = undefined,
-		// swallowed: defaults is an internal HtmlAtom layer, not a public Drawer.Root override.
+		// Swallow Kernel's internal defaults layer; it is not a Drawer.Root override.
 		defaults: _defaults = undefined,
 		// swallowed: old fallback prop is removed; keep it off the DOM spread.
 		fallback: _fallback = undefined,
@@ -68,9 +68,7 @@
 		mergeAtomProps(root.atom, preset, { ...root.props, ...restProps }, root.presetLayer)
 	);
 
-	export function getBond() {
-		return bond;
-	}
+	export const getBond = root.getBond;
 </script>
 
 <PortalSurface

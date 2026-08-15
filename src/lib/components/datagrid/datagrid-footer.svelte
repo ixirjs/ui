@@ -1,11 +1,14 @@
+<script module lang="ts">
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
+	import { DataGridBond } from './bond.svelte';
+	const PART = Kernel.part(DataGridBond, 'footer', { class: '' });
+</script>
+
 <script
 	lang="ts"
-	generics="T = unknown, E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base"
+	generics="T = unknown, E extends HtmlElementTagName = 'div', B extends Base = Base"
 >
-	import { type Base } from '$ixirjs/ui/components/atom';
-	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
-	import { usePart } from '@ixirjs/ui/shared';
-	import { DataGridBond } from './bond.svelte';
+	import { type Base, type BasePropsOf, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
 	import type { DatagridFooterProps } from './types';
 
 	let {
@@ -13,20 +16,27 @@
 		preset = undefined,
 		children = undefined,
 		...restProps
-	}: DatagridFooterProps<T, E, B> = $props();
+	}: DatagridFooterProps<T, E, B> & BasePropsOf<B> = $props();
 
-	const part = usePart(DataGridBond, 'footer', () => restProps, {
-		message: 'DataGrid.Footer must be used within DataGrid.Root.',
-		preset: () => preset
+	const part = Kernel.node(PART, () => ({ preset }), {
+		context: 'required',
+		message: 'DataGrid.Footer must be used within DataGrid.Root.'
 	});
 	const bond = part.bond as DataGridBond<T>;
 
-	// The explicit `bond` prop HtmlAtom took is exactly `part.bond`, which the seam already carries.
-	// Class order is this part's own: preset first, then consumer, then the structural `contents`.
-	const el = usePartElement(part, () => ({
+	// Class order is preset, consumer, then the structural `contents`.
+	const el = Kernel.element(part, () => ({
 		class: ['$preset', klass, 'contents'],
 		...restProps
 	}));
 </script>
 
-{@render partElement(el, children, { datagrid: bond })}
+{@render Kernel.render(el)(
+	el.tag(),
+	el.class(),
+	el.attrs(),
+	children,
+	{ datagrid: bond },
+	el.motion(),
+	el
+)}

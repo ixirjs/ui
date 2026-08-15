@@ -17,21 +17,9 @@ import {
 	type TrackPressDetail
 } from '$ixirjs/ui/shared/capability/models/interaction-policies/shared';
 
-export const THUMB_DRAG_POLICY = sharedCapabilityKey<void>({
-	owner: '@ixirjs/cap',
-	name: 'thumb-drag',
-	version: 1
-});
-export const TRACK_PRESS_POLICY = sharedCapabilityKey<void>({
-	owner: '@ixirjs/cap',
-	name: 'track-press',
-	version: 1
-});
-export const RESIZE_HANDLE_POLICY = sharedCapabilityKey<void>({
-	owner: '@ixirjs/cap',
-	name: 'resize-handle',
-	version: 1
-});
+export const THUMB_DRAG_POLICY = sharedCapabilityKey<void>('@ixirjs/cap:thumb-drag');
+export const TRACK_PRESS_POLICY = sharedCapabilityKey<void>('@ixirjs/cap:track-press');
+export const RESIZE_HANDLE_POLICY = sharedCapabilityKey<void>('@ixirjs/cap:resize-handle');
 
 export interface ThumbDragPolicyOptions {
 	role?: string;

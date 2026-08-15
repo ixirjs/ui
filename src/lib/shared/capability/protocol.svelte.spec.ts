@@ -4,7 +4,6 @@ import {
 	capabilityKey,
 	customRole,
 	defineCapability,
-	normalizeCapabilities,
 	roles,
 	sharedCapabilityKey,
 	type Capability,
@@ -30,16 +29,8 @@ void _rawDescriptor;
 describe('capability protocol', () => {
 	it('converges compatible shared keys and diagnoses incompatible protocol declarations', () => {
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-		const first = sharedCapabilityKey<void>({
-			owner: '@ixirjs/test',
-			name: 'shared-protocol',
-			version: 1
-		});
-		const second = sharedCapabilityKey<void>({
-			owner: '@ixirjs/test',
-			name: 'shared-protocol',
-			version: 1
-		});
+		const first = sharedCapabilityKey<void>('@ixirjs/test:shared-protocol');
+		const second = sharedCapabilityKey<void>('@ixirjs/test:shared-protocol');
 		const incompatible = sharedCapabilityKey<void>({
 			owner: '@ixirjs/test',
 			name: 'shared-protocol',
@@ -47,6 +38,10 @@ describe('capability protocol', () => {
 		});
 
 		expect(first).toBe(second);
+		// The "@owner:name" shorthand is the object form at version 1, not a parallel identity.
+		expect(first).toBe(
+			sharedCapabilityKey<void>({ owner: '@ixirjs/test', name: 'shared-protocol', version: 1 })
+		);
 		expect(first).toBe(incompatible);
 		expect(warn).toHaveBeenCalledWith(
 			expect.stringContaining('incompatible shared capability key')
@@ -75,13 +70,6 @@ describe('capability protocol', () => {
 			compose: () => defineCapability({ slot: second, surface: 'wrong-slot' })
 		});
 		expect(() => state.capability(malformed)).toThrow(/preserve its registered slot/);
-	});
-
-	it('normalizes a capability list with last-wins ordering', () => {
-		const slot = capabilityKey<string>('recipe');
-		const first = defineCapability({ slot, surface: 'first' });
-		const last = defineCapability({ slot, surface: 'last' });
-		expect(normalizeCapabilities([first, last])).toEqual([last]);
 	});
 
 	it('uses typed built-ins and namespaced custom role identities', () => {

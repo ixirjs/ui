@@ -1,5 +1,11 @@
-<script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { mergePresetProps, HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
+	import {
+		mergePresetProps,
+		type Base,
+		type BasePropsOf,
+		type HtmlElementTagName
+	} from '$ixirjs/ui/components/atom';
 	import { Stack } from '$ixirjs/ui/components/stack';
 	import { StepperBond } from './bond.svelte';
 	import type { StepperBodyProps } from './types';
@@ -12,11 +18,21 @@
 		children = undefined,
 		preset = undefined,
 		...restProps
-	}: StepperBodyProps<E, B> = $props();
+	}: StepperBodyProps<E, B> & BasePropsOf<B> = $props();
 
 	const bodyProps = $derived(mergePresetProps(preset, 'stepper.body', restProps));
+
+	// Element seam instead of a component boundary: identical output, one less boundary. Key
+	// order below is the order the previous call had; precedence is object-literal order.
+	// Built once at init, never inside a tracked boundary — the constraint anchor-diet A3 set
+	// when `bodyArg` replaced the per-part wrapper snippet.
+	const bodyArg = { stepper: bond };
+	const el = Kernel.element(Kernel.static, () => ({
+		bond,
+		base,
+		class: ['stepper-body w-full', '$preset', klass],
+		...bodyProps
+	}));
 </script>
 
-<HtmlAtom {bond} {base} class={['stepper-body w-full', '$preset', klass]} {...bodyProps}>
-	{@render children?.({ stepper: bond })}
-</HtmlAtom>
+{@render Kernel.render(el)(el.tag(), el.class(), el.attrs(), children, bodyArg, el.motion(), el)}

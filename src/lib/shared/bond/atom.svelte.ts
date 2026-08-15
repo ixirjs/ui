@@ -5,21 +5,25 @@ import { generateId, hasDynamicId } from './identity';
 import type { Bond } from './bond.svelte';
 import type { BondVirtualElement } from './types';
 import { mergeAttributeLayer, mergeHandlerLayer } from './merge';
-import { normalizeAtomCapability, slotName } from '$ixirjs/ui/shared/capability/capability';
-import { CapabilityRuntime } from '$ixirjs/ui/shared/capability/runtime.svelte';
 import {
-	capabilityRuntimeMessages,
-	capabilityValidationMessages,
-	registerCapability
-} from '$ixirjs/ui/shared/capability/host';
+	capabilityKey,
+	defineAtomCapability,
+	sharedCapabilityKey
+} from '$ixirjs/ui/shared/capability/capability';
+import { lazyCapability } from '$ixirjs/ui/shared/capability/intern';
+import { ariaRole, type AtomValue } from '$ixirjs/ui/shared/capability/models/atom.svelte';
+import { disposeLifo } from '$ixirjs/ui/shared/capability/runtime.svelte';
+import { CapabilityHost, warnMissingCapability } from '$ixirjs/ui/shared/capability/host';
 import type {
 	AtomBehavior,
 	AtomCapability,
+	AtomHost,
 	AnyCapabilitySurface,
 	Behavior,
 	CapabilityKey,
 	CapabilitySetupResult,
-	RoleCtxArgs
+	RoleCtxArgs,
+	SharedCapabilityKeyId
 } from '$ixirjs/ui/shared/capability/capability';
 
 type AtomAttachment<E extends Element | BondVirtualElement> = (node: E) => void | (() => void);
@@ -33,10 +37,10 @@ type HostedAtomCapability<B extends Bond, E extends Element | BondVirtualElement
 	B,
 	E
 >;
-type HostedCapabilityRuntime<
-	B extends Bond,
-	E extends Element | BondVirtualElement
-> = CapabilityRuntime<HostedAtomCapability<B, E>, { atom: Atom<B, E>; bond: B | undefined }>;
+type HostedCapabilityHost<B extends Bond, E extends Element | BondVirtualElement> = CapabilityHost<
+	HostedAtomCapability<B, E>,
+	{ atom: Atom<B, E>; bond: B | undefined }
+>;
 const EMPTY_ATOM_CAPABILITIES = Object.freeze([]) as readonly never[];
 const EMPTY_ATOM_BEHAVIORS = Object.freeze([]) as readonly never[];
 const EMPTY_TEARDOWN = () => {};
@@ -67,10 +71,9 @@ export class Atom<
 	// that expose `id` as a props cell (see hasDynamicId) recompute on read and stay reactive.
 	#element = $state<E | undefined>();
 
-	// Behavior projection. The capability runtime is rare and therefore allocated on first use.
+	// Behavior projection. The capability host is rare and therefore allocated on first use.
 	#behaviors: Behavior<B, E>[] | undefined;
-	#capabilityRuntime: HostedCapabilityRuntime<B, E> | undefined;
-	#validated = false;
+	#capabilityHost: HostedCapabilityHost<B, E> | undefined;
 	// Keeps role projection idempotent for cached atoms.
 	#roleApplications: RoleApplication[] | undefined;
 	// Written once at declaration; reactivity rides the queue, not this set.
@@ -135,19 +138,14 @@ export class Atom<
 	capability<S = AnyCapabilitySurface>(
 		capabilityOrKey: AtomCapability<AnyCapabilitySurface, Atom<B, E>, B, E> | CapabilityKey<S>
 	): AtomCapability<S, Atom<B, E>, B, E> | undefined {
-		if (typeof capabilityOrKey === 'symbol') {
-			const found = this.#findCapability(capabilityOrKey) as
-				| AtomCapability<S, Atom<B, E>, B, E>
-				| undefined;
-			if (DEV && !found) {
-				console.warn(
-					`[ixirjs] Atom("${this.name}").capability("${slotName(capabilityOrKey)}"): no atom capability registered.`
-				);
-			}
-			return found;
+		// No host means no capability, and probing an empty slot must not allocate one.
+		if (typeof capabilityOrKey === 'symbol' && !this.#capabilityHost) {
+			warnMissingCapability('atom', () => this.name, capabilityOrKey);
+			return undefined;
 		}
-
-		return this.#registerCapability(capabilityOrKey) as AtomCapability<S, Atom<B, E>, B, E>;
+		return this.#host().registerOrFind(capabilityOrKey) as
+			| AtomCapability<S, Atom<B, E>, B, E>
+			| undefined;
 	}
 
 	surface<S>(key: CapabilityKey<S>): S | undefined {
@@ -155,17 +153,15 @@ export class Atom<
 	}
 
 	requireSurface<S>(key: CapabilityKey<S>): S {
+		// Ask through `surface` first: it warns on an empty slot and allocates no host to do it. The
+		// host owns the throw so the message stays in one place; reaching it means we throw anyway.
 		const surface = this.surface(key);
-		if (surface === undefined) {
-			throw new Error(
-				`[ixirjs] required atom capability "${slotName(key)}" has no surface on Atom("${this.name}").`
-			);
-		}
-		return surface;
+		if (surface !== undefined) return surface;
+		return this.#host().requireSurface(key) as S;
 	}
 
 	get capabilities(): readonly AtomCapability<AnyCapabilitySurface, Atom<B, E>, B, E>[] {
-		return (this.#capabilityRuntime?.capabilities ??
+		return (this.#capabilityHost?.capabilities ??
 			EMPTY_ATOM_CAPABILITIES) as readonly AtomCapability<AnyCapabilitySurface, Atom<B, E>, B, E>[];
 	}
 
@@ -173,18 +169,19 @@ export class Atom<
 		bond: B | undefined = this.bond,
 		beforeSetups: readonly (() => CapabilitySetupResult)[] = []
 	): () => void {
-		if (!this.#capabilityRuntime && beforeSetups.length === 0) return EMPTY_TEARDOWN;
-		this.#runtime().activate(
+		if (!this.#capabilityHost && beforeSetups.length === 0) return EMPTY_TEARDOWN;
+		const host = this.#host();
+		host.activate(
 			{ atom: this, bond },
 			(capability, owner) => capability.setup?.(owner.atom, owner.bond),
 			beforeSetups
 		);
-		this.#validateCapabilities();
+		host.validate();
 		return () => this.destroyCapabilities();
 	}
 
 	destroyCapabilities(): void {
-		this.#capabilityRuntime?.destroy();
+		this.#capabilityHost?.destroy();
 	}
 
 	// item/input require a string ctx; structural roles take none; custom roles accept optional unknown.
@@ -265,6 +262,11 @@ export class Atom<
 		return this.bond;
 	}
 
+	/** @internal Used only when a lazy registry descriptor materializes after its element mounted. */
+	adoptElement(element: E | undefined): void {
+		this.setElement(element);
+	}
+
 	protected setElement(element: E | undefined) {
 		this.#element = element;
 	}
@@ -278,46 +280,11 @@ export class Atom<
 		return getElementId(owner, this.kind);
 	}
 
-	#registerCapability(
-		capability: AtomCapability<AnyCapabilitySurface, Atom<B, E>, B, E>
-	): AtomCapability<AnyCapabilitySurface, Atom<B, E>, B, E> {
-		const registered = registerCapability(this.#runtime(), capability, {
-			kind: 'atom',
-			label: () => this.name,
-			normalize: (descriptor, expectedSlot) =>
-				normalizeAtomCapability(descriptor, expectedSlot as CapabilityKey<unknown> | undefined)
-		});
-		this.#validated = false;
-		return registered;
-	}
-
-	#findCapability(
-		slot: symbol
-	): AtomCapability<AnyCapabilitySurface, Atom<B, E>, B, E> | undefined {
-		return this.#capabilityRuntime?.find(slot);
-	}
-
-	#validateCapabilities(): void {
-		if (!DEV || this.#validated) return;
-		this.#validated = true;
-		const { messages, inactiveLifecycle } = capabilityValidationMessages(
-			'atom',
-			() => this.name,
-			this.#capabilityRuntime?.capabilities ?? EMPTY_ATOM_CAPABILITIES
-		);
-		for (const message of messages) console.warn(message);
-		if (!inactiveLifecycle || this.#capabilityRuntime?.isActive) return;
-		// The spread is built during render; activateCapabilities runs at mount. Ask after both.
-		queueMicrotask(() => {
-			if (!this.#capabilityRuntime?.isActive) console.warn(inactiveLifecycle);
-		});
-	}
-
 	#nodeBehaviors(): readonly AtomBehavior<Atom<B, E>, B, E>[] {
-		if (!this.#capabilityRuntime) return EMPTY_ATOM_BEHAVIORS;
+		if (!this.#capabilityHost) return EMPTY_ATOM_BEHAVIORS;
 		// One pass: the map/filter chain allocated a full-length array of mostly-undefined behaviors
 		// before discarding them. Most capabilities carry none, so the kept set is usually smaller.
-		const order = this.#capabilityRuntime.order();
+		const order = this.#capabilityHost.order();
 		const behaviors: AtomBehavior<Atom<B, E>, B, E>[] = [];
 		for (let index = 0; index < order.length; index++) {
 			const behavior = order[index]!.attach;
@@ -327,7 +294,8 @@ export class Atom<
 	}
 
 	#buildSpread(includeAttachments: boolean): AtomSpread<E> {
-		this.#validateCapabilities();
+		// An Atom with no host declared no capabilities, so there is nothing to validate.
+		this.#capabilityHost?.validate();
 		const nodeBehaviors = this.#nodeBehaviors();
 		if (!this.#behaviors?.length && nodeBehaviors.length === 0) {
 			return this.#baseSpread(includeAttachments);
@@ -336,10 +304,24 @@ export class Atom<
 		const nodeSpread =
 			nodeBehaviors.length === 0
 				? { attrs: this.attrs, handlers: this.handlers }
-				: mergeNodeBehaviors(this, this.bond, this.attrs, this.handlers, nodeBehaviors);
+				: mergeBehaviorLayers(
+						this.attrs,
+						this.handlers,
+						nodeBehaviors,
+						ATOM_BEHAVIOR_LAYER,
+						this,
+						this.bond
+					);
 		const projectedSpread =
 			this.bond && this.#behaviors?.length
-				? mergeBehaviors(this.bond, nodeSpread.attrs, nodeSpread.handlers, this.#behaviors)
+				? mergeBehaviorLayers(
+						nodeSpread.attrs,
+						nodeSpread.handlers,
+						this.#behaviors,
+						BOND_BEHAVIOR_LAYER,
+						this.bond,
+						undefined
+					)
 				: nodeSpread;
 
 		return includeAttachments
@@ -381,12 +363,12 @@ export class Atom<
 				}
 			}
 
-			for (const capability of this.#capabilityRuntime?.order() ?? EMPTY_ATOM_CAPABILITIES) {
+			for (const capability of this.#capabilityHost?.order() ?? EMPTY_ATOM_CAPABILITIES) {
 				const cleanup = capability.attach?.onmount?.(node, this, this.bond);
 				if (cleanup) cleanups.push(cleanup);
 			}
 		} catch (error) {
-			const cleanupErrors = disposeMountCleanups(cleanups);
+			const cleanupErrors = disposeLifo(cleanups);
 			this.setElement(undefined);
 			throw cleanupErrors.length
 				? new AggregateError(
@@ -400,7 +382,7 @@ export class Atom<
 		return () => {
 			if (!mounted) return;
 			mounted = false;
-			const errors = disposeMountCleanups(cleanups);
+			const errors = disposeLifo(cleanups);
 			try {
 				this.ondestroy?.();
 			} catch (error) {
@@ -414,11 +396,12 @@ export class Atom<
 		};
 	}
 
-	#runtime(): HostedCapabilityRuntime<B, E> {
-		return (this.#capabilityRuntime ??= new CapabilityRuntime<
-			HostedAtomCapability<B, E>,
-			{ atom: Atom<B, E>; bond: B | undefined }
-		>(capabilityRuntimeMessages<HostedAtomCapability<B, E>>('atom'), () => this.name));
+	/** Allocated on first registration: most rendered parts declare no atom capability at all. */
+	#host(): HostedCapabilityHost<B, E> {
+		return (this.#capabilityHost ??= new CapabilityHost({
+			kind: 'atom',
+			label: () => this.name
+		}));
 	}
 
 	#hasProjectedRole(role: string, ctx: unknown): boolean {
@@ -452,18 +435,6 @@ function isEmptyHandlerLayer(handlers: Record<string, unknown>): boolean {
 	return true;
 }
 
-function disposeMountCleanups(cleanups: readonly (() => void)[]): unknown[] {
-	const errors: unknown[] = [];
-	for (let index = cleanups.length - 1; index >= 0; index--) {
-		try {
-			cleanups[index]!();
-		} catch (error) {
-			errors.push(error);
-		}
-	}
-	return errors;
-}
-
 // Generated atom class helpers.
 
 export type DefineAtomSetup<N extends Atom, B> = (atom: N, bond: B) => void;
@@ -484,6 +455,61 @@ export type DefinedAtomClass<
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyAtomClass = new (bond: any) => Atom<any, any>;
 
+/**
+ * A slot's presentation, declared where the slot is.
+ *
+ * Nineteen families each wrote the same trio for one fact: a `defineAtom` whose whole setup body
+ * registered one capability, a module-level `lazyCapability(() => partCapability(...))` const used
+ * exactly once, and the slot string restated in all three. Only `attrs` ever varied, and forgetting
+ * `lazyCapability` was a silent per-render descriptor allocation.
+ *
+ * The descriptor is built once per atom class, lazily — the same guarantee the hand-written
+ * `lazyCapability` wrapper gave, now unforgettable. `slot` keeps the shared key identity byte
+ * identical to what the hand-written `partCapability` produced; omit it and the capability takes an
+ * unshared local key, which is all a single-registrant presentation ever needed.
+ */
+export type AtomPresentationSpec<
+	B extends Bond = Bond,
+	E extends Element | BondVirtualElement = Element | BondVirtualElement
+> = {
+	slot?: SharedCapabilityKeyId;
+	docs?: string;
+	/** ARIA role projection. Registers `ariaRole(...)`, which owns its own slot. */
+	role?: AtomValue<string | null | undefined>;
+	attrs?: AtomBehavior<AtomHost, B, E>['attrs'];
+	handlers?: AtomBehavior<AtomHost, B, E>['handlers'];
+	onmount?: AtomBehavior<AtomHost, B, E>['onmount'];
+	/** Anything the declarative fields do not cover. Runs after them. */
+	setup?: (atom: Atom<B, E>, bond: B | undefined) => void;
+};
+
+function presentationSetup(
+	key: string,
+	spec: AtomPresentationSpec
+): (atom: Atom, bond: Bond | undefined) => void {
+	const { slot, docs, role, attrs, handlers, onmount, setup } = spec;
+	const attach: AtomBehavior<AtomHost> = {};
+	if (attrs) attach.attrs = attrs;
+	if (handlers) attach.handlers = handlers;
+	if (onmount) attach.onmount = onmount;
+
+	const presentation = Object.keys(attach).length
+		? lazyCapability(() =>
+				defineAtomCapability<void>({
+					slot: slot ? sharedCapabilityKey<void>(slot) : capabilityKey<void>(`atom:${key}`),
+					meta: { projects: [key], docs: docs ?? `${key} presentation.` },
+					attach
+				})
+			)
+		: undefined;
+
+	return (atom, bond) => {
+		if (presentation) atom.capability(presentation());
+		if (role !== undefined) atom.capability(ariaRole(role));
+		setup?.(atom as Atom, bond);
+	};
+}
+
 export function defineAtom<
 	B extends Bond = Bond,
 	E extends Element | BondVirtualElement = Element | BondVirtualElement
@@ -498,19 +524,38 @@ export function defineAtom<
 	key: string,
 	setup?: <T extends B>(atom: Atom<T, E>, bond: T) => void
 ): { new <T extends B = B>(bond: T): Atom<T, E> };
+export function defineAtom<
+	B extends Bond = Bond,
+	E extends Element | BondVirtualElement = Element | BondVirtualElement
+>(
+	key: string,
+	presentation: AtomPresentationSpec<B, E>
+): { new <T extends B = B>(bond: T): Atom<T, E> };
 export function defineAtom<C extends AnyAtomClass>(
 	Base: C,
 	setup?: DefineAtomSetup<InstanceType<C>, ConstructorParameters<C>[0]>
 ): C;
+export function defineAtom<C extends AnyAtomClass>(Base: C, presentation: AtomPresentationSpec): C;
 export function defineAtom(
 	keyOptionsOrBase: string | DefineAtomOptions | AnyAtomClass,
-	setup?: DefineAtomSetup<Atom, Bond | undefined>
+	setupOrPresentation?: DefineAtomSetup<Atom, Bond | undefined> | AtomPresentationSpec
 ): AnyAtomClass {
+	// A declarative presentation normalizes to the setup callback the three branches already take.
+	const partKey =
+		typeof keyOptionsOrBase === 'string'
+			? keyOptionsOrBase
+			: typeof keyOptionsOrBase === 'object'
+				? keyOptionsOrBase.key
+				: ((keyOptionsOrBase as { name?: string }).name ?? 'atom');
+	const setup =
+		typeof setupOrPresentation === 'object'
+			? presentationSetup(partKey, setupOrPresentation)
+			: setupOrPresentation;
+
 	if (typeof keyOptionsOrBase === 'string') {
-		const key = keyOptionsOrBase;
 		return class GeneratedAtomClass extends Atom {
 			constructor(bond: Bond) {
-				super(bond, key);
+				super(bond, partKey);
 				setup?.(this, bond);
 			}
 		} as AnyAtomClass;
@@ -518,13 +563,15 @@ export function defineAtom(
 
 	if (typeof keyOptionsOrBase === 'object') {
 		const { key, bond: defaultBond, namespace, preset, id } = keyOptionsOrBase;
+		// Class-closure constants, so the options object is built once per definition rather than
+		// per instance. Atom only ever reads `#options`; sharing one reference is safe.
+		const atomOptions: AtomOptions = {};
+		if (namespace !== undefined) atomOptions.namespace = namespace;
+		if (preset !== undefined) atomOptions.preset = preset;
+		if (id !== undefined) atomOptions.id = id;
 		return class GeneratedAtomClass extends Atom {
 			constructor(bond: Bond | undefined = defaultBond) {
-				super(bond, key, {
-					...(namespace !== undefined ? { namespace } : {}),
-					...(preset !== undefined ? { preset } : {}),
-					...(id !== undefined ? { id } : {})
-				});
+				super(bond, key, atomOptions);
 				setup?.(this, bond);
 			}
 		} as AnyAtomClass;
@@ -554,47 +601,37 @@ const ATOM_BEHAVIOR_LAYER = Object.freeze({
 	nextSource: 'atom capability'
 });
 
-function mergeBehaviors<B extends Bond, E extends Element | BondVirtualElement>(
-	bond: B,
+/**
+ * Both behavior kinds project the same way and differ only in what their callbacks are handed: a
+ * Bond behavior takes `(bond)`, an atom behavior takes `(node, bond)`. Passing both positionally
+ * covers the two — the Bond form simply ignores the second argument — so one loop serves both
+ * without a per-call adapter closure on the spread path.
+ */
+type BehaviorLayerCallback = (first: never, second: never) => Record<string, unknown>;
+type BehaviorLayer = {
+	attrs?: BehaviorLayerCallback;
+	handlers?: BehaviorLayerCallback;
+};
+
+function mergeBehaviorLayers(
 	baseAttrs: Record<string, unknown>,
 	baseHandlers: Record<string, unknown>,
-	behaviors: readonly Behavior<B, E>[]
+	behaviors: readonly BehaviorLayer[],
+	layer: typeof BOND_BEHAVIOR_LAYER | typeof ATOM_BEHAVIOR_LAYER,
+	first: unknown,
+	second: unknown
 ): { attrs: Record<string, unknown>; handlers: Record<string, unknown> } {
 	let attrs: Record<string, unknown> = { ...baseAttrs };
 	let handlers: Record<string, unknown> = { ...baseHandlers };
+	const a = first as never;
+	const b = second as never;
 
 	for (const behavior of behaviors) {
 		if (behavior.attrs) {
-			attrs = mergeAttributeLayer(attrs, behavior.attrs(bond), BOND_BEHAVIOR_LAYER);
+			attrs = mergeAttributeLayer(attrs, behavior.attrs(a, b), layer);
 		}
 		if (behavior.handlers) {
-			handlers = mergeHandlerLayer(handlers, behavior.handlers(bond), BOND_BEHAVIOR_LAYER);
-		}
-	}
-
-	return { attrs, handlers };
-}
-
-function mergeNodeBehaviors<
-	N extends Atom<B, E>,
-	B extends Bond,
-	E extends Element | BondVirtualElement
->(
-	node: N,
-	bond: B | undefined,
-	baseAttrs: Record<string, unknown>,
-	baseHandlers: Record<string, unknown>,
-	behaviors: readonly AtomBehavior<N, B, E>[]
-): { attrs: Record<string, unknown>; handlers: Record<string, unknown> } {
-	let attrs: Record<string, unknown> = { ...baseAttrs };
-	let handlers: Record<string, unknown> = { ...baseHandlers };
-
-	for (const behavior of behaviors) {
-		if (behavior.attrs) {
-			attrs = mergeAttributeLayer(attrs, behavior.attrs(node, bond), ATOM_BEHAVIOR_LAYER);
-		}
-		if (behavior.handlers) {
-			handlers = mergeHandlerLayer(handlers, behavior.handlers(node, bond), ATOM_BEHAVIOR_LAYER);
+			handlers = mergeHandlerLayer(handlers, behavior.handlers(a, b), layer);
 		}
 	}
 

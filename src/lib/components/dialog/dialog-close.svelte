@@ -1,13 +1,13 @@
-<script
-	lang="ts"
-	generics="E extends keyof HTMLElementTagNameMap = 'button', B extends Base = Base"
->
+<script module lang="ts">
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
+	import { DialogBond } from './bond.svelte';
+	const PART = Kernel.part(DialogBond, 'closeButton', { class: '' });
+</script>
+
+<script lang="ts" generics="E extends HtmlElementTagName = 'button', B extends Base = Base">
 	import { Icon } from '$ixirjs/ui/components/icon';
 	import Close from '$ixirjs/ui/icons/icon-close.svelte';
-	import { type Base } from '$ixirjs/ui/components/atom';
-	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
-	import { usePart } from '$ixirjs/ui/shared';
-	import { DialogBond } from './bond.svelte';
+	import { type Base, type BasePropsOf, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
 	import type { DialogCloseButtonProps } from './types';
 
 	let {
@@ -18,11 +18,11 @@
 		onclick = undefined,
 		onkeydown = undefined,
 		...restProps
-	}: DialogCloseButtonProps<E, B> = $props();
+	}: DialogCloseButtonProps<E, B> & BasePropsOf<B> = $props();
 
-	const part = usePart(DialogBond, 'closeButton', () => restProps, {
-		message: '<Dialog.Close /> must be used within a <Dialog.Root />',
-		preset: () => preset
+	const part = Kernel.node(PART, () => ({ preset }), {
+		context: 'required',
+		message: '<Dialog.Close /> must be used within a <Dialog.Root />'
 	});
 	const bond = part.bond;
 	const defaults = $derived({
@@ -50,7 +50,7 @@
 		}
 	}
 
-	const el = usePartElement(part, () => ({
+	const el = Kernel.element(part, () => ({
 		as,
 		class: ['cursor-pointer', '$preset', klass],
 		defaults,
@@ -60,7 +60,7 @@
 	}));
 </script>
 
-{@render partElement(el, body)}
+{@render Kernel.render(el)(el.tag(), el.class(), el.attrs(), body, undefined, el.motion(), el)}
 
 {#snippet body()}
 	{@render (children ?? fallback)({ dialog: bond })}

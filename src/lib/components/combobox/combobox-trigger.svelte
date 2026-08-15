@@ -1,10 +1,12 @@
-<script
-	lang="ts"
-	generics="E extends keyof HTMLElementTagNameMap = 'button', B extends Base = Base"
->
+<script lang="ts" generics="E extends HtmlElementTagName = 'button', B extends Base = Base">
 	import { ComboboxBond } from './bond.svelte';
 	import { Trigger } from '$ixirjs/ui/components/select/atoms';
-	import { mergePresetProps, type Base } from '$ixirjs/ui/components/atom';
+	import {
+		mergePresetProps,
+		type Base,
+		type BasePropsOf,
+		type HtmlElementTagName
+	} from '$ixirjs/ui/components/atom';
 	import type { ComboboxTriggerProps } from './types';
 	import { openOverlay } from '$ixirjs/ui/components/overlay/policies/overlay-view';
 
@@ -16,7 +18,7 @@
 		preset = undefined,
 		children = undefined,
 		...restProps
-	}: ComboboxTriggerProps<E, B> = $props();
+	}: ComboboxTriggerProps<E, B> & BasePropsOf<B> = $props();
 
 	const presentation = $derived(mergePresetProps(preset, 'combobox.trigger', restProps));
 </script>

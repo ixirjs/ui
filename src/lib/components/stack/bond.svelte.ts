@@ -2,32 +2,14 @@ import { Bond, Atom, type BondStateProps } from '$ixirjs/ui/shared/bond';
 import { defineBond, type BondOf } from '$ixirjs/ui/shared';
 import { tick, untrack } from 'svelte';
 
-// -----------------------------------------------------------------------------
-// Public types
-// -----------------------------------------------------------------------------
-
 export type StackStateProps = BondStateProps & {
 	value?: string;
 };
 
-export type StackElements = {
-	root?: HTMLElement;
-};
-
 // Bond shape the stack atoms type `this.bond` against — breaks the atom↔bond cycle.
 
-// -----------------------------------------------------------------------------
-// Internal types
-// -----------------------------------------------------------------------------
-
-type StackBondView = StackBondBase;
-
-// -----------------------------------------------------------------------------
-// Atom definitions
-// -----------------------------------------------------------------------------
-
-export class StackRootAtom extends Atom<StackBondView> {
-	constructor(bond: StackBondView) {
+class StackRootAtom extends Atom<StackBondBase> {
+	constructor(bond: StackBondBase) {
 		super(bond, 'root');
 	}
 
@@ -40,10 +22,10 @@ export class StackRootAtom extends Atom<StackBondView> {
 	}
 }
 
-export class StackItemAtom extends Atom<StackBondView> {
+class StackItemAtom extends Atom<StackBondBase> {
 	#value: string;
 
-	constructor(bond: StackBondView, value: string) {
+	constructor(bond: StackBondBase, value: string) {
 		super(bond, `item-${value}`);
 		this.#value = value;
 	}
@@ -60,10 +42,6 @@ export class StackItemAtom extends Atom<StackBondView> {
 }
 
 // Hand-written base for StackBond — provides per-value dynamic item atoms.
-
-// -----------------------------------------------------------------------------
-// Bond implementation
-// -----------------------------------------------------------------------------
 
 class StackBondBase extends Bond<StackStateProps> {
 	#order = $state<{ id: string; index: number }[]>([]);
@@ -214,10 +192,6 @@ class StackBondBase extends Bond<StackStateProps> {
 }
 
 // StackBond — `defineBond` over `StackBondBase`; z-order lives on `StackBondBase`.
-
-// -----------------------------------------------------------------------------
-// Bond spec and constructor facade
-// -----------------------------------------------------------------------------
 
 export const StackBond = defineBond({
 	name: 'stack',

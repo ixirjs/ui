@@ -128,9 +128,7 @@
 	const bond = root.bond;
 	callbackState.bond = bond;
 
-	export function getBond() {
-		return bond;
-	}
+	export const getBond = root.getBond;
 </script>
 
 {@render children?.({ datePicker: bond })}

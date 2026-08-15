@@ -1,6 +1,11 @@
 import type { Snippet } from 'svelte';
 import type { CardBond } from './bond.svelte';
-import type { HtmlAtomProps, Base, SnippetProps } from '$ixirjs/ui/components/atom';
+import type {
+	RenderProps,
+	Base,
+	SnippetProps,
+	HtmlElementTagName
+} from '$ixirjs/ui/components/atom';
 import type { Factory } from '$ixirjs/ui/types';
 
 // Card Snippet Props
@@ -12,62 +17,63 @@ export type CardChildren = Snippet<[CardSnippetProps]>;
 
 // Card Root Props
 export interface CardRootProps<
-	E extends keyof HTMLElementTagNameMap = 'div',
+	E extends HtmlElementTagName = 'div',
 	B extends Base = Base
-> extends HtmlAtomProps<E, B, CardChildren> {
+> extends RenderProps<E, B, CardChildren> {
+	/**
+	 * Disable the card, preventing interaction when clickable
+	 * @default false
+	 */
 	disabled?: boolean;
+	/** Renders the card as an interactive surface — hover and focus affordances, and a `button` role when no other element supplies one. */
 	clickable?: boolean;
+	/** Custom factory for the card bond, enabling advanced behavioral customization */
 	factory?: Factory<CardBond>;
+	/** Click handler. When provided, the card becomes interactive/clickable with appropriate styling. */
 	onclick?: (event: MouseEvent) => void;
+	/** Keyboard event handler for accessible card interaction */
 	onkeydown?: (event: KeyboardEvent) => void;
 }
 
 // Card Sub-component Props
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface CardHeaderProps<
-	E extends keyof HTMLElementTagNameMap = 'div',
+	E extends HtmlElementTagName = 'div',
 	B extends Base = Base
-> extends HtmlAtomProps<E, B> {}
+> extends RenderProps<E, B> {}
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface CardBodyProps<
-	E extends keyof HTMLElementTagNameMap = 'div',
+	E extends HtmlElementTagName = 'div',
 	B extends Base = Base
-> extends HtmlAtomProps<E, B> {}
+> extends RenderProps<E, B> {}
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface CardFooterProps<
-	E extends keyof HTMLElementTagNameMap = 'div',
+	E extends HtmlElementTagName = 'div',
 	B extends Base = Base
-> extends HtmlAtomProps<E, B> {}
+> extends RenderProps<E, B> {}
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface CardTitleProps<
-	E extends keyof HTMLElementTagNameMap = 'h3',
+	E extends HtmlElementTagName = 'h3',
 	B extends Base = Base
-> extends HtmlAtomProps<E, B> {}
+> extends RenderProps<E, B> {}
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface CardSubtitleProps<
-	E extends keyof HTMLElementTagNameMap = 'p',
+	E extends HtmlElementTagName = 'p',
 	B extends Base = Base
-> extends HtmlAtomProps<E, B> {}
+> extends RenderProps<E, B> {}
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface CardDescriptionProps<
-	E extends keyof HTMLElementTagNameMap = 'p',
+	E extends HtmlElementTagName = 'p',
 	B extends Base = Base
-> extends HtmlAtomProps<E, B> {}
+> extends RenderProps<E, B> {}
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface CardMediaProps<
-	E extends keyof HTMLElementTagNameMap = 'div',
+	E extends HtmlElementTagName = 'div',
 	B extends Base = Base
-> extends HtmlAtomProps<E, B> {}
+> extends RenderProps<E, B> {}
 
 // Alias for CardBodyProps (used in card-body.svelte).
 export type CardContentProps<
-	E extends keyof HTMLElementTagNameMap = 'div',
+	E extends HtmlElementTagName = 'div',
 	B extends Base = Base
 > = CardBodyProps<E, B>;

@@ -1,29 +1,25 @@
-<script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { type Base } from '$ixirjs/ui/components/atom';
-	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
-	import { usePart } from '$ixirjs/ui/shared';
+<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
+	import { type Base, type BasePropsOf, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
+	import { definePart } from '$ixirjs/ui/components/atom/define-part.svelte';
 	import { AlertBond } from './bond.svelte';
 	import type { AlertDescriptionProps } from './types';
 
-	let {
-		class: klass = '',
-		as = 'p' as E,
-		preset = undefined,
-		children = undefined,
-		...restProps
-	}: AlertDescriptionProps<E, B> = $props();
+	const props: AlertDescriptionProps<E, B> & BasePropsOf<B> = $props();
 
-	const part = usePart(AlertBond, 'description', () => restProps, {
-		context: 'optional',
-		preset: () => preset
+	const el = definePart(AlertBond, 'description', () => props, {
+		as: 'p',
+		class: 'alert-description border-border mt-1 text-sm leading-relaxed',
+		context: 'optional'
 	});
-	const bond = part.bond;
-
-	const el = usePartElement(part, () => ({
-		as,
-		class: ['alert-description border-border mt-1 text-sm leading-relaxed', '$preset', klass],
-		...restProps
-	}));
 </script>
 
-{@render partElement(el, children, { alert: bond! })}
+{@render Kernel.render(el)(
+	el.tag(),
+	el.class(),
+	el.attrs(),
+	props.children,
+	{ alert: el.bond! },
+	el.motion(),
+	el
+)}

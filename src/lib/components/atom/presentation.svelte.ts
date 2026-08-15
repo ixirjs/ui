@@ -49,7 +49,7 @@ export type PresentationSnapshot<E extends Element = Element> = {
 	readonly base: unknown;
 };
 
-type PresetRegistry = {
+export type PresetRegistry = {
 	get(key: PresetModuleName): PresetEntry | undefined;
 	keys(): readonly string[];
 };
@@ -66,7 +66,7 @@ const NO_PRESET_REGISTRY: PresetRegistry = Object.freeze({
  * The registry is a pure view of the context value: `setPreset`/`mergePreset` build a new object
  * and install it once at provider initialization, and nothing mutates it afterwards. Building it
  * inside `createPresentation` therefore allocated one object and two closures for every component
- * instance that resolves presentation — every `HtmlAtom`, plus the standalone callers (slider ×3,
+ * instance that resolves presentation — every Kernel element plus standalone callers (slider ×3,
  * switch, input, textarea, both element renderers) — to describe a value that changes at most once
  * per provider. Keyed weakly so a torn-down provider's registry is collectable with it.
  *
@@ -89,43 +89,91 @@ function presetRegistry(installed: Partial<Preset> | undefined): PresetRegistry 
 	return registry;
 }
 
-/** Pure presentation evaluation; the Svelte adapter below supplies its tracked input getters. */
-function resolvePresentationSnapshot<E extends Element = Element>(
-	options: PresentationOptions<E>,
+/**
+ * The eleven inputs, already read. `PresentationOptions` is the *thunk* shape — one closure per
+ * axis, allocated per rendered part — which exists so the browser can read every axis inside one
+ * tracked evaluation. A server render has no tracking to do, so those closures were eleven
+ * allocations and eleven calls per part to deliver values the caller already held.
+ *
+ * Splitting the shape lets the server hand over plain values (see `resolvePresentation`) while the
+ * browser still builds them inside its `$derived`. One resolver, two callers.
+ */
+export type PresentationValues<E extends Element = Element> = {
+	preset: PresetKey | undefined;
+	bond: Bond | undefined;
+	variants: Variants | undefined;
+	defaults: Record<string, unknown> | undefined;
+	class: ClassValue | null | undefined;
+	as: unknown;
+	base: unknown;
+	variantProps: Record<string, unknown> | undefined;
+	motion: Motion<E> | null | undefined;
+	instance: PresetLike | undefined;
+	restProps: Record<string, unknown>;
+};
+
+/** Reads every axis of the thunk shape. Must stay inside the caller's tracked boundary. */
+function readValues<E extends Element = Element>(
+	options: PresentationOptions<E>
+): PresentationValues<E> {
+	return {
+		preset: options.preset?.(),
+		bond: options.bond?.(),
+		variants: options.variants?.(),
+		defaults: options.defaults?.(),
+		class: options.class?.(),
+		as: options.as?.(),
+		base: options.base?.(),
+		variantProps: options.variantProps?.(),
+		motion: options.motion?.(),
+		instance: options.instance?.(),
+		restProps: options.restProps()
+	};
+}
+
+/** Pure presentation evaluation over already-read inputs. */
+export function resolvePresentation<E extends Element = Element>(
+	values: PresentationValues<E>,
 	registry: PresetRegistry
 ): PresentationSnapshot<E> {
-	const bond = options.bond?.();
-	const preset = resolvers.resolvePreset(
-		options.preset?.(),
-		bond,
-		(key) => registry.get(key),
-		() => registry.keys()
-	);
-	const restProps = options.restProps();
-	const additional = options.variantProps?.();
+	const bond = values.bond;
+	// The registry's own methods, not two fresh closures wrapping them. `get` and `keys` are already
+	// `this`-free arrows created once per installed preset and cached in `presetRegistries`, so the
+	// wrappers added two allocations per rendered element to call functions that were in hand.
+	const preset = resolvers.resolvePreset(values.preset, bond, registry.get, registry.keys);
+	const restProps = values.restProps;
+	const additional = values.variantProps;
 	const variantProps = additional ? { ...restProps, ...additional } : restProps;
-	const localVariantDef = options.variants?.();
+	const localVariantDef = values.variants;
 	const localVariants = resolveLocalVariants(localVariantDef, bond ?? null, variantProps);
 	const mergedVariants = resolvers.resolveVariants(preset, localVariants, bond, variantProps);
-	const instanceLayer = resolvers.resolvePresetLayer(options.instance?.(), bond);
+	const instanceLayer = resolvers.resolvePresetLayer(values.instance, bond);
 	const folded = resolvers.foldLayers(
 		preset,
 		mergedVariants,
 		restProps,
-		options.defaults?.(),
-		options.motion?.(),
+		values.defaults,
+		values.motion,
 		instanceLayer,
 		resolvers.resolveConsumedVariantKeys(preset, localVariantDef, bond)
 	);
 
 	return {
 		preset,
-		class: resolvers.resolveClass(options.class?.(), folded),
+		class: resolvers.resolveClass(values.class, folded),
 		attrs: folded.attrs,
 		motion: folded.motion,
-		as: options.as?.() ?? preset?.render?.as,
-		base: options.base?.() ?? preset?.render?.base
+		as: values.as ?? preset?.render?.as,
+		base: values.base ?? preset?.render?.base
 	};
+}
+
+/**
+ * The installed preset's registry, for callers that resolve presentation themselves rather than
+ * through {@link createPresentation}. Initialization-scoped, exactly as it is there.
+ */
+export function presentationRegistry(): PresetRegistry {
+	return presetRegistry(getPreset());
 }
 
 export function createPresentation<E extends Element = Element>(
@@ -142,12 +190,13 @@ export function createPresentation<E extends Element = Element>(
 	// per-part cost in SSR profiles. Evaluating at init rather than at first read is safe because
 	// every caller reads the presentation during its own render, after its Atom and Bond are wired.
 	if (!BROWSER) {
-		return resolvePresentationSnapshot(options, registry);
+		return resolvePresentation(readValues(options), registry);
 	}
 
 	// One coherent tracked snapshot replaces six stage-level signals. Resolver functions stay pure,
-	// while dynamic preset and Bond reads remain tracked during this evaluation.
-	const snapshot = $derived.by(() => resolvePresentationSnapshot(options, registry));
+	// while dynamic preset and Bond reads remain tracked during this evaluation — which is why the
+	// axes are read inside the derived rather than hoisted out of it.
+	const snapshot = $derived.by(() => resolvePresentation(readValues(options), registry));
 
 	return {
 		get preset() {

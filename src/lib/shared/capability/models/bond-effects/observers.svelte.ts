@@ -1,3 +1,4 @@
+import { untrack } from 'svelte';
 import {
 	defineCapability,
 	sharedCapabilityKey,
@@ -6,28 +7,30 @@ import {
 } from '$ixirjs/ui/shared/capability/capability';
 import type { Bond } from '$ixirjs/ui/shared/bond';
 import { isBrowser } from '$ixirjs/ui/utils/dom.svelte';
-import { GEOMETRY, type GeometryRect } from '$ixirjs/ui/shared/capability/models/geometry.svelte';
+import {
+	GEOMETRY,
+	type GeometryModel,
+	type GeometryRect
+} from '$ixirjs/ui/shared/capability/models/geometry.svelte';
 import {
 	domRectToGeometry,
 	noop,
 	observerKey
 } from '$ixirjs/ui/shared/capability/models/bond-effects/shared';
 
-export const RESIZE_OBSERVER = sharedCapabilityKey<ResizeObserverSurface>({
-	owner: '@ixirjs/cap',
-	name: 'resize-observer',
-	version: 1
-});
-export const INTERSECTION_OBSERVER = sharedCapabilityKey<IntersectionObserverSurface>({
-	owner: '@ixirjs/cap',
-	name: 'intersection-observer',
-	version: 1
-});
-export const MUTATION_OBSERVER = sharedCapabilityKey<MutationObserverSurface>({
-	owner: '@ixirjs/cap',
-	name: 'mutation-observer',
-	version: 1
-});
+// `observed`/`records` are published reactively but mutated inside a mount or attachment effect, so
+// reads in a write expression are untracked — otherwise the effect depends on the state it assigns
+// and re-runs to the depth limit. Same fix as `Collection.set`; unexercised until the virtual family
+// became the first in-repo consumer.
+export const RESIZE_OBSERVER = sharedCapabilityKey<ResizeObserverSurface>(
+	'@ixirjs/cap:resize-observer'
+);
+export const INTERSECTION_OBSERVER = sharedCapabilityKey<IntersectionObserverSurface>(
+	'@ixirjs/cap:intersection-observer'
+);
+export const MUTATION_OBSERVER = sharedCapabilityKey<MutationObserverSurface>(
+	'@ixirjs/cap:mutation-observer'
+);
 
 export interface ObserverProjectionOptions {
 	roles?: readonly string[];
@@ -51,6 +54,10 @@ export function resizeObserverCapability(
 ): Capability<ResizeObserverSurface> {
 	let bondRef: Bond | undefined;
 	let observer: ResizeObserver | undefined;
+	// Resolved once at setup: the geometry sink is optional and `bond.surface` DEV-warns on an empty
+	// slot, so probing per resize turned an ordinary "no geometry here" into one console line per
+	// frame per element. `bond.capabilities` answers the same question quietly.
+	let geometry: GeometryModel | undefined;
 	let observed = $state<Element[]>([]);
 	const entries = new Map<Element, ResizeObserverEntry>();
 	const rects = new Map<string, GeometryRect>();
@@ -67,7 +74,7 @@ export function resizeObserverCapability(
 					if (currentKey) {
 						const rect = domRectToGeometry(entry.contentRect);
 						rects.set(currentKey, rect);
-						bondRef?.surface(GEOMETRY)?.setRect(currentKey, rect);
+						geometry?.setRect(currentKey, rect);
 					}
 					if (bondRef) options.onResize?.(entry, bondRef);
 				}
@@ -77,7 +84,7 @@ export function resizeObserverCapability(
 				const geometryKey = key ?? observerKey(element, bondRef, options.key);
 				keys.set(element, geometryKey);
 				keyCounts.set(geometryKey, (keyCounts.get(geometryKey) ?? 0) + 1);
-				observed = [...observed, element];
+				observed = [...untrack(() => observed), element];
 				observer.observe(element, options.box ? { box: options.box } : undefined);
 			}
 			counts.set(element, count + 1);
@@ -101,11 +108,11 @@ export function resizeObserverCapability(
 					} else {
 						keyCounts.delete(currentKey);
 						rects.delete(currentKey);
-						bondRef?.surface(GEOMETRY)?.clear(currentKey);
+						geometry?.clear(currentKey);
 					}
 				}
 				keys.delete(element);
-				observed = observed.filter((item) => item !== element);
+				observed = untrack(() => observed).filter((item) => item !== element);
 			};
 		},
 		entry(element) {
@@ -123,12 +130,16 @@ export function resizeObserverCapability(
 		docs: 'Observes element size and updates the geometry surface when available.',
 		setup(bond) {
 			bondRef = bond;
+			geometry = bond.capabilities.some((capability) => capability.slot === GEOMETRY)
+				? bond.surface(GEOMETRY)
+				: undefined;
 			return () => {
 				observer?.disconnect();
 				observer = undefined;
 				observed = [];
 				entries.clear();
-				for (const key of keyCounts.keys()) bondRef?.surface(GEOMETRY)?.clear(key);
+				for (const key of keyCounts.keys()) geometry?.clear(key);
+				geometry = undefined;
 				rects.clear();
 				keys.clear();
 				keyCounts.clear();
@@ -180,7 +191,7 @@ export function intersectionObserverCapability(
 			}, observerOptions);
 			const count = counts.get(element) ?? 0;
 			if (count === 0) {
-				observed = [...observed, element];
+				observed = [...untrack(() => observed), element];
 				observer.observe(element);
 			}
 			counts.set(element, count + 1);
@@ -196,7 +207,7 @@ export function intersectionObserverCapability(
 				counts.delete(element);
 				observer?.unobserve(element);
 				entries.delete(element);
-				observed = observed.filter((item) => item !== element);
+				observed = untrack(() => observed).filter((item) => item !== element);
 			};
 		},
 		entry(element) {
@@ -250,12 +261,12 @@ export function mutationObserverCapability(
 		observe(node) {
 			if (!isBrowser() || typeof MutationObserver === 'undefined') return noop;
 			observer ??= new MutationObserver((nextRecords) => {
-				records = [...records, ...nextRecords];
+				records = [...untrack(() => records), ...nextRecords];
 				if (bondRef) options.onMutation?.(nextRecords, bondRef);
 			});
 			const count = counts.get(node) ?? 0;
 			if (count === 0) {
-				observed = [...observed, node];
+				observed = [...untrack(() => observed), node];
 				observer.observe(node, observeOptions);
 			}
 			counts.set(node, count + 1);
@@ -270,7 +281,7 @@ export function mutationObserverCapability(
 				}
 				counts.delete(node);
 				observer?.disconnect();
-				observed = observed.filter((item) => item !== node);
+				observed = untrack(() => observed).filter((item) => item !== node);
 				for (const target of observed) observer?.observe(target, observeOptions);
 			};
 		},
@@ -282,7 +293,7 @@ export function mutationObserverCapability(
 		},
 		takeRecords() {
 			const taken = observer?.takeRecords() ?? [];
-			if (taken.length > 0) records = [...records, ...taken];
+			if (taken.length > 0) records = [...untrack(() => records), ...taken];
 			return taken;
 		}
 	};

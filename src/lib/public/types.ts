@@ -28,7 +28,7 @@ export type {
 	AlertTitleProps
 } from './components/alert';
 
-export type { HtmlAtomProps } from './components/atom';
+export type { RenderProps } from '$ixirjs/ui/components/atom/types';
 export type { AvatarProps } from './components/avatar';
 export type { BadgeChildren, BadgeProps, BadgeSnippetProps } from './components/badge';
 export type {
@@ -207,9 +207,13 @@ export type {
 	FormChildren,
 	FormRootProps,
 	FormSnippetProps,
-	ValidationAdapter,
+	FormValidateDetails,
+	ErrorRecord,
+	StandardSchemaV1,
 	ValidationError,
-	ValidationResult
+	ValidationMode,
+	ValidationResult,
+	ValidationSource
 } from './components/form';
 
 export type { IconChildren, IconProps, IconSnippetProps } from './components/icon';

@@ -1,8 +1,12 @@
-<script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { type Base } from '$ixirjs/ui/components/atom';
-	import { PortalHost } from '$ixirjs/ui/components/portal/instance';
-	import { usePart } from '$ixirjs/ui/shared';
+<script module lang="ts">
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
 	import { DialogBond } from './bond.svelte';
+	const PART = Kernel.part(DialogBond, 'content', { class: '' });
+</script>
+
+<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
+	import { type Base, type BasePropsOf, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
+	import { PortalHost } from '$ixirjs/ui/components/portal/instance';
 	import type { DialogContentProps } from './types';
 	import { animateDialogContent } from './motion.svelte';
 
@@ -11,14 +15,15 @@
 		preset = undefined,
 		children = undefined,
 		...restProps
-	}: DialogContentProps<E, B> = $props();
+	}: DialogContentProps<E, B> & BasePropsOf<B> = $props();
 
 	const defaults = {
 		animate: animateDialogContent()
 	};
 
-	const part = usePart(DialogBond, 'content', () => restProps, {
-		preset: () => preset
+	const part = Kernel.node(PART, () => ({ preset }), {
+		context: 'required',
+		rest: () => restProps
 	});
 	const bond = part.bond;
 </script>

@@ -7,7 +7,7 @@
 
 <script lang="ts">
 	import { setPreset } from '$ixirjs/ui/preset';
-	import { HtmlAtom } from '$ixirjs/ui/components/atom';
+	import KernelElement from '$ixirjs/ui/test/components/atom/kernel-element.test.svelte';
 
 	// A preset given as a factory is invoked once per presentation resolve (`resolvers.resolveEntry`),
 	// so counting its calls counts snapshot recomputes exactly — no timing, no machine dependence.
@@ -34,5 +34,7 @@
 <button data-testid="flip-title" onclick={() => (title = title === 'a' ? 'b' : 'a')}>title</button>
 <button data-testid="flip-hidden" onclick={() => (hidden = !hidden)}>hidden</button>
 
-<HtmlAtom data-testid="bare" as="div" preset="button" {title} aria-hidden={hidden}></HtmlAtom>
-<HtmlAtom data-testid="with-attrs" as="div" preset="badge" {title} aria-hidden={hidden}></HtmlAtom>
+<KernelElement data-testid="bare" as="div" preset="button" {title} aria-hidden={hidden}
+></KernelElement>
+<KernelElement data-testid="with-attrs" as="div" preset="badge" {title} aria-hidden={hidden}
+></KernelElement>

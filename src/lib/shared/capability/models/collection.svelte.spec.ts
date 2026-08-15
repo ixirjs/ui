@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { flushSync } from 'svelte';
 import { collectionCapability, collectionSlot } from './collection.svelte';
 import { Collection } from '$ixirjs/ui/shared/bond/collection.svelte';
 import { Bond, type BondStateProps } from '$ixirjs/ui/shared/bond';
@@ -64,45 +63,5 @@ describe('Collection — iterable protocol (#4)', () => {
 		const out: string[] = [];
 		for (const [id, value] of col) out.push(`${id}:${value.id}`);
 		expect(out).toEqual(['a:a', 'b:b']);
-	});
-});
-
-describe('collectionCapability — positional ARIA (opt-in)', () => {
-	it('projects 1-based posinset + setsize + 0-based data-index on role "item"', () => {
-		const cap = collectionCapability<{ id: string }>('item', { positional: true });
-		expect(cap.meta).toMatchObject({
-			projects: ['item']
-		});
-		const col = cap.surface;
-		col.set('a', { id: 'a' });
-		col.set('b', { id: 'b' });
-		col.set('c', { id: 'c' });
-
-		const itemB = cap.behavior!('item', 'b');
-		flushSync();
-		expect(itemB?.attrs?.({} as never)).toEqual({
-			'aria-posinset': 2,
-			'aria-setsize': 3,
-			'data-index': 1
-		});
-	});
-
-	it('omits positional attrs for an unregistered id', () => {
-		const cap = collectionCapability('item', { positional: true });
-		cap.surface.set('a', {});
-		const ghost = cap.behavior!('item', 'missing');
-		expect(ghost?.attrs?.({} as never)).toEqual({
-			'aria-posinset': undefined,
-			'aria-setsize': 1,
-			'data-index': undefined
-		});
-	});
-
-	it('keeps positional ARIA on items and emits nothing on the container', () => {
-		const cap = collectionCapability('item', { positional: true });
-		cap.surface.set('a', {});
-		cap.surface.set('b', {});
-		expect(cap.behavior!('container')).toBeUndefined();
-		expect(cap.behavior!('whatever')).toBeUndefined();
 	});
 });

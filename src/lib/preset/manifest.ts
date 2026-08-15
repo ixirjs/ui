@@ -94,6 +94,7 @@ export const BUILT_IN_PRESET_KEYS = [
 	'dropdown-menu.trigger',
 	'field',
 	'field.control',
+	'field.error',
 	'field.helper-text',
 	'field.label',
 	'form',

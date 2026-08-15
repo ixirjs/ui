@@ -1,6 +1,8 @@
 <script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
 	import { DEV } from 'esm-env';
-	import { HtmlAtom, type Base } from '$ixirjs/ui/components/atom';
+	import { createAttachmentKey } from 'svelte/attachments';
+	import { type Base, type BasePropsOf } from '$ixirjs/ui/components/atom';
 	import type { HtmlElementTagName } from '$ixirjs/ui/components/element';
 	import { overlayIsOpen } from '$ixirjs/ui/components/overlay/policies/overlay-view';
 	import { PortalBond } from '$ixirjs/ui/components/portal/instance/bond.svelte';
@@ -26,7 +28,7 @@
 		style = undefined,
 		class: klass = undefined,
 		...restProps
-	}: PortalSurfaceProps<E, B> = $props();
+	}: PortalSurfaceProps<E, B> & BasePropsOf<B> = $props();
 
 	const portalsBond = PortalsBond.get();
 	const ambientPortal = $derived(PortalBond.get());
@@ -100,24 +102,43 @@
 	function teleport(node: HTMLElement) {
 		return port(node, targetElement);
 	}
+
+	// `{@attach}` is markup syntax; the seam takes a props object, so the attachment rides its own
+	// key. Minted once per instance so the node is not re-ported on every invalidation.
+	const teleportKey = createAttachmentKey();
+
+	// Element seam instead of a component boundary; key order matches the previous call exactly.
+	// A consumer `base` still escalates — the seam decides that, rather than this call site
+	// committing to a component boundary whether one was passed or not.
+	const el = Kernel.element(Kernel.static, () => ({
+		[teleportKey]: teleport,
+		as: as as E,
+		base,
+		class: klass ?? undefined,
+		...(restProps as Record<string, unknown>),
+		style: surfaceStyle,
+		'data-band': band,
+		'data-portal': targetPortal?.props.id
+	}));
 </script>
 
 {@render content?.()}
 
 {#snippet ui()}
-	<HtmlAtom
-		{@attach teleport}
-		as={as as E}
-		{base}
-		class={klass ?? undefined}
-		{...restProps as Record<string, unknown>}
-		style={surfaceStyle}
-		data-band={band}
-		data-portal={targetPortal?.props.id}
-	>
-		<!-- `ui` exists only after targetElement resolved from this concrete target. -->
-		<ActivePortal portal={targetPortal!}>
-			{@render children?.({ portal: targetPortal!, z })}
-		</ActivePortal>
-	</HtmlAtom>
+	{@render Kernel.render(el)(
+		el.tag(),
+		el.class(),
+		el.attrs(),
+		surfaceBody,
+		undefined,
+		el.motion(),
+		el
+	)}
+{/snippet}
+
+{#snippet surfaceBody()}
+	<!-- `ui` exists only after targetElement resolved from this concrete target. -->
+	<ActivePortal portal={targetPortal!}>
+		{@render children?.({ portal: targetPortal!, z })}
+	</ActivePortal>
 {/snippet}

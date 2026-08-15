@@ -6,7 +6,7 @@ export {
 	drawer,
 	toggleDrawer
 } from './attachments.svelte';
-export { DrawerBond, type DrawerBondElements, type DrawerBondProps } from './bond.svelte';
+export { DrawerBond, type DrawerBondProps } from './bond.svelte';
 
 export * from './attachments.svelte';
 

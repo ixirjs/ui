@@ -137,7 +137,10 @@ describe('Collapsible Bond interface', () => {
 	});
 
 	it('rejects descendant parts outside a root context', () => {
-		expect(() => render(Header)).toThrow(
+		// `Header`'s props carry `BasePropsOf<B>`, a conditional over its own generic, so svelte2tsx
+		// emits a component type structurally unrelated to `render`'s parameter. Runtime is what this
+		// asserts; the cast only gets the call past that identity mismatch.
+		expect(() => render(Header as never)).toThrow(
 			'<Collapsible.Header /> must be used within a <Collapsible.Root />'
 		);
 	});

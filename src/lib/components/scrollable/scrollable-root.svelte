@@ -1,7 +1,7 @@
-<script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
+<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
 	import { useRoot } from '$ixirjs/ui/shared';
-	import { type Base } from '$ixirjs/ui/components/atom';
-	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
+	import { type Base, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
 	import { ScrollableBond } from './bond.svelte';
 	import type { ScrollableRootProps } from './types';
 
@@ -84,11 +84,9 @@
 	);
 	const bond: ScrollableBond = root.bond;
 
-	export function getBond(): ScrollableBond {
-		return bond;
-	}
+	export const getBond = root.getBond;
 
-	const el = usePartElement(root, () => ({
+	const el = Kernel.element(root, () => ({
 		as: 'div',
 		class: ['scrollable-root relative box-content overflow-hidden', '$preset', klass],
 		variantProps: root.props,
@@ -96,4 +94,12 @@
 	}));
 </script>
 
-{@render partElement(el, children, { scrollable: bond })}
+{@render Kernel.render(el)(
+	el.tag(),
+	el.class(),
+	el.attrs(),
+	children,
+	{ scrollable: bond },
+	el.motion(),
+	el
+)}

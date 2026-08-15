@@ -1,9 +1,4 @@
 import type { Bond } from '$ixirjs/ui/shared/bond';
-import { INPUT } from '$ixirjs/ui/shared/capability/models/input.svelte';
-import {
-	SELECTION,
-	type SelectionModel
-} from '$ixirjs/ui/shared/capability/models/selection.svelte';
 
 export type PolicyGuard = boolean | ((bond: Bond, event?: Event) => boolean);
 export type PolicyAction<E extends Event = Event> = (bond: Bond, event: E) => void;
@@ -44,14 +39,6 @@ export function shouldSkipPolicy(
 	if ('button' in event && typeof event.button === 'number' && event.button > 0) return true;
 	if (event.type !== 'click' && 'isPrimary' in event && event.isPrimary === false) return true;
 	return isDisabled(guard, bond, event);
-}
-
-export function clearKnownSurfaces(bond: Bond, field: string | undefined): void {
-	const input = bond.surface(INPUT);
-	if (input?.clear(field)) return;
-
-	const selection = bond.surface(SELECTION) as SelectionModel<unknown> | undefined;
-	if (selection && selection.values.length > 0) selection.clear();
 }
 
 export function dragDetail(

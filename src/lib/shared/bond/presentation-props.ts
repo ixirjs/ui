@@ -73,7 +73,7 @@ export function mergePresetProps(
 	};
 }
 
-// `defaults` is HtmlAtom's internal low-priority layer, never an ordinary DOM prop.
+// `defaults` is Kernel's internal low-priority presentation layer, never an ordinary DOM prop.
 function stripDefaultLayerProps(
 	restProps: Record<string, unknown>
 ): Record<string | symbol, unknown> {

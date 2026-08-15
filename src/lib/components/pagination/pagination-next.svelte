@@ -1,8 +1,11 @@
-<script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { type Base } from '$ixirjs/ui/components/atom';
-	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
-	import { usePart } from '$ixirjs/ui/shared';
+<script module lang="ts">
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
 	import { PaginationBond } from './bond.svelte';
+	const PART = Kernel.part(PaginationBond, 'next', { class: '' });
+</script>
+
+<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
+	import { type Base, type BasePropsOf, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
 	import type { PaginationNextProps } from './types';
 
 	let {
@@ -11,13 +14,11 @@
 		as = 'button' as E,
 		children = undefined,
 		...restProps
-	}: PaginationNextProps<E, B> = $props();
+	}: PaginationNextProps<E, B> & BasePropsOf<B> = $props();
 
-	const part = usePart(PaginationBond, 'next', () => restProps, {
-		preset: () => preset
-	});
+	const part = Kernel.node(PART, () => ({ preset }), { context: 'required' });
 
-	const el = usePartElement(part, () => ({
+	const el = Kernel.element(part, () => ({
 		as,
 		class: ['pagination-next', '$preset', klass],
 		type: as === 'button' ? 'button' : undefined,
@@ -25,4 +26,12 @@
 	}));
 </script>
 
-{@render partElement(el, children, { pagination: part.bond })}
+{@render Kernel.render(el)(
+	el.tag(),
+	el.class(),
+	el.attrs(),
+	children,
+	{ pagination: part.bond },
+	el.motion(),
+	el
+)}

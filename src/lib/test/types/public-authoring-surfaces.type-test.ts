@@ -8,8 +8,6 @@ export type StableAuthoringTypesArePublic = [
 	Shared.CreateAtomInstanceOptions,
 	Shared.BondOf<Experimental.DefinedBondClass<Experimental.BondSpec>>,
 	Shared.PropsOf<Experimental.BondSpec>,
-	Shared.UsedPart<Experimental.Bond, Experimental.Atom>,
-	Shared.UsePartOptions,
 	Shared.AtomCapability,
 	Shared.AtomCapabilityConfig,
 	Shared.BondCapability,
@@ -22,7 +20,6 @@ export type StableAuthoringTypesArePublic = [
 	Shared.DisclosureBacking,
 	Shared.DisclosureActivationOptions,
 	Shared.CollectionCapability<unknown>,
-	Shared.CollectionProjectionOptions,
 	Shared.SelectionBacking<unknown>,
 	Shared.SelectionModel<unknown>,
 	Shared.SelectionProjectionOptions,
@@ -69,7 +66,6 @@ export type ExperimentalDefinitionAndProtocolTypesArePublic = [
 	Experimental.DefinedBond<Experimental.BondSpec>,
 	Experimental.DefinedBondClass<Experimental.BondSpec>,
 	Experimental.FusablePart,
-	Experimental.MethodsOf<Experimental.BondSpec>,
 	Experimental.PartsOf<Experimental.BondSpec>,
 	Experimental.SpecOf<Experimental.DefinedBondClass<Experimental.BondSpec>>,
 	Experimental.AtomsOfPart<Experimental.DefinedBondClass<Experimental.BondSpec>>,
@@ -134,8 +130,6 @@ export type StableDoesNotExposeDefinedBond = Shared.DefinedBond<never>;
 export type StableDoesNotExposeDefinedBondClass = Shared.DefinedBondClass<never>;
 // @ts-expect-error Raw definition records are experimental-only.
 export type StableDoesNotExposeFusablePart = Shared.FusablePart;
-// @ts-expect-error Raw definition records are experimental-only.
-export type StableDoesNotExposeMethodsOf = Shared.MethodsOf<never>;
 // @ts-expect-error Raw definition records are experimental-only.
 export type StableDoesNotExposePartsOf = Shared.PartsOf<never>;
 // @ts-expect-error Raw definition records are experimental-only.

@@ -1,41 +1,42 @@
 import type { Snippet } from 'svelte';
-import type { HtmlAtomProps, Base, SnippetProps } from '$ixirjs/ui/components/atom';
+import type {
+	RenderProps,
+	Base,
+	SnippetProps,
+	HtmlElementTagName
+} from '$ixirjs/ui/components/atom';
 import type { DividerProps } from '$ixirjs/ui/components/divider';
 
 // List Snippet Props
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface ListSnippetProps extends SnippetProps {}
 
 export type ListChildren = Snippet;
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface ListRootProps<
-	E extends keyof HTMLElementTagNameMap = 'ul',
+	E extends HtmlElementTagName = 'ul',
 	B extends Base = Base
-> extends HtmlAtomProps<E, B, ListChildren> {}
+> extends RenderProps<E, B, ListChildren> {}
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface ListGroupProps<
-	E extends keyof HTMLElementTagNameMap = 'div',
+	E extends HtmlElementTagName = 'div',
 	B extends Base = Base
-> extends HtmlAtomProps<E, B, ListChildren> {}
+> extends RenderProps<E, B, ListChildren> {}
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface ListItemProps<
-	E extends keyof HTMLElementTagNameMap = 'li',
+	E extends HtmlElementTagName = 'li',
 	B extends Base = Base
-> extends HtmlAtomProps<E, B, ListChildren> {}
+> extends RenderProps<E, B, ListChildren> {}
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface ListTitleProps<
-	E extends keyof HTMLElementTagNameMap = 'h3',
+	E extends HtmlElementTagName = 'h3',
 	B extends Base = Base
-> extends HtmlAtomProps<E, B, ListChildren> {}
+> extends RenderProps<E, B, ListChildren> {}
 
 export interface ListDividerProps<
-	E extends keyof HTMLElementTagNameMap = 'div',
+	E extends HtmlElementTagName = 'div',
 	B extends Base = Base
 > extends DividerProps<E, B> {
+	/** Content of this part. */
 	children?: never;
 }

@@ -1,31 +1,26 @@
-<script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { type Base } from '$ixirjs/ui/components/atom';
-	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
-	import { usePart } from '$ixirjs/ui/shared';
+<script module lang="ts">
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
 	import { CardBond } from './bond.svelte';
-	import type { CardTitleProps } from './types';
-
-	let {
-		class: klass = '',
-		preset = undefined,
-		as = 'h3' as E,
-		children = undefined,
-		...restProps
-	}: CardTitleProps<E, B> = $props();
-
-	const part = usePart(CardBond, 'title', () => restProps, {
-		context: 'optional',
-		preset: () => preset
+	const PLAN = Kernel.part(CardBond, 'title', {
+		as: 'h3',
+		class: 'card-title border-border text-lg leading-none font-semibold tracking-tight'
 	});
-	const el = usePartElement(part, () => ({
-		as,
-		class: [
-			'card-title border-border text-lg leading-none font-semibold tracking-tight',
-			'$preset',
-			klass
-		],
-		...restProps
-	}));
 </script>
 
-{@render partElement(el, children)}
+<script lang="ts" generics="E extends HtmlElementTagName = 'h3', B extends Base = Base">
+	import { type Base, type BasePropsOf, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
+	import type { CardTitleProps } from './types';
+
+	const props: CardTitleProps<E, B> & BasePropsOf<B> = $props();
+	const node = Kernel.node(PLAN, () => props);
+</script>
+
+{@render Kernel.render(node)(
+	node.tag(),
+	node.class(),
+	node.attrs(),
+	props.children,
+	undefined,
+	undefined,
+	node
+)}

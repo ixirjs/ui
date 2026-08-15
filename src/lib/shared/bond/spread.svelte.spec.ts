@@ -1,18 +1,18 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { render } from 'vitest-browser-svelte';
+import { Bond } from './index';
 import {
-	Bond,
 	sharedCapabilityKey,
 	defineCapability,
 	type Behavior,
 	type Capability
-} from './index';
+} from '$ixirjs/ui/shared/capability';
 import Comp, { tally, resetTally } from '$ixirjs/ui/test/shared/bond/probe.test.svelte';
 
 // Regression for the spread attachment-key churn: Atom.spread must NOT re-mint attachment keys
 // on each access, or Svelte tears down and re-runs every onmount on every reactive update that
 // re-reads spread. We probe via a capability that projects an onmount onto role 'item'.
-const SLOT = sharedCapabilityKey({ owner: '@ixirjs/test', name: 'mount-probe', version: 1 });
+const SLOT = sharedCapabilityKey('@ixirjs/test:mount-probe');
 
 function probeCapability(): Capability {
 	return defineCapability({

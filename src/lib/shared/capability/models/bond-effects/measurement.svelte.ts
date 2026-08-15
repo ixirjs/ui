@@ -5,113 +5,14 @@ import {
 } from '$ixirjs/ui/shared/capability/capability';
 import type { Bond } from '$ixirjs/ui/shared/bond';
 import {
-	isElement,
-	isEnabled,
 	isNode,
-	isWindow,
 	listen,
 	noop,
 	resolveDocument,
-	type DocumentSource,
-	type EffectGuard,
-	type ElementSource,
-	type WindowSource
+	type DocumentSource
 } from '$ixirjs/ui/shared/capability/models/bond-effects/shared';
 
-export const SCROLL_MEASUREMENT = sharedCapabilityKey<ScrollMeasurementSurface>({
-	owner: '@ixirjs/cap',
-	name: 'scroll-measurement',
-	version: 1
-});
-export const DOCUMENT_DRAG = sharedCapabilityKey<DocumentDragSurface>({
-	owner: '@ixirjs/cap',
-	name: 'document-drag',
-	version: 1
-});
-
-export interface ScrollGeometry {
-	x: number;
-	y: number;
-	width: number;
-	height: number;
-	scrollWidth: number;
-	scrollHeight: number;
-}
-
-export interface ScrollMeasurementCapabilityOptions {
-	target?: ElementSource | WindowSource;
-	enabled?: EffectGuard;
-	onMeasure?: (measurement: ScrollGeometry, bond: Bond) => void;
-}
-
-export interface ScrollMeasurementSurface extends ScrollGeometry {
-	measure(): ScrollGeometry;
-}
-
-export function scrollMeasurementCapability(
-	options: ScrollMeasurementCapabilityOptions = {}
-): Capability<ScrollMeasurementSurface> {
-	let measurement = $state<ScrollGeometry>({
-		x: 0,
-		y: 0,
-		width: 0,
-		height: 0,
-		scrollWidth: 0,
-		scrollHeight: 0
-	});
-	const surface: ScrollMeasurementSurface = {
-		get x() {
-			return measurement.x;
-		},
-		get y() {
-			return measurement.y;
-		},
-		get width() {
-			return measurement.width;
-		},
-		get height() {
-			return measurement.height;
-		},
-		get scrollWidth() {
-			return measurement.scrollWidth;
-		},
-		get scrollHeight() {
-			return measurement.scrollHeight;
-		},
-		measure() {
-			return measurement;
-		}
-	};
-
-	return defineCapability<ScrollMeasurementSurface>({
-		slot: SCROLL_MEASUREMENT,
-		surface,
-		meta: {
-			docs: 'Maintains scroll position and scrollable geometry for a target.'
-		},
-		setup: (bond) => {
-			$effect(() => {
-				const target = resolveScrollTarget(options.target, bond);
-				if (!target || !isEnabled(options.enabled, bond)) return;
-				const update = () => {
-					if (!isEnabled(options.enabled, bond)) return;
-					measurement = measureScrollTarget(target);
-					options.onMeasure?.(measurement, bond);
-				};
-				update();
-				const offScroll = listen(target, 'scroll', update, { passive: true });
-				const resizeTarget = isWindow(target) ? target : target.ownerDocument.defaultView;
-				const offResize = resizeTarget
-					? listen(resizeTarget, 'resize', update, { passive: true })
-					: noop;
-				return () => {
-					offResize();
-					offScroll();
-				};
-			});
-		}
-	});
-}
+export const DOCUMENT_DRAG = sharedCapabilityKey<DocumentDragSurface>('@ixirjs/cap:document-drag');
 
 export interface DocumentDragDetail {
 	start: PointerEvent;
@@ -214,39 +115,6 @@ export function documentDragCapability(
 			};
 		}
 	});
-}
-
-function resolveScrollTarget(
-	source: ScrollMeasurementCapabilityOptions['target'],
-	bond: Bond
-): Element | Window | undefined {
-	if (!source) return typeof window !== 'undefined' ? window : undefined;
-	if (isWindow(source) || isElement(source)) return source;
-	if (typeof source !== 'function') return undefined;
-	const value = source(bond);
-	return isWindow(value) || isElement(value) ? value : undefined;
-}
-
-function measureScrollTarget(target: Element | Window): ScrollGeometry {
-	if (isWindow(target)) {
-		const doc = target.document.documentElement;
-		return {
-			x: target.scrollX,
-			y: target.scrollY,
-			width: target.innerWidth,
-			height: target.innerHeight,
-			scrollWidth: doc.scrollWidth,
-			scrollHeight: doc.scrollHeight
-		};
-	}
-	return {
-		x: target.scrollLeft,
-		y: target.scrollTop,
-		width: target.clientWidth,
-		height: target.clientHeight,
-		scrollWidth: target.scrollWidth,
-		scrollHeight: target.scrollHeight
-	};
 }
 
 function dragDetail(start: PointerEvent, current: PointerEvent): DocumentDragDetail {

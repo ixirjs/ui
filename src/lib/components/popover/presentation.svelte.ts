@@ -13,36 +13,12 @@ import {
 } from '$ixirjs/ui/components/overlay/policies/overlay-view';
 import { getPopoverPosition, popoverNode } from '$ixirjs/ui/components/popover/position-state';
 
-const POPOVER_TAIL = sharedCapabilityKey<void>({
-	owner: '@ixirjs/popover',
-	name: 'tail',
-	version: 1
-});
-const POPOVER_TAIL_GEOMETRY = sharedCapabilityKey<void>({
-	owner: '@ixirjs/popover',
-	name: 'tail-geometry',
-	version: 1
-});
-const POPOVER_OVERLAY = sharedCapabilityKey<void>({
-	owner: '@ixirjs/popover',
-	name: 'overlay',
-	version: 1
-});
-const POPOVER_CONTENT = sharedCapabilityKey<void>({
-	owner: '@ixirjs/popover',
-	name: 'content',
-	version: 1
-});
-const POPOVER_INDICATOR = sharedCapabilityKey<void>({
-	owner: '@ixirjs/popover',
-	name: 'indicator',
-	version: 1
-});
-const POPOVER_TRIGGER = sharedCapabilityKey<void>({
-	owner: '@ixirjs/popover',
-	name: 'trigger',
-	version: 1
-});
+const POPOVER_TAIL = sharedCapabilityKey<void>('@ixirjs/popover:tail');
+const POPOVER_TAIL_GEOMETRY = sharedCapabilityKey<void>('@ixirjs/popover:tail-geometry');
+const POPOVER_OVERLAY = sharedCapabilityKey<void>('@ixirjs/popover:overlay');
+const POPOVER_CONTENT = sharedCapabilityKey<void>('@ixirjs/popover:content');
+const POPOVER_INDICATOR = sharedCapabilityKey<void>('@ixirjs/popover:indicator');
+const POPOVER_TRIGGER = sharedCapabilityKey<void>('@ixirjs/popover:trigger');
 
 type PopoverSide = 'top' | 'bottom' | 'left' | 'right';
 export interface PopoverTailPresentationOptions {

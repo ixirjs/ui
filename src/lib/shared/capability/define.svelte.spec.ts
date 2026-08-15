@@ -1,29 +1,18 @@
 import { describe, it, expect, vi } from 'vitest';
+import { Bond, Atom, type BondStateProps } from '$ixirjs/ui/shared/bond';
 import {
-	Bond,
-	Atom,
 	defineCapability,
-	defineProjectionCapability,
 	sharedCapabilityKey,
 	capabilityKey,
-	type BondStateProps,
 	type Capability
-} from '$ixirjs/ui/shared/bond';
+} from '$ixirjs/ui/shared/capability';
 
 // defineCapability is the canonical authoring entry point: a typed role-map (or a raw behavior
 // escape hatch) folded into a Capability, plus the surface-access (#3/#4) and setup-guard (#5)
 // primitives it pairs with. These specs lock the seam the 9-issue pass introduced.
 
-const MODEL = sharedCapabilityKey<{ value: number }>({
-	owner: '@ixirjs/test',
-	name: 'dc:model',
-	version: 1
-});
-const DEP = sharedCapabilityKey<{ tag: string }>({
-	owner: '@ixirjs/test',
-	name: 'dc:dep',
-	version: 1
-});
+const MODEL = sharedCapabilityKey<{ value: number }>('@ixirjs/test:dc:model');
+const DEP = sharedCapabilityKey<{ tag: string }>('@ixirjs/test:dc:dep');
 
 class S extends Bond<BondStateProps> {
 	constructor() {
@@ -125,7 +114,7 @@ describe('defineCapability — typed role map', () => {
 
 describe('faceted capability helpers', () => {
 	it('defines a projection capability from a typed role map', () => {
-		const cap = defineProjectionCapability({
+		const cap = defineCapability({
 			slot: capabilityKey('projection'),
 			roles: {
 				trigger: () => ({ attrs: () => ({ 'data-trigger': true }) })
@@ -166,17 +155,12 @@ describe('faceted capability helpers', () => {
 	});
 });
 
-describe('surface / requireCapability / requireSurface — typed access (#3/#4)', () => {
+describe('surface / requireSurface — typed access (#3/#4)', () => {
 	it('surface() returns the held model, undefined when the slot is empty', () => {
 		const bond = mkBond();
 		expect(bond.surface(MODEL)).toBeUndefined();
 		bond.capability(defineCapability<{ value: number }>({ slot: MODEL, surface: { value: 42 } }));
 		expect(bond.surface(MODEL)).toEqual({ value: 42 });
-	});
-
-	it('requireCapability() throws (no warn) when the slot is empty', () => {
-		const bond = mkBond();
-		expect(() => bond.requireCapability(MODEL)).toThrowError(/required capability/);
 	});
 
 	it('requireSurface() returns the model, throws when slot or surface is absent', () => {

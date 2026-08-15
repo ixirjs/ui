@@ -22,26 +22,10 @@ export interface DisclosureBacking {
 	set(open: boolean): void;
 }
 
-export const DISCLOSURE = sharedCapabilityKey<Disclosure>({
-	owner: '@ixirjs/cap',
-	name: 'disclosure',
-	version: 1
-});
-export const DISCLOSURE_TRIGGER = sharedCapabilityKey<void>({
-	owner: '@ixirjs/cap',
-	name: 'disclosure-trigger',
-	version: 1
-});
-export const DISCLOSURE_CLOSE = sharedCapabilityKey<void>({
-	owner: '@ixirjs/cap',
-	name: 'disclosure-close',
-	version: 1
-});
-export const DISCLOSURE_TOGGLE = sharedCapabilityKey<void>({
-	owner: '@ixirjs/cap',
-	name: 'disclosure-toggle',
-	version: 1
-});
+export const DISCLOSURE = sharedCapabilityKey<Disclosure>('@ixirjs/cap:disclosure');
+export const DISCLOSURE_TRIGGER = sharedCapabilityKey<void>('@ixirjs/cap:disclosure-trigger');
+export const DISCLOSURE_CLOSE = sharedCapabilityKey<void>('@ixirjs/cap:disclosure-close');
+export const DISCLOSURE_TOGGLE = sharedCapabilityKey<void>('@ixirjs/cap:disclosure-toggle');
 
 export type DisclosureActivationAction = 'open' | 'close' | 'toggle';
 export type DisclosureActivationEvent = 'click' | 'pointerdown' | false;

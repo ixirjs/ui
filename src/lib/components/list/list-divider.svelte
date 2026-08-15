@@ -1,5 +1,10 @@
-<script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { mergePresetProps, type Base } from '$ixirjs/ui/components/atom';
+<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
+	import {
+		mergePresetProps,
+		type Base,
+		type BasePropsOf,
+		type HtmlElementTagName
+	} from '$ixirjs/ui/components/atom';
 	import { Divider } from '$ixirjs/ui/components/divider';
 	import { cn, toClassValue } from '$ixirjs/ui/utils';
 	import type { ListDividerProps } from './types';
@@ -12,7 +17,7 @@
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		children = undefined,
 		...restProps
-	}: ListDividerProps<E, B> = $props();
+	}: ListDividerProps<E, B> & BasePropsOf<B> = $props();
 
 	const dividerProps = $derived(mergePresetProps(preset, 'list.divider', restProps));
 </script>

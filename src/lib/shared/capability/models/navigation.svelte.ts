@@ -1,6 +1,6 @@
 import {
 	capabilityKey,
-	defineCapability,
+	defineRoleProjection,
 	type Capability
 } from '$ixirjs/ui/shared/capability/capability';
 import { ROVING, type RovingFocus } from './roving.svelte';
@@ -21,6 +21,10 @@ export interface NavigationProjectionOptions {
 	homeEnd?: boolean;
 	// preventDefault on a handled key (stops the page from scrolling). Default false.
 	preventScroll?: boolean;
+	// Called with the new active id after a key moved the highlight. This is the keyboard-only
+	// seam: widgets whose items carry real DOM focus (tabs, accordion headers) focus here, and
+	// pointer-driven `goto` deliberately does not fire it.
+	onMove?: (id: string | null) => void;
 }
 
 // Keyboard navigation as a projectable Capability (slot 'navigation') over a RovingFocus surface.
@@ -40,36 +44,32 @@ export function navigationCapability(
 	const onkeydown = (ev: KeyboardEvent): void => {
 		if (ev.defaultPrevented) return;
 		let handled = true;
+		let moved: string | null = null;
 		// Home/End always preventDefault: jumping the page to top/bottom while the highlight moves is
 		// never what the user meant. Arrows stay governed by `preventScroll` — a closed trigger also
 		// receives them, and swallowing page scroll there would be a surprise.
-		if (vertical && ev.key === 'ArrowDown') roving.next();
-		else if (vertical && ev.key === 'ArrowUp') roving.previous();
-		else if (horizontal && ev.key === 'ArrowRight') roving.next();
-		else if (horizontal && ev.key === 'ArrowLeft') roving.previous();
-		else if (homeEnd && ev.key === 'Home') roving.first();
-		else if (homeEnd && ev.key === 'End') roving.last();
+		if (vertical && ev.key === 'ArrowDown') moved = roving.next();
+		else if (vertical && ev.key === 'ArrowUp') moved = roving.previous();
+		else if (horizontal && ev.key === 'ArrowRight') moved = roving.next();
+		else if (horizontal && ev.key === 'ArrowLeft') moved = roving.previous();
+		else if (homeEnd && ev.key === 'Home') moved = roving.first();
+		else if (homeEnd && ev.key === 'End') moved = roving.last();
 		else handled = false;
-		if (handled && (preventScroll || ev.key === 'Home' || ev.key === 'End')) ev.preventDefault();
+		if (!handled) return;
+		if (preventScroll || ev.key === 'Home' || ev.key === 'End') ev.preventDefault();
+		options.onMove?.(moved);
 	};
 
-	// Roles are configured at runtime (options.roles), so this uses defineCapability's raw `behavior`
-	// escape hatch rather than the static typed `roles` map — the same projection on each configured role.
-	return defineCapability<RovingFocus>({
+	// Roles are configured at runtime (options.roles), which is what `defineRoleProjection` exists
+	// for — the same projection on each configured role, rather than a statically named role map.
+	return defineRoleProjection<RovingFocus>({
 		slot: NAVIGATION,
+		roles,
 		surface: roving,
 		requires: [ROVING],
-		meta: {
-			projects: roles,
-			docs: 'Keyboard navigation policy that drives a roving focus surface.'
-		},
-		behavior(role) {
-			if (!roles.includes(role)) return undefined;
-			return {
-				handlers: () => ({
-					onkeydown: ((ev: Event) => onkeydown(ev as KeyboardEvent)) as (ev: Event) => void
-				})
-			};
-		}
+		docs: 'Keyboard navigation policy that drives a roving focus surface.',
+		handlers: () => ({
+			onkeydown: ((ev: Event) => onkeydown(ev as KeyboardEvent)) as (ev: Event) => void
+		})
 	});
 }

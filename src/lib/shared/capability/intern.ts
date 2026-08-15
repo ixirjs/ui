@@ -88,6 +88,32 @@ function argumentsKey(args: readonly unknown[]): string | undefined {
  * arguments fall through to the original factory, so behaviour is identical either way — the only
  * observable difference is reference identity, which nothing in the runtime depends on.
  */
+/**
+ * The argument-free case of {@link internCapabilityFactory}: one descriptor, built on first use.
+ *
+ * A factory taking no arguments has exactly one possible answer, so the general path spends a `Map`
+ * and an `argumentsKey([])` string build per call to look up a value it can only ever find in one
+ * place. Fifteen presentation capabilities across the component families are this shape, and each
+ * had to be written as a *named function expression* purely to satisfy the interning wrapper.
+ *
+ * The same surface-less rule applies — a descriptor with state must be built per host — and is
+ * enforced here in DEV exactly as it is there.
+ */
+export function lazyCapability<C extends object>(build: () => C): () => C {
+	let descriptor: C | undefined;
+	return (): C => {
+		if (descriptor !== undefined) return descriptor;
+		const created = build();
+		if (DEV && (created as { surface?: unknown }).surface !== undefined) {
+			console.error(
+				`[ixirjs] lazyCapability(${build.name || 'anonymous'}): descriptor carries a surface and was not cached — sharing it would hand every host the same state.`
+			);
+			return created;
+		}
+		return (descriptor = created);
+	};
+}
+
 export function internCapabilityFactory<A extends readonly unknown[], C extends object>(
 	factory: (...args: A) => C
 ): (...args: A) => C {

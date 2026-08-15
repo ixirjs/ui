@@ -1,11 +1,11 @@
 <script
 	lang="ts"
-	generics="T = unknown, E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base"
+	generics="T = unknown, E extends HtmlElementTagName = 'div', B extends Base = Base"
 >
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
 	import { untrack } from 'svelte';
-	import { useRoot } from '@ixirjs/ui/shared';
-	import { type Base } from '$ixirjs/ui/components/atom';
-	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
+	import { useRoot } from '$ixirjs/ui/shared';
+	import { type Base, type BasePropsOf, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
 	import { DataGridRowBond } from './bond.svelte';
 	import type { DataGridBond } from '$ixirjs/ui/components/datagrid/bond.svelte';
 	import { setDatagridRowRenderContext } from '$ixirjs/ui/components/datagrid/context';
@@ -23,7 +23,7 @@
 		factory = undefined,
 		children = undefined,
 		...restProps
-	}: DatagridRowProps<T, E, B> = $props();
+	}: DatagridRowProps<T, E, B> & BasePropsOf<B> = $props();
 
 	let nextCellIndex = 0;
 
@@ -56,7 +56,7 @@
 
 	// Consumer `onclick` rides restProps: the removed wrapper only forwarded it, costing a closure
 	// and a live listener on every row even when no consumer handler existed.
-	const el = usePartElement(root, () => ({
+	const el = Kernel.element(root, () => ({
 		class: [
 			'datagrid-row items-center border-b bg-transparent',
 			!isHeader && 'hover:bg-foreground/2 active:bg-foreground/4 transition-colors duration-100',
@@ -70,4 +70,12 @@
 	}));
 </script>
 
-{@render partElement(el, children, { row: bond })}
+{@render Kernel.render(el)(
+	el.tag(),
+	el.class(),
+	el.attrs(),
+	children,
+	{ row: bond },
+	el.motion(),
+	el
+)}

@@ -7,8 +7,8 @@ const LIFECYCLE_PREFIX = '@ixirjs/lifecycle';
 
 // Phase a symbol-keyed lifecycle callback fires at: `mount` (in DOM) or `destroy` (teardown).
 // Both are client-only — Svelte's server rest_props drops symbol props during SSR. Init-time
-// logic is no longer a symbol phase: use HtmlAtom's string-keyed `oninit` prop, which survives
-// server rest_props and fires synchronously before mount on both server and client (see runLifecycle).
+// logic uses Kernel's string-keyed `oninit` prop, which survives server rest_props and fires
+// synchronously before mount on both server and client (see runLifecycle).
 export type LifecycleType = 'mount' | 'destroy';
 
 // A lifecycle callback: receives the atom's bond; `init`/`mount` may return a cleanup.
@@ -65,7 +65,15 @@ function bumpMintedCount() {
 	GLOBAL[MINTED_COUNT] = (GLOBAL[MINTED_COUNT] ?? 0) + 1;
 }
 
-// While false, no props object can carry a lifecycle key — classification skips the symbol scan.
+/**
+ * While false, no props object can carry a lifecycle key — classification skips the symbol scan.
+ *
+ * Exported as `hasMintedLifecycleKeys` so a caller can skip *reaching* {@link runLifecycle} rather
+ * than allocating its three thunks only for the early exit to discard them. The two must stay in
+ * step: this is the same question the early exit asks.
+ */
+export { hasMintedKeys as hasMintedLifecycleKeys };
+
 function hasMintedKeys(): boolean {
 	return (GLOBAL[MINTED_COUNT] ?? 0) > 0;
 }
@@ -119,16 +127,15 @@ export function getLifecycleProps<B extends Bond = Bond>(
 
 // Bond-level counterpart of `svelte/attachments`. Fires the bond lifecycle callbacks by phase.
 // Lifecycle keys are symbol-keyed (description ≠ '@attach'), so Svelte ignores them on a DOM
-// spread and SSR drops them entirely — nothing to strip; the live props flow on untouched.
-// HtmlAtom is the sole caller.
+// spread and SSR drops them entirely. Kernel is the sole caller.
 export function runLifecycle<P extends Record<PropertyKey, unknown>, B extends Bond = Bond>(
 	getProps: () => P,
 	getBond: () => B | undefined,
 	getOninit?: () => LifecycleAttachment<B> | undefined
 ): void {
 	// Classify once — lifecycle keys are fixed at init, so this never re-runs per prop change.
-	// The minted-key check comes first: `getProps()` is HtmlAtom's `effectiveRestProps`, which
-	// materializes the Atom spread and merges it with rest props. Calling it before this guard
+	// The minted-key check comes first: `getProps()` may materialize and merge an Atom spread.
+	// Calling it before this guard
 	// paid for a full merge per part only to discard it when no lifecycle key exists at all.
 	const { mount, destroy } = hasMintedKeys()
 		? getLifecycleProps<B>(getProps())

@@ -1,6 +1,7 @@
 export * from './bond';
 export * from './capability';
 export * from './authoring';
+export * from './validation';
 export { DURATION } from '$ixirjs/ui/constants/motion';
 export {
 	animate,

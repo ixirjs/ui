@@ -1,6 +1,7 @@
 <script lang="ts" generics="E extends HtmlElementTagName, B extends Base = Base">
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
 	import { PortalBond, PortalsBond, resolveTeleportTarget } from '$ixirjs/ui/components/portal';
-	import { HtmlAtom, mergeAtomProps, type Base } from '$ixirjs/ui/components/atom';
+	import { mergeAtomProps, type Base, type BasePropsOf } from '$ixirjs/ui/components/atom';
 	import { createAtomInstance, type Atom } from '$ixirjs/ui/shared/bond';
 	import type { HtmlElementTagName } from '$ixirjs/ui/components/element';
 	import {
@@ -38,7 +39,7 @@
 		// swallowed: old fallback prop is removed; keep it off the DOM spread.
 		fallback: _fallback = undefined,
 		...restProps
-	}: PopoverContentProps<E, B> = $props();
+	}: PopoverContentProps<E, B> & BasePropsOf<B> = $props();
 
 	const defaults = {
 		animate: animatePopoverContent()
@@ -102,21 +103,26 @@
 		...mergeAtomProps(atom, preset, restProps, bond.presetLayer('content')),
 		style: sizeStyle
 	});
+
+	// `contentProps` already folds the Atom spread; build Kernel once during initialization.
+	const bodyArg = { popover: bond };
+	const el = Kernel.element(
+		{ atom: undefined, bond, preset: undefined, presetLayer: undefined },
+		() => ({
+			bond,
+			defaults,
+			class: [
+				'popover-content bg-popover text-popover-foreground relative rounded-md border p-2 opacity-0 shadow-lg outline-none',
+				'$preset',
+				klass
+			],
+			...contentProps
+		})
+	);
 </script>
 
 <Floating portal={activePortalBond} />
 
 <Overlay portal={activePortalBond} {layer} {order} as="div" z-index={zIndex}>
-	<HtmlAtom
-		{bond}
-		{defaults}
-		class={[
-			'popover-content bg-popover text-popover-foreground relative rounded-md border p-2 opacity-0 shadow-lg outline-none',
-			'$preset',
-			klass
-		]}
-		{...contentProps}
-	>
-		{@render children?.({ popover: bond })}
-	</HtmlAtom>
+	{@render Kernel.render(el)(el.tag(), el.class(), el.attrs(), children, bodyArg, el.motion(), el)}
 </Overlay>

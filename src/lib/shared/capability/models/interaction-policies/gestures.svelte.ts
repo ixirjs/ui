@@ -11,21 +11,9 @@ import {
 	type SwipeDirection
 } from '$ixirjs/ui/shared/capability/models/interaction-policies/shared';
 
-export const REORDER_DRAG_POLICY = sharedCapabilityKey<void>({
-	owner: '@ixirjs/cap',
-	name: 'reorder-drag',
-	version: 1
-});
-export const LONG_PRESS_POLICY = sharedCapabilityKey<void>({
-	owner: '@ixirjs/cap',
-	name: 'long-press',
-	version: 1
-});
-export const SWIPE_POLICY = sharedCapabilityKey<void>({
-	owner: '@ixirjs/cap',
-	name: 'swipe',
-	version: 1
-});
+export const REORDER_DRAG_POLICY = sharedCapabilityKey<void>('@ixirjs/cap:reorder-drag');
+export const LONG_PRESS_POLICY = sharedCapabilityKey<void>('@ixirjs/cap:long-press');
+export const SWIPE_POLICY = sharedCapabilityKey<void>('@ixirjs/cap:swipe');
 
 export interface ReorderDragPolicyOptions {
 	role?: string;

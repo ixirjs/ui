@@ -1,16 +1,18 @@
 import type { Snippet } from 'svelte';
-import type { HtmlAtomProps, Base, SnippetProps } from '$ixirjs/ui/components/atom';
+import type {
+	RenderProps,
+	Base,
+	SnippetProps,
+	HtmlElementTagName
+} from '$ixirjs/ui/components/atom';
 import type { Factory } from '$ixirjs/ui/types';
 import type { PaginationBond } from './bond.svelte';
 
 // Extension points: merge custom props into pagination parts by augmenting these interfaces.
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface PaginationRootExtendProps {}
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface PaginationPreviousExtendProps {}
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface PaginationNextExtendProps {}
 
 // Snippet props
@@ -21,10 +23,11 @@ export interface PaginationSnippetProps extends SnippetProps {
 export type PaginationChildren = Snippet<[PaginationSnippetProps]>;
 
 export type PaginationRootProps<
-	E extends keyof HTMLElementTagNameMap = 'div',
+	E extends HtmlElementTagName = 'div',
 	B extends Base = Base
-> = HtmlAtomProps<E, B, PaginationChildren> &
+> = RenderProps<E, B, PaginationChildren> &
 	PaginationRootExtendProps & {
+		/** Disables the control: it stops responding and is removed from the tab order. */
 		disabled?: boolean;
 		/** Bindable 1-based current page. Previous/Next commit through it. */
 		page?: number;
@@ -39,16 +42,26 @@ export type PaginationRootProps<
 		total?: number | undefined;
 		/** Accessible name for the navigation landmark. */
 		label?: string;
+		/** HTML tag to render instead of the default. */
 		as?: E;
+		/** Replaces the Bond constructor, so a family can be extended or fused. */
 		factory?: Factory<PaginationBond>;
 	};
 
 export type PaginationPreviousProps<
-	E extends keyof HTMLElementTagNameMap = 'div',
+	E extends HtmlElementTagName = 'div',
 	B extends Base = Base
-> = HtmlAtomProps<E, B, PaginationChildren> & PaginationPreviousExtendProps & { as?: E };
+> = RenderProps<E, B, PaginationChildren> &
+	PaginationPreviousExtendProps & {
+		/** HTML tag to render instead of the default. */
+		as?: E;
+	};
 
 export type PaginationNextProps<
-	E extends keyof HTMLElementTagNameMap = 'div',
+	E extends HtmlElementTagName = 'div',
 	B extends Base = Base
-> = HtmlAtomProps<E, B, PaginationChildren> & PaginationNextExtendProps & { as?: E };
+> = RenderProps<E, B, PaginationChildren> &
+	PaginationNextExtendProps & {
+		/** HTML tag to render instead of the default. */
+		as?: E;
+	};

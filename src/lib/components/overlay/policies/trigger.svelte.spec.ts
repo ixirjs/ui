@@ -1,8 +1,20 @@
 import { describe, expect, it, vi } from 'vitest';
-import { clickTrigger, hoverTrigger, contextMenuTrigger, manualTrigger } from './trigger.svelte';
+import {
+	clickTrigger,
+	hoverTrigger,
+	contextMenuTrigger,
+	manualTrigger,
+	TRIGGER
+} from './trigger.svelte';
 import type { OverlayView } from '$ixirjs/ui/components/overlay/types';
 
-function mockBond(isOpen = false, isDisabled = false) {
+// Minimal Overlay-ish stub: what the trigger policies read. `nodeByPart` stands in for the node
+// registry — the policy resolves the content id through it rather than rebuilding the id string.
+function mockBond(
+	isOpen = false,
+	isDisabled = false,
+	contentId: string | undefined = 'content-b1'
+) {
 	return {
 		id: 'b1',
 		namespace: 'popover',
@@ -10,11 +22,45 @@ function mockBond(isOpen = false, isDisabled = false) {
 		isDisabled,
 		open: vi.fn(),
 		close: vi.fn(),
-		toggle: vi.fn()
+		toggle: vi.fn(),
+		nodeByPart: (part: string) => (part === 'content' && contentId ? { id: contentId } : undefined)
 	} as unknown as OverlayView;
 }
 
 describe('clickTrigger', () => {
+	it('lives in slot "trigger" with no surface (stateless policy)', () => {
+		const cap = clickTrigger();
+		expect(cap.slot).toBe(TRIGGER);
+		expect(cap.surface).toBeUndefined();
+		expect(cap.meta).toMatchObject({
+			projects: ['trigger']
+		});
+	});
+
+	it('projects disclosure ARIA + gesture handlers onto "trigger"', () => {
+		const cap = clickTrigger({ ariaHasPopup: 'menu' });
+		const b = cap.behavior!('trigger')!;
+		const attrs = b.attrs!(mockBond(true, false));
+		expect(attrs['aria-expanded']).toBe(true);
+		expect(attrs['aria-haspopup']).toBe('menu');
+		expect(attrs['aria-controls']).toBe('content-b1');
+		expect(attrs['tabindex']).toBe(0);
+		expect(typeof b.handlers).toBe('function');
+		expect('onclick' in b.handlers!(mockBond())).toBe(true);
+	});
+
+	it('defaults aria-haspopup to "dialog" and tabindex to -1 when disabled', () => {
+		const attrs = clickTrigger().behavior!('trigger')!.attrs!(mockBond(false, true));
+		expect(attrs['aria-haspopup']).toBe('dialog');
+		expect(attrs['aria-disabled']).toBe(true);
+		expect(attrs['tabindex']).toBe(-1);
+	});
+
+	it('projects nothing for non-trigger roles', () => {
+		expect(clickTrigger().behavior!('surface')).toBeUndefined();
+		expect(clickTrigger().behavior!('content')).toBeUndefined();
+	});
+
 	it('onclick toggles', () => {
 		const bond = mockBond();
 		const h = clickTrigger().behavior!('trigger')!.handlers!(bond);

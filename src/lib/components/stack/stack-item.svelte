@@ -1,9 +1,11 @@
-<script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
+<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
 	import {
-		HtmlAtom,
 		mergeAtomProps,
-		type HtmlAtomProps,
-		type Base
+		type RenderProps,
+		type Base,
+		type BasePropsOf,
+		type HtmlElementTagName
 	} from '$ixirjs/ui/components/atom';
 	import { createAtomInstance } from '$ixirjs/ui/shared/bond';
 	import { StackBond } from './bond.svelte';
@@ -18,7 +20,7 @@
 		children,
 		style: userStyle = '',
 		...restProps
-	}: HtmlAtomProps<E, B> & { value: string } = $props();
+	}: RenderProps<E, B> & { value: string } & BasePropsOf<B> = $props();
 
 	$effect.pre(() => {
 		if (!bond) return;
@@ -33,12 +35,15 @@
 
 	const zIndex = $derived(bond?.getZIndex(value) ?? 0);
 
-	const atom = createAtomInstance(undefined, {
-		resolveKey: () => `item:${value}`,
-		bond,
-		factory: (owner) => owner!.item(value),
-		register: { key: untrack(() => `item:${value}`) }
-	});
+	const atom = createAtomInstance(
+		untrack(() => `item:${value}`),
+		{
+			bond,
+			factory: (owner) => owner!.item(value),
+			// The atom names itself `item-<value>`; registration keeps the `item:` key it always had.
+			register: { key: untrack(() => `item:${value}`) }
+		}
+	);
 
 	const itemProps = $derived({
 		...mergeAtomProps(atom, preset ?? 'stack.item', restProps),
@@ -47,13 +52,17 @@
 	});
 
 	const isActive = $derived(bond?.props.value === value);
+
+	// `mergeAtomProps` already folded the Atom spread into `itemProps`, so Kernel must not read it twice.
+	const el = Kernel.element(
+		{ atom: undefined, bond: undefined, preset: undefined, presetLayer: undefined },
+		() => ({
+			class: ['stack-item', '$preset', klass],
+			'data-value': value,
+			'data-active': isActive,
+			...itemProps
+		})
+	);
 </script>
 
-<HtmlAtom
-	class={['stack-item', '$preset', klass]}
-	data-value={value}
-	data-active={isActive}
-	{...itemProps}
->
-	{@render children?.()}
-</HtmlAtom>
+{@render Kernel.render(el)(el.tag(), el.class(), el.attrs(), children, undefined, el.motion(), el)}

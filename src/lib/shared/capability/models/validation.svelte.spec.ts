@@ -32,17 +32,16 @@ const error: ValidationError = { path: ['email'], message: 'Required', code: 're
 
 describe('createValidation', () => {
 	it('stores validation errors and exposes invalid/pending state', () => {
-		const validate = vi.fn<() => ValidationResult>(() => ({
-			success: false,
+		const run = vi.fn<() => ValidationResult>(() => ({
 			errors: [error]
 		}));
-		const validation = createValidation({ validate });
+		const validation = createValidation({ run });
 
 		expect(validation.errors).toEqual([]);
 		expect(validation.isInvalid).toBe(false);
 
-		expect(validation.validate()).toEqual({ success: false, errors: [error] });
-		expect(validate).toHaveBeenCalledOnce();
+		expect(validation.validate()).toEqual({ errors: [error] });
+		expect(run).toHaveBeenCalledOnce();
 		expect(validation.errors).toEqual([error]);
 		expect(validation.isInvalid).toBe(true);
 
@@ -54,17 +53,17 @@ describe('createValidation', () => {
 	it('marks async validation as pending until the result resolves', async () => {
 		let resolve!: (result: ValidationResult) => void;
 		const validation = createValidation({
-			validateAsync: () =>
+			run: () =>
 				new Promise<ValidationResult>((done) => {
 					resolve = done;
 				})
 		});
 
-		const pending = validation.validateAsync();
+		const pending = validation.validate();
 		expect(validation.isValidating).toBe(true);
 
-		resolve({ success: false, errors: [error] });
-		await expect(pending).resolves.toEqual({ success: false, errors: [error] });
+		resolve({ errors: [error] });
+		await expect(pending).resolves.toEqual({ errors: [error] });
 		expect(validation.isValidating).toBe(false);
 		expect(validation.errors).toEqual([error]);
 	});
@@ -72,22 +71,22 @@ describe('createValidation', () => {
 	it('keeps the latest async result and pending state when validations settle out of order', async () => {
 		const resolvers: Array<(result: ValidationResult) => void> = [];
 		const validation = createValidation({
-			validateAsync: () =>
+			run: () =>
 				new Promise<ValidationResult>((done) => {
 					resolvers.push(done);
 				})
 		});
 
-		const first = validation.validateAsync();
-		const second = validation.validateAsync();
+		const first = validation.validate();
+		const second = validation.validate();
 		expect(validation.isValidating).toBe(true);
 
-		resolvers[0]!({ success: false, errors: [error] });
+		resolvers[0]!({ errors: [error] });
 		await first;
 		expect(validation.isValidating).toBe(true);
 		expect(validation.errors).toEqual([]);
 
-		resolvers[1]!({ success: true, errors: [] });
+		resolvers[1]!({ errors: [] });
 		await second;
 		expect(validation.isValidating).toBe(false);
 		expect(validation.errors).toEqual([]);
@@ -97,10 +96,7 @@ describe('createValidation', () => {
 describe('validationCapability', () => {
 	it('exposes the validation surface and projects validation attrs onto controls', () => {
 		const validation = createValidation({
-			validate: () => ({
-				success: false,
-				errors: [error]
-			})
+			run: () => ({ errors: [error] })
 		});
 		const cap = validationCapability(validation);
 		const bond = new TestBond();

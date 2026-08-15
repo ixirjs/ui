@@ -15,6 +15,7 @@ export type OverlayView = Bond & {
 // Minimum shape every overlay state must satisfy. Flavours extend with their own props.
 export type OverlayStateProps = BondStateProps & {
 	open: boolean;
+	/** Disables the control: it stops responding and is removed from the tab order. */
 	disabled?: boolean;
 	/** Whether this overlay applies modal ARIA, focus, and document effects. */
 	modal?: boolean;

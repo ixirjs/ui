@@ -9,6 +9,12 @@ import { fileURLToPath } from 'node:url';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const lib = path.join(root, 'src/lib');
 
+// Entry is parameterised so a second benchmark (`bench:nesting`) reuses this config rather than
+// forking it — the alias block, the environment stub and the `external: svelte` rule are the parts
+// worth sharing, and all three are entry-independent. Defaults reproduce `bench:ssr` exactly.
+const entry = process.env.BENCH_ENTRY ?? 'test/perf/ssr-bench.ts';
+const outDir = process.env.BENCH_OUT ?? '.bench-out';
+
 export default defineConfig({
 	root,
 	plugins: [svelte({ preprocess: [vitePreprocess()] })],
@@ -33,8 +39,8 @@ export default defineConfig({
 		]
 	},
 	build: {
-		ssr: path.join(lib, 'test/perf/ssr-bench.ts'),
-		outDir: path.join(root, '.bench-out'),
+		ssr: path.join(lib, entry),
+		outDir: path.join(root, outDir),
 		emptyOutDir: true,
 		minify: false,
 		target: 'esnext',

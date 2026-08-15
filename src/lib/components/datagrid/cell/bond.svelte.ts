@@ -1,35 +1,16 @@
 import { Bond, defineAtom, type BondStateProps } from '$ixirjs/ui/shared/bond';
-import { defineBond, type BondOf } from '@ixirjs/ui/shared';
+import { defineBond, type BondOf } from '$ixirjs/ui/shared';
 import { specializeDefinition } from '$ixirjs/ui/shared/authoring/metadata';
 import { DataGridBond, type IDataGrid } from '$ixirjs/ui/components/datagrid/bond.svelte';
 import { rowColumnCellLink } from '$ixirjs/ui/shared/capability/models/relationship.svelte';
-
-// -----------------------------------------------------------------------------
-// Public types
-// -----------------------------------------------------------------------------
 
 export type DataGridCellBondProps<T = unknown> = BondStateProps & {
 	data?: T;
 };
 
-// -----------------------------------------------------------------------------
-// Internal types
-// -----------------------------------------------------------------------------
-
-type DataGridCellBondView = DataGridCellBondBase;
-
-// -----------------------------------------------------------------------------
-// Atom definitions
-// -----------------------------------------------------------------------------
-
-export const DataGridCellRootAtom = defineAtom<DataGridCellBondView>('root', (atom) => {
+const DataGridCellRootAtom = defineAtom<DataGridCellBondBase>('root', (atom) => {
 	atom.role('cell');
 });
-export type DataGridCellRootAtom = InstanceType<typeof DataGridCellRootAtom>;
-
-// -----------------------------------------------------------------------------
-// Bond implementation
-// -----------------------------------------------------------------------------
 
 class DataGridCellBondBase<T = unknown> extends Bond<DataGridCellBondProps<T>> {
 	readonly #datagrid = DataGridBond.get() as DataGridBond<T> | undefined;
@@ -44,19 +25,11 @@ class DataGridCellBondBase<T = unknown> extends Bond<DataGridCellBondProps<T>> {
 	}
 }
 
-// -----------------------------------------------------------------------------
-// Bond spec and constructor facade
-// -----------------------------------------------------------------------------
-
 const DataGridCellBondDefinition = defineBond({
 	name: 'datagrid-cell',
 	base: DataGridCellBondBase,
 	atoms: { root: DataGridCellRootAtom }
 });
-
-// -----------------------------------------------------------------------------
-// Public types
-// -----------------------------------------------------------------------------
 
 export type DataGridCellBond<T = unknown> = BondOf<typeof DataGridCellBondDefinition> & {
 	readonly __props?: DataGridCellBondProps<T>;
@@ -64,10 +37,6 @@ export type DataGridCellBond<T = unknown> = BondOf<typeof DataGridCellBondDefini
 };
 
 // Generic-constructor facade over the non-generic impl.
-
-// -----------------------------------------------------------------------------
-// Bond spec and constructor facade
-// -----------------------------------------------------------------------------
 
 // TS cannot retain a class value's type parameter through `typeof DataGridCellBondDefinition`; this
 // minimal static facade preserves generic construction and context lookup ergonomics.

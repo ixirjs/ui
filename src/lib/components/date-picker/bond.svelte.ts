@@ -3,16 +3,11 @@ import {
 	PopoverBondBase,
 	PopoverTriggerAtom,
 	PopoverContentAtom,
-	type PopoverDomElements,
 	type PopoverStateProps
 } from '$ixirjs/ui/components/popover/bond.svelte';
 import { Atom } from '$ixirjs/ui/shared/bond';
 import { defineBond, type BondOf } from '$ixirjs/ui/shared';
 import type { CalendarBondProps } from '$ixirjs/ui/components/calendar/bond.svelte';
-
-// -----------------------------------------------------------------------------
-// Public types
-// -----------------------------------------------------------------------------
 
 export type DatePickerBondProps = PopoverStateProps &
 	Omit<CalendarBondProps, 'value' | 'start' | 'end'> & {
@@ -24,18 +19,7 @@ export type DatePickerBondProps = PopoverStateProps &
 		readonly rest?: Record<string, unknown>;
 	};
 
-export type DatePickerBondElements = PopoverDomElements & {
-	trigger: HTMLInputElement;
-	root: HTMLElement;
-	content: HTMLElement;
-	'clear-button': HTMLElement;
-};
-
 // Extends PopoverBondBase with date selection (single/range), value formatting, and sub-picker disclosure.
-
-// -----------------------------------------------------------------------------
-// Bond implementation
-// -----------------------------------------------------------------------------
 
 class DatePickerBondBase extends PopoverBondBase<DatePickerBondProps> {
 	#isYearsPickerOpen = $state(false);
@@ -153,20 +137,10 @@ class DatePickerBondBase extends PopoverBondBase<DatePickerBondProps> {
 
 // Bond shape date-picker atoms type against — breaks the atom↔bond declaration cycle.
 
-// -----------------------------------------------------------------------------
-// Internal types
-// -----------------------------------------------------------------------------
-
-type DatePickerBondView = DatePickerBondBase;
-
 // Combobox surface over PopoverTriggerAtom — adds aria-expanded/controls, readonly, and disabled wiring.
 
-// -----------------------------------------------------------------------------
-// Atom definitions
-// -----------------------------------------------------------------------------
-
-export class DatePickerTriggerAtom extends PopoverTriggerAtom<DatePickerBondView> {
-	declare protected bond: DatePickerBondView;
+class DatePickerTriggerAtom extends PopoverTriggerAtom<DatePickerBondBase> {
+	declare protected bond: DatePickerBondBase;
 
 	override get attrs() {
 		const isDisabled = this.requireBond().props.disabled ?? false;
@@ -188,8 +162,8 @@ export class DatePickerTriggerAtom extends PopoverTriggerAtom<DatePickerBondView
 }
 
 // Popover content panel relabelled as the date-choosing dialog (role=dialog).
-export class DatePickerContentAtom extends PopoverContentAtom<DatePickerBondView> {
-	declare protected bond: DatePickerBondView;
+class DatePickerContentAtom extends PopoverContentAtom<DatePickerBondBase> {
+	declare protected bond: DatePickerBondBase;
 
 	override get attrs() {
 		return {
@@ -201,8 +175,8 @@ export class DatePickerContentAtom extends PopoverContentAtom<DatePickerBondView
 }
 
 // Clears value/range; removed from tab order when nothing to clear. Tracked as bond.elements['clear-button'].
-export class DatePickerClearButtonAtom extends Atom<DatePickerBondView, HTMLElement> {
-	constructor(bond: DatePickerBondView) {
+class DatePickerClearButtonAtom extends Atom<DatePickerBondBase, HTMLElement> {
+	constructor(bond: DatePickerBondBase) {
 		super(bond, 'clear-button');
 	}
 
@@ -229,10 +203,6 @@ export class DatePickerClearButtonAtom extends Atom<DatePickerBondView, HTMLElem
 }
 
 // DatePickerBond — flat composition over PopoverBond; overrides trigger/content atoms and adds clear-button.
-
-// -----------------------------------------------------------------------------
-// Bond spec and constructor facade
-// -----------------------------------------------------------------------------
 
 export const DatePickerBond = defineBond({
 	parts: [PopoverBond],

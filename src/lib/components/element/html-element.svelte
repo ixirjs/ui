@@ -1,12 +1,17 @@
 <script lang="ts" generics="T extends HtmlElementTagName">
 	import { untrack } from 'svelte';
 	import type { HTMLAttributes } from 'svelte/elements';
-	import type { MotionTransitionFunction } from '$ixirjs/ui/preset';
 	import { toClassValue } from '$ixirjs/ui/utils';
 	import { withDefaultBorder } from './class';
 	import { createPresentation } from '$ixirjs/ui/components/atom/presentation.svelte';
 	import { extractMotion, resolveMotionLayers } from '$ixirjs/ui/components/atom/resolve/motion';
-	import { stopMotion } from './motion-host';
+	import { useElementMotion } from './use-element-motion.svelte';
+	import {
+		divLocal,
+		dynamicLocal,
+		divGlobal,
+		dynamicGlobal
+	} from '$ixirjs/ui/components/atom/render/element-branches.svelte';
 	import type { ElementType, HtmlElementProps, HtmlElementTagName } from './types';
 
 	type Element = ElementType<T>;
@@ -18,7 +23,7 @@
 		variants = undefined,
 		defaults = undefined,
 		motion: motionProp = undefined,
-		__resolvedPresentation = false,
+		__presentationResolved = false,
 		global = true,
 		initial = undefined,
 		enter = undefined,
@@ -32,48 +37,8 @@
 		...restProps
 	}: HtmlElementProps<T> & Omit<HTMLAttributes<Element>, keyof HtmlElementProps<T>> = $props();
 
-	let node = $state<Element>();
-	// with an enter transition, defer animate() until it ends
-	let hasEntered = $state<boolean | undefined>();
-	// Transition callbacks can run after the component effect is paused for outro. Snapshot the
-	// resolved functions outside the reactive graph so teardown never reads an inert derived.
-	const transitionMotion: {
-		enter: MotionTransitionFunction<Element> | undefined;
-		exit: MotionTransitionFunction<Element> | undefined;
-	} = { enter: undefined, exit: undefined };
-	// guards initial() to a single mount-time invocation
-	let hasInitialized = false;
-
-	$effect(() => {
-		if (!node) return;
-
-		const unmount = untrack(() => onmount?.(node!));
-
-		return () => {
-			if (typeof unmount === 'function') unmount(node!);
-			ondestroy?.(node!);
-		};
-	});
-
-	$effect(() => {
-		if (hasEntered !== undefined) return;
-		hasEntered = !resolvedEnter;
-	});
-
-	$effect(() => {
-		if (!hasEntered || !node) return;
-
-		const currentNode = node;
-		const cleanup = resolvedAnimate?.(currentNode);
-		return () => stopMotion(cleanup, currentNode);
-	});
-
-	const attachFunction = (n: Element) => {
-		node = n;
-	};
-
-	// Renderer mode is an initialization-only internal prop from HtmlAtom.
-	const resolvedPresentation = untrack(() => __resolvedPresentation);
+	// Kernel marks already-resolved presentation at initialization.
+	const resolvedPresentation = untrack(() => __presentationResolved);
 	const directMotion = $derived(
 		extractMotion({ motion: motionProp, initial, enter, exit, animate })
 	);
@@ -91,58 +56,74 @@
 	const resolvedMotion = $derived(
 		resolvedPresentation ? resolveMotionLayers<Element>([directMotion]) : presentation?.motion
 	);
-	const resolvedInitial = $derived(resolvedMotion?.initial);
-	const resolvedEnter = $derived(resolvedMotion?.enter);
-	const resolvedExit = $derived(resolvedMotion?.exit);
-	const resolvedAnimate = $derived(resolvedMotion?.animate);
-	$effect.pre(() => {
-		transitionMotion.enter = resolvedEnter;
-		transitionMotion.exit = resolvedExit;
+
+	const motion = useElementMotion<Element>({
+		motion: () => resolvedMotion,
+		onmount: () => onmount,
+		ondestroy: () => ondestroy,
+		onintroend: () => onintroend,
+		onexitend: () => onexitend,
+		once: true
 	});
+
 	const finalKlass = $derived(
 		withDefaultBorder(resolvedPresentation ? toClassValue(klass) : (presentation?.class ?? ''))
 	);
 	const finalAs = $derived(String(resolvedPresentation ? as : (presentation?.as ?? as)));
-	const hasTransitions = $derived(!!(resolvedEnter ?? resolvedExit));
+	const hasTransitions = $derived(motion.hasTransitions);
 
 	// attach transition-end handlers only when transitions exist — they can't fire on a bare element
 	const elementProps = $derived.by(() => {
 		const base = resolvedPresentation ? { ...restProps } : { ...(presentation?.attrs ?? {}) };
-		if (hasTransitions) {
-			base.onintroend = handleIntroEnd;
-			base.onoutroend = handleExitEnd;
-		}
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any -- loose passthrough spread onto a polymorphic element; `unknown` values can't satisfy attribute types
-		return base as Record<string, any>;
+		return motion.decorate(base) as Record<string, any>;
 	});
 
-	function handleIntroEnd(ev: TransitionEvent) {
-		onintroend?.(ev);
-		if (ev.defaultPrevented) return;
-		hasEntered = true;
-	}
+	// The shared transition leaves copy and decorate the attrs themselves (`motionAttrs`), so they take
+	// them RAW — handing them `elementProps` would decorate twice. Harmless, `decorate` assigning the
+	// same two keys, but it would also mean two copies of the attrs per rendered element.
+	const rawAttrs = $derived(
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any -- same polymorphic spread as above
+		(resolvedPresentation ? restProps : (presentation?.attrs ?? {})) as Record<string, any>
+	);
 
-	function handleExitEnd(ev: TransitionEvent) {
-		onexitend?.(ev);
-	}
-
-	function enterTransition(node: Element) {
-		return transitionMotion.enter?.(node) ?? {};
-	}
-
-	function exitTransition(node: Element) {
-		return transitionMotion.exit?.(node) ?? {};
-	}
-
-	function applyInitial(node: Element) {
-		if (!node) return;
-		if (hasInitialized) return;
-		hasInitialized = true;
-		untrack(() => resolvedInitial?.(node!));
-	}
+	// Only the bare pair reads these now; the transition arms take `motion` whole and destructure it
+	// inside the shared snippet.
+	const applyInitial = motion.applyInitial;
+	const attachFunction = motion.attach;
 </script>
 
-{@render (!hasTransitions ? bareElement : global ? globalTransition : localTransition)()}
+<!-- The rich path had no literal-div branch, so every element it rendered paid `<svelte:element>`'s
+     three hydration anchors where a static tag pays one. The bare pair below has had that branch for a
+     while; the TRANSITION arms did not, and they are the ones this file exists for.
+
+     They do now, by delegating to the same `element-branches.svelte` the other two seams render
+     through. The reason they could not before was real but narrower than it read: `{@attach}` and
+     `in:`/`out:` are inline-only and cannot be passed or forwarded — but the shared snippets INLINE
+     them, and take the motion instance as an ordinary parameter. So the syntax never crosses the
+     boundary; only the rune does.
+
+     The bare pair stays local, because the shared `divBranch`/`dynamicBranch` deliberately ignore
+     motion and attach nothing. A bare `HtmlElement` still needs `attach` — that is what drives
+     `animate`, `onmount` and `ondestroy` on an element with no transition. Sharing that pair would
+     need two more leaves, which nothing else can reach today. -->
+{@render (!hasTransitions
+	? finalAs === 'div'
+		? bareDiv
+		: bareElement
+	: global
+		? finalAs === 'div'
+			? divGlobal
+			: dynamicGlobal
+		: finalAs === 'div'
+			? divLocal
+			: dynamicLocal)(finalAs, finalKlass, rawAttrs, children, undefined, motion)}
+
+{#snippet bareDiv()}
+	<div {@attach applyInitial} {@attach attachFunction} class={finalKlass} {...elementProps}>
+		{@render children?.()}
+	</div>
+{/snippet}
 
 {#snippet bareElement()}
 	<svelte:element
@@ -150,34 +131,6 @@
 		{@attach applyInitial}
 		{@attach attachFunction}
 		class={finalKlass}
-		{...elementProps}
-	>
-		{@render children?.()}
-	</svelte:element>
-{/snippet}
-
-{#snippet globalTransition()}
-	<svelte:element
-		this={finalAs}
-		{@attach applyInitial}
-		{@attach attachFunction}
-		class={finalKlass}
-		in:enterTransition|global
-		out:exitTransition|global
-		{...elementProps}
-	>
-		{@render children?.()}
-	</svelte:element>
-{/snippet}
-
-{#snippet localTransition()}
-	<svelte:element
-		this={finalAs}
-		{@attach applyInitial}
-		{@attach attachFunction}
-		class={finalKlass}
-		in:enterTransition
-		out:exitTransition
 		{...elementProps}
 	>
 		{@render children?.()}

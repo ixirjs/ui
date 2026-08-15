@@ -1,14 +1,14 @@
-import { defineCapability, sharedCapabilityKey, type Capability } from '$ixirjs/ui/shared/bond';
+import {
+	defineCapability,
+	sharedCapabilityKey,
+	type Capability
+} from '$ixirjs/ui/shared/capability';
 import { INPUT } from '$ixirjs/ui/shared/capability/models/input.svelte';
 import { isTopOverlay, useEscapeStack } from './escape-stack.svelte';
 import type { OverlayView, EscapeOutcome } from '$ixirjs/ui/components/overlay/types';
 import { closeOverlay, overlayIsDisabled } from './overlay-view';
 
-export const ESCAPE = sharedCapabilityKey<EscapeHandler>({
-	owner: '@ixirjs/cap',
-	name: 'escape',
-	version: 1
-});
+export const ESCAPE = sharedCapabilityKey<EscapeHandler>('@ixirjs/cap:escape');
 
 export type { EscapeOutcome };
 

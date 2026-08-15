@@ -3,7 +3,6 @@ export { clickoutPopover, popover } from './attachments.svelte';
 export {
 	PopoverBond,
 	type PopoverBondProps,
-	type PopoverDomElements,
 	type PopoverParams,
 	type PopoverStateProps,
 	popoverNode,

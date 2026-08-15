@@ -28,6 +28,12 @@ export function mergeAttributeLayer(
 	next: Record<string, unknown>,
 	options: MergeLayerOptions = {}
 ): Record<string, unknown> {
+	// An empty layer merges to `base` exactly, so hand it back by reference rather than copying it
+	// key by key. Relationship attrs are the common producer of this shape — `labelledControl`
+	// projects `{}` whenever the referenced siblings are absent, which on the server is every root
+	// whose label renders after it. Callers must not mutate the result; the one in-library caller
+	// (`mergeBehaviorLayers`) only reassigns or reads it.
+	if (isEmptyProps(next)) return base;
 	const out: Record<string, unknown> = { ...base };
 	for (const key in next) {
 		if (!Object.hasOwn(next, key)) continue;
@@ -127,9 +133,10 @@ export function composeHandlers(
 	};
 }
 
-export function composeAttachments<
-	E extends Element | BondVirtualElement = Element | BondVirtualElement
->(base: AtomAttachment<E>, next: AtomAttachment<E>): AtomAttachment<E> {
+function composeAttachments<E extends Element | BondVirtualElement = Element | BondVirtualElement>(
+	base: AtomAttachment<E>,
+	next: AtomAttachment<E>
+): AtomAttachment<E> {
 	return (node: E) => {
 		const cleanupBase = base(node);
 		const cleanupNext = next(node);
@@ -150,20 +157,49 @@ function mergeAttributeValue(
 	if (key === 'class') return mergeClass(base, next);
 	if (key === 'style') return mergeStyle(base, next);
 	if (TRUE_WINS_ATTRIBUTES.has(key)) return mergeTrueWins(base, next);
-	if (key === 'role') return mergeRole(base, next, options);
+	if (key === 'role') {
+		return mergeExclusive('role attribute', key, base, next, options, true, 'using the later role');
+	}
 	if (key.startsWith('data-'))
 		return mergeWarnOnConflict('data attribute', key, base, next, options);
 	if (key.startsWith('aria-')) return mergeAria(key, base, next, options);
 	return next;
 }
 
-function mergeId(base: unknown, next: unknown, options: MergeLayerOptions): unknown {
+/**
+ * A single-valued attribute two layers both claim: absent or equal sides resolve silently, a real
+ * disagreement warns and hands the attribute to whichever side the caller names. `id` and `role`
+ * differ only in that winner and its wording.
+ */
+function mergeExclusive(
+	kind: string,
+	key: string,
+	base: unknown,
+	next: unknown,
+	options: MergeLayerOptions,
+	nextWins: boolean,
+	resolution: string
+): unknown {
 	if (!hasValue(base)) return next;
 	if (!hasValue(next)) return base;
 	if (Object.is(base, next)) return base;
-	if (options.nextIsUser) return next;
-	warnConflict('id attribute', 'id', base, next, options, 'keeping the generated id');
-	return base;
+	warnConflict(kind, key, base, next, options, resolution);
+	return nextWins ? next : base;
+}
+
+function mergeId(base: unknown, next: unknown, options: MergeLayerOptions): unknown {
+	// The consumer's own id wins outright and silently; the generated one is the fallback, not a
+	// claim worth reporting. Guarded on `next` so an absent consumer id still leaves it in place.
+	if (options.nextIsUser && hasValue(next)) return next;
+	return mergeExclusive(
+		'id attribute',
+		'id',
+		base,
+		next,
+		options,
+		false,
+		'keeping the generated id'
+	);
 }
 
 function mergeClass(base: unknown, next: unknown): unknown {
@@ -186,16 +222,9 @@ function mergeStyle(base: unknown, next: unknown): unknown {
 }
 
 function mergeTrueWins(base: unknown, next: unknown): unknown {
-	if (isPresentBooleanAttribute(base) || isPresentBooleanAttribute(next)) return true;
+	// `disabled`/`inert`/`hidden` are present-means-true, which is exactly `hasValue`.
+	if (hasValue(base) || hasValue(next)) return true;
 	return next === undefined ? base : next;
-}
-
-function mergeRole(base: unknown, next: unknown, options: MergeLayerOptions): unknown {
-	if (!hasValue(base)) return next;
-	if (!hasValue(next)) return base;
-	if (Object.is(base, next)) return base;
-	warnConflict('role attribute', 'role', base, next, options, 'using the later role');
-	return next;
 }
 
 function mergeAria(key: string, base: unknown, next: unknown, options: MergeLayerOptions): unknown {
@@ -277,10 +306,6 @@ function hasClassValue(value: unknown): boolean {
 	if (!hasValue(value)) return false;
 	if (Array.isArray(value)) return value.some(hasClassValue);
 	return value !== '';
-}
-
-function isPresentBooleanAttribute(value: unknown): boolean {
-	return value !== undefined && value !== null && value !== false;
 }
 
 function isEventHandlerKey(key: string): boolean {

@@ -11,11 +11,25 @@ export type StateChangeCallback<Value, B = never, E extends Event = Event> = (
 	context: StateChangeContext<B, E>
 ) => void;
 
-// Override conflicting properties of T with U.
-export type Override<T, U> = Omit<T, keyof U> & U;
+/**
+ * Remove keys `K` from `T`, surviving an index signature.
+ *
+ * `Omit` cannot do this over element props: `ElementProps extends Record<string, unknown>`, so
+ * `keyof T` widens to `string | number`, `Exclude<…, K>` subtracts nothing, and `Pick` collapses
+ * every named prop into the index signature — leaving each one typed `unknown`. A homomorphic
+ * mapped type with an `as` clause drops the named keys while preserving the index signature and
+ * every other property.
+ */
+export type OmitKey<T, K extends PropertyKey> = {
+	[P in keyof T as P extends K ? never : P]: T[P];
+};
+
+// Override conflicting properties of T with U. Built on OmitKey, not Omit: with the stock Omit
+// every property of T that U does not redeclare silently degraded to `unknown`.
+export type Override<T, U> = OmitKey<T, keyof U> & U;
 
 // Partial override maintaining optional properties.
-export type PartialOverride<T, U extends Partial<T>> = Omit<T, keyof U> & U;
+export type PartialOverride<T, U extends Partial<T>> = OmitKey<T, keyof U> & U;
 
 // Deep override for nested objects.
 export type DeepOverride<T, U> = U extends object

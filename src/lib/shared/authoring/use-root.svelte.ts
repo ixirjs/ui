@@ -10,11 +10,11 @@ import {
 } from '$ixirjs/ui/shared/bond/bind.svelte';
 import { createAtomInstance } from '$ixirjs/ui/shared/bond/use-atom.svelte';
 import type { PresetKey, PresetLike } from '$ixirjs/ui/preset/types';
-import type { AtomConstructor, AtomInstance, AtomsOf, SpecOf } from './define.svelte';
-import { resolveBondPart } from './metadata';
+import type { AtomInstance, AtomsOf, SpecOf } from './define.svelte';
+import { createPartAtom, resolveBondPart } from './metadata';
 
 /**
- * The root counterpart of {@link usePart}.
+ * The root counterpart of {@link Kernel.node}.
  *
  * A root owns five things that every family root previously wired by hand: the props cells, the
  * Bond, its context publication, the root Atom, and that Atom's registration. All five are already
@@ -22,22 +22,15 @@ import { resolveBondPart } from './metadata';
  * Atom constructor, its registration key, and its role — so the root component was restating
  * authoring metadata the backbone already holds. `useRoot` is the one place that resolves it.
  *
- * The result satisfies the same structural seam `HtmlAtom` accepts from `usePart`, so a root
- * renders through the identical direct path:
+ * The result satisfies `Kernel.element`'s seam directly:
  *
- * ```svelte
- * const root = useRoot(CardBond, { disabled: [() => disabled, (v) => (disabled = v ?? false)] }, {
- *   preset: () => preset,
- *   id: () => ID,
- *   factory
- * });
- *
- * <HtmlAtom class={['card …', '$preset', klass]} {...root.props} {...restProps} part={root}>
+ * ```ts
+ * const root = useRoot(CardBond, propsSpec, { preset: () => preset, id: () => ID, factory });
+ * const el = Kernel.element(root, () => ({ ...root.props, ...restProps }));
  * ```
  *
- * Every member is a getter, so passing `root` across the seam allocates nothing and adds no signal
- * — the same property that made the `usePart` seam cheaper than the merged-props packet it
- * replaced. Roots that must *replace* a composed handler keep building the packet by hand with
+ * Every member is a getter, so passing `root` into Kernel allocates no compatibility packet and
+ * adds no signal. Roots that must *replace* a composed handler keep building the packet by hand with
  * `mergeAtomProps(root.atom, preset, { ...root.props, ...restProps })`; nothing was removed.
  */
 
@@ -139,7 +132,12 @@ export type UsedRoot<B extends Bond, N extends Atom> = {
 	readonly props: Record<string, unknown>;
 	/** The underlying binding, for a root that needs the preset-carrying props or the raw cells. */
 	readonly binding: BondBinding<B>;
-	/** The instance accessor a root re-exports as its own `getBond()`. */
+	/**
+	 * The instance accessor a root re-exports as its own `getBond()` — assign it, don't rebuild it:
+	 * `export const getBond = root.getBond;`. It is a plain arrow over the shared Bond with no
+	 * `this`, so it survives being handed out. Twenty-seven roots wrote `() => bond` instead, which
+	 * is the same function allocated a second time per root instance.
+	 */
 	getBond(): B;
 };
 
@@ -165,8 +163,9 @@ export function useRoot(
 	// `bindBond`'s options are declared with exactOptionalPropertyTypes, so an absent getter must be
 	// absent rather than explicitly undefined.
 	const bindingOptions: BondBindingOptions<Bond> = {};
-	const preset = options.preset;
-	if (preset) bindingOptions.preset = () => preset() as PresetKey | undefined;
+	// The cast, not a wrapper closure: the getter is forwarded as-is, and the unknown → PresetKey
+	// narrowing is a type-level statement the old per-root arrow restated at runtime cost.
+	if (options.preset) bindingOptions.preset = options.preset as () => PresetKey | undefined;
 	if (options.base) bindingOptions.base = options.base;
 	if (options.id) bindingOptions.id = options.id;
 
@@ -185,57 +184,106 @@ export function useRoot(
 	options.connect?.(bond);
 
 	// An element-less root owns a Bond and nothing else: no Atom, no registration, no preset key.
-	if (options.atom === false) {
-		return {
-			bond,
-			get props() {
-				return binding.stateProps;
-			},
-			binding,
-			getBond: () => bond
-		};
+	if (options.atom === false) return new BondRoot(bond, binding);
+
+	// An explicit `atom` factory belongs to the root; otherwise the declaration owns construction,
+	// exactly as it does for a descendant part.
+	const construct = options.atom;
+	const atom = construct
+		? createAtomInstance<Atom, Bond>(slot, {
+				bond,
+				required: true,
+				factory: (owner) => construct(owner as Bond)
+			})
+		: createPartAtom(resolveBondPart(definition, slot), bond, true);
+
+	return new ElementRoot(bond, binding, atom, slot, options);
+}
+
+/**
+ * The two root results are classes, not object literals, so their accessors live on one shared
+ * prototype instead of being installed per rendered root.
+ *
+ * An object literal carrying getters is not a plain data object: V8 builds it with accessor
+ * descriptors, which is materially more work than storing fields into a known shape. `useRoot` was
+ * 6.1% of the bare-root layer's SSR self time, most of it here. This is the same trade that was
+ * measured and rejected for `KernelElement` — but the two are not the same case: KernelElement's
+ * methods are called several times per element by the renderer, so a
+ * prototype hop is paid repeatedly, whereas a root's accessors are read once or twice per render
+ * and the construction saving dominates.
+ *
+ * `getBond` stays an own arrow field: roots re-export it (`export const getBond = root.getBond;`),
+ * so it must survive being detached from the instance.
+ */
+class BondRoot<B extends Bond> implements UsedBondRoot<B> {
+	readonly bond: B;
+	readonly binding: BondBinding<B>;
+	readonly getBond: () => B;
+
+	constructor(bond: B, binding: BondBinding<B>) {
+		this.bond = bond;
+		this.binding = binding;
+		this.getBond = () => bond;
 	}
 
-	const declared = options.atom ? undefined : resolveBondPart(definition, slot);
-	const atom = createAtomInstance<Atom, Bond>(declared ? declared.part : slot, {
-		bond,
-		required: true,
-		...(declared ? { register: declared.registration } : {}),
-		factory: (owner) => {
-			if (options.atom) return options.atom(owner as Bond);
-			const instance = new (declared!.Ctor as AtomConstructor)(owner);
-			return declared!.role ? instance.role(declared!.role) : instance;
-		}
-	});
+	get props(): Record<string, unknown> {
+		return this.binding.stateProps;
+	}
+}
 
-	return {
-		bond,
-		atom,
-		slot,
-		get preset() {
-			return (options.preset?.() ?? atom.preset) as PresetKey | undefined;
-		},
-		get presetLayer() {
-			const layer = options.presetLayer;
-			if (layer === undefined || layer === true) return bond.presetLayer(slot);
-			if (layer === false) return undefined;
-			return layer();
-		},
-		get props() {
-			return binding.stateProps;
-		},
-		binding,
-		getBond: () => bond
-	};
+class ElementRoot<B extends Bond, N extends Atom> implements UsedRoot<B, N> {
+	readonly bond: B;
+	readonly binding: BondBinding<B>;
+	readonly atom: N;
+	readonly slot: string;
+	readonly getBond: () => B;
+	readonly #options: UseRootOptions<B, N>;
+
+	constructor(
+		bond: B,
+		binding: BondBinding<B>,
+		atom: N,
+		slot: string,
+		options: UseRootOptions<B, N>
+	) {
+		this.bond = bond;
+		this.binding = binding;
+		this.atom = atom;
+		this.slot = slot;
+		this.#options = options;
+		this.getBond = () => bond;
+	}
+
+	get preset(): PresetKey | undefined {
+		return (this.#options.preset?.() ?? this.atom.preset) as PresetKey | undefined;
+	}
+
+	get presetLayer(): PresetLike | undefined {
+		const layer = this.#options.presetLayer;
+		if (layer === undefined || layer === true) return this.bond.presetLayer(this.slot);
+		if (layer === false) return undefined;
+		return layer();
+	}
+
+	get props(): Record<string, unknown> {
+		return this.binding.stateProps;
+	}
 }
 
 // `defineBond` attaches a static `create(props)` to every definition; a hand-written Bond subclass
-// has none and is constructed directly. Resolved once per root, not per render.
+// has none and is constructed directly. The factory is a per-definition constant — the property
+// probe and the closure used to run per rendered root, so the answer is cached and shared.
+const bondFactories = new WeakMap<object, BondFactory<Bond>>();
+
 function defaultBondFactory(definition: object): BondFactory<Bond> {
+	const cached = bondFactories.get(definition);
+	if (cached) return cached;
+
 	const create = (definition as { create?: (props: never) => Bond }).create;
-	if (typeof create === 'function') {
-		return (props) => create.call(definition, props as never);
-	}
-	const Ctor = definition as unknown as new (props: unknown) => Bond;
-	return (props) => new Ctor(props);
+	const factory: BondFactory<Bond> =
+		typeof create === 'function'
+			? (props) => create.call(definition, props as never)
+			: (props) => new (definition as unknown as new (props: unknown) => Bond)(props);
+	bondFactories.set(definition, factory);
+	return factory;
 }

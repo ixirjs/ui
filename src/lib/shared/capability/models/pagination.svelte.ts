@@ -27,11 +27,7 @@ export interface PaginationModel {
 	previousPage(): void;
 }
 
-export const PAGINATION = sharedCapabilityKey<PaginationModel>({
-	owner: '@ixirjs/cap',
-	name: 'pagination',
-	version: 1
-});
+export const PAGINATION = sharedCapabilityKey<PaginationModel>('@ixirjs/cap:pagination');
 
 export function createPagination(backing: PaginationBacking): PaginationModel {
 	const model: PaginationModel = {

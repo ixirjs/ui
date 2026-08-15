@@ -5,25 +5,18 @@ import {
 	disclosureCapability,
 	type Disclosure
 } from '$ixirjs/ui/shared/capability/models/disclosure.svelte';
+import type { StateChangeContext } from '$ixirjs/ui/types';
 import type { OverlayView } from './types';
 
 // Bond base for any overlay that can host nested popovers. Concrete bonds (Dialog, Drawer,
 // Sidebar) extend and share themselves; OverlayPortal creates standalone instances via
 // create() so the portal's context key shadows the outer host inside its subtree.
 
-// -----------------------------------------------------------------------------
-// Internal types
-// -----------------------------------------------------------------------------
-
 type OverlayReadableProps = BondStateProps & {
 	open?: boolean;
 	disabled?: boolean;
 	modal?: boolean;
 };
-
-// -----------------------------------------------------------------------------
-// Bond state
-// -----------------------------------------------------------------------------
 
 export class OverlayBond<
 	Props extends OverlayReadableProps = OverlayReadableProps
@@ -50,6 +43,24 @@ export class OverlayBond<
 	constructor(stateOrProps: Props, name = 'overlay') {
 		super(stateOrProps as Props, name);
 		this.capability(disclosureCapability(this.disclosure));
+	}
+
+	// Staged rather than passed: the policy that closes an overlay (escape, outside press, backdrop)
+	// is a capability, and the `open` cell it writes takes no argument. It stages the reason here and
+	// the controlled prop's `onchange` takes it back on the same tick. Was copied in four families.
+	#openChangeContext: Pick<StateChangeContext, 'event' | 'reason'> | undefined;
+
+	stageOpenChange(context: Pick<StateChangeContext, 'event' | 'reason'>): void {
+		this.#openChangeContext = context;
+		queueMicrotask(() => {
+			if (this.#openChangeContext === context) this.#openChangeContext = undefined;
+		});
+	}
+
+	takeOpenChangeContext(): Pick<StateChangeContext, 'event' | 'reason'> {
+		const context = this.#openChangeContext ?? {};
+		this.#openChangeContext = undefined;
+		return context;
 	}
 
 	get isOpen(): boolean {
@@ -87,11 +98,6 @@ export class OverlayBond<
 
 // .role('trigger') folds in disclosure ARIA + gesture from the trigger policy.
 
-// -----------------------------------------------------------------------------
-// Atom definitions
-// -----------------------------------------------------------------------------
-
 export const OverlayTriggerAtom = defineAtom<OverlayView, HTMLElement>('trigger', (atom) => {
 	atom.role('trigger');
 });
-export type OverlayTriggerAtom = InstanceType<typeof OverlayTriggerAtom>;

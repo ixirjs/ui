@@ -39,7 +39,6 @@ export {
 } from './use-atom.svelte';
 export { Collection } from './collection.svelte';
 export {
-	composeAttachments,
 	composeHandlers,
 	mergeAttributeLayer,
 	mergeHandlerLayer,
@@ -47,52 +46,7 @@ export {
 	type AtomAttachment,
 	type MergeLayerOptions
 } from './merge';
-export {
-	capabilityKey,
-	sharedCapabilityKey,
-	defineCapability,
-	defineBondCapability,
-	defineAtomCapability,
-	defineProjectionCapability,
-	type AtomBehavior,
-	type AtomCapability,
-	type AtomCapabilityConfig,
-	type AtomHost,
-	type Behavior,
-	type BondCapability,
-	type BondCapabilityConfig,
-	type CapabilityKey,
-	type SurfaceOf,
-	type RoleCtxArgs,
-	type Capability,
-	type CapabilityEnvelope,
-	type CapabilitySetupResult,
-	type RoleCtx,
-	type CapabilityRoleMap,
-	type CapabilityConfig,
-	type CapabilityMetadata,
-	type ProjectionCapabilityConfig
-} from '$ixirjs/ui/shared/capability/capability';
-export {
-	elementRef,
-	pressable,
-	focusable,
-	dataState,
-	ariaRole,
-	motion,
-	ELEMENT_REF,
-	PRESSABLE,
-	FOCUSABLE,
-	DATA_STATE,
-	ARIA_ROLE,
-	MOTION,
-	type AtomElement,
-	type AtomTeardown,
-	type AtomValue,
-	type ElementRefCallback,
-	type ElementRefOptions,
-	type PressableOptions,
-	type FocusableOptions,
-	type DataStateOptions,
-	type MotionOptions
-} from '$ixirjs/ui/shared/capability/models/atom.svelte';
+// Capability symbols are NOT re-exported here. `shared/index.ts` already star-exports
+// `./capability`, so this barrel's second hand-written copy of 43 of those names guarded nothing
+// and had already drifted (it was missing `partCapability`, `AnyCapabilitySurface`,
+// `SharedCapabilityKeyId`). Import them from `$ixirjs/ui/shared` or `.../shared/capability`.

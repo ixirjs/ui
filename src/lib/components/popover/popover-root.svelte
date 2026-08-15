@@ -53,9 +53,7 @@
 	);
 	const bond = root.bond;
 
-	export function getBond() {
-		return bond;
-	}
+	export const getBond = root.getBond;
 </script>
 
 {@render children?.({ popover: bond })}

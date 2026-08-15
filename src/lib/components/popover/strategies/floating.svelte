@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { DEV } from 'esm-env';
 	import * as floating from '@floating-ui/dom';
 	import type { ComputePositionConfig, Strategy } from '@floating-ui/dom';
 	import {
@@ -94,12 +95,24 @@
 			const onpositionchange = props.onpositionchange as PopoverParams['onpositionchange'];
 
 			const compute = async () => {
-				const position = await floating.computePosition(referenceElement, overlayElement, {
-					placement: placement ?? 'bottom',
+				// Neither call site consumes this promise, so a rejection had nowhere to go but the
+				// unhandled-rejection handler. With `ancestorScroll`, any scrollport between trigger and
+				// sink keeps firing `autoUpdate` — including one *inside* the content — and the elements
+				// can be torn down mid-measurement. That race is expected; anything else should be seen.
+				const position = await floating
+					.computePosition(referenceElement, overlayElement, {
+						placement: placement ?? 'bottom',
 
-					middleware,
-					strategy
-				});
+						middleware,
+						strategy
+					})
+					.catch((error: unknown) => {
+						if (DEV && overlayElement.isConnected) {
+							console.warn('[ixirjs] popover position computation failed.', error);
+						}
+						return undefined;
+					});
+				if (!position) return;
 
 				// Round to 0.01px to avoid churn from sub-pixel changes.
 				const x = Math.round((position.x ?? 0) * 100) / 100;

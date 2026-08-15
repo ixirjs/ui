@@ -1,6 +1,6 @@
 <script lang="ts">
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
 	import { mergePresetProps } from '$ixirjs/ui/components/atom';
-	import { HtmlAtom } from '$ixirjs/ui/components/atom';
 	import { DatePickerBond } from './bond.svelte';
 	import { CalendarBond } from '$ixirjs/ui/components/calendar/bond.svelte';
 	import { Icon } from '$ixirjs/ui/components/icon';
@@ -32,13 +32,26 @@
 		if (!datePickerBond) return;
 		datePickerBond.openMonthsPicker();
 	}
+
+	// Element seam instead of a component boundary; key order matches the previous call exactly.
+	const el = Kernel.element(Kernel.static, () => ({
+		as: 'nav',
+		class: ['border-border flex items-center justify-between gap-2 border-b p-2', '$preset', klass],
+		...headerProps
+	}));
 </script>
 
-<HtmlAtom
-	as="nav"
-	class={['border-border flex items-center justify-between gap-2 border-b p-2', '$preset', klass]}
-	{...headerProps}
->
+{@render Kernel.render(el)(
+	el.tag(),
+	el.class(),
+	el.attrs(),
+	headerBody,
+	undefined,
+	el.motion(),
+	el
+)}
+
+{#snippet headerBody()}
 	<button
 		type="button"
 		class="hover:bg-foreground/10 active:bg-foreground/20 flex size-8 cursor-pointer items-center justify-center rounded-md transition-colors"
@@ -90,4 +103,4 @@
 			</svg>
 		</Icon>
 	</button>
-</HtmlAtom>
+{/snippet}

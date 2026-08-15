@@ -16,7 +16,7 @@
 </script>
 
 <script lang="ts">
-	import { HtmlAtom } from '$ixirjs/ui/components/atom';
+	import KernelElement from '$ixirjs/ui/test/components/atom/kernel-element.test.svelte';
 	import { HtmlElement, SvgElement } from '$ixirjs/ui/components/element';
 	import { setPreset } from '$ixirjs/ui/preset';
 
@@ -55,7 +55,7 @@
 >
 
 <HtmlElement preset="button" data-testid="html-motion" data-tick={tick}></HtmlElement>
-<HtmlAtom preset="button" data-testid="atom-motion" data-tick={tick}></HtmlAtom>
+<KernelElement preset="button" data-testid="atom-motion" data-tick={tick}></KernelElement>
 <HtmlElement preset="button" motion={{ animate: null }} data-testid="phase-disabled"></HtmlElement>
 <HtmlElement preset="button" motion={null} data-testid="all-disabled"></HtmlElement>
 {#if showExitingHtml}

@@ -1,8 +1,11 @@
-<script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { type Base } from '$ixirjs/ui/components/atom';
-	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
-	import { usePart } from '$ixirjs/ui/shared';
+<script module lang="ts">
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
 	import { StepBond } from './bond.svelte';
+	const PART = Kernel.part(StepBond, 'indicator', { class: '' });
+</script>
+
+<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
+	import { type Base, type BasePropsOf, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
 	import type { StepIndicatorProps } from './types';
 
 	let {
@@ -10,15 +13,13 @@
 		preset = undefined,
 		children = undefined,
 		...restProps
-	}: StepIndicatorProps<E, B> = $props();
+	}: StepIndicatorProps<E, B> & BasePropsOf<B> = $props();
 
-	const part = usePart(StepBond, 'indicator', () => restProps, {
-		preset: () => preset
-	});
+	const part = Kernel.node(PART, () => ({ preset }), { context: 'required' });
 
 	const index = $derived(part.bond.props.index);
 
-	const el = usePartElement(part, () => ({
+	const el = Kernel.element(part, () => ({
 		class: [
 			'flex h-8 w-8 items-center justify-center border-border rounded-full border-2 transition-colors',
 			'transition-all',
@@ -34,7 +35,7 @@
 	}));
 </script>
 
-{@render partElement(el, body)}
+{@render Kernel.render(el)(el.tag(), el.class(), el.attrs(), body, undefined, el.motion(), el)}
 
 {#snippet body()}
 	{@render (children ?? (part.bond.isCompleted ? completedMark : ordinal))({ step: part.bond })}

@@ -53,8 +53,7 @@ export function foldPresentationAttrs(
 ): Record<string | symbol, unknown> {
 	// Passthrough: with no layer to fold in and no motion key to strip, the fold would copy `rest`
 	// key by key into a fresh object and return an exact duplicate. Every rendered part pays for
-	// that, so hand back the same reference instead — nothing downstream mutates attrs (HtmlAtom
-	// reads and spreads it; HtmlElement spreads it into its own object before touching it).
+	// that, so hand back the same reference instead — Kernel and HtmlElement treat attrs as immutable.
 	//
 	// `consumed` is non-empty only when a variants definition resolved, which also makes `variants`
 	// defined; the explicit check keeps that from being a standing assumption about the caller.

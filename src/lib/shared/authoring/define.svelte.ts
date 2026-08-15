@@ -1,14 +1,16 @@
 import { setContext } from 'svelte';
+import type { Override } from '$ixirjs/ui/types';
 import {
 	Bond,
 	type Atom,
 	bondContextKey,
+	defineAtom,
 	type BondStateProps,
-	type Capability,
 	type NodeCardinality
 } from '$ixirjs/ui/shared/bond';
-import { attachMethod, attachStateFactory } from '$ixirjs/ui/shared/authoring/define-runtime';
-import { getBondSpec, setBondSpec } from './metadata';
+import type { Capability } from '$ixirjs/ui/shared/capability';
+import { attachStateFactory } from '$ixirjs/ui/shared/authoring/define-runtime';
+import { getBondSpec, markSynthesizedAtom, setBondSpec } from './metadata';
 
 // bond: any lets atoms declare a narrower view without variance errors.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -19,7 +21,14 @@ export type AtomConstructor = new (bond: any) => Atom<any, any>;
 export type AtomSpec =
 	| AtomConstructor
 	| {
-			atom: AtomConstructor;
+			/**
+			 * Omit for a presentation-free slot: `defineBond` synthesizes
+			 * `defineAtom({ key: slot, namespace: spec.name })`, which is what a family's own
+			 * `const slot = (key) => defineAtom({ key, namespace })` helper was producing — a slot
+			 * name written three times (const, `defineAtom` key, map key) for one fact. Declare
+			 * `atom` when the part carries attrs, handlers, or its own element type.
+			 */
+			atom?: AtomConstructor;
 			part?: string;
 			role?: string;
 			/** Registration policy belongs to the declared part, not its Svelte call site. */
@@ -27,13 +36,15 @@ export type AtomSpec =
 	  };
 type AtomMap = Record<string, AtomSpec>;
 
+// A slot that declares no `atom` gets the synthesized presentation-free Atom, hence the `Atom`
+// fallback rather than `never`.
 export type AtomInstance<E> = E extends AtomConstructor
 	? InstanceType<E>
 	: E extends { atom: infer C }
 		? C extends AtomConstructor
 			? InstanceType<C>
-			: never
-		: never;
+			: Atom
+		: Atom;
 
 // Abstract classes allowed. Omit makes the constraint structural: declaration emit expands
 // inferred root `getBond()` returns, where Bond's private fields cannot be named across packages.
@@ -55,9 +66,6 @@ export interface BondSpec<A extends AtomMap = AtomMap, Base extends BondBaseClas
 	capabilities?: (state: any) => Capability[];
 	preset?: string;
 	parts?: readonly FusablePart[];
-	extends?: FusablePart;
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	methods?: Record<string, (this: any, ...args: any[]) => any>;
 }
 
 // This symbol exists only in the type system. Runtime composition remains private in metadata.ts.
@@ -74,14 +82,7 @@ export type BaseOf<S> = S extends { base: infer Base extends BondBaseClass } ? B
 export type PartsOf<S> = S extends { parts: infer Parts extends readonly FusablePart[] }
 	? Parts
 	: [];
-export type ExtendsOf<S> = S extends { extends: infer Parent extends FusablePart } ? Parent : never;
 export type PropsOf<S> = BaseInstance<S> extends Bond<infer P> ? P : BondStateProps;
-export type MethodsOf<S> = S extends {
-	methods: infer Methods extends Record<string, (...args: never[]) => unknown>;
-}
-	? Methods
-	: Record<never, never>;
-type Override<Old, New> = Omit<Old, keyof New> & New;
 type OwnAtomsOf<S> = S extends { atoms: infer A extends AtomMap } ? A : Record<never, never>;
 type PartAtomsOf<Part> = [Part] extends [never]
 	? Record<never, never>
@@ -108,24 +109,14 @@ export type MergeAtoms<Parts extends readonly FusablePart[]> = AtomsOf<{
 	parts: Parts;
 }>;
 
-/** Atom slots after ordered parts/extends composition; later definitions win per slot. */
+/** Atom slots after ordered `parts:` composition; later definitions win per slot. */
 export type AtomsOf<S> =
-	PartsOf<S> extends []
-		? Override<PartAtomsOf<ExtendsOf<S>>, OwnAtomsOf<S>>
-		: Override<MergePartAtoms<PartsOf<S>>, OwnAtomsOf<S>>;
+	PartsOf<S> extends [] ? OwnAtomsOf<S> : Override<MergePartAtoms<PartsOf<S>>, OwnAtomsOf<S>>;
 
-type BaseClassOf<S> =
-	PartsOf<S> extends []
-		? [SpecOf<ExtendsOf<S>>] extends [never]
-			? BaseOf<S>
-			: ExtendsOf<S> extends BondBaseClass
-				? ExtendsOf<S>
-				: BaseOf<S>
-		: BaseOf<S>;
-type BaseInstance<S> = InstanceType<BaseClassOf<S>>;
+type BaseInstance<S> = InstanceType<BaseOf<S>>;
 
-/** The instance produced by a spec: its base class plus the spec's authored methods. */
-export type DefinedBond<S extends BondSpec> = BaseInstance<S> & MethodsOf<S>;
+/** The instance produced by a spec: its base class. */
+export type DefinedBond<S extends BondSpec> = BaseInstance<S>;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type BondOf<C extends new (...args: any[]) => Bond> = InstanceType<C>;
@@ -136,31 +127,28 @@ export type DefinedBondClass<S extends BondSpec> = (new (props: PropsOf<S>) => D
 		CONTEXT_KEY: string;
 		readonly CONTEXT_KEYS?: readonly string[];
 		get(): DefinedBond<S> | undefined;
+		getOptional(): DefinedBond<S> | undefined;
 		getOrThrow(message?: string): DefinedBond<S>;
 		create(props: PropsOf<S>): DefinedBond<S>;
 	};
 
 /**
- * One construction path for both composition operators.
+ * `base:` supplies the class, `atoms:` the slots, `parts:` flat composition over other definitions.
  *
- * `parts:` (flat composition, a rebrand) and `extends:` (spec inheritance, a real subclass) used to
- * be two ~100-line branches that each resolved state, overrode `namespace`/`preset`, installed a
- * context key, attached methods and the state factory, and recorded the spec — the same six steps,
- * written twice. What actually differs between them is three decisions, taken below as three
- * values: which class to extend, how the constructor reaches `super`, and which context keys the
- * definition answers to.
- *
- * `parts:` continues to take precedence over `extends:` when a spec somehow declares both, exactly
- * as the branch order did before.
+ * There used to be a second composition operator, `extends:` (spec inheritance producing a real
+ * subclass), and a `methods:` map that attached instance methods to the generated prototype. Both
+ * ended with zero users — every family subclasses `Bond` itself for state and methods — while
+ * `extends:` alone forked the constructor's `super` call, the context-key install, and the
+ * capability composer into a two-question shape. Removing them left one path.
  */
 export function defineBond<const S extends BondSpec>(spec: S): DefinedBondClass<S> {
 	const composed = Boolean(spec.parts && spec.parts.length > 0);
 
-	// ─── Decision 1: the inherited atoms and capabilities ───
-	// `parts:` merges its members' specs; `extends:` flattens its parent's. Both are overridden
-	// per slot by the spec's own atoms, and both run their inherited capability factories first.
-	const parent = (composed ? undefined : spec.extends) as DefinedBondClass<BondSpec> | undefined;
-	const parentSpec = parent ? getBondSpec(parent) : undefined;
+	// `parts:` merges its members' specs, overridden per slot by the spec's own atoms, and runs
+	// their capability factories before its own. Whether there is anything to compose at all is
+	// known at definition time — most families register capabilities in their base class
+	// constructor instead, and the old shape allocated up to three arrays per Bond construction
+	// just to produce an empty list.
 	const inheritedAtoms: Record<string, AtomSpec> = {};
 	const inheritedCapabilityFns: ((bond: Bond) => Capability[])[] = [];
 
@@ -169,46 +157,44 @@ export function defineBond<const S extends BondSpec>(spec: S): DefinedBondClass<
 		Object.assign(inheritedAtoms, partSpec.atoms);
 		if (partSpec.capabilities) inheritedCapabilityFns.push(partSpec.capabilities);
 	}
-	if (parentSpec) {
-		Object.assign(inheritedAtoms, parentSpec.atoms);
-		if (parentSpec.capabilities) inheritedCapabilityFns.push(parentSpec.capabilities);
-	}
 
-	const mergedAtoms = { ...inheritedAtoms, ...spec.atoms };
+	const mergedAtoms: Record<string, AtomSpec> = { ...inheritedAtoms, ...spec.atoms };
+	// A slot with no `atom` is presentation-free, and its whole declaration is derivable: the key is
+	// the slot, the namespace is the definition's name. Synthesized once per definition, never per
+	// render, so it costs what the hand-written const cost and states the slot name once.
+	for (const slot of Object.keys(mergedAtoms)) {
+		const entry = mergedAtoms[slot]!;
+		if (typeof entry === 'function' || entry.atom) continue;
+		const atom = defineAtom({ key: entry.part ?? slot, namespace: spec.name });
+		// Recorded so `resolveBondPart` can tell a synthesized presentation-only Atom from a declared
+		// one: a role-less synthesized slot is inert and skips Atom construction in `definePart`.
+		markSynthesizedAtom(atom);
+		mergedAtoms[slot] = { ...entry, atom };
+	}
 	// Widened for the seam; the runtime argument is always the constructed Bond.
 	const ownCapabilities = spec.capabilities as ((bond: Bond) => Capability[]) | undefined;
 
-	// A subclass's parent constructor has already registered the parent's capabilities, so an
-	// `extends:` child must only register its own. A `parts:` composition has no such constructor
-	// chain and registers every member's. Whether any source exists at all is known at definition
-	// time — most families register capabilities in their base class constructor instead, and the
-	// old shape allocated up to three arrays per Bond construction just to produce an empty list.
-	const inheritsCapabilities = !parent && inheritedCapabilityFns.length > 0;
-	const hasConstructorCapabilities = inheritsCapabilities || ownCapabilities !== undefined;
-	const constructorCapabilities = (state: Bond): Capability[] => {
-		if (!inheritsCapabilities) return ownCapabilities?.(state) ?? [];
+	const hasCapabilities = inheritedCapabilityFns.length > 0 || ownCapabilities !== undefined;
+	const composeCapabilities = (state: Bond): Capability[] => {
+		if (inheritedCapabilityFns.length === 0) return ownCapabilities?.(state) ?? [];
 		const out: Capability[] = [];
 		for (const fn of inheritedCapabilityFns) out.push(...fn(state));
 		if (ownCapabilities) out.push(...ownCapabilities(state));
 		return out;
 	};
 
-	// ─── Decision 2: the class to extend and how its constructor reaches `super` ───
-	const BaseClass = ((composed ? spec.base : (spec.extends ?? spec.base)) ??
-		Bond) as unknown as new (props: BondStateProps, name?: string) => Bond;
+	const BaseClass = (spec.base ?? Bond) as unknown as new (
+		props: BondStateProps,
+		name?: string
+	) => Bond;
 
 	class Defined extends BaseClass {
 		constructor(props: PropsOf<S>) {
-			// A parent ctor has already registered its own capabilities and takes only the props; a
-			// raw base also takes the name. Either way `name` drives the namespace via the getter
-			// below, not the ctor argument.
-			if (parent) super(props as BondStateProps);
-			else super(props as BondStateProps, spec.name);
+			// `name` drives the namespace via the getter below, not the ctor argument.
+			super(props as BondStateProps, spec.name);
 			// The bond itself is the state host, so capability factories receive it directly.
-			if (hasConstructorCapabilities) {
-				for (const capability of constructorCapabilities(this)) {
-					this.capability(capability);
-				}
+			if (hasCapabilities) {
+				for (const capability of composeCapabilities(this)) this.capability(capability);
 			}
 		}
 
@@ -221,16 +207,11 @@ export function defineBond<const S extends BondSpec>(spec: S): DefinedBondClass<
 		}
 	}
 
-	// ─── Decision 3: the context keys this definition answers to ───
-	// An `extends:` child inherits its parent's key, keeping the family unified. Everything else
-	// gets its own — `parts:` is a rebrand, not an extension.
-	if (!parent) {
-		Object.defineProperty(Defined, 'CONTEXT_KEY', {
-			value: bondContextKey(spec.name),
-			writable: true,
-			configurable: true
-		});
-	}
+	Object.defineProperty(Defined, 'CONTEXT_KEY', {
+		value: bondContextKey(spec.name),
+		writable: true,
+		configurable: true
+	});
 
 	if (composed) {
 		// Transitive keys: a part contributes its full CONTEXT_KEYS, so e.g. a `<Popover.Trigger>`
@@ -265,23 +246,16 @@ export function defineBond<const S extends BondSpec>(spec: S): DefinedBondClass<
 		});
 	}
 
-	for (const [name, fn] of Object.entries(spec.methods ?? {})) {
-		attachMethod(Defined.prototype, name, fn);
-	}
-
 	// Self-construction (ADR 0012): every definition gets a static `create(props)` under its own
-	// identity. A child via extends would otherwise inherit the parent's.
+	// identity.
 	attachStateFactory(Defined);
 
-	// The recorded spec is the flattened one: `resolveBondPart` and `usePart` read atoms from it,
+	// The recorded spec is flattened: `resolveBondPart` and Kernel read atoms from it,
 	// and a further `parts: [ThisBond]` reads its capability factory.
 	setBondSpec(Defined, {
 		...spec,
 		atoms: mergedAtoms,
-		capabilities: (bond: Bond): Capability[] => [
-			...inheritedCapabilityFns.flatMap((fn) => fn(bond)),
-			...(ownCapabilities?.(bond) ?? [])
-		]
+		capabilities: composeCapabilities
 	} as unknown as BondSpec<Record<string, AtomSpec>>);
 
 	return Defined as unknown as DefinedBondClass<S>;

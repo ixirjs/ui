@@ -1,7 +1,7 @@
-<script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
+<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
 	import { useRoot } from '$ixirjs/ui/shared';
-	import { type Base } from '$ixirjs/ui/components/atom';
-	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
+	import { type Base, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
 	import { AlertBond } from './bond.svelte';
 	import type { AlertRootProps } from './types';
 	import './alert.css';
@@ -28,11 +28,9 @@
 	);
 	const bond = root.bond;
 
-	export function getBond() {
-		return bond;
-	}
+	export const getBond = root.getBond;
 
-	const el = usePartElement(root, () => ({
+	const el = Kernel.element(root, () => ({
 		class: [
 			'alert border-border relative flex gap-1 rounded-md border p-4 transition-all duration-200',
 			'bg-background text-foreground',
@@ -46,4 +44,12 @@
 	}));
 </script>
 
-{@render partElement(el, children, { alert: bond })}
+{@render Kernel.render(el)(
+	el.tag(),
+	el.class(),
+	el.attrs(),
+	children,
+	{ alert: bond },
+	el.motion(),
+	el
+)}

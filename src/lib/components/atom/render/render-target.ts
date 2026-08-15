@@ -66,6 +66,12 @@ export function resolveRendererComponent(
 	return target.kind === 'snippet' ? snippetAdapter : target.component;
 }
 
+/** Emptiness by early exit: `Object.keys(motion).length` allocates an array to answer yes/no. */
+function hasMotion(motion: object): boolean {
+	for (const _ in motion) return true;
+	return false;
+}
+
 export function resolveRendererProps<E extends Element = Element>(
 	target: RenderTarget,
 	klass: unknown,
@@ -74,13 +80,15 @@ export function resolveRendererProps<E extends Element = Element>(
 	motion: ResolvedMotion<E> | undefined = undefined,
 	options: { presentationResolved?: boolean } = {}
 ): RendererProps {
-	const props = {
-		class: klass,
-		as,
-		...(options.presentationResolved ? { __resolvedPresentation: true } : {}),
-		...attrs,
-		...(motion && Object.keys(motion).length > 0 ? { motion } : {})
-	};
-	if (target.kind === 'snippet') return { snippet: target.snippet, ...props };
+	// Built by assignment rather than by nested spreads. The literal form allocated up to four
+	// objects and a key array per call — two of them the `? {…} : {}` conditionals, whose false arm
+	// is a fresh empty object every time — to produce one. Key order is unchanged: `snippet`, then
+	// `class`/`as`, then the resolved flag, then attrs, then motion, exactly as the spreads wrote it.
+	const props: RendererProps = target.kind === 'snippet' ? { snippet: target.snippet } : {};
+	props.class = klass;
+	props.as = as;
+	if (options.presentationResolved) props.__presentationResolved = true;
+	Object.assign(props, attrs);
+	if (motion && hasMotion(motion)) props.motion = motion;
 	return props;
 }

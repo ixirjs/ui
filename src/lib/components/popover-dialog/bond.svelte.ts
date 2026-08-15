@@ -7,18 +7,10 @@ import {
 	type DialogBondProps
 } from '$ixirjs/ui/components/dialog/bond.svelte';
 
-// -----------------------------------------------------------------------------
-// Public types
-// -----------------------------------------------------------------------------
-
 export type PopoverDialogBondProps = DialogBondProps;
 
 // Fusion of Popover + Dialog: popover's trigger opens a modal dialog instead of a floating panel.
 // Dialog atoms/capabilities win per-slot (last-wins); floating atoms are inert at runtime.
-
-// -----------------------------------------------------------------------------
-// Bond spec and constructor facade
-// -----------------------------------------------------------------------------
 
 export const PopoverDialogBond = defineBond({
 	name: 'popover-dialog',

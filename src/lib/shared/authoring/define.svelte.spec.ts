@@ -57,12 +57,10 @@ describe('defineBond', () => {
 		const _Inferred = defineBond({
 			name: 'inferred',
 			base: TBase,
-			atoms: { root: RootAtom },
-			methods: { ping: () => 'pong' as const }
+			atoms: { root: RootAtom }
 		});
 
 		expectTypeOf<InstanceType<typeof _Inferred>['props']>().toEqualTypeOf<BondStateProps>();
-		expectTypeOf<InstanceType<typeof _Inferred>['ping']>().toEqualTypeOf<() => 'pong'>();
 		expectTypeOf<typeof _Inferred.create>().parameter(0).toEqualTypeOf<BondStateProps>();
 	});
 
@@ -180,68 +178,6 @@ describe('defineBond — atom spec affordances', () => {
 		const bond = new Sub({});
 		expect(bond.label()).toBe('custom');
 		expect((Sub as unknown as { CONTEXT_KEY: string }).CONTEXT_KEY).toContain('sub');
-	});
-
-	it('methods: attaches non-atom instance methods', () => {
-		const WithMethods = defineBond({
-			name: 'with-methods',
-			atoms: { root: RootAtom },
-			methods: {
-				ping(): string {
-					return 'pong';
-				}
-			}
-		});
-		const bond = new WithMethods({});
-		expect(bond.ping()).toBe('pong');
-	});
-});
-
-describe('defineBond — `extends` inheritance', () => {
-	class ChildItemAtom extends Atom {
-		constructor(bond: ConstructorParameters<typeof Atom>[0]) {
-			super(bond, 'item');
-		}
-	}
-
-	const Parent = defineBond({
-		name: 'parent',
-		base: TBase,
-		atoms: { root: RootAtom, item: ItemAtom },
-		capabilities: (bond: TBase) => [selectionCapability(bond.selection)],
-		methods: {
-			kind(this: unknown) {
-				return 'parent-kind';
-			}
-		}
-	});
-
-	const Child = defineBond({
-		extends: Parent,
-		name: 'child',
-		atoms: { item: ChildItemAtom }
-	});
-
-	it('inherits parent capabilities and metadata while overriding identity', () => {
-		const bond = new Child({});
-		expect(bond.capability(SELECTION)).toBeDefined();
-		expect(bond.namespace).toBe('child');
-		expect(bond.preset).toBe('child');
-		expect((bond as unknown as { kind(): string }).kind()).toBe('parent-kind');
-		expect(new RootAtom(bond)).toBeInstanceOf(RootAtom);
-		expect(new ChildItemAtom(bond)).toBeInstanceOf(ChildItemAtom);
-	});
-
-	it('is instanceof the parent and shares its context key', () => {
-		const bond = new Child({});
-		expect(bond).toBeInstanceOf(Parent);
-		expect((Child as unknown as { CONTEXT_KEY: string }).CONTEXT_KEY).toBe(
-			(Parent as unknown as { CONTEXT_KEY: string }).CONTEXT_KEY
-		);
-	});
-
-	it('keeps composition metadata private', () => {
-		expect('spec' in Child).toBe(false);
 	});
 });
 

@@ -14,7 +14,6 @@ Authoritative evidence: [`package.json`](package.json), [`svelte.config.js`](sve
 - [`CONTEXT.md`](CONTEXT.md) — Bond, Atom, capability, preset, portal, and testing vocabulary.
 - [`README.md`](README.md) — package purpose, consumer prerequisites, and basic development entry points.
 - [`package.json`](package.json) — package exports and verified scripts.
-- [`docs/component-authoring.md`](docs/component-authoring.md) — canonical static and bonded module shapes.
 - [`src/lib/index.ts`](src/lib/index.ts) — curated root package API.
 
 ## Project index router
@@ -29,7 +28,7 @@ This is a single project, so no subordinate indexes are required. The library, d
 
 | Path                                                                                             | Responsibility                                                                                                      | Index or source of truth                                                                                                 |
 | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `src/lib/components/`                                                                            | Public and internal UI component families; most folders expose an `index.ts`.                                       | [`src/lib/index.ts`](src/lib/index.ts), [`docs/component-authoring.md`](docs/component-authoring.md)                     |
+| `src/lib/components/`                                                                            | Public and internal UI component families; most folders expose an `index.ts`.                                       | [`src/lib/index.ts`](src/lib/index.ts), [`AGENTS.md`](AGENTS.md)                                                         |
 | `src/lib/shared/`                                                                                | Runtime engine for Bonds, Atoms, capabilities, authoring helpers, and motion.                                       | [`src/lib/shared/README.md`](src/lib/shared/README.md)                                                                   |
 | `src/lib/preset/`, `src/lib/public/`, `src/lib/attachments/`, `src/lib/runes/`, `src/lib/utils/` | Presentation presets, constrained public facades, DOM/lifecycle helpers, reactive utilities, and general utilities. | [`package.json`](package.json), [`src/lib/public/types.ts`](src/lib/public/types.ts)                                     |
 | `src/docs/`                                                                                      | Documentation components, previews, markdown/LLM helpers, and docs-side utilities.                                  | [`src/docs/index.ts`](src/docs/index.ts)                                                                                 |
@@ -54,7 +53,7 @@ SvelteKit routes/docs/stories ──imports──> src/lib public/component APIs
 - Component families use the shared Bond/Atom/capability runtime; `src/lib/shared/README.md` and `CONTEXT.md` define the load-bearing vocabulary.
 - The package root facade in [`src/lib/index.ts`](src/lib/index.ts) and subpath facades configured in [`svelte.config.js`](svelte.config.js) / [`package.json`](package.json) are the consumer-facing boundary.
 - Presets feed component presentation; the site installs its preset in [`src/routes/+layout.svelte`](src/routes/+layout.svelte).
-- Overlay components share portal/teleport/z-layer infrastructure under `src/lib/components/portal/`; see [`docs/portal-system.md`](docs/portal-system.md).
+- Overlay components share portal/teleport/z-layer infrastructure under `src/lib/components/portal/`; see [`docs/adr/0007-portal-containment-over-top-layer-and-body-detach.md`](docs/adr/0007-portal-containment-over-top-layer-and-body-detach.md).
 - The SvelteKit API route exposes documentation-oriented MCP tools and reads component docs from `src/routes/docs/components/`; it is an application integration, not a separate service package.
 - `bun run build` builds the SvelteKit application, while `prepack`/the package preflight build and validate the distributable library surface. Changes to shared runtime, public facades, presets, or package exports can affect both consumers and the docs app.
 
@@ -89,12 +88,12 @@ SvelteKit routes/docs/stories ──imports──> src/lib public/component APIs
 
 ## Repository-wide conventions and constraints
 
-- Follow [`AGENTS.md`](AGENTS.md), [`CONTEXT.md`](CONTEXT.md), and [`docs/component-authoring.md`](docs/component-authoring.md) before changing public component modules.
+- Follow [`AGENTS.md`](AGENTS.md) and [`CONTEXT.md`](CONTEXT.md) before changing public component modules.
 - Components and directories use kebab-case; variables/functions use camelCase.
 - New modules follow the static `Button` or bonded `Collapsible` anatomy. Shared state belongs on Bonds; cross-cutting behavior belongs in capabilities; rendered parts use Atoms.
 - Public package surfaces are explicit. A new top-level module generally requires updates to its component facade, [`src/lib/index.ts`](src/lib/index.ts), public facade, aggregate convention, and public-surface test; consult the authoring guide for the exact list.
 - Test-only Svelte files belong under `src/lib/test/` and use the `*.test.svelte` convention. Bond interface and `atom.spread` behavior are primary test surfaces.
-- Do not copy legacy patterns listed in [`docs/component-authoring.md`](docs/component-authoring.md) or classified in [`docs/known-dead-code.md`](docs/known-dead-code.md).
+- Do not copy legacy patterns; `AGENTS.md` marks the canonical exemplar for each module shape and names the parts that are migration debt.
 
 ## Cross-project change guide
 

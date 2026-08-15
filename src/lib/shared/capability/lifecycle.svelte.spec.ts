@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { Bond, defineCapability, capabilityKey, type BondStateProps } from '$ixirjs/ui/shared/bond';
+import { Bond, type BondStateProps } from '$ixirjs/ui/shared/bond';
+import { defineCapability, capabilityKey } from '$ixirjs/ui/shared/capability';
 
 class S extends Bond<BondStateProps> {
 	constructor() {

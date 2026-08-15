@@ -1,27 +1,42 @@
 <script lang="ts">
-	import { HtmlAtom, mergePresetProps } from '$ixirjs/ui/components/atom';
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
+	import { mergePresetProps } from '$ixirjs/ui/components/atom';
 	import type { SwatchProps } from './types';
 
 	let { class: klass = '', color = '', preset = undefined, ...restProps }: SwatchProps = $props();
 
 	const isEmpty = $derived(!color.trim());
 	const swatchProps = $derived(mergePresetProps(preset, 'swatch', restProps));
+
+	// Element seam instead of a component boundary. The inline children move into a local
+	// snippet because the seam takes a body rather than markup — Svelte compiled them to a
+	// `children` snippet for the component call anyway, so the shape is unchanged.
+	const el = Kernel.element(Kernel.static, () => ({
+		as: 'span',
+		role: 'img',
+		'aria-label': isEmpty ? 'No color' : `Color: ${color}`,
+		title: color || undefined,
+		class: ['swatch', '$preset', klass],
+		...swatchProps
+	}));
 </script>
 
-<HtmlAtom
-	as="span"
-	role="img"
-	aria-label={isEmpty ? 'No color' : `Color: ${color}`}
-	title={color || undefined}
-	class={['swatch', '$preset', klass]}
-	{...swatchProps}
->
+{@render Kernel.render(el)(
+	el.tag(),
+	el.class(),
+	el.attrs(),
+	swatchBody,
+	undefined,
+	el.motion(),
+	el
+)}
+
+{#snippet swatchBody()}
 	<span aria-hidden="true" class="checkerboard absolute inset-[0.5px] rounded-inherit"></span>
 	{@render (!isEmpty ? fill : undefined)?.()}
-</HtmlAtom>
+{/snippet}
 
-<!-- Declared at template top level, not inside <HtmlAtom>: a snippet written among a
-     component's children is passed to it as a prop, not defined as a local snippet. -->
+<!-- Keep this local declaration at template top level; a snippet inside component children becomes a prop. -->
 {#snippet fill()}
 	<span aria-hidden="true" class="fill absolute -inset-px" style="background-color: {color};"
 	></span>

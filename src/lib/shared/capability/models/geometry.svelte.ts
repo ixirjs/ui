@@ -29,15 +29,7 @@ export interface GeometryModel {
 	keys(): readonly string[];
 }
 
-export interface GeometryProjectionContext {
-	key?: string | undefined;
-}
-
-export const GEOMETRY = sharedCapabilityKey<GeometryModel>({
-	owner: '@ixirjs/cap',
-	name: 'geometry',
-	version: 1
-});
+export const GEOMETRY = sharedCapabilityKey<GeometryModel>('@ixirjs/cap:geometry');
 
 export function createGeometry(backing?: Partial<GeometryBacking>): GeometryModel {
 	const rects = new SvelteMap<string, GeometryRect>();
@@ -62,53 +54,16 @@ export function createGeometry(backing?: Partial<GeometryBacking>): GeometryMode
 	};
 }
 
-export interface GeometryProjectionOptions {
-	roles?: readonly string[];
-}
-
-export function geometryCapability(
-	geometry: GeometryModel,
-	options: GeometryProjectionOptions = {}
-): Capability<GeometryModel> {
-	const roles = options.roles ?? ['control'];
-
+// Surface-only: registers the rect store on the Bond so `resizeObserverCapability` can write
+// measured rects into it (`bond-effects/observers.svelte.ts` resolves `bond.surface(GEOMETRY)`).
+// It projects nothing. The old `data-rect-*` role projection was removed — no component read those
+// attributes, and emitting them forced a DOM write on every measure.
+export function geometryCapability(geometry: GeometryModel): Capability<GeometryModel> {
 	return defineCapability<GeometryModel>({
 		slot: GEOMETRY,
 		surface: geometry,
 		meta: {
-			projects: roles,
-			docs: 'Named element rectangles and measured geometry projection.'
-		},
-		behavior: (role, ctx) => {
-			if (!roles.includes(role)) return undefined;
-			const key = geometryKey(ctx);
-			return {
-				attrs: () => geometryAttrs(geometry, key)
-			};
+			docs: 'Named element rectangles measured by the observer capabilities.'
 		}
 	});
-}
-
-function geometryKey(ctx: unknown): string | undefined {
-	if (typeof ctx === 'string') return ctx;
-	if (ctx && typeof ctx === 'object' && 'key' in ctx) {
-		const key = (ctx as GeometryProjectionContext).key;
-		return typeof key === 'string' ? key : undefined;
-	}
-	return undefined;
-}
-
-function geometryAttrs(geometry: GeometryModel, key: string | undefined): Record<string, unknown> {
-	const rect = key ? geometry.rect(key) : undefined;
-	return {
-		'data-geometry-key': key,
-		'data-rect-x': rect?.x,
-		'data-rect-y': rect?.y,
-		'data-rect-width': rect?.width,
-		'data-rect-height': rect?.height,
-		'data-rect-top': rect?.top,
-		'data-rect-right': rect?.right,
-		'data-rect-bottom': rect?.bottom,
-		'data-rect-left': rect?.left
-	};
 }

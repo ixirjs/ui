@@ -4,7 +4,7 @@ import type { Factory, StateChangeCallback } from '$ixirjs/ui/types';
 import type { PopoverBond } from './bond.svelte';
 import type { PresetLike } from '$ixirjs/ui/preset';
 import type { BondPresetLayers } from '$ixirjs/ui/shared/bond';
-import type { Base, HtmlAtomProps } from '$ixirjs/ui/components/atom';
+import type { Base, RenderProps } from '$ixirjs/ui/components/atom';
 import type { HtmlElementTagName } from '$ixirjs/ui/components/element';
 import type {
 	LayerInput,
@@ -27,34 +27,46 @@ export interface PopoverPresets extends BondPresetLayers {
 }
 
 export interface PopoverRootProps {
+	/**
+	 * Bindable open state for the menu.
+	 * @default false
+	 */
 	open?: boolean;
+	/**
+	 * Prevents the context-menu trigger from opening the menu.
+	 * @default false
+	 */
 	disabled?: boolean;
+	/** Ordered fallback placements used when the preferred placement does not fit. */
 	placements?: Placement[];
+	/** Preferred Floating UI placement for the menu. */
 	placement?: Placement;
+	/** Distance in pixels between the virtual cursor anchor and content. */
 	offset?: number;
 	/** CSS positioning strategy for the floating content. Defaults to `'absolute'`. */
 	position?: 'fixed' | 'absolute';
+	/**
+	 * Portal target selector or PortalBond instance. Resolution is explicit target → ambient portal → root.l0, preserving nested overlay containment.
+	 * @default ambient portal → root.l0
+	 */
 	portal?: string | PortalBond;
 	/** Per-instance presentation overrides for bonded Popover parts. */
 	presets?: PopoverPresets | undefined;
+	/** Extend */
 	extend?: Record<string, unknown>;
+	/** Factory */
 	factory?: Factory<PopoverBond>;
+	/** Called after a real open-state transition commits; dismissal events and reasons are included when available. */
 	onopenchange?: StateChangeCallback<boolean, PopoverBond> | undefined;
+	/** Children */
 	children?: PopoverChildren;
-}
-
-export interface AnimateParams {
-	x: number;
-	y: number;
-	xOffset: number;
-	yOffset: number;
-	open: boolean;
 }
 
 export interface PopoverOverlayProps<
 	E extends HtmlElementTagName = 'div',
 	B extends Base = Base
 > extends TeleportProps<E, B, PopoverChildren> {
+	/** Portal surface to render the overlay into, by id or Bond. */
 	portal?: string | PortalBond | undefined;
 	/** Semantic z-index layer for the floating content. Defaults to `'popover'`. */
 	layer?: LayerInput | undefined;
@@ -63,7 +75,9 @@ export interface PopoverOverlayProps<
 	 * sticky header registered via `ZLayer.anchor(...)` puts the popover beneath it.
 	 */
 	order?: LayerRelation | undefined;
+	/** Explicit z-index for the overlay. Prefer the semantic layer unless resolving a stacking conflict. */
 	'z-index'?: ZIndexInput | undefined;
+	/** Content of this part. */
 	children?: PopoverChildren;
 }
 
@@ -97,7 +111,8 @@ export type AnchorSize = AnchorSizeFn | string;
 export interface PopoverContentProps<
 	T extends HtmlElementTagName,
 	B extends Base = Base
-> extends HtmlAtomProps<T, B, PopoverChildren> {
+> extends RenderProps<T, B, PopoverChildren> {
+	/** Replaces the overlay component the content renders into. */
 	overlay?: Component<PopoverOverlayProps>;
 	/** Semantic z-index layer for the floating content. Defaults to `'popover'`. */
 	layer?: LayerInput | undefined;
@@ -121,19 +136,19 @@ export interface PopoverContentProps<
 	 * the trigger, or an {@link AnchorSizeFn}.
 	 */
 	maxWidth?: AnchorSize;
+	/** Called for an outside press; providing it replaces the default close handler. */
 	onclickoutside?: (ev: PointerEvent, atom: PopoverBond) => void;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface PopoverIndicatorProps<
-	E extends keyof HTMLElementTagNameMap = 'div',
+	E extends HtmlElementTagName = 'div',
 	B extends Base = Base
-> extends HtmlAtomProps<E, B, PopoverChildren> {}
+> extends RenderProps<E, B, PopoverChildren> {}
 
 export interface PopoverTailProps<
-	E extends keyof HTMLElementTagNameMap = 'div',
+	E extends HtmlElementTagName = 'div',
 	B extends Base = Base
-> extends HtmlAtomProps<E, B, PopoverChildren> {
+> extends RenderProps<E, B, PopoverChildren> {
 	/** Minimum distance, in px, between the tail wrapper and the content edge. Defaults to `0`. */
 	padding?: number | undefined;
 	/**
@@ -144,11 +159,14 @@ export interface PopoverTailProps<
 }
 
 export interface PopoverTriggerProps<
-	T extends keyof HTMLElementTagNameMap,
+	T extends HtmlElementTagName,
 	B extends Base = Base
-> extends HtmlAtomProps<T, B, PopoverChildren> {
+> extends RenderProps<T, B, PopoverChildren> {
 	// Explicit so the trigger can preserve native handlers before built-in activation.
+	/** Native click event. */
 	onclick?: ((event: MouseEvent) => void) | undefined;
+	/** Native keydown event. Runs before the atom’s own handler, which is skipped if the default is prevented. */
 	onkeydown?: ((event: KeyboardEvent) => void) | undefined;
+	/** Native pointerenter event, used by hover-opened popovers such as Tooltip. */
 	onpointerenter?: ((event: PointerEvent) => void) | undefined;
 }

@@ -10,7 +10,6 @@ export type ElementSource =
 	| readonly (Element | null | undefined)[]
 	| ((bond: Bond) => Element | null | undefined | readonly (Element | null | undefined)[]);
 export type DocumentSource = Document | (() => Document | undefined);
-export type WindowSource = Window | (() => Window | undefined);
 
 export function resolveElements(source: ElementSource | undefined, bond: Bond): Element[] {
 	const value = typeof source === 'function' ? source(bond) : source;
@@ -35,11 +34,6 @@ export function isInsideSource(
 export function resolveDocument(source: DocumentSource | undefined): Document | undefined {
 	if (source) return typeof source === 'function' ? source() : source;
 	return isBrowser() ? document : undefined;
-}
-
-export function resolveWindow(source: WindowSource | undefined): Window | undefined {
-	if (source) return typeof source === 'function' ? source() : source;
-	return isBrowser() ? window : undefined;
 }
 
 export function isEnabled(enabled: EffectGuard | undefined, bond: Bond): boolean {
@@ -93,14 +87,6 @@ export function listen(
 
 export function clamp(value: number, min: number, max: number): number {
 	return Math.min(Math.max(value, min), max);
-}
-
-export function isWindow(value: unknown): value is Window {
-	return typeof Window !== 'undefined' && value instanceof Window;
-}
-
-export function isElement(value: unknown): value is Element {
-	return typeof Element !== 'undefined' && value instanceof Element;
 }
 
 export function isNode(value: unknown): value is Node {

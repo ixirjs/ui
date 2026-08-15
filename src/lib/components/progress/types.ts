@@ -1,12 +1,18 @@
-import type { HtmlAtomProps } from '$ixirjs/ui/components/atom';
+import type { RenderProps } from '$ixirjs/ui/components/atom';
 
 interface ProgressSharedProps {
-	// 0–max; null = indeterminate (default: null).
+	/**
+	 * Current progress value (0–max). Set to `null` for indeterminate state.
+	 * @default null
+	 */
 	value?: number | null;
-	// default: 100
+	/**
+	 * Maximum value used to compute the percentage.
+	 * @default 100
+	 */
 	max?: number;
 }
 
-export interface ProgressLinearProps extends HtmlAtomProps<'div'>, ProgressSharedProps {}
+export interface ProgressLinearProps extends RenderProps<'div'>, ProgressSharedProps {}
 
-export interface ProgressCircularProps extends HtmlAtomProps<'div'>, ProgressSharedProps {}
+export interface ProgressCircularProps extends RenderProps<'div'>, ProgressSharedProps {}

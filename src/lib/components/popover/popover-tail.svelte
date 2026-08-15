@@ -1,5 +1,11 @@
-<script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { HtmlAtom, mergeAtomProps, type Base } from '$ixirjs/ui/components/atom';
+<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
+	import {
+		mergeAtomProps,
+		type Base,
+		type BasePropsOf,
+		type HtmlElementTagName
+	} from '$ixirjs/ui/components/atom';
 	import { createAtomInstance, type Atom } from '$ixirjs/ui/shared/bond';
 	import { createPopoverAtom, PopoverBond } from './bond.svelte';
 	import { popoverTailGeometry } from './presentation.svelte';
@@ -14,7 +20,7 @@
 		padding = 0,
 		size = 20,
 		...restProps
-	}: PopoverTailProps<E, B> = $props();
+	}: PopoverTailProps<E, B> & BasePropsOf<B> = $props();
 
 	const atom = createAtomInstance<Atom<PopoverBond, HTMLElement>, PopoverBond, HTMLElement>(
 		'tail',
@@ -121,20 +127,33 @@
 			'Z'
 		].join(' ');
 	}
+
+	// The merged props already fold the Atom spread; build Kernel once during initialization.
+	const bodyArg = { popover: bond };
+	const el = Kernel.element(
+		{ atom: undefined, bond, preset: undefined, presetLayer: undefined },
+		() => ({
+			bond,
+			class: [
+				'sa-popover-tail text-popover border-border pointer-events-none absolute z-[-1]',
+				'$preset',
+				klass
+			],
+			...tailProps,
+			style: tailStyle
+		})
+	);
 </script>
 
-<HtmlAtom
-	{bond}
-	class={[
-		'sa-popover-tail text-popover border-border pointer-events-none absolute z-[-1]',
-		'$preset',
-		klass
-	]}
-	{...tailProps}
-	style={tailStyle}
->
-	{@render (children ?? fallback)({ popover: bond })}
-</HtmlAtom>
+{@render Kernel.render(el)(
+	el.tag(),
+	el.class(),
+	el.attrs(),
+	children ?? fallback,
+	bodyArg,
+	el.motion(),
+	el
+)}
 
 {#snippet fallback()}
 	<svg

@@ -17,21 +17,15 @@ import {
 	type ElementSource
 } from '$ixirjs/ui/shared/capability/models/bond-effects/shared';
 
-export const OUTSIDE_PRESS_LISTENER = sharedCapabilityKey<OutsidePressListenerSurface>({
-	owner: '@ixirjs/cap',
-	name: 'outside-press-listener',
-	version: 1
-});
-export const BODY_SCROLL_LOCK = sharedCapabilityKey<BodyScrollLockSurface>({
-	owner: '@ixirjs/cap',
-	name: 'body-scroll-lock',
-	version: 1
-});
-export const INERT_SIBLINGS = sharedCapabilityKey<InertSiblingsSurface>({
-	owner: '@ixirjs/cap',
-	name: 'inert-siblings',
-	version: 1
-});
+export const OUTSIDE_PRESS_LISTENER = sharedCapabilityKey<OutsidePressListenerSurface>(
+	'@ixirjs/cap:outside-press-listener'
+);
+export const BODY_SCROLL_LOCK = sharedCapabilityKey<BodyScrollLockSurface>(
+	'@ixirjs/cap:body-scroll-lock'
+);
+export const INERT_SIBLINGS = sharedCapabilityKey<InertSiblingsSurface>(
+	'@ixirjs/cap:inert-siblings'
+);
 
 type BodyLockRecord = {
 	owners: Map<symbol, boolean>;

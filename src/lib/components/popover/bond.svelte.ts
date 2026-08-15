@@ -12,10 +12,8 @@ import {
 	positionedCapabilities,
 	trappedFocus,
 	type OverlayStateProps,
-	type OverlayView,
-	type PositionedOverlayElements
+	type OverlayView
 } from '$ixirjs/ui/components/overlay';
-import type { StateChangeContext } from '$ixirjs/ui/types';
 import type { PortalBond } from '$ixirjs/ui/components/portal';
 import type { PopoverStrategy } from '$ixirjs/ui/components/popover/strategy-types';
 import {
@@ -34,10 +32,6 @@ export {
 	shouldTrackPopoverPosition
 } from '$ixirjs/ui/components/popover/position-state';
 
-// -----------------------------------------------------------------------------
-// Public types
-// -----------------------------------------------------------------------------
-
 export type PopoverParams = {
 	apply?: (
 		node: HTMLElement,
@@ -54,10 +48,6 @@ export type PopoverEngineParams = Record<string, unknown> & {
 export type PopoverEngine = (
 	bond: PopoverBond
 ) => (props: PopoverEngineParams, ...args: unknown[]) => PopoverEngineCleanup;
-
-export type PopoverContentPropsParams = {
-	engine?: 'internal' | PopoverEngine | undefined;
-};
 
 export type PopoverBondProps = OverlayStateProps & {
 	disabled: boolean;
@@ -76,19 +66,6 @@ export type PopoverStateProps = PopoverBondProps;
 export type TriggerParams = {
 	onclick?: (ev: MouseEvent) => void;
 };
-
-export type PopoverDomElements = PositionedOverlayElements & {
-	trigger?: HTMLElement;
-	'virtual-trigger'?: BondVirtualElement;
-	overlay?: HTMLElement;
-	content?: HTMLElement;
-	indicator?: HTMLElement;
-	tail?: HTMLElement;
-};
-
-// -----------------------------------------------------------------------------
-// Capability slots and shared helpers
-// -----------------------------------------------------------------------------
 
 // Positioned defaults (click trigger, escape, restore-to-trigger) + trapped-focus override.
 // The final same-slot policies enrich dismissals with their originating event/reason.
@@ -111,17 +88,12 @@ function popoverCapabilities() {
 	];
 }
 
-// -----------------------------------------------------------------------------
-// Bond implementation
-// -----------------------------------------------------------------------------
-
 // Floating-positioned disclosure with optional tail/indicator/virtual-trigger.
 // Overlay behaviour via capabilities; adds Tab->focus-content and Tab-trap within content.
 export class PopoverBondBase<
 	Props extends PopoverBondProps = PopoverBondProps
 > extends OverlayBond<Props> {
 	position = $state<ComputePositionReturn>();
-	#openChangeContext: Pick<StateChangeContext, 'event' | 'reason'> | undefined;
 	// Whether position should be actively computed. Defaults to `open`; can be overridden
 	// to keep computing while hiding or to start computing on hover before open.
 	tracking = $state<boolean | undefined>(undefined);
@@ -132,19 +104,6 @@ export class PopoverBondBase<
 
 	constructor(props: Props, name = 'popover') {
 		super(props, name);
-	}
-
-	stageOpenChange(context: Pick<StateChangeContext, 'event' | 'reason'>): void {
-		this.#openChangeContext = context;
-		queueMicrotask(() => {
-			if (this.#openChangeContext === context) this.#openChangeContext = undefined;
-		});
-	}
-
-	takeOpenChangeContext(): Pick<StateChangeContext, 'event' | 'reason'> {
-		const context = this.#openChangeContext ?? {};
-		this.#openChangeContext = undefined;
-		return context;
 	}
 
 	#createComputed() {
@@ -167,10 +126,6 @@ export class PopoverBondBase<
 
 type PopoverBondView = PopoverBondBase<PopoverBondProps>;
 
-// -----------------------------------------------------------------------------
-// Atom factory extension point
-// -----------------------------------------------------------------------------
-
 type PopoverHTMLElementNode = Atom<PopoverBond, HTMLElement>;
 
 export function createPopoverAtom<N extends PopoverHTMLElementNode>(
@@ -182,14 +137,9 @@ export function createPopoverAtom<N extends PopoverHTMLElementNode>(
 	return (part.role ? atom.role(part.role) : atom) as N;
 }
 
-// -----------------------------------------------------------------------------
-// Atom definitions
-// -----------------------------------------------------------------------------
-
 export const PopoverTailAtom = defineAtom<OverlayView, HTMLElement>('tail', (atom) => {
 	atom.capability(popoverTailPresentation());
 });
-export type PopoverTailAtom = InstanceType<typeof PopoverTailAtom>;
 
 export class PopoverVirtualTriggerAtom<B extends OverlayView = PopoverBondView> extends Atom<
 	B,
@@ -230,34 +180,26 @@ export const PopoverOverlayAtom = defineAtom<OverlayView, HTMLElement>('overlay'
 	atom.role('surface');
 	atom.capability(popoverOverlayPresentation());
 });
-export type PopoverOverlayAtom = InstanceType<typeof PopoverOverlayAtom>;
 
 // No hand-written handlers: focus-trap + escape onkeydown come from `.role('surface')`.
 
 export const PopoverContentAtom = defineAtom<OverlayView, HTMLElement>('content', (atom) => {
 	atom.capability(popoverContentPresentation());
 });
-export type PopoverContentAtom = InstanceType<typeof PopoverContentAtom>;
 
 export const PopoverIndicatorAtom = defineAtom<OverlayView, HTMLElement>('indicator', (atom) => {
 	atom.capability(popoverIndicatorPresentation());
 });
-export type PopoverIndicatorAtom = InstanceType<typeof PopoverIndicatorAtom>;
 
 // Extends OverlayTriggerAtom with role="button" (non-button), disabled attr (button),
 // Tab->focus-content, and Escape->close routing.
 export const PopoverTriggerAtom = defineAtom(OverlayTriggerAtom, (atom) => {
 	atom.capability(popoverTriggerPresentation());
 });
-export type PopoverTriggerAtom = InstanceType<typeof PopoverTriggerAtom>;
-
-// -----------------------------------------------------------------------------
-// Bond spec and constructor facade
-// -----------------------------------------------------------------------------
 
 // Fusion spec (§9.4.1): exposes popover's atoms + capabilities to `parts:` without
 // converting the generic PopoverBond to a defineBond. Pass as `{ spec: popoverSpec }`.
-export const popoverSpec = {
+const popoverSpec = {
 	name: 'popover',
 	base: PopoverBondBase,
 	atoms: {

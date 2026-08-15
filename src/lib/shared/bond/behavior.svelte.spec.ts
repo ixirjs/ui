@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { Bond, Atom, type Behavior, type BondStateProps } from './index';
+import { Bond, Atom, type BondStateProps } from './index';
+import type { Behavior } from '$ixirjs/ui/shared/capability';
 import { clickTrigger } from '$ixirjs/ui/components/overlay/policies/trigger.svelte';
 
 // Specs for Atom.behavior() — the generic behavior-composition seam.

@@ -1,28 +1,24 @@
-<script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'p', B extends Base = Base">
-	import { type Base } from '$ixirjs/ui/components/atom';
-	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
-	import { usePart } from '$ixirjs/ui/shared';
+<script lang="ts" generics="E extends HtmlElementTagName = 'p', B extends Base = Base">
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
+	import { type Base, type BasePropsOf, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
+	import { definePart } from '$ixirjs/ui/components/atom/define-part.svelte';
 	import type { DialogDescriptionProps } from './types';
 	import { DialogBond } from './bond.svelte';
 
-	let {
-		preset = undefined,
-		as = 'p' as E,
-		children = undefined,
-		...restProps
-	}: DialogDescriptionProps<E, B> = $props();
+	const props: DialogDescriptionProps<E, B> & BasePropsOf<B> = $props();
 
-	const part = usePart(DialogBond, 'description', () => restProps, {
-		preset: () => preset
+	const el = definePart(DialogBond, 'description', () => props, {
+		as: 'p',
+		class: ''
 	});
-	const bond = part.bond;
-
-	const el = usePartElement(part, () => ({
-		as,
-		// This part declares no base classes; `''` is exactly HtmlAtom's own `class` default.
-		class: '',
-		...restProps
-	}));
 </script>
 
-{@render partElement(el, children, { dialog: bond })}
+{@render Kernel.render(el)(
+	el.tag(),
+	el.class(),
+	el.attrs(),
+	props.children,
+	{ dialog: el.bond },
+	el.motion(),
+	el
+)}

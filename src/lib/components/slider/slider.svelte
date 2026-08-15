@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { mergePresetProps, HtmlAtom } from '$ixirjs/ui/components/atom';
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
+	import { mergePresetProps } from '$ixirjs/ui/components/atom';
 	import { createPresentation } from '$ixirjs/ui/components/atom/presentation.svelte';
 	import { clamp } from '$ixirjs/ui/utils/math';
 	import type {
@@ -145,20 +146,33 @@
 		const nextValue = clampNumber(Number(input.value), normalizedMin, normalizedMax);
 		commitValue(nextValue, event, onchange);
 	}
+
+	// Element seam instead of a component boundary; key order matches the previous call exactly.
+	const el = Kernel.element(Kernel.static, () => ({
+		as: 'div',
+		class: [
+			'slider-root relative flex items-center',
+			isVertical ? 'h-full w-6 flex-col' : 'h-6 w-full flex-row',
+			disabled && 'cursor-not-allowed opacity-50',
+			'$preset',
+			klass
+		],
+		'aria-orientation': orientation,
+		...sliderProps
+	}));
 </script>
 
-<HtmlAtom
-	as="div"
-	class={[
-		'slider-root relative flex items-center',
-		isVertical ? 'h-full w-6 flex-col' : 'h-6 w-full flex-row',
-		disabled && 'cursor-not-allowed opacity-50',
-		'$preset',
-		klass
-	]}
-	aria-orientation={orientation}
-	{...sliderProps}
->
+{@render Kernel.render(el)(
+	el.tag(),
+	el.class(),
+	el.attrs(),
+	sliderBody,
+	undefined,
+	el.motion(),
+	el
+)}
+
+{#snippet sliderBody()}
 	{@render (trackContent ?? defaultTrack)({
 		value: normalizedValue,
 		percent,
@@ -194,7 +208,7 @@
 	/>
 
 	{@render thumbWrapper()}
-</HtmlAtom>
+{/snippet}
 
 {@render children?.()}
 

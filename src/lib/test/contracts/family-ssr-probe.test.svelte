@@ -14,9 +14,29 @@
 	import { Stepper, Step } from '$ixirjs/ui/components/stepper';
 	import { Breadcrumb } from '$ixirjs/ui/components/breadcrumb';
 	import { List } from '$ixirjs/ui/components/list';
-	import { ProgressLinear } from '$ixirjs/ui/components/progress';
+	import { ProgressLinear, ProgressCircular } from '$ixirjs/ui/components/progress';
 	import { Stack } from '$ixirjs/ui/components/stack';
+	import { Toast } from '$ixirjs/ui/components/toast';
 	import { Tree } from '$ixirjs/ui/components/tree';
+	import { Button } from '$ixirjs/ui/components/button';
+	import { Badge } from '$ixirjs/ui/components/badge';
+	import { Divider } from '$ixirjs/ui/components/divider';
+	import { Label } from '$ixirjs/ui/components/label';
+	import { Link } from '$ixirjs/ui/components/link';
+	import { Kbd } from '$ixirjs/ui/components/kbd';
+	import { Chip } from '$ixirjs/ui/components/chip';
+	import { Swatch } from '$ixirjs/ui/components/swatch';
+	import { Image } from '$ixirjs/ui/components/image';
+	import { Avatar } from '$ixirjs/ui/components/avatar';
+	import { Shortcut } from '$ixirjs/ui/components/kbd';
+	import { Popover } from '$ixirjs/ui/components/popover';
+	import { Calendar } from '$ixirjs/ui/components/calendar';
+	import type { Day } from '$ixirjs/ui/components/calendar/types';
+	import { Scrollable } from '$ixirjs/ui/components/scrollable';
+
+	// Calendar defaults `pivote` to `new Date()`; a snapshot off the wall clock would change daily, so
+	// pin a date.
+	const PIVOT = new Date('2026-03-15T00:00:00.000Z');
 
 	export type Family =
 		| 'accordion'
@@ -29,7 +49,14 @@
 		| 'list'
 		| 'progress'
 		| 'stack'
-		| 'tree';
+		| 'toast'
+		| 'tree'
+		| 'popover'
+		| 'calendar'
+		| 'scrollable'
+		| 'button'
+		| 'badge'
+		| 'primitives';
 
 	let { family }: { family: Family } = $props();
 </script>
@@ -94,6 +121,9 @@
 {:else if family === 'breadcrumb'}
 	<Breadcrumb.Root>
 		<Breadcrumb.Item>Home</Breadcrumb.Item>
+		<!-- Separator renders its default through the `children ?? fallback` dispatch, the one shape
+		     in this family that is not a plain children pass-through. It was outside the probe. -->
+		<Breadcrumb.Separator />
 		<Breadcrumb.Item>Library</Breadcrumb.Item>
 	</Breadcrumb.Root>
 {:else if family === 'list'}
@@ -103,6 +133,8 @@
 	</List.Root>
 {:else if family === 'progress'}
 	<ProgressLinear value={40} />
+	<!-- Circular renders through SvgElement, a different renderer path from linear's. -->
+	<ProgressCircular value={40} />
 {:else if family === 'tree'}
 	<Tree.Root open>
 		<Tree.Header>
@@ -116,9 +148,66 @@
 			</Tree.Root>
 		</Tree.Body>
 	</Tree.Root>
+{:else if family === 'toast'}
+	<!-- Appended after `tree` on purpose: an `{:else if}` inserted mid-chain shifts every later
+	     branch index, which moves unrelated snapshots for no real change. -->
+	<Toast.Root open>
+		<Toast.Title>Saved</Toast.Title>
+		<Toast.Description>Your changes are live.</Toast.Description>
+		<Toast.Close />
+	</Toast.Root>
+{:else if family === 'popover'}
+	<!-- Appended, like `toast`, so earlier branch indices do not shift. Only the trigger and its
+	     indicator render on the server; the content is portalled. -->
+	<Popover.Root open>
+		<Popover.Trigger>Open<Popover.Indicator /></Popover.Trigger>
+		<Popover.Content>Panel<Popover.Tail /></Popover.Content>
+	</Popover.Root>
+{:else if family === 'calendar'}
+	<Calendar.Root pivote={PIVOT} value={PIVOT}>
+		<Calendar.Header />
+		<Calendar.Body weekday={undefined}>
+			{#snippet children({ day }: { day: Day })}
+				<Calendar.Day {day} />
+			{/snippet}
+		</Calendar.Body>
+	</Calendar.Root>
+{:else if family === 'scrollable'}
+	<Scrollable.Root orientation="horizontal">
+		<Scrollable.Container>
+			<Scrollable.Content>Scrolling content</Scrollable.Content>
+		</Scrollable.Container>
+		<Scrollable.Track orientation="horizontal">
+			<Scrollable.Thumb orientation="horizontal" />
+		</Scrollable.Track>
+	</Scrollable.Root>
+{:else if family === 'button'}
+	<!-- Appended at the end for the same reason `toast` was: inserting mid-chain shifts every later
+	     family's `$props.id()` seed and rewrites snapshots that did not change.
+
+	     Button and Badge are the static, Bond-less shape: no Atom or registration. -->
+	<Button>Click</Button>
+{:else if family === 'badge'}
+	<Badge>New</Badge>
+{:else if family === 'primitives'}
+	<!-- The small static leaves. Individually trivial, collectively the most-rendered components in
+	     any real page, and none of them had a byte-level check anywhere. Grouped into one entry
+	     rather than five so the probe chain — and every later family's `$props.id()` seed — moves
+	     once instead of five times. -->
+	<Divider />
+	<Label>Name</Label>
+	<Link href="/docs">Docs</Link>
+	<Kbd>⌘K</Kbd>
+	<Chip>Tag</Chip>
+	<Swatch color="#336699" />
+	<Image src="/x.png" alt="x" />
+	<Avatar>AB</Avatar>
+	<Shortcut keys={['Ctrl', 'K']} />
 {:else}
 	<Stack.Root>
-		<div>a</div>
-		<div>b</div>
+		<!-- Item, not bare divs: it is the part that carries an Atom and the z-index style, and it
+		     was outside the probe entirely. -->
+		<Stack.Item value="a">a</Stack.Item>
+		<Stack.Item value="b">b</Stack.Item>
 	</Stack.Root>
 {/if}

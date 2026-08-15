@@ -70,12 +70,20 @@ export function capabilityKey<Surface = unknown>(description: string): Capabilit
 }
 
 /**
+ * The `"@owner:name"` shorthand — the key's own identity string, since `sharedCapabilityKey` builds
+ * its symbol from exactly that. Implies `version: 1`; declaring an incompatible protocol means
+ * bumping the version, which is the point at which the object form is worth writing out.
+ */
+export type SharedCapabilityKeyId = `@${string}:${string}`;
+
+/**
  * Creates a cross-copy key. Identity deliberately excludes `version`: duplicate physical copies
  * still converge through Symbol.for, while an incompatible declaration is diagnosed immediately.
  */
 export function sharedCapabilityKey<Surface = AnyCapabilitySurface>(
-	options: SharedCapabilityKeyOptions
+	options: SharedCapabilityKeyOptions | SharedCapabilityKeyId
 ): CapabilityKey<Surface> {
+	if (typeof options === 'string') return sharedCapabilityKey<Surface>(parseKeyId(options));
 	if (!options.owner.startsWith('@') || !options.name || !Number.isInteger(options.version)) {
 		throw new Error(
 			'[ixirjs] shared capability keys require a namespaced owner, non-empty name, and integer protocol version.'
@@ -97,6 +105,17 @@ export function sharedCapabilityKey<Surface = AnyCapabilitySurface>(
 		sharedKeyDeclarations.set(symbol, { ...options, symbol });
 	}
 	return symbol as CapabilityKey<Surface>;
+}
+
+// Split on the first colon only: an owner is a package scope and never contains one, while a name
+// may (`@ixirjs/cap:cap:disclosure` is a legal, if unusual, owner-local name).
+function parseKeyId(id: SharedCapabilityKeyId): SharedCapabilityKeyOptions {
+	const separator = id.indexOf(':');
+	return {
+		owner: separator < 0 ? id : id.slice(0, separator),
+		name: separator < 0 ? '' : id.slice(separator + 1),
+		version: 1
+	};
 }
 
 export function slotName(slot: symbol): string {
@@ -141,7 +160,6 @@ export const roles = {
 	),
 	error: role<'error', void>('@ixirjs', 'error')
 } as const;
-export type BuiltinRole = (typeof roles)[keyof typeof roles];
 export function customRole<Name extends string, Context = unknown>(
 	options: CustomRoleOptions<Name>
 ): Role<Name, Context> {
@@ -211,11 +229,17 @@ export interface AtomCapability<
 
 export type CapabilityRoleMap = Record<string, (ctx: unknown) => Behavior | undefined>;
 
-export interface CapabilityConfig<Surface = AnyCapabilitySurface> {
+/** What both hosts' configs declare identically. `setup`/`compose` differ per host and stay below. */
+export interface CapabilityConfigBase<Surface = AnyCapabilitySurface> {
 	slot: CapabilityKey<Surface>;
 	meta?: CapabilityMetadata;
 	surface?: NoInfer<Surface>;
 	requires?: readonly symbol[];
+}
+
+export interface CapabilityConfig<
+	Surface = AnyCapabilitySurface
+> extends CapabilityConfigBase<Surface> {
 	setup?(bond: Bond): CapabilitySetupResult;
 	compose?(prior: Capability<Surface>): Capability<Surface>;
 	roles?: CapabilityRoleMap;
@@ -227,11 +251,7 @@ export interface AtomCapabilityConfig<
 	N = AtomHost,
 	B extends Bond = Bond,
 	E extends Element | BondVirtualElement = Element | BondVirtualElement
-> {
-	slot: CapabilityKey<Surface>;
-	meta?: CapabilityMetadata;
-	surface?: NoInfer<Surface>;
-	requires?: readonly symbol[];
+> extends CapabilityConfigBase<Surface> {
 	attach?: AtomBehavior<N, B, E>;
 	setup?(node: N, bond: B | undefined): CapabilitySetupResult;
 	compose?(prior: AtomCapability<Surface, N, B, E>): AtomCapability<Surface, N, B, E>;
@@ -260,28 +280,64 @@ function brand<H extends CapabilityHost, T extends object>(
 	return Object.freeze(descriptor) as T & DescriptorBrand<H>;
 }
 
+/**
+ * Descriptors are frozen and read on every spread, so an absent optional stays absent rather than
+ * being present-and-undefined. Each builder below assigns only the keys it has, rather than
+ * building the full shape and stripping the undefined ones: `delete` demotes an object to
+ * dictionary mode, and these objects are read for the life of the page.
+ */
+
+/**
+ * The synthesized `behavior(role, ctx)` over a role map, with the ctx-less projection memoized.
+ *
+ * Every definition-driven `atom.role(role)` call — every root and every role-carrying part —
+ * projects with no ctx, and a role-map entry is a pure function of the descriptor's own options:
+ * the behavior objects it returns are stateless (their `attrs`/`handlers` take the bond as an
+ * argument). Building the same object once per rendered Bond was pure allocation; the cache lives
+ * on the descriptor's closure, and interned descriptors make it page-global. A ctx-carrying
+ * projection (item/input roles) stays uncached — its result can close over the ctx.
+ */
+function memoizedRoleBehavior(
+	roles: CapabilityRoleMap
+): (role: string, ctx?: unknown) => Behavior | undefined {
+	// Definition-lifetime cache, never reactive state.
+	// eslint-disable-next-line svelte/prefer-svelte-reactivity
+	const cached = new Map<string, Behavior | undefined>();
+	return (role, ctx) => {
+		if (ctx !== undefined) return roles[role]?.(ctx);
+		if (cached.has(role)) return cached.get(role);
+		const projected = roles[role]?.(undefined);
+		cached.set(role, projected);
+		return projected;
+	};
+}
+
 export function defineCapability<Surface = AnyCapabilitySurface>(
 	config: CapabilityConfig<Surface>
 ): Capability<Surface> {
 	const { slot, meta, surface, requires, setup, compose, roles, behavior } = config;
-	const project =
-		behavior ?? (roles ? (role: string, ctx?: unknown) => roles[role]?.(ctx) : undefined);
-	return brand('bond', {
+	// Assigned rather than built-then-`compact`ed. The absent-stays-absent shape is the same, but
+	// `compact` reached it by `delete`ing the undefined keys, and a deleted key demotes the object
+	// to dictionary mode — on a descriptor that is then read on every spread for the life of the
+	// page. Stateless descriptors intern and pay this once; a stateful one (every disclosure,
+	// roving and selection model) is rebuilt per Bond, which is where it showed up: `compact` plus
+	// `brand` were ~3% of the tree layer's SSR self time, one tree node being five capabilities.
+	const descriptor: Record<string, unknown> = {
 		slot,
-		meta: { ...meta, host: 'bond' },
-		...(surface !== undefined ? { surface } : {}),
-		...(requires ? { requires } : {}),
-		...(setup ? { setup } : {}),
-		...(compose ? { compose } : {}),
-		...(project ? { behavior: project } : {})
-	});
+		// A role map names exactly what the capability projects, and `meta.projects` is what the
+		// host's DEV conflict check reads. Deriving it here rather than restating it per model
+		// keeps the two in step; an explicit `meta.projects` still wins.
+		meta: { ...(roles ? { projects: Object.keys(roles) } : {}), ...meta, host: 'bond' as const }
+	};
+	if (surface !== undefined) descriptor.surface = surface;
+	if (requires !== undefined) descriptor.requires = requires;
+	if (setup !== undefined) descriptor.setup = setup;
+	if (compose !== undefined) descriptor.compose = compose;
+	const projection = behavior ?? (roles ? memoizedRoleBehavior(roles) : undefined);
+	if (projection !== undefined) descriptor.behavior = projection;
+	return brand('bond', descriptor) as unknown as Capability<Surface>;
 }
-/**
- * The published spelling of {@link defineCapability}, named for symmetry with
- * {@link defineAtomCapability} at the package boundary. Identical at runtime: `defineCapability` is
- * the internal name (used throughout `models/`), `defineBondCapability` is the one on
- * `@ixirjs/ui/shared`. Both are kept so neither layer has to restate the other's vocabulary.
- */
+/** The published spelling of {@link defineCapability}, for symmetry with {@link defineAtomCapability}. */
 export const defineBondCapability: typeof defineCapability = defineCapability;
 
 export function defineAtomCapability<
@@ -290,24 +346,60 @@ export function defineAtomCapability<
 	B extends Bond = Bond,
 	E extends Element | BondVirtualElement = Element | BondVirtualElement
 >(config: AtomCapabilityConfig<Surface, N, B, E>): AtomCapability<Surface, N, B, E> {
-	return brand('atom', {
+	// Same reason as `defineCapability` above: assign the present keys instead of deleting the
+	// absent ones, so the descriptor keeps a fast shape for the reads it serves thereafter.
+	const descriptor: Record<string, unknown> = {
 		slot: config.slot,
-		meta: { ...config.meta, host: 'atom' },
-		...(config.surface !== undefined ? { surface: config.surface } : {}),
-		...(config.requires ? { requires: config.requires } : {}),
-		...(config.attach ? { attach: config.attach } : {}),
-		...(config.setup ? { setup: config.setup } : {}),
-		...(config.compose ? { compose: config.compose } : {})
+		meta: { ...config.meta, host: 'atom' as const }
+	};
+	if (config.surface !== undefined) descriptor.surface = config.surface;
+	if (config.requires !== undefined) descriptor.requires = config.requires;
+	if (config.attach !== undefined) descriptor.attach = config.attach;
+	if (config.setup !== undefined) descriptor.setup = config.setup;
+	if (config.compose !== undefined) descriptor.compose = config.compose;
+	return brand('atom', descriptor) as unknown as AtomCapability<Surface, N, B, E>;
+}
+
+/**
+ * One rendered part's presentation capability: a shared slot key, the single `projects` entry that
+ * names the part, its docs line, and the `attach` behavior — which is the only thing that actually
+ * varies. Twenty-five of these across the component families were each declaring a module-level key
+ * constant and restating the slot and meta block around it.
+ *
+ * Deliberately not interned: an `attach` closing over a component's own state must not be shared,
+ * and the families that *can* share theirs already wrap this in `lazyCapability`.
+ */
+export function partCapability<
+	B extends Bond = Bond,
+	E extends Element | BondVirtualElement = Element | BondVirtualElement
+>(
+	id: SharedCapabilityKeyId,
+	part: string,
+	docs: string,
+	attach: AtomBehavior<AtomHost, B, E>
+): AtomCapability<void, AtomHost, B, E> {
+	return defineAtomCapability<void, AtomHost, B, E>({
+		slot: sharedCapabilityKey<void>(id),
+		meta: { projects: [part], docs },
+		attach
 	});
 }
 
-function normalizeDescriptor<T extends CapabilityEnvelope>(
+/**
+ * Validates a descriptor's brand and, on composition, that it kept its slot. `kind` selects the
+ * wording; both hosts reach this through `CapabilityHost`, which already knows its own kind.
+ */
+export function normalizeCapability<T extends CapabilityEnvelope>(
 	capability: T,
 	host: CapabilityHost,
 	expectedSlot?: symbol
 ): T {
+	if (typeof capability?.slot !== 'symbol') {
+		throw new TypeError(`[ixirjs] ${host} capability descriptors require a slot.`);
+	}
+	// A null/undefined descriptor already failed the slot check above.
 	const candidate = capability as T & Partial<DescriptorBrand<CapabilityHost>>;
-	if (!candidate || candidate[CAPABILITY_DESCRIPTOR] !== host) {
+	if (candidate[CAPABILITY_DESCRIPTOR] !== host) {
 		throw new TypeError(
 			`[ixirjs] ${host} capability descriptors must be created by define${host === 'bond' ? 'Bond' : 'Atom'}Capability().`
 		);
@@ -321,62 +413,64 @@ function normalizeDescriptor<T extends CapabilityEnvelope>(
 	return capability;
 }
 
-export function normalizeBondCapability<S>(
-	capability: Capability<S>,
-	expectedSlot?: CapabilityKey<S>
-): Capability<S> {
-	if (typeof capability.slot !== 'symbol') {
-		throw new TypeError('[ixirjs] bond capability descriptors require a slot.');
-	}
-	return normalizeDescriptor(capability, 'bond', expectedSlot);
-}
-export function normalizeAtomCapability<
-	S,
-	N,
-	B extends Bond,
-	E extends Element | BondVirtualElement
->(
-	capability: AtomCapability<S, N, B, E>,
-	expectedSlot?: CapabilityKey<S>
-): AtomCapability<S, N, B, E> {
-	if (typeof capability.slot !== 'symbol') {
-		throw new TypeError('[ixirjs] atom capability descriptors require a slot.');
-	}
-	return normalizeDescriptor(capability, 'atom', expectedSlot);
+export interface RoleProjectionConfig<Surface = AnyCapabilitySurface> {
+	slot: CapabilityKey<Surface>;
+	/** The roles this capability projects onto. Also becomes `meta.projects`. */
+	roles: readonly string[];
+	docs?: string;
+	meta?: Omit<CapabilityMetadata, 'projects' | 'docs'>;
+	surface?: NoInfer<Surface>;
+	requires?: readonly symbol[];
+	setup?(bond: Bond): CapabilitySetupResult;
+	/** Read on every spread build, so it sees current state. `ctx` is the role's projection context. */
+	attrs?(ctx: unknown, role: string): Record<string, unknown>;
+	handlers?(ctx: unknown, role: string): Record<string, unknown>;
 }
 
 /**
- * The one taxonomy helper that does something a plain `defineCapability` does not: it derives
- * `meta.projects` from the role map, and `projects` is read by the host's DEV conflict check.
- * The former siblings (`defineModel/Relationship/Policy/EffectCapability`) only stamped a
- * `layer`/`kind` pair that nothing ever read — they were documentation shaped like code.
+ * One projection applied to a runtime-configured list of roles — the shape thirteen models were
+ * each spelling out by hand:
+ *
+ * ```ts
+ * const roles = options.roles ?? ['control'];
+ * return defineCapability({
+ *   slot, surface,
+ *   meta: { projects: roles, docs: '…' },
+ *   behavior: (role) => (roles.includes(role) ? { attrs: () => ({ … }) } : undefined)
+ * });
+ * ```
+ *
+ * Passing `defineCapability` a `roles` *map* instead covers statically named roles, each with
+ * its own behavior. This one takes a *list* decided by the caller's options, with one behavior
+ * across all of them, which is why those models reached for the raw `behavior` escape hatch.
+ *
+ * A model whose projection genuinely varies per role (`validation`, two role sets with different
+ * attrs) or which derives state from `ctx` once per projection rather than per read (`geometry`,
+ * `sort`) still uses `defineCapability` directly — this helper would misrepresent both.
  */
-export type ProjectionCapabilityConfig<Surface = AnyCapabilitySurface> =
-	CapabilityConfig<Surface> & {
-		roles: CapabilityRoleMap;
-	};
-export function defineProjectionCapability<Surface = AnyCapabilitySurface>(
-	config: ProjectionCapabilityConfig<Surface>
+export function defineRoleProjection<Surface = AnyCapabilitySurface>(
+	config: RoleProjectionConfig<Surface>
 ): Capability<Surface> {
-	return defineCapability({
-		...config,
-		meta: { projects: Object.keys(config.roles), ...config.meta }
-	});
-}
+	const { slot, roles, docs, meta, surface, requires, setup, attrs, handlers } = config;
 
-/** Last descriptor wins, while the first occurrence fixes the slot position. */
-export function normalizeCapabilities(capabilities: readonly Capability[]): Capability[] {
-	const indices = new Map<symbol, number>();
-	const normalized: Capability[] = [];
-	for (const capability of capabilities) {
-		const descriptor = normalizeBondCapability(capability);
-		const index = indices.get(descriptor.slot);
-		if (index === undefined) {
-			indices.set(descriptor.slot, normalized.length);
-			normalized.push(descriptor);
-		} else {
-			normalized[index] = descriptor;
+	// `defineCapability` reads these by truthiness and re-tests each itself, so the outer `compact`
+	// only ever removed keys the callee already tolerates — assign straight through instead.
+	const projected: CapabilityConfig<Surface> = {
+		slot,
+		meta: { ...meta, projects: roles, ...(docs !== undefined ? { docs } : {}) },
+		// Built per projection, not per definition, so the same delete-vs-assign rule applies with
+		// more force here: this object is produced every time a role resolves against this model.
+		behavior: (role: string, ctx?: unknown) => {
+			if (!roles.includes(role)) return undefined;
+			const behavior: Behavior = {};
+			if (attrs) behavior.attrs = () => attrs(ctx, role);
+			if (handlers) behavior.handlers = () => handlers(ctx, role);
+			return behavior;
 		}
-	}
-	return normalized;
+	};
+	if (surface !== undefined) projected.surface = surface;
+	if (requires !== undefined) projected.requires = requires;
+	if (setup !== undefined) projected.setup = setup;
+
+	return defineCapability<Surface>(projected);
 }

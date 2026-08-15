@@ -1,15 +1,8 @@
-import { DEV } from 'esm-env';
 import {
 	collectionCapability,
 	collectionSlot
 } from '$ixirjs/ui/shared/capability/models/collection.svelte';
-import { normalizeBondCapability, slotName } from '$ixirjs/ui/shared/capability/capability';
-import { CapabilityRuntime } from '$ixirjs/ui/shared/capability/runtime.svelte';
-import {
-	capabilityRuntimeMessages,
-	capabilityValidationMessages,
-	registerCapability
-} from '$ixirjs/ui/shared/capability/host';
+import { CapabilityHost } from '$ixirjs/ui/shared/capability/host';
 import type { Behavior, Capability, CapabilityKey } from '$ixirjs/ui/shared/capability/capability';
 import type { Bond } from './bond.svelte';
 import type { Collection } from './collection.svelte';
@@ -18,15 +11,37 @@ import type { Collection } from './collection.svelte';
 export abstract class CapabilityRegistry {
 	abstract get id(): string;
 
-	readonly #runtime = new CapabilityRuntime<Capability, Bond>(
-		capabilityRuntimeMessages<Capability>('bond'),
-		() => this.id
-	);
-	#validated = false;
+	#host: CapabilityHost<Capability, Bond> | undefined;
+	#deferred: (() => Capability) | Array<() => Capability> | undefined;
+	#deferredActivated = false;
+
+	#getHost(): CapabilityHost<Capability, Bond> {
+		if (this.#host) return this.#host;
+		const host = new CapabilityHost<Capability, Bond>({ kind: 'bond', label: () => this.id });
+		const deferred = this.#deferred;
+		if (deferred) {
+			if (Array.isArray(deferred)) {
+				for (const create of deferred) host.register(create());
+			} else host.register(deferred());
+		}
+		if (this.#deferredActivated) host.markActive();
+		return (this.#host = host);
+	}
+
+	/** @internal Defers a setup-free default capability until its public surface is observed. */
+	deferSetupFreeCapability(create: () => Capability): void {
+		if (this.#host) {
+			this.#host.register(create());
+			return;
+		}
+		if (!this.#deferred) this.#deferred = create;
+		else if (Array.isArray(this.#deferred)) this.#deferred.push(create);
+		else this.#deferred = [this.#deferred, create];
+	}
 
 	collection<T>(kind: string): Collection<T> {
 		const slot = collectionSlot(kind);
-		const existing = this.#runtime.find(slot);
+		const existing = this.#getHost().find(slot);
 		if (existing) return existing.surface as Collection<T>;
 		const capability = collectionCapability<T>(kind);
 		this.capability(capability);
@@ -38,24 +53,7 @@ export abstract class CapabilityRegistry {
 	capability<S = unknown>(
 		capabilityOrKey: Capability | CapabilityKey<S>
 	): Capability<S> | undefined {
-		if (typeof capabilityOrKey === 'symbol') {
-			const found = this.#runtime.find(capabilityOrKey) as Capability<S> | undefined;
-			if (DEV && !found) {
-				console.warn(
-					`[ixirjs] capability("${slotName(capabilityOrKey)}"): no capability registered at this slot in "${this.id}".`
-				);
-			}
-			return found;
-		}
-
-		const registered = registerCapability(this.#runtime, capabilityOrKey, {
-			kind: 'bond',
-			label: () => this.id,
-			normalize: (capability, expectedSlot) =>
-				normalizeBondCapability(capability, expectedSlot as CapabilityKey<unknown> | undefined)
-		});
-		this.#validated = false;
-		return registered as Capability<S>;
+		return this.#getHost().registerOrFind(capabilityOrKey) as Capability<S> | undefined;
 	}
 
 	registerCapabilities(capabilities: readonly Capability[]): void {
@@ -63,75 +61,54 @@ export abstract class CapabilityRegistry {
 	}
 
 	surface<S>(key: CapabilityKey<S>): S | undefined {
-		return this.capability(key)?.surface;
-	}
-
-	requireCapability<S>(key: CapabilityKey<S>): Capability<S> {
-		const found = this.#runtime.find(key) as Capability<S> | undefined;
-		if (!found) {
-			throw new Error(
-				`[ixirjs] required capability "${slotName(key)}" is not registered in "${this.id}".`
-			);
-		}
-		return found;
+		return this.#getHost().surface(key) as S | undefined;
 	}
 
 	requireSurface<S>(key: CapabilityKey<S>): S {
-		const capability = this.requireCapability(key);
-		if (capability.surface === undefined) {
-			throw new Error(`[ixirjs] capability "${slotName(key)}" has no surface in "${this.id}".`);
-		}
-		return capability.surface;
+		return this.#getHost().requireSurface(key) as S;
 	}
 
 	get capabilities(): readonly Capability[] {
-		return this.#runtime.capabilities;
+		return this.#getHost().capabilities;
 	}
 
 	activateCapabilities(owner: Bond = this as unknown as Bond): void {
-		this.#runtime.activate(owner, (capability, bond) => capability.setup?.(bond));
-		if (DEV && !this.#validated) {
-			this.#validated = true;
-			this.#validateCapabilities();
+		if (!this.#host) {
+			this.#deferredActivated = true;
+			return;
 		}
+		const host = this.#getHost();
+		host.activate(owner, (capability, bond) => capability.setup?.(bond));
+		host.validate();
 	}
 
 	destroyCapabilities(): void {
-		this.#runtime.destroy();
+		this.#host?.destroy();
 	}
 
-	/** Seals a setup-free host without creating a lifecycle owner. Used by capability unit tests. */
+	/** Whether capability activation left a lifecycle owner to destroy (false after the setup-free fast path). */
+	get hasCapabilityTeardown(): boolean {
+		return this.#host?.hasTeardown ?? false;
+	}
+
+	/**
+	 * Seals a setup-free host without creating a lifecycle owner. The test seam for capability unit
+	 * tests: `activateCapabilities()` would run the setups, which is the thing under test.
+	 * @internal
+	 */
 	markSetupConsumed(): void {
-		this.#runtime.markActive();
+		this.#getHost().markActive();
 	}
 
 	behaviorsForRole(role: string, ctx?: unknown): Behavior[] {
-		this.#runtime.seal();
-		if (DEV && !this.#validated) {
-			this.#validated = true;
-			this.#validateCapabilities();
-		}
+		const host = this.#getHost();
+		host.seal();
+		host.validate();
 		const out: Behavior[] = [];
-		for (const capability of this.#runtime.order()) {
+		for (const capability of host.order()) {
 			const behavior = capability.behavior?.(role, ctx);
 			if (behavior) out.push(behavior);
 		}
 		return out;
-	}
-
-	#validateCapabilities(): void {
-		const { messages, inactiveLifecycle } = capabilityValidationMessages(
-			'bond',
-			() => this.id,
-			this.capabilities
-		);
-		for (const message of messages) console.warn(message);
-		if (!inactiveLifecycle || this.#runtime.isActive) return;
-		// A Bond that projects a role while still constructing reaches here before bindBond's own
-		// constructor activates it. Every activation path is synchronous, so ask again once the
-		// turn settles rather than reporting a lifecycle that is a few statements away.
-		queueMicrotask(() => {
-			if (!this.#runtime.isActive) console.warn(inactiveLifecycle);
-		});
 	}
 }

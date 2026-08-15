@@ -1,26 +1,24 @@
-<script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { type Base } from '$ixirjs/ui/components/atom';
-	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
-	import { usePart } from '$ixirjs/ui/shared';
+<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
+	import { type Base, type BasePropsOf, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
+	import { definePart } from '$ixirjs/ui/components/atom/define-part.svelte';
 	import { StepBond } from './bond.svelte';
 	import type { StepTitleProps } from './types';
 
-	let {
-		class: klass = '',
-		preset = undefined,
-		children = undefined,
-		...restProps
-	}: StepTitleProps<E, B> = $props();
+	const props: StepTitleProps<E, B> & BasePropsOf<B> = $props();
 
-	const part = usePart(StepBond, 'title', () => restProps, {
-		preset: () => preset
-	});
-
-	const el = usePartElement(part, () => ({
+	const el = definePart(StepBond, 'title', () => props, {
 		as: 'div',
-		class: ['font-medium text-sm', '$preset', klass],
-		...restProps
-	}));
+		class: 'font-medium text-sm'
+	});
 </script>
 
-{@render partElement(el, children, { step: part.bond })}
+{@render Kernel.render(el)(
+	el.tag(),
+	el.class(),
+	el.attrs(),
+	props.children,
+	{ step: el.bond },
+	el.motion(),
+	el
+)}

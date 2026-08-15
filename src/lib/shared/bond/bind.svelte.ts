@@ -194,7 +194,7 @@ function assembleProps<P extends object>(
 	return assembled;
 }
 
-// Assembles props and builds the bond in untrack; spreading atomProps + restProps gives preset→spread→rest precedence.
+// Assembles props and builds the bond in untrack, preserving preset → spread → rest precedence.
 export class BondBinding<B extends Bond = Bond> {
 	readonly bond: B;
 	readonly #props: PropsOf<B>;
@@ -225,7 +225,14 @@ export class BondBinding<B extends Bond = Bond> {
 		// bindBond assembles props and owns activation/destruction. The component explicitly
 		// publishes the Bond with binding.bond.share() at its context boundary.
 		this.bond.activateCapabilities(this.bond);
-		onDestroy(() => this.bond.destroy());
+		// SSR teardown is skipped when activation took the setup-free fast path: there is no
+		// lifecycle owner to destroy, the bond is render-scoped so its registry dies with the
+		// render, and single-cardinality re-registration cannot occur because a binding-owned bond
+		// is constructed fresh per render. Bonds whose capabilities ran a `setup()` keep the
+		// teardown — a setup may hold module-global state (escape stacks, focus records) that must
+		// not leak across server requests. The browser always keeps it: component teardown there is
+		// real lifecycle, not end-of-render bookkeeping.
+		if (BROWSER || this.bond.hasCapabilityTeardown) onDestroy(() => this.bond.destroy());
 	}
 
 	get preset() {

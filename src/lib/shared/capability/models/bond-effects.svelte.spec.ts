@@ -1,5 +1,4 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { flushSync } from 'svelte';
 import { render } from 'vitest-browser-svelte';
 import { Bond, bondContextKey, type BondStateProps } from '$ixirjs/ui/shared/bond';
 import UseProbe from '$ixirjs/ui/test/shared/capability/use-probe.test.svelte';
@@ -10,24 +9,18 @@ import {
 	geometryCapability,
 	inertSiblings,
 	intersectionObserverCapability,
-	mediaQueryCapability,
 	mutationObserverCapability,
 	outsidePressListener,
 	pointerModalityCapability,
-	reducedMotionCapability,
 	resizeObserverCapability,
-	scrollMeasurementCapability,
 	BODY_SCROLL_LOCK,
 	DOCUMENT_DRAG,
 	INERT_SIBLINGS,
 	INTERSECTION_OBSERVER,
-	MEDIA_QUERY,
 	MUTATION_OBSERVER,
 	OUTSIDE_PRESS_LISTENER,
 	POINTER_MODALITY,
-	REDUCED_MOTION,
-	RESIZE_OBSERVER,
-	SCROLL_MEASUREMENT
+	RESIZE_OBSERVER
 } from '.';
 
 class TestState {
@@ -50,7 +43,6 @@ describe('whole-bond effect primitives', () => {
 	});
 
 	it('exposes every missing primitive as a Layer 1 effect capability', () => {
-		const mediaWindow = fakeMediaWindow(false);
 		const capabilities = [
 			[outsidePressListener(), OUTSIDE_PRESS_LISTENER],
 			[bodyScrollLock({ enabled: false }), BODY_SCROLL_LOCK],
@@ -58,10 +50,7 @@ describe('whole-bond effect primitives', () => {
 			[resizeObserverCapability(), RESIZE_OBSERVER],
 			[intersectionObserverCapability(), INTERSECTION_OBSERVER],
 			[mutationObserverCapability(), MUTATION_OBSERVER],
-			[mediaQueryCapability({ query: '(min-width: 1px)', window: () => mediaWindow }), MEDIA_QUERY],
-			[reducedMotionCapability({ window: () => mediaWindow }), REDUCED_MOTION],
 			[pointerModalityCapability(), POINTER_MODALITY],
-			[scrollMeasurementCapability({ enabled: false }), SCROLL_MEASUREMENT],
 			[documentDragCapability(), DOCUMENT_DRAG]
 		] as const;
 
@@ -195,23 +184,11 @@ describe('whole-bond effect primitives', () => {
 		unmount();
 	});
 
-	it('mediaQueryCapability, reducedMotionCapability, and pointerModalityCapability track globals', () => {
-		const mediaWindow = fakeMediaWindow(false);
+	it('pointerModalityCapability tracks the current input modality', () => {
 		const bond = new TestBond();
-		const media = mediaQueryCapability({ query: '(min-width: 1px)', window: () => mediaWindow });
-		const reduced = reducedMotionCapability({ window: () => mediaWindow });
 		const modality = pointerModalityCapability();
-		bond.capability(media);
-		bond.capability(reduced);
 		bond.capability(modality);
 		const { unmount } = render(UseProbe, { bond });
-
-		expect(media.surface!.matches).toBe(false);
-		expect(reduced.surface!.matches).toBe(false);
-
-		mediaWindow.change(true);
-		expect(media.surface!.matches).toBe(true);
-		expect(reduced.surface!.matches).toBe(true);
 
 		document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab' }));
 		expect(modality.surface!.modality).toBe('keyboard');
@@ -244,48 +221,6 @@ describe('whole-bond effect primitives', () => {
 		secondProbe.unmount();
 		expect(document.body.style.overflow).toBe('auto');
 		expect((before as HTMLElement & { inert?: boolean }).inert).toBe(false);
-	});
-
-	it('scrollMeasurementCapability waits for a reactive target to become available', () => {
-		const state = new TestState();
-		const scroller = document.createElement('div');
-		Object.defineProperties(scroller, {
-			clientWidth: { value: 100, configurable: true },
-			clientHeight: { value: 50, configurable: true },
-			scrollWidth: { value: 100, configurable: true },
-			scrollHeight: { value: 500, configurable: true },
-			scrollTop: { value: 25, configurable: true }
-		});
-		const bond = new TestBond(state);
-		const scroll = scrollMeasurementCapability({ target: () => state.scrollTarget });
-		bond.capability(scroll);
-		const { unmount } = render(UseProbe, { bond });
-
-		state.scrollTarget = scroller;
-		flushSync();
-		expect(scroll.surface!.y).toBe(25);
-		unmount();
-	});
-
-	it('scrollMeasurementCapability maintains scroll geometry', () => {
-		const scroller = document.createElement('div');
-		Object.defineProperties(scroller, {
-			clientWidth: { value: 200, configurable: true },
-			clientHeight: { value: 100, configurable: true },
-			scrollWidth: { value: 200, configurable: true },
-			scrollHeight: { value: 1000, configurable: true },
-			scrollTop: { value: 40, configurable: true }
-		});
-		document.body.append(scroller);
-
-		const bond = new TestBond();
-		const scroll = scrollMeasurementCapability({ target: scroller });
-		bond.capability(scroll);
-		const { unmount } = render(UseProbe, { bond });
-
-		expect(scroll.surface!.y).toBe(40);
-
-		unmount();
 	});
 
 	it('outsidePressListener binds to its configured document', () => {
@@ -356,39 +291,6 @@ function rect(width: number, height: number): DOMRectReadOnly {
 		left: 0,
 		toJSON: () => ({})
 	};
-}
-
-function fakeMediaWindow(initial: boolean): Window & { change(matches: boolean): void } {
-	let matches = initial;
-	const listeners = new Set<(event: MediaQueryListEvent) => void>();
-	const query: MediaQueryList = {
-		matches,
-		media: '',
-		onchange: null,
-		addEventListener: (_type: string, listener: EventListenerOrEventListenerObject) => {
-			listeners.add(listener as (event: MediaQueryListEvent) => void);
-		},
-		removeEventListener: (_type: string, listener: EventListenerOrEventListenerObject) => {
-			listeners.delete(listener as (event: MediaQueryListEvent) => void);
-		},
-		addListener: (listener) => {
-			listeners.add(listener as (event: MediaQueryListEvent) => void);
-		},
-		removeListener: (listener) => {
-			listeners.delete(listener as (event: MediaQueryListEvent) => void);
-		},
-		dispatchEvent: () => true
-	};
-	return {
-		matchMedia: () => query,
-		change(next: boolean) {
-			matches = next;
-			Object.defineProperty(query, 'matches', { value: matches, configurable: true });
-			for (const listener of listeners) {
-				listener({ matches } as MediaQueryListEvent);
-			}
-		}
-	} as unknown as Window & { change(matches: boolean): void };
 }
 
 function installResizeObserver() {

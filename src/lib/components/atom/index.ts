@@ -1,5 +1,3 @@
-export { default as HtmlAtom } from './html-atom.svelte';
-export * as Atom from './atoms';
 export * from './types';
 export { componentBase, type ExplicitBase } from './render/render-target';
 export { resolvePreset, mergeAtomProps, mergePresetProps } from './resolve';

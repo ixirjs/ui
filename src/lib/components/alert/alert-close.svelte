@@ -1,11 +1,11 @@
-<script
-	lang="ts"
-	generics="E extends keyof HTMLElementTagNameMap = 'button', B extends Base = Base"
->
-	import { type Base } from '$ixirjs/ui/components/atom';
-	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
-	import { usePart } from '$ixirjs/ui/shared';
+<script module lang="ts">
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
 	import { AlertBond } from './bond.svelte';
+	const PART = Kernel.part(AlertBond, 'closeButton', { class: '' });
+</script>
+
+<script lang="ts" generics="E extends HtmlElementTagName = 'button', B extends Base = Base">
+	import { type Base, type BasePropsOf, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
 	import type { AlertCloseButtonProps } from './types';
 	import { Icon } from '$ixirjs/ui/components/icon';
 
@@ -15,12 +15,9 @@
 		preset = undefined,
 		children = undefined,
 		...restProps
-	}: AlertCloseButtonProps<E, B> = $props();
+	}: AlertCloseButtonProps<E, B> & BasePropsOf<B> = $props();
 
-	const part = usePart(AlertBond, 'closeButton', () => restProps, {
-		context: 'optional',
-		preset: () => preset
-	});
+	const part = Kernel.node(PART, () => ({ preset }), { context: 'optional' });
 	const bond = part.bond;
 
 	const defaults = $derived({
@@ -29,7 +26,7 @@
 		tabindex: as === 'button' ? undefined : 0
 	});
 
-	const el = usePartElement(part, () => ({
+	const el = Kernel.element(part, () => ({
 		as,
 		defaults,
 		class: [
@@ -41,7 +38,7 @@
 	}));
 </script>
 
-{@render partElement(el, body)}
+{@render Kernel.render(el)(el.tag(), el.class(), el.attrs(), body, undefined, el.motion(), el)}
 
 {#snippet body()}
 	{@render (children ?? fallback)({ alert: bond! })}

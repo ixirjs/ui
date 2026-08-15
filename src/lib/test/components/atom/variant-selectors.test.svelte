@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Button } from '$ixirjs/ui';
-	import { HtmlAtom } from '$ixirjs/ui/components/atom';
+	import KernelElement from '$ixirjs/ui/test/components/atom/kernel-element.test.svelte';
 	import { setPreset } from '$ixirjs/ui/preset';
 
 	// The local `variants` prop is a public escape hatch no shipped component uses, so it needs its
@@ -26,9 +26,13 @@
 <Button data-testid="selectors" variant="primary" size="sm" tone="loud" title="Save">Save</Button>
 <Button data-testid="undeclared" role="link">Link</Button>
 
-<HtmlAtom as="span" data-testid="local" variants={localVariants} emphasis="high" lang="en"
-></HtmlAtom>
+<KernelElement as="span" data-testid="local" variants={localVariants} emphasis="high" lang="en"
+></KernelElement>
 
 <!-- Opaque by design: a function definition computes its own props, so nothing is stripped. -->
-<HtmlAtom as="span" data-testid="opaque" variants={() => ({ class: 'is-opaque' })} emphasis="high"
-></HtmlAtom>
+<KernelElement
+	as="span"
+	data-testid="opaque"
+	variants={() => ({ class: 'is-opaque' })}
+	emphasis="high"
+></KernelElement>

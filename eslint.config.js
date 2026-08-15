@@ -56,10 +56,43 @@ export default ts.config(
 					ignoreRestSiblings: true
 				}
 			],
+			// An empty interface is this library's declaration-merging seam (ADR 0008), in both its
+			// shapes: `interface CardTitleProps extends HtmlAtomProps<E, B> {}` for interface-shaped
+			// props, and a bare `interface TreeRootExtendProps {}` for the ones a type alias cannot
+			// merge into. An empty body is the point, not an oversight, so the rule is wrong here
+			// rather than the code — it was being silenced 61 times by hand. Object types stay
+			// checked: `type X = {}` is still an error (see the three in `components/atom/types.ts`).
+			'@typescript-eslint/no-empty-object-type': ['error', { allowInterfaces: 'always' }],
 			'svelte/no-navigation-without-resolve': 'off',
 			'svelte/no-useless-children-snippet': 'off',
 			'svelte/no-useless-mustaches': 'off',
 			'svelte/prefer-svelte-reactivity': 'off'
+		}
+	},
+	{
+		// `@ixirjs/ui/*` resolves to `src/lib/public/*` — the hand-curated published surface — while
+		// `$ixirjs/ui/*` resolves to `src/lib/*`. Both work, so four families (collapsible, combobox,
+		// datagrid, select) had drifted onto the package specifier and were authoring themselves
+		// through their own published barrel, which is a strict subset: `lazyCapability` and
+		// `isBrowser` were only reachable that way. Collapsible is the exemplar AGENTS.md says to
+		// copy for a bonded family, so the minority convention was the one being taught.
+		//
+		// Product code takes the internal alias. `src/lib/public/**` is the barrel itself and
+		// `src/lib/test/**` legitimately imports the public surface — that is what it is testing.
+		files: ['src/lib/components/**/*', 'src/lib/shared/**/*', 'src/lib/preset/**/*'],
+		rules: {
+			'no-restricted-imports': [
+				'error',
+				{
+					patterns: [
+						{
+							group: ['@ixirjs/ui', '@ixirjs/ui/*'],
+							message:
+								"Import library internals through the '$ixirjs/ui/…' alias. '@ixirjs/ui/…' is the published barrel (src/lib/public), and product code must not author itself through its own public surface."
+						}
+					]
+				}
+			]
 		}
 	},
 	{

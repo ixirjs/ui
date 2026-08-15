@@ -13,10 +13,10 @@ Declarative helpers for defining Bond families.
 
 ## Usage Notes
 
-- `defineBond<const S extends BondSpec>(spec: S)` has one inference site; use `SpecOf`, `BaseOf`, `StateOf`, `PropsOf`, `PartsOf`, `ExtendsOf`, `AtomsOf`, and `MethodsOf` to inspect it at type level.
+- `defineBond<const S extends BondSpec>(spec: S)` has one inference site; use `SpecOf`, `BaseOf`, `StateOf`, `PropsOf`, `PartsOf`, and `AtomsOf` to inspect it at type level.
 - Prefer `BondOf<typeof X>` for defined bond instances.
-- Use `parts:` for flat composition and `extends:` only for legacy/spec inheritance.
-- Ordinary fixed descendants use `usePart(BondClass, slot, () => restProps, options)` so the helper owns context lookup, registration, role projection, and presentation. Roots, repeated/data-driven, virtual, and runtime-polymorphic parts use `createAtomInstance(...)` directly by explicit exception. Definition metadata remains internal and no public `.spec` is exposed.
-- `AtomSpec.part` names a declarative slot only. Atom identity belongs to the Atom constructor and registration belongs to `createAtomInstance({ register })`.
-- Definitions record atom metadata for `usePart(...)`; they never manufacture detached Atom methods. Rendered parts use `createAtomInstance(...)` or `usePart(...)` so identity, registration, and teardown stay with the render owner.
+- Use `parts:` for flat composition. State and methods belong on the `base:` class — the generated class adds neither.
+- Ordinary fixed descendants compile `Kernel.part(BondClass, slot, options)` in module scope and bind `Kernel.node(...)` per instance; Kernel owns context lookup, lazy registration, role projection, and presentation. Roots use `useRoot`; repeated/data-driven, virtual, and runtime-polymorphic parts use `createAtomInstance(...)` only by explicit exception. Definition metadata remains internal and no public `.spec` is exposed.
+- `AtomSpec.part` names a declarative slot only. Atom identity belongs to the Atom constructor and registration belongs to Kernel or `createAtomInstance({ register })`.
+- Definitions record atom metadata for Kernel. Identity, registration, and teardown stay with the render owner.
 - A generic class value loses its type parameter through `typeof` in TypeScript. The DataGrid family and Drawer retain only small static constructor facades to re-introduce that parameter at their public boundary; ordinary bonds expose `defineBond(...)` directly.

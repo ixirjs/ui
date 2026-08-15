@@ -46,9 +46,10 @@ Trigger, Content, Item, Header, or Body.
 
 **Atom** — the runtime object owned by an Atom Component. It owns one DOM element
 ref, attrs, handlers, attachment lifecycle, role projection, and atom-local
-capabilities. Rendered Svelte parts create Atoms with `createAtomInstance(...)`
-and register them with their Bond. Definitions retain atom metadata only; there are no generated detached-Atom constructors. Rendered
-parts use `createAtomInstance(...)`/`usePart(...)`, and mounted consumers use registry queries.
+capabilities. Ordinary rendered parts compile `Kernel.part(...)` metadata and bind a
+`Kernel.node(...)`; Kernel registers a lazy semantic descriptor and materializes its Atom only when
+rendering semantics or a public query needs it. Repeated/runtime-polymorphic parts use
+`createAtomInstance(...)` by exception. Mounted consumers use registry queries.
 
 **Capability** — a reusable behavior unit installed on a Bond or an Atom. Bond
 capabilities own shared state, cross-atom coordination, role projection, and
@@ -123,29 +124,25 @@ break lifecycle locality.
 **Share** — the low-level operation that sets a Bond into Svelte context. Roots use `useRoot(...)`,
 which constructs, activates, publishes and destroys the Bond (delegating to the experimental `bindBond(...)`, still
 the exported primitive, for the construction and lifecycle half). A root that renders no element of
-its own passes `atom: false`. Sub-components retrieve via `FooBond.get()` or `usePart(...)`.
+its own passes `atom: false`. Ordinary sub-components bind a module-scoped Kernel plan with
+`Kernel.node(...)`; lower-level code may retrieve context via `FooBond.get()`.
 See §"Bond context plumbing".
 
 **Preset record** — the closed presentation contract `{ class, attrs, variants,
 compounds, defaults, render? }`, authored with `definePreset(...)`. Presets do not own
 attachments or lifecycle; that behavior belongs in capabilities.
 
-**`base` / `as` / preset cascade** — props on `HtmlAtom` that govern what
-component renders and how variants/presets merge. Order: `defaults → preset →
-variants → restProps` (last wins). This precedence is contract; tests in
-`src/lib/components/atom/resolvers.spec.ts` and `utils/fold.spec.ts` pin it. The
-resolver pipeline lives in `atom/resolvers.ts` (`resolvePreset`, `resolveLocalVariants`,
-`resolveVariants`, `foldLayers`, `resolveClass`, `resolveBase`, `resolveAs`).
-`presentation.svelte.ts` evaluates it into one tracked snapshot. `HtmlAtom` renders the ordinary
-native path directly; only custom renderers, snippets, motion, or renderer lifecycle hooks enter
-the richer `HtmlElement` adapter. Current binding notes live in `src/lib/shared/README.md` and child
-READMEs.
+**`base` / `as` / preset cascade** — rich render props govern what component renders and how
+variants/presets merge. Order: `defaults → preset → variants → restProps` (last wins). Tests under
+`src/lib/components/atom/resolve/` pin this contract. `presentation.svelte.ts` evaluates it into one
+tracked snapshot. Kernel renders the ordinary native path directly; custom renderers, driver-only
+motion, or renderer lifecycle hooks enter the richer component leaves.
 
-**Part element seam** — `usePartElement(...)` + the `partElement` snippet render a bonded part's
-element without an `HtmlAtom` component boundary, running the same presentation cascade inside the
-part's own init. Its config thunk returns an `HtmlAtom` props object, so precedence stays ordinary
-object-literal order. Parts needing the rich path (`base`, motion, lifecycle hooks) route back to
-`<HtmlAtom>`, which remains the single lifecycle handler. See AGENTS.md → "the element seam".
+**Runtime Kernel** — the sole first-party rendering seam. `Kernel.part(...)` compiles immutable
+slot metadata once per module, `Kernel.node(...)` binds one instance and its lazy semantic identity,
+`Kernel.element(...)` resolves the full presentation contract, and `Kernel.render(...)` selects the
+literal, dynamic, transition, element, or custom-renderer leaf. `definePart(...)` collapses the
+ordinary no-logic descendant shape onto Kernel. There is no parallel rendering interface.
 
 **`Bond.namespace` vs `Bond.preset`** — two _distinct_ identities, kept
 separate on purpose:
@@ -289,3 +286,26 @@ Calendar days keyed by `day.id` or weekday headers keyed by index. Prefer
 creating these Atoms in the rendered part with `createAtomInstance(key, ...)`
 and registering many nodes with `register: { cardinality: 'many' }`. Caller
 responsibility: keep the data identity stable across renders.
+
+**ValidationSource** — the one seam between a Bond and whoever decides whether it
+is valid (`shared/validation`). Two directions, either or both: **pull**, where
+`validate(values)` is called when the form decides it is time, and **push**, where
+`errors` is read reactively because someone else owns the state. A
+[Standard Schema](https://standardschema.dev) is a source
+(`standardSchemaSource`); a reactive error bag is a source (`errorRecordSource`);
+Superforms is a source (`superformsSource`). `FormBond` never learns which kind it
+was handed, which is why adding Superforms took no changes to the Bond.
+
+The `~standard` spec is **vendored as types**, not depended on — a peer dependency
+would force every consumer to install a schema library they may not use. There is
+deliberately no adapter layer: Zod, Valibot, ArkType and Effect all implement the
+spec natively, so `schema={anySchema}` is the whole integration. A schema that
+_throws_ propagates rather than being reported as zero errors, since an empty error
+list reads downstream as valid. See `docs/adr/0010`.
+
+**Error routing** — issue paths and field `name`s are both normalized through
+`formatPath(parsePath(name))` before comparison, so `items.0.qty` and `items[0].qty`
+are one key. A field's `errors` are its own schema's plus the slice of the form's
+that match its name; the merged view — not the field's own model — is what the
+`VALIDATION` capability surface publishes, so a form-level error still reaches
+`aria-invalid` on the control.
