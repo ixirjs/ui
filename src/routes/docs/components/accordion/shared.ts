@@ -91,15 +91,14 @@ export const metadata = {
 	componentTitle: 'Accordion',
 	componentDescription:
 		'Collapsible content sections for FAQs and settings with single/multiple open items and keyboard navigation.',
+	summary: 'Collapsible content sections with single or multi-open support',
+	category: 'Layout' as const,
 	componentType: 'compound' as const,
 	status: 'stable' as const,
 	packageName: '@ixirjs/ui',
 	importCode: "import { Accordion, AccordionItem } from '@ixirjs/ui';",
-	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Accordion' }],
 	useCases,
 	componentsSummary,
-	examples: {
-		preset: presetCode
-	},
+	presetCode,
 	accessibility: accessibilityFeatures
 };

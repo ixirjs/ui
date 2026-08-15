@@ -48,7 +48,7 @@ const buttonVariants = defineVariants({
 
 {codeBlock(
 	`<script lang="ts">
-  import { HtmlAtom } from '@ixirjs/ui';
+  import { HtmlElement } from '@ixirjs/ui/components/element';
 import { defineVariants } from '@ixirjs/ui/utils';
 
   const variants = defineVariants({
@@ -65,9 +65,9 @@ import { defineVariants } from '@ixirjs/ui/utils';
   let { tone = 'neutral', ...rest } = $props();
 </script>
 
-<HtmlAtom {rest} variants={variants} {tone}>
+<HtmlElement {rest} variants={variants} {tone}>
   {@render children?.()}
-</HtmlAtom>`,
+</HtmlElement>`,
 	'svelte'
 )}
 

@@ -75,15 +75,14 @@ export const metadata = {
 	componentTitle: 'Toast',
 	componentDescription:
 		'Temporary notification that appears at the screen edge for non-intrusive feedback and system messages.',
+	summary: 'Temporary notification messages with position and duration control',
+	category: 'Feedback' as const,
 	componentType: 'simple' as const,
 	status: 'stable' as const,
 	packageName: '@ixirjs/ui',
 	importCode: "import { Toast, Toaster } from '@ixirjs/ui/components/toast';",
-	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Toast' }],
 	useCases,
 	componentsSummary,
-	examples: {
-		preset: presetCode
-	},
+	presetCode,
 	accessibility: accessibilityFeatures
 };

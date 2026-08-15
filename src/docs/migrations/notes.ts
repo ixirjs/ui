@@ -38,10 +38,9 @@ export const migrationNotes: MigrationNote[] = [
 		id: 'atoms-created-in-parts',
 		title: 'Create runtime Atoms in the part that renders the element',
 		detail:
-			'Bond-owned atom factories (`bond.trigger()`, `bond.content()`, `bond.atom(...)`) were removed. The component rendering an element creates its own Atom with `createAtomInstance(slot, { resolveBond, capabilities })`, and fixed descendants use `usePart(...)`.',
+			'Bond-owned atom factories (`bond.trigger()`, `bond.content()`, `bond.atom(...)`) were removed. The component rendering an element creates its own Atom with `createAtomInstance(slot, { bond, capabilities })`, and fixed descendants use `usePart(...)`.',
 		find: 'bond\\.(trigger|content|atom)\\(',
-		replace:
-			"createAtomInstance('trigger', { resolveBond: () => XBond.getOrThrow(), capabilities: [...] })",
+		replace: "createAtomInstance('trigger', { bond: XBond.getOrThrow(), capabilities: [...] })",
 		doc: 'migration'
 	},
 	{

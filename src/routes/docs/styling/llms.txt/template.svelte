@@ -65,7 +65,7 @@ directly on components:
 
 {codeBlock(
 	`
-<HtmlAtom
+<HtmlElement
   class={[
     'base-layout-classes',    // flex, grid, etc.
     'sizing-classes',         // w-full, px-4, etc.
@@ -178,7 +178,7 @@ Tailwind utilities:
 <script lang="ts">
 	/* eslint-disable @typescript-eslint/no-unused-vars */
   import { defineVariants } from '@ixirjs/ui/utils';
-  import { HtmlAtom } from '@ixirjs/ui';
+  import { HtmlElement } from '@ixirjs/ui/components/element';
 
   const buttonVariants = defineVariants({
     class: 'inline-flex items-center justify-center rounded-md font-medium',
@@ -203,9 +203,9 @@ Tailwind utilities:
   let { variant, size, ...props } = $props();
 </script>
 
-<HtmlAtom variants={buttonVariants} {variant} {size} {...props}>
+<HtmlElement variants={buttonVariants} {variant} {size} {...props}>
   {@render children?.()}
-</HtmlAtom>
+</HtmlElement>
 `,
 	'typescript'
 )}
@@ -260,7 +260,7 @@ const accordionVariants = defineVariants((bond) => ({
 {codeBlock(
 	`
 <!-- In your component -->
-<HtmlAtom
+<HtmlElement
   preset="button"
   class={[
     'component-defaults',
@@ -269,7 +269,7 @@ const accordionVariants = defineVariants((bond) => ({
 />
 
 <!-- Preset classes are inserted automatically -->
-<HtmlAtom
+<HtmlElement
   preset="button"
   class={['component-classes', klass]}
 />
@@ -320,7 +320,7 @@ const accordionVariants = defineVariants((bond) => ({
 	`
 <script lang="ts">
 	/* eslint-disable @typescript-eslint/no-unused-vars */
-  import { HtmlAtom } from '@ixirjs/ui';
+  import { HtmlElement } from '@ixirjs/ui/components/element';
 import { defineVariants } from '@ixirjs/ui/utils';
   
   const variants = defineVariants({
@@ -347,7 +347,7 @@ import { defineVariants } from '@ixirjs/ui/utils';
   let { variant, size, class: klass, ...props } = $props();
 </script>
 
-<HtmlAtom
+<HtmlElement
   as="button"
   {variants}
   {variant}
@@ -365,12 +365,12 @@ import { defineVariants } from '@ixirjs/ui/utils';
 	`
 <script lang="ts">
 	/* eslint-disable @typescript-eslint/no-unused-vars */
-  import { HtmlAtom } from '@ixirjs/ui';
+  import { HtmlElement } from '@ixirjs/ui/components/element';
   
   let { class: klass, ...props } = $props();
 </script>
 
-<HtmlAtom
+<HtmlElement
   as="div"
   preset="card"
   class={['rounded-lg border bg-card text-card-foreground shadow-sm', klass]}

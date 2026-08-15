@@ -1,12 +1,6 @@
 <script lang="ts">
-	import { createExampleLoader } from '$docs/utils/example-loader';
-	import {
-		DocComponentPage,
-		DocExample,
-		DocCode,
-		DocPropsTabs,
-		DocSection
-	} from '$docs/components';
+	import type { DocContentProps } from '$docs/types';
+	import { DocComponentPage, DocExample, DocSection } from '$docs/components';
 	import type { PropsSection } from '$docs/components';
 	import {
 		dialogProps,
@@ -19,19 +13,8 @@
 		dialogCloseButtonProps
 	} from './props';
 	import { metadata } from './shared';
-	import type { DocMode } from '$docs/context/doc-mode.svelte';
-	import type { Frontmatter } from '$docs/md/frontmatter';
 
-	let { contentType = 'html' }: { contentType?: DocMode } = $props();
-
-	const frontmatter: Frontmatter = {
-		id: 'dialog',
-		title: 'Dialog',
-		category: 'components',
-		depth: 'intermediate',
-		prerequisites: [],
-		related: []
-	};
+	let { contentType = 'html', ex }: DocContentProps = $props();
 
 	const apiSections: PropsSection[] = [
 		{ label: 'Dialog.Root', presetKey: 'dialog', props: dialogProps },
@@ -43,27 +26,9 @@
 		{ label: 'Dialog.Description', presetKey: 'dialog.description', props: dialogDescriptionProps },
 		{ label: 'Dialog.CloseButton', presetKey: 'dialog.close', props: dialogCloseButtonProps }
 	];
-
-	const _loaders = import.meta.glob('./examples/*.svelte');
-	const _sources = import.meta.glob('./examples/*.svelte', {
-		query: '?raw',
-		import: 'default',
-		eager: true
-	}) as Record<string, string>;
-	const ex = createExampleLoader(_loaders, _sources);
 </script>
 
-<DocComponentPage
-	{contentType}
-	{metadata}
-	{frontmatter}
-	prev={{ label: 'DataGrid', href: '/docs/components/datagrid' }}
-	next={{ label: 'Divider', href: '/docs/components/divider' }}
->
-	{#snippet preset()}
-		<DocCode code={metadata.examples.preset} lang="typescript" />
-	{/snippet}
-
+<DocComponentPage {contentType} {metadata} {apiSections}>
 	{#snippet examples()}
 		<DocExample
 			title="Basic Dialog"
@@ -84,9 +49,5 @@
 			portal supplied by its host, then <code>root.l0</code>. Nested overlays therefore remain
 			scoped to the dialog's host instead of detaching to <code>document.body</code>.
 		</DocSection>
-	{/snippet}
-
-	{#snippet apiReference()}
-		<DocPropsTabs sections={apiSections} />
 	{/snippet}
 </DocComponentPage>

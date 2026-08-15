@@ -9,8 +9,22 @@ Parts call bond.trigger(), bond.content(), or bond.atom(...).
 
 // Current wording
 Bond owns shared state, mutations, context, capabilities, and registered Atoms.
-Atom Components create their own Atoms with createAtomInstance(...); ordinary fixed descendants use usePart(...).
+Built-in fixed descendants bind through the internal Kernel; custom runtime parts use createAtomInstance(...).
 Parts read rendered Atoms with bond.nodeByPart(...), bond.nodesByPart(...), and bond.nodeByRole(...).`;
+
+	const renderCode = `// Before
+import { HtmlAtom, type HtmlAtomProps } from '@ixirjs/ui';
+import { usePart } from '@ixirjs/ui/shared';
+
+// After
+import type { RenderProps } from '@ixirjs/ui';
+import { HtmlElement } from '@ixirjs/ui/components/element';
+
+// Prefer a semantic library component. Use HtmlElement only for a low-level custom element.
+<HtmlElement preset="button" as="button">Save</HtmlElement>
+
+// Built-in descendants bind through the internal Kernel. External custom runtime parts use
+// createAtomInstance(...) instead of usePart(...).`;
 
 	const stateCode = `// Before: state class as the public authoring surface
 class DialogState extends BondState<DialogProps> {
@@ -39,7 +53,7 @@ const trigger = bond.trigger();
 
 // After: the rendered part owns its runtime Atom
 const trigger = createAtomInstance('trigger', {
-  resolveBond: () => DialogBond.getOrThrow(),
+  bond: DialogBond.getOrThrow(),
   capabilities: [elementRef(), pressable(), ariaRole('button')]
 });
 
@@ -103,6 +117,20 @@ const trigger = createAtomInstance('trigger', {
 		The Bond coordinates. The Atom Component renders. The Atom owns one DOM node. Capabilities add
 		reusable behavior.
 	</DocCallout>
+</Section.Root>
+
+<Section.Root>
+	<Section.Header>
+		<Section.Title>Replace Removed Rendering Adapters</Section.Title>
+		<Section.Subtitle>
+			The rich prop vocabulary is now <code>RenderProps</code>. Prefer semantic components or the
+			low-level <code>HtmlElement</code> renderer.
+		</Section.Subtitle>
+	</Section.Header>
+
+	<div class="overflow-hidden rounded-lg">
+		<CodeBlock lang="svelte" code={renderCode} />
+	</div>
 </Section.Root>
 
 <Section.Root>
@@ -175,6 +203,9 @@ const trigger = createAtomInstance('trigger', {
 		<p class="text-foreground mb-2 text-sm font-semibold">Migration checklist</p>
 		<ul class="text-muted-foreground list-disc space-y-1 pl-5 text-sm">
 			<li>Replace BondState hosts with a Bond subclass, passed to defineBond as its base.</li>
+			<li>Replace HtmlAtomProps with RenderProps.</li>
+			<li>Replace HtmlAtom with a semantic component or HtmlElement.</li>
+			<li>Replace usePart in custom families with explicit createAtomInstance ownership.</li>
 			<li>Move shared getters and mutation methods onto the Bond.</li>
 			<li>Create runtime Atoms in rendered Svelte parts with createAtomInstance.</li>
 			<li>Use nodeByPart, nodesByPart, and nodeByRole for rendered Atom lookup.</li>

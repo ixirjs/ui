@@ -36,14 +36,14 @@ export const metadata = {
 	componentTitle: 'DatePicker',
 	componentDescription:
 		'A composed overlay that anchors a Calendar to a trigger. Supports single-date and range selection, min/max bounds, and configurable placement.',
+	summary: 'Popover calendar wired to a trigger for single or range date selection',
+	category: 'Form' as const,
 	componentType: 'compound' as const,
 	status: 'beta' as const,
+	depth: 'intermediate' as const,
 	packageName: '@ixirjs/ui',
 	importCode: "import { DatePicker } from '@ixirjs/ui';",
-	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'DatePicker' }],
 	useCases,
-	examples: {
-		preset: presetCode
-	},
+	presetCode,
 	accessibility: accessibilityFeatures
 };

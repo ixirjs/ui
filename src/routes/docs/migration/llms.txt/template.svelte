@@ -25,10 +25,21 @@ generated atom factories, or `bond.state` as the main public API. ## Current Ter
 New: Bond owns public shared state and mutations.
 
 Old: Bond creates each Atom for rendered parts.
-New: Atom Components create their own Atoms with createAtomInstance(...); ordinary fixed descendants use usePart(...).
+New: Built-in fixed descendants bind through the internal Kernel; custom runtime parts use createAtomInstance(...).
 
 Old: bond.trigger(), bond.content(), or bond.atom(...) are the main lookup API.
 New: bond.nodeByPart(...), bond.nodesByPart(...), and bond.nodeByRole(...) read rendered registered Atoms.`,
+	'text'
+)}
+
+## Replace Removed Rendering Adapters
+
+{codeBlock(
+	`Old: HtmlAtom and HtmlAtomProps.
+New: semantic components or HtmlElement, with RenderProps for shared rich prop typing.
+
+Old: usePart in externally authored families.
+New: explicit createAtomInstance ownership. Built-in descendants use the internal Kernel.`,
 	'text'
 )}
 
@@ -51,7 +62,7 @@ New: bond.nodeByPart(...), bond.nodesByPart(...), and bond.nodeByRole(...) read 
 
 {codeBlock(
 	`const trigger = createAtomInstance('trigger', {
-  resolveBond: () => DialogBond.getOrThrow(),
+  bond: DialogBond.getOrThrow(),
   capabilities: [elementRef(), pressable(), ariaRole('button')]
 });`,
 	'typescript'
@@ -70,6 +81,9 @@ const items = bond.nodesByPart('item');`,
 ## Checklist
 
 {list([
+	'Replace HtmlAtomProps with RenderProps.',
+	'Replace HtmlAtom with a semantic component or HtmlElement.',
+	'Replace usePart with explicit createAtomInstance ownership.',
 	'Replace BondState hosts with a Bond subclass, passed to defineBond as its base.',
 	'Move shared getters and mutation methods onto the Bond.',
 	'Create runtime Atoms in rendered Svelte parts with createAtomInstance.',

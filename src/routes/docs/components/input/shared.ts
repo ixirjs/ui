@@ -256,16 +256,15 @@ export const metadata = {
 	componentTitle: 'Input',
 	componentDescription:
 		'Flexible input component with icons, placeholders, and all HTML input types.',
+	summary: 'Text input with optional prefix, suffix, and validation states',
+	category: 'Form' as const,
 	componentType: 'compound' as const,
 	status: 'stable' as const,
 	packageName: '@ixirjs/ui',
 	importCode: "import { Input } from '@ixirjs/ui';",
-	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Input' }],
 	useCases,
 	componentsSummary,
-	examples: {
-		preset: presetCode
-	},
+	presetCode,
 	accessibility: accessibilityFeatures,
 	specializedControls
 };

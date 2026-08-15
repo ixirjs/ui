@@ -1,52 +1,23 @@
 <script lang="ts">
-	import { createExampleLoader } from '$docs/utils/example-loader';
-	import { DocComponentPage, DocExample, DocCode, DocPropsTabs } from '$docs/components';
+	import type { DocContentProps } from '$docs/types';
+	import { DocComponentPage, DocExample } from '$docs/components';
 	import type { PropsSection } from '$docs/components';
-	import { cardRootProps, cardSubPartProps } from './props';
+	import { cardRootProps, cardHeaderProps } from './props';
 	import { metadata } from './shared';
-	import type { DocMode } from '$docs/context/doc-mode.svelte';
-	import type { Frontmatter } from '$docs/md/frontmatter';
 
-	let { contentType = 'html' }: { contentType?: DocMode } = $props();
-
-	const frontmatter: Frontmatter = {
-		id: 'card',
-		title: 'Card',
-		category: 'components',
-		depth: 'beginner',
-		prerequisites: [],
-		related: []
-	};
+	let { contentType = 'html', ex }: DocContentProps = $props();
 
 	const apiSections: PropsSection[] = [
 		{ label: 'Card.Root', presetKey: 'card', props: cardRootProps },
 		{
 			label: 'Card Sub-Parts',
 			presetKey: 'card.header / card.body / card.footer / …',
-			props: cardSubPartProps
+			props: cardHeaderProps
 		}
 	];
-
-	const _loaders = import.meta.glob('./examples/*.svelte');
-	const _sources = import.meta.glob('./examples/*.svelte', {
-		query: '?raw',
-		import: 'default',
-		eager: true
-	}) as Record<string, string>;
-	const ex = createExampleLoader(_loaders, _sources);
 </script>
 
-<DocComponentPage
-	{contentType}
-	{metadata}
-	{frontmatter}
-	prev={{ label: 'Calendar', href: '/docs/components/calendar' }}
-	next={{ label: 'Checkbox', href: '/docs/components/checkbox' }}
->
-	{#snippet preset()}
-		<DocCode code={metadata.examples.preset} lang="typescript" />
-	{/snippet}
-
+<DocComponentPage {contentType} {metadata} {apiSections}>
 	{#snippet examples()}
 		<DocExample
 			title="Basic Card"
@@ -63,9 +34,5 @@
 			description="Interactive card with click handler"
 			{...ex('./examples/clickable.svelte')}
 		/>
-	{/snippet}
-
-	{#snippet apiReference()}
-		<DocPropsTabs sections={apiSections} />
 	{/snippet}
 </DocComponentPage>

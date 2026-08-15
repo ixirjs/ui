@@ -79,15 +79,14 @@ export const metadata = {
 	componentTitle: 'Dropdown Menu',
 	componentDescription:
 		'Contextual menu triggered by user interaction with support for nested items and keyboard navigation.',
+	summary: 'Floating action menu anchored to a trigger element',
+	category: 'Overlay' as const,
 	componentType: 'compound' as const,
 	status: 'stable' as const,
 	packageName: '@ixirjs/ui',
 	importCode: "import { DropdownMenu } from '@ixirjs/ui';",
-	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Dropdown Menu' }],
 	useCases,
 	componentsSummary,
-	examples: {
-		preset: presetCode
-	},
+	presetCode,
 	accessibility: accessibilityFeatures
 };

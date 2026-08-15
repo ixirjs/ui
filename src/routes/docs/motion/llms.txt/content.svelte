@@ -15,9 +15,7 @@
 
 <FrontMatter {frontmatter} />
 
-# Motion and Animation Motion APIs are available on {inlineCode('HtmlElement')} and {inlineCode(
-	'HtmlAtom'
-)}. Supported hooks:
+# Motion and Animation Motion APIs are available on {inlineCode('HtmlElement')}. Supported hooks:
 
 {list([
 	'initial(node): one-time setup before transitions run',
@@ -31,19 +29,19 @@
 
 {codeBlock(
 	`<script lang="ts">
-  import { HtmlAtom } from '@ixirjs/ui';
+  import { HtmlElement } from '@ixirjs/ui/components/element';
   import { fade, slide } from 'svelte/transition';
 
   let open = $state(true);
 </script>
 
 {#if open}
-  <HtmlAtom
+  <HtmlElement
     enter={(node) => fade(node, { duration: 200 })}
     exit={(node) => slide(node, { duration: 160 })}
   >
     Animated block
-  </HtmlAtom>
+  </HtmlElement>
 {/if}`,
 	'svelte'
 )}
@@ -52,13 +50,13 @@
 
 {codeBlock(
 	`<script lang="ts">
-  import { HtmlAtom } from '@ixirjs/ui';
+  import { HtmlElement } from '@ixirjs/ui/components/element';
   import gsap from 'gsap';
 
   let open = $state(false);
 </script>
 
-<HtmlAtom
+<HtmlElement
   initial={(node) => gsap.set(node, { opacity: 0, y: 12 })}
   animate={(node) => {
     gsap.to(node, {
@@ -69,7 +67,7 @@
   }}
 >
   Content
-</HtmlAtom>`,
+</HtmlElement>`,
 	'svelte'
 )}
 

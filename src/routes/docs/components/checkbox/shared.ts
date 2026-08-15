@@ -61,14 +61,13 @@ export const metadata = {
 	componentTitle: 'Checkbox',
 	componentDescription:
 		'Custom checkbox with checked, unchecked, and indeterminate states, group binding, and form compatibility.',
+	summary: 'Single-checkbox or group selection with indeterminate support',
+	category: 'Form' as const,
 	componentType: 'simple' as const,
 	status: 'stable' as const,
 	packageName: '@ixirjs/ui',
 	importCode: "import { Checkbox } from '@ixirjs/ui';",
-	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Checkbox' }],
 	useCases,
-	examples: {
-		preset: presetCode
-	},
+	presetCode,
 	accessibility: accessibilityFeatures
 };

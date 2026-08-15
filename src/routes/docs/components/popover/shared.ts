@@ -88,15 +88,15 @@ export const metadata = {
 	componentTitle: 'Popover',
 	componentDescription:
 		'Floating panel displaying rich content near a trigger element for contextual information or actions.',
+	summary: 'Floating content panel with smart positioning and tail',
+	category: 'Overlay' as const,
 	componentType: 'compound' as const,
-	status: 'stable' as const,
+	status: 'beta' as const,
+	depth: 'intermediate' as const,
 	packageName: '@ixirjs/ui',
 	importCode: "import { Popover } from '@ixirjs/ui';",
-	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Popover' }],
 	useCases,
 	componentsSummary,
-	examples: {
-		preset: presetCode
-	},
+	presetCode,
 	accessibility: accessibilityFeatures
 };

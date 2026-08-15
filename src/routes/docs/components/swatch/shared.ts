@@ -10,11 +10,12 @@ export const metadata = {
 	componentTitle: 'Swatch',
 	componentDescription:
 		'Displays a color value as a small preview square. Shows a checkerboard pattern for transparent or empty colors.',
+	summary: 'Color swatch tile for palette display and color picker UIs',
+	category: 'Display' as const,
 	componentType: 'simple' as const,
 	status: 'stable' as const,
 	packageName: '@ixirjs/ui',
 	importCode: "import { Swatch } from '@ixirjs/ui/components/swatch';",
-	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Swatch' }],
 	examples: {},
 	accessibility: accessibilityFeatures
 };

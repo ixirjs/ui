@@ -109,15 +109,15 @@ export const metadata = {
 	componentTitle: 'Combobox',
 	componentDescription:
 		'Flexible combobox with text input, dropdown list, single/multiple selection, filtering, and keyboard navigation.',
+	summary: 'Searchable input that filters a dropdown list of options',
+	category: 'Form' as const,
 	componentType: 'compound' as const,
-	status: 'stable' as const,
+	status: 'beta' as const,
+	depth: 'intermediate' as const,
 	packageName: '@ixirjs/ui',
 	importCode: "import { Combobox } from '@ixirjs/ui';",
-	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Combobox' }],
 	useCases,
 	componentsSummary,
-	examples: {
-		preset: presetCode
-	},
+	presetCode,
 	accessibility: accessibilityFeatures
 };

@@ -55,14 +55,13 @@ export const metadata = {
 	componentTitle: 'Divider',
 	componentDescription:
 		'Visual separator for content sections with horizontal/vertical orientation and optional labels.',
+	summary: 'Horizontal or vertical separator for content sections',
+	category: 'Layout' as const,
 	componentType: 'simple' as const,
 	status: 'stable' as const,
 	packageName: '@ixirjs/ui',
 	importCode: "import { Divider } from '@ixirjs/ui';",
-	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Divider' }],
 	useCases,
-	examples: {
-		preset: presetCode
-	},
+	presetCode,
 	accessibility: accessibilityFeatures
 };

@@ -104,15 +104,15 @@ export const metadata = {
 	componentTitle: 'Drawer',
 	componentDescription:
 		'Side panel that slides in from screen edge, perfect for navigation menus and contextual content.',
+	summary: 'Side panel that slides in from any screen edge with focus trap',
+	category: 'Overlay' as const,
 	componentType: 'compound' as const,
 	status: 'stable' as const,
+	depth: 'intermediate' as const,
 	packageName: '@ixirjs/ui',
 	importCode: "import { Drawer } from '@ixirjs/ui';",
-	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Drawer' }],
 	useCases,
 	componentsSummary,
-	examples: {
-		preset: presetCode
-	},
+	presetCode,
 	accessibility: accessibilityFeatures
 };

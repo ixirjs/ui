@@ -174,7 +174,7 @@
 		</div>
 
 		<div class="grid gap-px border md:grid-cols-3 bg-border border-border">
-			<!-- Atoms -->
+			<!-- Components -->
 			<div class="bg-card p-8">
 				<div class="mb-5 flex items-center justify-between">
 					<div
@@ -200,16 +200,13 @@
 					</div>
 					<span class="text-muted-foreground/50 font-mono text-xs">01</span>
 				</div>
-				<h3 class="mb-2 text-base font-semibold">Atoms</h3>
+				<h3 class="mb-2 text-base font-semibold">Components</h3>
 				<p class="text-muted-foreground text-sm leading-relaxed">
-					The lowest-level building block. <code class="bg-muted rounded px-1 text-xs"
-						>HtmlAtom</code
-					>
-					wraps any HTML element and injects preset classes, variants, and bond state — with zero hardcoded
-					styles.
+					Semantic Svelte components own their markup, accessibility, and public props while the
+					internal runtime keeps rendering consistent and allocation-light.
 				</p>
 				<a
-					href="/docs/atoms"
+					href="/docs/components"
 					class="text-primary mt-4 inline-flex items-center gap-1 text-sm font-medium"
 				>
 					Learn more <svg

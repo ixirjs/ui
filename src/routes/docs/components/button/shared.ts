@@ -64,14 +64,13 @@ export const metadata = {
 	componentTitle: 'Button',
 	componentDescription:
 		'Versatile button with full HTML support, preset styling, disabled states, and icon content.',
+	summary: 'Interactive element for triggering actions and navigation',
+	category: 'Form' as const,
 	componentType: 'simple' as const,
 	status: 'stable' as const,
 	packageName: '@ixirjs/ui',
 	importCode: "import { Button } from '@ixirjs/ui';",
-	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Button' }],
 	useCases,
-	examples: {
-		preset: presetCode
-	},
+	presetCode,
 	accessibility: accessibilityFeatures
 };

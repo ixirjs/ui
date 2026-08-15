@@ -1,165 +1,106 @@
-export interface PropDefinition {
-	name: string;
-	type: string;
-	default: string;
-	description: string;
-}
-
-export const accordionRootProps: PropDefinition[] = [
-	{
-		name: 'value',
-		type: 'string | undefined',
-		default: 'undefined',
-		description: 'The value of the currently open item (controlled single-item mode)'
-	},
-	{
-		name: 'values',
-		type: 'string[] | undefined',
-		default: 'undefined',
-		description: 'Array of currently open item values (controlled multiple-item mode)'
-	},
-	{
-		name: 'multiple',
-		type: 'boolean | undefined',
-		default: 'false',
-		description: 'Allow multiple accordion items to be open simultaneously'
-	},
-	{
-		name: 'collapsible',
-		type: 'boolean | undefined',
-		default: 'false',
-		description: 'Allow all items to be collapsed (no forced-open item)'
-	},
-	{
-		name: 'disabled',
-		type: 'boolean | undefined',
-		default: 'false',
-		description: 'Disable all accordion items'
-	},
-	{
-		name: 'factory',
-		type: 'Factory<AccordionBond> | undefined',
-		default: 'undefined',
-		description: 'Custom factory for the accordion bond, enabling advanced behavioral customization'
-	},
-	{
-		name: '...atomProps',
-		type: 'HtmlAtomProps',
-		default: '-',
-		description:
-			'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
-	}
-];
+import { renderPropsRow, type PropDefinition } from '$docs/types';
 
 export const accordionItemRootProps: PropDefinition[] = [
 	{
-		name: 'value',
-		type: 'string | undefined',
+		name: 'data',
+		type: 'any',
 		default: 'undefined',
-		description:
-			'Unique identifier for this accordion item. Used to control open state programmatically.'
+		description: 'Arbitrary payload carried on the Bond, returned by lookups and snippet props.'
 	},
 	{
 		name: 'disabled',
-		type: 'boolean | undefined',
+		type: 'boolean',
 		default: 'false',
 		description: 'Disable this accordion item individually'
 	},
 	{
 		name: 'factory',
-		type: 'Factory<AccordionItemBond> | undefined',
+		type: 'Factory<AccordionItemBondBase>',
 		default: 'undefined',
 		description: 'Custom factory for the item bond, enabling advanced behavioral customization'
 	},
 	{
-		name: '...atomProps',
-		type: 'HtmlAtomProps',
-		default: '-',
+		name: 'presets',
+		type: 'AccordionItemPresets | undefined',
+		default: 'undefined',
+		description: 'Per-instance presentation overrides for the Accordion item Bond.'
+	},
+	{
+		name: 'value',
+		type: 'string',
+		default: 'undefined',
 		description:
-			'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
-	}
+			'Unique identifier for this accordion item. Used to control open state programmatically.'
+	},
+	renderPropsRow
 ];
 
-export const accordionItemHeaderProps: PropDefinition[] = [
-	{
-		name: 'bond',
-		type: 'AccordionItemBond',
-		default: 'undefined',
-		description: 'Bond object passed down from AccordionItem.Root for shared item coordination'
-	},
-	{
-		name: 'preset',
-		type: 'PresetModuleName | string',
-		default: 'undefined',
-		description: 'Preset module name for styling this header'
-	},
-	{
-		name: 'class',
-		type: 'ClassValue | ClassValue[]',
-		default: 'undefined',
-		description: 'CSS class(es) to apply'
-	},
-	{
-		name: '...atomProps',
-		type: 'HtmlAtomProps',
-		default: '-',
-		description:
-			'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
-	}
-];
+export const accordionItemHeaderProps: PropDefinition[] = [renderPropsRow];
 
-export const accordionItemBodyProps: PropDefinition[] = [
-	{
-		name: 'bond',
-		type: 'AccordionItemBond',
-		default: 'undefined',
-		description: 'Bond object passed down from AccordionItem.Root for shared item coordination'
-	},
-	{
-		name: 'preset',
-		type: 'PresetModuleName | string',
-		default: 'undefined',
-		description: 'Preset module name for styling this body'
-	},
-	{
-		name: 'class',
-		type: 'ClassValue | ClassValue[]',
-		default: 'undefined',
-		description: 'CSS class(es) to apply'
-	},
-	{
-		name: '...atomProps',
-		type: 'HtmlAtomProps',
-		default: '-',
-		description:
-			'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
-	}
-];
+export const accordionItemBodyProps: PropDefinition[] = [renderPropsRow];
 
-export const accordionItemIndicatorProps: PropDefinition[] = [
+export const accordionItemIndicatorProps: PropDefinition[] = [renderPropsRow];
+
+export const accordionRootProps: PropDefinition[] = [
 	{
-		name: 'bond',
-		type: 'AccordionItemBond',
-		default: 'undefined',
-		description: 'Bond object passed down from AccordionItem.Root for shared item coordination'
+		name: 'collapsible',
+		type: 'boolean',
+		default: 'false',
+		description: 'Allow all items to be collapsed (no forced-open item)'
 	},
 	{
-		name: 'preset',
-		type: 'PresetModuleName | string',
+		name: 'data',
+		type: 'unknown',
 		default: 'undefined',
-		description: 'Preset module name for styling this indicator'
+		description: 'Arbitrary payload carried on the Bond, returned by lookups and snippet props.'
 	},
 	{
-		name: 'class',
-		type: 'ClassValue | ClassValue[]',
-		default: 'undefined',
-		description: 'CSS class(es) to apply'
+		name: 'disabled',
+		type: 'boolean',
+		default: 'false',
+		description: 'Disable all accordion items'
 	},
 	{
-		name: '...atomProps',
-		type: 'HtmlAtomProps',
-		default: '-',
-		description:
-			'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
-	}
+		name: 'factory',
+		type: 'Factory<AccordionBondBase>',
+		default: 'undefined',
+		description: 'Custom factory for the accordion bond, enabling advanced behavioral customization'
+	},
+	{
+		name: 'multiple',
+		type: 'boolean',
+		default: 'false',
+		description: 'Allow multiple accordion items to be open simultaneously'
+	},
+	{
+		name: 'onvaluechange',
+		type: 'StateChangeCallback<string | undefined, AccordionBondBase> | undefined',
+		default: 'undefined',
+		description: 'Single-mode callback; runs after the selected value commits.'
+	},
+	{
+		name: 'onvalueschange',
+		type: 'StateChangeCallback<string[], AccordionBondBase> | undefined',
+		default: 'undefined',
+		description: 'Multiple-mode callback; runs after the set of open values commits.'
+	},
+	{
+		name: 'presets',
+		type: 'AccordionPresets | undefined',
+		default: 'undefined',
+		description: 'Per-instance presentation overrides for the Accordion root Bond.'
+	},
+	{
+		name: 'value',
+		type: 'string',
+		default: 'undefined',
+		description: 'The value of the currently open item (controlled single-item mode)'
+	},
+	{
+		name: 'values',
+		type: 'string[]',
+		default: 'undefined',
+		description: 'Array of currently open item values (controlled multiple-item mode)'
+	},
+	renderPropsRow
 ];

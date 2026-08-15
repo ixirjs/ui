@@ -1,16 +1,10 @@
 <script lang="ts">
+	import type { DocContentProps } from '$docs/types';
 	import { resolve } from '$app/paths';
-	import { createExampleLoader } from '$docs/utils/example-loader';
-	import {
-		DocComponentPage,
-		DocExample,
-		DocSection,
-		DocOnly,
-		DocPropsTabs
-	} from '$docs/components';
-	import type { ComponentDocMeta, PropsSection } from '$docs/components';
-	import type { DocMode } from '$docs/context/doc-mode.svelte';
+	import { DocComponentPage, DocExample, DocSection, DocOnly } from '$docs/components';
+	import type { PropsSection } from '$docs/components';
 	import type { Frontmatter } from '$docs/md/frontmatter';
+	import { metadata } from './shared';
 	import {
 		contextMenuRootProps,
 		contextMenuTriggerProps,
@@ -18,7 +12,7 @@
 		contextMenuItemProps
 	} from './props';
 
-	let { contentType = 'html' }: { contentType?: DocMode } = $props();
+	let { contentType = 'html', ex }: DocContentProps = $props();
 
 	const frontmatter: Frontmatter = {
 		id: 'context-menu',
@@ -27,66 +21,6 @@
 		depth: 'intermediate',
 		prerequisites: ['dropdown-menu', 'popover'],
 		related: ['menu', 'dropdown-menu', 'popover']
-	};
-
-	const presetCode = `import { definePreset } from '@ixirjs/ui/preset';
-
-const preset = definePreset({
-  'context-menu.trigger': () => ({
-    class: 'cursor-context-menu select-none'
-  }),
-  'context-menu.content': () => ({
-    class: 'min-w-[10rem] rounded-md border bg-popover p-1 shadow-md'
-  }),
-  'context-menu.item': () => ({
-    class: 'rounded-sm px-2 py-1.5 text-sm hover:bg-accent'
-  })
-});`;
-
-	const metadata: ComponentDocMeta = {
-		componentTitle: 'Context Menu',
-		componentDescription:
-			'Right-click activated menu that appears at cursor position. Ideal for contextual actions and shortcuts.',
-		componentType: 'compound',
-		status: 'stable',
-		packageName: '@ixirjs/ui',
-		importCode: `import { ContextMenu } from '@ixirjs/ui';`,
-		breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Context Menu' }],
-		presetCode,
-		accessibility: [
-			'Right-click or Shift+F10 opens the menu on the trigger element',
-			'Arrow keys navigate menu items',
-			'Enter or Space activates a focused item',
-			'Escape closes the menu'
-		],
-		useCases: [
-			{
-				title: 'Contextual actions at cursor position',
-				description: 'Open a menu exactly where the user right-clicks'
-			},
-			{
-				title: 'Row/item actions in dense data interfaces',
-				description: 'Attach per-row menus without extra UI chrome'
-			},
-			{
-				title: 'Right-click interactions without layout shift',
-				description: 'Non-destructive overlay that keeps the page stable'
-			}
-		],
-		componentsSummary: [
-			{ name: 'ContextMenu.Root', description: 'Provides shared dropdown state and positioning' },
-			{
-				name: 'ContextMenu.Trigger',
-				description: 'Captures right-click and opens at pointer coordinates'
-			},
-			{ name: 'ContextMenu.Content', description: 'Floating menu container' },
-			{ name: 'ContextMenu.Item', description: 'Actionable item with keyboard support' },
-			{ name: 'ContextMenu.Divider', description: 'Visual separator between items' },
-			{ name: 'ContextMenu.Group', description: 'Logical group of menu items' },
-			{ name: 'ContextMenu.Title', description: 'Label for a menu-item group' },
-			{ name: 'ContextMenu.Indicator', description: 'Popover state indicator' },
-			{ name: 'ContextMenu.Tail', description: 'Optional popover tail' }
-		]
 	};
 
 	const apiSections: PropsSection[] = [
@@ -103,23 +37,9 @@ const preset = definePreset({
 		},
 		{ label: 'ContextMenu.Item', presetKey: 'context-menu.item', props: contextMenuItemProps }
 	];
-
-	const _loaders = import.meta.glob('./examples/*.svelte');
-	const _sources = import.meta.glob('./examples/*.svelte', {
-		query: '?raw',
-		import: 'default',
-		eager: true
-	}) as Record<string, string>;
-	const ex = createExampleLoader(_loaders, _sources);
 </script>
 
-<DocComponentPage
-	{contentType}
-	{metadata}
-	{frontmatter}
-	prev={{ label: 'Combobox', href: '/docs/components/combobox' }}
-	next={{ label: 'DatePicker', href: '/docs/components/date-picker' }}
->
+<DocComponentPage {contentType} {metadata} {frontmatter} {apiSections}>
 	{#snippet examples()}
 		<DocExample
 			title="Basic Zone"
@@ -136,10 +56,6 @@ const preset = definePreset({
 			description="Row-level context actions"
 			{...ex('./examples/row.svelte')}
 		/>
-	{/snippet}
-
-	{#snippet apiReference()}
-		<DocPropsTabs sections={apiSections} />
 	{/snippet}
 
 	{#snippet extra()}

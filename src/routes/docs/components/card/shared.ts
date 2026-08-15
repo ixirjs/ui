@@ -115,15 +115,14 @@ export const metadata = {
 	componentTitle: 'Card',
 	componentDescription:
 		'Modular card for organizing content into distinct sections with header, body, media, and footer.',
+	summary: 'Structured content container with header, body, and footer',
+	category: 'Display' as const,
 	componentType: 'compound' as const,
 	status: 'stable' as const,
 	packageName: '@ixirjs/ui',
 	importCode: "import { Card } from '@ixirjs/ui';",
-	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Card' }],
 	useCases,
 	componentsSummary,
-	examples: {
-		preset: presetCode
-	},
+	presetCode,
 	accessibility: accessibilityFeatures
 };

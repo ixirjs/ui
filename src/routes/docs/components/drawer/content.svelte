@@ -1,12 +1,6 @@
 <script lang="ts">
-	import { createExampleLoader } from '$docs/utils/example-loader';
-	import {
-		DocComponentPage,
-		DocExample,
-		DocCode,
-		DocPropsTabs,
-		DocSection
-	} from '$docs/components';
+	import type { DocContentProps } from '$docs/types';
+	import { DocComponentPage, DocExample, DocSection } from '$docs/components';
 	import type { PropsSection } from '$docs/components';
 	import {
 		slideoverRootProps,
@@ -15,19 +9,8 @@
 		drawerBodyProps
 	} from './props';
 	import { metadata } from './shared';
-	import type { DocMode } from '$docs/context/doc-mode.svelte';
-	import type { Frontmatter } from '$docs/md/frontmatter';
 
-	let { contentType = 'html' }: { contentType?: DocMode } = $props();
-
-	const frontmatter: Frontmatter = {
-		id: 'drawer',
-		title: 'Drawer',
-		category: 'components',
-		depth: 'intermediate',
-		prerequisites: [],
-		related: []
-	};
+	let { contentType = 'html', ex }: DocContentProps = $props();
 
 	const apiSections: PropsSection[] = [
 		{ label: 'Drawer.Root', presetKey: 'drawer', props: slideoverRootProps },
@@ -35,27 +18,9 @@
 		{ label: 'Drawer.Header', presetKey: 'drawer.header', props: slideoverHeaderProps },
 		{ label: 'Drawer.Body', presetKey: 'drawer.body', props: drawerBodyProps }
 	];
-
-	const _loaders = import.meta.glob('./examples/*.svelte');
-	const _sources = import.meta.glob('./examples/*.svelte', {
-		query: '?raw',
-		import: 'default',
-		eager: true
-	}) as Record<string, string>;
-	const ex = createExampleLoader(_loaders, _sources);
 </script>
 
-<DocComponentPage
-	{contentType}
-	{metadata}
-	{frontmatter}
-	prev={{ label: 'Divider', href: '/docs/components/divider' }}
-	next={{ label: 'Dropdown Menu', href: '/docs/components/dropdown-menu' }}
->
-	{#snippet preset()}
-		<DocCode code={metadata.examples.preset} lang="typescript" />
-	{/snippet}
-
+<DocComponentPage {contentType} {metadata} {apiSections}>
 	{#snippet examples()}
 		<DocExample
 			title="Notifications Drawer"
@@ -76,9 +41,5 @@
 			<code>root.l0</code>. The chosen portal supplies the containment and stacking boundary for the
 			drawer and nested overlays.
 		</DocSection>
-	{/snippet}
-
-	{#snippet apiReference()}
-		<DocPropsTabs sections={apiSections} />
 	{/snippet}
 </DocComponentPage>

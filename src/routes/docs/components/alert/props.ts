@@ -1,56 +1,35 @@
-export interface PropDefinition {
-	name: string;
-	type: string;
-	default: string;
-	description: string;
-}
+import { renderPropsRow, type PropDefinition } from '$docs/types';
 
 export const alertRootProps: PropDefinition[] = [
 	{
 		name: 'disabled',
-		type: 'boolean | undefined',
+		type: 'boolean',
 		default: 'false',
 		description: 'Disable interaction with the alert (e.g., prevent close button)'
 	},
 	{
+		name: 'extend',
+		type: 'Record<string, unknown>',
+		default: 'undefined',
+		description: 'Extra capabilities composed onto this Bond at construction.'
+	},
+	{
 		name: 'factory',
-		type: 'Factory<AlertBond> | undefined',
+		type: 'Factory<AlertBondBase>',
 		default: 'undefined',
 		description: 'Custom factory for the alert bond, enabling advanced behavioral customization'
 	},
-	{
-		name: '...atomProps',
-		type: 'HtmlAtomProps',
-		default: '-',
-		description:
-			'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
-	}
+	renderPropsRow
 ];
 
-export const alertSubPartProps: PropDefinition[] = [
-	{
-		name: 'bond',
-		type: 'AlertBond',
-		default: 'undefined',
-		description: 'Bond object passed down from Alert.Root for shared component coordination'
-	},
-	{
-		name: 'preset',
-		type: 'PresetModuleName | string',
-		default: 'undefined',
-		description: 'Preset module name for styling'
-	},
-	{
-		name: 'class',
-		type: 'ClassValue | ClassValue[]',
-		default: 'undefined',
-		description: 'CSS class(es) to apply'
-	},
-	{
-		name: '...atomProps',
-		type: 'HtmlAtomProps',
-		default: '-',
-		description:
-			'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
-	}
-];
+export const alertContentProps: PropDefinition[] = [renderPropsRow];
+
+export const alertTitleProps: PropDefinition[] = [renderPropsRow];
+
+export const alertDescriptionProps: PropDefinition[] = [renderPropsRow];
+
+export const alertIconProps: PropDefinition[] = [renderPropsRow];
+
+export const alertActionsProps: PropDefinition[] = [renderPropsRow];
+
+export const alertCloseButtonProps: PropDefinition[] = [renderPropsRow];

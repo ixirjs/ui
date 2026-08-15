@@ -1,19 +1,19 @@
 <script lang="ts">
-	import { createExampleLoader } from '$docs/utils/example-loader';
-	import { DocComponentPage, DocExample, DocCode, DocPropsTabs } from '$docs/components';
+	import type { DocContentProps } from '$docs/types';
+	import { DocComponentPage, DocExample } from '$docs/components';
 	import type { PropsSection } from '$docs/components';
 	import {
 		formRootProps,
 		fieldRootProps,
 		fieldLabelProps,
 		fieldControlProps,
-		fieldHelperTextProps
+		fieldHelperTextProps,
+		fieldErrorProps
 	} from './props';
 	import { metadata } from './shared';
-	import type { DocMode } from '$docs/context/doc-mode.svelte';
 	import type { Frontmatter } from '$docs/md/frontmatter';
 
-	let { contentType = 'html' }: { contentType?: DocMode } = $props();
+	let { contentType = 'html', ex }: DocContentProps = $props();
 
 	const frontmatter: Frontmatter = {
 		id: 'form',
@@ -29,29 +29,12 @@
 		{ label: 'Field.Root', presetKey: 'field', props: fieldRootProps },
 		{ label: 'Field.Label', presetKey: 'field.label', props: fieldLabelProps },
 		{ label: 'Field.Control', presetKey: 'field.control', props: fieldControlProps },
-		{ label: 'Field.HelperText', presetKey: 'field.helper-text', props: fieldHelperTextProps }
+		{ label: 'Field.HelperText', presetKey: 'field.helper-text', props: fieldHelperTextProps },
+		{ label: 'Field.Error', presetKey: 'field.error', props: fieldErrorProps }
 	];
-
-	const _loaders = import.meta.glob('./examples/*.svelte');
-	const _sources = import.meta.glob('./examples/*.svelte', {
-		query: '?raw',
-		import: 'default',
-		eager: true
-	}) as Record<string, string>;
-	const ex = createExampleLoader(_loaders, _sources);
 </script>
 
-<DocComponentPage
-	{contentType}
-	{metadata}
-	{frontmatter}
-	prev={{ label: 'Dropdown Menu', href: '/docs/components/dropdown-menu' }}
-	next={{ label: 'Input', href: '/docs/components/input' }}
->
-	{#snippet preset()}
-		<DocCode code={metadata.examples.preset} lang="typescript" />
-	{/snippet}
-
+<DocComponentPage {contentType} {metadata} {frontmatter} {apiSections}>
 	{#snippet examples()}
 		<DocExample
 			title="Basic Form"
@@ -60,13 +43,15 @@
 		/>
 
 		<DocExample
-			title="Form with Validation Errors"
-			description="Field with inline error messages."
+			title="Schema Validation"
+			description="A Standard Schema on the form — Zod here, but Valibot or ArkType work unchanged. Errors are routed to the field whose name matches the issue path."
 			{...ex('./examples/validated.svelte')}
 		/>
-	{/snippet}
 
-	{#snippet apiReference()}
-		<DocPropsTabs sections={apiSections} />
+		<DocExample
+			title="Externally Owned Errors"
+			description="Errors that come from outside the form — a server action, or Superforms' $errors store. No schema on the client."
+			{...ex('./examples/external-errors.svelte')}
+		/>
 	{/snippet}
 </DocComponentPage>

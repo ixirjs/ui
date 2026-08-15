@@ -7,10 +7,10 @@
 	const features: Array<{ title: string; description: string; href: string; iconKey: FeatureKey }> =
 		[
 			{
-				title: 'Atoms',
+				title: 'Components',
 				description:
-					'Atom Components render flexible parts; Atoms provide runtime spreads, element refs, and local capabilities.',
-				href: '/docs/atoms',
+					'Accessible semantic components stay flexible through snippets, presets, and native element props.',
+				href: '/docs/components',
 				iconKey: 'atoms'
 			},
 			{
@@ -299,7 +299,7 @@
 		</p>
 		<div class="flex flex-wrap gap-2">
 			<Button href="/docs/philosophy" as="a" variant="primary">Learn the Philosophy</Button>
-			<Button href="/docs/atoms" as="a" variant="outline">Understand Atoms</Button>
+			<Button href="/docs/components" as="a" variant="outline">Explore Components</Button>
 			<Button href="/docs/bonds" as="a" variant="outline">Understand Bonds</Button>
 			<Button href="/docs/migration" as="a" variant="outline">Migration Guide</Button>
 			<Button href="/docs/preset" as="a" variant="outline">Explore Presets</Button>

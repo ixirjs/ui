@@ -63,15 +63,14 @@ export const metadata = {
 	componentTitle: 'Textarea',
 	componentDescription:
 		'Multi-line text input with character limits, validation, and configurable dimensions.',
+	summary: 'Multi-line text input with resize support',
+	category: 'Form' as const,
 	componentType: 'compound' as const,
-	status: 'stable' as const,
+	status: 'beta' as const,
 	packageName: '@ixirjs/ui',
 	importCode: "import { Textarea } from '@ixirjs/ui';",
-	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Textarea' }],
 	useCases,
 	componentsSummary,
-	examples: {
-		preset: presetCode
-	},
+	presetCode,
 	accessibility: accessibilityFeatures
 };

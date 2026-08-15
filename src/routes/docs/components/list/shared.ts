@@ -95,15 +95,14 @@ export const metadata = {
 	componentTitle: 'List',
 	componentDescription:
 		'Structured list component with grouping, ordered/unordered variants, and interactive items.',
+	summary: 'Structured list with item grouping, dividers, and icons',
+	category: 'Display' as const,
 	componentType: 'compound' as const,
-	status: 'stable' as const,
+	status: 'beta' as const,
 	packageName: '@ixirjs/ui',
 	importCode: "import { List } from '@ixirjs/ui';",
-	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'List' }],
 	useCases,
 	componentsSummary,
-	examples: {
-		preset: presetCode
-	},
+	presetCode,
 	accessibility: accessibilityFeatures
 };

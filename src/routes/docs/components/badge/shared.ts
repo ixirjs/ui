@@ -55,14 +55,13 @@ export const metadata = {
 	componentTitle: 'Badge',
 	componentDescription:
 		'Compact inline element for status labels, counts, and tags with customizable variants and colors.',
+	summary: 'Small status label for metadata, counts, and categories',
+	category: 'Display' as const,
 	componentType: 'simple' as const,
 	status: 'stable' as const,
 	packageName: '@ixirjs/ui',
 	importCode: "import { Badge } from '@ixirjs/ui';",
-	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Badge' }],
 	useCases,
-	examples: {
-		preset: presetCode
-	},
+	presetCode,
 	accessibility: accessibilityFeatures
 };

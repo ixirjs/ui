@@ -36,14 +36,14 @@ export const metadata = {
 	componentTitle: 'Calendar',
 	componentDescription:
 		'A headless-ish calendar that owns month pivote and selection state. Compose Root + Header + Body + Day to render the grid; the bond drives navigation and selection.',
+	summary: 'Composable month-grid calendar for single-date or range selection',
+	category: 'Display' as const,
 	componentType: 'compound' as const,
 	status: 'beta' as const,
+	depth: 'intermediate' as const,
 	packageName: '@ixirjs/ui',
 	importCode: "import { Calendar } from '@ixirjs/ui';",
-	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Calendar' }],
 	useCases,
-	examples: {
-		preset: presetCode
-	},
+	presetCode,
 	accessibility: accessibilityFeatures
 };

@@ -111,15 +111,15 @@ export const metadata = {
 	componentTitle: 'Dialog',
 	componentDescription:
 		'Modal dialog for important user interactions that captures focus and requires user action.',
+	summary: 'Accessible modal overlay for critical user interactions',
+	category: 'Overlay' as const,
 	componentType: 'compound' as const,
 	status: 'stable' as const,
+	depth: 'intermediate' as const,
 	packageName: '@ixirjs/ui',
 	importCode: "import { Dialog } from '@ixirjs/ui';",
-	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Dialog' }],
 	useCases,
 	componentsSummary,
-	examples: {
-		preset: presetCode
-	},
+	presetCode,
 	accessibility: accessibilityFeatures
 };

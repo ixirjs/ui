@@ -1,16 +1,18 @@
-export interface PropDefinition {
-	name: string;
-	type: string;
-	default: string;
-	description: string;
-}
+import { renderPropsRow, type PropDefinition } from '$docs/types';
 
 export const chipProps: PropDefinition[] = [
 	{
-		name: 'children',
+		name: 'closeButton',
 		type: 'Snippet<[]> | undefined',
 		default: 'undefined',
-		description: 'Label content rendered inside the chip.'
+		description:
+			'Fully replace the close button with a custom snippet. When set, `ondismiss`/`icon` no longer apply.'
+	},
+	{
+		name: 'icon',
+		type: 'Snippet<[]> | undefined',
+		default: 'undefined',
+		description: 'Custom icon rendered inside the default close button (replaces the default ✕).'
 	},
 	{
 		name: 'ondismiss',
@@ -18,32 +20,13 @@ export const chipProps: PropDefinition[] = [
 		default: 'undefined',
 		description: 'Called when the default close button is clicked.'
 	},
-	{
-		name: 'icon',
-		type: 'Snippet | undefined',
-		default: 'undefined',
-		description: 'Custom icon rendered inside the default close button (replaces the default ✕).'
-	},
-	{
-		name: 'closeButton',
-		type: 'Snippet | undefined',
-		default: 'undefined',
-		description:
-			'Fully replace the close button with a custom snippet. When set, `ondismiss`/`icon` no longer apply.'
-	},
-	{
-		name: '...atomProps',
-		type: 'HtmlAtomProps',
-		default: '-',
-		description:
-			'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
-	}
+	renderPropsRow
 ];
 
 export const chipCloseButtonProps: PropDefinition[] = [
 	{
 		name: 'icon',
-		type: 'Snippet | undefined',
+		type: 'Snippet<[]> | undefined',
 		default: 'undefined',
 		description: 'Custom icon to render inside the close button.'
 	},
@@ -53,10 +36,5 @@ export const chipCloseButtonProps: PropDefinition[] = [
 		default: 'undefined',
 		description: 'Click handler for the close button.'
 	},
-	{
-		name: '...atomProps',
-		type: 'HtmlAtomProps',
-		default: '-',
-		description: 'Inherited HTML element props. See [Atom Props](/docs/components/atom#props).'
-	}
+	renderPropsRow
 ];

@@ -1,343 +1,212 @@
-import type { PropDefinition } from '$docs/types';
+import { renderPropsRow, type PropDefinition } from '$docs/types';
 
 export const popoverRootProps: PropDefinition[] = [
 	{
-		name: 'open',
-		type: 'boolean \\| undefined',
+		name: 'children',
+		type: 'PopoverChildren',
+		default: 'undefined',
+		description: 'Children'
+	},
+	{
+		name: 'disabled',
+		type: 'boolean',
 		default: 'false',
-		description: 'Open'
+		description: 'Prevents the context-menu trigger from opening the menu.'
+	},
+	{
+		name: 'extend',
+		type: 'Record<string, unknown>',
+		default: 'undefined',
+		description: 'Extend'
+	},
+	{
+		name: 'factory',
+		type: 'Factory<PopoverBondBase<PopoverBondProps>>',
+		default: 'undefined',
+		description: 'Factory'
+	},
+	{
+		name: 'offset',
+		type: 'number',
+		default: 'undefined',
+		description: 'Distance in pixels between the virtual cursor anchor and content.'
 	},
 	{
 		name: 'onopenchange',
-		type: 'StateChangeCallback<boolean, PopoverBond> \\| undefined',
+		type: 'StateChangeCallback<boolean, PopoverBondBase<PopoverBondProps>> | undefined',
 		default: 'undefined',
 		description:
 			'Called after a real open-state transition commits; dismissal events and reasons are included when available.'
 	},
 	{
-		name: 'disabled',
-		type: 'boolean \\| undefined',
+		name: 'open',
+		type: 'boolean',
 		default: 'false',
-		description: 'Disabled'
-	},
-	{
-		name: 'placements',
-		type: 'Placement[] \\| undefined',
-		default: 'undefined',
-		description: 'Placements'
+		description: 'Bindable open state for the menu.'
 	},
 	{
 		name: 'placement',
-		type: 'Placement \\| undefined',
+		type: 'Placement',
 		default: 'undefined',
-		description: 'Placement'
+		description: 'Preferred Floating UI placement for the menu.'
 	},
 	{
-		name: 'offset',
-		type: 'number \\| undefined',
-		default: '0',
-		description: 'Offset'
+		name: 'placements',
+		type: 'Placement[]',
+		default: 'undefined',
+		description: 'Ordered fallback placements used when the preferred placement does not fit.'
 	},
 	{
 		name: 'portal',
-		type: 'string \\| PortalBond \\| undefined',
+		type: 'string | PortalBondBase<PortalBondProps>',
 		default: 'ambient portal → root.l0',
 		description:
 			'Portal target selector or PortalBond instance. Resolution is explicit target → ambient portal → root.l0, preserving nested overlay containment.'
 	},
 	{
-		name: 'extend',
-		type: 'Record<string, unknown> \\| undefined',
-		default: "''",
-		description: 'Extend'
+		name: 'position',
+		type: '"fixed" | "absolute"',
+		default: 'undefined',
+		description: "CSS positioning strategy for the floating content. Defaults to `'absolute'`."
 	},
 	{
-		name: 'factory',
-		type: 'Factory<PopoverBond<PopoverStateProps, PopoverState<PopoverStateProps>, PopoverDomElements>> \\| undefined',
+		name: 'presets',
+		type: 'PopoverPresets | undefined',
 		default: 'undefined',
-		description: 'Factory'
-	},
+		description: 'Per-instance presentation overrides for bonded Popover parts.'
+	}
+];
+
+export const popoverOverlayProps: PropDefinition[] = [
 	{
 		name: 'children',
-		type: 'Snippet<[{ popover: PopoverBond<PopoverStateProps, PopoverState<PopoverStateProps>, PopoverDomElements>; }]> \\| undefined',
+		type: 'PopoverChildren',
 		default: 'undefined',
-		description: 'Children'
-	}
+		description: 'Content of this part.'
+	},
+	{
+		name: 'layer',
+		type: 'LayerInput | undefined',
+		default: 'undefined',
+		description: "Semantic z-index layer for the floating content. Defaults to `'popover'`."
+	},
+	{
+		name: 'order',
+		type: 'LayerRelation | undefined',
+		default: 'undefined',
+		description:
+			'Order the content relative to a registered ZLayer anchor — `below` a sticky header registered via `ZLayer.anchor(...)` puts the popover beneath it.'
+	},
+	{
+		name: 'portal',
+		type: 'string | PortalBondBase<PortalBondProps> | undefined',
+		default: 'undefined',
+		description: 'Portal surface to render the overlay into, by id or Bond.'
+	},
+	{
+		name: 'z-index',
+		type: 'ZIndexInput | undefined',
+		default: 'undefined',
+		description:
+			'Explicit z-index for the overlay. Prefer the semantic layer unless resolving a stacking conflict.'
+	},
+	renderPropsRow
 ];
 
 export const popoverContentProps: PropDefinition[] = [
 	{
-		name: 'bond',
-		type: 'Bond',
+		name: 'layer',
+		type: 'LayerInput | undefined',
 		default: 'undefined',
-		description: 'Bond object for component communication'
+		description: "Semantic z-index layer for the floating content. Defaults to `'popover'`."
 	},
 	{
-		name: 'base',
-		type: 'Component \\| Snippet',
+		name: 'maxWidth',
+		type: 'AnchorSize',
 		default: 'undefined',
-		description: 'Base component or snippet to render'
+		description:
+			"Cap the content's width. A CSS length, `'var(--sa-anchor-width)'` to clamp it to never exceed the trigger, or an AnchorSizeFn."
 	},
 	{
-		name: 'preset',
-		type: 'PresetModuleName \\| string',
+		name: 'minWidth',
+		type: 'AnchorSize',
 		default: 'undefined',
-		description: 'Preset module name for styling'
+		description:
+			"Floor the content's width. A CSS length, `'var(--sa-anchor-width)'` to match the trigger — right for select/dropdown/combobox menus that align with their trigger — or an AnchorSizeFn."
 	},
 	{
-		name: 'variants',
-		type: 'VariantDefinition \\| Function',
+		name: 'onclickoutside',
+		type: '(ev: PointerEvent, atom: PopoverBond) => void',
 		default: 'undefined',
-		description: 'Variant definition or function to resolve variants'
+		description: 'Called for an outside press; providing it replaces the default close handler.'
 	},
 	{
-		name: 'class',
-		type: 'ClassValue \\| ClassValue[]',
+		name: 'order',
+		type: 'LayerRelation | undefined',
 		default: 'undefined',
-		description: 'CSS class(es) to apply to the element'
+		description: 'Order the content relative to a registered ZLayer anchor (sticky-under).'
 	},
 	{
-		name: 'as',
-		type: 'string',
+		name: 'overlay',
+		type: 'Component<PopoverOverlayProps<"div", SnippetBase | ComponentBase | ExplicitBase>, {}, string>',
 		default: 'undefined',
-		description: 'HTML tag to render as'
+		description: 'Replaces the overlay component the content renders into.'
 	},
 	{
-		name: 'global',
-		type: 'boolean',
-		default: 'false',
-		description: 'Whether to use global styles'
+		name: 'width',
+		type: 'AnchorSize',
+		default: 'undefined',
+		description:
+			"Fix the content's width. A CSS length, `'var(--sa-anchor-width)'` to match the trigger's measured width exactly, or an AnchorSizeFn computed from the trigger."
 	},
 	{
-		name: 'initial',
-		type: 'NodeFunction',
+		name: 'z-index',
+		type: 'ZIndexInput | undefined',
 		default: 'undefined',
-		description: 'Function called on initial render'
+		description: 'Explicit z-index for the floating content, forwarded to the Overlay.'
 	},
-	{
-		name: 'enter',
-		type: 'TransitionFunction',
-		default: 'undefined',
-		description: 'Transition function for entering'
-	},
-	{
-		name: 'exit',
-		type: 'TransitionFunction',
-		default: 'undefined',
-		description: 'Transition function for exiting'
-	},
-	{
-		name: 'animate',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Animation function'
-	},
-	{
-		name: 'onmount',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Function called when element is mounted'
-	},
-	{
-		name: 'ondestroy',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Function called when element is destroyed'
-	},
-	{
-		name: 'children',
-		type: 'Snippet',
-		default: 'undefined',
-		description: 'Children content snippet'
-	}
+	renderPropsRow
 ];
 
-export const popoverIndicatorProps: PropDefinition[] = [
-	{
-		name: 'bond',
-		type: 'Bond',
-		default: 'undefined',
-		description: 'Bond object for component communication'
-	},
-	{
-		name: 'base',
-		type: 'Component \\| Snippet',
-		default: 'undefined',
-		description: 'Base component or snippet to render'
-	},
-	{
-		name: 'preset',
-		type: 'PresetModuleName \\| string',
-		default: 'undefined',
-		description: 'Preset module name for styling'
-	},
-	{
-		name: 'variants',
-		type: 'VariantDefinition \\| Function',
-		default: 'undefined',
-		description: 'Variant definition or function to resolve variants'
-	},
-	{
-		name: 'class',
-		type: 'ClassValue \\| ClassValue[]',
-		default: 'undefined',
-		description: 'CSS class(es) to apply to the element'
-	},
-	{
-		name: 'as',
-		type: 'string',
-		default: 'undefined',
-		description: 'HTML tag to render as'
-	},
-	{
-		name: 'global',
-		type: 'boolean',
-		default: 'false',
-		description: 'Whether to use global styles'
-	},
-	{
-		name: 'initial',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Function called on initial render'
-	},
-	{
-		name: 'enter',
-		type: 'TransitionFunction',
-		default: 'undefined',
-		description: 'Transition function for entering'
-	},
-	{
-		name: 'exit',
-		type: 'TransitionFunction',
-		default: 'undefined',
-		description: 'Transition function for exiting'
-	},
-	{
-		name: 'animate',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Animation function'
-	},
-	{
-		name: 'onmount',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Function called when element is mounted'
-	},
-	{
-		name: 'ondestroy',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Function called when element is destroyed'
-	},
-	{
-		name: 'children',
-		type: 'Snippet',
-		default: 'undefined',
-		description: 'Children content snippet'
-	}
-];
+export const popoverIndicatorProps: PropDefinition[] = [renderPropsRow];
 
 export const popoverTailProps: PropDefinition[] = [
 	{
-		name: 'bond',
-		type: 'Bond',
+		name: 'padding',
+		type: 'number | undefined',
 		default: 'undefined',
-		description: 'Bond object for component communication'
+		description:
+			'Minimum distance, in px, between the tail wrapper and the content edge. Defaults to `0`.'
 	},
 	{
-		name: 'base',
-		type: 'Component \\| Snippet',
+		name: 'size',
+		type: 'number | undefined',
 		default: 'undefined',
-		description: 'Base component or snippet to render'
+		description:
+			"Base thickness of the tail, in px. Drives the whole shape and stays consistent across placements. Defaults to the content's shorter side."
 	},
-	{
-		name: 'preset',
-		type: 'PresetModuleName \\| string',
-		default: 'undefined',
-		description: 'Preset module name for styling'
-	},
-	{
-		name: 'variants',
-		type: 'VariantDefinition \\| Function',
-		default: 'undefined',
-		description: 'Variant definition or function to resolve variants'
-	},
-	{
-		name: 'class',
-		type: 'ClassValue \\| ClassValue[]',
-		default: 'undefined',
-		description: 'CSS class(es) to apply to the element'
-	},
-	{
-		name: 'as',
-		type: 'string',
-		default: 'undefined',
-		description: 'HTML tag to render as'
-	},
-	{
-		name: 'global',
-		type: 'boolean',
-		default: 'false',
-		description: 'Whether to use global styles'
-	},
-	{
-		name: 'initial',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Function called on initial render'
-	},
-	{
-		name: 'enter',
-		type: 'TransitionFunction',
-		default: 'undefined',
-		description: 'Transition function for entering'
-	},
-	{
-		name: 'exit',
-		type: 'TransitionFunction',
-		default: 'undefined',
-		description: 'Transition function for exiting'
-	},
-	{
-		name: 'animate',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Animation function'
-	},
-	{
-		name: 'onmount',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Function called when element is mounted'
-	},
-	{
-		name: 'ondestroy',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Function called when element is destroyed'
-	},
-	{
-		name: 'children',
-		type: 'Snippet',
-		default: 'undefined',
-		description: 'Children content snippet'
-	}
+	renderPropsRow
 ];
 
 export const popoverTriggerProps: PropDefinition[] = [
 	{
-		name: 'children',
-		type: 'Snippet<[{ popover?: PopoverBond<PopoverStateProps, PopoverState<PopoverStateProps>, PopoverDomElements>; }]> | undefined',
+		name: 'onclick',
+		type: '((event: MouseEvent) => void) | undefined',
 		default: 'undefined',
-		description: 'Children content snippet'
+		description: 'Native click event.'
 	},
 	{
-		name: '...atomProps',
-		type: 'HtmlAtomProps',
-		default: '-',
+		name: 'onkeydown',
+		type: '((event: KeyboardEvent) => void) | undefined',
+		default: 'undefined',
 		description:
-			'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
-	}
+			'Native keydown event. Runs before the atom’s own handler, which is skipped if the default is prevented.'
+	},
+	{
+		name: 'onpointerenter',
+		type: '((event: PointerEvent) => void) | undefined',
+		default: 'undefined',
+		description: 'Native pointerenter event, used by hover-opened popovers such as Tooltip.'
+	},
+	renderPropsRow
 ];

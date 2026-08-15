@@ -74,7 +74,6 @@ export const metadata = {
 				description: 'File and component naming'
 			},
 			{ title: 'Usage', href: '/docs/usage/llms.txt', description: 'Component usage patterns' },
-			{ title: 'Atoms', href: '/docs/atoms/llms.txt', description: 'Understanding atoms' },
 			{ title: 'Bonds', href: '/docs/bonds/llms.txt', description: 'Understanding bonds' }
 		],
 		styling: [
@@ -242,9 +241,6 @@ export const metadata = {
 				href: '/docs/components/stepper/llms.txt',
 				description: 'Stepper component'
 			}
-		],
-		core: [
-			{ title: 'Atom', href: '/docs/components/atom/llms.txt', description: 'Core atom component' }
 		]
 	}
 };

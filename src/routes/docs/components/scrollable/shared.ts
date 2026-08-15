@@ -81,15 +81,14 @@ export const metadata = {
 	componentTitle: 'Scrollable',
 	componentDescription:
 		'Custom-styled scrollable container with full control over scroll position and appearance.',
+	summary: 'Custom scrollbar container with styled track and thumb',
+	category: 'Layout' as const,
 	componentType: 'compound' as const,
 	status: 'stable' as const,
 	packageName: '@ixirjs/ui',
 	importCode: "import { Scrollable } from '@ixirjs/ui';",
-	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Scrollable' }],
 	useCases,
 	componentsSummary,
-	examples: {
-		preset: presetCode
-	},
+	presetCode,
 	accessibility: accessibilityFeatures
 };

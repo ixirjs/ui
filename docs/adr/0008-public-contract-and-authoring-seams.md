@@ -2,7 +2,8 @@
 
 ## Status
 
-Accepted
+Accepted for package layering. [ADR 0009](./0009-native-renderer-and-lazy-runtime-kernel.md)
+supersedes its rendering, descendant-authoring, and retired low-level public surfaces.
 
 ## Date
 
@@ -125,8 +126,20 @@ The following remain reserved implementation details unless a component explicit
 
 ## Current `/shared` classification
 
-This table is exhaustive for names currently exported by `src/lib/public/shared.ts`. It records the
-target seam, not a promise that every current export is already in its final location.
+This table records the target seam for the names below, not a promise that every current export is
+already in its final location. It is not exhaustive — `docs/public-surface.snapshot.json` is the
+mechanical list, and `public-surface.spec.ts` is what enforces it.
+
+**Removed, pre-1.0:** the `checked`, `progress`, `range` and `role-projections` capability models
+(`CHECKED`, `createChecked`, `checkedCapability`, `PROGRESS_VALUE`, `createProgressValue`,
+`progressValueCapability`, `RANGE_VALUE`, `createRangeValue`, `rangeValueCapability`,
+`ORIENTATION_PROJECTION`, `DISABLED_PROJECTION`, `CURRENT_PROJECTION`, `orientationProjection`,
+`disabledProjection`, `currentProjection`, and their option/backing types). They were published as
+stable seams that no component in the library ever composed — Progress, Slider, Checkbox, Switch and
+Radio are all static modules with no Bond. Publishing a model no first-party family uses commits the
+project to a shape that was never validated against a real consumer, which is the opposite of what
+this ADR's stability rule is for. Reinstate them from a family that actually needs them, not ahead
+of one.
 
 ### Stable `/shared` target
 
@@ -176,7 +189,7 @@ in `collapsible/bond.svelte.ts`.
   `PropCell`, `PropsSpec`, `AtomOptions`, `DefineAtomOptions`, `DefinedAtomClass`, `DefineAtomSetup`,
   `defineAtom`.
 - **Raw definition and composition records:** `AtomConstructor`, `AtomSpec`, `AtomsOf`,
-  `BondBaseClass`, `BondSpec`, `DefinedBond`, `DefinedBondClass`, `FusablePart`, `MethodsOf`, `PartsOf`,
+  `BondBaseClass`, `BondSpec`, `DefinedBond`, `DefinedBondClass`, `FusablePart`, `PartsOf`,
   `SpecOf`, `StateOf`, `ViewOf`, `AtomsOfPart`, `MergeAtoms`.
 - **Low-level protocol/diagnostic records:** `CAPABILITY_PROTOCOL_VERSION`,
   `SharedCapabilityKeyOptions`,

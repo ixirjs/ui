@@ -21,7 +21,7 @@ improves UX. ## Minimal component skeleton
 
 {codeBlock(
 	`<script lang="ts">
-  import { HtmlAtom } from '@ixirjs/ui';
+  import { HtmlElement } from '@ixirjs/ui/components/element';
 import { defineVariants } from '@ixirjs/ui/utils';
 
   const badgeVariants = defineVariants({
@@ -41,7 +41,7 @@ import { defineVariants } from '@ixirjs/ui/utils';
   let { tone = 'neutral', class: klass, children, ...rest } = $props();
 </script>
 
-<HtmlAtom
+<HtmlElement
   as="span"
   preset="badge"
   variants={badgeVariants}
@@ -50,15 +50,15 @@ import { defineVariants } from '@ixirjs/ui/utils';
   {...rest}
 >
   {@render children?.()}
-</HtmlAtom>`,
+</HtmlElement>`,
 	'svelte'
 )}
 
 ## Compound component checklist For multi-part components (for example popovers, menus, drawers):
 
 {list([
-	'Provide a Root atom that owns state and context.',
-	'Expose focused child atoms (Trigger, Content, Item, etc.).',
+	'Provide a Root component that owns state and context.',
+	'Expose focused child parts (Trigger, Content, Item, etc.).',
 	'Share state via a bond/context object, not prop drilling.',
 	'Keep each child usable with base={...} composition.'
 ])}

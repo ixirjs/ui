@@ -59,14 +59,13 @@ export const metadata = {
 	componentTitle: 'Slider',
 	componentDescription:
 		'Single-value range input with bindable value, horizontal or vertical orientation, and customizable thumb and track rendering.',
+	summary: 'Range input for selecting numeric values with thumb and track',
+	category: 'Form' as const,
 	componentType: 'simple' as const,
 	status: 'beta' as const,
 	packageName: '@ixirjs/ui',
 	importCode: "import { Slider } from '@ixirjs/ui';",
-	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Slider' }],
 	useCases,
-	examples: {
-		preset: presetCode
-	},
+	presetCode,
 	accessibility: accessibilityFeatures
 };

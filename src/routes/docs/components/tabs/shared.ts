@@ -101,15 +101,14 @@ export const metadata = {
 	componentTitle: 'Tabs',
 	componentDescription:
 		'Tabbed interface for organizing content into separate views with keyboard navigation and active state management.',
+	summary: 'Tab panel navigation for organizing grouped content',
+	category: 'Navigation' as const,
 	componentType: 'compound' as const,
-	status: 'stable' as const,
+	status: 'beta' as const,
 	packageName: '@ixirjs/ui',
 	importCode: "import { Tabs, Tab } from '@ixirjs/ui';",
-	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Tabs' }],
 	useCases,
 	componentsSummary,
-	examples: {
-		preset: presetCode
-	},
+	presetCode,
 	accessibility: accessibilityFeatures
 };

@@ -1,48 +1,19 @@
 <script lang="ts">
-	import { createExampleLoader } from '$docs/utils/example-loader';
-	import { DocComponentPage, DocExample, DocCode, DocPropsTabs } from '$docs/components';
+	import type { DocContentProps } from '$docs/types';
+	import { DocComponentPage, DocExample } from '$docs/components';
 	import type { PropsSection } from '$docs/components';
 	import { kbdProps, shortcutProps } from './props';
 	import { metadata } from './shared';
-	import type { DocMode } from '$docs/context/doc-mode.svelte';
-	import type { Frontmatter } from '$docs/md/frontmatter';
 
-	let { contentType = 'html' }: { contentType?: DocMode } = $props();
-
-	const frontmatter: Frontmatter = {
-		id: 'kbd',
-		title: 'Kbd',
-		category: 'components',
-		depth: 'beginner',
-		prerequisites: [],
-		related: []
-	};
+	let { contentType = 'html', ex }: DocContentProps = $props();
 
 	const apiSections: PropsSection[] = [
 		{ label: 'Kbd', presetKey: 'kbd', props: kbdProps },
 		{ label: 'Shortcut', props: shortcutProps }
 	];
-
-	const _loaders = import.meta.glob('./examples/*.svelte');
-	const _sources = import.meta.glob('./examples/*.svelte', {
-		query: '?raw',
-		import: 'default',
-		eager: true
-	}) as Record<string, string>;
-	const ex = createExampleLoader(_loaders, _sources);
 </script>
 
-<DocComponentPage
-	{contentType}
-	{metadata}
-	{frontmatter}
-	prev={{ label: 'Input', href: '/docs/components/input' }}
-	next={{ label: 'Label', href: '/docs/components/label' }}
->
-	{#snippet preset()}
-		<DocCode code={metadata.examples.preset} lang="typescript" />
-	{/snippet}
-
+<DocComponentPage {contentType} {metadata} {apiSections}>
 	{#snippet examples()}
 		<DocExample
 			title="Individual Keys"
@@ -69,9 +40,5 @@
 			description="Kbd and Shortcut can be embedded directly within prose text."
 			{...ex('./examples/inline.svelte')}
 		/>
-	{/snippet}
-
-	{#snippet apiReference()}
-		<DocPropsTabs sections={apiSections} />
 	{/snippet}
 </DocComponentPage>

@@ -1,402 +1,89 @@
-export interface PropDefinition {
-	name: string;
-	type: string;
-	default: string;
-	description: string;
-}
+import { renderPropsRow, type PropDefinition } from '$docs/types';
 
 export const slideoverRootProps: PropDefinition[] = [
 	{
-		name: 'open',
-		type: 'boolean | undefined',
-		default: 'false',
-		description: 'Controls whether the drawer is open. Bind this prop for controlled usage.'
-	},
-	{
-		name: 'side',
-		type: "'left' | 'right' | 'top' | 'bottom' | undefined",
-		default: "'right'",
-		description:
-			'Which edge of the screen the drawer slides in from. Controls the slide animation direction.'
-	},
-	{
 		name: 'disabled',
-		type: 'boolean | undefined',
+		type: 'boolean',
 		default: 'false',
 		description: 'Disables the drawer trigger, preventing the drawer from being opened.'
 	},
 	{
-		name: 'portal',
-		type: 'string | PortalBond | undefined',
-		default: 'ambient portal → root.l0',
-		description:
-			"Portal target selector or PortalBond instance. Resolution is explicit target → ambient portal → root.l0; the drawer stays within that portal's containment scope."
+		name: 'factory',
+		type: 'Factory<DrawerBondBase>',
+		default: 'undefined',
+		description: 'Custom factory function to create a DrawerBond instance with custom logic.'
+	},
+	{
+		name: 'onclose',
+		type: '((event: Event) => void) | undefined',
+		default: 'undefined',
+		description: 'Native close event handler for the rendered dialog element.'
 	},
 	{
 		name: 'onopenchange',
-		type: 'StateChangeCallback<boolean, DrawerBond> | undefined',
+		type: 'StateChangeCallback<boolean, DrawerBondBase> | undefined',
 		default: 'undefined',
 		description:
 			'Called after a real open-state transition commits; dismissal events and reasons are included when available.'
 	},
 	{
-		name: 'factory',
-		type: 'Factory<DrawerBond<...>> | undefined',
-		default: 'undefined',
-		description: 'Custom factory function to create a DrawerBond instance with custom logic.'
-	}
-];
-
-export const slideoverContentProps: PropDefinition[] = [
-	{
-		name: 'bond',
-		type: 'Bond',
-		default: 'undefined',
-		description: 'Bond object for component communication'
-	},
-	{
-		name: 'base',
-		type: 'Component | Snippet',
-		default: 'undefined',
-		description: 'Base component or snippet to render'
-	},
-	{
-		name: 'preset',
-		type: 'PresetModuleName | string',
-		default: 'undefined',
-		description: 'Preset module name for styling'
-	},
-	{
-		name: 'variants',
-		type: 'VariantDefinition | Function',
-		default: 'undefined',
-		description: 'Variant definition or function to resolve variants'
-	},
-	{
-		name: 'class',
-		type: 'ClassValue | ClassValue[]',
-		default: 'undefined',
-		description: 'CSS class(es) to apply to the element'
-	},
-	{
-		name: 'as',
-		type: 'string',
-		default: 'undefined',
-		description: 'HTML tag to render as'
-	},
-	{
-		name: 'global',
+		name: 'open',
 		type: 'boolean',
 		default: 'false',
-		description: 'Whether to use global styles'
+		description: 'Controls whether the drawer is open. Bind this prop for controlled usage.'
 	},
 	{
-		name: 'initial',
-		type: 'NodeFunction',
+		name: 'order',
+		type: 'LayerRelation',
 		default: 'undefined',
-		description: 'Function called on initial render'
+		description: 'Position relative to a named portal elevation anchor.'
 	},
 	{
-		name: 'enter',
-		type: 'TransitionFunction',
+		name: 'portal',
+		type: 'string | PortalBondBase<PortalBondProps>',
 		default: 'undefined',
-		description: 'Transition function for entering'
+		description:
+			'Portal surface to render into, by id or Bond. Defaults to the nearest active portal.'
 	},
 	{
-		name: 'exit',
-		type: 'TransitionFunction',
+		name: 'position',
+		type: '"fixed" | "absolute"',
 		default: 'undefined',
-		description: 'Transition function for exiting'
+		description:
+			'CSS positioning for the drawer surface. `fixed` pins it to the viewport, `absolute` to the nearest positioned ancestor.'
 	},
 	{
-		name: 'animate',
-		type: 'NodeFunction',
+		name: 'presets',
+		type: 'DrawerPresets | undefined',
 		default: 'undefined',
-		description: 'Animation function'
+		description: 'Per-instance presentation overrides for bonded Drawer parts.'
 	},
 	{
-		name: 'onmount',
-		type: 'NodeFunction',
+		name: 'side',
+		type: '"top" | "right" | "bottom" | "left"',
 		default: 'undefined',
-		description: 'Function called when element is mounted'
+		description:
+			'Which edge of the screen the drawer slides in from. Controls the slide animation direction.'
 	},
 	{
-		name: 'ondestroy',
-		type: 'NodeFunction',
+		name: 'z-index',
+		type: 'ZIndexInput',
 		default: 'undefined',
-		description: 'Function called when element is destroyed'
+		description: 'Explicit z-index for the drawer surface.'
 	},
-	{
-		name: 'children',
-		type: 'Snippet',
-		default: 'undefined',
-		description: 'Children content snippet'
-	}
+	renderPropsRow
 ];
 
-export const slideoverHeaderProps: PropDefinition[] = [
-	{
-		name: 'bond',
-		type: 'Bond',
-		default: 'undefined',
-		description: 'Bond object for component communication'
-	},
-	{
-		name: 'base',
-		type: 'Component | Snippet',
-		default: 'undefined',
-		description: 'Base component or snippet to render'
-	},
-	{
-		name: 'preset',
-		type: 'PresetModuleName | string',
-		default: 'undefined',
-		description: 'Preset module name for styling'
-	},
-	{
-		name: 'variants',
-		type: 'VariantDefinition | Function',
-		default: 'undefined',
-		description: 'Variant definition or function to resolve variants'
-	},
-	{
-		name: 'class',
-		type: 'ClassValue | ClassValue[]',
-		default: 'undefined',
-		description: 'CSS class(es) to apply to the element'
-	},
-	{
-		name: 'as',
-		type: 'string',
-		default: 'undefined',
-		description: 'HTML tag to render as'
-	},
-	{
-		name: 'global',
-		type: 'boolean',
-		default: 'false',
-		description: 'Whether to use global styles'
-	},
-	{
-		name: 'initial',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Function called on initial render'
-	},
-	{
-		name: 'enter',
-		type: 'TransitionFunction',
-		default: 'undefined',
-		description: 'Transition function for entering'
-	},
-	{
-		name: 'exit',
-		type: 'TransitionFunction',
-		default: 'undefined',
-		description: 'Transition function for exiting'
-	},
-	{
-		name: 'animate',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Animation function'
-	},
-	{
-		name: 'onmount',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Function called when element is mounted'
-	},
-	{
-		name: 'ondestroy',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Function called when element is destroyed'
-	},
-	{
-		name: 'children',
-		type: 'Snippet',
-		default: 'undefined',
-		description: 'Children content snippet'
-	}
-];
+export const slideoverContentProps: PropDefinition[] = [renderPropsRow];
 
-export const drawerBodyProps: PropDefinition[] = [
-	{
-		name: 'bond',
-		type: 'Bond',
-		default: 'undefined',
-		description: 'Bond object for component communication'
-	},
-	{
-		name: 'base',
-		type: 'Component | Snippet',
-		default: 'undefined',
-		description: 'Base component or snippet to render'
-	},
-	{
-		name: 'preset',
-		type: 'PresetModuleName | string',
-		default: 'undefined',
-		description: 'Preset module name for styling'
-	},
-	{
-		name: 'variants',
-		type: 'VariantDefinition | Function',
-		default: 'undefined',
-		description: 'Variant definition or function to resolve variants'
-	},
-	{
-		name: 'class',
-		type: 'ClassValue | ClassValue[]',
-		default: 'undefined',
-		description: 'CSS class(es) to apply to the element'
-	},
-	{
-		name: 'as',
-		type: 'string',
-		default: 'undefined',
-		description: 'HTML tag to render as'
-	},
-	{
-		name: 'global',
-		type: 'boolean',
-		default: 'false',
-		description: 'Whether to use global styles'
-	},
-	{
-		name: 'initial',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Function called on initial render'
-	},
-	{
-		name: 'enter',
-		type: 'TransitionFunction',
-		default: 'undefined',
-		description: 'Transition function for entering'
-	},
-	{
-		name: 'exit',
-		type: 'TransitionFunction',
-		default: 'undefined',
-		description: 'Transition function for exiting'
-	},
-	{
-		name: 'animate',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Animation function'
-	},
-	{
-		name: 'onmount',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Function called when element is mounted'
-	},
-	{
-		name: 'ondestroy',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Function called when element is destroyed'
-	},
-	{
-		name: 'children',
-		type: 'Snippet',
-		default: 'undefined',
-		description: 'Children content snippet'
-	}
-];
+export const slideoverHeaderProps: PropDefinition[] = [renderPropsRow];
 
-export const slideoverFooterProps: PropDefinition[] = [];
+export const drawerBodyProps: PropDefinition[] = [renderPropsRow];
 
-export const slideoverTitleProps: PropDefinition[] = [];
+export const slideoverFooterProps: PropDefinition[] = [renderPropsRow];
 
-export const slideoverDescriptionProps: PropDefinition[] = [];
+export const slideoverTitleProps: PropDefinition[] = [renderPropsRow];
 
-export const slideoverBackdropProps: PropDefinition[] = [
-	{
-		name: 'bond',
-		type: 'Bond',
-		default: 'undefined',
-		description: 'Bond object for component communication'
-	},
-	{
-		name: 'base',
-		type: 'Component | Snippet',
-		default: 'undefined',
-		description: 'Base component or snippet to render'
-	},
-	{
-		name: 'preset',
-		type: 'PresetModuleName | string',
-		default: 'undefined',
-		description: 'Preset module name for styling'
-	},
-	{
-		name: 'variants',
-		type: 'VariantDefinition | Function',
-		default: 'undefined',
-		description: 'Variant definition or function to resolve variants'
-	},
-	{
-		name: 'class',
-		type: 'ClassValue | ClassValue[]',
-		default: 'undefined',
-		description: 'CSS class(es) to apply to the element'
-	},
-	{
-		name: 'as',
-		type: 'string',
-		default: 'undefined',
-		description: 'HTML tag to render as'
-	},
-	{
-		name: 'global',
-		type: 'boolean',
-		default: 'false',
-		description: 'Whether to use global styles'
-	},
-	{
-		name: 'initial',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Function called on initial render'
-	},
-	{
-		name: 'enter',
-		type: 'TransitionFunction',
-		default: 'undefined',
-		description: 'Transition function for entering'
-	},
-	{
-		name: 'exit',
-		type: 'TransitionFunction',
-		default: 'undefined',
-		description: 'Transition function for exiting'
-	},
-	{
-		name: 'animate',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Animation function'
-	},
-	{
-		name: 'onmount',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Function called when element is mounted'
-	},
-	{
-		name: 'ondestroy',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Function called when element is destroyed'
-	},
-	{
-		name: 'children',
-		type: 'Snippet',
-		default: 'undefined',
-		description: 'Children content snippet'
-	}
-];
+export const slideoverDescriptionProps: PropDefinition[] = [renderPropsRow];
+
+export const slideoverBackdropProps: PropDefinition[] = [renderPropsRow];

@@ -50,14 +50,13 @@ export const metadata = {
 	componentTitle: 'Label',
 	componentDescription:
 		'Semantic label component for form inputs with enhanced accessibility and interactive hit area.',
+	summary: 'Accessible label that associates with form controls',
+	category: 'Form' as const,
 	componentType: 'simple' as const,
 	status: 'stable' as const,
 	packageName: '@ixirjs/ui',
 	importCode: "import { Label } from '@ixirjs/ui';",
-	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Label' }],
 	useCases,
-	examples: {
-		preset: presetCode
-	},
+	presetCode,
 	accessibility: accessibilityFeatures
 };

@@ -42,14 +42,13 @@ export const metadata = {
 	componentTitle: 'Chip',
 	componentDescription:
 		'A small inline element that renders a label with a dismissible close button. The default close button fires `onclose`, or supply a `closeButton` snippet to fully replace it.',
+	summary: 'Dismissible inline label with a wired close button',
+	category: 'Display' as const,
 	componentType: 'simple' as const,
 	status: 'beta' as const,
 	packageName: '@ixirjs/ui',
 	importCode: "import { Chip, ChipCloseButton } from '@ixirjs/ui';",
-	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Chip' }],
 	useCases,
-	examples: {
-		preset: presetCode
-	},
+	presetCode,
 	accessibility: accessibilityFeatures
 };

@@ -75,15 +75,14 @@ export const metadata = {
 	componentTitle: 'Tooltip',
 	componentDescription:
 		'Floating label providing additional context when hovering or focusing on an element.',
+	summary: 'Contextual help text shown on hover or focus',
+	category: 'Overlay' as const,
 	componentType: 'compound' as const,
-	status: 'stable' as const,
+	status: 'beta' as const,
 	packageName: '@ixirjs/ui',
 	importCode: "import { Tooltip } from '@ixirjs/ui';",
-	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Tooltip' }],
 	useCases,
 	componentsSummary,
-	examples: {
-		preset: presetCode
-	},
+	presetCode,
 	accessibility: accessibilityFeatures
 };

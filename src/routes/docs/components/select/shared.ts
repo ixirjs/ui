@@ -104,15 +104,14 @@ export const metadata = {
 	componentTitle: 'Select',
 	componentDescription:
 		'Flexible select with single/multiple selection, search, and advanced composition via Dropdown and Popover.',
+	summary: 'Styled select with grouped options and keyboard navigation',
+	category: 'Form' as const,
 	componentType: 'compound' as const,
 	status: 'stable' as const,
 	packageName: '@ixirjs/ui',
 	importCode: "import { Select } from '@ixirjs/ui';",
-	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Select' }],
 	useCases,
 	componentsSummary,
-	examples: {
-		preset: presetCode
-	},
+	presetCode,
 	accessibility: accessibilityFeatures
 };

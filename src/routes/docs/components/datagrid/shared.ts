@@ -116,15 +116,15 @@ export const metadata = {
 	componentTitle: 'DataGrid',
 	componentDescription:
 		'Grid component for structured data with sortable columns, row selection, custom cell rendering, and responsive columns.',
+	summary: 'Sortable, filterable data table with column configuration',
+	category: 'Display' as const,
 	componentType: 'compound' as const,
-	status: 'stable' as const,
+	status: 'beta' as const,
+	depth: 'intermediate' as const,
 	packageName: '@ixirjs/ui',
 	importCode: "import { DataGrid } from '@ixirjs/ui';",
-	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'DataGrid' }],
 	useCases,
 	componentsSummary,
-	examples: {
-		preset: presetCode
-	},
+	presetCode,
 	accessibility: accessibilityFeatures
 };

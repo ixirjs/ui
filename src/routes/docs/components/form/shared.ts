@@ -24,8 +24,9 @@ const accessibilityFeatures = [
 	'Proper semantic form and input elements',
 	'Label association with for/id attributes',
 	'Keyboard navigation and focus management',
-	'Built-in validation with aria-invalid',
-	'Screen reader compatible error messages',
+	'Built-in validation with aria-invalid and aria-errormessage',
+	'Field.Error renders only while invalid, so aria-errormessage always points at live text',
+	'Error messages announced as role="alert" when they appear',
 	'Support for required and optional fields'
 ];
 
@@ -53,7 +54,7 @@ const useCases = [
 	{
 		title: 'Data Entry Interfaces',
 		description:
-			'Build admin or internal forms for creating or editing records (products, users, configurations) with rich input types and validation adapters.'
+			'Build admin or internal forms for creating or editing records (products, users, configurations) with rich input types and schema validation.'
 	},
 	{
 		title: 'Checkout & Payment Forms',
@@ -66,7 +67,7 @@ const componentsSummary = [
 	{
 		name: 'Form.Root',
 		description:
-			'Root form element that manages form state, mounts field bonds, and provides the validator context to all child fields. Renders as a semantic <form> element.'
+			'Root form element. Holds the schema or validation source, aggregates values and errors across its fields, and validates on submit. Renders as a semantic <form> element.'
 	},
 	{
 		name: 'Field.Root',
@@ -87,25 +88,29 @@ const componentsSummary = [
 		name: 'Field.HelperText',
 		description:
 			'Helper text rendered under the field control for guidance, hints, or supporting context. Exposes { field } in snippet children.'
+	},
+	{
+		name: 'Field.Error',
+		description:
+			'Validation message for the field, rendered only while it is invalid. Defaults to the first error message; exposes { field } in snippet children for full control.'
 	}
 ];
 
 export const metadata = {
 	title: 'Form & Field - Svelte Atoms',
 	description:
-		'Composable form and field components for building accessible, validated forms with Bond-based state management.',
+		'Composable form and field components for building accessible, validated forms. Works with any Standard Schema library — Zod, Valibot, ArkType — with no adapter.',
 	componentTitle: 'Form & Field',
 	componentDescription:
-		'Composable form components with validation, schema support, and field-level state management.',
+		'Composable form components with Standard Schema validation, configurable trigger modes, and support for externally owned form state.',
+	summary: 'Form layout with field validation and accessible error display',
+	category: 'Form' as const,
 	componentType: 'compound' as const,
-	status: 'stable' as const,
+	status: 'beta' as const,
 	packageName: '@ixirjs/ui',
 	importCode: "import { Form, Field } from '@ixirjs/ui';",
-	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Form' }],
 	useCases,
 	componentsSummary,
-	examples: {
-		preset: presetCode
-	},
+	presetCode,
 	accessibility: accessibilityFeatures
 };

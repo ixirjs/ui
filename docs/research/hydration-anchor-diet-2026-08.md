@@ -1,5 +1,8 @@
 # Hydration-anchor diet — investigation and plan (2026-08-02)
 
+Historical note: the adapter paths and budgets below predate Kernel-only authoring; current budgets
+live in `src/lib/test/contracts/anchor-budget.spec.ts`.
+
 Status: **A6 + A1 + A2 + A3 implemented** (same day); A4/A5 remain decision-gated. The ratchet
 lives in `src/lib/test/contracts/anchor-budget.spec.ts` — budgets moved 34→24 (card), 32→22
 (card + defaultPreset), 29→17 (collapsible), 36→20 (datagrid row — the cell dispatches by
@@ -14,17 +17,17 @@ At identical element counts, `@ixirjs/ui`'s table DOM is twice the size of shadc
 **comment nodes**. Measured on the compare apps (`/table?rows=1000`, live DOM after hydration,
 TreeWalker census):
 
-| | elements | comments | texts | total nodes |
-|---|---|---|---|---|
-| @ixirjs/ui | 11,085 | **93,363** | 15,099 | **119,547** |
-| shadcn-svelte | 11,073 | **34,138** | 15,040 | **60,251** |
+|               | elements | comments   | texts  | total nodes |
+| ------------- | -------- | ---------- | ------ | ----------- |
+| @ixirjs/ui    | 11,085   | **93,363** | 15,099 | **119,547** |
+| shadcn-svelte | 11,073   | **34,138** | 15,040 | **60,251**  |
 
 Server HTML marginals agree: **93 comments/row vs 34/row** (slope between `rows=2` and `rows=12`).
 Comments are 78% of our DOM nodes. Every DOM-proportional cost scales with them:
 
 - **Hydration** walks every anchor (`hydrate_next` traverses comments); 5000 rows ≈ 465k comments.
 - **Filter interaction** (2.5× slower than shadcn, sort at parity): CDP profiles show 59–74% of
-  self time in native DOM `remove`/`insertBefore` + GC on *both* apps and only ~10% in library
+  self time in native DOM `remove`/`insertBefore` + GC on _both_ apps and only ~10% in library
   code — the differential is the node mass being torn down and recreated, not resolution math.
 - **Heap**: ~93k extra live `Comment` objects per 1000 rows, plus their effect-anchor references.
 - **The bench never saw it**: `client.mjs` counts `getElementsByTagName('*').length` — elements
@@ -37,17 +40,23 @@ comments (script preserved in the perf pass session; re-runnable in minutes). Em
 verified in `svelte/src/internal/server/index.js` (`element()`, `props_id()`) and `renderer.js`
 (`child_block`, `BLOCK_OPEN/CLOSE`).
 
-| Construct | Extra anchors | Notes |
-|---|---|---|
-| static element (`<div>`) | **0** | |
-| component boundary (`<C/>`) | **0** | boundaries are free |
-| `{@render localSnippet(args)}` — statically known callee | **0** | args are free too |
-| `{@render someParam?.()` / ternary callee | **+1** | each *dynamic-callee* level pays 1 |
-| children projected through a component boundary | **+2** | |
-| `{#if}` block (any number of branches) | **+2** | `<!--[N-->` + `<!--]-->` |
-| `{#each}` | +2 block, +2 per item | |
-| **`<svelte:element this={…}>`** | **+3** | before-tag, inner-close, after-tag (`element()` helper) |
-| `$props.id()` | **+1** | `<!--$sN-->` per component instance |
+| Construct                                                | Extra anchors         | Notes                                                   |
+| -------------------------------------------------------- | --------------------- | ------------------------------------------------------- |
+| static element (`<div>`)                                 | **0**                 |                                                         |
+| component boundary (`<C/>`)                              | **0**                 | boundaries are free                                     |
+| `{@render localSnippet(args)}` — statically known callee | **0**                 | args are free too                                       |
+| `{@render someParam?.()` / ternary callee                | **+1**                | each _dynamic-callee_ level pays 1                      |
+| children projected through a component boundary          | **+2**                |                                                         |
+| `{#if}` block (any number of branches)                   | **+2**                | `<!--[N-->` + `<!--]-->`                                |
+| `{#each}`                                                | +2 block, +2 per item |                                                         |
+| **`<svelte:element this={…}>`**                          | **+3**                | before-tag, inner-close, after-tag (`element()` helper) |
+| `$props.id()`                                            | **+1**                | `<!--$sN-->` per component instance                     |
+
+The two "free" rows above are free on this axis **only**. `nesting-component-vs-snippet-2026-08.md`
+prices a boundary against a module snippet in time, allocation and live heap at nesting depth, and
+finds them byte-identical here while differing ~28% on SSR time and ~17% on retained heap. It also
+records that the +2 for children through a boundary is paid by a snippet's body dispatch too, so it
+is not a reason to prefer one seam over the other.
 
 **Transition transparency (secondary benefit of snippet dispatch).** Svelte's local-transition
 boundaries follow `EFFECT_TRANSPARENT`: snippet/render-tag branches carry it
@@ -81,7 +90,7 @@ public API change, no resolution change, no new signals; output bytes change del
 
 In `part-element.svelte` and `html-atom.svelte`, add a `nativeDiv` snippet rendering a literal
 `<div class={…} {...attrs}>` and select it when `el.tag() === 'div'` (resp.
-`presentation.as ?? 'div'` is `'div'`). Selection happens inside the *existing* dynamic-callee
+`presentation.as ?? 'div'` is `'div'`). Selection happens inside the _existing_ dynamic-callee
 render — `{@render (el.native() ? (el.tag() === 'div' ? nativeDiv : native) : component)(…)}` — so
 it adds **no** new anchors. `<svelte:element>` remains for genuine `as` polymorphism.
 Hydration safety: branch choice is a pure function of the same resolved inputs on server and
@@ -109,7 +118,7 @@ tracked scope). Call-site migration is mechanical; parts with argless children a
 Rows whose identity is the consumer's `value` never render the seed-derived id, yet still emit
 `<!--$sN-->` per row (5000 at scale). Skipping `$props.id()` there collides with the
 root-identity audit's blanket rule — needs an explicit classification in
-`root-identity-audit.spec.ts` and an SSR-determinism argument (`value` *is* the stable identity).
+`root-identity-audit.spec.ts` and an SSR-determinism argument (`value` _is_ the stable identity).
 Small win, contract-sensitive: do last, or not at all.
 
 ### A5 — `isHidden` semantics (mostly superseded)
@@ -135,13 +144,13 @@ own PR) → re-measure → A4/A5 only if the calm-machine numbers say the remain
 
 ## 4. Expected end-state (pre-registered)
 
-| Metric | Before | Predicted | **Measured after A1–A3** | shadcn | Residual |
-|---|---|---|---|---|---|
-| comments/row (live, 1000 rows) | 93.4 | ~55–62 | **61.3** (snippet-dispatch cell; compare row carries Badge + spans beyond the fixture arithmetic) | 34.1 | `$sN` (A4), children-args hops, each-item, per-cell dispatch floor of 1 |
-| comments @1000 rows | 93,363 | ~85–90k total nodes | **61,305** (−160k nodes at 5000 rows) | 34,138 | same |
-| table HTML bytes @1000 rows | 1.998 MB | — | **1.746 MB** (13% below shadcn's 2.016 MB) | 2.016 MB | — |
-| anchor budgets (contract spec) | card 34 · preset 32 · collapsible 29 · row 36 | ~17–24 | **24 · 22 · 17 · 20** | — | pinned exactly |
-| interleaved A/B vs pre-diet HEAD | — | — | htmlatom −14%, card −10%, collapsible −18%, datagrid −32%, tree −21% (µs/unit) | — | — |
+| Metric                           | Before                                        | Predicted           | **Measured after A1–A3**                                                                          | shadcn   | Residual                                                                |
+| -------------------------------- | --------------------------------------------- | ------------------- | ------------------------------------------------------------------------------------------------- | -------- | ----------------------------------------------------------------------- |
+| comments/row (live, 1000 rows)   | 93.4                                          | ~55–62              | **61.3** (snippet-dispatch cell; compare row carries Badge + spans beyond the fixture arithmetic) | 34.1     | `$sN` (A4), children-args hops, each-item, per-cell dispatch floor of 1 |
+| comments @1000 rows              | 93,363                                        | ~85–90k total nodes | **61,305** (−160k nodes at 5000 rows)                                                             | 34,138   | same                                                                    |
+| table HTML bytes @1000 rows      | 1.998 MB                                      | —                   | **1.746 MB** (13% below shadcn's 2.016 MB)                                                        | 2.016 MB | —                                                                       |
+| anchor budgets (contract spec)   | card 34 · preset 32 · collapsible 29 · row 36 | ~17–24              | **24 · 22 · 17 · 20**                                                                             | —        | pinned exactly                                                          |
+| interleaved A/B vs pre-diet HEAD | —                                             | —                   | htmlatom −14%, card −10%, collapsible −18%, datagrid −32%, tree −21% (µs/unit)                    | —        | —                                                                       |
 
 Hydration integrity after landing: zero console diagnostics across all routes/both apps, fidelity
 valid, table parity 1.0, full unit suite green (872).
@@ -153,7 +162,7 @@ medians drifted ±15% intra-day on unchanged code during the 2026-08 pass.
 ## 5. Constraints carried forward
 
 - ADR 0008: presentation precedence, spread identity, lifecycle guarantees untouched — this plan
-  changes *markup plumbing*, not resolution or behavior. Rich path stays on `HtmlAtom`.
+  changes _markup plumbing_, not resolution or behavior. Rich path stays on `HtmlAtom`.
 - Seam rules: no per-part `$derived` added; `bodyArg` objects built at init, never inside a
   tracked boundary; restProps stay by-reference.
 - Every fingerprint change lands as its own re-record commit with the snapshot diff reviewed
@@ -167,16 +176,19 @@ Every conditional in the **product components** of `src/lib` (59 blocks across 4
 dispatches a snippet instead of opening an `{#if}` block:
 
 ```svelte
-{@render (cond ? branchA : branchB)()}          <!-- two outcomes -->
-{@render (cond ? branch : undefined)?.()}       <!-- optional -->
-{@render (children ?? fallback)(arg)}           <!-- consumer-or-default -->
+{@render (cond ? branchA : branchB)()}
+<!-- two outcomes -->
+{@render (cond ? branch : undefined)?.()}
+<!-- optional -->
+{@render (children ?? fallback)(arg)}
+<!-- consumer-or-default -->
 ```
 
 Three reasons, in order of weight:
 
 1. **One anchor instead of two.** An `{#if}` block emits `<!--[N-->` + `<!--]-->`; a render tag
    emits one. Where the block only wrapped another render tag (`{#if children}{@render
-   children(…)}{/if}`) the saving is 2 of 3.
+children(…)}{/if}`) the saving is 2 of 3.
 2. **Transition transparency.** Snippet branches carry `EFFECT_TRANSPARENT`
    (`svelte/src/internal/client/dom/blocks/snippet.js:38`); an `{#if}` branch carries it **only**
    as an `{:else if}` continuation (`if.js:30`). Consumer content inside a dispatched snippet
@@ -202,7 +214,6 @@ Three reasons, in order of weight:
 
 ### Deliberately not converted
 
-- `src/lib/components/virtual/` — documented dead code; AGENTS.md forbids churning it.
 - `src/lib/**/stories/*.svelte` and `src/lib/test/**` fixtures — neither ships. Story conditionals
   live inside nested snippet/each scopes, so converting them means threading demo-local scope
   through parameters, which makes the examples harder to read for no runtime gain; and

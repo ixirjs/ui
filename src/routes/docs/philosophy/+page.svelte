@@ -49,8 +49,8 @@
 		design, and owned entirely by the developer who uses them.
 	</p>
 	<div class="flex flex-wrap gap-3">
-		<Button href="/docs/atoms" as="a" variant="primary" class="gap-2 px-5">
-			Understand Atoms
+		<Button href="/docs/components" as="a" variant="primary" class="gap-2 px-5">
+			Explore Components
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
 				width="14"

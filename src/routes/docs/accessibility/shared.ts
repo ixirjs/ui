@@ -338,10 +338,10 @@ export const metadata = {
 </script>
 
 <!-- Variants automatically apply ARIA attributes -->
-<HtmlAtom variants={alertVariants} variant="error">
+<HtmlElement variants={alertVariants} variant="error">
   <!-- role="alert" and aria-live="assertive" applied -->
   Critical error message
-</HtmlAtom>`,
+</HtmlElement>`,
 
 		disabledState: `<!-- Button with disabled state -->
 <Button disabled>

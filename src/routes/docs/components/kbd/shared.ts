@@ -43,14 +43,13 @@ export const metadata = {
 	componentTitle: 'Kbd',
 	componentDescription:
 		'Semantic keyboard key and shortcut components. Use Kbd for individual keys and Shortcut to compose multi-key combinations.',
+	summary: 'Keyboard shortcut display styled as key cap badges',
+	category: 'Display' as const,
 	componentType: 'simple' as const,
 	status: 'stable' as const,
 	packageName: '@ixirjs/ui',
 	importCode: "import { Kbd, Shortcut } from '@ixirjs/ui';",
-	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Kbd' }],
 	useCases,
-	examples: {
-		preset: presetCode
-	},
+	presetCode,
 	accessibility: accessibilityFeatures
 };

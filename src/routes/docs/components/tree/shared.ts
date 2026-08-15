@@ -78,15 +78,15 @@ export const metadata = {
 	componentTitle: 'Tree',
 	componentDescription:
 		'Recursive tree component for hierarchical data with expandable nodes and unlimited depth.',
+	summary: 'Collapsible hierarchical data display with expand and select',
+	category: 'Display' as const,
 	componentType: 'compound' as const,
-	status: 'stable' as const,
+	status: 'beta' as const,
+	depth: 'intermediate' as const,
 	packageName: '@ixirjs/ui',
 	importCode: "import { Tree } from '@ixirjs/ui';",
-	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Tree' }],
 	useCases,
 	componentsSummary,
-	examples: {
-		preset: presetCode
-	},
+	presetCode,
 	accessibility: accessibilityFeatures
 };

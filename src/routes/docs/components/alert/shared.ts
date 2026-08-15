@@ -94,15 +94,14 @@ export const metadata = {
 	componentTitle: 'Alert',
 	componentDescription:
 		'Contextual feedback component for notifications, errors, and warnings with icons and action buttons.',
+	summary: 'Contextual status messages with title, description, and dismiss',
+	category: 'Feedback' as const,
 	componentType: 'compound' as const,
 	status: 'stable' as const,
 	packageName: '@ixirjs/ui',
 	importCode: "import { Alert } from '@ixirjs/ui';",
-	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Alert' }],
 	useCases,
 	componentsSummary,
-	examples: {
-		preset: presetCode
-	},
+	presetCode,
 	accessibility: accessibilityFeatures
 };

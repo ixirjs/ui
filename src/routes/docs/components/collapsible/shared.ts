@@ -82,15 +82,14 @@ export const metadata = {
 	componentTitle: 'Collapsible',
 	componentDescription:
 		'Toggle visibility of content sections with independent open/closed state and animated transitions.',
+	summary: 'Show and hide a single content region with animated height',
+	category: 'Layout' as const,
 	componentType: 'compound' as const,
 	status: 'stable' as const,
 	packageName: '@ixirjs/ui',
 	importCode: "import { Collapsible } from '@ixirjs/ui';",
-	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Collapsible' }],
 	useCases,
 	componentsSummary,
-	examples: {
-		preset: presetCode
-	},
+	presetCode,
 	accessibility: accessibilityFeatures
 };

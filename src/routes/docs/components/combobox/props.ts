@@ -1,17 +1,111 @@
-export interface PropDefinition {
-	name: string;
-	type: string;
-	default: string;
-	description: string;
-}
+import { renderPropsRow, type PropDefinition } from '$docs/types';
 
 export const comboboxRootProps: PropDefinition[] = [
 	{
+		name: 'children',
+		type: 'ComboboxChildren',
+		default: 'undefined',
+		description: 'Combobox content. Receives the ComboboxBond instance for custom composition.'
+	},
+	{
+		name: 'disabled',
+		type: 'boolean',
+		default: 'false',
+		description: 'Disables the combobox, preventing user interaction.'
+	},
+	{
+		name: 'factory',
+		type: 'Factory<ComboboxBondBase>',
+		default: 'undefined',
+		description: 'Custom factory function to create a ComboboxBond instance.'
+	},
+	{
+		name: 'keys',
+		type: 'string[]',
+		default: 'undefined',
+		description:
+			'Data keys `filterSelectData` searches. Defaults to every string field on the item.'
+	},
+	{
+		name: 'label',
+		type: 'string',
+		default: 'undefined',
+		description: 'Display label for the currently selected item (single-select mode).'
+	},
+	{
+		name: 'labels',
+		type: 'string[]',
+		default: 'undefined',
+		description: 'Array of display labels for selected items (multi-select mode).'
+	},
+	{
+		name: 'multiple',
+		type: 'boolean',
+		default: 'false',
+		description: 'When true, enables multiple item selection and shows selection chips.'
+	},
+	{
+		name: 'offset',
+		type: 'number',
+		default: '0',
+		description: 'Distance in pixels between the trigger and the dropdown content.'
+	},
+	{
+		name: 'onopenchange',
+		type: 'StateChangeCallback<boolean, ComboboxBondBase>',
+		default: 'undefined',
+		description: 'Fired after open state commits.'
+	},
+	{
+		name: 'onquerychange',
+		type: 'StateChangeCallback<string, ComboboxBondBase>',
+		default: 'undefined',
+		description: 'Fired after the filter query commits.'
+	},
+	{
+		name: 'onvaluechange',
+		type: 'StateChangeCallback<unknown, ComboboxBondBase>',
+		default: 'undefined',
+		description: 'Fired after the selected value commits in single mode.'
+	},
+	{
+		name: 'onvalueschange',
+		type: 'StateChangeCallback<unknown[], ComboboxBondBase>',
+		default: 'undefined',
+		description: 'Fired after the selected values commit in multiple mode.'
+	},
+	{
 		name: 'open',
-		type: 'boolean | undefined',
+		type: 'boolean',
 		default: 'false',
 		description:
 			'Controls whether the combobox dropdown is open. Can be bound for controlled usage.'
+	},
+	{
+		name: 'placement',
+		type: 'string',
+		default: 'undefined',
+		description:
+			'Preferred placement position for the dropdown content (floating-ui placement value).'
+	},
+	{
+		name: 'placements',
+		type: 'string[]',
+		default: 'undefined',
+		description: 'Ordered list of preferred placement positions for the dropdown content.'
+	},
+	{
+		name: 'presets',
+		type: 'ComboboxPresets | undefined',
+		default: 'undefined',
+		description: 'Per-instance presentation overrides for bonded Combobox parts.'
+	},
+	{
+		name: 'query',
+		type: 'string',
+		default: 'undefined',
+		description:
+			'Two-way-bindable search text. Read by `filterSelectData`, cleared by Escape (`ClearThenClose`).'
 	},
 	{
 		name: 'value',
@@ -21,135 +115,73 @@ export const comboboxRootProps: PropDefinition[] = [
 	},
 	{
 		name: 'values',
-		type: 'unknown[] | undefined',
+		type: 'unknown[]',
 		default: 'undefined',
 		description: 'Array of selected values in multi-select mode.'
-	},
-	{
-		name: 'label',
-		type: 'string | undefined',
-		default: "''",
-		description: 'Display label for the currently selected item (single-select mode).'
-	},
-	{
-		name: 'labels',
-		type: 'string[] | undefined',
-		default: "''",
-		description: 'Array of display labels for selected items (multi-select mode).'
-	},
-	{
-		name: 'multiple',
-		type: 'boolean | undefined',
-		default: 'false',
-		description: 'When true, enables multiple item selection and shows selection chips.'
-	},
-	{
-		name: 'disabled',
-		type: 'boolean | undefined',
-		default: 'false',
-		description: 'Disables the combobox, preventing user interaction.'
-	},
-	{
-		name: 'placements',
-		type: 'string[] | undefined',
-		default: "['bottom-start', 'top-start']",
-		description: 'Ordered list of preferred placement positions for the dropdown content.'
-	},
-	{
-		name: 'placement',
-		type: 'string | undefined',
-		default: "'bottom-start'",
-		description:
-			'Preferred placement position for the dropdown content (floating-ui placement value).'
-	},
-	{
-		name: 'offset',
-		type: 'number | undefined',
-		default: '0',
-		description: 'Distance in pixels between the trigger and the dropdown content.'
-	},
-	{
-		name: 'factory',
-		type: 'Factory<ComboboxBond> | undefined',
-		default: 'undefined',
-		description: 'Custom factory function to create a ComboboxBond instance.'
-	},
-	{
-		name: 'children',
-		type: 'Snippet<[{ combobox: ComboboxBond; }]> | undefined',
-		default: 'undefined',
-		description: 'Combobox content. Receives the ComboboxBond instance for custom composition.'
-	},
-	{
-		name: 'onopenchange',
-		type: 'StateChangeCallback<boolean, ComboboxBond> | undefined',
-		default: 'undefined',
-		description: 'Fired after open state commits.'
-	},
-	{
-		name: 'onvaluechange',
-		type: 'StateChangeCallback<unknown, ComboboxBond> | undefined',
-		default: 'undefined',
-		description: 'Fired after the selected value commits in single mode.'
-	},
-	{
-		name: 'onvalueschange',
-		type: 'StateChangeCallback<unknown[], ComboboxBond> | undefined',
-		default: 'undefined',
-		description: 'Fired after the selected values commit in multiple mode.'
-	},
-	{
-		name: 'onquerychange',
-		type: 'StateChangeCallback<string, ComboboxBond> | undefined',
-		default: 'undefined',
-		description: 'Fired after the filter query commits.'
-	},
-	{
-		name: '...atomProps',
-		type: 'HtmlAtomProps',
-		default: '-',
-		description:
-			'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
 	}
 ];
 
-export const comboboxSelectionsProps: PropDefinition[] = [
-	{
-		name: 'class',
-		type: 'ClassValue | undefined',
-		default: 'undefined',
-		description: 'CSS class for the selections container'
-	},
-	{
-		name: 'Selection',
-		type: 'Component<{}, {}, string> | undefined',
-		default: "''",
-		description: 'Custom component to render each individual selection badge.'
-	},
+export const comboboxItemProps: PropDefinition[] = [
 	{
 		name: 'children',
-		type: 'Snippet<[{ selections: DropdownSelection[]; selection?: DropdownSelection | undefined; }]> | undefined',
+		type: 'ComboboxChildren',
+		default: 'undefined',
+		description: 'Content of this part.'
+	},
+	{
+		name: 'data',
+		type: 'T',
+		default: 'undefined',
+		description: 'Arbitrary payload carried on the Bond, returned by lookups and snippet props.'
+	},
+	{
+		name: 'disabled',
+		type: 'boolean',
+		default: 'undefined',
+		description: 'Disables the control: it stops responding and is removed from the tab order.'
+	},
+	{
+		name: 'value',
+		type: 'string',
+		default: 'undefined',
+		description: 'Current value of the control.'
+	},
+	renderPropsRow
+];
+
+export const comboboxTriggerProps: PropDefinition[] = [renderPropsRow];
+
+export const comboboxSelectionsProps: PropDefinition[] = [
+	{
+		name: 'children',
+		type: 'Snippet<[{ selections: SelectSelection[]; selection?: SelectSelection | undefined; }]>',
 		default: 'undefined',
 		description: 'Children content snippet'
 	},
 	{
+		name: 'class',
+		type: 'ClassValue',
+		default: 'undefined',
+		description: 'CSS class for the selections container'
+	},
+	{
 		name: 'getSelections',
-		type: '(<T extends DropdownBond>(bond: T) => DropdownSelection[]) | undefined',
+		type: '<T extends SelectBond>(bond: T) => SelectSelection[]',
 		default: 'undefined',
 		description: 'Custom function to retrieve selections from the bond'
+	},
+	{
+		name: 'Selection',
+		type: 'Component<{}, {}, string> | undefined',
+		default: 'undefined',
+		description: 'Replaces the component rendering each selected item.'
 	}
 ];
 
 export const comboboxSelectionProps: PropDefinition[] = [
 	{
-		name: 'selection',
-		type: 'DropdownSelection',
-		default: '-',
-		description: 'Selection object containing id, value, label, and unselect function (required)'
-	},
-	{
 		name: 'children',
-		type: 'Snippet<[]> | undefined',
+		type: 'Snippet<[]>',
 		default: 'undefined',
 		description: 'Children content snippet'
 	},
@@ -160,26 +192,32 @@ export const comboboxSelectionProps: PropDefinition[] = [
 		description: 'Callback fired when the selection is closed/removed'
 	},
 	{
-		name: '...atomProps',
-		type: 'HtmlAtomProps',
-		default: '-',
-		description:
-			'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
-	}
+		name: 'selection',
+		type: 'SelectSelection',
+		default: 'undefined',
+		description: 'Selection object containing id, value, label, and unselect function (required)'
+	},
+	renderPropsRow
 ];
 
 export const comboboxControlProps: PropDefinition[] = [
 	{
-		name: 'value',
-		type: 'any',
+		name: 'checked',
+		type: 'boolean',
 		default: 'undefined',
-		description: 'The input value'
+		description: 'Checked state for checkbox/radio inputs'
 	},
 	{
-		name: 'files',
-		type: 'File[]',
+		name: 'children',
+		type: 'InputChildren',
 		default: 'undefined',
-		description: 'File list for file inputs'
+		description: 'Children content snippet'
+	},
+	{
+		name: 'class',
+		type: 'ClassValue | ClassValue[]',
+		default: 'undefined',
+		description: 'CSS class for the input control'
 	},
 	{
 		name: 'date',
@@ -188,111 +226,77 @@ export const comboboxControlProps: PropDefinition[] = [
 		description: 'Date value for date inputs'
 	},
 	{
+		name: 'files',
+		type: 'File[]',
+		default: 'undefined',
+		description: 'File list for file inputs'
+	},
+	{
 		name: 'number',
 		type: 'number',
 		default: 'undefined',
 		description: 'Number value for number inputs'
 	},
 	{
-		name: 'checked',
-		type: 'boolean',
+		name: 'onchange',
+		type: '(event: Event) => void',
 		default: 'undefined',
-		description: 'Checked state for checkbox/radio inputs'
+		description: 'Native change callback. Receives only the DOM event.'
 	},
 	{
-		name: 'type',
-		type: 'HTMLInputTypeAttribute | null',
-		default: "'text'",
-		description: 'HTML input type attribute'
+		name: 'oncheckedchange',
+		type: 'InputStateChangeCallback<boolean, InputControlChangeDetails, Event>',
+		default: 'undefined',
+		description: 'Semantic callback for `type="checkbox"` and `type="radio"`.'
+	},
+	{
+		name: 'ondatechange',
+		type: 'InputStateChangeCallback<Date | null, InputControlChangeDetails, Event>',
+		default: 'undefined',
+		description: 'Semantic callback for native date/time input types.'
+	},
+	{
+		name: 'onfileschange',
+		type: 'InputStateChangeCallback<File[], InputControlChangeDetails, Event>',
+		default: 'undefined',
+		description: 'Semantic callback for `type="file"`.'
+	},
+	{
+		name: 'oninput',
+		type: '(event: Event) => void',
+		default: 'undefined',
+		description: 'Native input callback. Receives only the DOM event.'
+	},
+	{
+		name: 'onnumberchange',
+		type: 'InputStateChangeCallback<number | undefined, InputControlChangeDetails, Event>',
+		default: 'undefined',
+		description: 'Semantic callback for `type="number"`.'
+	},
+	{
+		name: 'onvaluechange',
+		type: 'InputStateChangeCallback<unknown, InputControlChangeDetails, Event>',
+		default: 'undefined',
+		description: 'Semantic callback for the parsed input value.'
 	},
 	{
 		name: 'placeholder',
-		type: 'string',
+		type: 'string | undefined',
 		default: 'undefined',
 		description: 'Placeholder text for the input'
 	},
 	{
-		name: 'class',
-		type: 'string',
+		name: 'type',
+		type: 'InputControlType',
 		default: 'undefined',
-		description: 'CSS class for the input control'
+		description: 'HTML input type attribute'
 	},
 	{
-		name: 'children',
-		type: 'Snippet',
+		name: 'value',
+		type: 'any',
 		default: 'undefined',
-		description: 'Children content snippet'
+		description:
+			'The native input value. Parsed number/date/file state uses the dedicated props below.'
 	},
-	{
-		name: 'bond',
-		type: 'Bond',
-		default: 'undefined',
-		description: 'Bond object for component communication'
-	},
-	{
-		name: 'base',
-		type: 'Component | Snippet',
-		default: 'undefined',
-		description: 'Base component or snippet to render'
-	},
-	{
-		name: 'preset',
-		type: 'PresetModuleName | string',
-		default: "'input.control'",
-		description: 'Preset module name for styling'
-	},
-	{
-		name: 'variants',
-		type: 'VariantDefinition | Function',
-		default: 'undefined',
-		description: 'Variant definition or function to resolve variants'
-	},
-	{
-		name: 'as',
-		type: 'string',
-		default: 'undefined',
-		description: 'HTML tag to render as'
-	},
-	{
-		name: 'global',
-		type: 'boolean',
-		default: 'false',
-		description: 'Whether to use global styles'
-	},
-	{
-		name: 'initial',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Function called on initial render'
-	},
-	{
-		name: 'enter',
-		type: 'TransitionFunction',
-		default: 'undefined',
-		description: 'Transition function for entering'
-	},
-	{
-		name: 'exit',
-		type: 'TransitionFunction',
-		default: 'undefined',
-		description: 'Transition function for exiting'
-	},
-	{
-		name: 'animate',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Animation function'
-	},
-	{
-		name: 'onmount',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Function called when element is mounted'
-	},
-	{
-		name: 'ondestroy',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Function called when element is destroyed'
-	}
+	renderPropsRow
 ];

@@ -2,6 +2,9 @@ import type { Component } from 'svelte';
 
 export type ExampleLoader = () => Promise<{ default: Component }>;
 
+/** What `createExampleLoader` returns — spread into `<DocExample>`. */
+export type ExampleFn = (src: string) => { component: ExampleLoader; code: string };
+
 // Replaces internal $lib paths with the public package name for user-facing code blocks.
 function transformImports(code: string): string {
 	return code.replace(/from\s+'(\$lib\/[^']+)'/g, "from '@ixirjs/ui'");

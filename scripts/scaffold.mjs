@@ -3,16 +3,15 @@
  * Scaffold a component family.
  *
  * Authoring a bonded family means writing the same eight-ish files every time: a barrel, an atom
- * namespace, four prop-type aliases and four extension interfaces, and one ~25-line part component
- * per slot whose entire body is `usePart` plus an `<HtmlAtom>` with the `$preset` sentinel. The
- * mechanical share of that was measured at roughly 70%; the remaining 30% — ARIA and keyboard
- * logic, Bond methods, capability choice, motion, markup — is the part worth a human.
+ * namespace, four prop-type aliases and four extension interfaces, and one part component per
+ * slot. The mechanical share of that was measured at roughly 70%; the remaining 30% — ARIA and
+ * keyboard logic, Bond methods, capability choice, motion, markup — is the part worth a human.
  *
  * This emits the 70% in the canonical shape, so "copy the nearest sibling and edit" stops being
  * the only template. It deliberately does NOT introduce a shared runtime `<Part>` wrapper: a
- * component between the family part and `HtmlAtom` costs ~1 µs per part (about +9% on Card), so
- * the duplication between part files is a measured performance floor, not an accident. The fix for
- * repetitive files is to generate them, not to wrap them.
+ * component boundary between the family part and Kernel costs ~1 µs per part (about +9% on Card).
+ * `definePart` is the answer instead — a function call inside the part's own init, no second
+ * component boundary — which is why a generated part is now ~14 lines rather than ~30.
  *
  * Usage:
  *   node scripts/scaffold.mjs <name> --slots root,header:trigger,body:content,indicator
@@ -22,6 +21,11 @@
  * A slot is `name` or `name:role`. `role` is the relationship role a capability responds to
  * (`trigger`, `content`, `item`, …) and is passed straight through to `defineBond`'s atom map.
  * `root` is implied and always emitted first.
+ *
+ * A docs page under `src/routes/docs/components/<name>/` is emitted too — `--no-docs` skips it,
+ * `--category` picks its catalog group (default `Display`). The sidebar entry, catalog card,
+ * breadcrumbs and prev/next links all derive from that page's `shared.ts` via `$docs/registry`,
+ * so the directory is the whole registration.
  */
 import { writeFileSync, readFileSync, mkdirSync, existsSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
@@ -97,11 +101,7 @@ export * from './types';
 
 function typesFile(n, slots) {
 	const extend = slots
-		.map(
-			(s) =>
-				`// eslint-disable-next-line @typescript-eslint/no-empty-object-type\n` +
-				`export interface ${n.Pascal}${pascal(s.slot)}ExtendProps {}`
-		)
+		.map((s) => `export interface ${n.Pascal}${pascal(s.slot)}ExtendProps {}`)
 		.join('\n\n');
 
 	// Emitted already Prettier-clean: a root's extra members push the intersection onto its own
@@ -109,9 +109,9 @@ function typesFile(n, slots) {
 	// makes every scaffold start with a spurious diff.
 	const propsFor = (s) => {
 		const head = `export type ${n.Pascal}${pascal(s.slot)}Props<
-	E extends keyof HTMLElementTagNameMap = 'div',
+	E extends HtmlElementTagName = 'div',
 	B extends Base = Base
-> = HtmlAtomProps<E, B, ${n.Pascal}Children> &`;
+> = RenderProps<E, B, ${n.Pascal}Children> &`;
 		if (s.slot !== 'root') {
 			return `${head} ${n.Pascal}${pascal(s.slot)}ExtendProps;`;
 		}
@@ -123,7 +123,12 @@ function typesFile(n, slots) {
 	};
 
 	return `import type { Snippet } from 'svelte';
-import type { HtmlAtomProps, Base, SnippetProps } from '$ixirjs/ui/components/atom';
+import type {
+	RenderProps,
+	Base,
+	HtmlElementTagName,
+	SnippetProps
+} from '$ixirjs/ui/components/atom';
 import type { Factory } from '$ixirjs/ui/types';
 import type { ${n.Pascal}Bond } from './bond.svelte';
 
@@ -142,26 +147,16 @@ ${slots.map(propsFor).join('\n\n')}
 }
 
 function bondFile(n, slots) {
-	const atomDecls = slots
-		.map(
-			(
-				s
-			) => `export const ${n.Pascal}${pascal(s.slot)}Atom = defineAtom<${n.Pascal}BondView>('${s.slot}');
-export type ${n.Pascal}${pascal(s.slot)}Atom = InstanceType<typeof ${n.Pascal}${pascal(s.slot)}Atom>;`
-		)
-		.join('\n\n');
-
+	// Every scaffolded slot starts presentation-free, so none declares an `atom`: `defineBond`
+	// synthesizes `defineAtom({ key: slot, namespace: name })` for it. Declare one — a `defineAtom`
+	// with an `attrs`/`handlers` spec, or an `Atom` subclass — at the point a slot grows behavior.
 	const atomMap = slots
-		.map((s) =>
-			s.role
-				? `\t\t${s.slot}: { atom: ${n.Pascal}${pascal(s.slot)}Atom, role: '${s.role}' }`
-				: `\t\t${s.slot}: ${n.Pascal}${pascal(s.slot)}Atom`
-		)
+		.map((s) => (s.role ? `\t\t${s.slot}: { role: '${s.role}' }` : `\t\t${s.slot}: {}`))
 		.join(',\n');
 
 	const domElements = slots.map((s) => `\t${s.slot}: HTMLElement;`).join('\n');
 
-	return `import { Bond, defineAtom } from '$ixirjs/ui/shared/bond';
+	return `import { Bond } from '$ixirjs/ui/shared/bond';
 import { defineBond } from '$ixirjs/ui/shared';
 import type { BondStateProps } from '$ixirjs/ui/shared/bond';
 
@@ -176,18 +171,6 @@ export type ${n.Pascal}StateProps = BondStateProps & {
 export type ${n.Pascal}DomElements = {
 ${domElements}
 };
-
-// -----------------------------------------------------------------------------
-// Internal types
-// -----------------------------------------------------------------------------
-
-type ${n.Pascal}BondView = ${n.Pascal}BondBase;
-
-// -----------------------------------------------------------------------------
-// Atom definitions
-// -----------------------------------------------------------------------------
-
-${atomDecls}
 
 // -----------------------------------------------------------------------------
 // Bond implementation
@@ -228,12 +211,11 @@ export type ${n.Pascal}Bond = ${n.Pascal}BondBase;
 }
 
 function rootFile(n) {
-	return `<script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
+	return `<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
 	import { useRoot } from '$ixirjs/ui/shared';
-	import { type Base } from '$ixirjs/ui/components/atom';
-	import { usePartElement } from '$ixirjs/ui/components/atom/use-part-element.svelte';
-	import { partElement } from '$ixirjs/ui/components/atom/part-element.svelte';
-	import { ${n.Pascal}Bond, type ${n.Pascal}StateProps } from './bond.svelte';
+	import { type Base, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
+	import { ${n.Pascal}Bond } from './bond.svelte';
 	import type { ${n.Pascal}RootProps } from './types';
 
 	const ID = $props.id();
@@ -242,7 +224,7 @@ function rootFile(n) {
 		class: klass = '',
 		preset = undefined,
 		disabled = false,
-		factory = defaultFactory,
+		factory = undefined,
 		children = undefined,
 		...restProps
 	}: ${n.Pascal}RootProps<E, B> = $props();
@@ -255,71 +237,67 @@ function rootFile(n) {
 		{
 			preset: () => preset,
 			id: () => ID,
-			factory: (props) => factory(props)
+			// A getter, like preset and id: useRoot falls back to ${n.Pascal}Bond.create when the
+			// consumer passes none, so there is no local default to declare.
+			factory: () => factory
 		}
 	);
 	const bond = root.bond;
 
-	function defaultFactory(props: ${n.Pascal}StateProps) {
-		return ${n.Pascal}Bond.create(props);
-	}
+	// The accessor useRoot already returns — assign it rather than rebuilding an arrow over bond.
+	export const getBond = root.getBond;
 
-	export function getBond() {
-		return bond;
-	}
-
-	const el = usePartElement(root, () => ({
+	const el = Kernel.element(root, () => ({
 		class: ['${n.kebab}', '$preset', klass],
 		...root.props,
 		...restProps
 	}));
 </script>
 
-{#snippet body()}
-	{@render children?.({ ${n.camel}: bond })}
-{/snippet}
-
-{@render partElement(el, body)}
+{@render Kernel.render(el)(
+	el.tag(),
+	el.class(),
+	el.attrs(),
+	children,
+	{ ${n.camel}: bond },
+	el.motion(),
+	el
+)}
 `;
 }
 
 function partFile(n, slot) {
-	return `<script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { type Base } from '$ixirjs/ui/components/atom';
-	import { usePartElement } from '$ixirjs/ui/components/atom/use-part-element.svelte';
-	import { partElement } from '$ixirjs/ui/components/atom/part-element.svelte';
-	import { usePart } from '$ixirjs/ui/shared';
+	return `<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
+	import { type Base, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
+	import { definePart } from '$ixirjs/ui/components/atom/define-part.svelte';
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
 	import { ${n.Pascal}Bond } from './bond.svelte';
 	import type { ${n.Pascal}${pascal(slot)}Props } from './types';
 
-	let {
-		class: klass = '',
-		preset = undefined,
-		children = undefined,
-		...restProps
-	}: ${n.Pascal}${pascal(slot)}Props<E, B> = $props();
+	const props: ${n.Pascal}${pascal(slot)}Props<E, B> = $props();
 
-	const part = usePart(${n.Pascal}Bond, '${slot}', () => restProps, {
-		preset: () => preset
+	const el = definePart(${n.Pascal}Bond, '${slot}', () => props, {
+		class: '${n.kebab}-${slot}'
 	});
-	const el = usePartElement(part, () => ({
-		class: ['${n.kebab}-${slot}', '$preset', klass],
-		...restProps
-	}));
 </script>
 
-{#snippet body()}
-	{@render children?.({ ${n.camel}: part.bond })}
-{/snippet}
-
-{@render partElement(el, body)}
+{@render Kernel.render(el)(
+	el.tag(),
+	el.class(),
+	el.attrs(),
+	props.children,
+	{ ${n.camel}: el.bond },
+	el.motion(),
+	el
+)}
 `;
 }
 
 /** A static module: component + types + index, no Bond, no Atom (the Button shape). */
 function staticFile(n) {
-	return `<script lang="ts" generics="E extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
-	import { HtmlAtom, mergePresetProps, type Base } from '$ixirjs/ui/components/atom';
+	return `<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
+	import { mergePresetProps, type Base, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
 	import type { ${n.Pascal}Props } from './types';
 
 	let {
@@ -330,26 +308,35 @@ function staticFile(n) {
 	}: ${n.Pascal}Props<E, B> = $props();
 
 	const ${n.camel}Props = $derived(mergePresetProps(preset, '${n.kebab}', restProps));
+	const el = Kernel.element(Kernel.static, () => ({
+		class: ['${n.kebab}', '$preset', klass],
+		...${n.camel}Props
+	}));
 </script>
 
-<HtmlAtom class={['${n.kebab}', '$preset', klass]} {...${n.camel}Props}>
-	{@render children?.()}
-</HtmlAtom>
+{@render Kernel.render(el)(
+	el.tag(),
+	el.class(),
+	el.attrs(),
+	children,
+	undefined,
+	el.motion(),
+	el
+)}
 `;
 }
 
 function staticTypesFile(n) {
 	return `import type { Snippet } from 'svelte';
-import type { HtmlAtomProps, Base } from '$ixirjs/ui/components/atom';
+import type { RenderProps, Base } from '$ixirjs/ui/components/atom';
 
 // Extension point: merge custom props by augmenting this interface.
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface ${n.Pascal}ExtendProps {}
 
 export type ${n.Pascal}Props<
-	E extends keyof HTMLElementTagNameMap = 'div',
+	E extends HtmlElementTagName = 'div',
 	B extends Base = Base
-> = HtmlAtomProps<E, B, Snippet> & ${n.Pascal}ExtendProps;
+> = RenderProps<E, B, Snippet> & ${n.Pascal}ExtendProps;
 `;
 }
 
@@ -387,6 +374,158 @@ export function planFamily(name, slotInput, { static: isStatic = false } = {}) {
 		files[`${n.kebab}-${slot}.svelte`] = slot === 'root' ? rootFile(n) : partFile(n, slot);
 	}
 	return files;
+}
+
+// ─── docs page ─────────────────────────────────────────────────────────────────
+
+const DOCS_DIR = join(ROOT, 'src/routes/docs/components');
+
+/**
+ * The four files a docs page is made of, in the shape the other 41 already have.
+ *
+ * `props.ts` is deliberately absent: `scripts/sync-props.mjs` generates it from the family's own
+ * `types.ts`, and a scaffolded copy would be a second, immediately-stale source. That is also why
+ * `sync:props` is the first of the printed next steps — `content.svelte` imports the tables this
+ * plan does not write, so the page does not type-check until the generator has run once.
+ *
+ * Everything else the page needs is derived: the sidebar entry, the catalog card, the breadcrumb
+ * trail and the prev/next links all come from `shared.ts` via `$docs/registry`, so creating this
+ * directory is the whole of "add a component to the docs".
+ */
+export function planDocs(name, slotInput, { static: isStatic = false, category = 'Display' } = {}) {
+	const n = names(name);
+	const slots = isStatic ? [{ slot: 'root' }] : parseSlots(slotInput);
+
+	// `sync-props.mjs` exports one table per `*Props` type, named by lowercasing the type's first
+	// letter. For a bonded family that is `<Family><Slot>Props`; a static one declares `<Family>Props`.
+	const tableFor = (slot) => (isStatic ? `${n.camel}Props` : `${n.camel}${pascal(slot)}Props`);
+	const labelFor = (slot) =>
+		isStatic ? n.Pascal : slot === 'root' ? `${n.Pascal}.Root` : `${n.Pascal}.${pascal(slot)}`;
+	const presetFor = (slot) => (slot === 'root' ? n.kebab : `${n.kebab}.${slot}`);
+
+	const tables = slots.map(({ slot }) => tableFor(slot));
+	const sections = slots
+		.map(
+			({ slot }) =>
+				`\t\t{ label: '${labelFor(slot)}', presetKey: '${presetFor(slot)}', props: ${tableFor(slot)} }`
+		)
+		.join(',\n');
+
+	const usage = isStatic
+		? `<${n.Pascal}>${TODO}</${n.Pascal}>`
+		: slots
+				.filter(({ slot }) => slot !== 'root')
+				.map(({ slot }) => `\t<${n.Pascal}.${pascal(slot)}>${TODO}</${n.Pascal}.${pascal(slot)}>`)
+				.join('\n') || `\t${TODO}`;
+
+	const example = isStatic
+		? `<script lang="ts">
+	import { ${n.Pascal} } from '$lib/components/${n.kebab}';
+</script>
+
+${usage}
+`
+		: `<script lang="ts">
+	import { ${n.Pascal} } from '$lib/components/${n.kebab}';
+</script>
+
+<${n.Pascal}.Root>
+${usage}
+</${n.Pascal}.Root>
+`;
+
+	return {
+		'+page.svelte': `<script lang="ts">
+	import { metadata } from './shared';
+	import Content from './content.svelte';
+</script>
+
+<svelte:head>
+	<title>{metadata.title}</title>
+	<meta name="description" content={metadata.description} />
+</svelte:head>
+
+<Content contentType="html" />
+`,
+
+		'shared.ts': `const presetCode = \`import { setPreset } from '@ixirjs/ui/preset';
+
+const preset = setPreset({
+	'${presetFor('root')}': () => ({ class: '${TODO}' })
+});\`;
+
+export const metadata = {
+	title: '${n.Pascal} - Svelte Atoms',
+	description: '${TODO} — one sentence, used as the page <meta description>.',
+	componentTitle: '${n.Pascal}',
+	componentDescription: '${TODO} — the page subtitle, a sentence or two.',
+	summary: '${TODO} — the terse catalog-card blurb, no trailing period',
+	category: '${category}' as const,
+	componentType: '${isStatic ? 'simple' : 'compound'}' as const,
+	status: 'beta' as const,
+	packageName: '@ixirjs/ui',
+	importCode: "import { ${n.Pascal} } from '@ixirjs/ui';",
+	examples: {
+		preset: presetCode
+	},
+	accessibility: ['${TODO} — one line per guarantee: roles, keyboard, focus, screen-reader']
+};
+`,
+
+		'content.svelte': `<script lang="ts">
+	import { createExampleLoader } from '$docs/utils/example-loader';
+	import { DocComponentPage, DocExample, DocCode, DocPropsTabs } from '$docs/components';
+	import type { PropsSection } from '$docs/components';
+	import { ${tables.join(', ')} } from './props';
+	import { metadata } from './shared';
+	import type { DocMode } from '$docs/context/doc-mode.svelte';
+	import type { Frontmatter } from '$docs/md/frontmatter';
+
+	let { contentType = 'html' }: { contentType?: DocMode } = $props();
+
+	const frontmatter: Frontmatter = {
+		id: '${n.kebab}',
+		title: '${n.Pascal}',
+		category: 'components',
+		depth: 'beginner',
+		prerequisites: [],
+		related: []
+	};
+
+	const apiSections: PropsSection[] = [
+${sections}
+	];
+
+	const _loaders = import.meta.glob('./examples/*.svelte');
+	const _sources = import.meta.glob('./examples/*.svelte', {
+		query: '?raw',
+		import: 'default',
+		eager: true
+	}) as Record<string, string>;
+	const ex = createExampleLoader(_loaders, _sources);
+</script>
+
+<DocComponentPage {contentType} {metadata} {frontmatter}>
+	{#snippet preset()}
+		<DocCode code={metadata.examples.preset} lang="typescript" />
+	{/snippet}
+
+	{#snippet examples()}
+		<DocExample
+			title="Basic ${n.Pascal}"
+			description="${TODO} — what this example shows."
+			{...ex('./examples/basic.svelte')}
+		/>
+	{/snippet}
+
+	{#snippet apiReference()}
+		<DocPropsTabs sections={apiSections} />
+	{/snippet}
+</DocComponentPage>
+`,
+
+		'examples/basic.svelte': example
+	};
 }
 
 // ─── preset manifest ───────────────────────────────────────────────────────────
@@ -436,14 +575,22 @@ function parseArgs(argv) {
 		static: false,
 		dry: false,
 		out: undefined,
-		presets: true
+		presets: true,
+		docs: true,
+		// For a family that already exists and only lacks its page — the ten that predate docs
+		// emission. Skips the family files and the preset manifest, both already in place.
+		docsOnly: false,
+		category: 'Display'
 	};
 	for (let index = 0; index < argv.length; index++) {
 		const arg = argv[index];
 		if (arg === '--static') options.static = true;
 		else if (arg === '--dry') options.dry = true;
 		else if (arg === '--no-presets') options.presets = false;
+		else if (arg === '--no-docs') options.docs = false;
+		else if (arg === '--docs-only') options.docsOnly = true;
 		else if (arg === '--slots') options.slots = argv[++index];
+		else if (arg === '--category') options.category = argv[++index];
 		else if (arg === '--out') options.out = argv[++index];
 		else if (!arg.startsWith('-') && !options.name) options.name = arg;
 		else throw new Error(`unexpected argument "${arg}"`);
@@ -454,12 +601,31 @@ function parseArgs(argv) {
 
 function main() {
 	const options = parseArgs(process.argv.slice(2));
-	const files = planFamily(options.name, options.slots, { static: options.static });
+	const files = options.docsOnly
+		? {}
+		: planFamily(options.name, options.slots, { static: options.static });
 	const target = options.out ? join(options.out, options.name) : join(COMPONENTS_DIR, options.name);
+
+	// An out-of-tree preview gets its docs page beside the family rather than in the routes tree,
+	// for the same reason `--out` skips the preset manifest: nothing outside the repo's own
+	// directories should be written on the strength of a preview flag.
+	const docs = options.docs
+		? planDocs(options.name, options.slots, {
+				static: options.static,
+				category: options.category
+			})
+		: {};
+	const docsTarget = options.out
+		? join(options.out, options.name, 'docs')
+		: join(DOCS_DIR, options.name);
 
 	if (options.dry) {
 		for (const [file, content] of Object.entries(files)) {
 			console.log(`\n─── ${join(target, file)} ${'─'.repeat(Math.max(0, 60 - file.length))}`);
+			console.log(content);
+		}
+		for (const [file, content] of Object.entries(docs)) {
+			console.log(`\n─── ${join(docsTarget, file)} ${'─'.repeat(Math.max(0, 60 - file.length))}`);
 			console.log(content);
 		}
 		return;
@@ -467,21 +633,37 @@ function main() {
 
 	// Never overwrite: scaffolding is for new families, and a half-generated directory over an
 	// authored one is far worse than a refusal.
-	if (existsSync(target) && readdirSync(target).length > 0) {
+	if (!options.docsOnly && existsSync(target) && readdirSync(target).length > 0) {
 		throw new Error(`${target} already exists and is not empty`);
 	}
-	mkdirSync(target, { recursive: true });
-	for (const [file, content] of Object.entries(files)) {
-		writeFileSync(join(target, file), content);
+	if (existsSync(docsTarget) && readdirSync(docsTarget).length > 0) {
+		throw new Error(`${docsTarget} already exists and is not empty`);
+	}
+	if (Object.keys(files).length > 0) {
+		mkdirSync(target, { recursive: true });
+		for (const [file, content] of Object.entries(files)) {
+			writeFileSync(join(target, file), content);
+		}
+	}
+	for (const [file, content] of Object.entries(docs)) {
+		const path = join(docsTarget, file);
+		mkdirSync(dirname(path), { recursive: true });
+		writeFileSync(path, content);
 	}
 
-	console.log(`scaffolded ${Object.keys(files).length} files → ${target}\n`);
-	for (const file of Object.keys(files)) console.log(`  ${file}`);
+	if (Object.keys(files).length > 0) {
+		console.log(`scaffolded ${Object.keys(files).length} files → ${target}\n`);
+		for (const file of Object.keys(files)) console.log(`  ${file}`);
+	}
+	if (Object.keys(docs).length > 0) {
+		console.log(`\nscaffolded ${Object.keys(docs).length} files → ${docsTarget}\n`);
+		for (const file of Object.keys(docs)) console.log(`  ${file}`);
+	}
 
 	// Skipped for an out-of-tree preview: registering keys for a family that does not live in the
 	// components directory would leave the manifest describing something that is not there.
 	let added = [];
-	if (options.presets && !options.out) {
+	if (options.presets && !options.out && !options.docsOnly) {
 		const keys = presetKeysFor(options.name, options.slots, { static: options.static });
 		const result = withPresetKeys(readFileSync(MANIFEST_PATH, 'utf8'), keys);
 		if (result.added.length > 0) writeFileSync(MANIFEST_PATH, result.source);
@@ -492,12 +674,22 @@ function main() {
 		}
 	}
 
-	const steps = [
-		`fill the ${TODO}s in bond.svelte.ts — capabilities, state methods, predicates`,
-		'add default styling for the new preset keys in src/lib/preset/default.ts',
-		'add the family to src/lib/index.ts and src/lib/public/ if it is public',
-		'bun run check && bun run lint && bun run test:unit -- --run'
-	];
+	const steps = options.docsOnly
+		? ['bun run check && bun run lint']
+		: [
+				`fill the ${TODO}s in bond.svelte.ts — capabilities, state methods, predicates`,
+				'add default styling for the new preset keys in src/lib/preset/default.ts',
+				'add the family to src/lib/index.ts and src/lib/public/ if it is public',
+				'bun run check && bun run lint && bun run test:unit -- --run'
+			];
+	// First, not last: `content.svelte` imports the prop tables, and nothing generates them until
+	// this runs — so the page does not type-check in between.
+	if (Object.keys(docs).length > 0) {
+		steps.unshift(
+			'bun run sync:props — writes the props.ts the docs page imports',
+			`fill the ${TODO}s in the docs page — shared.ts copy, the basic example, accessibility`
+		);
+	}
 	if (!options.presets || options.out) {
 		steps.unshift('register this family’s preset keys in src/lib/preset/manifest.ts');
 	}

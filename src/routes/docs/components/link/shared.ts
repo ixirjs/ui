@@ -60,14 +60,13 @@ export const metadata = {
 	componentTitle: 'Link',
 	componentDescription:
 		'Styled anchor element with consistent hover/active states and preset-based variants.',
+	summary: 'Styled anchor element with active state and external link support',
+	category: 'Navigation' as const,
 	componentType: 'simple' as const,
 	status: 'stable' as const,
 	packageName: '@ixirjs/ui',
 	importCode: "import { Link } from '@ixirjs/ui';",
-	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Link' }],
 	useCases,
-	examples: {
-		preset: presetCode
-	},
+	presetCode,
 	accessibility: accessibilityFeatures
 };

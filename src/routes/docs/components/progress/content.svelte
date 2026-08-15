@@ -1,19 +1,12 @@
 <script lang="ts">
-	import { createExampleLoader } from '$docs/utils/example-loader';
-	import {
-		DocComponentPage,
-		DocSection,
-		DocExample,
-		DocCode,
-		DocPropsTabs
-	} from '$docs/components';
+	import type { DocContentProps } from '$docs/types';
+	import { DocComponentPage, DocSection, DocExample, DocCode } from '$docs/components';
 	import type { PropsSection } from '$docs/components';
 	import { progressLinearProps, progressCircularProps } from './props';
 	import { metadata } from './shared';
-	import type { DocMode } from '$docs/context/doc-mode.svelte';
 	import type { Frontmatter } from '$docs/md/frontmatter';
 
-	let { contentType = 'html' }: { contentType?: DocMode } = $props();
+	let { contentType = 'html', ex }: DocContentProps = $props();
 
 	const frontmatter: Frontmatter = {
 		id: 'progress',
@@ -29,23 +22,9 @@
 		{ label: 'Linear', presetKey: 'progress.linear', props: progressLinearProps },
 		{ label: 'Circular', presetKey: 'progress.circular', props: progressCircularProps }
 	];
-
-	const _loaders = import.meta.glob('./examples/*.svelte');
-	const _sources = import.meta.glob('./examples/*.svelte', {
-		query: '?raw',
-		import: 'default',
-		eager: true
-	}) as Record<string, string>;
-	const ex = createExampleLoader(_loaders, _sources);
 </script>
 
-<DocComponentPage
-	{contentType}
-	{metadata}
-	{frontmatter}
-	prev={{ label: 'Popover', href: '/docs/components/popover' }}
-	next={{ label: 'Radio', href: '/docs/components/radio' }}
->
+<DocComponentPage {contentType} {metadata} {frontmatter} {apiSections}>
 	{#snippet extra()}
 		<DocSection
 			title="Linear Progress"
@@ -85,11 +64,7 @@
 		</DocSection>
 
 		<DocSection title="Preset Configuration" subtitle="Customise appearance using presets">
-			<DocCode code={metadata.examples.preset} lang="typescript" />
+			<DocCode code={metadata.presetCode} lang="typescript" />
 		</DocSection>
-	{/snippet}
-
-	{#snippet apiReference()}
-		<DocPropsTabs sections={apiSections} />
 	{/snippet}
 </DocComponentPage>

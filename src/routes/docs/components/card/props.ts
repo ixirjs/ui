@@ -1,69 +1,53 @@
-export interface PropDefinition {
-	name: string;
-	type: string;
-	default: string;
-	description: string;
-}
+import { renderPropsRow, type PropDefinition } from '$docs/types';
 
 export const cardRootProps: PropDefinition[] = [
 	{
+		name: 'clickable',
+		type: 'boolean',
+		default: 'undefined',
+		description:
+			'Renders the card as an interactive surface — hover and focus affordances, and a `button` role when no other element supplies one.'
+	},
+	{
 		name: 'disabled',
-		type: 'boolean | undefined',
+		type: 'boolean',
 		default: 'false',
 		description: 'Disable the card, preventing interaction when clickable'
 	},
 	{
+		name: 'factory',
+		type: 'Factory<CardBondBase>',
+		default: 'undefined',
+		description: 'Custom factory for the card bond, enabling advanced behavioral customization'
+	},
+	{
 		name: 'onclick',
-		type: '((event: MouseEvent) => void) | undefined',
+		type: '(event: MouseEvent) => void',
 		default: 'undefined',
 		description:
 			'Click handler. When provided, the card becomes interactive/clickable with appropriate styling.'
 	},
 	{
 		name: 'onkeydown',
-		type: '((event: KeyboardEvent) => void) | undefined',
+		type: '(event: KeyboardEvent) => void',
 		default: 'undefined',
 		description: 'Keyboard event handler for accessible card interaction'
 	},
-	{
-		name: 'factory',
-		type: 'Factory<CardBond> | undefined',
-		default: 'undefined',
-		description: 'Custom factory for the card bond, enabling advanced behavioral customization'
-	},
-	{
-		name: '...atomProps',
-		type: 'HtmlAtomProps',
-		default: '-',
-		description:
-			'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
-	}
+	renderPropsRow
 ];
 
-export const cardSubPartProps: PropDefinition[] = [
-	{
-		name: 'bond',
-		type: 'CardBond',
-		default: 'undefined',
-		description: 'Bond object passed down from Card.Root for shared component coordination'
-	},
-	{
-		name: 'preset',
-		type: 'PresetModuleName | string',
-		default: 'undefined',
-		description: 'Preset module name for styling this sub-part'
-	},
-	{
-		name: 'class',
-		type: 'ClassValue | ClassValue[]',
-		default: 'undefined',
-		description: 'CSS class(es) to apply'
-	},
-	{
-		name: '...atomProps',
-		type: 'HtmlAtomProps',
-		default: '-',
-		description:
-			'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
-	}
-];
+export const cardHeaderProps: PropDefinition[] = [renderPropsRow];
+
+export const cardBodyProps: PropDefinition[] = [renderPropsRow];
+
+export const cardFooterProps: PropDefinition[] = [renderPropsRow];
+
+export const cardTitleProps: PropDefinition[] = [renderPropsRow];
+
+export const cardSubtitleProps: PropDefinition[] = [renderPropsRow];
+
+export const cardDescriptionProps: PropDefinition[] = [renderPropsRow];
+
+export const cardMediaProps: PropDefinition[] = [renderPropsRow];
+
+export const cardContentProps: PropDefinition[] = [renderPropsRow];

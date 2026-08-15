@@ -62,15 +62,14 @@ export const metadata = {
 	componentTitle: 'Stack',
 	componentDescription:
 		'Layers multiple elements in the same visual space using CSS Grid with natural parent sizing and z-order control.',
+	summary: 'Horizontal or vertical flex layout primitive with gap control',
+	category: 'Layout' as const,
 	componentType: 'compound' as const,
 	status: 'stable' as const,
 	packageName: '@ixirjs/ui',
 	importCode: "import { Stack } from '@ixirjs/ui';",
-	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Stack' }],
 	useCases,
 	componentsSummary,
-	examples: {
-		preset: presetCode
-	},
+	presetCode,
 	accessibility: accessibilityFeatures
 };

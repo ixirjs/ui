@@ -9,12 +9,22 @@
 	import type { DocMode } from '$docs/context/doc-mode.svelte';
 	import type { Frontmatter } from '$docs/md/frontmatter';
 	import { newLine } from '$docs/md/template';
-	import type { ComponentDocMeta } from '$docs/types';
+	import { breadcrumbsFor, siblingsOf, slugFor } from '$docs/registry';
+	import DocPropsTabs from './doc-props-tabs.svelte';
+	import type { ComponentDocMeta, PropsSection } from '$docs/types';
 
 	let {
 		contentType = 'html',
 		metadata,
+		// Derived from `metadata` when absent — see `resolvedFrontmatter`. Fifty-one pages wrote the
+		// same eight-line literal in which only `depth` carried information.
 		frontmatter,
+		// Rendered inside the API Reference section when no `apiReference` snippet is given. Fifty
+		// pages passed a snippet whose entire body was `<DocPropsTabs {sections} />`.
+		apiSections,
+		// Both default to the registry, keyed on `frontmatter.id` (which is the page's slug).
+		// Every page used to hand-wire these; 41 prev/next pairs meant inserting a component was a
+		// three-file edit and a missed one broke the chain silently.
 		prev,
 		next,
 		// Optional content appended inside the Installation section (e.g. DocCallout, warnings).
@@ -32,9 +42,10 @@
 	}: {
 		contentType?: DocMode;
 		metadata: ComponentDocMeta;
-		frontmatter: Frontmatter;
-		prev: { label: string; href: string };
-		next: { label: string; href: string };
+		frontmatter?: Frontmatter;
+		apiSections?: PropsSection[];
+		prev?: { label: string; href: string };
+		next?: { label: string; href: string };
 		installationNote?: Snippet;
 		preset?: Snippet;
 		examples?: Snippet;
@@ -42,6 +53,28 @@
 		apiReference?: Snippet;
 		children?: Snippet;
 	} = $props();
+
+	// A page states only what is not derivable: `id` is the directory slug, `title` the component
+	// title, `category` always `components`, `prerequisites`/`related` empty on 47 of 51 pages. The
+	// five that differ pass `frontmatter` explicitly and it wins whole — never half-derived.
+	const resolvedFrontmatter: Frontmatter = $derived(
+		frontmatter ?? {
+			id: slugFor(metadata) ?? '',
+			title: metadata.componentTitle,
+			category: 'components',
+			depth: metadata.depth ?? 'beginner',
+			prerequisites: [],
+			related: []
+		}
+	);
+
+	const siblings = $derived(siblingsOf(resolvedFrontmatter.id));
+	const asLink = (entry?: { title: string; href: string }) =>
+		entry && { label: entry.title, href: entry.href };
+
+	const prevLink = $derived(prev ?? asLink(siblings.prev));
+	const nextLink = $derived(next ?? asLink(siblings.next));
+	const trail = $derived(metadata.breadcrumbs ?? breadcrumbsFor(metadata.componentTitle));
 
 	const showPreset = $derived(preset !== undefined || Boolean(metadata.presetCode));
 	const isCompound = $derived(metadata.componentType === 'compound');
@@ -57,10 +90,10 @@
 	description={metadata.componentDescription}
 	status={metadata.status}
 	llms={true}
-	breadcrumbs={metadata.breadcrumbs}
-	{prev}
-	{next}
-	{frontmatter}
+	breadcrumbs={trail}
+	prev={prevLink}
+	next={nextLink}
+	frontmatter={resolvedFrontmatter}
 >
 	{#if children}
 		{@render children()}
@@ -109,9 +142,13 @@
 
 		{@render extra?.()}
 
-		{#if apiReference}
+		{#if apiReference || apiSections}
 			<DocSection title="API Reference">
-				{@render apiReference()}
+				{#if apiReference}
+					{@render apiReference()}
+				{:else if apiSections}
+					<DocPropsTabs sections={apiSections} />
+				{/if}
 			</DocSection>
 		{/if}
 

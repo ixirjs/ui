@@ -1,28 +1,50 @@
-export interface PropDefinition {
-	name: string;
-	type: string;
-	default: string;
-	description: string;
-}
+import { renderPropsRow, type PropDefinition } from '$docs/types';
 
-export const tabsRootProps: PropDefinition[] = [
+export const tabRootProps: PropDefinition[] = [
 	{
-		name: 'value',
-		type: 'D | undefined',
+		name: 'children',
+		type: 'Snippet<[{ tab: TabBond; }]>',
 		default: 'undefined',
-		description: 'Active tab value'
+		description: 'Content of this part.'
+	},
+	{
+		name: 'data',
+		type: 'unknown',
+		default: 'undefined',
+		description: 'Arbitrary payload carried on the Bond, returned by lookups and snippet props.'
+	},
+	{
+		name: 'disabled',
+		type: 'boolean',
+		default: 'undefined',
+		description: 'Disables the control: it stops responding and is removed from the tab order.'
 	},
 	{
 		name: 'factory',
-		type: 'Factory<TabsBond<unknown>> | undefined',
+		type: 'Factory<TabBond>',
 		default: 'undefined',
-		description: 'Factory'
+		description: 'Replaces the Bond constructor, so a family can be extended or fused.'
 	},
 	{
-		name: 'children',
-		type: 'Snippet<[{ tabs: TabsBond<unknown>; }]> | undefined',
+		name: 'presets',
+		type: 'TabPresets | undefined',
 		default: 'undefined',
-		description: 'Children'
+		description: 'Per-instance presentation overrides for the Tab Bond.'
+	},
+	{
+		name: 'value',
+		type: 'string',
+		default: 'undefined',
+		description: 'Current value of the control.'
+	}
+];
+
+export const tabsRootProps: PropDefinition[] = [
+	{
+		name: 'factory',
+		type: 'Factory<TabsBond>',
+		default: 'undefined',
+		description: 'Factory'
 	},
 	{
 		name: 'onvaluechange',
@@ -32,112 +54,36 @@ export const tabsRootProps: PropDefinition[] = [
 			'Semantic callback fired after the active value commits. Receives `(value, { bond? })`.'
 	},
 	{
-		name: '...atomProps',
-		type: 'HtmlAtomProps',
-		default: '-',
-		description:
-			'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
-	}
+		name: 'presets',
+		type: 'TabsPresets | undefined',
+		default: 'undefined',
+		description: 'Per-instance presentation overrides for the parent Tabs Bond.'
+	},
+	{
+		name: 'value',
+		type: 'D',
+		default: 'undefined',
+		description: 'Active tab value'
+	},
+	renderPropsRow
 ];
 
 export const tabHeaderProps: PropDefinition[] = [
-	{
-		name: 'children',
-		type: 'Snippet<[{ tab?: TabBond<unknown>; }]> | undefined',
-		default: 'undefined',
-		description: 'Children'
-	},
 	{
 		name: 'onclick',
 		type: '((event: MouseEvent) => void) | undefined',
 		default: 'undefined',
 		description: 'Native click callback. Receives only the DOM event.'
 	},
-	{
-		name: '...atomProps',
-		type: 'HtmlAtomProps',
-		default: '-',
-		description:
-			'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
-	}
+	renderPropsRow
 ];
 
-export const tabBodyProps: PropDefinition[] = [
-	{
-		name: 'children',
-		type: 'Snippet<[{ tab?: TabBond<unknown>; }]> | undefined',
-		default: 'undefined',
-		description: 'Children'
-	},
-	{
-		name: '...atomProps',
-		type: 'HtmlAtomProps',
-		default: '-',
-		description:
-			'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
-	}
-];
+export const tabBodyProps: PropDefinition[] = [renderPropsRow];
 
-export const tabDescriptionProps: PropDefinition[] = [
-	{
-		name: 'children',
-		type: 'Snippet<[{ tab?: TabBond<unknown>; }]> | undefined',
-		default: 'undefined',
-		description: 'Children'
-	},
-	{
-		name: '...atomProps',
-		type: 'HtmlAtomProps',
-		default: '-',
-		description:
-			'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
-	}
-];
+export const tabDescriptionProps: PropDefinition[] = [renderPropsRow];
 
-export const tabsHeaderProps: PropDefinition[] = [
-	{
-		name: 'children',
-		type: 'Snippet<[{ tabs?: TabsBond<unknown>; }]> | undefined',
-		default: 'undefined',
-		description: 'Children'
-	},
-	{
-		name: '...atomProps',
-		type: 'HtmlAtomProps',
-		default: '-',
-		description:
-			'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
-	}
-];
+export const tabsHeaderProps: PropDefinition[] = [renderPropsRow];
 
-export const tabsBodyProps: PropDefinition[] = [
-	{
-		name: 'children',
-		type: 'Snippet<[{ tabs?: TabsBond<unknown>; }]> | undefined',
-		default: 'undefined',
-		description: 'Children'
-	},
-	{
-		name: '...atomProps',
-		type: 'HtmlAtomProps',
-		default: '-',
-		description:
-			'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
-	}
-];
+export const tabsBodyProps: PropDefinition[] = [renderPropsRow];
 
-export const tabsContentProps: PropDefinition[] = [
-	{
-		name: 'children',
-		type: 'Snippet<[{ tabs?: TabsBond<unknown>; }]> | undefined',
-		default: 'undefined',
-		description: 'Children'
-	},
-	{
-		name: '...atomProps',
-		type: 'HtmlAtomProps',
-		default: '-',
-		description:
-			'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
-	}
-];
+export const tabsContentProps: PropDefinition[] = [renderPropsRow];

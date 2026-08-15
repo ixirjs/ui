@@ -14,38 +14,28 @@
 	import type { PropsSection } from '$docs/components';
 	import {
 		inputRootProps,
-		commonControlProps,
-		textControlProps,
-		passwordControlProps,
-		emailControlProps,
-		urlControlProps,
-		phoneControlProps,
-		numberControlProps,
-		currencyControlProps,
-		timeControlProps,
-		dateControlProps,
-		dateTimeControlProps,
-		colorControlProps,
-		otpControlProps,
-		fileControlProps,
-		locationControlProps
+		inputControlProps,
+		inputTextControlProps,
+		inputPasswordControlProps,
+		inputEmailControlProps,
+		inputUrlControlProps,
+		inputPhoneControlProps,
+		inputNumberControlProps,
+		inputCurrencyControlProps,
+		inputTimeControlProps,
+		inputDateControlProps,
+		inputDateTimeControlProps,
+		inputColorControlProps,
+		inputPinControlProps,
+		inputFileControlProps,
+		inputLocationControlProps
 	} from './props';
 	import { metadata } from './shared';
 	import type { DocMode } from '$docs/context/doc-mode.svelte';
-	import type { Frontmatter } from '$docs/md/frontmatter';
 	import { newLine } from '$docs/md/template';
 	import { SearchIcon } from 'lucide-svelte';
 
 	let { contentType = 'html' }: { contentType?: DocMode } = $props();
-
-	const frontmatter: Frontmatter = {
-		id: 'input',
-		title: 'Input',
-		category: 'components',
-		depth: 'beginner',
-		prerequisites: [],
-		related: []
-	};
 
 	let textValue = $state('');
 	let passwordValue = $state('');
@@ -61,36 +51,30 @@
 	let phoneValue = $state('');
 	let locationValue = $state('');
 	let colorValue = $state('oklch(0.65 0.18 253)');
-	let otpValue = $state('');
+	let pinValue = $state('');
 	let fileList = $state<File[]>([]);
 
 	const apiSections: PropsSection[] = [
 		{ label: 'Input.Root', presetKey: 'input', props: inputRootProps },
-		{ label: 'Common', props: commonControlProps },
-		{ label: 'Text', props: textControlProps },
-		{ label: 'Password', props: passwordControlProps },
-		{ label: 'Number', props: numberControlProps },
-		{ label: 'Currency', props: currencyControlProps },
-		{ label: 'Time', props: timeControlProps },
-		{ label: 'Date', props: dateControlProps },
-		{ label: 'DateTime', props: dateTimeControlProps },
-		{ label: 'Email', props: emailControlProps },
-		{ label: 'Url', props: urlControlProps },
-		{ label: 'Phone', props: phoneControlProps },
-		{ label: 'Color', props: colorControlProps },
-		{ label: 'Otp', props: otpControlProps },
-		{ label: 'File', props: fileControlProps },
-		{ label: 'Location', props: locationControlProps }
+		{ label: 'Common', props: inputControlProps },
+		{ label: 'Text', props: inputTextControlProps },
+		{ label: 'Password', props: inputPasswordControlProps },
+		{ label: 'Number', props: inputNumberControlProps },
+		{ label: 'Currency', props: inputCurrencyControlProps },
+		{ label: 'Time', props: inputTimeControlProps },
+		{ label: 'Date', props: inputDateControlProps },
+		{ label: 'DateTime', props: inputDateTimeControlProps },
+		{ label: 'Email', props: inputEmailControlProps },
+		{ label: 'Url', props: inputUrlControlProps },
+		{ label: 'Phone', props: inputPhoneControlProps },
+		{ label: 'Color', props: inputColorControlProps },
+		{ label: 'Pin', props: inputPinControlProps },
+		{ label: 'File', props: inputFileControlProps },
+		{ label: 'Location', props: inputLocationControlProps }
 	];
 </script>
 
-<DocComponentPage
-	{contentType}
-	{metadata}
-	{frontmatter}
-	prev={{ label: 'Form', href: '/docs/components/form' }}
-	next={{ label: 'Kbd', href: '/docs/components/kbd' }}
->
+<DocComponentPage {contentType} {metadata}>
 	{#snippet children()}
 		<DocOnly for="markdown">
 			**Type**: Compound Component ## Use Cases
@@ -139,7 +123,7 @@
 			title="Preset Configuration"
 			subtitle="Customize the input appearance using presets"
 		>
-			<DocCode code={metadata.examples.preset} lang="typescript" />
+			<DocCode code={metadata.presetCode} lang="typescript" />
 		</DocSection>
 
 		<DocSection title="Text Controls" subtitle="Plain text, password, search">
@@ -376,10 +360,10 @@
 			</DocExample>
 
 			<DocExample
-				title="OtpControl"
+				title="PinControl"
 				description="One-time password slots with keyboard navigation, paste support, and oncomplete callback."
 				code={`<Input.Root>
-  <Input.OtpControl
+  <Input.PinControl
     length={6}
     type="numeric"
     bind:value
@@ -389,10 +373,10 @@
 			>
 				<div class="space-y-2">
 					<Input.Root class="w-80 px-2">
-						<Input.OtpControl length={6} type="numeric" bind:value={otpValue} />
+						<Input.PinControl length={6} type="numeric" bind:value={pinValue} />
 					</Input.Root>
-					{#if otpValue.length === 6}
-						<p class="text-muted-foreground text-xs">Code: {otpValue}</p>
+					{#if pinValue.length === 6}
+						<p class="text-muted-foreground text-xs">Code: {pinValue}</p>
 					{/if}
 				</div>
 			</DocExample>
@@ -416,7 +400,7 @@
 				**Input.TimeControl** — Segment-based 12/24h time picker - **Input.DateControl** —
 				Segment-based date picker - **Input.DateTimeControl** — Combined date + time picker -
 				**Input.ColorControl** — CSS color editor with per-channel segments - **Input.ColorSwatch**
-				— Live color preview (reads bond automatically) - **Input.OtpControl** — One-time password
+				— Live color preview (reads bond automatically) - **Input.PinControl** — One-time password
 				slot grid - **Input.FileControl** — File upload trigger with custom snippet -
 				**Input.LocationControl** — Coordinates input with lat/lng bindables - **Input.Icon** —
 				Leading or trailing icon slot - **Input.Placeholder** — Floating overlay placeholder ##
@@ -434,7 +418,7 @@
 							Works inside Input.Root
 						</h3>
 						<div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-							{#each [{ name: 'Input.TextControl', desc: 'Plain text input with bond wiring.' }, { name: 'Input.PasswordControl', desc: 'Password input with show/hide toggle.' }, { name: 'Input.EmailControl', desc: 'Email with local/domain/TLD segment coloring.' }, { name: 'Input.UrlControl', desc: 'URL with protocol, host, path and hash coloring.' }, { name: 'Input.PhoneControl', desc: 'Masked phone input with segment color map.' }, { name: 'Input.NumberControl', desc: 'Numeric stepper with increment/decrement buttons.' }, { name: 'Input.CurrencyControl', desc: 'Locale-aware currency input with formatted overlay.' }, { name: 'Input.TimeControl', desc: 'Segment-based 12/24h time picker.' }, { name: 'Input.DateControl', desc: 'Segment-based date picker.' }, { name: 'Input.DateTimeControl', desc: 'Combined date + time picker.' }, { name: 'Input.ColorControl', desc: 'CSS color editor with per-channel segments.' }, { name: 'Input.ColorSwatch', desc: 'Live color preview — reads bond automatically.' }, { name: 'Input.OtpControl', desc: 'One-time password slot grid.' }, { name: 'Input.FileControl', desc: 'File upload trigger with custom snippet.' }, { name: 'Input.LocationControl', desc: 'Coordinates input with lat/lng bindables.' }, { name: 'Input.Icon', desc: 'Leading or trailing icon slot.' }, { name: 'Input.Placeholder', desc: 'Floating overlay placeholder.' }] as item (item.name)}
+							{#each [{ name: 'Input.TextControl', desc: 'Plain text input with bond wiring.' }, { name: 'Input.PasswordControl', desc: 'Password input with show/hide toggle.' }, { name: 'Input.EmailControl', desc: 'Email with local/domain/TLD segment coloring.' }, { name: 'Input.UrlControl', desc: 'URL with protocol, host, path and hash coloring.' }, { name: 'Input.PhoneControl', desc: 'Masked phone input with segment color map.' }, { name: 'Input.NumberControl', desc: 'Numeric stepper with increment/decrement buttons.' }, { name: 'Input.CurrencyControl', desc: 'Locale-aware currency input with formatted overlay.' }, { name: 'Input.TimeControl', desc: 'Segment-based 12/24h time picker.' }, { name: 'Input.DateControl', desc: 'Segment-based date picker.' }, { name: 'Input.DateTimeControl', desc: 'Combined date + time picker.' }, { name: 'Input.ColorControl', desc: 'CSS color editor with per-channel segments.' }, { name: 'Input.ColorSwatch', desc: 'Live color preview — reads bond automatically.' }, { name: 'Input.PinControl', desc: 'One-time password slot grid.' }, { name: 'Input.FileControl', desc: 'File upload trigger with custom snippet.' }, { name: 'Input.LocationControl', desc: 'Coordinates input with lat/lng bindables.' }, { name: 'Input.Icon', desc: 'Leading or trailing icon slot.' }, { name: 'Input.Placeholder', desc: 'Floating overlay placeholder.' }] as item (item.name)}
 								<div class="border-border bg-muted/30 rounded-lg border p-3">
 									<div class="mb-1">
 										<code class="text-foreground text-xs font-medium">{item.name}</code>

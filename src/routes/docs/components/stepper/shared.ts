@@ -109,15 +109,15 @@ export const metadata = {
 	componentTitle: 'Stepper',
 	componentDescription:
 		'Multi-step workflow component with linear/free navigation and animated transitions.',
+	summary: 'Multi-step wizard with progress indicator and step navigation',
+	category: 'Navigation' as const,
 	componentType: 'compound' as const,
 	status: 'stable' as const,
+	depth: 'intermediate' as const,
 	packageName: '@ixirjs/ui',
 	importCode: "import { Stepper } from '@ixirjs/ui';",
-	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Stepper' }],
 	useCases,
 	componentsSummary,
-	examples: {
-		preset: presetCode
-	},
+	presetCode,
 	accessibility: accessibilityFeatures
 };

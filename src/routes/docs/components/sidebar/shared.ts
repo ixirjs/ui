@@ -64,15 +64,15 @@ export const metadata = {
 	componentTitle: 'Sidebar',
 	componentDescription:
 		'Collapsible side panel with left/right placement, smooth animations, and state binding.',
+	summary: 'Collapsible navigation sidebar with header, body, and footer',
+	category: 'Layout' as const,
 	componentType: 'compound' as const,
-	status: 'stable' as const,
+	status: 'beta' as const,
+	depth: 'intermediate' as const,
 	packageName: '@ixirjs/ui',
 	importCode: "import { Sidebar } from '@ixirjs/ui';",
-	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Sidebar' }],
 	useCases,
 	componentsSummary,
-	examples: {
-		preset: presetCode
-	},
+	presetCode,
 	accessibility: accessibilityFeatures
 };

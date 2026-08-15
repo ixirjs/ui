@@ -1,11 +1,12 @@
-export interface PropDefinition {
-	name: string;
-	type: string;
-	default: string;
-	description: string;
-}
+import { renderPropsRow, type PropDefinition } from '$docs/types';
 
 export const dropdownMenuItemProps: PropDefinition[] = [
+	{
+		name: 'animate',
+		type: '(this: DropdownMenuItemAtom) => void | (() => void)',
+		default: 'undefined',
+		description: 'Animation configuration'
+	},
 	{
 		name: 'class',
 		type: 'ClassValue',
@@ -13,163 +14,143 @@ export const dropdownMenuItemProps: PropDefinition[] = [
 		description: 'Custom CSS class(es) to apply to the dropdown menu item'
 	},
 	{
-		name: 'preset',
-		type: 'string | undefined',
-		default: "'dropdown-menu.item'",
-		description: 'Preset key for styling'
-	},
-	{
 		name: 'disabled',
-		type: 'boolean | undefined',
-		default: 'false',
-		description: 'Whether the menu item is disabled'
-	},
-	{
-		name: 'onclick',
-		type: '((event: MouseEvent) => void) | undefined',
+		type: 'boolean',
 		default: 'undefined',
-		description: 'Click event handler'
-	},
-	{
-		name: 'onmount',
-		type: '((this: DropdownMenuItemAtom) => void) | undefined',
-		default: 'undefined',
-		description: 'Function called when element is mounted'
-	},
-	{
-		name: 'ondestroy',
-		type: '((this: DropdownMenuItemAtom) => void) | undefined',
-		default: 'undefined',
-		description: 'Function called when element is destroyed'
-	},
-	{
-		name: 'animate',
-		type: '((this: DropdownMenuItemAtom) => any) | undefined',
-		default: 'undefined',
-		description: 'Animation configuration'
+		description: 'Disables the item.'
 	},
 	{
 		name: 'enter',
-		type: '((this: DropdownMenuItemAtom) => any) | undefined',
+		type: '(this: DropdownMenuItemAtom) => Partial<TransitionConfig> | void',
 		default: 'undefined',
 		description: 'Transition function for entering'
 	},
 	{
 		name: 'exit',
-		type: '((this: DropdownMenuItemAtom) => any) | undefined',
+		type: '(this: DropdownMenuItemAtom) => Partial<TransitionConfig> | void',
 		default: 'undefined',
 		description: 'Transition function for exiting'
 	},
 	{
-		name: 'initial',
-		type: '((this: DropdownMenuItemAtom) => any) | undefined',
-		default: 'undefined',
-		description: 'Initial state configuration'
-	},
-	{
 		name: 'factory',
-		type: '(() => DropdownMenuItemAtom) | undefined',
+		type: '() => DropdownMenuItemAtom',
 		default: 'undefined',
 		description: 'Factory function for advanced custom item Atom creation'
 	},
 	{
-		name: 'children',
-		type: 'Snippet<[{ dropdownMenuItem: DropdownMenuItemAtom; }]> | undefined',
-		default: 'undefined',
-		description: 'Render prop for children'
-	},
-	{
-		name: '...atomProps',
-		type: 'HtmlAtomProps',
-		default: '-',
-		description:
-			'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
-	}
-];
-
-export const dropdownMenuListProps: PropDefinition[] = [
-	{
-		name: 'bond',
-		type: 'Bond',
-		default: 'undefined',
-		description: 'Bond object for component communication'
-	},
-	{
-		name: 'base',
-		type: 'Component | Snippet',
-		default: 'undefined',
-		description: 'Base component or snippet to render'
-	},
-	{
-		name: 'preset',
-		type: 'PresetModuleName | string',
-		default: 'undefined',
-		description: 'Preset module name for styling'
-	},
-	{
-		name: 'variants',
-		type: 'VariantDefinition | Function',
-		default: 'undefined',
-		description: 'Variant definition or function to resolve variants'
-	},
-	{
-		name: 'class',
-		type: 'ClassValue | ClassValue[]',
-		default: 'undefined',
-		description: 'CSS class(es) to apply to the element'
-	},
-	{
-		name: 'as',
+		name: 'id',
 		type: 'string',
-		default: 'undefined',
-		description: 'HTML tag to render as'
-	},
-	{
-		name: 'global',
-		type: 'boolean',
-		default: 'false',
-		description: 'Whether to use global styles'
+		default: 'generated id',
+		description: 'Stable item identity used by roving focus.'
 	},
 	{
 		name: 'initial',
-		type: 'NodeFunction',
+		type: '(this: DropdownMenuItemAtom) => void | (() => void)',
 		default: 'undefined',
-		description: 'Function called on initial render'
+		description: 'Initial state configuration'
 	},
 	{
-		name: 'enter',
-		type: 'TransitionFunction',
+		name: 'onclick',
+		type: '(event: MouseEvent) => void',
 		default: 'undefined',
-		description: 'Transition function for entering'
-	},
-	{
-		name: 'exit',
-		type: 'TransitionFunction',
-		default: 'undefined',
-		description: 'Transition function for exiting'
-	},
-	{
-		name: 'animate',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Animation function'
-	},
-	{
-		name: 'onmount',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Function called when element is mounted'
+		description: 'Native click callback. Call event.preventDefault() to keep the menu open.'
 	},
 	{
 		name: 'ondestroy',
-		type: 'NodeFunction',
+		type: '(this: DropdownMenuItemAtom) => void',
 		default: 'undefined',
 		description: 'Function called when element is destroyed'
 	},
 	{
-		name: 'children',
-		type: 'Snippet',
+		name: 'onmount',
+		type: '(this: DropdownMenuItemAtom) => void',
 		default: 'undefined',
-		description: 'Children content snippet'
+		description: 'Function called when element is mounted'
+	},
+	{
+		name: 'preset',
+		type: 'PresetKey',
+		default: 'undefined',
+		description: 'Use context-menu.item for a context-menu-specific presentation entry.'
+	},
+	renderPropsRow
+];
+
+export const dropdownMenuContentProps: PropDefinition[] = [renderPropsRow];
+
+export const dropdownMenuRootProps: PropDefinition[] = [
+	{
+		name: 'children',
+		type: 'Snippet<[{ popover: PopoverBond; }]>',
+		default: 'undefined',
+		description: 'Children'
+	},
+	{
+		name: 'disabled',
+		type: 'boolean',
+		default: 'false',
+		description: 'Prevents the context-menu trigger from opening the menu.'
+	},
+	{
+		name: 'extend',
+		type: '{ [x: string]: unknown; }',
+		default: 'undefined',
+		description: 'Extend'
+	},
+	{
+		name: 'factory',
+		type: '((props: DropdownMenuBondProps) => DropdownMenuBond) | undefined',
+		default: 'undefined',
+		description: 'Replaces the Bond constructor, so a family can be extended or fused.'
+	},
+	{
+		name: 'offset',
+		type: 'number',
+		default: 'undefined',
+		description: 'Distance in pixels between the virtual cursor anchor and content.'
+	},
+	{
+		name: 'onopenchange',
+		type: 'StateChangeCallback<boolean, DropdownMenuBondBase<PopoverBondProps>> | undefined',
+		default: 'undefined',
+		description:
+			'Semantic callback; runs after the open state commits, not when the trigger is clicked.'
+	},
+	{
+		name: 'open',
+		type: 'boolean',
+		default: 'false',
+		description: 'Bindable open state for the menu.'
+	},
+	{
+		name: 'placement',
+		type: '"top" | "right" | "bottom" | "left" | "top-start" | "top-end" | "right-start" | "right-end" | "bottom-start" | "bottom-end" | "left-start" | "left-end"',
+		default: 'undefined',
+		description: 'Preferred Floating UI placement for the menu.'
+	},
+	{
+		name: 'placements',
+		type: 'Placement[]',
+		default: 'undefined',
+		description: 'Ordered fallback placements used when the preferred placement does not fit.'
+	},
+	{
+		name: 'portal',
+		type: 'string | PortalBondBase<PortalBondProps>',
+		default: 'ambient portal → root.l0',
+		description:
+			'Portal target selector or PortalBond instance. Resolution is explicit target → ambient portal → root.l0, preserving nested overlay containment.'
+	},
+	{
+		name: 'position',
+		type: '"fixed" | "absolute"',
+		default: 'undefined',
+		description: "CSS positioning strategy for the floating content. Defaults to `'absolute'`."
+	},
+	{
+		name: 'presets',
+		type: 'DropdownMenuPresets | undefined',
+		default: 'undefined',
+		description: 'Per-instance presentation overrides for this family’s compound slots.'
 	}
 ];

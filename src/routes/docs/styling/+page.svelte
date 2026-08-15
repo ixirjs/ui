@@ -79,7 +79,7 @@ ${'<'}/Button>`;
 
 	const variantBasicExample = `${'<'}script lang="ts">
   import { defineVariants } from '@ixirjs/ui/utils';
-  import { HtmlAtom } from '@ixirjs/ui';
+  import { HtmlElement } from '@ixirjs/ui/components/element';
 
   const buttonVariants = defineVariants({
     class: 'inline-flex items-center justify-center rounded-md font-medium',
@@ -104,9 +104,9 @@ ${'<'}/Button>`;
   let { variant, size, ...props } = $props();
 ${'<'}/script>
 
-${'<'}HtmlAtom variants={buttonVariants} {variant} {size} {...props}>
+${'<'}HtmlElement variants={buttonVariants} {variant} {size} {...props}>
   {@render children?.()}
-${'<'}/HtmlAtom>`;
+${'<'}/HtmlElement>`;
 
 	const compoundVariantsExample = `const alertVariants = defineVariants({
   class: 'rounded-lg p-4 border',
@@ -165,7 +165,7 @@ ${'<'}div style="padding: 16px; background: blue;">
 ${'<'}/div>`;
 
 	const presetPlaceholderExample = `<!-- Preset classes are inserted automatically -->
-<HtmlAtom preset="button" class={['component-classes', klass]} />
+<HtmlElement preset="button" class={['component-classes', klass]} />
 
 <!-- Result order: preset-classes component-classes user-classes -->`;
 

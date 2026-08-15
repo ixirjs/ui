@@ -1,16 +1,11 @@
-export interface PropDefinition {
-	name: string;
-	type: string;
-	default: string;
-	description: string;
-}
+import { renderPropsRow, type PropDefinition } from '$docs/types';
 
 export const collapsibleRootProps: PropDefinition[] = [
 	{
-		name: 'open',
-		type: 'boolean',
-		default: 'false',
-		description: 'Whether the collapsible is open. Supports two-way binding with bind:open.'
+		name: 'data',
+		type: 'any',
+		default: 'undefined',
+		description: 'Arbitrary payload carried on the Bond, returned by lookups and snippet props.'
 	},
 	{
 		name: 'disabled',
@@ -19,66 +14,35 @@ export const collapsibleRootProps: PropDefinition[] = [
 		description: 'Disable the collapsible, preventing user interaction'
 	},
 	{
-		name: '...atomProps',
-		type: 'HtmlAtomProps',
-		default: '-',
+		name: 'factory',
+		type: '(props: CollapsibleStateProps) => CollapsibleBondBase',
+		default: 'undefined',
+		description: 'Replaces the Bond constructor, so a family can be extended or fused.'
+	},
+	{
+		name: 'onopenchange',
+		type: '(value: boolean, context: StateChangeContext<CollapsibleBondBase, Event>) => void',
+		default: 'undefined',
 		description:
-			'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
-	}
+			'Semantic callback; runs after the open state commits, not when the toggle is clicked.'
+	},
+	{
+		name: 'open',
+		type: 'boolean',
+		default: 'false',
+		description: 'Whether the collapsible is open. Supports two-way binding with bind:open.'
+	},
+	{
+		name: 'value',
+		type: 'string',
+		default: 'undefined',
+		description: 'Current value of the control.'
+	},
+	renderPropsRow
 ];
 
-export const collapsibleHeaderProps: PropDefinition[] = [
-	{
-		name: 'bond',
-		type: 'CollapsibleBond',
-		default: 'undefined',
-		description: 'Bond object passed down from Collapsible.Root for shared component coordination'
-	},
-	{
-		name: 'preset',
-		type: 'PresetModuleName | string',
-		default: 'undefined',
-		description: 'Preset module name for styling'
-	},
-	{
-		name: 'class',
-		type: 'ClassValue | ClassValue[]',
-		default: 'undefined',
-		description: 'CSS class(es) to apply'
-	},
-	{
-		name: '...atomProps',
-		type: 'HtmlAtomProps',
-		default: '-',
-		description:
-			'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
-	}
-];
+export const collapsibleHeaderProps: PropDefinition[] = [renderPropsRow];
 
-export const collapsibleBodyProps: PropDefinition[] = [
-	{
-		name: 'bond',
-		type: 'CollapsibleBond',
-		default: 'undefined',
-		description: 'Bond object passed down from Collapsible.Root for shared component coordination'
-	},
-	{
-		name: 'preset',
-		type: 'PresetModuleName | string',
-		default: 'undefined',
-		description: 'Preset module name for styling'
-	},
-	{
-		name: 'class',
-		type: 'ClassValue | ClassValue[]',
-		default: 'undefined',
-		description: 'CSS class(es) to apply'
-	},
-	{
-		name: '...atomProps',
-		type: 'HtmlAtomProps',
-		default: '-',
-		description:
-			'All HTML element props are supported. See [Atom Props](/docs/components/atom#props) for the complete list of inherited properties.'
-	}
-];
+export const collapsibleBodyProps: PropDefinition[] = [renderPropsRow];
+
+export const collapsibleIndicatorProps: PropDefinition[] = [renderPropsRow];

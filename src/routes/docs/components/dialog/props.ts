@@ -1,657 +1,96 @@
-export interface PropDefinition {
-	name: string;
-	type: string;
-	default: string;
-	description: string;
-}
+import { renderPropsRow, type PropDefinition } from '$docs/types';
 
 export const dialogProps: PropDefinition[] = [
 	{
-		name: 'open',
-		type: 'boolean | undefined',
-		default: 'false',
-		description: 'Controls whether the dialog is visible. Bind this prop for controlled usage.'
-	},
-	{
-		name: 'onopenchange',
-		type: 'StateChangeCallback<boolean, DialogBond> | undefined',
-		default: 'undefined',
-		description:
-			'Called after a real open-state transition commits; dismissal events and reasons are included when available.'
-	},
-	{
 		name: 'disabled',
-		type: 'boolean | undefined',
-		default: 'false',
-		description: 'Disables the dialog trigger, preventing the dialog from being opened.'
-	},
-	{
-		name: 'portal',
-		type: 'string | PortalBond | undefined',
-		default: 'ambient portal → root.l0',
-		description:
-			"Portal target selector or PortalBond instance. Resolution is explicit target → ambient portal → root.l0; dialog content remains within that portal's containment scope."
+		type: 'boolean',
+		default: 'undefined',
+		description: 'Disables the control: it stops responding and is removed from the tab order.'
 	},
 	{
 		name: 'factory',
-		type: '((props: DialogBondProps) => DialogBond) | undefined',
+		type: '(props: DialogBondProps) => DialogBond',
 		default: 'undefined',
-		description: 'Custom factory function to create a DialogBond instance with custom logic.'
+		description: 'Replaces the Bond constructor, so a family can be extended or fused.'
 	},
 	{
-		name: 'children',
-		type: 'Snippet<[{ dialog: DialogBond; }]> | undefined',
+		name: 'onclick',
+		type: '((event: MouseEvent) => void) | undefined',
+		default: 'undefined',
+		description: 'Native click handler for the rendered dialog element.'
+	},
+	{
+		name: 'onopenchange',
+		type: 'StateChangeCallback<boolean, DialogBondBase<DialogBondProps>> | undefined',
+		default: 'undefined',
+		description: 'Semantic callback; runs after the open state commits.'
+	},
+	{
+		name: 'open',
+		type: 'boolean',
+		default: 'undefined',
+		description: 'Bindable open state.'
+	},
+	{
+		name: 'order',
+		type: 'LayerRelation',
+		default: 'undefined',
+		description: 'Position relative to a named portal elevation anchor.'
+	},
+	{
+		name: 'portal',
+		type: 'string | PortalBondBase<PortalBondProps>',
 		default: 'undefined',
 		description:
-			'Dialog content. Receives the DialogBond for accessing open state and close functionality.'
-	}
+			'Portal surface to render into, by id or Bond. Defaults to the ambient portal, then the root portal.'
+	},
+	{
+		name: 'presets',
+		type: 'DialogPresets | undefined',
+		default: 'undefined',
+		description: 'Per-instance presentation overrides for bonded Dialog parts.'
+	},
+	{
+		name: 'type',
+		type: '"modal" | "non-modal" | undefined',
+		default: 'undefined',
+		description:
+			'Modal (default) traps focus and blocks the background; non-modal preserves background access.'
+	},
+	{
+		name: 'z-index',
+		type: 'ZIndexInput',
+		default: 'undefined',
+		description:
+			'Explicit z-index for the dialog surface. Prefer the semantic layer unless resolving a stacking conflict.'
+	},
+	renderPropsRow
 ];
 
-export const dialogContentProps: PropDefinition[] = [
-	{
-		name: 'bond',
-		type: 'Bond',
-		default: 'undefined',
-		description: 'Bond object for component communication'
-	},
-	{
-		name: 'base',
-		type: 'Component | Snippet',
-		default: 'undefined',
-		description: 'Base component or snippet to render'
-	},
-	{
-		name: 'preset',
-		type: 'PresetModuleName | string',
-		default: 'undefined',
-		description: 'Preset module name for styling'
-	},
-	{
-		name: 'variants',
-		type: 'VariantDefinition | Function',
-		default: 'undefined',
-		description: 'Variant definition or function to resolve variants'
-	},
-	{
-		name: 'class',
-		type: 'ClassValue | ClassValue[]',
-		default: 'undefined',
-		description: 'CSS class(es) to apply to the element'
-	},
-	{
-		name: 'as',
-		type: 'string',
-		default: 'undefined',
-		description: 'HTML tag to render as'
-	},
-	{
-		name: 'global',
-		type: 'boolean',
-		default: 'false',
-		description: 'Whether to use global styles'
-	},
-	{
-		name: 'initial',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Function called on initial render'
-	},
-	{
-		name: 'enter',
-		type: 'TransitionFunction',
-		default: 'undefined',
-		description: 'Transition function for entering'
-	},
-	{
-		name: 'exit',
-		type: 'TransitionFunction',
-		default: 'undefined',
-		description: 'Transition function for exiting'
-	},
-	{
-		name: 'animate',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Animation function'
-	},
-	{
-		name: 'onmount',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Function called when element is mounted'
-	},
-	{
-		name: 'ondestroy',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Function called when element is destroyed'
-	},
-	{
-		name: 'children',
-		type: 'Snippet',
-		default: 'undefined',
-		description: 'Children content snippet'
-	}
-];
+export const dialogContentProps: PropDefinition[] = [renderPropsRow];
 
-export const dialogHeaderProps: PropDefinition[] = [
-	{
-		name: 'bond',
-		type: 'Bond',
-		default: 'undefined',
-		description: 'Bond object for component communication'
-	},
-	{
-		name: 'base',
-		type: 'Component | Snippet',
-		default: 'undefined',
-		description: 'Base component or snippet to render'
-	},
-	{
-		name: 'preset',
-		type: 'PresetModuleName | string',
-		default: 'undefined',
-		description: 'Preset module name for styling'
-	},
-	{
-		name: 'variants',
-		type: 'VariantDefinition | Function',
-		default: 'undefined',
-		description: 'Variant definition or function to resolve variants'
-	},
-	{
-		name: 'class',
-		type: 'ClassValue | ClassValue[]',
-		default: 'undefined',
-		description: 'CSS class(es) to apply to the element'
-	},
-	{
-		name: 'as',
-		type: 'string',
-		default: 'undefined',
-		description: 'HTML tag to render as'
-	},
-	{
-		name: 'global',
-		type: 'boolean',
-		default: 'false',
-		description: 'Whether to use global styles'
-	},
-	{
-		name: 'initial',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Function called on initial render'
-	},
-	{
-		name: 'enter',
-		type: 'TransitionFunction',
-		default: 'undefined',
-		description: 'Transition function for entering'
-	},
-	{
-		name: 'exit',
-		type: 'TransitionFunction',
-		default: 'undefined',
-		description: 'Transition function for exiting'
-	},
-	{
-		name: 'animate',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Animation function'
-	},
-	{
-		name: 'onmount',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Function called when element is mounted'
-	},
-	{
-		name: 'ondestroy',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Function called when element is destroyed'
-	},
-	{
-		name: 'children',
-		type: 'Snippet',
-		default: 'undefined',
-		description: 'Children content snippet'
-	}
-];
+export const dialogHeaderProps: PropDefinition[] = [renderPropsRow];
 
-export const dialogBodyProps: PropDefinition[] = [
-	{
-		name: 'bond',
-		type: 'Bond',
-		default: 'undefined',
-		description: 'Bond object for component communication'
-	},
-	{
-		name: 'base',
-		type: 'Component | Snippet',
-		default: 'undefined',
-		description: 'Base component or snippet to render'
-	},
-	{
-		name: 'preset',
-		type: 'PresetModuleName | string',
-		default: 'undefined',
-		description: 'Preset module name for styling'
-	},
-	{
-		name: 'variants',
-		type: 'VariantDefinition | Function',
-		default: 'undefined',
-		description: 'Variant definition or function to resolve variants'
-	},
-	{
-		name: 'class',
-		type: 'ClassValue | ClassValue[]',
-		default: 'undefined',
-		description: 'CSS class(es) to apply to the element'
-	},
-	{
-		name: 'as',
-		type: 'string',
-		default: 'undefined',
-		description: 'HTML tag to render as'
-	},
-	{
-		name: 'global',
-		type: 'boolean',
-		default: 'false',
-		description: 'Whether to use global styles'
-	},
-	{
-		name: 'initial',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Function called on initial render'
-	},
-	{
-		name: 'enter',
-		type: 'TransitionFunction',
-		default: 'undefined',
-		description: 'Transition function for entering'
-	},
-	{
-		name: 'exit',
-		type: 'TransitionFunction',
-		default: 'undefined',
-		description: 'Transition function for exiting'
-	},
-	{
-		name: 'animate',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Animation function'
-	},
-	{
-		name: 'onmount',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Function called when element is mounted'
-	},
-	{
-		name: 'ondestroy',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Function called when element is destroyed'
-	},
-	{
-		name: 'children',
-		type: 'Snippet',
-		default: 'undefined',
-		description: 'Children content snippet'
-	}
-];
+export const dialogBodyProps: PropDefinition[] = [renderPropsRow];
 
-export const dialogFooterProps: PropDefinition[] = [
-	{
-		name: 'bond',
-		type: 'Bond',
-		default: 'undefined',
-		description: 'Bond object for component communication'
-	},
-	{
-		name: 'base',
-		type: 'Component | Snippet',
-		default: 'undefined',
-		description: 'Base component or snippet to render'
-	},
-	{
-		name: 'preset',
-		type: 'PresetModuleName | string',
-		default: 'undefined',
-		description: 'Preset module name for styling'
-	},
-	{
-		name: 'variants',
-		type: 'VariantDefinition | Function',
-		default: 'undefined',
-		description: 'Variant definition or function to resolve variants'
-	},
-	{
-		name: 'class',
-		type: 'ClassValue | ClassValue[]',
-		default: 'undefined',
-		description: 'CSS class(es) to apply to the element'
-	},
-	{
-		name: 'as',
-		type: 'string',
-		default: 'undefined',
-		description: 'HTML tag to render as'
-	},
-	{
-		name: 'global',
-		type: 'boolean',
-		default: 'false',
-		description: 'Whether to use global styles'
-	},
-	{
-		name: 'initial',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Function called on initial render'
-	},
-	{
-		name: 'enter',
-		type: 'TransitionFunction',
-		default: 'undefined',
-		description: 'Transition function for entering'
-	},
-	{
-		name: 'exit',
-		type: 'TransitionFunction',
-		default: 'undefined',
-		description: 'Transition function for exiting'
-	},
-	{
-		name: 'animate',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Animation function'
-	},
-	{
-		name: 'onmount',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Function called when element is mounted'
-	},
-	{
-		name: 'ondestroy',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Function called when element is destroyed'
-	},
-	{
-		name: 'children',
-		type: 'Snippet',
-		default: 'undefined',
-		description: 'Children content snippet'
-	}
-];
+export const dialogFooterProps: PropDefinition[] = [renderPropsRow];
 
-export const dialogTitleProps: PropDefinition[] = [
-	{
-		name: 'bond',
-		type: 'Bond',
-		default: 'undefined',
-		description: 'Bond object for component communication'
-	},
-	{
-		name: 'base',
-		type: 'Component | Snippet',
-		default: 'undefined',
-		description: 'Base component or snippet to render'
-	},
-	{
-		name: 'preset',
-		type: 'PresetModuleName | string',
-		default: 'undefined',
-		description: 'Preset module name for styling'
-	},
-	{
-		name: 'variants',
-		type: 'VariantDefinition | Function',
-		default: 'undefined',
-		description: 'Variant definition or function to resolve variants'
-	},
-	{
-		name: 'class',
-		type: 'ClassValue | ClassValue[]',
-		default: 'undefined',
-		description: 'CSS class(es) to apply to the element'
-	},
-	{
-		name: 'as',
-		type: 'string',
-		default: 'undefined',
-		description: 'HTML tag to render as'
-	},
-	{
-		name: 'global',
-		type: 'boolean',
-		default: 'false',
-		description: 'Whether to use global styles'
-	},
-	{
-		name: 'initial',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Function called on initial render'
-	},
-	{
-		name: 'enter',
-		type: 'TransitionFunction',
-		default: 'undefined',
-		description: 'Transition function for entering'
-	},
-	{
-		name: 'exit',
-		type: 'TransitionFunction',
-		default: 'undefined',
-		description: 'Transition function for exiting'
-	},
-	{
-		name: 'animate',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Animation function'
-	},
-	{
-		name: 'onmount',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Function called when element is mounted'
-	},
-	{
-		name: 'ondestroy',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Function called when element is destroyed'
-	},
-	{
-		name: 'children',
-		type: 'Snippet',
-		default: 'undefined',
-		description: 'Children content snippet'
-	}
-];
+export const dialogTitleProps: PropDefinition[] = [renderPropsRow];
 
-export const dialogDescriptionProps: PropDefinition[] = [
-	{
-		name: 'bond',
-		type: 'Bond',
-		default: 'undefined',
-		description: 'Bond object for component communication'
-	},
-	{
-		name: 'base',
-		type: 'Component | Snippet',
-		default: 'undefined',
-		description: 'Base component or snippet to render'
-	},
-	{
-		name: 'preset',
-		type: 'PresetModuleName | string',
-		default: 'undefined',
-		description: 'Preset module name for styling'
-	},
-	{
-		name: 'variants',
-		type: 'VariantDefinition | Function',
-		default: 'undefined',
-		description: 'Variant definition or function to resolve variants'
-	},
-	{
-		name: 'class',
-		type: 'ClassValue | ClassValue[]',
-		default: 'undefined',
-		description: 'CSS class(es) to apply to the element'
-	},
-	{
-		name: 'as',
-		type: 'string',
-		default: 'undefined',
-		description: 'HTML tag to render as'
-	},
-	{
-		name: 'global',
-		type: 'boolean',
-		default: 'false',
-		description: 'Whether to use global styles'
-	},
-	{
-		name: 'initial',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Function called on initial render'
-	},
-	{
-		name: 'enter',
-		type: 'TransitionFunction',
-		default: 'undefined',
-		description: 'Transition function for entering'
-	},
-	{
-		name: 'exit',
-		type: 'TransitionFunction',
-		default: 'undefined',
-		description: 'Transition function for exiting'
-	},
-	{
-		name: 'animate',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Animation function'
-	},
-	{
-		name: 'onmount',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Function called when element is mounted'
-	},
-	{
-		name: 'ondestroy',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Function called when element is destroyed'
-	},
-	{
-		name: 'children',
-		type: 'Snippet',
-		default: 'undefined',
-		description: 'Children content snippet'
-	}
-];
+export const dialogDescriptionProps: PropDefinition[] = [renderPropsRow];
 
 export const dialogCloseButtonProps: PropDefinition[] = [
 	{
-		name: 'bond',
-		type: 'Bond',
+		name: 'onclick',
+		type: '((event: MouseEvent) => void) | undefined',
 		default: 'undefined',
-		description: 'Bond object for component communication'
+		description: 'Native click event.'
 	},
 	{
-		name: 'base',
-		type: 'Component | Snippet',
+		name: 'onkeydown',
+		type: '((event: KeyboardEvent) => void) | undefined',
 		default: 'undefined',
-		description: 'Base component or snippet to render'
+		description: 'Native keydown event.'
 	},
-	{
-		name: 'preset',
-		type: 'PresetModuleName | string',
-		default: 'undefined',
-		description: 'Preset module name for styling'
-	},
-	{
-		name: 'variants',
-		type: 'VariantDefinition | Function',
-		default: 'undefined',
-		description: 'Variant definition or function to resolve variants'
-	},
-	{
-		name: 'class',
-		type: 'ClassValue | ClassValue[]',
-		default: 'undefined',
-		description: 'CSS class(es) to apply to the element'
-	},
-	{
-		name: 'as',
-		type: 'string',
-		default: 'undefined',
-		description: 'HTML tag to render as'
-	},
-	{
-		name: 'global',
-		type: 'boolean',
-		default: 'false',
-		description: 'Whether to use global styles'
-	},
-	{
-		name: 'initial',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Function called on initial render'
-	},
-	{
-		name: 'enter',
-		type: 'TransitionFunction',
-		default: 'undefined',
-		description: 'Transition function for entering'
-	},
-	{
-		name: 'exit',
-		type: 'TransitionFunction',
-		default: 'undefined',
-		description: 'Transition function for exiting'
-	},
-	{
-		name: 'animate',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Animation function'
-	},
-	{
-		name: 'onmount',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Function called when element is mounted'
-	},
-	{
-		name: 'ondestroy',
-		type: 'NodeFunction',
-		default: 'undefined',
-		description: 'Function called when element is destroyed'
-	},
-	{
-		name: 'children',
-		type: 'Snippet',
-		default: 'undefined',
-		description: 'Children content snippet'
-	}
+	renderPropsRow
 ];

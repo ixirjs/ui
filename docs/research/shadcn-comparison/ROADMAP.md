@@ -2,7 +2,7 @@
 
 _Standalone, trackable roadmap distilled from the [iteration findings](README.md). This file is the actionable checklist — update the status boxes as items land._
 
-_Status verified against `src/lib` on 2026-06-22 (baseline commit `7f9da8ac`)._
+_Status verified against `src/lib` on 2026-06-22 (baseline commit `7f9da8ac`); boxes below re-verified 2026-08-09._
 
 ---
 
@@ -25,7 +25,7 @@ In 13 of 15 investigative iterations the gap was _"the capability exists but isn
 
 ## Tier 0 — trivial, ship now (≈zero risk)
 
-- [~] **0.1 — Dependency diet.** Move `@modelcontextprotocol/sdk` + `mcp-handler` + `lucide-svelte` → `devDependencies` (3 runtime deps with zero non-story `src/lib` use). _T · iter 5,7 · in working tree, **uncommitted**_
+- [x] **0.1 — Dependency diet.** Move `@modelcontextprotocol/sdk` + `mcp-handler` + `lucide-svelte` → `devDependencies` (3 runtime deps with zero non-story `src/lib` use). _T · iter 5,7 · in working tree, **uncommitted**_
 - [ ] **0.2 — Enable Home/End** for select / combobox / menu. Model already implements it; pure config flip. _T · iter 2,11_
 - [ ] **0.3 — Demote memo-engine internals** out of `./utils` (mark `@internal`). Shrinks the public API surface; the engine is a liability if exposed. _L · iter 10_
 - [ ] **0.4 — Normalize off-convention error messages** (~10%). Consistency of the "must be used within" misuse story. _L · iter 13_
@@ -33,8 +33,8 @@ In 13 of 15 investigative iterations the gap was _"the capability exists but isn
 
 ## Tier 1 — high impact, low/medium effort (the DX + correctness unlock)
 
-- [ ] ⭐⭐ **1.1 — Wire `navigation` + `roving` into tabs / tree / accordion.** Biggest a11y ROI — these have **no keyboard** today; the capabilities exist + are tested. _M · iter 11_
-- [ ] ⭐⭐ **1.2 — Add a `Field.Error` component.** Closes a forms gap **and** an a11y bug (dangling `aria-errormessage`). _L · iter 3_
+- [x] ⭐⭐ **1.1 — Wire `navigation` + `roving` into tabs / tree / accordion.** _All three: arrows/Home/End, roving tabindex, disabled skipped; tree also does Right=expand-then-descend / Left=collapse-then-ascend over visible nodes only._ Biggest a11y ROI — these have **no keyboard** today; the capabilities exist + are tested. _M · iter 11_
+- [x] ⭐⭐ **1.2 — Add a `Field.Error` component.** Closes a forms gap **and** an a11y bug (dangling `aria-errormessage`). _L · iter 3_
 - [ ] ⭐⭐ **1.3 — Emit `data-state` / `data-open`** on disclosure + overlay content. Gives consumers a CSS-animation opt-out path. _L · iter 9_
 - [ ] ⭐⭐ **1.4 — Export `ThemeProvider` + `ThemeToggle` + FOUC `<head>` script from `$lib`.** Promotes the docs-only `Theme` runtime; kills the re-copy friction. _M · iter 4,6_
 - [ ] ⭐⭐ **1.5 — Exports snapshot (api-extractor) + `.changeset/` + CHANGELOG.** Backs the "real upgrade path" claim; the ~938-symbol API has no snapshot today. _M · iter 10_
@@ -42,7 +42,7 @@ In 13 of 15 investigative iterations the gap was _"the capability exists but isn
 - [ ] ⭐⭐ **1.7 — Remove / narrow the `ElementProps` index signature** (`[key: string]: unknown`). Restores excess-prop typo checking lib-wide (off for 17/22 today). _M · iter 14_
 - [ ] ⭐⭐ **1.8 — DEV warn on unknown preset key** (Levenshtein "did you mean?"). Preset-key typos are silently dropped today. _L · iter 13_
 - [ ] ⭐⭐ **1.9 — De-dup the double `DataGridBond.get()` per row.** Per-row cost reduction before virtualization lands. _L · iter 15_
-- [ ] ⭐ **1.10 — Body scroll-lock capability** for modals (ref-counted). Most visible a11y gap vs bits-ui. _M · iter 2_
+- [x] ⭐ **1.10 — Body scroll-lock capability** for modals (ref-counted). Most visible a11y gap vs bits-ui. _M · iter 2_
 - [ ] ⭐ **1.11 — Thread `reducedMotion()` into the motion host.** Accessibility; the rune exists but only 1 factory reads it. _L · iter 9_
 - [ ] ⭐ **1.12 — `buttonClasses()` helper and/or `Button` `href` mode.** Matches shadcn's `buttonVariants` escape hatch. _L · iter 7_
 - [ ] ⭐ **1.13 — `SelectRootProps<T = unknown>` + thread `T` to `bind:value`.** Select value is `any` today. _M · iter 14_
@@ -51,10 +51,10 @@ In 13 of 15 investigative iterations the gap was _"the capability exists but isn
 
 - [ ] ⭐⭐ **2.1 — CLI / registry (config-not-source):** `init` / `add` / `theme`, generate `registry.json` from `PresetModuleMap`. The #1 adoption objection; also fixes preset discoverability. _H · iter 1,3,4,5_
 - [ ] ⭐ **2.2 — Theme generator page** (pick palette/radius → emit CSS-var / preset override). shadcn's top marketing asset; tokens already match. _M · iter 4_
-- [ ] ⭐⭐ **2.3 — Component scaffolder** (`plop`/`hygen`) for contributors. Tier-B authoring is 12 concepts with no scaffolder. _M · iter 12_
-- [ ] ⭐⭐ **2.4 — Virtualization for datagrid / list.** **The one true invention** — the only decisive loss to shadcn at scale. _H · iter 15_
-- [ ] ⭐ **2.5 — Auto-wire `validate()`** to submit (default) + blur/input (opt-in); add dirty/touched/pristine. Makes the existing validation engine actually fire. _M · iter 3_
-- [ ] ⭐ **2.6 — Typeahead model** (menu + select + tree listboxes). bits-ui parity. _M · iter 2,11_
+- [x] ⭐⭐ **2.3 — Component scaffolder** (`plop`/`hygen`) for contributors. Tier-B authoring is 12 concepts with no scaffolder. _M · iter 12_
+- [x] ⭐⭐ **2.4 — Virtualization for datagrid / list.** **The one true invention** — the only decisive loss to shadcn at scale. _H · iter 15_ — shipped as the `createVirtual` rune (`@ixirjs/ui`), activated by the consumer in their own markup and composed by Select over a data-backed option source; see `docs/research/virtualization-decision-2026-07.md`.
+- [x] ⭐ **2.5 — Auto-wire `validate()`** to submit + blur/input via a `mode` prop; add dirty/touched. Done together with the Standard Schema rearchitecture — see `docs/adr/0010`. _M · iter 3_
+- [x] ⭐ **2.6 — Typeahead model** (menu + select + tree listboxes). bits-ui parity. _M · iter 2,11_
 - [ ] ⭐ **2.7 — RTL `dir` seam** + flip nav + floating-ui `rtl` + logical drawer sides. No RTL today. _H · iter 11_
 - [ ] ⭐ **2.8 — Localization seam** (labels + calendar/date `locale`). 25 hardcoded English aria-labels. _M · iter 11_
 - [ ] **2.9 — Storybook play functions** (addons already installed); lighter select-item row pattern. Free interaction + a11y coverage; per-row cost. _M · iter 6,15_

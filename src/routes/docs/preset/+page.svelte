@@ -114,11 +114,11 @@ setPreset(definePreset({
 
 	const placeholderCode = `<!-- Preset classes are inserted automatically -->
 <script>
-  import { HtmlAtom } from '@ixirjs/ui';
+  import { HtmlElement } from '@ixirjs/ui/components/element';
   let { class: klass = '' } = $props();
 <\x2Fscript>
 
-<HtmlAtom preset="button" class={['my-component-base', klass]} />
+<HtmlElement preset="button" class={['my-component-base', klass]} />
 
 <!-- Order: preset classes → component/user classes; the consumer wins conflicts. -->`;
 
@@ -288,7 +288,7 @@ setPreset(definePreset({
 				<path d="M5 12h14" /><path d="m12 5 7 7-7 7" />
 			</svg>
 		</Button>
-		<Button href="/docs/atoms" as="a" variant="outline" class="px-5">Explore Atoms</Button>
+		<Button href="/docs/styling" as="a" variant="outline" class="px-5">Explore Styling</Button>
 	</div>
 </div>
 

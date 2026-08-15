@@ -64,15 +64,14 @@ export const metadata = {
 	componentTitle: 'Radio',
 	componentDescription:
 		'Radio button for single selections with group support and full accessibility states.',
+	summary: 'Radio button group for mutually exclusive selection',
+	category: 'Form' as const,
 	componentType: 'compound' as const,
-	status: 'stable' as const,
+	status: 'beta' as const,
 	packageName: '@ixirjs/ui',
 	importCode: "import { Radio } from '@ixirjs/ui';",
-	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Radio' }],
 	useCases,
 	componentsSummary,
-	examples: {
-		preset: presetCode
-	},
+	presetCode,
 	accessibility: accessibilityFeatures
 };

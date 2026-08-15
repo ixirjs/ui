@@ -2,7 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { parseSlots, planFamily, presetKeysFor, withPresetKeys, pascal } from './scaffold.mjs';
+import {
+	parseSlots,
+	planFamily,
+	planDocs,
+	presetKeysFor,
+	withPresetKeys,
+	pascal
+} from './scaffold.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -62,37 +69,49 @@ describe('scaffold — bonded family', () => {
 		expect(files['date-picker-root.svelte']).not.toContain('bindBond');
 	});
 
-	it('binds each descendant with usePart, naming its slot exactly once', () => {
+	// Pin exact call shape and arity: `bun run check` does not see dry-run scaffold output.
+	// Whoever changes `definePart`/`useRoot` must scaffold once and typecheck it.
+	it('binds each descendant with definePart, naming its slot exactly once', () => {
 		const header = files['date-picker-header.svelte'];
-		expect(header).toContain("usePart(DatePickerBond, 'header', () => restProps");
+		expect(header).toContain("definePart(DatePickerBond, 'header', () => props, {");
 		// The slot string must not be restated — a second copy silently degrades when one is renamed.
 		expect(header.match(/'header'/g)).toHaveLength(1);
 		expect(header).not.toContain('presetLayer=');
+		// definePart owns the destructure; reintroducing one is the boilerplate it removed.
+		expect(header).not.toContain('...restProps');
 	});
 
 	it('orders the class list base → $preset → consumer', () => {
-		for (const file of ['date-picker-root.svelte', 'date-picker-header.svelte']) {
-			expect(files[file]).toContain("'$preset', klass]");
-		}
+		// The root composes the list itself; a `definePart` part hands its base classes to the
+		// helper, which composes exactly the same three-element list.
+		expect(files['date-picker-root.svelte']).toContain("'$preset', klass]");
+		expect(files['date-picker-header.svelte']).toContain("class: 'date-picker-header'");
 	});
 
-	it('renders through the part-element seam rather than spreading a merged packet', () => {
-		// `usePartElement` takes the part/root handle directly and the snippet renders the element
-		// without an HtmlAtom component boundary. Spreading `part.props` would materialize the
-		// compatibility packet the seam exists to avoid.
-		expect(files['date-picker-header.svelte']).toContain('usePartElement(part, () => ({');
-		expect(files['date-picker-root.svelte']).toContain('usePartElement(root, () => ({');
+	it('forwards the root factory prop as a getter, not as a call', () => {
+		// `useRoot`'s `factory` option is `() => BondFactory | undefined`. Passing
+		// `(props) => factory(props)` type-errors and silently defeats the Bond.create fallback.
+		expect(files['date-picker-root.svelte']).toContain('factory: () => factory');
+		expect(files['date-picker-root.svelte']).toContain('factory = undefined');
+	});
+
+	it('renders directly through Kernel rather than compatibility adapters', () => {
+		expect(files['date-picker-root.svelte']).toContain('Kernel.element(root, () => ({');
 		for (const file of ['date-picker-root.svelte', 'date-picker-header.svelte']) {
-			expect(files[file]).toContain('{@render partElement(el, body)}');
+			expect(files[file]).toContain('{@render Kernel.render(el)(');
+			expect(files[file]).not.toContain('{#snippet body()}');
 			expect(files[file]).not.toContain('...part.props');
 		}
 	});
 
 	it('declares roles in the atom map so relationships can respond to them', () => {
 		const bond = files['bond.svelte.ts'];
-		expect(bond).toContain("header: { atom: DatePickerHeaderAtom, role: 'trigger' }");
-		expect(bond).toContain("body: { atom: DatePickerBodyAtom, role: 'content' }");
-		expect(bond).toContain('root: DatePickerRootAtom');
+		// Slots start presentation-free: no `atom`, so `defineBond` synthesizes one from the slot
+		// name and the definition's `name`.
+		expect(bond).toContain("header: { role: 'trigger' }");
+		expect(bond).toContain("body: { role: 'content' }");
+		expect(bond).toContain('root: {}');
+		expect(bond).not.toContain('defineAtom');
 	});
 
 	it('derives every identifier from the kebab name', () => {
@@ -114,6 +133,34 @@ describe('scaffold — bonded family', () => {
 	it('never emits a per-root effect for cross-cutting behaviour', () => {
 		expect(files['date-picker-root.svelte']).not.toContain('$effect');
 	});
+
+	// Two conventions the generator had drifted off, both invisible to a text-contains assertion
+	// that only looks for the happy string, so each is asserted as an absence of the old form.
+	it('constrains element generics on the exported alias, not on the raw tag map', () => {
+		for (const file of Object.values(files)) {
+			expect(file).not.toContain('keyof HTMLElementTagNameMap');
+		}
+		expect(files['types.ts']).toContain("E extends HtmlElementTagName = 'div'");
+		expect(files['types.ts']).toContain('HtmlElementTagName');
+	});
+
+	it('emits no eslint-disable for empty interfaces — the rule allows them outright', () => {
+		for (const file of Object.values(files)) {
+			expect(file).not.toContain('no-empty-object-type');
+		}
+	});
+
+	it('re-exports useRoot’s own Bond accessor rather than rebuilding it', () => {
+		const root = files['date-picker-root.svelte'];
+		expect(root).toContain('export const getBond = root.getBond;');
+		expect(root).not.toContain('() => bond;');
+	});
+
+	it('imports library internals through the $ alias, never the published package specifier', () => {
+		for (const file of Object.values(files)) {
+			expect(file).not.toContain("from '@ixirjs/ui");
+		}
+	});
 });
 
 describe('scaffold — static module', () => {
@@ -127,9 +174,10 @@ describe('scaffold — static module', () => {
 		);
 	});
 
-	it('resolves the preset in the script, not inline in markup', () => {
+	it('resolves the preset and renders directly through Kernel', () => {
 		expect(files['badge-lite.svelte']).toContain('$derived(mergePresetProps(');
-		expect(files['badge-lite.svelte']).not.toMatch(/<HtmlAtom[^>]*preset \?\?/);
+		expect(files['badge-lite.svelte']).toContain('Kernel.element(Kernel.static');
+		expect(files['badge-lite.svelte']).toContain('{@render Kernel.render(el)(');
 	});
 });
 
@@ -157,5 +205,61 @@ describe('scaffold — preset manifest registration', () => {
 		const { source: next, added } = withPresetKeys(source, ['button', 'card.title']);
 		expect(added).toEqual([]);
 		expect(next).toBe(source);
+	});
+});
+
+describe('scaffold — docs page', () => {
+	const docs = planDocs('date-picker', 'root,header:trigger,body:content', {
+		category: 'Form'
+	});
+
+	it('emits the four files a docs page is made of, and not props.ts', () => {
+		expect(Object.keys(docs).sort()).toEqual([
+			'+page.svelte',
+			'content.svelte',
+			'examples/basic.svelte',
+			'shared.ts'
+		]);
+		// sync-props.mjs owns props.ts. A scaffolded copy would be a second source, stale on write.
+		expect(Object.keys(docs)).not.toContain('props.ts');
+	});
+
+	it('names the prop tables sync-props will actually export', () => {
+		// `DatePickerHeaderProps` -> `datePickerHeaderProps`, the script's `exportNameFor`.
+		expect(docs['content.svelte']).toContain(
+			"import { datePickerRootProps, datePickerHeaderProps, datePickerBodyProps } from './props';"
+		);
+	});
+
+	it('keys the page to its slug so the registry can find its siblings', () => {
+		// `siblingsOf(frontmatter.id)` is what replaced 41 hand-wired prev/next pairs.
+		expect(docs['content.svelte']).toMatch(/id: 'date-picker'/);
+	});
+
+	it('declares the metadata the registry derives nav, catalog and breadcrumbs from', () => {
+		for (const field of ['componentTitle', 'summary', 'category', 'status']) {
+			expect(docs['shared.ts']).toContain(`${field}:`);
+		}
+		expect(docs['shared.ts']).toContain("category: 'Form' as const");
+		// Widened to `string`, `category` no longer satisfies ComponentCategory — svelte-check
+		// caught exactly this across all 41 pages during the migration.
+		expect(docs['shared.ts']).toMatch(/category: '[A-Z][a-z]+' as const/);
+	});
+
+	it('does not hand-wire prev, next or breadcrumbs — the registry derives all three', () => {
+		expect(docs['content.svelte']).not.toContain('prev=');
+		expect(docs['content.svelte']).not.toContain('next=');
+		expect(docs['shared.ts']).not.toContain('breadcrumbs');
+	});
+
+	it('resolves preset keys the same way the family does', () => {
+		expect(docs['content.svelte']).toContain("presetKey: 'date-picker'");
+		expect(docs['content.svelte']).toContain("presetKey: 'date-picker.header'");
+	});
+
+	it('gives a static module one table and no compound markup', () => {
+		const staticDocs = planDocs('kbd', 'root', { static: true });
+		expect(staticDocs['content.svelte']).toContain("import { kbdProps } from './props';");
+		expect(staticDocs['examples/basic.svelte']).not.toContain('.Root>');
 	});
 });

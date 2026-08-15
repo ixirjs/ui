@@ -1,13 +1,12 @@
 <script lang="ts">
-	import { createExampleLoader } from '$docs/utils/example-loader';
-	import { DocComponentPage, DocExample, DocCode, DocOnly, DocPropsTabs } from '$docs/components';
+	import type { DocContentProps } from '$docs/types';
+	import { DocComponentPage, DocExample, DocCode, DocOnly } from '$docs/components';
 	import type { PropsSection } from '$docs/components';
 	import { buttonProps } from './props';
 	import { metadata } from './shared';
-	import type { DocMode } from '$docs/context/doc-mode.svelte';
 	import type { Frontmatter } from '$docs/md/frontmatter';
 
-	let { contentType = 'html' }: { contentType?: DocMode } = $props();
+	let { contentType = 'html', ex }: DocContentProps = $props();
 
 	const frontmatter: Frontmatter = {
 		id: 'button',
@@ -21,30 +20,16 @@
 	const apiSections: PropsSection[] = [
 		{ label: 'Button', presetKey: 'button', props: buttonProps }
 	];
-
-	const _loaders = import.meta.glob('./examples/*.svelte');
-	const _sources = import.meta.glob('./examples/*.svelte', {
-		query: '?raw',
-		import: 'default',
-		eager: true
-	}) as Record<string, string>;
-	const ex = createExampleLoader(_loaders, _sources);
 </script>
 
-<DocComponentPage
-	{contentType}
-	{metadata}
-	{frontmatter}
-	prev={{ label: 'Breadcrumb', href: '/docs/components/breadcrumb' }}
-	next={{ label: 'Calendar', href: '/docs/components/calendar' }}
->
+<DocComponentPage {contentType} {metadata} {frontmatter} {apiSections}>
 	{#snippet preset()}
 		<DocOnly for="html">
 			<p class="text-muted-foreground mb-4 text-sm">
 				Customize the default styles by defining presets in your configuration:
 			</p>
 		</DocOnly>
-		<DocCode lang="typescript" code={metadata.examples.preset} />
+		<DocCode lang="typescript" code={metadata.presetCode} />
 	{/snippet}
 
 	{#snippet examples()}
@@ -71,9 +56,5 @@
 			description="Disabled buttons are non-interactive."
 			{...ex('./examples/disabled.svelte')}
 		/>
-	{/snippet}
-
-	{#snippet apiReference()}
-		<DocPropsTabs sections={apiSections} />
 	{/snippet}
 </DocComponentPage>

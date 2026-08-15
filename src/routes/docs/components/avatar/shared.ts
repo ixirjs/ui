@@ -65,14 +65,13 @@ export const metadata = {
 	componentTitle: 'Avatar',
 	componentDescription:
 		'User profile image with automatic fallback to generated initials and customizable sizes.',
+	summary: 'Display user profile pictures or initials as fallback',
+	category: 'Display' as const,
 	componentType: 'simple' as const,
 	status: 'stable' as const,
 	packageName: '@ixirjs/ui',
 	importCode: "import { Avatar } from '@ixirjs/ui';",
-	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Avatar' }],
 	useCases,
-	examples: {
-		preset: presetCode
-	},
+	presetCode,
 	accessibility: accessibilityFeatures
 };

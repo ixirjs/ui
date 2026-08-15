@@ -1,6 +1,8 @@
 # Design: consolidating the direct presentation seam
 
-**Date:** 2026-07-26 · **Status:** proposed · **Follows:** ADR 0009
+**Date:** 2026-07-26 · **Status:** historical; superseded by Kernel-only authoring · **Follows:** ADR 0009
+
+The adapter names and paths below record the measured predecessor design; they are no longer live APIs.
 
 ## Problem
 
@@ -145,6 +147,37 @@ Recommendation: keep it unexported until the layout is incrementalized (a prefix
 in place, invalidated from the changed index forward) and it renders through the same presentation
 seam as every other part. `docs/research/virtualization-decision-2026-07.md` already says a generic
 exported component is not part of the first contract; `atoms.ts` currently exports one.
+
+**Resolved 2026-08-10.** Both defects were closed on the way to the rune. The component itself was
+then **dropped**: with the layout and the spreads owned by `createVirtual`, `VirtualBody` was a
+fixed markup shape wrapped around a rune a caller can activate directly, and a windowed grid whose
+markup is not the caller's is the thing this whole decision refused. Virtualization is opt-in at the
+call site; DataGrid ships no windowed body.
+
+- The layout moved into `src/lib/runes/virtual-layout.svelte.ts`. A uniform estimate with
+  nothing measured is answered by arithmetic and allocates no array at any source size — the path a
+  same-height option list never leaves. Once something measures, offsets are a prefix-sum array
+  rebuilt lazily **from the lowest dirty index only**, and measurement bumps still coalesce to one
+  revision per turn, so a window of rows mounting costs one bounded pass rather than one full pass
+  per row. `virtual.svelte.spec.ts` pins the from-dirty-index rebuild by counting estimator reads.
+- The scrolling, measuring and positioning moved into the `createVirtual` rune, where
+  `position`/`overflow` are structural style rather than a utility class and a caller's own `style`
+  is merged rather than overwritten. The `480` fallback is gone — the viewport is measured, and a
+  numeric `height` seeds the server-rendered window.
+
+Two latent bugs in the observer capabilities surfaced on the way and were fixed where they lived,
+even though the final design no longer uses them — they were real, and the next consumer would have
+hit both:
+
+- All three observer capabilities did `observed = [...observed, element]` — reading and writing the
+  same `$state` from inside a mount or attachment effect, which self-invalidates to the depth limit.
+  Untracked, the same way and for the same reason `Collection.set` already is.
+- `resizeObserverCapability` probed the optional `GEOMETRY` slot through `bond.surface` on **every**
+  resize of every observed element, which DEV-warns on an empty slot. Resolved once at setup via the
+  quiet `bond.capabilities` check instead.
+
+The anchor ratchet gained the matching invariant: `createVirtual` must emit an identical anchor
+count for 1k and 10k sources.
 
 ## Consequences
 

@@ -58,14 +58,13 @@ export const metadata = {
 	componentTitle: 'Progress',
 	componentDescription:
 		'Progress indicators inform users about the status of ongoing operations. Available in linear and circular variants with support for indeterminate animations.',
+	summary: 'Linear and circular progress indicators with indeterminate support',
+	category: 'Feedback' as const,
 	componentType: 'simple' as const,
 	status: 'stable' as const,
 	packageName: '@ixirjs/ui',
 	importCode: "import { ProgressLinear, ProgressCircular } from '@ixirjs/ui/components/progress';",
-	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Progress' }],
 	useCases,
-	examples: {
-		preset: presetCode
-	},
+	presetCode,
 	accessibility: accessibilityFeatures
 };

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { type PageContent } from '$docs/content-sidebar.svelte';
+	import { components } from '$docs/registry';
 	import DocsNavSidebar from '$docs/docs-nav-sidebar.svelte';
 	import DocsTocSidebar from '$docs/docs-toc-sidebar.svelte';
 	import DocsFooter from '../docs-footer.svelte';
@@ -58,7 +59,6 @@
 		{
 			title: 'Core Concepts',
 			children: [
-				{ title: 'Atoms', href: '/docs/atoms' },
 				{ title: 'Bonds', href: '/docs/bonds' },
 				{ title: 'Extending & Fusing', href: '/docs/extending' },
 				{ title: 'Preset System', href: '/docs/preset' },
@@ -69,46 +69,7 @@
 		{
 			title: 'Components',
 			href: '/docs/components',
-			children: [
-				{ title: 'Accordion', href: '/docs/components/accordion' },
-				{ title: 'Alert', href: '/docs/components/alert' },
-				{ title: 'Atom', href: '/docs/components/atom' },
-				{ title: 'Avatar', href: '/docs/components/avatar' },
-				{ title: 'Badge', href: '/docs/components/badge' },
-				{ title: 'Breadcrumb', href: '/docs/components/breadcrumb' },
-				{ title: 'Button', href: '/docs/components/button' },
-				{ title: 'Card', href: '/docs/components/card' },
-				{ title: 'Checkbox', href: '/docs/components/checkbox' },
-				{ title: 'Collapsible', href: '/docs/components/collapsible' },
-				{ title: 'Combobox', href: '/docs/components/combobox' },
-				{ title: 'Context Menu', href: '/docs/components/context-menu' },
-				{ title: 'DataGrid', href: '/docs/components/datagrid' },
-				{ title: 'Dialog', href: '/docs/components/dialog' },
-				{ title: 'Divider', href: '/docs/components/divider' },
-				{ title: 'Drawer', href: '/docs/components/drawer' },
-				{ title: 'Dropdown Menu', href: '/docs/components/dropdown-menu' },
-				{ title: 'Form', href: '/docs/components/form' },
-				{ title: 'Input', href: '/docs/components/input' },
-				{ title: 'Kbd', href: '/docs/components/kbd' },
-				{ title: 'Label', href: '/docs/components/label' },
-				{ title: 'Link', href: '/docs/components/link' },
-				{ title: 'List', href: '/docs/components/list' },
-				{ title: 'Select', href: '/docs/components/select' },
-				{ title: 'Popover', href: '/docs/components/popover' },
-				{ title: 'Progress', href: '/docs/components/progress' },
-				{ title: 'Radio', href: '/docs/components/radio' },
-				{ title: 'Scrollable', href: '/docs/components/scrollable' },
-				{ title: 'Sidebar', href: '/docs/components/sidebar' },
-				{ title: 'Slider', href: '/docs/components/slider' },
-				{ title: 'Stack', href: '/docs/components/stack' },
-				{ title: 'Stepper', href: '/docs/components/stepper' },
-				{ title: 'Swatch', href: '/docs/components/swatch' },
-				{ title: 'Tabs', href: '/docs/components/tabs' },
-				{ title: 'Textarea', href: '/docs/components/textarea' },
-				{ title: 'Toast', href: '/docs/components/toast' },
-				{ title: 'Tooltip', href: '/docs/components/tooltip' },
-				{ title: 'Tree', href: '/docs/components/tree' }
-			]
+			children: components.map(({ title, href }) => ({ title, href }))
 		}
 	];
 </script>

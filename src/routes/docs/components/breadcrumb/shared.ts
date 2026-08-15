@@ -78,15 +78,14 @@ export const metadata = {
 	componentTitle: 'Breadcrumb',
 	componentDescription:
 		'Navigational breadcrumb showing current location with customizable separators and styling.',
+	summary: 'Hierarchical trail showing the current page path',
+	category: 'Navigation' as const,
 	componentType: 'compound' as const,
 	status: 'stable' as const,
 	packageName: '@ixirjs/ui',
 	importCode: "import { Breadcrumb } from '@ixirjs/ui';",
-	breadcrumbs: [{ label: 'Components', href: '/docs/components' }, { label: 'Breadcrumb' }],
 	useCases,
 	componentsSummary,
-	examples: {
-		preset: presetCode
-	},
+	presetCode,
 	accessibility: accessibilityFeatures
 };

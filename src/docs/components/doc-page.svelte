@@ -26,8 +26,8 @@
 		status?: 'stable' | 'beta' | 'experimental' | 'deprecated' | undefined;
 		llms?: boolean;
 		breadcrumbs?: { label: string; href?: string }[];
-		prev?: { label: string; href: string };
-		next?: { label: string; href: string };
+		prev?: { label: string; href: string } | undefined;
+		next?: { label: string; href: string } | undefined;
 		frontmatter?: Frontmatter;
 		children: Snippet;
 	} = $props();
