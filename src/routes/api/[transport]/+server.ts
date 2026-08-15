@@ -2,13 +2,6 @@ import type { RequestHandler } from './$types';
 import { createMcpHandler } from 'mcp-handler';
 import { z } from 'zod';
 import { componentSlugs, docSlugs, guideSlugs, readDoc } from '../docs';
-import {
-	archivedVersions,
-	compareVersions,
-	latestVersion,
-	planMigration,
-	renderPlan
-} from '../migration';
 
 // MCP server for @ixirjs/ui. Serves the docs site's own llms.txt content (see ../docs.ts)
 // plus the authoring guidance that lives nowhere else — the prompts and craft-component.
@@ -132,106 +125,12 @@ const handler = createMcpHandler(
 			}
 		);
 
-		server.registerTool(
-			'plan-migration',
-			{
-				description:
-					"Build an ordered, executable migration plan for a consumer codebase upgrading @ixirjs/ui. Give it the version currently in the consumer's package.json. Combines hand-written migration steps with a mechanical diff of the published API surface, and names a regex to search for at each step.",
-				inputSchema: {
-					from: z.string().min(1).describe('Version the consumer is on now, e.g. "1.0.0-alpha.44"'),
-					to: z
-						.string()
-						.optional()
-						.describe(`Target version. Defaults to the newest archived (${latestVersion}).`)
-				}
-			},
-			({ from, to }) => {
-				const target = to?.trim() || latestVersion;
-				if (compareVersions(from, target) >= 0) {
-					return text(
-						`Nothing to do: ${from} is not older than ${target}. Archived versions: ${archivedVersions.join(', ')}.`
-					);
-				}
-				return text(renderPlan(planMigration(from.trim(), target)));
-			}
-		);
-
-		server.registerTool(
-			'list-versions',
-			{
-				description:
-					'List the @ixirjs/ui versions with an archived public API surface — the versions plan-migration can diff against.',
-				inputSchema: {}
-			},
-			() =>
-				text(
-					`# Archived surfaces\n\n${archivedVersions.map((v) => `- ${v}`).join('\n')}\n\n` +
-						`Latest: ${latestVersion}. plan-migration accepts any version; it diffs from the nearest archived one at or below it.`
-				)
-		);
-
-		// Every doc is also a resource, so clients that browse resources see the full set
-		// without spending a tool call.
-		for (const slug of docSlugs) {
-			const uri = `docs://${slug}`;
-			server.registerResource(
-				`docs-${slug.replace(/\//g, '-')}`,
-				uri,
-				{
-					title: slug.startsWith('components/')
-						? `${slug.slice('components/'.length)} component`
-						: slug,
-					description: `@ixirjs/ui documentation: ${slug}`,
-					mimeType: 'text/markdown'
-				},
-				async () => {
-					const content = await readDoc(slug);
-					if (!content) throw new Error(`Resource not found: ${slug}`);
-					return { contents: [{ uri, mimeType: 'text/markdown', text: content }] };
-				}
-			);
-		}
-
 		// Prompts carry the authoring rules that are not in the docs.
 		const IMPORT_RULES = `IMPORT RULES:
 - Components come from the package root as named imports: import { Button, Dialog } from '@ixirjs/ui';
 - Per-family subpaths are also supported: import { Button } from '@ixirjs/ui/components/button';
 - NEVER use default imports.
 - Component names are PascalCase (Button, Dialog); utilities are camelCase (clickOutside, portal).`;
-
-		server.registerPrompt(
-			'migrate',
-			{
-				description: 'Upgrade a codebase to a newer @ixirjs/ui version',
-				argsSchema: {
-					from: z
-						.string()
-						.optional()
-						.describe("Version in the consumer's package.json; read it if not given"),
-					to: z.string().optional().describe(`Target version (default ${latestVersion})`)
-				}
-			},
-			({ from, to }) => ({
-				messages: [
-					{
-						role: 'user' as const,
-						content: {
-							type: 'text' as const,
-							text: `Upgrade this codebase from @ixirjs/ui ${from || '<read the version from package.json / the lockfile first>'} to ${to || latestVersion}.
-
-Procedure:
-1. Call plan-migration with the exact installed version. Do not guess it — read it from the lockfile, which records what is actually installed.
-2. Work the plan's steps in order. For each step, run its "Find" regex across the codebase FIRST and read every hit before editing — the regexes are deliberately broad, and some hits will be unrelated code that must be left alone.
-3. Treat "REMOVED ... no replacement inferred" as a research task, not a deletion: call search-docs with the symbol before deciding what replaces it.
-4. Rename hints are hints. Confirm each against get-doc or get-component-info before applying it.
-5. Bump the dependency, then run the consumer's type check. Every remaining error should map to a step in the plan; if one does not, say so rather than inventing a fix.
-
-Report what you changed per step, and list anything you could not resolve.`
-						}
-					}
-				]
-			})
-		);
 
 		server.registerPrompt(
 			'create-component',
