@@ -1,8 +1,10 @@
 <script lang="ts" generics="D">
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
+	import { untrack } from 'svelte';
 	import { SelectItemAtom, type SelectItemAtomProps } from './bond.svelte';
 	import type { SelectItemProps } from './types';
 	import { SelectBond } from '$ixirjs/ui/components/select/bond.svelte';
-	import { List } from '$ixirjs/ui/components/list';
+	import { LIST_ITEM_AS, listItemClass } from '$ixirjs/ui/components/list/item-class';
 	import { mergeAtomProps } from '$ixirjs/ui/components/atom';
 	import { createAtomInstance } from '$ixirjs/ui/shared/bond';
 	import { closeOverlay } from '$ixirjs/ui/components/overlay/policies/overlay-view';
@@ -29,10 +31,9 @@
 	} as SelectItemAtomProps<D>);
 
 	const atom = createAtomInstance<SelectItemAtom<D, typeof select>, typeof select, HTMLElement>(
-		undefined,
+		untrack(() => `item-${value}`),
 		{
-			resolveKey: () => `item-${value}`,
-			resolveBond: () => select,
+			bond: select,
 			required: true,
 			register: { key: 'item', cardinality: 'many' },
 			factory: () => new SelectItemAtom<D, typeof select>(itemProps, select)
@@ -71,22 +72,44 @@
 		atom.select();
 		closeOverlay(select);
 	}
+
+	// Renders the item element itself instead of mounting `<List.Item>` to do it — see the same
+	// comment on `dropdown-menu-item.svelte` for the measured cost of that wrapper. This one also
+	// shortens the combobox chain, whose items are `Select.Item` output, from three boundaries to two.
+	//
+	// The class carried TWO `$preset` sentinels before: this component's, inside the string it handed
+	// down, and `List.Item`'s own. Only the last one ever placed — `mergeClassesWithPreset` uses
+	// `lastIndexOf` and strips the earlier ones — so this component's sentinel always won and
+	// `List.Item`'s never did. `listItemClass` puts these classes exactly where that resolved to,
+	// with one sentinel.
+	//
+	// `preset` keeps its `?? 'select.item'` default and stays on the config: `List.Item`'s own
+	// `'list.item'` fallback was already dead here, because `mergeAtomProps` always supplies a truthy
+	// preset. That is load-bearing — `list.item` resolves to `px-4 py-3` where `select.item` resolves
+	// to `px-2 py-1.5`, so letting the fallback wake up would restyle every option in every app.
+	const el = Kernel.element(Kernel.static, () => ({
+		as: LIST_ITEM_AS,
+		class: listItemClass(
+			[
+				'cursor-pointer',
+				isHighlighted && 'bg-foreground/5',
+				isSelected && 'bg-primary/5 hover:bg-primary/10 active:bg-primary/15'
+			],
+			klass
+		),
+		...itemAttrs,
+		onclick: handleClick
+	}));
 </script>
 
-<List.Item
-	class={[
-		'cursor-pointer',
-		isHighlighted && 'bg-foreground/5',
-		isSelected && 'bg-primary/5 hover:bg-primary/10 active:bg-primary/15',
-		'$preset',
-		klass
-	]
-		.filter(Boolean)
-		.join(' ')}
-	{...itemAttrs}
-	onclick={handleClick}
->
-	{@render children?.({
+{@render Kernel.render(el)(
+	el.tag(),
+	el.class(),
+	el.attrs(),
+	children,
+	{
 		selectItem: atom as unknown as import('./controller.svelte').SelectItemController<D>
-	})}
-</List.Item>
+	},
+	el.motion(),
+	el
+)}

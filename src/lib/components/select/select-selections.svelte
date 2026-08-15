@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { HtmlAtom } from '$ixirjs/ui/components/atom';
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
 	import SelectSelection from './select-selection.svelte';
 	import { SelectBond } from './bond.svelte';
 	import type { SelectSelectionsProps } from './types';
@@ -44,6 +44,12 @@
 		}));
 	});
 	const isMultiple = $derived(bond.props.multiple);
+
+	// Element seam instead of a component boundary; key order matches the previous call exactly.
+	const el = Kernel.element(Kernel.static, () => ({
+		class: ['flex flex-wrap items-center gap-2', klass],
+		...restProps
+	}));
 </script>
 
 {@render (isMultiple && selections.length
@@ -55,9 +61,15 @@
 			: undefined)?.()}
 
 {#snippet multipleSelections()}
-	<HtmlAtom class={['flex flex-wrap items-center gap-2', klass]} {...restProps}>
-		{@render (children ? consumerSelection : selectionChips)()}
-	</HtmlAtom>
+	{@render Kernel.render(el)(
+		el.tag(),
+		el.class(),
+		el.attrs(),
+		children ? consumerSelection : selectionChips,
+		undefined,
+		el.motion(),
+		el
+	)}
 {/snippet}
 
 {#snippet consumerSelection()}

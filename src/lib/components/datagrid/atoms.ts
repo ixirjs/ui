@@ -1,5 +1,4 @@
 export { default as Body } from './datagrid-body.svelte';
-export { default as VirtualBody } from './datagrid-virtual-body.svelte';
 export { default as Checkbox } from './datagrid-checkbox.svelte';
 export { default as Root } from './datagrid-root.svelte';
 export { default as Header } from './datagrid-header.svelte';

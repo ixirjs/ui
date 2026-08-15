@@ -1,6 +1,11 @@
-<script lang="ts" generics="T extends keyof HTMLElementTagNameMap = 'div', B extends Base = Base">
+<script lang="ts" generics="T extends HtmlElementTagName = 'div', B extends Base = Base">
 	import { Trigger } from '$ixirjs/ui/components/popover/atoms';
-	import { mergePresetProps, type Base } from '$ixirjs/ui/components/atom';
+	import {
+		mergePresetProps,
+		type Base,
+		type BasePropsOf,
+		type HtmlElementTagName
+	} from '$ixirjs/ui/components/atom';
 	import { SelectBond } from './bond.svelte';
 	import type { SelectTriggerProps } from './types';
 
@@ -12,7 +17,7 @@
 		preset = undefined,
 		children = undefined,
 		...restProps
-	}: SelectTriggerProps<T, B> = $props();
+	}: SelectTriggerProps<T, B> & BasePropsOf<B> = $props();
 
 	// Forward only `preset` (+ restProps), not `atom.spread`: the inner popover `Trigger` resolves the
 	// same shared bond's `trigger` atom and applies `mergeAtomProps` itself, so spreading the atom here

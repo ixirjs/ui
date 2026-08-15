@@ -1,35 +1,14 @@
 import { Atom } from '$ixirjs/ui/shared/bond';
-import {
-	defineAtomCapability,
-	sharedCapabilityKey,
-	type AtomHost
-} from '$ixirjs/ui/shared/capability';
+import { partCapability } from '$ixirjs/ui/shared/capability';
+import { lazyCapability } from '$ixirjs/ui/shared/capability/intern';
 import { generateId } from '$ixirjs/ui/shared/bond';
 import type { DropdownMenuBond } from '$ixirjs/ui/components/dropdown-menu/bond.svelte';
-
-// -----------------------------------------------------------------------------
-// Public types
-// -----------------------------------------------------------------------------
 
 export type DropdownMenuItemAtomProps = {
 	id: string;
 	// `| undefined`: callers pass an unset `disabled` prop; the atom treats undefined as not-disabled.
 	disabled?: boolean | undefined;
 };
-
-// -----------------------------------------------------------------------------
-// Capability slots and shared helpers
-// -----------------------------------------------------------------------------
-
-const DROPDOWN_MENU_ITEM = sharedCapabilityKey<void>({
-	owner: '@ixirjs/dropdown-menu',
-	name: 'item-node',
-	version: 1
-});
-
-// -----------------------------------------------------------------------------
-// Atom definitions
-// -----------------------------------------------------------------------------
 
 export class DropdownMenuItemAtom<B extends DropdownMenuBond = DropdownMenuBond> extends Atom<
 	B,
@@ -49,7 +28,7 @@ export class DropdownMenuItemAtom<B extends DropdownMenuBond = DropdownMenuBond>
 		// Fold in the roving capability's `item` projection (`data-highlighted`); attrs-only,
 		// the .svelte keeps its own click.
 		this.role('item', this.#id);
-		this.capability(dropdownMenuItemPresentation(() => this.#props.disabled));
+		this.capability(dropdownMenuItemPresentation());
 	}
 
 	get id() {
@@ -91,25 +70,27 @@ export class DropdownMenuItemAtom<B extends DropdownMenuBond = DropdownMenuBond>
 	}
 }
 
-// -----------------------------------------------------------------------------
-// Atom capabilities
-// -----------------------------------------------------------------------------
-
-function dropdownMenuItemPresentation<B extends DropdownMenuBond>(
-	disabled: () => boolean | undefined
-) {
-	return defineAtomCapability<void, AtomHost, B>({
-		slot: DROPDOWN_MENU_ITEM,
-		meta: {
-			projects: ['item'],
-			docs: 'Dropdown menu rendered item role, disabled projection, and close policy.'
-		},
-		attach: {
-			attrs: () => ({
-				role: 'menuitem',
-				'aria-disabled': disabled() ? true : undefined,
-				tabIndex: disabled() ? -1 : 0
-			}),
+// Built once, not per rendered item. `disabled` is per-instance, so it is read off the node the
+// behavior is handed rather than closed over — which is what makes one frozen descriptor serve
+// every item in every menu. Typed by the one member it reads instead of `AtomHost`, which is why
+// this uses `defineAtomCapability` rather than the `partCapability` shorthand.
+const dropdownMenuItemPresentation = lazyCapability(() =>
+	partCapability<DropdownMenuBond, HTMLElement>(
+		'@ixirjs/dropdown-menu:item-node',
+		'item',
+		'Dropdown menu rendered item role, disabled projection, and close policy.',
+		{
+			// `Atom.capability` types its argument's node as `Atom`, so a behavior cannot declare the
+			// subclass it is registered on; the narrowing is asserted here instead. Only this atom
+			// registers this slot.
+			attrs: (node) => {
+				const disabled = (node as DropdownMenuItemAtom).props.disabled;
+				return {
+					role: 'menuitem',
+					'aria-disabled': disabled ? true : undefined,
+					tabIndex: disabled ? -1 : 0
+				};
+			},
 			handlers: (_node, bond) => ({
 				onclick: (event: MouseEvent) => {
 					if (!bond) return;
@@ -118,5 +99,5 @@ function dropdownMenuItemPresentation<B extends DropdownMenuBond>(
 				}
 			})
 		}
-	});
-}
+	)
+);

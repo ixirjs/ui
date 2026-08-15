@@ -1,11 +1,6 @@
 export * as Select from './atoms';
 
-export {
-	SelectBond,
-	type SelectBondElements,
-	SelectBondBase,
-	type SelectStateProps
-} from './bond.svelte';
+export { SelectBond, SelectBondBase, type SelectStateProps } from './bond.svelte';
 
 export * from './item';
 

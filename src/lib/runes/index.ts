@@ -2,3 +2,9 @@
 // svelte/motion (`prefersReducedMotion`) — no local re-implementation.
 export { colorScheme, type ColorScheme } from './color-scheme.svelte';
 export { container } from './container.svelte';
+export {
+	createVirtual,
+	type VirtualOptions,
+	type Virtualizer,
+	type VirtualItem
+} from './virtual.svelte';

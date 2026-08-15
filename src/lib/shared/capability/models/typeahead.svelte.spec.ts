@@ -23,7 +23,10 @@ class TypeaheadBond extends Bond<BondStateProps> {
 		super({}, 'test-typeahead');
 		this.capability(rovingCapability(this.roving));
 		this.capability(
-			typeaheadCapability(this.items, this.roving, { roles: ['container', 'trigger'] })
+			typeaheadCapability(this.items, this.roving, {
+				roles: ['container', 'trigger'],
+				collectionKind: this.items.kind
+			})
 		);
 	}
 }
@@ -64,7 +67,7 @@ afterEach(() => {
 describe('typeaheadCapability', () => {
 	it('reports metadata, surface, and collection/roving requirements', () => {
 		const bond = new TypeaheadBond();
-		const cap = bond.requireCapability(TYPEAHEAD);
+		const cap = bond.capability(TYPEAHEAD)!;
 
 		expect(cap.surface).toBeDefined();
 		expect(cap.requires).toEqual([collectionSlot('item'), ROVING]);
@@ -138,6 +141,14 @@ describe('typeaheadCapability', () => {
 		key(trigger.spread, 'c');
 
 		expect(bond.roving.activeId).toBe('charlie');
+	});
+
+	it('declares the collection dependency from a Collection passed with no options', () => {
+		const bond = new TypeaheadBond();
+		// The published shape: a Collection and nothing else. Its `kind` is the declaration, so the
+		// requirement must not narrow to ROVING alone.
+		const cap = typeaheadCapability(bond.items, bond.roving);
+		expect(cap.requires).toEqual([collectionSlot('item'), ROVING]);
 	});
 
 	it('clears pending timeout state during setup teardown', () => {

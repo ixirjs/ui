@@ -1,27 +1,49 @@
 import {
-	defineCapability,
+	defineRoleProjection,
 	sharedCapabilityKey,
 	type Capability
 } from '$ixirjs/ui/shared/capability/capability';
-import { Collection } from '$ixirjs/ui/shared/bond/collection.svelte';
 import { collectionSlot } from './collection.svelte';
 import { ROVING, type RovingFocus } from './roving.svelte';
 
-export const TYPEAHEAD = sharedCapabilityKey<TypeaheadSurface>({
-	owner: '@ixirjs/cap',
-	name: 'typeahead',
-	version: 1
-});
+export const TYPEAHEAD = sharedCapabilityKey<TypeaheadSurface>('@ixirjs/cap:typeahead');
+
+/**
+ * The item list typeahead searches. `Collection<T>` satisfies it structurally and is what every
+ * non-virtual family passes. A virtualized one cannot — its Collection holds only the mounted
+ * window — so it passes a data-backed source plus a `text` option, an unmounted item having no
+ * element for `defaultText` to read.
+ */
+export interface TypeaheadSource<T> {
+	readonly entries: readonly (readonly [string, T])[];
+	indexOf(id: string): number;
+}
+
+/**
+ * All typeahead needs of a roving surface: read the highlight, move it. Not `RovingFocus<T>` —
+ * sharing that parameter would force searched and highlighted items to be the same type, and under
+ * virtualization the search runs over data while `activeItem` must resolve a clickable Atom.
+ */
+export type TypeaheadTarget = Pick<RovingFocus, 'activeId' | 'goto'>;
 
 export interface TypeaheadOptions<T = unknown> {
 	// Roles that receive printable-key search. Default ['container'].
 	roles?: readonly string[];
 	// Milliseconds before the buffered query is cleared. Default 700.
 	timeout?: number;
-	// Extract searchable text from an item. Defaults to label/element text/value/id.
+	/**
+	 * Extract searchable text from an item. `undefined`/`null` falls through to the default
+	 * resolution (label → element text → value → id), so an override need only answer what it knows.
+	 */
 	text?: (item: T, id: string) => string | undefined | null;
 	// Skip items that should not be reached by typeahead.
 	disabled?: (item: T, id: string) => boolean;
+	/**
+	 * Collection kind to declare as a dependency. A `Collection` needs no option — its own `kind` is
+	 * used. Declare it when the source is a delegating object not resolvable at construction:
+	 * `requires` is read once, statically, and must not touch such a source that early.
+	 */
+	collectionKind?: string | undefined;
 	// Gate the policy, e.g. only while a popover is open.
 	enabled?: boolean | (() => boolean);
 	// preventDefault on a matched printable key. Default true.
@@ -39,12 +61,12 @@ export interface TypeaheadSurface {
 type SearchMode = 'current' | 'next';
 
 export function createTypeahead<T>(
-	collection: Collection<T>,
-	roving: RovingFocus<T>,
+	source: TypeaheadSource<T>,
+	roving: TypeaheadTarget,
 	options: TypeaheadOptions<T> = {}
 ): TypeaheadSurface {
 	const timeout = options.timeout ?? 700;
-	const text = options.text ?? defaultText;
+	const text = (item: T, id: string): string => options.text?.(item, id) ?? defaultText(item, id);
 	const disabled = options.disabled ?? defaultDisabled;
 	const preventDefault = options.preventDefault ?? true;
 	let buffer = $state('');
@@ -70,17 +92,17 @@ export function createTypeahead<T>(
 		const needle = normalize(query);
 		if (!needle) return null;
 
-		const entries = collection.entries;
+		const entries = source.entries;
 		if (entries.length === 0) return null;
 
-		const activeIndex = roving.activeId === null ? -1 : collection.indexOf(roving.activeId);
+		const activeIndex = roving.activeId === null ? -1 : source.indexOf(roving.activeId);
 		const start = mode === 'current' && activeIndex >= 0 ? activeIndex : activeIndex + 1;
 
 		for (let offset = 0; offset < entries.length; offset++) {
 			const index = (Math.max(start, 0) + offset) % entries.length;
 			const [id, item] = entries[index]!;
 			if (disabled(item, id)) continue;
-			const haystack = normalize(text(item, id) ?? '');
+			const haystack = normalize(text(item, id));
 			if (haystack.startsWith(needle)) {
 				return roving.goto(id);
 			}
@@ -128,32 +150,28 @@ export function createTypeahead<T>(
 }
 
 export function typeaheadCapability<T>(
-	collection: Collection<T>,
-	roving: RovingFocus<T>,
+	source: TypeaheadSource<T>,
+	roving: TypeaheadTarget,
 	options: TypeaheadOptions<T> = {}
 ): Capability<TypeaheadSurface> {
-	const roles = options.roles ?? ['container'];
-	const surface = createTypeahead(collection, roving, options);
+	const surface = createTypeahead(source, roving, options);
 
-	return defineCapability<TypeaheadSurface>({
+	// A `Collection` carries `kind` as a plain field, so passing one still declares the dependency it
+	// always did. `TypeaheadSource` has no `kind`, so nothing is read off a delegating source here.
+	const collectionKind = options.collectionKind ?? (source as { kind?: string }).kind;
+
+	return defineRoleProjection<TypeaheadSurface>({
 		slot: TYPEAHEAD,
+		roles: options.roles ?? ['container'],
 		surface,
-		requires: [collectionSlot(collection.kind), ROVING],
+		// A data-backed source has no collection slot; `requires` is strict and would throw on one that
+		// is never registered.
+		requires: collectionKind === undefined ? [ROVING] : [collectionSlot(collectionKind), ROVING],
 		setup: () => () => surface.destroy(),
-		meta: {
-			projects: roles,
-			docs: 'Buffered printable-key typeahead policy over a collection-backed roving focus surface.'
-		},
-		behavior(role) {
-			if (!roles.includes(role)) return undefined;
-			return {
-				handlers: () => ({
-					onkeydown: ((ev: Event) => surface.handleKeydown(ev as KeyboardEvent)) as (
-						ev: Event
-					) => void
-				})
-			};
-		}
+		docs: 'Buffered printable-key typeahead policy over a collection-backed roving focus surface.',
+		handlers: () => ({
+			onkeydown: ((ev: Event) => surface.handleKeydown(ev as KeyboardEvent)) as (ev: Event) => void
+		})
 	});
 }
 

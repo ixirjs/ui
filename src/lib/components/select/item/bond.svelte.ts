@@ -1,15 +1,8 @@
 import { closeOverlay } from '$ixirjs/ui/components/overlay/policies/overlay-view';
 import { Atom, generateId } from '$ixirjs/ui/shared/bond';
-import {
-	defineAtomCapability,
-	sharedCapabilityKey,
-	type AtomHost
-} from '$ixirjs/ui/shared/capability';
+import { partCapability } from '$ixirjs/ui/shared/capability';
+import { lazyCapability } from '$ixirjs/ui/shared/capability/intern';
 import type { SelectBond } from '$ixirjs/ui/components/select/bond.svelte';
-
-// -----------------------------------------------------------------------------
-// Public types
-// -----------------------------------------------------------------------------
 
 export type SelectItemAtomProps<T = unknown> = {
 	value: string;
@@ -17,20 +10,6 @@ export type SelectItemAtomProps<T = unknown> = {
 	data?: T;
 	id?: string;
 };
-
-// -----------------------------------------------------------------------------
-// Capability slots and shared helpers
-// -----------------------------------------------------------------------------
-
-const SELECT_ITEM = sharedCapabilityKey<void>({
-	owner: '@ixirjs/select',
-	name: 'item-node',
-	version: 1
-});
-
-// -----------------------------------------------------------------------------
-// Atom definitions
-// -----------------------------------------------------------------------------
 
 export class SelectItemAtom<Data = unknown, B extends SelectBond = SelectBond> extends Atom<
 	B,
@@ -123,21 +102,17 @@ export class SelectItemAtom<Data = unknown, B extends SelectBond = SelectBond> e
 	}
 }
 
-// -----------------------------------------------------------------------------
-// Atom capabilities
-// -----------------------------------------------------------------------------
-
-function selectItemPresentation<B extends SelectBond>() {
-	return defineAtomCapability<void, AtomHost, B>({
-		slot: SELECT_ITEM,
-		meta: {
-			projects: ['item'],
-			docs: 'Select rendered item option role projection.'
-		},
-		attach: {
+// Built once, not per rendered option: the descriptor is surface-less and reads nothing from the
+// instance, so one frozen value serves every item in every select.
+const selectItemPresentation = lazyCapability(() =>
+	partCapability<SelectBond>(
+		'@ixirjs/select:item-node',
+		'item',
+		'Select rendered item option role projection.',
+		{
 			attrs: () => ({
 				role: 'option'
 			})
 		}
-	});
-}
+	)
+);

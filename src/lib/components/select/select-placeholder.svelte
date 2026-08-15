@@ -1,7 +1,10 @@
-<script lang="ts">
+<script module lang="ts">
+	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
 	import { SelectBond } from './bond.svelte';
-	import { partElement, usePartElement } from '$ixirjs/ui/components/atom/part-element.svelte';
-	import { usePart } from '@ixirjs/ui/shared';
+	const PART = Kernel.part(SelectBond, 'placeholder', { class: '' });
+</script>
+
+<script lang="ts">
 	import type { PresetKey } from '$ixirjs/ui/preset';
 
 	let {
@@ -11,13 +14,11 @@
 		...restProps
 	} = $props();
 
-	const part = usePart(SelectBond, 'placeholder', () => restProps, {
-		preset: () => preset
-	});
+	const part = Kernel.node(PART, () => ({ preset }), { context: 'required' });
 	const bond = part.bond;
 	const hasValue = $derived(!!bond.props.values?.length);
 
-	const el = usePartElement(part, () => ({
+	const el = Kernel.element(part, () => ({
 		class: [
 			'border-border absolute inset-0 flex h-full w-full items-center px-2 leading-1 opacity-50 outline-none',
 			'$preset',
@@ -30,5 +31,13 @@
 {@render (!hasValue ? placeholder : undefined)?.()}
 
 {#snippet placeholder()}
-	{@render partElement(el, children)}
+	{@render Kernel.render(el)(
+		el.tag(),
+		el.class(),
+		el.attrs(),
+		children,
+		undefined,
+		el.motion(),
+		el
+	)}
 {/snippet}

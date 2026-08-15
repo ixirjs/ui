@@ -4,7 +4,6 @@ import {
 	PopoverContentAtom,
 	PopoverTriggerAtom,
 	type PopoverBondProps,
-	type PopoverDomElements,
 	type PopoverStateProps
 } from '$ixirjs/ui/components/popover/bond.svelte';
 import { overlayIsOpen } from '$ixirjs/ui/components/overlay/policies/overlay-view';
@@ -16,22 +15,16 @@ import {
 	type RovingFocus
 } from '$ixirjs/ui/shared/capability/models/roving.svelte';
 import { navigationCapability } from '$ixirjs/ui/shared/capability/models/navigation.svelte';
-import { typeaheadCapability } from '$ixirjs/ui/shared/capability/models/typeahead.svelte';
+import {
+	typeaheadCapability,
+	type TypeaheadSource
+} from '$ixirjs/ui/shared/capability/models/typeahead.svelte';
 import { clickTrigger } from '$ixirjs/ui/components/overlay';
 import type { DropdownMenuItemControllerInterface } from './item/controller.svelte';
-import {
-	defineAtomCapability,
-	sharedCapabilityKey,
-	type AtomHost
-} from '$ixirjs/ui/shared/capability';
-
-// -----------------------------------------------------------------------------
-// Public types
-// -----------------------------------------------------------------------------
+import { partCapability } from '$ixirjs/ui/shared/capability';
+import { lazyCapability } from '$ixirjs/ui/shared/capability/intern';
 
 export type DropdownMenuBondProps = PopoverBondProps;
-
-export type DropdownMenuBondElements = PopoverDomElements;
 
 // Item union: a per-instance Atom (dropdown-menu or subclass like SelectItemAtom) or a controller facade.
 export type DropdownMenuItem =
@@ -41,16 +34,35 @@ export type DropdownMenuItem =
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	DropdownMenuItemControllerInterface<Record<string, any>> | Atom<any, any>;
 
-// -----------------------------------------------------------------------------
-// Bond implementation
-// -----------------------------------------------------------------------------
+/** Ordered item ids plus the searchable entries behind them. `Collection<DropdownMenuItem>` satisfies it, and is the default. */
+export interface MenuItemSource<T = DropdownMenuItem | undefined> extends TypeaheadSource<T> {
+	readonly keys: readonly string[];
+}
+
+/**
+ * Delegates on every read: typeahead captures its source once at construction, while
+ * `navigableItems` is overridable and can change with props.
+ */
+function delegatingNavigableItems(bond: DropdownMenuBondBase): MenuItemSource {
+	return {
+		get entries() {
+			return bond.navigableItems.entries;
+		},
+		get keys() {
+			return bond.navigableItems.keys;
+		},
+		indexOf: (id) => bond.navigableItems.indexOf(id)
+	};
+}
 
 export class DropdownMenuBondBase<
 	Props extends DropdownMenuBondProps = DropdownMenuBondProps
 > extends PopoverBondBase<Props> {
 	// Roving-focus capability over item ids; activeId/activeItem/next/previous own highlighting and navigation.
+	// `ids` comes from `navigableItems`, which a virtualized subclass points at its data; `item` stays
+	// the Collection, because `activeItem` means the mounted Atom and callers click it.
 	#roving: RovingFocus<DropdownMenuItem> = createRovingFocus<DropdownMenuItem>({
-		ids: () => this.items.keys,
+		ids: () => this.navigableItems.keys,
 		item: (id) => this.items.get(id)
 	});
 
@@ -70,11 +82,30 @@ export class DropdownMenuBondBase<
 		// Arrow-key navigation projected onto content + trigger (replaces hand-rolled per-atom keydown).
 		this.capability(navigationCapability(this.#roving, { roles: ['container', 'trigger'] }));
 		this.capability(
-			typeaheadCapability(this.items, this.#roving, {
+			typeaheadCapability(delegatingNavigableItems(this), this.#roving, {
 				roles: ['container', 'trigger'],
-				enabled: () => this.isOpen && !this.isDisabled
+				collectionKind: this.items.kind,
+				enabled: () => this.isOpen && !this.isDisabled,
+				text: (item, id) => this.itemText(item, id)
 			})
 		);
+	}
+
+	/**
+	 * Where the ordered item ids and searchable entries come from. The Collection by default, where
+	 * every mounted item is every item. A virtualized subclass overrides it with a data-backed source,
+	 * since the Collection then holds only the window and roving would stop at its edge.
+	 */
+	get navigableItems(): MenuItemSource {
+		return this.items;
+	}
+
+	/**
+	 * Searchable text for one entry. Defers to typeahead's own resolution, which reads the mounted
+	 * element — unavailable to a virtualized menu, which overrides this to read its data.
+	 */
+	protected itemText(_item: DropdownMenuItem | undefined, _id: string): string | undefined | null {
+		return undefined;
 	}
 
 	// Maps a roving id to its DOM element id for aria-activedescendant.
@@ -116,38 +147,8 @@ export class DropdownMenuBondBase<
 
 // Bond shape the dropdown-menu atoms type `this.bond` against.
 
-// -----------------------------------------------------------------------------
-// Internal types
-// -----------------------------------------------------------------------------
-
-type DropdownMenuBondView = DropdownMenuBondBase;
-
-// -----------------------------------------------------------------------------
-// Capability slots and shared helpers
-// -----------------------------------------------------------------------------
-
-const DROPDOWN_MENU_CONTENT = sharedCapabilityKey<void>({
-	owner: '@ixirjs/dropdown-menu',
-	name: 'content',
-	version: 1
-});
-const DROPDOWN_MENU_TRIGGER = sharedCapabilityKey<void>({
-	owner: '@ixirjs/dropdown-menu',
-	name: 'trigger',
-	version: 1
-});
-const DROPDOWN_MENU_ITEM = sharedCapabilityKey<void>({
-	owner: '@ixirjs/dropdown-menu',
-	name: 'item',
-	version: 1
-});
-
-// -----------------------------------------------------------------------------
-// Atom definitions
-// -----------------------------------------------------------------------------
-
 export class DropdownMenuContentAtom<
-	B extends DropdownMenuBondView = DropdownMenuBondView
+	B extends DropdownMenuBondBase = DropdownMenuBondBase
 > extends PopoverContentAtom<B> {
 	declare protected bond: B;
 
@@ -165,41 +166,56 @@ export class DropdownMenuContentAtom<
 export const DropdownMenuTriggerAtom = defineAtom(PopoverTriggerAtom, (atom) => {
 	atom.capability(dropdownMenuTriggerActivation());
 });
-export type DropdownMenuTriggerAtom = InstanceType<typeof DropdownMenuTriggerAtom>;
 
-export const DropdownMenuItemAtom = defineAtom<DropdownMenuBondView>('item', (atom) => {
-	atom.capability(dropdownMenuItemPresentation());
+export const DropdownMenuItemAtom = defineAtom<DropdownMenuBondBase>('item', {
+	slot: '@ixirjs/dropdown-menu:item',
+	docs: 'Dropdown menu item role and keyboard close policy.',
+	attrs: () => ({
+		role: 'menuitem' as const
+	}),
+	handlers: (_node, bond) => ({
+		onkeyup: (ev: KeyboardEvent) => {
+			if (!bond) return;
+			const currentTarget = ev.currentTarget as HTMLElement;
+			const disabled =
+				currentTarget.getAttribute('disabled') ||
+				currentTarget.getAttribute('aria-disabled') === 'true';
+
+			if (disabled) return;
+
+			if (ev.key === 'Enter' || ev.key === ' ') {
+				ev.preventDefault();
+				bond.stageOpenChange({ event: ev, reason: 'item-select' });
+				bond.close();
+			}
+		}
+	})
 });
-export type DropdownMenuItemAtom = InstanceType<typeof DropdownMenuItemAtom>;
 
-// -----------------------------------------------------------------------------
-// Atom capabilities
-// -----------------------------------------------------------------------------
-
-function dropdownMenuContentPresentation<B extends DropdownMenuBondView>(role: () => string) {
-	return defineAtomCapability<void, AtomHost, B>({
-		slot: DROPDOWN_MENU_CONTENT,
-		meta: {
-			projects: ['content'],
-			docs: 'Dropdown menu content container role projection.'
-		},
-		attach: {
+// Per-instance by necessity: `contentRole` is a protected getter a flavour overrides (Select →
+// 'listbox'), so the descriptor closes over the atom. That is one content atom per open menu, not
+// one per item, which is why this one is not shared the way the item/trigger descriptors are.
+function dropdownMenuContentPresentation<B extends DropdownMenuBondBase>(role: () => string) {
+	return partCapability<B>(
+		'@ixirjs/dropdown-menu:content',
+		'content',
+		'Dropdown menu content container role projection.',
+		{
 			attrs: () => ({
 				// aria-activedescendant + orientation come from roving; key navigation from navigation.
 				role: role()
 			})
 		}
-	});
+	);
 }
 
-function dropdownMenuTriggerActivation<B extends DropdownMenuBondView>() {
-	return defineAtomCapability<void, AtomHost, B>({
-		slot: DROPDOWN_MENU_TRIGGER,
-		meta: {
-			projects: ['trigger'],
-			docs: 'Dropdown menu trigger activation of the highlighted item.'
-		},
-		attach: {
+// Built once, not per rendered trigger: surface-less and reads everything through `(node, bond)`.
+const dropdownMenuTriggerActivation = lazyCapability(() =>
+	partCapability<DropdownMenuBondBase>(
+		'@ixirjs/dropdown-menu:trigger',
+		'trigger',
+		'Dropdown menu trigger activation of the highlighted item.',
+		{
 			handlers: (_node, bond) => ({
 				onkeydown: (ev: KeyboardEvent) => {
 					if (!bond) return;
@@ -218,50 +234,14 @@ function dropdownMenuTriggerActivation<B extends DropdownMenuBondView>() {
 				}
 			})
 		}
-	});
-}
-
-function dropdownMenuItemPresentation<B extends DropdownMenuBondView>() {
-	return defineAtomCapability<void, AtomHost, B>({
-		slot: DROPDOWN_MENU_ITEM,
-		meta: {
-			projects: ['item'],
-			docs: 'Dropdown menu item role and keyboard close policy.'
-		},
-		attach: {
-			attrs: () => ({
-				role: 'menuitem' as const
-			}),
-			handlers: (_node, bond) => ({
-				onkeyup: (ev: KeyboardEvent) => {
-					if (!bond) return;
-					const currentTarget = ev.currentTarget as HTMLElement;
-					const disabled =
-						currentTarget.getAttribute('disabled') ||
-						currentTarget.getAttribute('aria-disabled') === 'true';
-
-					if (disabled) return;
-
-					if (ev.key === 'Enter' || ev.key === ' ') {
-						ev.preventDefault();
-						bond.stageOpenChange({ event: ev, reason: 'item-select' });
-						bond.close();
-					}
-				}
-			})
-		}
-	});
-}
-
-// -----------------------------------------------------------------------------
-// Bond spec and constructor facade
-// -----------------------------------------------------------------------------
+	)
+);
 
 // DropdownMenuBond — flat composition over PopoverBond.
 // Adds roving-focus, overrides content/trigger roles, adds `item` slot.
 // Inlined deliberately: `defineBond<const S>` infers `parts` as a tuple only from a literal
 // argument. A hoisted spec widens it to an array, which makes `AtomsOf` resolve every inherited
-// slot to `never` and blocks `usePart` on slots the runtime spec merge does provide.
+// slot to `never` and blocks `Kernel.part` on slots the runtime spec merge does provide.
 export const DropdownMenuBond = defineBond({
 	parts: [PopoverBond],
 	name: 'dropdown-menu',
@@ -276,9 +256,5 @@ export const DropdownMenuBond = defineBond({
 
 // Instance type — paired with the `const` (value + type).
 export type DropdownMenuBond = BondOf<typeof DropdownMenuBond>;
-
-// -----------------------------------------------------------------------------
-// Public types
-// -----------------------------------------------------------------------------
 
 export type { PopoverStateProps };

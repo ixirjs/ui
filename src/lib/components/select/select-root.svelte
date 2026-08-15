@@ -1,5 +1,5 @@
-<script lang="ts" generics="T">
-	import { controlledProp, useRoot } from '@ixirjs/ui/shared';
+<script lang="ts" generics="T, Option = unknown">
+	import { controlledProp, useRoot } from '$ixirjs/ui/shared';
 	import { SelectBond, type SelectStateProps } from './bond.svelte';
 	import type { SelectRootProps } from './types';
 
@@ -17,6 +17,9 @@
 		placement = 'bottom-start',
 		offset = 1,
 		keys = [],
+		options = undefined,
+		optionValue = undefined,
+		optionLabel = undefined,
 		query = $bindable(''),
 		presets = undefined,
 		// Arrow wrapper keeps the constructor facade bound when passed as a default factory.
@@ -26,7 +29,7 @@
 		onvaluechange = undefined,
 		onvalueschange = undefined,
 		onquerychange = undefined
-	}: SelectRootProps<T> = $props();
+	}: SelectRootProps<T, Option> = $props();
 
 	function valuesEqual(left: readonly T[], right: readonly T[]) {
 		return (
@@ -85,6 +88,9 @@
 			offset: () => offset,
 			placements: () => (placements ?? []) as SelectStateProps['placements'],
 			keys: () => keys ?? [],
+			options: () => options,
+			optionValue: () => optionValue as SelectStateProps['optionValue'],
+			optionLabel: () => optionLabel as SelectStateProps['optionLabel'],
 			query: queryProp,
 			presets: () => presets
 		},
@@ -93,9 +99,7 @@
 
 	const bond = root.bond;
 
-	export function getBond() {
-		return bond;
-	}
+	export const getBond = root.getBond;
 </script>
 
 {@render children?.({ select: bond })}
