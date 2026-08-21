@@ -5,7 +5,6 @@
 	import { DropdownMenuBond } from '$ixirjs/ui/components/dropdown-menu/bond.svelte';
 	import type { DropdownMenuItemProps } from './types';
 	import { LIST_ITEM_AS, listItemClass } from '$ixirjs/ui/components/list/item-class';
-	import { mergeAtomProps } from '$ixirjs/ui/components/atom';
 	import { createAtomInstance } from '$ixirjs/ui/shared/bond';
 
 	const menu = DropdownMenuBond.getOrThrow(
@@ -37,9 +36,6 @@
 			factory: () => new DropdownMenuItemAtom<typeof menu>(itemProps, menu)
 		}
 	);
-
-	// Atom spread (attrs + handlers + element attachment + roving projection) plus custom props.
-	const itemAttrs = $derived(mergeAtomProps(atom, preset, restProps, menu.presetLayer('item')));
 
 	// Register the item into the bond so roving focus / keyboard navigation can see
 	// it. Stable (outside the reactive `spread`), so it never feeds the mount loop.
@@ -76,19 +72,34 @@
 	//
 	// `Kernel.static`, not a seam carrying `menu`: `List.Item` used the static seam, so the
 	// bond was never visible to preset resolution, and a function-form preset entry is called as
-	// `entry({ bond })`. Handing it the menu bond here would change what such an entry sees. The
-	// atom merge already happened above in `mergeAtomProps`, exactly as it did before.
+	// `entry({ bond })`. Handing it the menu bond here would change what such an entry sees. Passing
+	// `atom:` below does not reopen that: `atom` and `bond` are separate axes, and `bond` stays unset.
 	//
-	// `onclick` stays LAST, as it was when written after the spread on `<List.Item>`: it deliberately
-	// REPLACES the atom's handler rather than composing with it, and `handleClick` routes to
-	// `atom.close(ev)` itself.
+	// The Atom rides the seam as `atom:` rather than being pre-merged into a packet. `mergeAtomProps`
+	// + `{...itemAttrs}` allocated three objects and held a `$derived` per item to produce what
+	// `buildKernelElement` already does internally via `mergeAtomPresentationProps` — and items are
+	// the one shape in the library where per-instance cost multiplies by list length.
+	//
+	// `onclick` stays LAST. Through the seam it now COMPOSES with the atom's handler rather than
+	// replacing it, but the observable behaviour is unchanged: `composeHandlers` runs the consumer's
+	// handler first and skips the atom's when the default was prevented, and `handleClick` prevents
+	// it before calling `atom.close(ev)` itself. A consumer `onclick` that prevents default still
+	// leaves the menu open, exactly as the replacing form did.
+	//
+	// `preset` keeps `mergeAtomProps`'s `preset ?? atom.preset` fallback explicitly: the seam's own
+	// fallback is `seam.preset`, and `Kernel.static` carries none.
 	const el = Kernel.element(Kernel.static, () => ({
 		as: LIST_ITEM_AS,
 		class: listItemClass(
 			'border-border last:border-b-0 hover:bg-foreground/5 active:bg-foreground/10 outline-primary cursor-pointer border-b',
 			klass
 		),
-		...itemAttrs,
+		atom,
+		...restProps,
+		// After the spread, matching `mergeAtomProps`, which preferred the explicit layer over one
+		// arriving through restProps.
+		preset: preset ?? atom.preset,
+		presetLayer: menu.presetLayer('item') ?? restProps.presetLayer,
 		onclick: handleClick
 	}));
 </script>
