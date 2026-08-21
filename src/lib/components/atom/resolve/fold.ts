@@ -1,6 +1,6 @@
 import type { ClassValue } from 'svelte/elements';
 import type { Motion, PresetEntryRecord, ResolvedMotion } from '$ixirjs/ui/preset';
-import { MOTION_SKIP, PRESET_SKIP, VARIANTS_SKIP } from './constants';
+import { MOTION_SKIP, MOTION_SKIP_LIST, PRESET_SKIP, VARIANTS_SKIP } from './constants';
 import { getCachedOwnSymbols } from './cache';
 import { EMPTY_RESOLVED_MOTION, extractMotion, resolveMotionLayers } from './motion';
 
@@ -35,8 +35,10 @@ function copySymbolKeys(
 // The canonical attrs axis. Attr-only consumers avoid paying to resolve an unused motion axis.
 /** Whether a layer carries any renderer-owned motion key, which the fold must strip from attrs. */
 function hasMotionKeys(src: Record<string, unknown>): boolean {
-	for (const key of MOTION_SKIP) {
-		if (key in src) return true;
+	// An indexed loop over an array, not `for…of` over the Set: this runs once per rendered element
+	// on the fold's passthrough check, and iterating a Set allocates an iterator object every time.
+	for (let index = 0; index < MOTION_SKIP_LIST.length; index++) {
+		if (MOTION_SKIP_LIST[index]! in src) return true;
 	}
 	return false;
 }

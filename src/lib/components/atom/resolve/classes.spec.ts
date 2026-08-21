@@ -109,3 +109,40 @@ describe('mergeClassesWithPreset — array user class (the component-root shape)
 		expect(result).toBe('text-sm p-6');
 	});
 });
+
+describe('mergeClassesWithPreset — the resolved-class cache stays sound under mutation', () => {
+	// The cache keys on the array's first entry and validates the rest element-wise. These pin the
+	// element-wise part: comparing by array reference would serve a stale string to any caller that
+	// reuses one array and edits it, which is exactly what `resolve/variants.ts` warns about.
+
+	it('misses when a reference-stable user array is mutated in place', () => {
+		const live = ['cache-mut-a', '$preset', 'text-sm'];
+		expect(mergeClassesWithPreset(live, undefined, undefined)).toBe('cache-mut-a text-sm');
+		live[2] = 'text-lg';
+		expect(mergeClassesWithPreset(live, undefined, undefined)).toBe('cache-mut-a text-lg');
+		live.length = 2;
+		expect(mergeClassesWithPreset(live, undefined, undefined)).toBe('cache-mut-a');
+	});
+
+	it('misses when a reference-stable preset array is mutated in place', () => {
+		const preset = ['bg-red-500'];
+		const user = ['cache-mut-b', '$preset', ''];
+		expect(mergeClassesWithPreset(user, preset, undefined)).toBe('cache-mut-b bg-red-500');
+		preset[0] = 'bg-blue-500';
+		expect(mergeClassesWithPreset(user, preset, undefined)).toBe('cache-mut-b bg-blue-500');
+	});
+
+	it('never stores a nested class array, so an inner edit still re-resolves', () => {
+		const nested = ['cache-mut-c', '$preset', ['inner', '$preset', 'x']];
+		expect(mergeClassesWithPreset(nested, undefined, undefined)).toBe('cache-mut-c inner x');
+		(nested[2] as string[])[0] = 'inner2';
+		expect(mergeClassesWithPreset(nested, undefined, undefined)).toBe('cache-mut-c inner2 x');
+	});
+
+	it('keeps an empty base class off the cache key', () => {
+		// Roughly 25 plans declare `class: ''`. Bucketing them together would make the scan cost more
+		// than the merge, so `''` bypasses the cache entirely — it must still resolve correctly.
+		expect(mergeClassesWithPreset(['', undefined, '$preset', 'p-2'], 'p-4', undefined)).toBe('p-2');
+		expect(mergeClassesWithPreset(['', undefined, '$preset', 'p-6'], 'p-4', undefined)).toBe('p-6');
+	});
+});
