@@ -12,12 +12,54 @@ export class Collection<T> {
 	#indexes = new Map<string, number>();
 	#indexesDirty = true;
 
+	/**
+	 * Membership signal for the whole-collection views, published at most once per read.
+	 *
+	 * Every view below used to register `void this.#items.size`, so all n of them depended on
+	 * `SvelteMap`'s size source and every `set` marked every one of them. Mounting n children is n
+	 * sets, so the marking was O(n²) with a small constant — the accordion fitted at k = 1.55 and a
+	 * 400-item mount cost ~1 s.
+	 *
+	 * The fix is NOT to defer the publish. Deferring it to a microtask is what previous attempts did,
+	 * and it fails two invariants that are asserted synchronously: the accordion's "one tabbable
+	 * header at mount" (a11y, a hard gate) and `collection.svelte.spec.ts`'s same-tick derived view.
+	 * Flushing a pending publish from inside a read does not rescue it either — a `$derived` that is
+	 * still CLEAN short-circuits and never calls into this class, so there is no read to flush from.
+	 *
+	 * So the publish stays synchronous and is instead COALESCED. `#dirtySinceRead` records whether
+	 * every dependent is already marked. While it is true a further `set` cannot tell any reader
+	 * anything it has not been told, so the bump is skipped; a tracked read clears it, and the next
+	 * write bumps again. n registrations with no interleaved read cost exactly one bump instead of n,
+	 * and any read still observes the collection as of that instant. The flag is a plain field, not
+	 * `$state`, so clearing it inside a read is not a reactive write and needs no `untrack`.
+	 */
+	#version = $state(0);
+	#dirtySinceRead = false;
+
 	constructor(kind: string) {
 		this.kind = kind;
 	}
 
+	/** Registers the coalesced membership dependency. */
+	#track(): void {
+		this.#dirtySinceRead = false;
+		void this.#version;
+	}
+
+	#publish(): void {
+		if (this.#dirtySinceRead) return;
+		this.#dirtySinceRead = true;
+		// Untracked for the same reason `set` reads `#items` untracked: this runs inside the child's
+		// mount effect, and `#version++` READS the signal before writing it. Tracked, that subscribes
+		// the registering effect to the very signal it bumps, so the effect re-runs and re-registers
+		// — which silently reorders the collection. The tree keyboard specs catch it as focus landing
+		// on the wrong node.
+		untrack(() => this.#version++);
+	}
+
 	get size(): number {
-		return this.#items.size;
+		this.#track();
+		return untrack(() => this.#items.size);
 	}
 
 	// `values` is read once per rendered child (a datagrid cell resolves its column through it), so
@@ -27,9 +69,8 @@ export class Collection<T> {
 	#values: readonly T[] | undefined;
 
 	get values(): readonly T[] {
-		// Registers the SvelteMap dependency for reactive reads; the cache serves the array.
-		void this.#items.size;
-		return (this.#values ??= Array.from(this.#items.values()));
+		this.#track();
+		return (this.#values ??= untrack(() => Array.from(this.#items.values())));
 	}
 
 	// Same cache shape as `#values` — these were the two remaining per-read `Array.from` walks.
@@ -37,19 +78,22 @@ export class Collection<T> {
 	#entries: readonly [string, T][] | undefined;
 
 	get keys(): readonly string[] {
-		void this.#items.size;
-		return (this.#keys ??= Array.from(this.#items.keys()));
+		this.#track();
+		return (this.#keys ??= untrack(() => Array.from(this.#items.keys())));
 	}
 
 	get entries(): readonly [string, T][] {
-		void this.#items.size;
-		return (this.#entries ??= Array.from(this.#items.entries()));
+		this.#track();
+		return (this.#entries ??= untrack(() => Array.from(this.#items.entries())));
 	}
 
 	[Symbol.iterator](): IterableIterator<[string, T]> {
 		return this.#items[Symbol.iterator]();
 	}
 
+	// `get`/`has` stay on `SvelteMap`'s own per-key sources. Those are already fine-grained — a `set`
+	// marks only readers of that one key — so they are not what made mounting quadratic, and routing
+	// them through the batched signal would make every key-reader depend on the whole collection.
 	get(id: string): T | undefined {
 		return this.#items.get(id);
 	}
@@ -64,12 +108,12 @@ export class Collection<T> {
 			this.#values = undefined;
 			this.#keys = undefined;
 			this.#entries = undefined;
+			this.#publish();
 		}
 	}
 
 	indexOf(id: string): number {
-		// Registers the SvelteMap dependency for reactive reads, while the plain cache handles lookup.
-		void this.#items.size;
+		this.#track();
 		this.#refreshIndexes();
 		return this.#indexes.get(id) ?? -1;
 	}
@@ -88,6 +132,7 @@ export class Collection<T> {
 		this.#values = undefined;
 		this.#keys = undefined;
 		this.#entries = undefined;
+		this.#publish();
 		return () => {
 			// Only delete if our value is still registered — guards re-mounts that overwrote it.
 			if (untrack(() => this.#items.get(id)) === value) this.delete(id);
@@ -101,13 +146,14 @@ export class Collection<T> {
 		this.#keys = undefined;
 		this.#entries = undefined;
 		this.#indexesDirty = true;
+		this.#publish();
 	}
 
 	#refreshIndexes(): void {
 		if (!this.#indexesDirty) return;
 		this.#indexes.clear();
 		let i = 0;
-		for (const key of this.#items.keys()) this.#indexes.set(key, i++);
+		for (const key of untrack(() => Array.from(this.#items.keys()))) this.#indexes.set(key, i++);
 		this.#indexesDirty = false;
 	}
 }

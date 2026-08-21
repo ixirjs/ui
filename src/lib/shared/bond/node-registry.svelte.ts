@@ -129,11 +129,15 @@ export class NodeRegistry {
 		if (this.#byNode?.has(node)) return () => this.unregister(node);
 
 		const existing = this.#byPart?.get(key);
-		const lazyExisting = this.#order?.some(
-			(entry) => entry instanceof LazyNodeDescriptor && entry.plan.key === key
-		);
-		if (cardinality === 'single' && (existing?.length || lazyExisting)) {
-			throw this.#cardinalityError(key);
+		// The lazy scan answers ONE question — is a single-node part being registered twice — and it
+		// walks every registration on this Bond to answer it. Computed unconditionally it was an O(n)
+		// scan per registration for `cardinality: 'many'` parts too, which is O(n²) over a collection
+		// (menu items, grid cells, tree nodes) to prove something that cannot be true for them.
+		if (cardinality === 'single') {
+			const lazyExisting = this.#order?.some(
+				(entry) => entry instanceof LazyNodeDescriptor && entry.plan.key === key
+			);
+			if (existing?.length || lazyExisting) throw this.#cardinalityError(key);
 		}
 
 		const registration: NodeRegistration<N> = {
@@ -157,12 +161,14 @@ export class NodeRegistry {
 	}
 
 	registerLazy<N extends Atom>(plan: LazyNodePlan<N>, bond: Bond): LazyNodeDescriptor<N> {
-		const eager = this.#byPart?.get(plan.key);
-		const lazy = this.#order?.some(
-			(entry) => entry instanceof LazyNodeDescriptor && entry.plan.key === plan.key
-		);
-		if (plan.cardinality === 'single' && (eager?.length || lazy)) {
-			throw this.#cardinalityError(plan.key);
+		// Same O(n²) as `register` above, and this is the hotter of the two: every Kernel part
+		// registers through here.
+		if (plan.cardinality === 'single') {
+			const eager = this.#byPart?.get(plan.key);
+			const lazy = this.#order?.some(
+				(entry) => entry instanceof LazyNodeDescriptor && entry.plan.key === plan.key
+			);
+			if (eager?.length || lazy) throw this.#cardinalityError(plan.key);
 		}
 
 		const descriptor = new LazyNodeDescriptor(plan, bond, this, ++this.#nextId);

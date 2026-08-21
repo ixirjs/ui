@@ -70,6 +70,17 @@ class TabsBondBase extends Bond<TabsBondProps> implements ITabs {
 		)
 	);
 
+	/**
+	 * Enabled tab values, MEMOIZED — declared before `#roving` so it is initialized before the
+	 * backing that reads it. Same defect and same fix as `AccordionBondBase.#enabledIds`: a plain
+	 * getter here allocated two arrays over every tab on every read, and every tab header reads it
+	 * through the roving tabindex. A tab strip is short enough that this never showed up in a
+	 * benchmark, which is exactly why it survived — the shape is O(n²) regardless of the constant.
+	 */
+	#enabledValues: readonly string[] = $derived(
+		this.items.entries.filter(([, tab]) => !tab.props.disabled).map(([id]) => id)
+	);
+
 	// Roving highlight over the enabled tab values. Controlled by `props.value`: for tabs the
 	// highlight *is* the selection (APG automatic activation), so an internal cell would drift the
 	// moment a tab is clicked and the next arrow key would resume from the wrong tab.
@@ -100,10 +111,6 @@ class TabsBondBase extends Bond<TabsBondProps> implements ITabs {
 				onMove: (id) => this.focusTab(id)
 			})
 		);
-	}
-
-	get #enabledValues(): readonly string[] {
-		return this.items.entries.filter(([, tab]) => !tab.props.disabled).map(([id]) => id);
 	}
 
 	// The roving highlight, exposed for the tab header's roving tabindex.

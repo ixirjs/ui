@@ -31,41 +31,6 @@ export type ControlledPropOptions<V, B> = {
 };
 
 /**
- * Owns the writable-derived bridge required by a controlled `$bindable` prop.
- * The cell commits locally first, writes upstream second, then reports the committed value.
- * Parent-driven echoes only update the derived input and never invoke `onchange`.
- */
-function controlledCell<V, B extends Bond>(options: ControlledPropOptions<V, B>) {
-	let value = $derived.by(options.get);
-	let owner: B | undefined;
-	const equals = options.equals ?? Object.is;
-
-	const cell: [Getter<V>, Setter<V>] = [
-		() => value,
-		(next) => {
-			const changed = !equals(value, next);
-			value = next;
-			options.set(next);
-			if (!changed || !owner || !options.onchange || options.notifyWhen?.() === false) return;
-			// Re-read after the upstream assignment: Svelte may proxy an assigned array/object,
-			// and the callback contract exposes the exact committed value visible on Bond props.
-			options.onchange(value, { bond: owner, ...options.context?.(owner) });
-		}
-	];
-
-	return {
-		cell,
-		connect(bond: B): B {
-			owner = bond;
-			return bond;
-		},
-		get value(): V {
-			return value;
-		}
-	};
-}
-
-/**
  * A controlled prop: the writable-derived bridge and its owner adoption in one declaration.
  *
  * A `ControlledProp` IS a `PropCell` — a real `[getter, setter]` tuple — so it goes straight into
@@ -95,19 +60,41 @@ const CONTROLLED_PROP = Symbol('ixirjs.controlledProp');
  * makes those shared sites polymorphic, and that costs every Bond on the page more than the saving
  * returns to the few roots that declare a controlled prop. Construction here happens once per root;
  * the spec walk happens for all of them.
+ *
+ * What *is* worth removing is `Object.defineProperties`. Descriptor validation, not the shape
+ * transition, is the expensive half: the three-descriptor call measures 0.73 µs against 0.28 µs for
+ * two plain stores plus one accessor, and `controlledProp` is 2.1% of a tree node's SSR self time
+ * (one controlled prop per node). Only `value` needs an accessor. The symbol brand never appears in
+ * `Object.keys` or `for…in` regardless of its descriptor, and nothing object-spreads a props-spec
+ * cell — `assembleProps` reads it by index, `connectControlledProps` by name.
+ *
+ * The writable-derived bridge lives here rather than in a separate cell object: the cell commits
+ * locally first, writes upstream second, then reports the committed value, and a parent-driven echo
+ * only updates the derived input and never invokes `onchange`.
  */
 export function controlledProp<V, B extends Bond = Bond>(
 	options: ControlledPropOptions<V, B>
 ): ControlledProp<V, B> {
-	const controlled = controlledCell<V, B>(options);
-	const prop = [controlled.cell[0], controlled.cell[1]] as ControlledProp<V, B>;
-	// Non-enumerable so the tuple still reads as a plain two-element cell everywhere it is spread,
-	// destructured, or length-checked.
-	Object.defineProperties(prop, {
-		[CONTROLLED_PROP]: { value: true },
-		connect: { value: (bond: B) => controlled.connect(bond) },
-		value: { get: () => controlled.value }
-	});
+	let value = $derived.by(options.get);
+	let owner: B | undefined;
+	const equals = options.equals ?? Object.is;
+
+	const prop = [
+		() => value,
+		(next: V) => {
+			const changed = !equals(value, next);
+			value = next;
+			options.set(next);
+			if (!changed || !owner || !options.onchange || options.notifyWhen?.() === false) return;
+			// Re-read after the upstream assignment: Svelte may proxy an assigned array/object,
+			// and the callback contract exposes the exact committed value visible on Bond props.
+			options.onchange(value, { bond: owner, ...options.context?.(owner) });
+		}
+	] as ControlledProp<V, B>;
+
+	(prop as unknown as Record<symbol, unknown>)[CONTROLLED_PROP] = true;
+	prop.connect = (bond: B): B => (owner = bond);
+	Object.defineProperty(prop, 'value', { get: () => value });
 	return prop;
 }
 

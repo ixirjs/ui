@@ -48,14 +48,20 @@ export class AccordionItemBondBase extends Bond<AccordionItemBondProps> {
 		return this.parent?.id;
 	}
 
+	// `isValueOpen` is O(1); the `includes` walk behind it is the fallback for an external
+	// `IAccordion` implementor that predates it. `??` and not `||`: a real `false` must win.
+	#isOpenValue(): boolean | undefined {
+		const parent = this.parent;
+		if (!parent) return undefined;
+		return parent.isValueOpen?.(this.id) ?? parent.values.includes(this.id);
+	}
+
 	get isOpen() {
-		return this.parent?.values.includes(this.id);
+		return this.#isOpenValue();
 	}
 
 	get isActive() {
-		return (
-			!this.props.disabled && !this.parent?.isDisabled && this.parent?.values.includes(this.id)
-		);
+		return !this.props.disabled && !this.parent?.isDisabled && this.#isOpenValue();
 	}
 
 	get isDisabled() {

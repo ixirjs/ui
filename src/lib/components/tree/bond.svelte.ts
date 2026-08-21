@@ -40,6 +40,9 @@ export interface ITreeNode extends ITreeKeyboard {
 	readonly headerId: string | undefined;
 	readonly isOpen: boolean;
 	readonly visibleHeaderIds: readonly string[];
+	// The first entry of `visibleHeaderIds`, without building the list. OPTIONAL so an existing
+	// external implementor of this contract keeps compiling; callers fall back to the list.
+	readonly firstVisibleHeaderId?: string | undefined;
 }
 
 // Minimal bond view — breaks the atom↔bond cycle.
@@ -114,12 +117,9 @@ class TreeBodyAtom extends Atom<TreeBondBase, HTMLElement> {
 		super(bond, 'body');
 		this.role('treegroup');
 	}
-	override get attrs() {
-		// aria-labelledby + role=group come from the trigger↔content link (role:'content').
-		return {
-			...super.attrs
-		};
-	}
+	// No `attrs` override: aria-labelledby + role=group come from the trigger↔content link
+	// (role:'content'). Spreading `super.attrs` into a fresh object added one allocation per tree
+	// body per render to reproduce it exactly.
 }
 
 const TreeIndicatorAtom = defineAtom<TreeBondBase, HTMLElement>('indicator');
@@ -136,7 +136,10 @@ class TreeBondBase extends Bond<TreeBondProps> {
 		set: (v) => (this.props.open = v)
 	});
 
-	#roving: RovingFocus<string> | undefined;
+	// Explicitly initialised, because `focusedId` below is a `$derived` field and TypeScript models
+	// every field initialiser as running eagerly in declaration order. `$derived` is lazy, so this is
+	// a no-op at runtime — but an implicitly-undefined field reads as "used before initialisation".
+	#roving: RovingFocus<string> | undefined = undefined;
 	#keyboard: readonly Capability[];
 
 	constructor(props: TreeBondProps, name = 'tree') {
@@ -219,23 +222,59 @@ class TreeBondBase extends Bond<TreeBondProps> {
 		return this.children.values.find((child) => !child.props.disabled)?.headerId;
 	}
 
-	// Every treeitem the user can currently reach, in document order: a node, then its children
-	// when it is open. Collapsed subtrees are skipped, which is what "visible" means to a keyboard.
-	get visibleHeaderIds(): readonly string[] {
+	/**
+	 * Every treeitem the user can currently reach, in document order: a node, then its children when
+	 * it is open. Collapsed subtrees are skipped, which is what "visible" means to a keyboard.
+	 *
+	 * `$derived` **per node**, so the recursion memoizes per SUBTREE: a change under one node
+	 * invalidates that node and its ancestors, not every node in the tree. As a plain getter this
+	 * rebuilt the whole list on every read — recursively, allocating an array at each level and
+	 * spreading each child's array into its parent's — and every node's header is a reader through
+	 * `focusedId`. Mounting a 400-node tree took 13.6 s at k = 2.51 (worse than quadratic, because
+	 * the spread makes one full walk O(n·depth) on its own).
+	 */
+	readonly visibleHeaderIds: readonly string[] = $derived.by(() => {
 		if (this.props.disabled) return [];
 		const own = this.headerId;
 		const ids = own ? [own] : [];
 		if (!this.isOpen) return ids;
 		for (const child of this.children.values) ids.push(...child.visibleHeaderIds);
 		return ids;
+	});
+
+	/**
+	 * `visibleHeaderIds[0]`, found by early return instead of by building the list.
+	 *
+	 * This is what `focusedId` needs, and for the outermost node — the only one whose `focusedId` is
+	 * ever read — it is answered by that node's own header, so it costs O(1) and never touches the
+	 * collection at all. Taking `[0]` off the full list instead made the tree-wide walk a dependency
+	 * of every header.
+	 */
+	get firstVisibleHeaderId(): string | undefined {
+		if (this.props.disabled) return undefined;
+		const own = this.headerId;
+		if (own) return own;
+		if (!this.isOpen) return undefined;
+		for (const child of this.children.values) {
+			const found = child.firstVisibleHeaderId ?? child.visibleHeaderIds[0];
+			if (found) return found;
+		}
+		return undefined;
 	}
 
-	// The treeitem holding the roving tabindex. Falls back to the first visible node, so a tree
-	// nobody has focused yet is still reachable with a single Tab — including in SSR output,
-	// where the collection is still empty and the outermost header is the only candidate.
-	get focusedId(): string | null {
-		return this.#roving?.activeId ?? this.visibleHeaderIds[0] ?? null;
-	}
+	/**
+	 * The treeitem holding the roving tabindex. Falls back to the first visible node, so a tree
+	 * nobody has focused yet is still reachable with a single Tab — including in SSR output, where
+	 * the collection is still empty and the outermost header is the only candidate.
+	 *
+	 * `$derived` for the reason `AccordionBondBase.focusedId` is: it is an **equality gate**, not a
+	 * memo. Every node's header atom reads this, so a plain getter let a child registration
+	 * invalidate every header already mounted. As a derived it recomputes to the same string and
+	 * Svelte stops the propagation. Keep the value primitive — the gate is `===` on it.
+	 */
+	readonly focusedId: string | null = $derived(
+		this.#roving?.activeId ?? this.firstVisibleHeaderId ?? null
+	);
 
 	notifyFocused(id: string): void {
 		this.#roving?.goto(id);
