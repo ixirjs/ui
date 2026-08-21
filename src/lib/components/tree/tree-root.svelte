@@ -50,12 +50,4 @@
 	}));
 </script>
 
-{@render Kernel.render(el)(
-	el.tag(),
-	el.class(),
-	el.attrs(),
-	children,
-	{ tree: bond },
-	el.motion(),
-	el
-)}
+{@render Kernel.render(el)(el, children, { tree: bond })}

@@ -85,51 +85,11 @@
 	onrangechange={handleRangeChange}
 	onpivotechange={handlePivoteChange}
 >
-	{@render Kernel.render(headerEl)(
-		headerEl.tag(),
-		headerEl.class(),
-		headerEl.attrs(),
-		undefined,
-		undefined,
-		headerEl.motion(),
-		headerEl
-	)}
-	{@render Kernel.render(weekdaysEl)(
-		weekdaysEl.tag(),
-		weekdaysEl.class(),
-		weekdaysEl.attrs(),
-		undefined,
-		undefined,
-		weekdaysEl.motion(),
-		weekdaysEl
-	)}
-	{@render Kernel.render(bodyEl)(
-		bodyEl.tag(),
-		bodyEl.class(),
-		bodyEl.attrs(),
-		dayBody,
-		Kernel.forward,
-		bodyEl.motion(),
-		bodyEl
-	)}
-	{@render Kernel.render(monthsEl)(
-		monthsEl.tag(),
-		monthsEl.class(),
-		monthsEl.attrs(),
-		undefined,
-		undefined,
-		monthsEl.motion(),
-		monthsEl
-	)}
-	{@render Kernel.render(yearsEl)(
-		yearsEl.tag(),
-		yearsEl.class(),
-		yearsEl.attrs(),
-		undefined,
-		undefined,
-		yearsEl.motion(),
-		yearsEl
-	)}
+	{@render Kernel.render(headerEl)(headerEl)}
+	{@render Kernel.render(weekdaysEl)(weekdaysEl)}
+	{@render Kernel.render(bodyEl)(bodyEl, dayBody, Kernel.forward)}
+	{@render Kernel.render(monthsEl)(monthsEl)}
+	{@render Kernel.render(yearsEl)(yearsEl)}
 </Content>
 
 {#snippet dayBody({ day }: { day: CalendarDayType })}

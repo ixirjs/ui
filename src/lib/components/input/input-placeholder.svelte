@@ -1,7 +1,7 @@
 <script module lang="ts">
 	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
 	import { InputBond } from './bond.svelte';
-	const PART = Kernel.part(InputBond, 'placeholder', { class: '' });
+	const PART = Kernel.plan(InputBond, 'placeholder', { class: '' });
 </script>
 
 <script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
@@ -37,13 +37,5 @@
 {@render (shouldShowPlaceholder ? placeholder : undefined)?.()}
 
 {#snippet placeholder()}
-	{@render Kernel.render(el)(
-		el.tag(),
-		el.class(),
-		el.attrs(),
-		children,
-		undefined,
-		el.motion(),
-		el
-	)}
+	{@render Kernel.render(el)(el, children)}
 {/snippet}

@@ -94,12 +94,4 @@
 	}));
 </script>
 
-{@render Kernel.render(el)(
-	el.tag(),
-	el.class(),
-	el.attrs(),
-	children,
-	{ scrollable: bond },
-	el.motion(),
-	el
-)}
+{@render Kernel.render(el)(el, children, { scrollable: bond })}

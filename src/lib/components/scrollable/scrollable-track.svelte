@@ -57,13 +57,5 @@
 {@render ((isOpen || isScrolling) && hasScroll ? track : undefined)?.()}
 
 {#snippet track()}
-	{@render Kernel.render(el)(
-		el.tag(),
-		el.class(),
-		el.attrs(),
-		children,
-		undefined,
-		el.motion(),
-		el
-	)}
+	{@render Kernel.render(el)(el, children)}
 {/snippet}

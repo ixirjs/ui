@@ -86,5 +86,5 @@
 {@render content?.({ form: bond })}
 
 {#snippet renderfull({ form }: { form: FormBond })}
-	{@render Kernel.render(el)(el.tag(), el.class(), el.attrs(), children, { form }, el.motion(), el)}
+	{@render Kernel.render(el)(el, children, { form })}
 {/snippet}

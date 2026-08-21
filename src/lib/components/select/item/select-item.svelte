@@ -102,14 +102,6 @@
 	}));
 </script>
 
-{@render Kernel.render(el)(
-	el.tag(),
-	el.class(),
-	el.attrs(),
-	children,
-	{
-		selectItem: atom as unknown as import('./controller.svelte').SelectItemController<D>
-	},
-	el.motion(),
-	el
-)}
+{@render Kernel.render(el)(el, children, {
+	selectItem: atom as unknown as import('./controller.svelte').SelectItemController<D>
+})}

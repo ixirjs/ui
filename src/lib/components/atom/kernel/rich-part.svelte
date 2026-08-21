@@ -1,9 +1,7 @@
 <script lang="ts">
-	import { onDestroy, untrack, type Snippet } from 'svelte';
-	import type { Bond } from '$ixirjs/ui/shared/bond';
-	import type { PresetKey, PresetLike } from '$ixirjs/ui/preset';
-	import { useKernelElement, type KernelElementSeam } from './element.svelte';
-	import { renderKernelElement } from './element-render.svelte';
+	import { untrack, type Snippet } from 'svelte';
+	import { useKernelElement } from './element.svelte';
+	import { branchForMode } from './element-render.svelte';
 	import type { KernelNode } from './index.svelte';
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -15,32 +13,17 @@
 		bodyArg = undefined
 	}: { node: KernelNode; body?: Body; bodyArg?: unknown } = $props();
 
+	// LATE escalation only. A part that is rich when it initializes builds its element through the
+	// leaf seam, where init is still open and no component boundary is needed; this file is reached
+	// when a consumer's props turn rich AFTER init, which is the one case that genuinely needs a
+	// deferred rune-init context — and a component is the only one Svelte offers.
+	//
+	// The node IS the seam: it already exposes `atom` (a lazy getter over the descriptor, so nothing
+	// materializes earlier than the presentation that reads it), `bond`, `preset` and `presetLayer`
+	// with exactly the fallbacks this file used to restate. It also owns `elementConfig`, so the init
+	// and late lanes cannot describe the same element two different ways.
 	const initial = untrack(() => node);
-	const atom = initial.descriptor?.materialize() ?? initial.plan.node.create(initial.bond as Bond);
-	if (!initial.descriptor) {
-		atom.activateCapabilities(initial.bond);
-		onDestroy(() => atom.destroyCapabilities());
-	}
-	const seam: KernelElementSeam = {
-		atom,
-		bond: initial.bond,
-		get preset() {
-			return (node.source.preset ?? atom.preset) as PresetKey | undefined;
-		},
-		get presetLayer() {
-			return (node.source.presetLayer ?? initial.bond?.presetLayer(initial.plan.slot)) as
-				| PresetLike
-				| undefined;
-		}
-	};
-	const el = useKernelElement(seam, () => {
-		const source = node.source;
-		return {
-			...source,
-			as: source.as ?? initial.plan.as,
-			class: [initial.plan.class, node.beforePreset(), '$preset', source.class]
-		};
-	});
+	const el = useKernelElement(initial, initial.elementConfig);
 </script>
 
-{@render renderKernelElement(el, body, bodyArg)}
+{@render branchForMode(el.mode())(el, body, bodyArg)}

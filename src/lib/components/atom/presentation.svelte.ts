@@ -143,8 +143,15 @@ export function resolvePresentation<E extends Element = Element>(
 	const preset = resolvers.resolvePreset(values.preset, bond, registry.get, registry.keys);
 	const restProps = values.restProps;
 	const additional = values.variantProps;
-	const variantProps = additional ? { ...restProps, ...additional } : restProps;
 	const localVariantDef = values.variants;
+	// Merged only when something will read it. `resolveLocalVariants` and `mergeVariants` are the
+	// only consumers and both return before touching `props` unless a variants source exists — so a
+	// root passing `variantProps: root.props` was allocating one object and invoking one accessor
+	// per Bond prop, on every rendered root, for a value nothing looked at. Eleven roots do this.
+	const variantProps =
+		additional && (localVariantDef !== undefined || preset?.variants !== undefined)
+			? { ...restProps, ...additional }
+			: restProps;
 	const localVariants = resolveLocalVariants(localVariantDef, bond ?? null, variantProps);
 	const mergedVariants = resolvers.resolveVariants(preset, localVariants, bond, variantProps);
 	const instanceLayer = resolvers.resolvePresetLayer(values.instance, bond);

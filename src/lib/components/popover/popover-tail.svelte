@@ -145,15 +145,7 @@
 	);
 </script>
 
-{@render Kernel.render(el)(
-	el.tag(),
-	el.class(),
-	el.attrs(),
-	children ?? fallback,
-	bodyArg,
-	el.motion(),
-	el
-)}
+{@render Kernel.render(el)(el, children ?? fallback, bodyArg)}
 
 {#snippet fallback()}
 	<svg

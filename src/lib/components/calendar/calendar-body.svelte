@@ -1,7 +1,7 @@
 <script module lang="ts">
 	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
 	import { CalendarBond } from './bond.svelte';
-	const PART = Kernel.part(CalendarBond, 'body', { class: '' });
+	const PART = Kernel.plan(CalendarBond, 'body', { class: '' });
 </script>
 
 <script lang="ts">
@@ -47,7 +47,7 @@
 	}));
 </script>
 
-{@render Kernel.render(el)(el.tag(), el.class(), el.attrs(), body, undefined, el.motion(), el)}
+{@render Kernel.render(el)(el, body)}
 
 {#snippet body()}
 	{#each visibleDays as day (day.id)}

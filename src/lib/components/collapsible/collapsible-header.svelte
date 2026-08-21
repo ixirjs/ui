@@ -12,12 +12,4 @@
 	});
 </script>
 
-{@render Kernel.render(el)(
-	el.tag(),
-	el.class(),
-	el.attrs(),
-	props.children,
-	{ collapsible: el.bond },
-	el.motion(),
-	el
-)}
+{@render Kernel.render(el)(el, props.children, { collapsible: el.bond })}

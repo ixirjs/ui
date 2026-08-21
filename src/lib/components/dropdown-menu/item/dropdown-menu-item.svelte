@@ -93,12 +93,4 @@
 	}));
 </script>
 
-{@render Kernel.render(el)(
-	el.tag(),
-	el.class(),
-	el.attrs(),
-	children,
-	{ menuItem: atom },
-	el.motion(),
-	el
-)}
+{@render Kernel.render(el)(el, children, { menuItem: atom })}

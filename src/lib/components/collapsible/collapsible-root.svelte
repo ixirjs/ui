@@ -51,12 +51,4 @@
 	}));
 </script>
 
-{@render Kernel.render(el)(
-	el.tag(),
-	el.class(),
-	el.attrs(),
-	children,
-	{ collapsible: bond },
-	el.motion(),
-	el
-)}
+{@render Kernel.render(el)(el, children, { collapsible: bond })}

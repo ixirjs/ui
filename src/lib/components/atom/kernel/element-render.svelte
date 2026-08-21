@@ -1,91 +1,82 @@
 <script module lang="ts">
-	import type { Snippet } from 'svelte';
 	import HtmlElement from '$ixirjs/ui/components/element/html-element.svelte';
 	import { componentBase, resolveRendererProps } from '../render/render-target';
 	import {
+		divPlain,
+		headingPlain,
 		divBranch,
+		headingBranch,
+		buttonBranch,
 		dynamicBranch,
 		divLocal,
 		dynamicLocal,
 		divGlobal,
-		dynamicGlobal
+		dynamicGlobal,
+		type ElementBody,
+		type ElementBranch
 	} from '../render/element-branches.svelte';
+	import type { RenderMode } from '../render/render-mode';
 	import type { KernelElement } from './element.svelte';
 	import RendererAdapter from './renderer.svelte';
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	type Body = Snippet<[any]> | Snippet<[]>;
 	const HTML_ELEMENT_TARGET = componentBase(HtmlElement as never);
 	export const FORWARD_BODY_ARG = Symbol('@ixirjs/kernel:forwardBodyArg');
 
-	export { elementBranch, componentBranch, renderKernelElement };
+	/**
+	 * Mode → leaf, owned once.
+	 *
+	 * This mapping used to exist twice: as a lookup table in `kernel/index.svelte.ts` and as a
+	 * ternary chain here. Two spellings of one seven-way fact, and they had already drifted — the
+	 * table shipped under a misspelled name. Both callers now read this.
+	 *
+	 * Declared after the branch snippets it names? No: snippet declarations are hoisted to module
+	 * scope by the compiler, but the table is built at module evaluation, so it is written here and
+	 * populated lazily on first dispatch, which is also the first moment either caller can need it.
+	 */
+	let branchByMode: Record<string, ElementBranch> | undefined;
+
+	export function branchForMode(mode: RenderMode): ElementBranch {
+		branchByMode ??= {
+			div: divBranch,
+			divPlain,
+			heading: headingBranch,
+			headingPlain,
+			button: buttonBranch,
+			dynamic: dynamicBranch,
+			divLocal,
+			dynamicLocal,
+			divGlobal,
+			dynamicGlobal,
+			element: elementBranch as ElementBranch
+		};
+		return branchByMode[mode] ?? (componentBranch as ElementBranch);
+	}
+
+	export { elementBranch, componentBranch };
 </script>
 
-{#snippet renderKernelElement(el: KernelElement, body?: Body, bodyArg?: unknown)}
-	{@const mode = el.mode()}
-	{@render (mode === 'div'
-		? divBranch
-		: mode === 'dynamic'
-			? dynamicBranch
-			: mode === 'divLocal'
-				? divLocal
-				: mode === 'dynamicLocal'
-					? dynamicLocal
-					: mode === 'divGlobal'
-						? divGlobal
-						: mode === 'dynamicGlobal'
-							? dynamicGlobal
-							: mode === 'element'
-								? elementBranch
-								: componentBranch)(
-		el.tag(),
-		el.class(),
-		el.attrs(),
-		body,
-		bodyArg,
-		el.motion(),
-		el
-	)}
-{/snippet}
-
-{#snippet elementBranch(
-	tag: string,
-	klass: string,
-	attrs: Record<string | symbol, unknown>,
-	body?: Body,
-	bodyArg?: unknown,
-	_motion?: unknown,
-	el?: KernelElement
-)}
+{#snippet elementBranch(el: KernelElement, body?: ElementBody, arg?: unknown)}
 	<HtmlElement
 		{...resolveRendererProps(
 			HTML_ELEMENT_TARGET,
-			klass,
-			tag,
-			attrs,
-			el!.resolvedMotion() as never,
+			el.class(),
+			el.tag(),
+			el.attrs(),
+			el.resolvedMotion() as never,
 			{ presentationResolved: true }
 		)}
 	>
-		{@render body?.(bodyArg)}
+		{@render body?.(arg)}
 	</HtmlElement>
 {/snippet}
 
-{#snippet componentBranch(
-	_tag: string,
-	_class: string,
-	_attrs: Record<string | symbol, unknown>,
-	body?: Body,
-	bodyArg?: unknown,
-	_motion?: unknown,
-	el?: KernelElement
-)}
-	{@const renderer = el!.renderer()}
+{#snippet componentBranch(el: KernelElement, body?: ElementBody, arg?: unknown)}
+	{@const renderer = el.renderer()}
 	<RendererAdapter
 		component={renderer.component}
 		props={renderer.props}
 		{...body ? { children: body } : {}}
-		{...bodyArg !== undefined ? { bodyArg } : {}}
-		forwardBodyArg={bodyArg === FORWARD_BODY_ARG}
+		{...arg !== undefined ? { bodyArg: arg } : {}}
+		forwardBodyArg={arg === FORWARD_BODY_ARG}
 	/>
 {/snippet}

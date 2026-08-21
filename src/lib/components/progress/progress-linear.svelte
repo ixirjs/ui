@@ -50,30 +50,14 @@
 	}));
 </script>
 
-{@render Kernel.render(el)(el.tag(), el.class(), el.attrs(), track, undefined, el.motion(), el)}
+{@render Kernel.render(el)(el, track)}
 
 {#snippet track()}
-	{@render Kernel.render(trackEl)(
-		trackEl.tag(),
-		trackEl.class(),
-		trackEl.attrs(),
-		fill,
-		undefined,
-		trackEl.motion(),
-		trackEl
-	)}
+	{@render Kernel.render(trackEl)(trackEl, fill)}
 {/snippet}
 
 {#snippet fill()}
-	{@render Kernel.render(fillEl)(
-		fillEl.tag(),
-		fillEl.class(),
-		fillEl.attrs(),
-		undefined,
-		undefined,
-		fillEl.motion(),
-		fillEl
-	)}
+	{@render Kernel.render(fillEl)(fillEl)}
 {/snippet}
 
 <style>

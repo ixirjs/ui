@@ -7,6 +7,7 @@ import MenuAblation from '$ixirjs/ui/test/perf/menu-ablation.test.svelte';
 import TransitionAnchors from '$ixirjs/ui/test/perf/transition-anchors.test.svelte';
 import VirtualTest from '$ixirjs/ui/test/runes/virtual.test.svelte';
 import Ceiling from '$ixirjs/ui/test/perf/ceiling/ceiling-ablation.test.svelte';
+import LaneAblation from '$ixirjs/ui/test/perf/lanes/lane-ablation.test.svelte';
 
 /**
  * Hydration-anchor budget — the DOM-mass ratchet.
@@ -82,6 +83,30 @@ describe('hydration-anchor budget (comments per rendered unit)', () => {
 
 	it('transitioning element via <HtmlElement>', () => {
 		expect(marginalComments(TransitionAnchors, (n) => ({ n, arm: 'element' }))).toBe(4);
+	});
+
+	/**
+	 * The two Kernel lanes on ONE part, and the bridge between them.
+	 *
+	 * Both rows render `card.title` inside `<Card.Root>`, byte-identical (`lane-bench.ts` asserts that
+	 * before it times the same fixture). They differ only in whether the consumer passed a rich prop —
+	 * `defaults={{}}`, which forces the lane and resolves to nothing.
+	 *
+	 * That one prop used to cost four extra anchors, because `Kernel.render` decides per render and
+	 * effects cannot be created mid-render, so escalation had to mount `RichPart` purely to obtain a
+	 * deferred rune-init context. The leaf seam now decides at INIT, where building the element is
+	 * legal, so the escalated part renders through the same leaf as the plain one and the two numbers
+	 * agree. `RichPart` remains for the late case only — a rich prop that appears after init — which
+	 * is why the bridge is still reachable and still correct.
+	 *
+	 * If these two diverge again, the lane decision moved back into the render pass.
+	 */
+	it('card title, class-only lane', () => {
+		expect(marginalComments(LaneAblation, (n) => ({ n, arm: 'node' }))).toBe(10);
+	});
+
+	it('card title, consumer passed a rich prop at init', () => {
+		expect(marginalComments(LaneAblation, (n) => ({ n, arm: 'escalated' }))).toBe(10);
 	});
 
 	// The library-free control: if this moves, Svelte's own anchor emission changed (compiler

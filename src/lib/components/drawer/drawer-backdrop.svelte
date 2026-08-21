@@ -12,4 +12,4 @@
 	});
 </script>
 
-{@render Kernel.render(el)(el.tag(), el.class(), el.attrs(), undefined, undefined, el.motion(), el)}
+{@render Kernel.render(el)(el)}

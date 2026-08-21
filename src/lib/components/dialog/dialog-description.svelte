@@ -13,12 +13,4 @@
 	});
 </script>
 
-{@render Kernel.render(el)(
-	el.tag(),
-	el.class(),
-	el.attrs(),
-	props.children,
-	{ dialog: el.bond },
-	el.motion(),
-	el
-)}
+{@render Kernel.render(el)(el, props.children, { dialog: el.bond })}

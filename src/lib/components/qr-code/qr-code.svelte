@@ -70,15 +70,7 @@
 	}));
 </script>
 
-{@render Kernel.render(el)(
-	el.tag(),
-	el.class(),
-	el.attrs(),
-	qrCodeBody,
-	undefined,
-	el.motion(),
-	el
-)}
+{@render Kernel.render(el)(el, qrCodeBody)}
 
 {#snippet qrCodeBody()}
 	<div bind:clientWidth class="size-full">

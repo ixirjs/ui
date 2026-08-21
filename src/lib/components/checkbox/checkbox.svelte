@@ -164,15 +164,7 @@
 </Input.Root>
 
 {#snippet indeterminateSnippet()}
-	{@render Kernel.render(indeterminateEl)(
-		indeterminateEl.tag(),
-		indeterminateEl.class(),
-		indeterminateEl.attrs(),
-		undefined,
-		undefined,
-		indeterminateEl.motion(),
-		indeterminateEl
-	)}
+	{@render Kernel.render(indeterminateEl)(indeterminateEl)}
 {/snippet}
 
 {#snippet checkedSnippet()}
@@ -181,27 +173,11 @@
 {/snippet}
 
 {#snippet customCheckedSnippet()}
-	{@render Kernel.render(customCheckmarkEl)(
-		customCheckmarkEl.tag(),
-		customCheckmarkEl.class(),
-		customCheckmarkEl.attrs(),
-		undefined,
-		undefined,
-		customCheckmarkEl.motion(),
-		customCheckmarkEl
-	)}
+	{@render Kernel.render(customCheckmarkEl)(customCheckmarkEl)}
 {/snippet}
 
 {#snippet defaultCheckedSnippet()}
-	{@render Kernel.render(defaultCheckmarkEl)(
-		defaultCheckmarkEl.tag(),
-		defaultCheckmarkEl.class(),
-		defaultCheckmarkEl.attrs(),
-		checkmarkIcon,
-		undefined,
-		defaultCheckmarkEl.motion(),
-		defaultCheckmarkEl
-	)}
+	{@render Kernel.render(defaultCheckmarkEl)(defaultCheckmarkEl, checkmarkIcon)}
 {/snippet}
 
 {#snippet checkmarkIcon()}

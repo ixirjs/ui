@@ -1,7 +1,7 @@
 <script module lang="ts">
 	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
 	import { FieldBond } from './bond.svelte';
-	const PART = Kernel.part(FieldBond, 'error', { class: '' });
+	const PART = Kernel.plan(FieldBond, 'error', { class: '' });
 </script>
 
 <script lang="ts" generics="E extends HtmlElementTagName = 'p', B extends Base = Base">
@@ -34,15 +34,7 @@
 {@render (isInvalid ? error : undefined)?.()}
 
 {#snippet error()}
-	{@render Kernel.render(el)(
-		el.tag(),
-		el.class(),
-		el.attrs(),
-		children ?? defaultMessage,
-		{ field: bond },
-		el.motion(),
-		el
-	)}
+	{@render Kernel.render(el)(el, children ?? defaultMessage, { field: bond })}
 {/snippet}
 
 <!-- Consumers who want every message iterate `field.errors` themselves; one line is the common case. -->

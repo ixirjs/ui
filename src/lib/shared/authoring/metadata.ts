@@ -48,6 +48,19 @@ export type ResolvedBondPart = {
 	 * `bond.nodeByPart(...)` — a slot that needs querying declares an `atom` or a `role`.
 	 */
 	readonly inert: boolean;
+	/**
+	 * Whether `defineBond` synthesized this slot's Atom because the slot declared none of its own.
+	 *
+	 * A synthesized Atom contributes exactly `{ id }` to the presentation spread — which is what
+	 * makes the class-only render lane correct for the part: that lane never materializes the Atom,
+	 * so it can only serve a part whose Atom had nothing else to add. A slot with a declared Atom
+	 * carries attrs, handlers or ARIA that only full resolution can fold in.
+	 *
+	 * Distinct from {@link inert}, which additionally requires the slot to declare no `role`. A
+	 * role-carrying synthesized slot (Card's `title`) still registers for queries, and still adds
+	 * nothing to the spread.
+	 */
+	readonly synthesized: boolean;
 	/** Immutable semantic plan used when Kernel registers the slot without constructing its Atom. */
 	readonly nodePlan: LazyNodePlan;
 };
@@ -93,6 +106,7 @@ export function resolveBondPart(definition: object, slot: string): ResolvedBondP
 		role,
 		cardinality,
 		registration: Object.freeze({ key: part, cardinality }),
+		synthesized: synthesizedAtoms.has(Ctor),
 		inert: role === undefined && synthesizedAtoms.has(Ctor),
 		nodePlan
 	}) as ResolvedBondPart;

@@ -41,15 +41,7 @@
 	}));
 </script>
 
-{@render Kernel.render(el)(
-	el.tag(),
-	el.class(),
-	el.attrs(),
-	headerBody,
-	undefined,
-	el.motion(),
-	el
-)}
+{@render Kernel.render(el)(el, headerBody)}
 
 {#snippet headerBody()}
 	<button

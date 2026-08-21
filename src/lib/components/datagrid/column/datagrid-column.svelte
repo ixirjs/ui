@@ -97,13 +97,5 @@
 {@render (!hidden ? columnElement : undefined)?.()}
 
 {#snippet columnElement()}
-	{@render Kernel.render(el)(
-		el.tag(),
-		el.class(),
-		el.attrs(),
-		children,
-		{ column: bond },
-		el.motion(),
-		el
-	)}
+	{@render Kernel.render(el)(el, children, { column: bond })}
 {/snippet}

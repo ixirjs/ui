@@ -51,12 +51,4 @@
 </script>
 
 <!-- One computed-callee render keeps a hidden cell at one anchor while Kernel selects its leaf. -->
-{@render (isHidden ? undefined : Kernel.render(el))?.(
-	el.tag(),
-	el.class(),
-	el.attrs(),
-	children,
-	{ datagrid: bond },
-	el.motion(),
-	el
-)}
+{@render (isHidden ? undefined : Kernel.render(el))?.(el, children, { datagrid: bond })}

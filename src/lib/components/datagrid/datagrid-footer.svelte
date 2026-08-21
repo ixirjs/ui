@@ -1,7 +1,7 @@
 <script module lang="ts">
 	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
 	import { DataGridBond } from './bond.svelte';
-	const PART = Kernel.part(DataGridBond, 'footer', { class: '' });
+	const PART = Kernel.plan(DataGridBond, 'footer', { class: '' });
 </script>
 
 <script
@@ -31,12 +31,4 @@
 	}));
 </script>
 
-{@render Kernel.render(el)(
-	el.tag(),
-	el.class(),
-	el.attrs(),
-	children,
-	{ datagrid: bond },
-	el.motion(),
-	el
-)}
+{@render Kernel.render(el)(el, children, { datagrid: bond })}

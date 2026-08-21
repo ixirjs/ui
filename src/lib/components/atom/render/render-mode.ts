@@ -9,7 +9,7 @@ import type { ResolvedMotion } from '$ixirjs/ui/preset';
  * Ordered cheapest-first and escalating only on a positive signal, because nearly every element in a
  * real page is a plain `div` with no motion:
  *
- *   div / dynamic          the six leaves in `element-branches.svelte`, no component boundary
+ *   div / heading / dynamic  the leaves in `element-branches.svelte`, no component boundary
  *   divLocal / dynamicLocal      enter/exit transitions, default (local) scope
  *   divGlobal / dynamicGlobal    enter/exit transitions marked `global`
  *   element                `HtmlElement` — motion that needs a driver but declares no transition
@@ -25,6 +25,10 @@ import type { ResolvedMotion } from '$ixirjs/ui/preset';
  */
 export type RenderMode =
 	| 'div'
+	| 'divPlain'
+	| 'heading'
+	| 'headingPlain'
+	| 'button'
 	| 'dynamic'
 	| 'divLocal'
 	| 'dynamicLocal'
@@ -70,6 +74,30 @@ export type RenderModeInput = {
 	 * it to the branch. This predicate never needed the string, only the comparison.
 	 */
 	isDiv: boolean;
+	/**
+	 * Whether the resolved tag is `h3` — the other literal leaf.
+	 *
+	 * A literal `<h3>` emits ONE hydration anchor where `<svelte:element this={'h3'}>` emits three,
+	 * and `card.title` is common enough to be worth its own leaf. The class-only lane has always had
+	 * it (`Kernel.render` selects `headingBranch` off `plan.as`); this is the same fact on the
+	 * resolved-presentation lane, which previously fell to `dynamic` and paid the two extra anchors.
+	 *
+	 * Optional because absence means "not a heading", which is the right default for every other
+	 * caller and keeps them from having to restate it.
+	 */
+	isHeading?: boolean;
+	/** Same reason as `isHeading`: a literal `<button>` leaf, not `svelte:element`. */
+	isButton?: boolean;
+	/**
+	 * Whether this element's attributes reduce to the ones the `*Plain` leaves declare literally —
+	 * `class`, and for a node `id` plus the two DEV markers.
+	 *
+	 * Asked by the caller rather than derived here, because the two callers know it by different
+	 * means and neither means is a walk of `attrs`: `KernelElement` compares its resolved attrs
+	 * against the shared empty object `elementAttrs` returns when it collected nothing, and
+	 * `KernelNode` already scans its source once per render to assemble the spread.
+	 */
+	plain?: boolean;
 	/** Resolved motion. `enter`/`exit` select a transition leaf; `animate` alone needs the driver. */
 	motion: ResolvedMotion<never> | object;
 	attrs: Record<string | symbol, unknown>;
@@ -111,5 +139,7 @@ export function renderMode(input: RenderModeInput): RenderMode {
 	}
 
 	if (hasLifecycleAttrs(input.attrs)) return 'element';
-	return isDiv ? 'div' : 'dynamic';
+	if (isDiv) return input.plain ? 'divPlain' : 'div';
+	if (input.isHeading) return input.plain ? 'headingPlain' : 'heading';
+	return input.isButton ? 'button' : 'dynamic';
 }

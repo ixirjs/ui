@@ -125,15 +125,7 @@
 {@render content?.()}
 
 {#snippet ui()}
-	{@render Kernel.render(el)(
-		el.tag(),
-		el.class(),
-		el.attrs(),
-		surfaceBody,
-		undefined,
-		el.motion(),
-		el
-	)}
+	{@render Kernel.render(el)(el, surfaceBody)}
 {/snippet}
 
 {#snippet surfaceBody()}

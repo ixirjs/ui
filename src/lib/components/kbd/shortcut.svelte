@@ -27,7 +27,7 @@
 	}));
 </script>
 
-{@render Kernel.render(el)(el.tag(), el.class(), el.attrs(), content, undefined, el.motion(), el)}
+{@render Kernel.render(el)(el, content)}
 
 {#snippet defaultChildren()}
 	{#each keys as key, i (key)}

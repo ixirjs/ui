@@ -104,27 +104,11 @@
 {@render (datePicker.isMonthsPickerOpen ? monthsPicker : undefined)?.()}
 
 {#snippet monthsPicker()}
-	{@render Kernel.render(overlayEl)(
-		overlayEl.tag(),
-		overlayEl.class(),
-		overlayEl.attrs(),
-		monthsOverlay,
-		undefined,
-		overlayEl.motion(),
-		overlayEl
-	)}
+	{@render Kernel.render(overlayEl)(overlayEl, monthsOverlay)}
 {/snippet}
 
 {#snippet monthsOverlay()}
-	{@render Kernel.render(panelEl)(
-		panelEl.tag(),
-		panelEl.class(),
-		panelEl.attrs(),
-		monthsPanel,
-		undefined,
-		panelEl.motion(),
-		panelEl
-	)}
+	{@render Kernel.render(panelEl)(panelEl, monthsPanel)}
 {/snippet}
 
 {#snippet monthsPanel()}

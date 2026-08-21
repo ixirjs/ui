@@ -1,5 +1,5 @@
 {
-	"machine": "AMD Ryzen 9 PRO 8945HS w/ Radeon 780M Graphics \u00d716",
+	"machine": "AMD Ryzen 9 PRO 8945HS w/ Radeon 780M Graphics ×16",
 	"node": "v24.13.1",
 	"recorded": "2026-08-15",
 	"layers": {
@@ -48,8 +48,11 @@
 		"menu": {
 			"micros": 9.09,
 			"gcShare": 0.165,
-			"bytesPerUnit": 422,
-			"sha": "62edaf171bf6"
+			"bytesPerUnit": 415,
+			"sha": "1463d698858e"
 		}
+	},
+	"fingerprintNotes": {
+		"menu": "2026-08-21: 422 B/sha=62edaf171bf6 -> 415 B/sha=1463d698858e. Kernel gained a literal <button> leaf, so a button-tagged part no longer renders through `svelte:element` and drops the three comment anchors `$.element` emits (open, close, empty-content). The menu layer's change is its Trigger, one per fixture; `bytesPerUnit` is body.length/3 at n=3, so a 24-byte constant reads as -7. Verified anchor-only: 18 SSR-fidelity snapshots re-recorded, 183 anchors removed, zero semantic differences."
 	}
 }

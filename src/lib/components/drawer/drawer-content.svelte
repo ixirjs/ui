@@ -1,7 +1,7 @@
 <script module lang="ts">
 	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
 	import { DrawerBond } from './bond.svelte';
-	const PART = Kernel.part(DrawerBond, 'content', { class: '' });
+	const PART = Kernel.plan(DrawerBond, 'content', { class: '' });
 </script>
 
 <script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
@@ -42,15 +42,7 @@
 	);
 </script>
 
-{@render Kernel.render(el)(
-	el.tag(),
-	el.class(),
-	el.attrs(),
-	drawerBody,
-	undefined,
-	el.motion(),
-	el
-)}
+{@render Kernel.render(el)(el, drawerBody)}
 
 {#snippet drawerBody()}
 	<PortalHost>

@@ -53,12 +53,4 @@
 	}));
 </script>
 
-{@render Kernel.render(el)(
-	el.tag(),
-	el.class(),
-	el.attrs(),
-	children,
-	{ tabs: bond },
-	el.motion(),
-	el
-)}
+{@render Kernel.render(el)(el, children, { tabs: bond })}

@@ -29,4 +29,4 @@
 	}));
 </script>
 
-{@render Kernel.render(el)(el.tag(), el.class(), el.attrs(), children, {}, el.motion(), el)}
+{@render Kernel.render(el)(el, children, {})}

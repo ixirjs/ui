@@ -1,7 +1,7 @@
 <script module lang="ts">
 	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
 	import { ToastBond } from './bond.svelte';
-	const PART = Kernel.part(ToastBond, 'dismiss', { class: '' });
+	const PART = Kernel.plan(ToastBond, 'dismiss', { class: '' });
 </script>
 
 <script lang="ts" generics="E extends HtmlElementTagName = 'button', B extends Base = Base">
@@ -59,7 +59,7 @@
 	}));
 </script>
 
-{@render Kernel.render(el)(el.tag(), el.class(), el.attrs(), body, undefined, el.motion(), el)}
+{@render Kernel.render(el)(el, body)}
 
 {#snippet body()}
 	{@render (children ?? fallback)({ toast: bond })}

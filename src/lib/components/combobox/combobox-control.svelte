@@ -1,7 +1,7 @@
 <script module lang="ts">
 	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
 	import { ComboboxBond } from './bond.svelte';
-	const PART = Kernel.part(ComboboxBond, 'control', { class: '' });
+	const PART = Kernel.plan(ComboboxBond, 'control', { class: '' });
 </script>
 
 <script lang="ts">

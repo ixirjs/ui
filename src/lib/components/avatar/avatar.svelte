@@ -39,15 +39,7 @@
 	}));
 </script>
 
-{@render Kernel.render(el)(
-	el.tag(),
-	el.class(),
-	el.attrs(),
-	typeof src === 'string' ? imageAvatar : iconAvatar,
-	undefined,
-	el.motion(),
-	el
-)}
+{@render Kernel.render(el)(el, typeof src === 'string' ? imageAvatar : iconAvatar)}
 
 <!-- `src as string` restores the `typeof` narrowing the dispatch performs; narrowing does not
      cross into a snippet body. -->

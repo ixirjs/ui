@@ -26,7 +26,7 @@
 
 <!-- Host wrapper, captured by Portal.Outer as the container whose rect Portal.Inner tracks (anchor
      frame for nested overlays); `relative` keeps it a positioned box for in-flow content. -->
-{@render Kernel.render(el)(el.tag(), el.class(), el.attrs(), hostBody, undefined, el.motion(), el)}
+{@render Kernel.render(el)(el, hostBody)}
 
 {#snippet hostBody()}
 	<!-- In-place portal surface; captures this host as its container so nested overlays clip softly to it. -->

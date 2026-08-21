@@ -1,16 +1,7 @@
-import { untrack } from 'svelte';
-import type { PresetKey, PresetLike } from '$ixirjs/ui/preset/types';
-import type { Atom } from '$ixirjs/ui/shared/bond/atom.svelte';
 import type { Bond } from '$ixirjs/ui/shared/bond/bond.svelte';
-import { resolveBondPart, type ResolvedBondPart } from '$ixirjs/ui/shared/authoring/metadata';
-import { missingRootMessage } from '$ixirjs/ui/shared/authoring/metadata';
 import { Kernel } from './kernel/index.svelte';
-import type {
-	KernelElement,
-	KernelElementConfig,
-	KernelElementProps,
-	KernelElementSeam
-} from './kernel/element.svelte';
+import type { KernelNode } from './kernel/index.svelte';
+import type { KernelElement, KernelElementProps } from './kernel/element.svelte';
 
 /**
  * `Kernel.node` + `Kernel.element` for the part that only names itself.
@@ -26,7 +17,7 @@ import type {
  *   const el = definePart(CardBond, 'title', () => props, { as: 'h3', class: 'card-title …' });
  * </script>
  *
- * {@render Kernel.render(el)(el.tag(), el.class(), el.attrs(), props.children, { card: el.bond }, el.motion(), el)}
+ * {@render Kernel.render(el)(el, props.children, { card: el.bond })}
  * ```
  *
  * Props arrive as a thunk for the reason every other seam here takes one: read inside the helper's
@@ -57,7 +48,15 @@ export type DefinePartProps = KernelElementProps & {
 	preset?: unknown;
 };
 
-export type DefinedPart = KernelElement & {
+/**
+ * What `definePart` hands back: a renderable handle plus its Bond.
+ *
+ * A union, not `KernelElement`, because the two are genuinely different values — a synthesized-Atom
+ * slot gets the node itself, a declared-Atom slot gets a resolved element. Both satisfy
+ * `Kernel.render`, and `bond` is what the call site actually reads. Writing this as `KernelElement`
+ * and casting would typecheck every caller against members half of them do not have at runtime.
+ */
+export type DefinedPart = (KernelElement | KernelNode) & {
 	/** The resolved Bond, for the snippet argument the part passes its children. */
 	readonly bond: Bond | undefined;
 };
@@ -73,94 +72,44 @@ export function definePart(
 	props: () => DefinePartProps,
 	options: DefinePartOptions = {}
 ): DefinedPart {
-	const resolved = resolveBondPart(definition, slot);
-	if (resolved.inert) {
-		const bond = (definition as { get(): Bond | undefined }).get();
-		if (options.context !== 'optional' && !bond) {
-			throw new Error(options.message ?? missingRootMessage(resolved.name, slot));
-		}
-		return defineInertPart(resolved, slot, bond, props, options);
-	}
-
-	const plan = Kernel.part(definition as never, slot as never, {
+	const plan = Kernel.plan(definition as never, slot as never, {
 		...(options.as ? { as: options.as } : {}),
 		class: options.class ?? ''
 	});
-	const part = Kernel.node(plan, () => ({ preset: props().preset }), {
+
+	// The node takes the whole props thunk on both lanes, so `KernelNode.elementConfig` is the only
+	// description of this element that exists. It used to take `() => ({ preset })` here and hand the
+	// real props to a second, near-identical config builder further down — two spellings of one
+	// element, differing only in a dead `base ? … : …` branch no caller could reach (all 33 pass a
+	// `class`). The node's own `preset`/`presetLayer` getters read the same values either way, because
+	// `Kernel.element` resolves both from the config first and the seam second.
+	// `eagerElement` only asks the lane question, and only a synthesized slot has one to ask. A
+	// declared-Atom slot builds its element unconditionally below, so asking there resolved a class
+	// through `klass()` — a preset context read and possibly a whole `twMerge` — that nothing reads.
+	// Both branches converge on the same `useKernelElement(part, part.elementConfig)` call.
+	const part = Kernel.node(plan, props, {
 		context: options.context ?? 'required',
+		eagerElement: plan.synthesized,
 		...(options.message ? { message: options.message } : {})
 	} as never);
-	const el = Kernel.element(part, partConfig(props, options));
 
+	// The node IS the handle when the slot's Atom adds nothing but `id`.
+	//
+	// Every `definePart` slot used to be wrapped in `Kernel.element`, which resolves the full
+	// presentation for that part on every render — measured at ~6.3 µs per part against the node's
+	// own class-only lane on the same fixture (`bench:lanes`). For a slot whose Atom is synthesized
+	// that work had nothing to fold in: the class lane composes the same class, the same attrs and
+	// the same id, and the node escalates the moment the consumer passes something rich.
+	//
+	// A slot with a DECLARED Atom keeps full resolution, and must: its Atom contributes attrs,
+	// handlers and cross-slot ARIA to the spread, and the class lane cannot fold those in without
+	// materializing the Atom — which is the one thing the lazy-node design exists to avoid. The
+	// `bench:ssr` fingerprints caught exactly this: taking the fast lane for Collapsible's and
+	// DataGrid's declared-Atom parts dropped 91 and 5 bytes per unit of real attributes.
+	if (plan.synthesized) return part as DefinedPart;
+
+	// A declared-Atom part always needs the element; reuse the one the node resolved for itself when
+	// its props were already rich, rather than building a second with the same config.
+	const el = part.element ?? Kernel.element(part, part.elementConfig);
 	return Object.assign(el, { bond: part.bond as Bond | undefined });
-}
-
-/** The config both paths hand `Kernel.element`: consumer props with `as`/`class` composed in. */
-function partConfig(props: () => DefinePartProps, options: DefinePartOptions): KernelElementConfig {
-	const base = options.class;
-	return () => {
-		const current = props();
-		return {
-			...current,
-			// Written after the spread for the same reason the destructure hoisted them out of
-			// `restProps`: these two are computed, not forwarded.
-			as: current.as ?? options.as,
-			class: base ? [base, '$preset', current.class] : current.class
-		};
-	};
-}
-
-/**
- * The seam an inert part hands `Kernel.element`. One shared prototype avoids a fresh
- * accessor-literal per rendered part; that allocation was
- * a measurable slice of what the fast path exists to remove.
- */
-class InertSeam implements KernelElementSeam {
-	readonly atom: Atom;
-	readonly bond: Bond | undefined;
-	readonly #slot: string;
-
-	constructor(atom: Atom, bond: Bond | undefined, slot: string) {
-		this.atom = atom;
-		this.bond = bond;
-		this.#slot = slot;
-	}
-
-	// The consumer's own `preset` prop rides the config and wins before this fallback is consulted.
-	get preset(): PresetKey | undefined {
-		return this.atom.preset as PresetKey;
-	}
-
-	get presetLayer(): PresetLike | undefined {
-		return this.bond?.presetLayer(this.#slot);
-	}
-}
-
-/**
- * The inert-part fast path: render a presentation-only slot without registering or activating its
- * Atom.
- *
- * An inert slot (see {@link ResolvedBondPart.inert}) declares neither `atom` nor `role`, so its
- * synthesized Atom contributes exactly `{ id }` to the spread and answers no query and no
- * capability. The Atom itself is constructed — field writes and one id computation, which keeps
- * ids, DEV metadata and the spread byte-identical by construction — but everything around it is
- * skipped: `bond.register` plus its teardown bookkeeping and capability activation.
- * `bench:ssr`'s fingerprint axis is the proof of equivalence.
- *
- * Deliberate contract change, pinned by spec: an inert part is not visible through
- * `bond.nodeByPart(...)`/`values()`/`elements`. A slot that needs querying declares an `atom` or a
- * `role`.
- */
-function defineInertPart(
-	part: ResolvedBondPart,
-	slot: string,
-	bond: Bond | undefined,
-	props: () => DefinePartProps,
-	options: DefinePartOptions
-): DefinedPart {
-	// Same guard `createAtomInstance` applies: construction reads reactive cells (`bond.id`), and
-	// an init-time read must not establish a dependency.
-	const atom = untrack(() => new part.Ctor(bond));
-	const el = Kernel.element(new InertSeam(atom, bond, slot), partConfig(props, options));
-	return Object.assign(el, { bond });
 }

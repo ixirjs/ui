@@ -1,7 +1,7 @@
 <script module lang="ts">
 	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
 	import { SelectBond } from './bond.svelte';
-	const PART = Kernel.part(SelectBond, 'value', { class: '' });
+	const PART = Kernel.plan(SelectBond, 'value', { class: '' });
 </script>
 
 <script lang="ts" generics="T extends HtmlElementTagName = 'div', B extends Base = Base">
@@ -52,15 +52,7 @@
 	);
 </script>
 
-{@render Kernel.render(el)(
-	el.tag(),
-	el.class(),
-	el.attrs(),
-	children ?? fallback,
-	undefined,
-	el.motion(),
-	el
-)}
+{@render Kernel.render(el)(el, children ?? fallback)}
 
 {#snippet fallback()}
 	{selection?.label}

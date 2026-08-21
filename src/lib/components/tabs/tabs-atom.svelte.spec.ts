@@ -5,12 +5,21 @@ import Probe, {
 	capturedTabsBond,
 	resetCapturedBonds
 } from '$ixirjs/ui/test/components/tabs/tabs-atom-probe.test.svelte';
+import RichPresetProbe from '$ixirjs/ui/test/components/tabs/tabs-rich-preset-probe.test.svelte';
 import { Atom } from '$ixirjs/ui/shared/bond';
 import { TabsBodyAtom, TabsBond, TabsHeaderAtom, TabsRootAtom } from './bond.svelte';
 import { TabBodyAtom, TabBond, TabDescriptionAtom, TabHeaderAtom } from './tab/bond.svelte';
 
 describe('Tabs component-owned Atoms', () => {
 	beforeEach(resetCapturedBonds);
+
+	it('renders a tab header through a rich preset', () => {
+		const { unmount } = render(RichPresetProbe);
+
+		expect(document.querySelector('[data-rich-preset="yes"]')).not.toBeNull();
+
+		unmount();
+	});
 
 	it('registers rendered tabs and tab nodes', () => {
 		const { unmount } = render(Probe);

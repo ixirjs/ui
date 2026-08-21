@@ -10,7 +10,9 @@
 		divLocal,
 		dynamicLocal,
 		divGlobal,
-		dynamicGlobal
+		dynamicGlobal,
+		type ElementBody,
+		type ElementView
 	} from '$ixirjs/ui/components/atom/render/element-branches.svelte';
 	import type { ElementType, HtmlElementProps, HtmlElementTagName } from './types';
 
@@ -91,6 +93,19 @@
 	// inside the shared snippet.
 	const applyInitial = motion.applyInitial;
 	const attachFunction = motion.attach;
+
+	// The shared leaves read their operands off a handle rather than taking them as arguments. This
+	// file has no Kernel handle, so it presents one — built ONCE, over the `$derived`s above, so the
+	// closures are per-instance and not per-render.
+	//
+	// `spread` is the class folded into the attrs, memoized on the same derived chain, because that
+	// is what the leaves consume: they no longer set `class` separately and so copy nothing.
+	const viewSpread = $derived({ class: finalKlass, ...rawAttrs });
+	const view = {
+		tag: () => finalAs,
+		spread: () => viewSpread,
+		motion: () => motion
+	};
 </script>
 
 <!-- The rich path had no literal-div branch, so every element it rendered paid `<svelte:element>`'s
@@ -117,15 +132,18 @@
 			: dynamicGlobal
 		: finalAs === 'div'
 			? divLocal
-			: dynamicLocal)(finalAs, finalKlass, rawAttrs, children, undefined, motion)}
+			: dynamicLocal)(view, children)}
 
-{#snippet bareDiv()}
+<!-- The pair takes the same two parameters as the shared leaves so the single ternary dispatch above
+     stays one call signature; both read their operands from this component's own state instead,
+     `elementProps` being the decorated attrs the shared leaves derive for themselves. -->
+{#snippet bareDiv(_view: ElementView, _body?: ElementBody)}
 	<div {@attach applyInitial} {@attach attachFunction} class={finalKlass} {...elementProps}>
 		{@render children?.()}
 	</div>
 {/snippet}
 
-{#snippet bareElement()}
+{#snippet bareElement(_view: ElementView, _body?: ElementBody)}
 	<svelte:element
 		this={finalAs}
 		{@attach applyInitial}

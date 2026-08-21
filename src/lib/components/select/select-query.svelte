@@ -1,7 +1,7 @@
 <script module lang="ts">
 	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
 	import { SelectBond } from './bond.svelte';
-	const PART = Kernel.part(SelectBond, 'query', { class: '' });
+	const PART = Kernel.plan(SelectBond, 'query', { class: '' });
 </script>
 
 <script lang="ts">

@@ -56,12 +56,4 @@
 	);
 </script>
 
-{@render Kernel.render(el)(
-	el.tag(),
-	el.class(),
-	el.attrs(),
-	children as Snippet | undefined,
-	Kernel.forward,
-	el.motion(),
-	el
-)}
+{@render Kernel.render(el)(el, children as Snippet | undefined, Kernel.forward)}

@@ -18,7 +18,7 @@ export class ContextMenuBondBase<
 
 // Inlined deliberately: `defineBond<const S>` infers `parts` as a tuple only from a literal
 // argument. Hoisting the spec to its own `const` widened it to an array, which made `AtomsOf`
-// resolve every inherited slot to `never` — `Kernel.part(ContextMenuBond, 'virtual-trigger')` could not
+// resolve every inherited slot to `never` — `Kernel.plan(ContextMenuBond, 'virtual-trigger')` could not
 // type-check even though the runtime spec merge had always provided it.
 export const ContextMenuBond = defineBond({
 	parts: [DropdownMenuBond],

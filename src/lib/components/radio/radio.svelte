@@ -146,15 +146,7 @@
 </Stack.Root>
 
 {#snippet customCheckedContent()}
-	{@render Kernel.render(customIndicatorEl)(
-		customIndicatorEl.tag(),
-		customIndicatorEl.class(),
-		customIndicatorEl.attrs(),
-		undefined,
-		undefined,
-		customIndicatorEl.motion(),
-		customIndicatorEl
-	)}
+	{@render Kernel.render(customIndicatorEl)(customIndicatorEl)}
 {/snippet}
 
 {#snippet defaultCheckedContent()}

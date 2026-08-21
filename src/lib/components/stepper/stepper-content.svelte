@@ -44,15 +44,7 @@
 {@render content?.(activeStepContent!)}
 
 {#snippet body(stepContent: StepContentSnippet)}
-	{@render Kernel.render(el)(
-		el.tag(),
-		el.class(),
-		el.attrs(),
-		stepBody,
-		stepContent,
-		el.motion(),
-		el
-	)}
+	{@render Kernel.render(el)(el, stepBody, stepContent)}
 {/snippet}
 
 {#snippet stepBody(stepContent: StepContentSnippet)}

@@ -30,15 +30,7 @@
 	}));
 </script>
 
-{@render Kernel.render(el)(
-	el.tag(),
-	el.class(),
-	el.attrs(),
-	icon ?? defaultIcon,
-	undefined,
-	el.motion(),
-	el
-)}
+{@render Kernel.render(el)(el, icon ?? defaultIcon)}
 
 {#snippet defaultIcon()}
 	<Icon src={CloseIcon} class="h-full" />

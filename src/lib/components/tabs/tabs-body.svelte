@@ -1,7 +1,7 @@
 <script module lang="ts">
 	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
 	import { TabsBond } from './bond.svelte';
-	const PART = Kernel.part(TabsBond, 'body', { class: '' });
+	const PART = Kernel.plan(TabsBond, 'body', { class: '' });
 </script>
 
 <script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">

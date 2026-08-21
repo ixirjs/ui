@@ -1,7 +1,7 @@
 <script module lang="ts">
 	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
 	import { ContextMenuBond } from './bond.svelte';
-	const PART = Kernel.part(ContextMenuBond, 'virtual-trigger', { class: '' });
+	const PART = Kernel.plan(ContextMenuBond, 'virtual-trigger', { class: '' });
 </script>
 
 <script lang="ts" generics="E extends HtmlElementTagName = 'button', B extends Base = Base">

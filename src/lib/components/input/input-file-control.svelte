@@ -90,19 +90,11 @@
 	{oninput}
 />
 
-{@render Kernel.render(el)(
-	el.tag(),
-	el.class(),
-	el.attrs(),
-	triggerContent ?? (hasFiles ? filesSummary : emptyPrompt),
-	{
-		files,
-		hasFiles,
-		open: openPicker
-	},
-	el.motion(),
-	el
-)}
+{@render Kernel.render(el)(el, triggerContent ?? (hasFiles ? filesSummary : emptyPrompt), {
+	files,
+	hasFiles,
+	open: openPicker
+})}
 
 {#snippet filesSummary()}
 	{@render (files.length === 1 ? singleFile : multipleFiles)()}

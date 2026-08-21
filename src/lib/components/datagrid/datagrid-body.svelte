@@ -16,12 +16,4 @@
 	});
 </script>
 
-{@render Kernel.render(el)(
-	el.tag(),
-	el.class(),
-	el.attrs(),
-	props.children,
-	{ datagrid: el.bond as DataGridBond<T> },
-	el.motion(),
-	el
-)}
+{@render Kernel.render(el)(el, props.children, { datagrid: el.bond as DataGridBond<T> })}

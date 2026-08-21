@@ -162,15 +162,7 @@
 	}));
 </script>
 
-{@render Kernel.render(el)(
-	el.tag(),
-	el.class(),
-	el.attrs(),
-	sliderBody,
-	undefined,
-	el.motion(),
-	el
-)}
+{@render Kernel.render(el)(el, sliderBody)}
 
 {#snippet sliderBody()}
 	{@render (trackContent ?? defaultTrack)({

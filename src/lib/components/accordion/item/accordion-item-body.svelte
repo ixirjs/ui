@@ -1,7 +1,7 @@
 <script module lang="ts">
 	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
 	import { AccordionItemBond } from './bond.svelte';
-	const PART = Kernel.part(AccordionItemBond, 'body', { class: '' });
+	const PART = Kernel.plan(AccordionItemBond, 'body', { class: '' });
 </script>
 
 <script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
@@ -48,13 +48,5 @@
 {@render content?.(bond!)}
 
 {#snippet body(accordionItem: AccordionItemBond)}
-	{@render Kernel.render(el)(
-		el.tag(),
-		el.class(),
-		el.attrs(),
-		children,
-		{ accordionItem },
-		el.motion(),
-		el
-	)}
+	{@render Kernel.render(el)(el, children, { accordionItem })}
 {/snippet}

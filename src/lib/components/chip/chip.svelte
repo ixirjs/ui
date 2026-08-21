@@ -28,7 +28,7 @@
 	}));
 </script>
 
-{@render Kernel.render(el)(el.tag(), el.class(), el.attrs(), chipBody, undefined, el.motion(), el)}
+{@render Kernel.render(el)(el, chipBody)}
 
 {#snippet chipBody()}
 	{@render children?.()}

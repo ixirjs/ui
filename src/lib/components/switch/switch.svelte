@@ -65,15 +65,7 @@
 	}));
 </script>
 
-{@render Kernel.render(el)(
-	el.tag(),
-	el.class(),
-	el.attrs(),
-	switchBody,
-	undefined,
-	el.motion(),
-	el
-)}
+{@render Kernel.render(el)(el, switchBody)}
 
 {#snippet switchBody()}
 	<input

@@ -21,12 +21,4 @@
 	Teleport sink and floating-ui boundary. `relative size-full` makes it the offsetParent the
 	teleported `absolute` overlays anchor against; no overflow clip keeps containment soft.
 -->
-{@render Kernel.render(el)(
-	el.tag(),
-	el.class(),
-	el.attrs(),
-	props.children,
-	undefined,
-	el.motion(),
-	el
-)}
+{@render Kernel.render(el)(el, props.children)}

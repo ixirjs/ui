@@ -6,7 +6,7 @@ import { toClassValue } from '$ixirjs/ui/utils';
 import type { ClassValue } from 'svelte/elements';
 import { InputBond, type InputStateProps } from './bond.svelte';
 
-const INPUT_PART = Kernel.part(InputBond, 'input', { class: '' });
+const INPUT_PART = Kernel.plan(InputBond, 'input', { class: '' });
 
 export interface ControlOptions {
 	preset: () => unknown;

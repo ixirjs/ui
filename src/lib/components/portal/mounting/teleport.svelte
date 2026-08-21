@@ -64,13 +64,5 @@
 <!-- `portalBond!` is proven by the dispatch below, which renders this only when it is present;
      TypeScript narrowing does not cross into a snippet body. -->
 {#snippet teleported()}
-	{@render Kernel.render(el)(
-		el.tag(),
-		el.class(),
-		el.attrs(),
-		children,
-		{ portal: portalBond! },
-		el.motion(),
-		el
-	)}
+	{@render Kernel.render(el)(el, children, { portal: portalBond! })}
 {/snippet}

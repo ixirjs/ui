@@ -10,12 +10,4 @@
 	const el = definePart(FieldBond, 'label', () => props, { class: 'flex' });
 </script>
 
-{@render Kernel.render(el)(
-	el.tag(),
-	el.class(),
-	el.attrs(),
-	props.children,
-	{ field: el.bond },
-	el.motion(),
-	el
-)}
+{@render Kernel.render(el)(el, props.children, { field: el.bond })}

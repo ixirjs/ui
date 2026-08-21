@@ -1,7 +1,7 @@
 <script module lang="ts">
 	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
 	import { PopoverBond } from './bond.svelte';
-	const PART = Kernel.part(PopoverBond, 'indicator', { class: '' });
+	const PART = Kernel.plan(PopoverBond, 'indicator', { class: '' });
 </script>
 
 <script lang="ts">
@@ -25,15 +25,7 @@
 	const isOpen = $derived(overlayIsOpen(part.bond));
 </script>
 
-{@render Kernel.render(el)(
-	el.tag(),
-	el.class(),
-	el.attrs(),
-	children ?? fallback,
-	{ popover: part.bond },
-	el.motion(),
-	el
-)}
+{@render Kernel.render(el)(el, children ?? fallback, { popover: part.bond })}
 
 {#snippet fallback()}
 	<Icon

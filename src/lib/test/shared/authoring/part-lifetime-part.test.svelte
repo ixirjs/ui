@@ -1,7 +1,7 @@
 <script module lang="ts">
 	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
 	import { LifetimeBond } from './part-lifetime-bond.test.svelte';
-	const PART = Kernel.part(LifetimeBond, 'trigger', { class: '' });
+	const PART = Kernel.plan(LifetimeBond, 'trigger', { class: '' });
 </script>
 
 <script lang="ts">

@@ -121,27 +121,11 @@
 {@render (datePicker.isYearsPickerOpen ? yearsPicker : undefined)?.()}
 
 {#snippet yearsPicker()}
-	{@render Kernel.render(overlayEl)(
-		overlayEl.tag(),
-		overlayEl.class(),
-		overlayEl.attrs(),
-		yearsOverlay,
-		undefined,
-		overlayEl.motion(),
-		overlayEl
-	)}
+	{@render Kernel.render(overlayEl)(overlayEl, yearsOverlay)}
 {/snippet}
 
 {#snippet yearsOverlay()}
-	{@render Kernel.render(panelEl)(
-		panelEl.tag(),
-		panelEl.class(),
-		panelEl.attrs(),
-		yearsPanel,
-		undefined,
-		panelEl.motion(),
-		panelEl
-	)}
+	{@render Kernel.render(panelEl)(panelEl, yearsPanel)}
 {/snippet}
 
 {#snippet yearsPanel()}

@@ -57,4 +57,4 @@
 	scrolls and stacks with the host. `pointer-events-none` lets page clicks through (overlays opt
 	back in).
 -->
-{@render Kernel.render(el)(el.tag(), el.class(), el.attrs(), children, undefined, el.motion(), el)}
+{@render Kernel.render(el)(el, children)}

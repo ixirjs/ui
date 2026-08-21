@@ -1,7 +1,7 @@
 <script module lang="ts">
 	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
 	import { AccordionItemBond } from './bond.svelte';
-	const PART = Kernel.part(AccordionItemBond, 'indicator', { class: '' });
+	const PART = Kernel.plan(AccordionItemBond, 'indicator', { class: '' });
 </script>
 
 <script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
@@ -41,15 +41,7 @@
 	);
 </script>
 
-{@render Kernel.render(el)(
-	el.tag(),
-	el.class(),
-	el.attrs(),
-	children && bond ? consumerIndicator : defaultIndicator,
-	undefined,
-	el.motion(),
-	el
-)}
+{@render Kernel.render(el)(el, children && bond ? consumerIndicator : defaultIndicator)}
 
 <!-- `bond!` is proven by the dispatch above; narrowing does not cross into a snippet body. -->
 {#snippet consumerIndicator()}

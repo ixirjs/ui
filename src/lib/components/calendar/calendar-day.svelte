@@ -101,15 +101,7 @@
 	const bodyArg = { calendar: calendarBond! };
 </script>
 
-{@render Kernel.render(el)(
-	el.tag(),
-	el.class(),
-	el.attrs(),
-	children ?? defaultDay,
-	bodyArg,
-	el.motion(),
-	el
-)}
+{@render Kernel.render(el)(el, children ?? defaultDay, bodyArg)}
 
 {#snippet defaultDay()}
 	<div

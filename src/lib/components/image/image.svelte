@@ -32,7 +32,7 @@
 	}));
 </script>
 
-{@render Kernel.render(el)(el.tag(), el.class(), el.attrs(), imageBody, undefined, el.motion(), el)}
+{@render Kernel.render(el)(el, imageBody)}
 
 {#snippet imageBody()}
 	<img

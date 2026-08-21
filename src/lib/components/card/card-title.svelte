@@ -1,7 +1,7 @@
 <script module lang="ts">
 	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
 	import { CardBond } from './bond.svelte';
-	const PLAN = Kernel.part(CardBond, 'title', {
+	const PLAN = Kernel.plan(CardBond, 'title', {
 		as: 'h3',
 		class: 'card-title border-border text-lg leading-none font-semibold tracking-tight'
 	});
@@ -12,15 +12,7 @@
 	import type { CardTitleProps } from './types';
 
 	const props: CardTitleProps<E, B> & BasePropsOf<B> = $props();
-	const node = Kernel.node(PLAN, () => props);
+	const node = Kernel.node(PLAN, () => props, { eagerElement: true });
 </script>
 
-{@render Kernel.render(node)(
-	node.tag(),
-	node.class(),
-	node.attrs(),
-	props.children,
-	undefined,
-	undefined,
-	node
-)}
+{@render Kernel.render(node)(node, props.children)}

@@ -45,15 +45,7 @@
 	}));
 </script>
 
-{@render Kernel.render(el)(
-	el.tag(),
-	el.class(),
-	el.attrs(),
-	circularBody,
-	undefined,
-	el.motion(),
-	el
-)}
+{@render Kernel.render(el)(el, circularBody)}
 
 {#snippet circularBody()}
 	<svg viewBox="0 0 48 48" class="h-full w-full -rotate-90" aria-hidden="true">

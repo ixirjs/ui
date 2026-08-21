@@ -21,15 +21,7 @@
 	}));
 </script>
 
-{@render Kernel.render(el)(
-	el.tag(),
-	el.class(),
-	el.attrs(),
-	swatchBody,
-	undefined,
-	el.motion(),
-	el
-)}
+{@render Kernel.render(el)(el, swatchBody)}
 
 {#snippet swatchBody()}
 	<span aria-hidden="true" class="checkerboard absolute inset-[0.5px] rounded-inherit"></span>

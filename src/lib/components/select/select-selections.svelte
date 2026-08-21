@@ -61,15 +61,7 @@
 			: undefined)?.()}
 
 {#snippet multipleSelections()}
-	{@render Kernel.render(el)(
-		el.tag(),
-		el.class(),
-		el.attrs(),
-		children ? consumerSelection : selectionChips,
-		undefined,
-		el.motion(),
-		el
-	)}
+	{@render Kernel.render(el)(el, children ? consumerSelection : selectionChips)}
 {/snippet}
 
 {#snippet consumerSelection()}

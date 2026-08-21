@@ -1,7 +1,7 @@
 <script module lang="ts">
 	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
 	import { SidebarBond } from './bond.svelte';
-	const PART = Kernel.part(SidebarBond, 'content', { class: '' });
+	const PART = Kernel.plan(SidebarBond, 'content', { class: '' });
 </script>
 
 <script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">

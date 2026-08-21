@@ -1,7 +1,7 @@
 <script module lang="ts">
 	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
 	import { AlertBond } from './bond.svelte';
-	const PART = Kernel.part(AlertBond, 'icon', { class: '' });
+	const PART = Kernel.plan(AlertBond, 'icon', { class: '' });
 </script>
 
 <script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
@@ -35,12 +35,4 @@
 	);
 </script>
 
-{@render Kernel.render(el)(
-	el.tag(),
-	el.class(),
-	el.attrs(),
-	children,
-	{ alert: bond! },
-	el.motion(),
-	el
-)}
+{@render Kernel.render(el)(el, children, { alert: bond! })}
