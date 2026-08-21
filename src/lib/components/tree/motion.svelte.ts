@@ -1,4 +1,3 @@
-import { untrack } from 'svelte';
 import { animate, DURATION, type Easing } from '$ixirjs/ui/shared';
 import { TreeBond } from './bond.svelte';
 import { stopMotion } from '$ixirjs/ui/components/element/motion-host';
@@ -33,9 +32,11 @@ function animateTreeBody(params: AnimateTreeBodyParams = {}) {
  * Attachment form of the body motion. A symbol-keyed attachment handles this animate-only path
  * without a HtmlElement motion driver.
  *
- * Behavior runs `initial` once at mount, untracked so it
- * registers no dependency, then the animate phase inside the attachment's own effect, re-running
- * whenever the disclosure state it reads changes.
+ * Mount runs `initial` and stops there — the same shape, and the same reason, as
+ * `collapsible/motion.svelte.ts`. Both phases read one disclosure state and resolve to the same
+ * keyframe, so a mount-time `update` animated the node from what `initial` had just committed to
+ * that identical value. `initial` runs *tracked*, which is what subscribes this attachment to the
+ * disclosure state; every later run is the real transition.
  */
 export function attachTreeBodyMotion(params: AnimateTreeBodyParams = {}) {
 	const initial = animateTreeBody({ ...params, duration: 0 });
@@ -43,11 +44,9 @@ export function attachTreeBodyMotion(params: AnimateTreeBodyParams = {}) {
 	let hasInitialized = false;
 
 	return (node: HTMLElement) => {
-		if (!hasInitialized) {
-			hasInitialized = true;
-			untrack(() => initial(node));
-		}
-		const controller = update(node);
+		const phase = hasInitialized ? update : initial;
+		hasInitialized = true;
+		const controller = phase(node);
 		return () => stopMotion(controller, node);
 	};
 }

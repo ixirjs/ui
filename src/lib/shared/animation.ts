@@ -75,20 +75,20 @@ export function animate(
 	input: AnimationKeyframes,
 	options: AnimationOptions = {}
 ): AnimationController {
-	const normalized = normalizeKeyframes(node, input);
 	const reducedMotion = prefersReducedMotion();
 	const timing = resolveTiming(options);
 	const duration = reducedMotion ? 0 : timing.duration;
 	const delay = reducedMotion ? 0 : secondsToMs(options.delay ?? 0);
-
-	if (!node.animate || duration === 0) {
-		applyFinalStyles(node, normalized.finalStyles);
-		options.onComplete?.();
-		return ZERO_CONTROLLER;
-	}
-
+	// Reading an element's current value (`getComputedStyle`, or the write-read-restore in
+	// `measuredAutoValue`) forces a style flush, and a run that will not animate throws that
+	// value away: it only ever applies `finalStyles`, which comes from the target. So the
+	// decision has to precede the normalization, not follow it. A zero-duration `initial`
+	// phase over n mounted parts is otherwise n forced layouts for nothing.
+	const willAnimate = !!node.animate && duration > 0;
+	const normalized = normalizeKeyframes(node, input, willAnimate);
 	const keyframes = normalized.keyframes;
-	if (!Object.keys(keyframes).length) {
+
+	if (!willAnimate || !Object.keys(keyframes).length) {
 		applyFinalStyles(node, normalized.finalStyles);
 		options.onComplete?.();
 		return ZERO_CONTROLLER;
@@ -134,7 +134,11 @@ type NormalizedKeyframes = {
 	finalStyles: Record<string, string>;
 };
 
-function normalizeKeyframes(node: HTMLElement, input: AnimationKeyframes): NormalizedKeyframes {
+function normalizeKeyframes(
+	node: HTMLElement,
+	input: AnimationKeyframes,
+	withKeyframes: boolean
+): NormalizedKeyframes {
 	const keyframes: Record<string, string[]> = {};
 	const finalStyles: Record<string, string> = {};
 	const transformInputs: Record<string, AnimationKeyframeValue> = {};
@@ -150,19 +154,25 @@ function normalizeKeyframes(node: HTMLElement, input: AnimationKeyframes): Norma
 			continue;
 		}
 
-		const normalized = normalizePropertyValues(node, prop, value);
+		const target = isArrayValue(value) ? value[value.length - 1]! : value;
+
 		if (NON_ANIMATABLE_PROPS.has(prop)) {
-			immediate[prop] = normalized.finalValue;
+			immediate[prop] = normalizeCssValue(node, prop, target);
 			continue;
 		}
 
-		keyframes[toAnimationProperty(prop)] = normalized.values;
-		finalStyles[prop] = normalized.finalStyleValue;
+		finalStyles[prop] = normalizeFinalCssValue(prop, target);
+		if (!withKeyframes) continue;
+
+		const rawValues = isArrayValue(value) ? [...value] : [currentStyle(node, prop), value];
+		keyframes[toAnimationProperty(prop)] = rawValues.map((item) =>
+			normalizeCssValue(node, prop, item)
+		);
 	}
 
-	const transform = normalizeTransformValues(node, transformInputs);
+	const transform = normalizeTransformValues(node, transformInputs, withKeyframes);
 	if (transform) {
-		keyframes.transform = transform.values;
+		if (withKeyframes) keyframes.transform = transform.values;
 		finalStyles.transform = transform.finalValue;
 	}
 
@@ -170,20 +180,10 @@ function normalizeKeyframes(node: HTMLElement, input: AnimationKeyframes): Norma
 	return { keyframes, finalStyles };
 }
 
-function normalizePropertyValues(
-	node: HTMLElement,
-	prop: string,
-	value: AnimationKeyframeValue
-): { values: string[]; finalValue: string; finalStyleValue: string } {
-	const rawValues = isArrayValue(value) ? [...value] : [currentStyle(node, prop), value];
-	const values = rawValues.map((item) => normalizeCssValue(node, prop, item));
-	const finalStyleValue = normalizeFinalCssValue(prop, rawValues[rawValues.length - 1]!);
-	return { values, finalValue: values[values.length - 1] ?? '', finalStyleValue };
-}
-
 function normalizeTransformValues(
 	node: HTMLElement,
-	input: Record<string, AnimationKeyframeValue>
+	input: Record<string, AnimationKeyframeValue>,
+	withKeyframes: boolean
 ): { values: string[]; finalValue: string } | undefined {
 	const entries = Object.entries(input);
 	if (!entries.length) return undefined;
@@ -197,6 +197,10 @@ function normalizeTransformValues(
 		props.set(prop, values);
 		length = Math.max(length, values.length);
 	}
+
+	// Same reason as above: `currentTransform` can hit `getComputedStyle`, and the final
+	// transform is index `length - 1`, never the current one.
+	if (!withKeyframes) return { values: [], finalValue: buildTransform(props, length - 1) };
 
 	const current = currentTransform(node);
 	const values: string[] = [];

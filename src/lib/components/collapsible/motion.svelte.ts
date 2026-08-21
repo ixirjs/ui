@@ -1,4 +1,3 @@
-import { untrack } from 'svelte';
 import { animate, type Easing } from '$ixirjs/ui/shared';
 import { CollapsibleBond } from '.';
 import { DURATION } from '$ixirjs/ui/shared';
@@ -38,9 +37,11 @@ function animateCollapsibleBody(params: AnimateCollapsibleBodyParams = {}) {
  * An attachment reaches the element as a symbol-keyed prop, so this animate-only path needs no
  * HtmlElement motion driver.
  *
- * Behavior mirrors `HtmlElement` for the animate-only case: `initial` runs once at mount, untracked
- * so it establishes no dependency, then the animate phase runs inside the attachment's own effect
- * and re-runs whenever the disclosure state it reads changes.
+ * Mount runs `initial` and stops there. Both phases resolve the same disclosure state and so
+ * target the same keyframe — running `update` as well animated the body from the state `initial`
+ * had just committed to that identical state, invisibly, for the cost of a second `animate()` and
+ * the style read that builds its "from" value. `initial` runs *tracked*, which is what subscribes
+ * this attachment's effect to the disclosure state; every later run is the real transition.
  */
 export function attachCollapsibleBodyMotion(params: AnimateCollapsibleBodyParams = {}) {
 	const initial = animateCollapsibleBody({ ...params, duration: 0 });
@@ -48,11 +49,9 @@ export function attachCollapsibleBodyMotion(params: AnimateCollapsibleBodyParams
 	let hasInitialized = false;
 
 	return (node: HTMLElement) => {
-		if (!hasInitialized) {
-			hasInitialized = true;
-			untrack(() => initial(node));
-		}
-		const cleanup = update(node);
+		const phase = hasInitialized ? update : initial;
+		hasInitialized = true;
+		const cleanup = phase(node);
 		return () => stopMotion(cleanup, node);
 	};
 }
