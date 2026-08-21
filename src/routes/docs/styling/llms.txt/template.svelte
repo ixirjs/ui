@@ -35,7 +35,7 @@
 	{list(approach.cons || [])}
 {/each}
 
-## Tailwind CSS (Recommended) Svelte Atoms works perfectly with Tailwind CSS. Use utility classes
+## Tailwind CSS (Recommended) IXIR UI works perfectly with Tailwind CSS. Use utility classes
 directly on components:
 
 {codeBlock(
@@ -99,8 +99,8 @@ cn(['text-sm', 'font-medium'], 'text-lg');
 	'typescript'
 )}
 
-## Color Tokens Svelte Atoms uses CSS variables for theming. All color tokens are available as
-Tailwind utilities:
+## Color Tokens IXIR UI uses CSS variables for theming. All color tokens are available as Tailwind
+utilities:
 
 {#each metadata.colorTokens as token, i (i)}
 	### {token.token}

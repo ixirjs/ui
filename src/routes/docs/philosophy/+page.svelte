@@ -33,20 +33,24 @@
 </script>
 
 <svelte:head>
-	<title>Philosophy — Svelte Atoms</title>
+	<title>Philosophy — IXIR UI</title>
 	<meta
 		name="description"
-		content="The principles and architecture behind Svelte Atoms — Atom, Bond, and Preset — and why they lead to a better component development experience."
+		content="The principles and architecture behind IXIR UI — Atom, Bond, and Preset — and why they lead to a better component development experience."
 	/>
 </svelte:head>
 
 <!-- Hero -->
-<div class="border-border/60 mb-14 border-b pb-12">
-	<p class="text-primary mb-3 text-sm font-medium uppercase tracking-wide">Philosophy</p>
-	<h1 class="text-foreground mb-4 text-4xl font-bold tracking-tight">Build less. Control more.</h1>
-	<p class="text-muted-foreground mb-8 max-w-xl text-lg leading-relaxed">
-		Svelte Atoms is built on one idea: components should be headless by nature, composable by
-		design, and owned entirely by the developer who uses them.
+<div class="animate-page-in mb-9">
+	<p class="text-muted-foreground m-0 mb-2.5 font-mono text-[11px] tracking-[0.05em] uppercase">
+		Philosophy
+	</p>
+	<h1 class="font-display text-foreground m-0 mb-3 text-[32px] font-bold tracking-[-0.025em]">
+		Build less. Control more.
+	</h1>
+	<p class="text-muted-foreground m-0 mb-6 max-w-[640px] text-[17px] leading-[1.65]">
+		IXIR UI is built on one idea: components should be headless by nature, composable by design, and
+		owned entirely by the developer who uses them.
 	</p>
 	<div class="flex flex-wrap gap-3">
 		<Button href="/docs/components" as="a" variant="primary" class="gap-2 px-5">
@@ -202,7 +206,7 @@
 	<Section.Header>
 		<Section.Title>The Bond pattern</Section.Title>
 		<Section.Subtitle>
-			Bonds are how Svelte Atoms moves state between components without coupling them.
+			Bonds are how IXIR UI moves state between components without coupling them.
 		</Section.Subtitle>
 	</Section.Header>
 

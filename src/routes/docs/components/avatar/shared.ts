@@ -60,7 +60,7 @@ const useCases = [
 ];
 
 export const metadata = {
-	title: 'Avatar - Svelte Atoms',
+	title: 'Avatar - IXIR UI',
 	description: 'Display user profile images with automatic initials fallback.',
 	componentTitle: 'Avatar',
 	componentDescription:

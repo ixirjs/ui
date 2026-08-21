@@ -33,39 +33,54 @@
 	--palette-neutron: oklch(0.54 0.12 162);
 
 	--background: oklch(1 0 0);
-	--foreground: oklch(0.145 0 0);
+	--foreground: oklch(0.16 0 0);
 	--card: oklch(1 0 0);
-	--card-foreground: oklch(0.145 0 0);
+	--card-foreground: oklch(0.16 0 0);
 	--popover: oklch(1 0 0);
-	--popover-foreground: oklch(0.145 0 0);
+	--popover-foreground: oklch(0.16 0 0);
 	--primary: var(--palette-proton);
 	--primary-foreground: oklch(0.985 0 0);
-	--secondary: oklch(0.97 0 0);
+	--secondary: oklch(0.955 0 0);
 	--secondary-foreground: oklch(0.205 0 0);
-	--muted: oklch(0.97 0 0);
-	--muted-foreground: oklch(0.556 0 0);
+	--muted: oklch(0.955 0 0);
+	--muted-foreground: oklch(0.52 0 0);
 	--accent: oklch(0.97 0 0);
 	--accent-foreground: oklch(0.205 0 0);
 	--destructive: var(--palette-critical);
 	--success: var(--palette-neutron);
 	--warning: var(--palette-isotope);
 	--info: var(--palette-proton);
-	--border: oklch(0.922 0 0);
-	--input: oklch(0.922 0 0);
+	--border: oklch(0.912 0 0);
+	--input: oklch(0.912 0 0);
 	--ring: oklch(0.708 0 0);
 	--chart-1: oklch(0.646 0.222 41.116);
 	--chart-2: oklch(0.6 0.118 184.704);
 	--chart-3: oklch(0.398 0.07 227.392);
 	--chart-4: oklch(0.828 0.189 84.429);
 	--chart-5: oklch(0.769 0.188 70.08);
+
+	/* ── Docs v3 design tokens ──────────────────────────────────── */
+	--bg-subtle: oklch(0.978 0 0);
+	--surface: oklch(1 0 0);
+	--surface-2: oklch(0.955 0 0);
+	--border-strong: oklch(0.82 0 0);
+	--fg-faint: oklch(0.66 0 0);
+	--accent-soft: oklch(0.64 0.14 162 / 0.08);
+	--accent-line: oklch(0.64 0.14 162 / 0.28);
+	--code-bg: oklch(0.968 0 0);
+	--code-fg: oklch(0.26 0 0);
+	--kbd-bg: oklch(1 0 0);
+	--warn: oklch(0.58 0.13 62);
+	--scrim: oklch(0.16 0 0 / 0.4);
+	--shadow-overlay: 0 24px 48px -16px oklch(0.16 0 0 / 0.22);
 	--radius: 0.625rem;
 	--sidebar: oklch(0.985 0 0);
-	--sidebar-foreground: oklch(0.145 0 0);
+	--sidebar-foreground: oklch(0.16 0 0);
 	--sidebar-primary: oklch(0.205 0 0);
 	--sidebar-primary-foreground: oklch(0.985 0 0);
 	--sidebar-accent: oklch(0.97 0 0);
 	--sidebar-accent-foreground: oklch(0.205 0 0);
-	--sidebar-border: oklch(0.922 0 0);
+	--sidebar-border: oklch(0.912 0 0);
 	--sidebar-ring: oklch(0.708 0 0);
 	--font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
 	--font-display: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
@@ -105,32 +120,47 @@
 }
 
 .dark {
-	--background: oklch(0.145 0 0);
-	--foreground: oklch(0.985 0 0);
-	--card: oklch(0.205 0 0);
-	--card-foreground: oklch(0.985 0 0);
-	--popover: oklch(0.205 0 0);
-	--popover-foreground: oklch(0.985 0 0);
+	--background: oklch(0.155 0 0);
+	--foreground: oklch(0.965 0 0);
+	--card: oklch(0.212 0 0);
+	--card-foreground: oklch(0.965 0 0);
+	--popover: oklch(0.212 0 0);
+	--popover-foreground: oklch(0.965 0 0);
 	--primary: var(--palette-ion);
 	--primary-foreground: oklch(0.205 0 0);
-	--secondary: oklch(0.269 0 0);
+	--secondary: oklch(0.255 0 0);
 	--secondary-foreground: oklch(0.985 0 0);
-	--muted: oklch(0.269 0 0);
-	--muted-foreground: oklch(0.708 0 0);
+	--muted: oklch(0.255 0 0);
+	--muted-foreground: oklch(0.735 0 0);
 	--accent: oklch(0.269 0 0);
 	--accent-foreground: oklch(0.985 0 0);
 	--destructive: oklch(0.704 0.191 22.216);
 	--success: var(--palette-electron);
 	--warning: var(--palette-beta);
 	--info: var(--palette-ion);
-	--border: oklch(1 0 0 / 10%);
-	--input: oklch(1 0 0 / 15%);
+	--border: oklch(0.295 0 0);
+	--input: oklch(0.295 0 0);
 	--ring: oklch(0.556 0 0);
 	--chart-1: oklch(0.488 0.243 264.376);
 	--chart-2: oklch(0.696 0.17 162.48);
 	--chart-3: oklch(0.769 0.188 70.08);
 	--chart-4: oklch(0.627 0.265 303.9);
 	--chart-5: oklch(0.645 0.246 16.439);
+
+	/* ── Docs v3 design tokens (dark) ───────────────────────────── */
+	--bg-subtle: oklch(0.188 0 0);
+	--surface: oklch(0.212 0 0);
+	--surface-2: oklch(0.255 0 0);
+	--border-strong: oklch(0.42 0 0);
+	--fg-faint: oklch(0.57 0 0);
+	--accent-soft: oklch(1 0 0 / 0.06);
+	--accent-line: oklch(1 0 0 / 0.16);
+	--code-bg: oklch(0.122 0 0);
+	--code-fg: oklch(0.9 0 0);
+	--kbd-bg: oklch(0.26 0 0);
+	--warn: oklch(0.8 0.13 75);
+	--scrim: oklch(0.08 0 0 / 0.62);
+	--shadow-overlay: 0 28px 56px -18px oklch(0 0 0 / 0.7);
 	--sidebar: oklch(0.205 0 0);
 	--sidebar-foreground: oklch(0.985 0 0);
 	--sidebar-primary: oklch(0.488 0.243 264.376);
@@ -220,6 +250,20 @@
 	--color-sidebar-border: var(--sidebar-border);
 	--color-sidebar-ring: var(--sidebar-ring);
 
+	--color-bg-subtle: var(--bg-subtle);
+	--color-surface: var(--surface);
+	--color-surface-2: var(--surface-2);
+	--color-border-strong: var(--border-strong);
+	--color-fg-faint: var(--fg-faint);
+	--color-accent-soft: var(--accent-soft);
+	--color-accent-line: var(--accent-line);
+	--color-code-bg: var(--code-bg);
+	--color-code-fg: var(--code-fg);
+	--color-kbd: var(--kbd-bg);
+	--color-warn: var(--warn);
+	--color-scrim: var(--scrim);
+	--shadow-overlay: var(--shadow-overlay);
+
 	--radius-inherit: inherit;
 	--font-display: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
 }
@@ -243,6 +287,17 @@
 		display: none;
 		width: 0;
 		height: 0;
+	}
+}
+
+/* ─── Docs prose ─────────────────────────────────────────────── */
+/* Inline code inside a doc section. Wrapped in `:where()` so the selector still weighs a single
+   class — any explicit utility on the element (the API table's own colours) keeps winning. */
+@layer components {
+	.doc-prose :where(code):not(:where(pre code)) {
+		font-family: var(--font-mono);
+		font-size: 0.92em;
+		color: var(--primary);
 	}
 }
 
@@ -322,29 +377,118 @@
 
 /* ─── Display font for headings ─────────────────────────────────── */
 @layer base {
+	html {
+		scroll-behavior: smooth;
+		/* header (56px) + breathing room — matches the design's scroll-padding */
+		scroll-padding-top: 76px;
+	}
+
 	h1,
 	h2,
 	h3 {
 		font-family: var(--font-display);
-		letter-spacing: -0.02em;
+		letter-spacing: -0.025em;
+	}
+
+	a {
+		color: var(--primary);
+	}
+
+	::selection {
+		background: var(--accent-soft);
+		color: var(--foreground);
+	}
+
+	:focus-visible {
+		outline: 2px solid var(--primary);
+		outline-offset: 2px;
+		border-radius: 3px;
 	}
 }
 
 /* ─── Scroll offset for sticky bars ─────────────────────────────── */
-/* Desktop: just the header (3.5rem) + a little breathing room */
 h1[id],
 h2[id],
 h3[id],
 h4[id] {
-	scroll-margin-top: 5rem;
+	scroll-margin-top: 76px;
 }
 
-/* Mobile: header (3.5rem) + sticky nav bar (~2.5rem) + breathing room */
+/* Mobile: header (56px) + sticky docs bar (~44px) + breathing room */
 @media (max-width: 1023px) {
 	h1[id],
 	h2[id],
 	h3[id],
 	h4[id] {
 		scroll-margin-top: 7.5rem;
+	}
+}
+
+/* ─── Docs v3 motion + affordances ──────────────────────────────── */
+@keyframes doc-page-in {
+	from {
+		opacity: 0;
+		transform: translateY(6px);
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+@keyframes doc-fade-in {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+@keyframes doc-pop-in {
+	from {
+		opacity: 0;
+		transform: scale(0.97) translateY(-6px);
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+@layer utilities {
+	.animate-page-in {
+		animation: doc-page-in 0.22s ease;
+	}
+
+	.animate-fade-in {
+		animation: doc-fade-in 0.14s ease;
+	}
+
+	.animate-pop-in {
+		animation: doc-pop-in 0.16s ease;
+	}
+}
+
+/* Heading anchors: revealed on heading hover or keyboard focus. */
+[data-anchor] {
+	opacity: 0;
+	transition: opacity 0.12s ease;
+}
+
+:is(h1, h2, h3):hover [data-anchor],
+[data-anchor]:focus-visible {
+	opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	html {
+		scroll-behavior: auto;
+	}
+
+	.animate-page-in,
+	.animate-fade-in,
+	.animate-pop-in {
+		animation: none;
 	}
 }

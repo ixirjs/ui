@@ -1,9 +1,9 @@
 export const metadata = {
-	title: 'Quick Start - Svelte Atoms',
-	description: 'Get up and running with Svelte Atoms in minutes.',
+	title: 'Quick Start - IXIR UI',
+	description: 'Get up and running with IXIR UI in minutes.',
 	pageTitle: 'Quick Start',
 	pageDescription:
-		'Get up and running with Svelte Atoms in minutes. This guide will walk you through installation, configuration, and your first component.',
+		'Get up and running with IXIR UI in minutes. This guide will walk you through installation, configuration, and your first component.',
 	breadcrumbs: [{ label: 'Docs', href: '/docs' }, { label: 'Quick Start' }],
 	requirements: [
 		{
@@ -54,7 +54,7 @@ export const metadata = {
 		},
 		{
 			title: 'Learn the Philosophy',
-			description: 'Understand the principles behind Svelte Atoms',
+			description: 'Understand the principles behind IXIR UI',
 			link: '/docs/philosophy'
 		},
 		{

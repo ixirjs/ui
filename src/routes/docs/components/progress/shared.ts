@@ -53,7 +53,7 @@ const useCases = [
 ];
 
 export const metadata = {
-	title: 'Progress - Svelte Atoms',
+	title: 'Progress - IXIR UI',
 	description: 'Linear and circular progress indicators with determinate and indeterminate states.',
 	componentTitle: 'Progress',
 	componentDescription:

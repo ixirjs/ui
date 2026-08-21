@@ -1,24 +1,20 @@
 <script lang="ts">
-	type Props = {
-		items: Array<{ label: string; href?: string }>;
-	};
+	type Props = { items: Array<{ label: string; href?: string }> };
 
 	let { items }: Props = $props();
 </script>
 
-<nav class="text-muted-foreground mb-4 flex items-center space-x-2 text-sm">
+<nav
+	class="text-muted-foreground mb-[18px] flex items-center gap-[7px] text-[13px]"
+	aria-label="Breadcrumb"
+>
+	<a href="/docs" class="text-muted-foreground hover:text-foreground transition-colors">Docs</a>
 	{#each items as item, index (index)}
-		{#if index > 0}
-			<svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-				<path
-					fill-rule="evenodd"
-					d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-					clip-rule="evenodd"
-				/>
-			</svg>
-		{/if}
+		<span class="text-fg-faint" aria-hidden="true">/</span>
 		{#if item.href}
-			<a href={item.href} class="hover:text-accent transition-colors">{item.label}</a>
+			<a href={item.href} class="text-muted-foreground hover:text-foreground transition-colors"
+				>{item.label}</a
+			>
 		{:else}
 			<span class="text-foreground">{item.label}</span>
 		{/if}

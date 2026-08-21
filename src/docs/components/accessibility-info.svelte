@@ -1,34 +1,33 @@
 <script lang="ts">
-	type Props = {
-		features: string[];
-		title?: string | undefined;
-	};
+	type Props = { features: string[]; title?: string | undefined };
 
-	let { features, title = '' }: Props = $props();
+	let { features, title = 'Handled for you' }: Props = $props();
 </script>
 
-<div class="border-primary/40 border-l-2 pl-4">
+<div class="border-border rounded-[10px] border p-4">
 	{#if title}
-		<p class="text-muted-foreground mb-2 text-xs font-medium uppercase tracking-wide">{title}</p>
+		<p class="text-muted-foreground m-0 mb-3 text-xs font-semibold tracking-[0.06em] uppercase">
+			{title}
+		</p>
 	{/if}
-	<ul class="space-y-1.5">
+	<div class="flex flex-col gap-2">
 		{#each features as feature, i (i)}
-			<li class="flex items-start gap-2">
+			<div class="flex items-start gap-[9px]">
 				<svg
-					class="text-primary/60 mt-0.5 h-3.5 w-3.5 flex-shrink-0"
+					width="14"
+					height="14"
+					viewBox="0 0 24 24"
 					fill="none"
 					stroke="currentColor"
-					viewBox="0 0 24 24"
+					stroke-width="2.5"
+					stroke-linecap="round"
+					class="text-primary mt-[3px] shrink-0"
+					aria-hidden="true"
 				>
-					<path
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						stroke-width="2.5"
-						d="M5 13l4 4L19 7"
-					/>
+					<path d="M20 6 9 17l-5-5" />
 				</svg>
-				<span class="text-foreground/80 text-sm">{feature}</span>
-			</li>
+				<span class="text-muted-foreground text-[13.5px] leading-[1.5]">{feature}</span>
+			</div>
 		{/each}
-	</ul>
+	</div>
 </div>

@@ -14,7 +14,7 @@ const useCases = [
 ];
 
 export const metadata = {
-	title: 'Image - Svelte Atoms',
+	title: 'Image - IXIR UI',
 	description: 'Image wrapper with a presettable container and graceful fallback.',
 	componentTitle: 'Image',
 	componentDescription:

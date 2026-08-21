@@ -14,7 +14,7 @@ const useCases = [
 ];
 
 export const metadata = {
-	title: 'QrCode - Svelte Atoms',
+	title: 'QrCode - IXIR UI',
 	description: 'Render a styled QR code from any string value.',
 	componentTitle: 'QrCode',
 	componentDescription:

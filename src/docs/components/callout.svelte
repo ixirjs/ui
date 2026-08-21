@@ -12,12 +12,14 @@
 
 	const { variant = 'info', title, class: klass = '', children }: Props = $props();
 
+	// Accent wash for the neutral variants; the two alarming ones borrow warn / danger so a caution
+	// still reads as one at a glance.
 	const variantStyles: Record<Variant, string> = {
-		info: 'border-primary/50 text-muted-foreground',
-		warning: 'border-yellow-500/60 text-muted-foreground',
-		success: 'border-green-500/60 text-muted-foreground',
-		tip: 'border-blue-500/60 text-muted-foreground',
-		note: 'border-border text-muted-foreground'
+		info: 'border-l-accent-line bg-accent-soft',
+		tip: 'border-l-accent-line bg-accent-soft',
+		success: 'border-l-accent-line bg-accent-soft',
+		warning: 'border-l-warn bg-warn/8',
+		note: 'border-l-border bg-bg-subtle'
 	};
 
 	const defaultTitles: Record<Variant, string> = {
@@ -29,14 +31,13 @@
 	};
 
 	const resolvedTitle = $derived(title ?? defaultTitles[variant]);
-	const variantClass = $derived(variantStyles[variant]);
 </script>
 
-<div class={['border-l-2 pl-4 py-2 my-4', variantClass, klass].filter(Boolean).join(' ')}>
+<div class={['my-6 rounded-r-lg border-l-2 px-4 py-3', variantStyles[variant], klass]}>
 	{#if resolvedTitle}
-		<p class="text-sm font-semibold text-foreground mb-1">{resolvedTitle}</p>
+		<p class="text-foreground m-0 mb-1 text-[13.5px] font-semibold">{resolvedTitle}</p>
 	{/if}
-	<div class="text-sm leading-relaxed">
+	<div class="text-foreground text-[13.5px] leading-[1.6]">
 		{@render children()}
 	</div>
 </div>

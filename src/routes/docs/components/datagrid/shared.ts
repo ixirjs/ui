@@ -110,7 +110,7 @@ const componentsSummary = [
 ];
 
 export const metadata = {
-	title: 'DataGrid - Svelte Atoms',
+	title: 'DataGrid - IXIR UI',
 	description:
 		'Flexible CSS subgrid-based data grid for displaying tabular data with sorting, selection, and custom cell rendering.',
 	componentTitle: 'DataGrid',

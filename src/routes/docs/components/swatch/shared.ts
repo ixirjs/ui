@@ -5,7 +5,7 @@ const accessibilityFeatures = [
 ];
 
 export const metadata = {
-	title: 'Swatch - Svelte Atoms',
+	title: 'Swatch - IXIR UI',
 	description: 'Color swatch tile for palette display and color picker UIs.',
 	componentTitle: 'Swatch',
 	componentDescription:

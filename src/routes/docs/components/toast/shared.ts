@@ -70,7 +70,7 @@ const componentsSummary = [
 ];
 
 export const metadata = {
-	title: 'Toast - Svelte Atoms',
+	title: 'Toast - IXIR UI',
 	description: 'Display brief, temporary notifications to users.',
 	componentTitle: 'Toast',
 	componentDescription:

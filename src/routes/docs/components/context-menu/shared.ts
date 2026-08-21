@@ -13,7 +13,7 @@ const preset = definePreset({
 });`;
 
 export const metadata = {
-	title: 'Context Menu - Svelte Atoms',
+	title: 'Context Menu - IXIR UI',
 	description: 'Context menu component triggered by right-click interactions.',
 	componentTitle: 'Context Menu',
 	componentDescription:

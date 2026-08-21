@@ -50,7 +50,7 @@ const useCases = [
 ];
 
 export const metadata = {
-	title: 'Badge - Svelte Atoms',
+	title: 'Badge - IXIR UI',
 	description: 'Small count and labeling component for status and notifications.',
 	componentTitle: 'Badge',
 	componentDescription:

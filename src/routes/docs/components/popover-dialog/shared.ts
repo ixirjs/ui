@@ -22,7 +22,7 @@ const useCases = [
 ];
 
 export const metadata = {
-	title: 'PopoverDialog - Svelte Atoms',
+	title: 'PopoverDialog - IXIR UI',
 	description: 'A popover on wide screens that becomes a modal dialog on small ones.',
 	componentTitle: 'PopoverDialog',
 	componentDescription:

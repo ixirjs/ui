@@ -262,12 +262,14 @@ setPreset(definePreset({
 </svelte:head>
 
 <!-- Hero -->
-<div class="border-border/60 mb-14 border-b pb-12">
-	<p class="text-primary mb-3 text-sm font-medium uppercase tracking-wide">Preset System</p>
-	<h1 class="text-foreground mb-4 text-4xl font-bold tracking-tight">
+<div class="animate-page-in mb-9">
+	<p class="text-muted-foreground m-0 mb-2.5 font-mono text-[11px] tracking-[0.05em] uppercase">
+		Preset System
+	</p>
+	<h1 class="font-display text-foreground m-0 mb-3 text-[32px] font-bold tracking-[-0.025em]">
 		Style once. Apply everywhere.
 	</h1>
-	<p class="text-muted-foreground mb-8 max-w-xl text-lg leading-relaxed">
+	<p class="text-muted-foreground m-0 mb-6 max-w-[640px] text-[17px] leading-[1.65]">
 		{metadata.pageDescription}
 	</p>
 	<div class="flex flex-wrap gap-3">

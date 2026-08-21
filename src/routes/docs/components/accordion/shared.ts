@@ -86,7 +86,7 @@ const componentsSummary = [
 ];
 
 export const metadata = {
-	title: 'Accordion - Svelte Atoms',
+	title: 'Accordion - IXIR UI',
 	description: 'Collapsible content sections for organizing information in a space-efficient way.',
 	componentTitle: 'Accordion',
 	componentDescription:

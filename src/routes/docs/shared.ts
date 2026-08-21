@@ -8,12 +8,12 @@ export const metadata = {
 	breadcrumbs: [{ label: 'Docs' }],
 
 	overview:
-		'Svelte Atoms is a modern, headless UI component library built for Svelte 5. It combines the power of atomic design principles with practical, production-ready components. Every component is built with accessibility, keyboard navigation, and type safety as first-class citizens.',
+		'IXIR UI is a modern, headless UI component library built for Svelte 5. It combines the power of atomic design principles with practical, production-ready components. Every component is built with accessibility, keyboard navigation, and type safety as first-class citizens.',
 
 	sections: [
 		{
 			title: 'Getting Started',
-			description: 'Learn the fundamentals of Svelte Atoms and how to use it in your projects.'
+			description: 'Learn the fundamentals of IXIR UI and how to use it in your projects.'
 		},
 		{
 			title: 'Core Concepts',

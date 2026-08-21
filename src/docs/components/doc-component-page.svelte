@@ -9,7 +9,8 @@
 	import type { DocMode } from '$docs/context/doc-mode.svelte';
 	import type { Frontmatter } from '$docs/md/frontmatter';
 	import { newLine } from '$docs/md/template';
-	import { breadcrumbsFor, siblingsOf, slugFor } from '$docs/registry';
+	import { breadcrumbsFor, relatedTo, siblingsOf, slugFor } from '$docs/registry';
+	import DocAnatomy from './doc-anatomy.svelte';
 	import DocPropsTabs from './doc-props-tabs.svelte';
 	import type { ComponentDocMeta, PropsSection } from '$docs/types';
 
@@ -78,10 +79,14 @@
 
 	const showPreset = $derived(preset !== undefined || Boolean(metadata.presetCode));
 	const isCompound = $derived(metadata.componentType === 'compound');
-	const hasMarkdownHeader = $derived(
-		isCompound &&
-			((metadata.useCases?.length ?? 0) > 0 || (metadata.componentsSummary?.length ?? 0) > 0)
-	);
+	const parts = $derived(metadata.componentsSummary ?? []);
+	// Siblings in the same category, never `frontmatter.related`: that field mixes guide slugs with
+	// component slugs and nothing checks it, so three of its four uses resolve to nothing.
+	const related = $derived(relatedTo(resolvedFrontmatter.id));
+	// The two neutral pills beside the status chip, per the design's component header.
+	const kindLabel = $derived(metadata.componentType ?? 'simple');
+	const depthLabel = $derived(resolvedFrontmatter.depth);
+	const hasMarkdownHeader = $derived(isCompound || (metadata.useCases?.length ?? 0) > 0);
 </script>
 
 <DocPage
@@ -89,6 +94,8 @@
 	title={metadata.componentTitle}
 	description={metadata.componentDescription}
 	status={metadata.status}
+	kind={kindLabel}
+	depth={depthLabel}
 	llms={true}
 	breadcrumbs={trail}
 	prev={prevLink}
@@ -109,13 +116,6 @@
 						- **{uc.title}**: {uc.description}
 					{/each}
 				{/if}
-				{#if metadata.componentsSummary?.length}
-					## Components
-
-					{#each metadata.componentsSummary as comp, i (i)}
-						- **{comp.name}**: {comp.description}
-					{/each}
-				{/if}
 			</DocOnly>
 		{/if}
 
@@ -129,7 +129,7 @@
 				{#if preset}
 					{@render preset()}
 				{:else if metadata.presetCode}
-					<DocCode code={metadata.presetCode} lang="typescript" />
+					<DocCode code={metadata.presetCode} lang="typescript" filepath="src/lib/preset.ts" />
 				{/if}
 			</DocSection>
 		{/if}
@@ -141,6 +141,15 @@
 		{/if}
 
 		{@render extra?.()}
+
+		{#if parts.length > 0}
+			<DocSection title="Anatomy">
+				<DocAnatomy
+					{parts}
+					intro="{parts.length} parts, coordinated by one {metadata.componentTitle} Bond."
+				/>
+			</DocSection>
+		{/if}
 
 		{#if apiReference || apiSections}
 			<DocSection title="API Reference">
@@ -155,6 +164,25 @@
 		<DocSection title="Accessibility">
 			<DocAccessibility features={metadata.accessibility} />
 		</DocSection>
+
+		{#if related.length > 0}
+			<DocOnly for="html">
+				<DocSection title="Related">
+					<div class="grid grid-cols-3 gap-2.5 max-[900px]:grid-cols-1">
+						{#each related as item (item.href)}
+							<a
+								href={item.href}
+								class="border-border hover:border-border-strong text-foreground flex flex-col gap-1 rounded-[9px] border p-[13px] transition-colors"
+							>
+								<span class="text-sm font-medium">{item.title}</span>
+								<span class="text-muted-foreground text-[12.5px] leading-[1.5]">{item.summary}</span
+								>
+							</a>
+						{/each}
+					</div>
+				</DocSection>
+			</DocOnly>
+		{/if}
 
 		<DocOnly for="markdown">
 			{newLine(2)}## License MIT License

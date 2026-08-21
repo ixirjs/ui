@@ -16,7 +16,7 @@
 
 {metadata.pageDescription}
 
-## Core Principles Svelte Atoms is built on three fundamental principles that guide every design
+## Core Principles IXIR UI is built on three fundamental principles that guide every design
 decision:
 
 {#each metadata.corePrinciples as principle, i (i)}
@@ -83,7 +83,7 @@ const accordion = createAccordionBond({
 	{approach.description}
 {/each}
 
-## Design Goals What we optimize for when building Svelte Atoms:
+## Design Goals What we optimize for when building IXIR UI:
 
 {#each metadata.designGoals as goal, i (i)}
 	### {goal.goal} (Priority: {goal.priority})
@@ -91,7 +91,7 @@ const accordion = createAccordionBond({
 	{goal.description}
 {/each}
 
-## What We're Not It's important to understand what Svelte Atoms is NOT trying to be:
+## What We're Not It's important to understand what IXIR UI is NOT trying to be:
 
 {#each metadata.whatWeAreNot as item, i (i)}
 	### {item.title}
@@ -121,11 +121,11 @@ const accordion = createAccordionBond({
 	'svelte'
 )}
 
-Svelte Atoms uses composition:
+IXIR UI uses composition:
 
 {codeBlock(
 	`
-<!-- Svelte Atoms -->
+<!-- IXIR UI -->
 <DataGrid.Root>
   <DataGrid.Header>
     {#each columns as column, i (i)}
@@ -215,7 +215,7 @@ Svelte Atoms uses composition:
 **Cons:**
 {list(['Still opinionated structure', 'Limited composition', 'Complex API for customization'])}
 
-### Svelte Atoms **Pros:**
+### IXIR UI **Pros:**
 {list([
 	'Maximum flexibility',
 	'Composition-first',
@@ -246,7 +246,7 @@ Svelte Atoms uses composition:
 	true
 )}
 
-## Future Direction Svelte Atoms will continue to:
+## Future Direction IXIR UI will continue to:
 
 {list([
 	'**Expand primitives**: Add more building blocks for common patterns',
@@ -290,7 +290,7 @@ What we won't do:
 	'**Education**: Help developers understand, not just use'
 ])}
 
-## Conclusion Svelte Atoms is about giving you the building blocks to create exactly what you need,
+## Conclusion IXIR UI is about giving you the building blocks to create exactly what you need,
 without compromise. It's built on the beliefs that:
 
 {list([
@@ -302,7 +302,7 @@ without compromise. It's built on the beliefs that:
 	'Simplicity and transparency build trust'
 ])}
 
-If these principles resonate with you, Svelte Atoms will feel natural and powerful. If you prefer
+If these principles resonate with you, IXIR UI will feel natural and powerful. If you prefer
 batteries-included solutions with opinionated defaults, you might prefer a traditional component
 library. We're building for developers who want control, understand trade-offs, and enjoy building
 from primitives.

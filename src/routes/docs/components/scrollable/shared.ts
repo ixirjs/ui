@@ -75,7 +75,7 @@ const componentsSummary = [
 ];
 
 export const metadata = {
-	title: 'Scrollable - Svelte Atoms',
+	title: 'Scrollable - IXIR UI',
 	description:
 		'Custom scrollbar container component for vertical and horizontal scrollable content areas.',
 	componentTitle: 'Scrollable',

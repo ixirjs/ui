@@ -58,7 +58,7 @@ const componentsSummary = [
 ];
 
 export const metadata = {
-	title: 'Textarea - Svelte Atoms',
+	title: 'Textarea - IXIR UI',
 	description: 'Multi-line text input component for capturing longer text content in forms.',
 	componentTitle: 'Textarea',
 	componentDescription:

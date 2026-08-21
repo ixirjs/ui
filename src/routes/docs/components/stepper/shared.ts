@@ -104,7 +104,7 @@ const componentsSummary = [
 ];
 
 export const metadata = {
-	title: 'Stepper - Svelte Atoms',
+	title: 'Stepper - IXIR UI',
 	description: 'Multi-step wizard component for guided workflows, forms, and onboarding processes.',
 	componentTitle: 'Stepper',
 	componentDescription:

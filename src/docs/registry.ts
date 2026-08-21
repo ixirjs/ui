@@ -19,6 +19,8 @@ export interface ComponentEntry {
 	category: ComponentCategory;
 	status: 'stable' | 'beta';
 	href: string;
+	/** The page's own import line — what the home gallery's copy button yields. */
+	importCode: string;
 }
 
 // Absolute glob, as in `src/routes/api/docs.ts` — this file lives under `src/docs`, but the pages
@@ -39,7 +41,8 @@ export const components: ComponentEntry[] = Object.entries(metas)
 			summary: meta.summary,
 			category: meta.category,
 			status: meta.status,
-			href: `/docs/components/${slug}`
+			href: `/docs/components/${slug}`,
+			importCode: meta.importCode
 		};
 	})
 	.sort((a, b) => a.title.localeCompare(b.title));
@@ -75,6 +78,20 @@ export function siblingsOf(slug: string): {
 	const index = indexBySlug.get(slug);
 	if (index === undefined) return {};
 	return { prev: components[index - 1], next: components[index + 1] };
+}
+
+/**
+ * Up to three siblings in the same category, for the component page's "Related" grid.
+ *
+ * Category, not a hand-kept list: a per-page `related` array is a fifth copy of the catalog and the
+ * one nobody updates when a component is added. A page that wants a specific set passes its own
+ * `frontmatter.related` and that wins.
+ */
+export function relatedTo(slug: string, limit = 3): ComponentEntry[] {
+	const index = indexBySlug.get(slug);
+	const self = index === undefined ? undefined : components[index];
+	if (!self) return [];
+	return components.filter((e) => e.category === self.category && e.slug !== slug).slice(0, limit);
 }
 
 /** `Components / <title>` — the trail every component page had written out by hand. */

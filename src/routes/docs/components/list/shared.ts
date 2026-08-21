@@ -89,7 +89,7 @@ const componentsSummary = [
 ];
 
 export const metadata = {
-	title: 'List - Svelte Atoms',
+	title: 'List - IXIR UI',
 	description:
 		'Flexible list component for displaying collections of items with grouping, titles, and dividers.',
 	componentTitle: 'List',

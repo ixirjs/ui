@@ -15,8 +15,8 @@
 
 <FrontMatter {frontmatter} />
 
-# Component Composition Svelte Atoms favors composition over monolithic components. ## Base
-Composition with {inlineCode('base')}
+# Component Composition IXIR UI favors composition over monolithic components. ## Base Composition
+with {inlineCode('base')}
 
 {codeBlock(
 	`<script lang="ts">

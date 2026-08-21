@@ -83,17 +83,21 @@ const trigger = createAtomInstance('trigger', {
 </script>
 
 <svelte:head>
-	<title>Migration Guide — Svelte Atoms</title>
+	<title>Migration Guide — IXIR UI</title>
 	<meta
 		name="description"
-		content="Move older Svelte Atoms code from BondState and Bond-owned atom factories to the current Bond, Atom, and capability model."
+		content="Move older IXIR UI code from BondState and Bond-owned atom factories to the current Bond, Atom, and capability model."
 	/>
 </svelte:head>
 
-<div class="border-border/60 mb-14 border-b pb-12">
-	<p class="text-primary mb-3 text-sm font-medium uppercase tracking-wide">Migration Guide</p>
-	<h1 class="text-foreground mb-4 text-4xl font-bold tracking-tight">Move to the current model.</h1>
-	<p class="text-muted-foreground mb-8 max-w-xl text-lg leading-relaxed">
+<div class="animate-page-in mb-9">
+	<p class="text-muted-foreground m-0 mb-2.5 font-mono text-[11px] tracking-[0.05em] uppercase">
+		Migration Guide
+	</p>
+	<h1 class="font-display text-foreground m-0 mb-3 text-[32px] font-bold tracking-[-0.025em]">
+		Move to the current model.
+	</h1>
+	<p class="text-muted-foreground m-0 mb-6 max-w-[640px] text-[17px] leading-[1.65]">
 		Use this guide when older code or docs mention BondState, Bond-owned Atoms, generated atom
 		factories, or <code class="font-mono text-sm">bond.state</code> as the main public API.
 	</p>

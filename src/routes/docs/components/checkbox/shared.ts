@@ -56,7 +56,7 @@ const useCases = [
 ];
 
 export const metadata = {
-	title: 'Checkbox - Svelte Atoms',
+	title: 'Checkbox - IXIR UI',
 	description: 'Accessible checkbox input for boolean and multi-select form controls.',
 	componentTitle: 'Checkbox',
 	componentDescription:

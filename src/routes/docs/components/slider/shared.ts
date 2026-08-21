@@ -53,7 +53,7 @@ const useCases = [
 ];
 
 export const metadata = {
-	title: 'Slider - Svelte Atoms',
+	title: 'Slider - IXIR UI',
 	description:
 		'Accessible slider component for selecting numeric values across a configurable range.',
 	componentTitle: 'Slider',

@@ -77,7 +77,7 @@ const componentsSummary = [
 ];
 
 export const metadata = {
-	title: 'Collapsible - Svelte Atoms',
+	title: 'Collapsible - IXIR UI',
 	description: 'Expandable container for showing and hiding content on demand.',
 	componentTitle: 'Collapsible',
 	componentDescription:

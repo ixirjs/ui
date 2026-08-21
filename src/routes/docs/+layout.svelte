@@ -1,10 +1,9 @@
 <script lang="ts">
-	import { type PageContent } from '$docs/content-sidebar.svelte';
-	import { components } from '$docs/registry';
 	import DocsNavSidebar from '$docs/docs-nav-sidebar.svelte';
 	import DocsTocSidebar from '$docs/docs-toc-sidebar.svelte';
-	import DocsFooter from '../docs-footer.svelte';
-	import { page } from '$app/stores';
+	import { allNavItems, isActive } from '$docs/nav';
+	import PageNavigation from '$docs/components/page-navigation.svelte';
+	import { page } from '$app/state';
 
 	let { children } = $props();
 
@@ -13,23 +12,47 @@
 	let activeId = $state('');
 	let mainEl = $state<HTMLElement | undefined>(undefined);
 	let mobileNavOpen = $state(false);
-	let mobileTocOpen = $state(false);
 
-	// Close mobile nav on route change
-	$effect(() => {
-		void $page.url.pathname;
-		mobileNavOpen = false;
-		mobileTocOpen = false;
+	const pathname = $derived(page.url.pathname);
+
+	// Shown next to the mobile menu button — the design's `crumbLabel`. Exact match first: the last
+	// prefix match on a component page is the catalog, not the component.
+	const crumbLabel = $derived(
+		allNavItems.find((item) => item.href === pathname)?.label ??
+			allNavItems.filter((item) => isActive(pathname, item.href)).pop()?.label ??
+			'Docs'
+	);
+
+	// Component pages get prev/next from `DocComponentPage`; every other docs page gets it here, in
+	// sidebar order, so a guide is never a dead end.
+	const ownsNavigation = $derived(/^\/docs\/components\/.+/.test(pathname));
+	const siblings = $derived.by(() => {
+		const at = allNavItems.findIndex((item) => item.href === pathname);
+		return at < 0 ? {} : { prev: allNavItems[at - 1], next: allNavItems[at + 1] };
 	});
 
 	$effect(() => {
-		void $page.url.pathname;
-		requestAnimationFrame(() => {
+		void pathname;
+		mobileNavOpen = false;
+	});
+
+	$effect(() => {
+		void pathname;
+		let observer: IntersectionObserver | undefined;
+
+		const frame = requestAnimationFrame(() => {
 			if (!mainEl) return;
 			const headings = Array.from(mainEl.querySelectorAll('h2[id]'));
-			toc = headings.map((h) => ({ id: h.id, text: h.textContent?.trim() ?? '' }));
+			// The heading owns a trailing `#` anchor, and Svelte's block anchors are comment nodes whose
+			// `textContent` is their marker text — so the label is read off a clone with both removed.
+			toc = headings.map((h) => {
+				const clone = h.cloneNode(true) as HTMLElement;
+				clone.querySelectorAll('[data-anchor]').forEach((node) => node.remove());
+				return { id: h.id, text: (clone.textContent ?? '').trim() };
+			});
+			activeId = headings[0]?.id ?? '';
 
-			const observer = new IntersectionObserver(
+			observer = new IntersectionObserver(
 				(entries) => {
 					for (const entry of entries) {
 						if (entry.isIntersecting) {
@@ -40,120 +63,53 @@
 				},
 				{ rootMargin: '-20% 0px -60% 0px', threshold: 0 }
 			);
-			headings.forEach((h) => observer.observe(h));
-			return () => observer.disconnect();
+			headings.forEach((h) => observer!.observe(h));
 		});
-	});
 
-	const sidebarData: PageContent[] = [
-		{
-			title: 'Getting Started',
-			href: '/docs',
-			children: [
-				{ title: 'Introduction', href: '/docs' },
-				{ title: 'Quick Start', href: '/docs/quick-start' },
-				{ title: 'Philosophy', href: '/docs/philosophy' },
-				{ title: 'Migration Guide', href: '/docs/migration' }
-			]
-		},
-		{
-			title: 'Core Concepts',
-			children: [
-				{ title: 'Bonds', href: '/docs/bonds' },
-				{ title: 'Extending & Fusing', href: '/docs/extending' },
-				{ title: 'Preset System', href: '/docs/preset' },
-				{ title: 'Styling', href: '/docs/styling' },
-				{ title: 'Accessibility', href: '/docs/accessibility' }
-			]
-		},
-		{
-			title: 'Components',
-			href: '/docs/components',
-			children: components.map(({ title, href }) => ({ title, href }))
-		}
-	];
+		return () => {
+			cancelAnimationFrame(frame);
+			observer?.disconnect();
+		};
+	});
 </script>
 
-<!-- Mobile sticky bar (hidden on desktop) -->
+<!-- 232 / content / 200 with a 40px gutter. The TOC column drops at 1180px, the nav column at 900. -->
 <div
-	class="border-border bg-background/80 sticky top-14 z-40 flex items-center border-b px-4 py-2 backdrop-blur-md lg:hidden"
+	class="mx-auto grid w-full max-w-[1480px] grid-cols-[232px_minmax(0,1fr)_200px] items-start gap-10 px-5 max-[1180px]:grid-cols-[232px_minmax(0,1fr)] max-[899px]:grid-cols-[minmax(0,1fr)] max-[899px]:gap-0"
 >
-	<!-- Left: hamburger -->
-	<button
-		onclick={() => {
-			mobileNavOpen = !mobileNavOpen;
-			mobileTocOpen = false;
-		}}
-		class="text-muted-foreground hover:text-foreground hover:bg-muted flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors"
-		aria-label="Toggle navigation"
-	>
-		{#if mobileNavOpen}
-			<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-				<path
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					stroke-width="2"
-					d="M6 18L18 6M6 6l12 12"
-				/>
-			</svg>
-		{:else}
-			<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-				<path
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					stroke-width="2"
-					d="M4 6h16M4 12h16M4 18h16"
-				/>
-			</svg>
-		{/if}
-		<span>Menu</span>
-	</button>
-
-	<!-- Right: current heading + TOC toggle -->
-	{#if toc.length > 0}
+	<!-- Below 900px: the sidebar collapses into a menu button. -->
+	<div class="border-border flex items-center gap-2.5 border-b py-2.5 min-[900px]:hidden">
 		<button
-			onclick={() => {
-				mobileTocOpen = !mobileTocOpen;
-				mobileNavOpen = false;
-			}}
-			class="text-muted-foreground hover:text-foreground hover:bg-muted ml-auto flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm transition-colors"
-			aria-label="Toggle table of contents"
+			type="button"
+			onclick={() => (mobileNavOpen = !mobileNavOpen)}
+			aria-expanded={mobileNavOpen}
+			class="border-border bg-surface text-foreground flex cursor-pointer items-center gap-2 rounded-[7px] border px-[11px] py-[7px] text-[13px]"
 		>
-			<span class="max-w-[180px] truncate">
-				{activeId ? (toc.find((t) => t.id === activeId)?.text ?? toc[0]?.text) : toc[0]?.text}
-			</span>
 			<svg
-				class="h-3.5 w-3.5 shrink-0 transition-transform {mobileTocOpen ? 'rotate-180' : ''}"
+				width="14"
+				height="14"
+				viewBox="0 0 24 24"
 				fill="none"
 				stroke="currentColor"
-				viewBox="0 0 24 24"
+				stroke-width="2"
+				stroke-linecap="round"
+				aria-hidden="true"
 			>
-				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+				<path d="M4 6h16M4 12h16M4 18h16" />
 			</svg>
+			Docs menu
 		</button>
-	{/if}
-</div>
+		<span class="text-muted-foreground truncate text-[13px]">{crumbLabel}</span>
+	</div>
 
-<!-- Layout -->
-<div class="docs-layout w-full items-start gap-4 px-4 lg:gap-16 lg:px-6">
-	<DocsNavSidebar
-		data={sidebarData}
-		pathname={$page.url.pathname}
-		open={mobileNavOpen}
-		ondismiss={() => (mobileNavOpen = false)}
-	/>
+	<DocsNavSidebar {pathname} bind:open={mobileNavOpen} />
 
-	<main bind:this={mainEl} class="docs-scroll min-w-0 flex-1 py-8">
+	<main bind:this={mainEl} class="docs-scroll min-w-0 pt-7 pb-18">
 		{@render children?.()}
-		<DocsFooter />
+		{#if !ownsNavigation}
+			<PageNavigation prev={siblings.prev} next={siblings.next} />
+		{/if}
 	</main>
 
-	<DocsTocSidebar {toc} {activeId} open={mobileTocOpen} ondismiss={() => (mobileTocOpen = false)} />
+	<DocsTocSidebar {toc} {activeId} {pathname} />
 </div>
-
-<style>
-	.docs-layout {
-		display: grid;
-		grid-template-columns: auto minmax(0, 1fr) auto;
-	}
-</style>

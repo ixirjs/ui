@@ -14,7 +14,7 @@ const useCases = [
 ];
 
 export const metadata = {
-	title: 'Element - Svelte Atoms',
+	title: 'Element - IXIR UI',
 	description: 'The primitive element renderers every atom is built on.',
 	componentTitle: 'Element',
 	componentDescription:

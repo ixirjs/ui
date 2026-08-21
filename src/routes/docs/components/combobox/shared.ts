@@ -103,7 +103,7 @@ const componentsSummary = [
 ];
 
 export const metadata = {
-	title: 'Combobox - Svelte Atoms',
+	title: 'Combobox - IXIR UI',
 	description:
 		'Accessible combobox with single/multiple selection, search filtering, and keyboard navigation. Built on Dropdown and Popover.',
 	componentTitle: 'Combobox',

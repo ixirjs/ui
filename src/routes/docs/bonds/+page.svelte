@@ -142,19 +142,21 @@ const trigger = createAtomInstance('trigger', {
 </script>
 
 <svelte:head>
-	<title>Bonds — Svelte Atoms</title>
+	<title>Bonds — IXIR UI</title>
 	<meta
 		name="description"
 		content="Learn the vNext Bond model: Atom components create Atoms, Bonds coordinate shared state, and capabilities attach reusable behavior."
 	/>
 </svelte:head>
 
-<div class="border-border/60 mb-14 border-b pb-12">
-	<p class="text-primary mb-3 text-sm font-medium uppercase tracking-wide">Bonds</p>
-	<h1 class="text-foreground mb-4 text-4xl font-bold tracking-tight">
+<div class="animate-page-in mb-9">
+	<p class="text-muted-foreground m-0 mb-2.5 font-mono text-[11px] tracking-[0.05em] uppercase">
+		Bonds
+	</p>
+	<h1 class="font-display text-foreground m-0 mb-3 text-[32px] font-bold tracking-[-0.025em]">
 		Coordination without prop drilling.
 	</h1>
-	<p class="text-muted-foreground mb-8 max-w-xl text-lg leading-relaxed">
+	<p class="text-muted-foreground m-0 mb-6 max-w-[640px] text-[17px] leading-[1.65]">
 		A Bond owns shared component state, context, registered Atoms, and compound coordination. Atom
 		components render the DOM; Atoms hold the runtime element behavior.
 	</p>

@@ -1,13 +1,13 @@
 export const metadata = {
-	title: 'Accessibility - Svelte Atoms',
-	description: 'Learn about accessibility features built into Svelte Atoms components.',
+	title: 'Accessibility - IXIR UI',
+	description: 'Learn about accessibility features built into IXIR UI components.',
 	pageTitle: 'Accessibility',
 	pageDescription:
-		'Svelte Atoms components are built with accessibility in mind, following WCAG 2.1 guidelines and best practices.',
+		'IXIR UI components are built with accessibility in mind, following WCAG 2.1 guidelines and best practices.',
 	breadcrumbs: [{ label: 'Docs', href: '/docs' }, { label: 'Accessibility' }],
 
 	overview:
-		'Svelte Atoms is designed with accessibility as a core principle, not an afterthought. Every component is built to be accessible by default, following WCAG 2.1 guidelines and WAI-ARIA best practices. This ensures your applications are usable by everyone, regardless of their abilities or the assistive technologies they use.',
+		'IXIR UI is designed with accessibility as a core principle, not an afterthought. Every component is built to be accessible by default, following WCAG 2.1 guidelines and WAI-ARIA best practices. This ensures your applications are usable by everyone, regardless of their abilities or the assistive technologies they use.',
 
 	sections: [
 		{

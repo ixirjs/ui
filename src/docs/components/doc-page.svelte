@@ -13,6 +13,8 @@
 		title,
 		description,
 		status = undefined,
+		kind = undefined,
+		depth = undefined,
 		llms = false,
 		breadcrumbs = [],
 		prev = undefined,
@@ -24,6 +26,8 @@
 		title: string;
 		description: string;
 		status?: 'stable' | 'beta' | 'experimental' | 'deprecated' | undefined;
+		kind?: string | undefined;
+		depth?: string | undefined;
 		llms?: boolean;
 		breadcrumbs?: { label: string; href?: string }[];
 		prev?: { label: string; href: string } | undefined;
@@ -38,13 +42,9 @@
 </script>
 
 {#if contentType === 'html'}
-	<div class="py-8">
-		<div
-			class="sticky top-[57px] z-9 -mx-8 bg-background/95 px-8 py-3 backdrop-blur-sm transition-all duration-200"
-		>
-			<Breadcrumb items={breadcrumbs} />
-			<PageHeader {title} {description} {status} {llms} />
-		</div>
+	<div class="animate-page-in">
+		<Breadcrumb items={breadcrumbs} />
+		<PageHeader {title} {description} {status} {kind} {depth} {llms} />
 		{@render children()}
 		<PageNavigation {prev} {next} />
 	</div>

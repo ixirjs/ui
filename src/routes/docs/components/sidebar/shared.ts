@@ -58,7 +58,7 @@ const componentsSummary = [
 ];
 
 export const metadata = {
-	title: 'Sidebar - Svelte Atoms',
+	title: 'Sidebar - IXIR UI',
 	description:
 		'Collapsible side panel component for navigation drawers, detail views, and filter panels.',
 	componentTitle: 'Sidebar',

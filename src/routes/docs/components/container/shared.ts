@@ -20,7 +20,7 @@ const useCases = [
 ];
 
 export const metadata = {
-	title: 'Container - Svelte Atoms',
+	title: 'Container - IXIR UI',
 	description: 'CSS container query context with bindable measured size.',
 	componentTitle: 'Container',
 	componentDescription:

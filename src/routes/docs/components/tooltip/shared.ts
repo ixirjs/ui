@@ -70,7 +70,7 @@ const componentsSummary = [
 ];
 
 export const metadata = {
-	title: 'Tooltip - Svelte Atoms',
+	title: 'Tooltip - IXIR UI',
 	description: 'Display contextual information on hover or focus.',
 	componentTitle: 'Tooltip',
 	componentDescription:

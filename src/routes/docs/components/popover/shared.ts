@@ -83,7 +83,7 @@ const componentsSummary = [
 ];
 
 export const metadata = {
-	title: 'Popover - Svelte Atoms',
+	title: 'Popover - IXIR UI',
 	description: 'Floating content panel triggered by user interaction.',
 	componentTitle: 'Popover',
 	componentDescription:

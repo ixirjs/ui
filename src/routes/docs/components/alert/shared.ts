@@ -89,7 +89,7 @@ const componentsSummary = [
 ];
 
 export const metadata = {
-	title: 'Alert - Svelte Atoms',
+	title: 'Alert - IXIR UI',
 	description: 'Display important messages and notifications to users.',
 	componentTitle: 'Alert',
 	componentDescription:

@@ -96,7 +96,7 @@ const componentsSummary = [
 ];
 
 export const metadata = {
-	title: 'Tabs - Svelte Atoms',
+	title: 'Tabs - IXIR UI',
 	description: 'Organize content into multiple panels.',
 	componentTitle: 'Tabs',
 	componentDescription:

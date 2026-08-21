@@ -1,12 +1,12 @@
 export const metadata = {
-	title: 'Styling System - Svelte Atoms',
+	title: 'Styling System - IXIR UI',
 	description: 'Learn the flexible styling system with Tailwind, variants, and presets.',
 	pageTitle: 'Styling System',
 	pageDescription:
-		'Learn how to style Svelte Atoms components using Tailwind CSS, variants, presets, and custom CSS.',
+		'Learn how to style IXIR UI components using Tailwind CSS, variants, presets, and custom CSS.',
 	breadcrumbs: [{ label: 'Docs', href: '/docs' }, { label: 'Styling' }],
 	overview:
-		'Svelte Atoms provides a flexible styling system that works with any approach: Tailwind CSS, CSS modules, styled-components, or plain CSS. Components are unstyled by default, giving you complete control.',
+		'IXIR UI provides a flexible styling system that works with any approach: Tailwind CSS, CSS modules, styled-components, or plain CSS. Components are unstyled by default, giving you complete control.',
 	stylingApproaches: [
 		{
 			approach: 'Tailwind CSS (Recommended)',

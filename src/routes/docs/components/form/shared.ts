@@ -97,7 +97,7 @@ const componentsSummary = [
 ];
 
 export const metadata = {
-	title: 'Form & Field - Svelte Atoms',
+	title: 'Form & Field - IXIR UI',
 	description:
 		'Composable form and field components for building accessible, validated forms. Works with any Standard Schema library — Zod, Valibot, ArkType — with no adapter.',
 	componentTitle: 'Form & Field',

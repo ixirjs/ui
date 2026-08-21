@@ -6,12 +6,12 @@
 	<Accordion class="border-border overflow-hidden rounded-lg border">
 		<AccordionItem.Root>
 			<AccordionItem.Header>
-				<span class="text-foreground font-medium">What is Svelte Atoms?</span>
+				<span class="text-foreground font-medium">What is IXIR UI?</span>
 				<AccordionItem.Indicator class="ml-auto" />
 			</AccordionItem.Header>
 			<AccordionItem.Body>
-				Svelte Atoms is a modular, accessible, and extensible Svelte 5 UI component library built
-				with TailwindCSS.
+				IXIR UI is a modular, accessible, and extensible Svelte 5 UI component library built with
+				TailwindCSS.
 			</AccordionItem.Body>
 		</AccordionItem.Root>
 		<AccordionItem.Root>

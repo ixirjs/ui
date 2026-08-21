@@ -110,7 +110,7 @@ const componentsSummary = [
 ];
 
 export const metadata = {
-	title: 'Card - Svelte Atoms',
+	title: 'Card - IXIR UI',
 	description: 'Flexible container component for grouped content with headers, body, and footers.',
 	componentTitle: 'Card',
 	componentDescription:

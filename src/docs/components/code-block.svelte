@@ -119,9 +119,9 @@
 	style:--left-border-width={showLeftBorder ? '1px' : '0px'}
 >
 	{#if isLoading}
-		<div class="bg-muted animate-pulse rounded-lg p-4">
-			<div class="bg-muted-foreground/20 h-4 w-3/4 rounded"></div>
-			<div class="bg-muted-foreground/20 mt-2 h-4 w-1/2 rounded"></div>
+		<div class="bg-code-bg animate-pulse p-3.5">
+			<div class="bg-muted-foreground/20 h-3 w-3/4 rounded"></div>
+			<div class="bg-muted-foreground/20 mt-2 h-3 w-1/2 rounded"></div>
 		</div>
 	{:else}
 		<div class="overflow-x-auto">
@@ -132,7 +132,8 @@
 
 <style>
 	.code-block :global(pre) {
-		padding: 1rem 1.25rem;
+		/* 14px / 12.5px / 1.7 — the design's code metrics. */
+		padding: 14px;
 		overflow-x: auto;
 		border-radius: 0;
 		border-left: var(--left-border-width, 0px) solid
@@ -142,9 +143,9 @@
 	}
 
 	.code-block :global(code) {
-		font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
-		font-size: 0.875rem;
-		line-height: 1.5;
+		font-family: var(--font-mono);
+		font-size: 12.5px;
+		line-height: 1.7;
 	}
 
 	.code-block :global([data-line]) {

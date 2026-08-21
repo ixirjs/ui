@@ -161,12 +161,24 @@ export const statusPresentation = defineAtomCapability({
 </script>
 
 <svelte:head>
-	<title>Extending & Fusing — Svelte Atoms</title>
+	<title>Extending & Fusing — IXIR UI</title>
 	<meta
 		name="description"
 		content="Extend, compose, and author components with defineBond and capabilities."
 	/>
 </svelte:head>
+
+<div class="animate-page-in mb-9">
+	<p class="text-muted-foreground m-0 mb-2.5 font-mono text-[11px] tracking-[0.05em] uppercase">
+		Guide · how-to
+	</p>
+	<h1 class="font-display text-foreground m-0 mb-3 text-[32px] font-bold tracking-[-0.025em]">
+		Extending &amp; fusing.
+	</h1>
+	<p class="text-muted-foreground m-0 mb-6 max-w-[640px] text-[17px] leading-[1.65]">
+		Extend, compose and author components with <code>defineBond</code> and capabilities.
+	</p>
+</div>
 
 <Section.Root>
 	<Section.Header>

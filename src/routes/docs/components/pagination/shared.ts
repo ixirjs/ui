@@ -22,7 +22,7 @@ const useCases = [
 ];
 
 export const metadata = {
-	title: 'Pagination - Svelte Atoms',
+	title: 'Pagination - IXIR UI',
 	description: 'Page-by-page navigation over a list of unknown or known length.',
 	componentTitle: 'Pagination',
 	componentDescription:

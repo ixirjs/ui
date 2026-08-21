@@ -74,7 +74,7 @@ const componentsSummary = [
 ];
 
 export const metadata = {
-	title: 'Dropdown Menu - Svelte Atoms',
+	title: 'Dropdown Menu - IXIR UI',
 	description: 'Navigation dropdown menu component.',
 	componentTitle: 'Dropdown Menu',
 	componentDescription:

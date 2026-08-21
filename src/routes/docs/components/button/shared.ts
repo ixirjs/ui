@@ -59,7 +59,7 @@ const accessibilityFeatures = [
 ];
 
 export const metadata = {
-	title: 'Button - Svelte Atoms',
+	title: 'Button - IXIR UI',
 	description: 'Interactive button component for triggering actions and events.',
 	componentTitle: 'Button',
 	componentDescription:

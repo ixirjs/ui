@@ -250,7 +250,7 @@ const componentsSummary = [
 ];
 
 export const metadata = {
-	title: 'Input - Svelte Atoms',
+	title: 'Input - IXIR UI',
 	description:
 		'Compound input component for forms and data entry, supporting icons, placeholder, and all HTML input types.',
 	componentTitle: 'Input',

@@ -14,7 +14,7 @@ const useCases = [
 ];
 
 export const metadata = {
-	title: 'Portal - Svelte Atoms',
+	title: 'Portal - IXIR UI',
 	description: 'Render content into a different place in the tree without detaching from the body.',
 	componentTitle: 'Portal',
 	componentDescription:

@@ -73,7 +73,7 @@ const componentsSummary = [
 ];
 
 export const metadata = {
-	title: 'Breadcrumb - Svelte Atoms',
+	title: 'Breadcrumb - IXIR UI',
 	description: "Navigation component showing the user's location within a site hierarchy.",
 	componentTitle: 'Breadcrumb',
 	componentDescription:

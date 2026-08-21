@@ -4,7 +4,6 @@
 	// Calculate dimensions
 	const outerRadius = $derived(size * 0.45);
 	const triangleRadius = $derived(size * 0.22); // Slightly smaller for better balance
-	const smallTriangleSize = $derived(size * 0.06); // Size of small outer triangles
 
 	// Create dash array for outer circle with 3 equal dashes
 	// Circle circumference = 2 * π * r
@@ -46,28 +45,6 @@
 			.join(' ') +
 			` Q${trianglePoints[0]!.x},${trianglePoints[0]!.y} ${trianglePoints[0]!.x + (trianglePoints[1]!.x - trianglePoints[0]!.x) * roundness},${trianglePoints[0]!.y + (trianglePoints[1]!.y - trianglePoints[0]!.y) * roundness} Z`
 	);
-
-	// Calculate small triangles in the gaps (pointing outward)
-	const smallTriangles = $derived(
-		[0, 120, 240].map((angle) => {
-			const rad = (angle * Math.PI) / 180 + angleOffset;
-			const tipDistance = outerRadius + smallTriangleSize * 0.3;
-			const baseDistance = outerRadius - smallTriangleSize * 0.5;
-
-			// Tip of small triangle (pointing outward)
-			const tipX = center + tipDistance * Math.cos(rad);
-			const tipY = center + tipDistance * Math.sin(rad);
-
-			// Base corners (perpendicular to radius)
-			const baseAngle1 = rad + Math.PI / 2;
-			const baseAngle2 = rad - Math.PI / 2;
-			const baseOffset = smallTriangleSize * 0.4;
-
-			return {
-				path: `M${tipX},${tipY} L${center + baseDistance * Math.cos(rad) + baseOffset * Math.cos(baseAngle1)},${center + baseDistance * Math.sin(rad) + baseOffset * Math.sin(baseAngle1)} L${center + baseDistance * Math.cos(rad) + baseOffset * Math.cos(baseAngle2)},${center + baseDistance * Math.sin(rad) + baseOffset * Math.sin(baseAngle2)} Z`
-			};
-		})
-	);
 </script>
 
 <svg
@@ -76,7 +53,7 @@
 	viewBox="0 0 {size} {size}"
 	class="atomic-logo {className}"
 	role="img"
-	aria-label="Atomic SV Logo - triangle as the fundamental building block"
+	aria-label="IXIR UI"
 >
 	<!-- Outer dashed circle with 3 dashes - gaps align with triangle vertices -->
 	<circle
@@ -91,11 +68,6 @@
 		class="opacity-70"
 		transform="rotate(-90 {size / 2} {size / 2})"
 	/>
-
-	<!-- Small triangles in the gaps - reinforcing the building block concept -->
-	{#each smallTriangles as triangle, i (i)}
-		<path d={triangle.path} fill="currentColor" class="opacity-60" />
-	{/each}
 
 	<!-- Core triangle - the fundamental building block -->
 	<path

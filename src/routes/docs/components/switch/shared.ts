@@ -21,7 +21,7 @@ const useCases = [
 ];
 
 export const metadata = {
-	title: 'Switch - Svelte Atoms',
+	title: 'Switch - IXIR UI',
 	description: 'Accessible on/off toggle backed by a hidden native input.',
 	componentTitle: 'Switch',
 	componentDescription:

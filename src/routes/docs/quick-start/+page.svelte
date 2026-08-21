@@ -68,10 +68,10 @@
 </script>
 
 <svelte:head>
-	<title>Quick Start — Svelte Atoms</title>
+	<title>Quick Start — IXIR UI</title>
 	<meta
 		name="description"
-		content="Install and configure Svelte Atoms in minutes. Step-by-step guide covering installation, Tailwind setup, presets, and your first component."
+		content="Install and configure IXIR UI in minutes. Step-by-step guide covering installation, Tailwind setup, presets, and your first component."
 	/>
 </svelte:head>
 
@@ -129,10 +129,14 @@
 {/snippet}
 
 <!-- Hero -->
-<div class="border-border/60 mb-14 border-b pb-12">
-	<p class="text-primary mb-3 text-sm font-medium uppercase tracking-wide">Quick Start</p>
-	<h1 class="text-foreground mb-4 text-4xl font-bold tracking-tight">Up and running in minutes.</h1>
-	<p class="text-muted-foreground mb-8 max-w-xl text-lg leading-relaxed">
+<div class="animate-page-in mb-9">
+	<p class="text-muted-foreground m-0 mb-2.5 font-mono text-[11px] tracking-[0.05em] uppercase">
+		Quick Start
+	</p>
+	<h1 class="font-display text-foreground m-0 mb-3 text-[32px] font-bold tracking-[-0.025em]">
+		Up and running in minutes.
+	</h1>
+	<p class="text-muted-foreground m-0 mb-6 max-w-[640px] text-[17px] leading-[1.65]">
 		Install, configure, and ship your first component — this guide covers everything from package
 		installation to a working preset.
 	</p>

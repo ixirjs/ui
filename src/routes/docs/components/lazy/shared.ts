@@ -14,7 +14,7 @@ const useCases = [
 ];
 
 export const metadata = {
-	title: 'Lazy - Svelte Atoms',
+	title: 'Lazy - IXIR UI',
 	description: 'Render a dynamically imported component with loading and error states.',
 	componentTitle: 'Lazy',
 	componentDescription:

@@ -1,9 +1,8 @@
 export const metadata = {
-	title: 'Preset System - Svelte Atoms',
+	title: 'Preset System - IXIR UI',
 	description: 'Global component styling and theming with the preset system.',
 	pageTitle: 'Preset System',
-	pageDescription:
-		'Powerful preset system for global component styling and theming in Svelte Atoms.',
+	pageDescription: 'Powerful preset system for global component styling and theming in IXIR UI.',
 	breadcrumbs: [{ label: 'Docs', href: '/docs' }, { label: 'Preset System' }],
 	overview:
 		'The preset system lets you define component styling globally and override it at any level. Set defaults once, customize anywhere.',

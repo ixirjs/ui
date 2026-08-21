@@ -106,7 +106,7 @@ const componentsSummary = [
 ];
 
 export const metadata = {
-	title: 'Dialog - Svelte Atoms',
+	title: 'Dialog - IXIR UI',
 	description: 'Modal dialog for important user interactions.',
 	componentTitle: 'Dialog',
 	componentDescription:

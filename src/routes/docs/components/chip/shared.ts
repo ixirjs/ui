@@ -37,7 +37,7 @@ const useCases = [
 ];
 
 export const metadata = {
-	title: 'Chip - Svelte Atoms',
+	title: 'Chip - IXIR UI',
 	description: 'Compact, dismissible inline label with a wired close button.',
 	componentTitle: 'Chip',
 	componentDescription:

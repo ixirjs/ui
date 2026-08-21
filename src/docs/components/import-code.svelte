@@ -1,99 +1,61 @@
 <script lang="ts">
-	import CodeBlock from './code-block.svelte';
+	// Install block: package-manager switcher, the command, then the import line.
+	import { createCopier } from '$docs/utils';
 
-	type Props = {
-		packageName: string;
-		importCode: string;
-	};
+	type Props = { packageName: string; importCode: string };
 
 	let { packageName, importCode }: Props = $props();
 
-	let importCopySuccess = $state(false);
-	let installCopySuccess = $state(false);
+	const MANAGERS = ['npm', 'pnpm', 'yarn', 'bun'] as const;
 
-	const installCmd = $derived(`npm install ${packageName}`);
+	let manager = $state<(typeof MANAGERS)[number]>('npm');
 
-	function copy(text: string, setter: (v: boolean) => void) {
-		navigator.clipboard.writeText(text);
-		setter(true);
-		setTimeout(() => setter(false), 2000);
-	}
+	const copier = createCopier();
+
+	const installCmd = $derived(
+		manager === 'npm' ? `npm install ${packageName}` : `${manager} add ${packageName}`
+	);
 </script>
 
-<div class="space-y-2">
-	<!-- Install -->
-	<div class="border-white/[0.06] group relative overflow-hidden rounded-lg border">
-		<div class="absolute top-2.5 right-3 z-10 flex items-center gap-2">
-			<span class="text-[11px] text-white/40">bash</span>
+<div class="flex flex-col gap-2.5">
+	<div class="border-border bg-surface flex w-fit gap-0.5 rounded-lg border p-[3px]">
+		{#each MANAGERS as name (name)}
 			<button
-				class="text-white/40 transition-opacity hover:text-white/90"
-				onclick={() => copy(installCmd, (v) => (installCopySuccess = v))}
-				aria-label="Copy install command"
+				type="button"
+				onclick={() => (manager = name)}
+				aria-pressed={manager === name}
+				class={[
+					'cursor-pointer rounded-md border-0 bg-transparent px-2.5 py-1 font-mono text-xs transition-colors',
+					manager === name
+						? 'bg-surface-2 text-foreground'
+						: 'text-muted-foreground hover:text-foreground'
+				]}>{name}</button
 			>
-				{#if installCopySuccess}
-					<svg
-						class="h-3.5 w-3.5 text-green-400"
-						fill="none"
-						stroke="currentColor"
-						viewBox="0 0 24 24"
-					>
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M5 13l4 4L19 7"
-						/>
-					</svg>
-				{:else}
-					<svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-						/>
-					</svg>
-				{/if}
-			</button>
-		</div>
-		<CodeBlock lang="bash" code={installCmd} showLeftBorder={false} />
+		{/each}
 	</div>
 
-	<!-- Import -->
-	<div class="border-white/[0.06] group relative overflow-hidden rounded-lg border">
-		<div class="absolute top-2.5 right-3 z-10 flex items-center gap-2">
-			<span class="text-[11px] text-white/40">ts</span>
-			<button
-				class="text-white/40 transition-opacity hover:text-white/90"
-				onclick={() => copy(importCode, (v) => (importCopySuccess = v))}
-				aria-label="Copy import statement"
-			>
-				{#if importCopySuccess}
-					<svg
-						class="h-3.5 w-3.5 text-green-400"
-						fill="none"
-						stroke="currentColor"
-						viewBox="0 0 24 24"
-					>
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M5 13l4 4L19 7"
-						/>
-					</svg>
-				{:else}
-					<svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-						/>
-					</svg>
-				{/if}
-			</button>
-		</div>
-		<CodeBlock lang="typescript" code={importCode} showLeftBorder={false} />
+	<div class="border-border bg-code-bg flex items-center gap-2.5 rounded-lg border px-3.5 py-3">
+		<span class="text-primary font-mono text-[13px]" aria-hidden="true">$</span>
+		<code class="text-code-fg min-w-0 flex-1 overflow-x-auto font-mono text-[13px]"
+			>{installCmd}</code
+		>
+		<button
+			type="button"
+			onclick={() => copier.run(installCmd, 'install')}
+			class="border-border bg-surface text-muted-foreground hover:text-foreground shrink-0 cursor-pointer rounded-md border px-2 py-[3px] text-[11px] transition-colors"
+			>{copier.label('install')}</button
+		>
+	</div>
+
+	<div class="border-border bg-code-bg flex items-center gap-2.5 rounded-lg border px-3.5 py-3">
+		<code class="text-code-fg min-w-0 flex-1 overflow-x-auto font-mono text-[13px] whitespace-pre"
+			>{importCode}</code
+		>
+		<button
+			type="button"
+			onclick={() => copier.run(importCode, 'import')}
+			class="border-border bg-surface text-muted-foreground hover:text-foreground shrink-0 cursor-pointer rounded-md border px-2 py-[3px] text-[11px] transition-colors"
+			>{copier.label('import')}</button
+		>
 	</div>
 </div>

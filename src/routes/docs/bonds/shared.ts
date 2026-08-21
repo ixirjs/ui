@@ -1,5 +1,5 @@
 export const metadata = {
-	title: 'Bonds - Svelte Atoms',
+	title: 'Bonds - IXIR UI',
 	description: 'Compound component coordination with Bond, Atom, and capabilities.',
 	pageTitle: 'Bonds',
 	pageDescription:

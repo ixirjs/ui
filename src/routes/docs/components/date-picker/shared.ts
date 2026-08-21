@@ -31,7 +31,7 @@ const useCases = [
 ];
 
 export const metadata = {
-	title: 'DatePicker - Svelte Atoms',
+	title: 'DatePicker - IXIR UI',
 	description: 'Popover calendar wired to a trigger for single or range date selection.',
 	componentTitle: 'DatePicker',
 	componentDescription:

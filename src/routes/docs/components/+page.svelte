@@ -1,5 +1,5 @@
 <script lang="ts">
-	import ComponentPreview from './component-preview.svelte';
+	import ComponentPreview from '$docs/component-preview.svelte';
 	import { components } from '$docs/registry';
 	import { COMPONENT_CATEGORIES } from '$docs/types';
 
@@ -8,211 +8,140 @@
 	let selectedCategory = $state('All');
 	let searchQuery = $state('');
 
-	const filteredComponents = $derived(
+	const filtered = $derived(
 		components.filter((c) => {
+			const q = searchQuery.trim().toLowerCase();
 			const matchesCategory = selectedCategory === 'All' || c.category === selectedCategory;
 			const matchesSearch =
-				searchQuery.trim() === '' ||
-				c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-				c.summary.toLowerCase().includes(searchQuery.toLowerCase());
+				q === '' || c.title.toLowerCase().includes(q) || c.summary.toLowerCase().includes(q);
 			return matchesCategory && matchesSearch;
 		})
 	);
 
-	const stableCount = $derived(components.filter((c) => c.status === 'stable').length);
-	const betaCount = $derived(components.filter((c) => c.status === 'beta').length);
-
-	function categoryCount(cat: string) {
-		return cat === 'All' ? components.length : components.filter((c) => c.category === cat).length;
-	}
-
-	function statusClass(status: string) {
-		return status === 'stable' ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground';
-	}
-
-	const statusLabel = (status: string) => status.charAt(0).toUpperCase() + status.slice(1);
+	const categoryCount = (category: string) =>
+		category === 'All'
+			? components.length
+			: components.filter((c) => c.category === category).length;
 </script>
 
 <svelte:head>
-	<title>Components - Svelte Atoms</title>
+	<title>Components — IXIR UI</title>
 	<meta
 		name="description"
-		content="Browse all available components in the Svelte Atoms library — accessible, composable, and built for Svelte 5."
+		content="Browse every component in @ixirjs/ui — accessible, composable, and built for Svelte 5."
 	/>
 </svelte:head>
 
-<!-- Hero -->
-<div class="border-border/60 mb-10 border-b pb-10">
-	<p class="text-primary mb-3 text-sm font-medium uppercase tracking-wide">Components</p>
-	<h1 class="text-foreground mb-4 text-4xl font-bold tracking-tight">Every UI piece you need.</h1>
-	<p class="text-muted-foreground mb-8 max-w-xl text-lg leading-relaxed">
+<div class="animate-page-in">
+	<p class="text-muted-foreground m-0 mb-2.5 font-mono text-[11px] tracking-[0.05em] uppercase">
+		Reference
+	</p>
+	<h1 class="font-display m-0 mb-3 text-[32px] font-bold tracking-[-0.025em]">
+		Every UI piece you need.
+	</h1>
+	<p class="text-muted-foreground m-0 mb-6 max-w-[640px] text-base leading-[1.6]">
 		Accessible, composable components built for Svelte 5. Each one is unstyled by default and fully
 		configurable through the preset system.
 	</p>
-	<div class="flex flex-wrap gap-4">
-		<div class="border-border rounded-lg border px-4 py-2 text-center">
-			<p class="text-foreground text-2xl font-bold">{components.length}</p>
-			<p class="text-muted-foreground text-xs">Components</p>
-		</div>
-		<div class="border-border rounded-lg border px-4 py-2 text-center">
-			<p class="text-primary text-2xl font-bold">{stableCount}</p>
-			<p class="text-muted-foreground text-xs">Stable</p>
-		</div>
-		<div class="border-border rounded-lg border px-4 py-2 text-center">
-			<p class="text-muted-foreground text-2xl font-bold">{betaCount}</p>
-			<p class="text-muted-foreground text-xs">Beta</p>
-		</div>
-		<div class="border-border rounded-lg border px-4 py-2 text-center">
-			<p class="text-foreground text-2xl font-bold">{categories.length - 1}</p>
-			<p class="text-muted-foreground text-xs">Categories</p>
-		</div>
-	</div>
-</div>
 
-<!-- Search + Filter -->
-<div class="mb-8 space-y-4">
-	<div class="relative max-w-sm">
-		<div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+	<div class="mb-4 flex flex-wrap items-center gap-3">
+		<div
+			class="border-border bg-surface focus-within:border-border-strong flex w-[320px] max-w-full items-center gap-[9px] rounded-lg border px-[11px] py-2 transition-colors"
+		>
 			<svg
-				xmlns="http://www.w3.org/2000/svg"
-				class="text-muted-foreground h-4 w-4"
+				width="14"
+				height="14"
+				viewBox="0 0 24 24"
 				fill="none"
 				stroke="currentColor"
-				viewBox="0 0 24 24"
 				stroke-width="2"
 				stroke-linecap="round"
-				stroke-linejoin="round"
+				class="text-muted-foreground shrink-0"
 				aria-hidden="true"
 			>
 				<circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
 			</svg>
+			<input
+				type="search"
+				bind:value={searchQuery}
+				placeholder="Filter by name or summary…"
+				aria-label="Filter components"
+				class="text-foreground min-w-0 flex-1 border-0 bg-transparent font-mono text-[12.5px] outline-none"
+			/>
 		</div>
-		<input
-			type="search"
-			placeholder="Search components..."
-			class="border-border bg-background text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 block w-full rounded-lg border py-2 pr-3 pl-9 text-sm focus:ring-2 focus:outline-none"
-			bind:value={searchQuery}
-		/>
+		<span class="text-muted-foreground text-[12.5px]">
+			{searchQuery.trim() || selectedCategory !== 'All'
+				? `${filtered.length} of ${components.length}`
+				: `${components.length} components`}
+		</span>
 	</div>
 
-	<div class="flex flex-wrap gap-2">
+	<div class="mb-6 flex flex-wrap gap-1.5">
 		{#each categories as category (category)}
 			<button
-				class="rounded-lg px-3 py-1.5 text-sm font-medium transition-colors {selectedCategory ===
-				category
-					? 'bg-primary text-primary-foreground'
-					: 'bg-muted text-muted-foreground hover:text-foreground'}"
+				type="button"
 				onclick={() => (selectedCategory = category)}
+				aria-pressed={selectedCategory === category}
+				class={[
+					'cursor-pointer rounded-md border px-2.5 py-[3px] text-[11px] transition-colors',
+					selectedCategory === category
+						? 'border-accent-line bg-accent-soft text-primary'
+						: 'border-border bg-surface text-muted-foreground hover:border-border-strong'
+				]}
 			>
 				{category}
-				<span class="ml-1 opacity-60 text-xs">{categoryCount(category)}</span>
+				<span class="ml-1 font-mono opacity-60">{categoryCount(category)}</span>
 			</button>
 		{/each}
 	</div>
-</div>
 
-<!-- Results count -->
-{#if searchQuery.trim() || selectedCategory !== 'All'}
-	<p class="text-muted-foreground mb-6 text-sm">
-		{filteredComponents.length} of {components.length} component{filteredComponents.length !== 1
-			? 's'
-			: ''}
-		{selectedCategory !== 'All' ? `in ${selectedCategory}` : ''}
-		{searchQuery.trim() ? `matching "${searchQuery.trim()}"` : ''}
-	</p>
-{/if}
-
-<!-- Component Grid -->
-{#if filteredComponents.length > 0}
-	<!-- eslint-disable svelte/no-navigation-without-resolve -->
-	<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-		{#each filteredComponents as component (component.href)}
-			<div
-				class="group border-border hover:border-primary/40 flex flex-col rounded-xl border overflow-hidden transition-all hover:shadow-sm"
-			>
-				<!-- Interactive preview -->
+	{#if filtered.length > 0}
+		<div class="grid grid-cols-3 gap-3 max-[1180px]:grid-cols-2 max-[640px]:grid-cols-1">
+			{#each filtered as component (component.href)}
 				<div
-					class="border-border/50 border-b bg-muted/20 flex h-36 items-center justify-center overflow-hidden p-4"
+					class="border-border hover:border-border-strong bg-surface flex flex-col overflow-hidden rounded-[10px] border transition-colors"
 				>
-					<ComponentPreview name={component.slug} />
-				</div>
-
-				<!-- Info + link -->
-				<a
-					href={component.href}
-					class="flex flex-1 flex-col p-4 transition-colors hover:bg-muted/10"
-				>
-					<div class="mb-2 flex items-start justify-between gap-3">
-						<p
-							class="text-foreground group-hover:text-primary text-sm font-semibold transition-colors"
+					<div class="border-border flex items-center gap-2 border-b px-2.5 py-2">
+						<a
+							href={component.href}
+							class="text-foreground hover:text-primary text-[12.5px] font-medium transition-colors"
+							>{component.title}</a
 						>
-							{component.title}
-						</p>
 						<span
-							class="shrink-0 rounded px-1.5 py-0.5 font-mono text-xs {statusClass(
-								component.status
-							)}"
+							class={[
+								'font-mono text-[10px]',
+								component.status === 'beta' ? 'text-warn' : 'text-fg-faint'
+							]}>{component.status === 'beta' ? 'beta' : component.category}</span
 						>
-							{statusLabel(component.status)}
-						</span>
 					</div>
-
-					<p class="text-muted-foreground mb-3 flex-1 text-xs leading-relaxed">
-						{component.summary}
-					</p>
-
-					<div class="flex items-center justify-between">
-						<span class="bg-muted text-muted-foreground rounded px-2 py-0.5 text-xs">
-							{component.category}
-						</span>
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							width="14"
-							height="14"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="2"
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							class="text-muted-foreground/50 group-hover:text-primary transition-colors"
-							aria-hidden="true"
-						>
-							<path d="m9 18 6-6-6-6" />
-						</svg>
+					<div
+						class="bg-bg-subtle flex min-h-[128px] flex-1 items-center justify-center overflow-hidden px-3.5 py-[18px]"
+					>
+						<ComponentPreview name={component.slug} />
 					</div>
-				</a>
-			</div>
-		{/each}
-	</div>
-	<!-- eslint-enable svelte/no-navigation-without-resolve -->
-{:else}
-	<div class="py-16 text-center">
-		<div class="bg-muted mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full">
-			<svg
-				xmlns="http://www.w3.org/2000/svg"
-				class="text-muted-foreground h-6 w-6"
-				fill="none"
-				stroke="currentColor"
-				viewBox="0 0 24 24"
-				stroke-width="2"
-				stroke-linecap="round"
-				stroke-linejoin="round"
-				aria-hidden="true"
-			>
-				<circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
-			</svg>
+					<a
+						href={component.href}
+						class="border-border text-muted-foreground hover:text-foreground border-t px-2.5 py-2.5 text-[12.5px] leading-[1.5] transition-colors"
+						>{component.summary}</a
+					>
+				</div>
+			{/each}
 		</div>
-		<p class="text-foreground mb-1 text-sm font-semibold">No components found</p>
-		<p class="text-muted-foreground text-sm">Try a different search term or category.</p>
-		<button
-			class="text-primary mt-4 text-sm hover:underline"
-			onclick={() => {
-				searchQuery = '';
-				selectedCategory = 'All';
-			}}
-		>
-			Clear filters
-		</button>
-	</div>
-{/if}
+	{:else}
+		<div class="border-border rounded-[10px] border px-5 py-14 text-center">
+			<p class="text-foreground m-0 mb-1.5 text-sm">Nothing matches “{searchQuery.trim()}”</p>
+			<p class="text-muted-foreground m-0 mb-4 text-[13px]">
+				Search covers component names and their one-line summaries.
+			</p>
+			<button
+				type="button"
+				onclick={() => {
+					searchQuery = '';
+					selectedCategory = 'All';
+				}}
+				class="border-border hover:border-border-strong text-foreground cursor-pointer rounded-[7px] border px-3 py-1.5 text-[13px] transition-colors"
+				>Clear filters</button
+			>
+		</div>
+	{/if}
+</div>

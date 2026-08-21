@@ -38,7 +38,7 @@ const useCases = [
 ];
 
 export const metadata = {
-	title: 'Kbd - Svelte Atoms',
+	title: 'Kbd - IXIR UI',
 	description: 'Keyboard key and shortcut display components.',
 	componentTitle: 'Kbd',
 	componentDescription:

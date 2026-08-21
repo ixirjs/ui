@@ -55,7 +55,7 @@ const useCases = [
 ];
 
 export const metadata = {
-	title: 'Link - Svelte Atoms',
+	title: 'Link - IXIR UI',
 	description: 'Accessible anchor component for internal and external navigation links.',
 	componentTitle: 'Link',
 	componentDescription:

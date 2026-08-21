@@ -45,7 +45,7 @@ const useCases = [
 ];
 
 export const metadata = {
-	title: 'Label - Svelte Atoms',
+	title: 'Label - IXIR UI',
 	description: 'Accessible label element for associating descriptive text with form controls.',
 	componentTitle: 'Label',
 	componentDescription:

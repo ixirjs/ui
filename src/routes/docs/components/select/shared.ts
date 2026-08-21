@@ -99,7 +99,7 @@ const componentsSummary = [
 ];
 
 export const metadata = {
-	title: 'Select - Svelte Atoms',
+	title: 'Select - IXIR UI',
 	description: 'Select component for actions and options.',
 	componentTitle: 'Select',
 	componentDescription:

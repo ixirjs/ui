@@ -99,7 +99,7 @@ const componentsSummary = [
 ];
 
 export const metadata = {
-	title: 'Drawer - Svelte Atoms',
+	title: 'Drawer - IXIR UI',
 	description: 'Side panel that slides in from screen edge.',
 	componentTitle: 'Drawer',
 	componentDescription:

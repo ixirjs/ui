@@ -1,9 +1,8 @@
 export const metadata = {
-	title: 'Philosophy - Svelte Atoms',
-	description: 'Understanding the principles and architecture behind Svelte Atoms.',
+	title: 'Philosophy - IXIR UI',
+	description: 'Understanding the principles and architecture behind IXIR UI.',
 	pageTitle: 'Philosophy',
-	pageDescription:
-		'Understanding the principles and architecture that make Svelte Atoms different.',
+	pageDescription: 'Understanding the principles and architecture that make IXIR UI different.',
 	breadcrumbs: [{ label: 'Docs', href: '/docs' }, { label: 'Philosophy' }],
 	corePrinciples: [
 		{

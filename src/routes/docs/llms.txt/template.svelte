@@ -17,12 +17,12 @@
 
 {metadata.pageDescription}
 
-## About Svelte Atoms Svelte Atoms is built on the philosophy that great UI libraries should give
-you control without sacrificing accessibility, performance, or developer experience. - **Atomic
-Design**: Components are built as atoms (basic units) that combine into more complex interfaces -
-**Headless Architecture**: Complete separation of logic and presentation — style any component your
-way - **Accessibility First**: WCAG 2.1 compliant, keyboard navigation, ARIA support out of the box
-- **Type Safe**: Full TypeScript support with comprehensive type definitions - **Svelte 5 Native**:
+## About IXIR UI IXIR UI is built on the philosophy that great UI libraries should give you control
+without sacrificing accessibility, performance, or developer experience. - **Atomic Design**:
+Components are built as atoms (basic units) that combine into more complex interfaces - **Headless
+Architecture**: Complete separation of logic and presentation — style any component your way -
+**Accessibility First**: WCAG 2.1 compliant, keyboard navigation, ARIA support out of the box -
+**Type Safe**: Full TypeScript support with comprehensive type definitions - **Svelte 5 Native**:
 Built with Svelte 5's runes and modern reactivity model - **Zero Runtime**: Tree-shakeable, small
 bundle size, and excellent performance ## Documentation Structure ### Getting Started Start here to
 understand the basics and get your first component running.
@@ -101,11 +101,11 @@ Use it in your Svelte app:
 )}
 
 For detailed setup instructions, see the [Quick Start Guide](/docs/quick-start/llms.txt). ## Why
-Svelte Atoms? **For Developers** - Components you own and control - No black boxes — see exactly how
-it works - Easy to customize and extend - Great DX with TypeScript and Svelte **For Users** -
+IXIR UI? **For Developers** - Components you own and control - No black boxes — see exactly how it
+works - Easy to customize and extend - Great DX with TypeScript and Svelte **For Users** -
 Accessible by default - Works with keyboard and screen readers - Respects motion preferences -
 High-quality, polished interactions **For Teams** - Consistent component behavior across projects -
 Sharable design systems - Easy theme switching and customization - Production-ready code ## License
-MIT © [Svelte Atoms Contributors](https://github.com/ixirjs/ui/graphs/contributors) --- Ready to
-build? Start with the [Quick Start Guide](/docs/quick-start/llms.txt) or explore the [component
+MIT © [IXIR UI Contributors](https://github.com/ixirjs/ui/graphs/contributors) --- Ready to build?
+Start with the [Quick Start Guide](/docs/quick-start/llms.txt) or explore the [component
 library](#component-library).

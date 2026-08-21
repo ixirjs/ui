@@ -1,933 +1,447 @@
 <script lang="ts">
 	import { Button } from '$ixirjs/ui/components/button';
-	import { Input } from '$ixirjs/ui/components/input';
 	import { Badge } from '$ixirjs/ui/components/badge';
-	import { Alert } from '$ixirjs/ui/components/alert';
-	import { Tabs, Tab } from '$ixirjs/ui/components/tabs';
-	import { Select } from '$ixirjs/ui/components/select';
-	import { DropdownMenu } from '$ixirjs/ui/components/dropdown-menu';
-	import { animateSidebarContent, Sidebar } from '$ixirjs/ui/components/sidebar';
-	import { goto } from '$app/navigation';
-	import TooltipDemo from './demos/tooltip-demo.svelte';
-	import PopoverDemo from './demos/popover-demo.svelte';
-	import DialogDemo from './demos/dialog-demo.svelte';
-	import DrawerDemo from './demos/drawer-demo.svelte';
+	import { Input } from '$ixirjs/ui/components/input';
+	import { components } from '$docs/registry';
+	import ComponentPreview from '$docs/component-preview.svelte';
+	import PresetScope from '$docs/preset-scope.svelte';
+	import { demoPresets } from '$docs/demo-presets';
+	import { page } from '$app/state';
+	import { createCopier } from '$docs/utils';
+	import pkg from '../../package.json';
 
-	let tabValue = $state('account');
-	let selectOpen = $state(false);
-	let dropdownMenuOpen = $state(false);
-	let sidebarOpen = $state(false);
-	let copied = $state(false);
-	let activeStep = $state(0);
+	const MANAGERS = ['npm', 'pnpm', 'yarn', 'bun'] as const;
 
-	const fruits = $state(['apple', 'banana', 'cherry']);
-	let packageManager = $state<'npm' | 'pnpm' | 'yarn' | 'bun'>('bun');
+	let manager = $state<(typeof MANAGERS)[number]>('npm');
+	let presetKey = $state(demoPresets[0]!.key);
 
-	const installCommands = {
-		npm: 'npm install @ixirjs/ui',
-		pnpm: 'pnpm add @ixirjs/ui',
-		yarn: 'yarn add @ixirjs/ui',
-		bun: 'bun add @ixirjs/ui'
-	};
+	const copier = createCopier();
 
-	function copyCode() {
-		const snippets = [
-			installCommands[packageManager] as string,
-			`import '@ixirjs/ui/styles/root.css';`,
-			`import { setPreset } from '@ixirjs/ui/preset';\n\nsetPreset({\n  button: () => ({\n    class: 'px-4 py-2 rounded-lg',\n    variants: { ... }\n  })\n});`,
-			`import { Button } from '@ixirjs/ui/components/button';`
-		];
-		navigator.clipboard.writeText(snippets[activeStep] ?? '');
-		copied = true;
-		setTimeout(() => (copied = false), 2000);
-	}
+	const installCmd = $derived(
+		manager === 'npm' ? `npm install ${pkg.name}` : `${manager} add ${pkg.name}`
+	);
+	const activePreset = $derived(demoPresets.find((p) => p.key === presetKey) ?? demoPresets[0]!);
 
-	function getAlertLayoutStyle() {
-		return "grid-template-areas: 'icon title close-button' '. description description' 'content content content' 'actions actions actions'; grid-template-columns: auto 1fr auto;";
-	}
+	// ── Three primitives ────────────────────────────────────────────────────
+	const layers = [
+		{
+			name: 'Atom',
+			num: '01',
+			sig: 'atom(props)',
+			desc: 'Wires attrs, handlers, lifecycle and relationships onto one DOM node.',
+			href: '/docs/bonds'
+		},
+		{
+			name: 'Bond',
+			num: '02',
+			sig: 'DialogBond',
+			desc: 'Shared reactive state between the parts of a compound component. No prop drilling.',
+			href: '/docs/bonds'
+		},
+		{
+			name: 'Preset',
+			num: '03',
+			sig: 'setPreset({…})',
+			desc: 'Every class name, in one object, overridable globally or per instance.',
+			href: '/docs/preset'
+		}
+	];
+
+	// ── Gallery ─────────────────────────────────────────────────────────────
+	// Slugs only; label, category and status come from the registry, so a renamed page cannot leave
+	// a stale caption behind.
+	const GALLERY_SLUGS = [
+		'button',
+		'input',
+		'slider',
+		'checkbox',
+		'select',
+		'tabs',
+		'dialog',
+		'popover',
+		'toast',
+		'accordion',
+		'combobox',
+		'progress',
+		'radio',
+		'stepper',
+		'tree',
+		'drawer',
+		'dropdown-menu',
+		'swatch',
+		'tooltip',
+		'card'
+	];
+
+	const bySlug = new Map(components.map((entry) => [entry.slug, entry]));
+	const gallery = GALLERY_SLUGS.map((slug) => bySlug.get(slug)).filter(
+		(entry): entry is NonNullable<typeof entry> => Boolean(entry)
+	);
+
+	// ── Agent surfaces ──────────────────────────────────────────────────────
+	let agentTab = $state('llms');
+
+	// Built from the live origin, not a literal: this panel's copy button hands someone a real MCP
+	// config, and a hardcoded domain would hand them a broken one.
+	const agentSurfaces = $derived([
+		{
+			key: 'llms',
+			label: 'llms.txt',
+			meta: 'GET /docs/llms.txt · 200 · text/plain',
+			note: 'Regenerated on every deploy',
+			text: `# ${pkg.name}
+
+> Headless Svelte primitives with a preset-driven class layer.
+
+## Docs
+- [Quick start](/docs/quick-start): install, preset, first component
+- [Presets](/docs/preset): where the class names live
+- [Bonds](/docs/bonds): shared state between the parts
+- [Components](/docs/components): all ${components.length}, by category`
+		},
+		{
+			key: 'md',
+			label: 'dialog.md',
+			meta: 'GET /docs/components/dialog/llms.txt · 200 · text/markdown',
+			note: 'Add /llms.txt to any page URL',
+			text: `# Dialog
+
+Modal dialog for important user interactions that captures focus.
+
+## Props
+- \`open\`: boolean
+- \`onopenchange\`: StateChangeCallback<boolean>
+- \`type\`: "modal" | "non-modal"
+- \`portal\`: string | PortalBond`
+		},
+		{
+			key: 'mcp',
+			label: 'mcp.json',
+			meta: 'http · list-docs, get-doc, get-component-info',
+			note: 'Claude Code, Cursor, Zed',
+			text: `{
+  "mcpServers": {
+    "ixir-ui": {
+      "url": "${page.url.origin}/api/mcp"
+    }
+  }
+}`
+		}
+	]);
+
+	const surface = $derived(agentSurfaces.find((s) => s.key === agentTab) ?? agentSurfaces[0]!);
+	const surfaceLines = $derived(surface.text.split('\n'));
+
+	const agentFacts = [
+		{ k: 'llms.txt', v: 'one curated index of every page, as Markdown links' },
+		{ k: '1 fetch', v: 'no JS, no auth, no rate limit on any surface' },
+		{ k: '3 tools', v: 'list docs, fetch a page, look up a component over MCP' }
+	];
+
+	const PM_TAB =
+		'cursor-pointer rounded-md border-0 bg-transparent px-2.5 py-1 font-mono text-xs transition-colors';
 </script>
 
 <svelte:head>
-	<title>Svelte Atoms — Headless UI for Svelte 5</title>
+	<title>IXIR UI — Headless Svelte 5 primitives</title>
 	<meta
 		name="description"
-		content="A modern, headless, fully composable Svelte 5 UI component library. Build your design system with the Bond architecture and Preset system."
+		content="{components.length} accessible Svelte 5 components built on three primitives — Atoms wire the DOM, Bonds share state between parts, Presets hold every class name. Nothing ships styled."
 	/>
 </svelte:head>
 
-<!-- ============================================================
-     HERO
-     ============================================================ -->
-<section class="border-border/50 border-b">
-	<div class="mx-auto max-w-5xl px-4 py-24 sm:px-6 lg:px-8">
-		<!-- Label -->
-		<div class="mb-6 flex items-center gap-2">
-			<Badge class="border-primary/20 bg-primary/5 text-primary gap-1.5 text-xs font-medium">
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					width="10"
-					height="10"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2.5"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-				>
-					<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-				</svg>
-				Svelte 5 · Runes · TypeScript
-			</Badge>
-		</div>
-
-		<!-- Headline -->
-		<h1
-			class="from-foreground to-foreground/50 mb-6 bg-gradient-to-br bg-clip-text text-5xl leading-[1.1] font-bold tracking-tight text-transparent sm:text-6xl lg:text-7xl"
-		>
-			Your design system,<br />
-			<span class="text-primary">your rules.</span>
-		</h1>
-
-		<!-- Sub -->
-		<p class="text-muted-foreground mb-10 max-w-xl text-lg leading-relaxed">
-			A headless Svelte 5 component library. No hardcoded styles. You own every pixel via the
-			<strong class="text-foreground font-medium">Preset system</strong> — globally configurable, locally
-			overridable.
-		</p>
-
-		<!-- CTAs -->
-		<div class="flex flex-wrap gap-3">
-			<Button variant="primary" class="gap-2 px-5" onclick={() => goto('/docs/quick-start')}>
-				Get started
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					width="15"
-					height="15"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-				>
-					<path d="M5 12h14" /><path d="m12 5 7 7-7 7" />
-				</svg>
-			</Button>
-			<Button variant="outline" class="gap-2 px-5" onclick={() => goto('/docs')}>
-				Browse components
-			</Button>
-			<Button
-				variant="ghost"
-				class="gap-2 px-5"
-				onclick={() => window.open('https://github.com/ixirjs/ui', '_blank')}
+<!-- ═══ Hero ══════════════════════════════════════════════════════════════ -->
+<section class="border-border border-b">
+	<div
+		class="mx-auto grid max-w-[1280px] grid-cols-[minmax(0,0.85fr)_minmax(0,1fr)] items-start gap-14 px-5 pt-16 pb-14 max-[1180px]:grid-cols-[minmax(0,1fr)]"
+	>
+		<div>
+			<p class="text-muted-foreground m-0 mb-[18px] font-mono text-xs">
+				{pkg.name} · Svelte 5 · MIT
+			</p>
+			<h1
+				class="font-display m-0 mb-[18px] text-[clamp(36px,4.4vw,52px)] leading-[1.06] font-bold tracking-[-0.025em] text-balance"
 			>
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					width="15"
-					height="15"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-					stroke-linecap="round"
-					stroke-linejoin="round"
+				Headless primitives.<br />You supply the CSS.
+			</h1>
+			<p class="text-muted-foreground m-0 mb-7 max-w-[460px] text-[17px] leading-[1.6]">
+				{components.length} accessible components built on three primitives — Atoms wire the DOM, Bonds
+				share state between parts, Presets hold every class name. Nothing ships styled.
+			</p>
+
+			<div class="flex max-w-[460px] flex-col gap-3.5">
+				<div class="border-border bg-surface flex w-fit gap-0.5 rounded-lg border p-[3px]">
+					{#each MANAGERS as name (name)}
+						<button
+							type="button"
+							onclick={() => (manager = name)}
+							aria-pressed={manager === name}
+							class={[
+								PM_TAB,
+								manager === name
+									? 'bg-surface-2 text-foreground'
+									: 'text-muted-foreground hover:text-foreground'
+							]}>{name}</button
+						>
+					{/each}
+				</div>
+
+				<div
+					class="border-border bg-code-bg flex items-center gap-2.5 rounded-lg border px-3.5 py-3"
 				>
-					<path
-						d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"
-					/>
-					<path d="M9 18c-4.51 2-5-2-7-2" />
-				</svg>
-				GitHub
-			</Button>
+					<span class="text-primary font-mono text-[13px]" aria-hidden="true">$</span>
+					<code class="text-code-fg min-w-0 flex-1 overflow-x-auto font-mono text-[13px]"
+						>{installCmd}</code
+					>
+					<button
+						type="button"
+						onclick={() => copier.run(installCmd, 'install')}
+						class="border-border bg-surface text-muted-foreground hover:text-foreground shrink-0 cursor-pointer rounded-md border px-2 py-[3px] text-[11px] transition-colors"
+						>{copier.label('install')}</button
+					>
+				</div>
+
+				<div class="flex flex-wrap gap-2.5">
+					<a
+						href="/docs/quick-start"
+						class="bg-primary text-primary-foreground inline-flex h-10 items-center gap-[7px] rounded-[7px] px-4 text-sm font-medium transition-opacity hover:opacity-90"
+					>
+						Quick start
+						<svg
+							width="14"
+							height="14"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							stroke-linecap="round"
+							aria-hidden="true"
+						>
+							<path d="M5 12h14" /><path d="m12 5 7 7-7 7" />
+						</svg>
+					</a>
+					<a
+						href="/docs/components"
+						class="border-border hover:border-border-strong text-foreground inline-flex h-10 items-center rounded-[7px] border px-4 text-sm font-medium transition-colors"
+						>Browse {components.length} components</a
+					>
+				</div>
+			</div>
 		</div>
 
-		<!-- Metrics -->
-		<div class="border-border mt-12 border-t pt-8">
-			<div class="flex flex-wrap gap-y-6 gap-x-8 md:gap-0 md:divide-x md:divide-border">
-				{#each [{ value: '30+', label: 'Components' }, { value: '0px', label: 'Hardcoded styles' }, { value: '100%', label: 'TypeScript typed' }, { value: 'WAI‑ARIA', label: 'Accessible by default' }] as stat (stat.value)}
-					<div class="flex flex-col gap-0 md:px-8 md:first:pl-0 md:last:pr-0">
-						<span class="text-primary text-lg font-medium tracking-tight leading-none"
-							>{stat.value}</span
-						>
-						<span class="text-muted-foreground mt-1.5 text-xs uppercase tracking-wide"
-							>{stat.label}</span
-						>
-					</div>
+		<!-- Same components, three presets — the switcher remounts the scope so the new preset takes. -->
+		<div class="flex flex-col gap-[30px]">
+			<div class="flex items-center gap-5">
+				{#each demoPresets as option (option.key)}
+					<button
+						type="button"
+						onclick={() => (presetKey = option.key)}
+						aria-pressed={presetKey === option.key}
+						class={[
+							'cursor-pointer border-0 bg-transparent p-0 text-xs font-medium transition-colors',
+							presetKey === option.key
+								? 'text-foreground'
+								: 'text-fg-faint hover:text-muted-foreground'
+						]}>{option.label}</button
+					>
 				{/each}
 			</div>
-		</div>
-	</div>
-</section>
 
-<!-- ============================================================
-     HOW IT WORKS — Architecture
-     ============================================================ -->
-<section class="border-border/50 border-b">
-	<div class="mx-auto max-w-5xl px-4 py-20 sm:px-6 lg:px-8">
-		<div class="mb-12">
-			<p class="text-primary mb-2 text-sm font-medium tracking-wide uppercase">Architecture</p>
-			<h2 class="mb-3 text-3xl font-bold">Three layers. Total control.</h2>
-			<p class="text-muted-foreground max-w-2xl">
-				Svelte Atoms is built around three composable primitives that work together to give you
-				complete control over behaviour, state, and style — without coupling them together.
-			</p>
-		</div>
-
-		<div class="grid gap-px border md:grid-cols-3 bg-border border-border">
-			<!-- Components -->
-			<div class="bg-card p-8">
-				<div class="mb-5 flex items-center justify-between">
-					<div
-						class="bg-primary/10 text-primary inline-flex h-10 w-10 items-center justify-center rounded-lg"
-					>
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							width="18"
-							height="18"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="2"
-							stroke-linecap="round"
-							stroke-linejoin="round"
-						>
-							<circle cx="12" cy="12" r="1" /><circle cx="12" cy="12" r="7" /><circle
-								cx="12"
-								cy="12"
-								r="11"
-							/>
-						</svg>
-					</div>
-					<span class="text-muted-foreground/50 font-mono text-xs">01</span>
-				</div>
-				<h3 class="mb-2 text-base font-semibold">Components</h3>
-				<p class="text-muted-foreground text-sm leading-relaxed">
-					Semantic Svelte components own their markup, accessibility, and public props while the
-					internal runtime keeps rendering consistent and allocation-light.
-				</p>
-				<a
-					href="/docs/components"
-					class="text-primary mt-4 inline-flex items-center gap-1 text-sm font-medium"
-				>
-					Learn more <svg
-						xmlns="http://www.w3.org/2000/svg"
-						width="13"
-						height="13"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="2"
-						stroke-linecap="round"
-						stroke-linejoin="round"><path d="m9 18 6-6-6-6" /></svg
-					>
-				</a>
-			</div>
-
-			<!-- Bond -->
-			<div class="bg-card p-8">
-				<div class="mb-5 flex items-center justify-between">
-					<div
-						class="bg-primary/10 text-primary inline-flex h-10 w-10 items-center justify-center rounded-lg"
-					>
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							width="18"
-							height="18"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="2"
-							stroke-linecap="round"
-							stroke-linejoin="round"
-						>
-							<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-							<path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-						</svg>
-					</div>
-					<span class="text-muted-foreground/50 font-mono text-xs">02</span>
-				</div>
-				<h3 class="mb-2 text-base font-semibold">Bond</h3>
-				<p class="text-muted-foreground text-sm leading-relaxed">
-					Shared reactive state between a component's parts. No prop drilling — child components
-					read their parent's bond from Svelte context. State flows down automatically.
-				</p>
-				<a
-					href="/docs/philosophy"
-					class="text-primary mt-4 inline-flex items-center gap-1 text-sm font-medium"
-				>
-					Learn more <svg
-						xmlns="http://www.w3.org/2000/svg"
-						width="13"
-						height="13"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="2"
-						stroke-linecap="round"
-						stroke-linejoin="round"><path d="m9 18 6-6-6-6" /></svg
-					>
-				</a>
-			</div>
-
-			<!-- Preset -->
-			<div class="bg-card p-8">
-				<div class="mb-5 flex items-center justify-between">
-					<div
-						class="bg-primary/10 text-primary inline-flex h-10 w-10 items-center justify-center rounded-lg"
-					>
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							width="18"
-							height="18"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="2"
-							stroke-linecap="round"
-							stroke-linejoin="round"
-						>
-							<path
-								d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"
-							/>
-							<circle cx="12" cy="12" r="3" />
-						</svg>
-					</div>
-					<span class="text-muted-foreground/50 font-mono text-xs">03</span>
-				</div>
-				<h3 class="mb-2 text-base font-semibold">Preset</h3>
-				<p class="text-muted-foreground text-sm leading-relaxed">
-					A global style configuration for your entire app. Define variants, defaults, and classes
-					per component slot once — override locally per instance. Your design system lives here.
-				</p>
-				<a
-					href="/docs/styling"
-					class="text-primary mt-4 inline-flex items-center gap-1 text-sm font-medium"
-				>
-					Learn more <svg
-						xmlns="http://www.w3.org/2000/svg"
-						width="13"
-						height="13"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="2"
-						stroke-linecap="round"
-						stroke-linejoin="round"><path d="m9 18 6-6-6-6" /></svg
-					>
-				</a>
-			</div>
-		</div>
-	</div>
-</section>
-
-<!-- ============================================================
-     COMPONENT SHOWCASE
-     ============================================================ -->
-<section class="border-border/50 border-b">
-	<div class="mx-auto max-w-5xl px-4 py-20 sm:px-6 lg:px-8">
-		<div class="mb-12">
-			<p class="text-primary mb-2 text-sm font-medium tracking-wide uppercase">Components</p>
-			<h2 class="mb-3 text-3xl font-bold">Everything you need.</h2>
-			<p class="text-muted-foreground max-w-2xl">
-				30+ accessible components. Each one is headless — style it once in your preset, use it
-				everywhere.
-			</p>
-		</div>
-
-		<div
-			class="grid grid-cols-1 gap-px border md:grid-cols-2 lg:grid-cols-3 bg-border"
-			style="border-color: var(--color-border);"
-		>
-			<!-- Button -->
-			<div class="bg-card flex flex-col gap-4 p-6">
-				<div class="flex items-center justify-between">
-					<h3 class="text-sm font-semibold">Button</h3>
-					<a href="/docs/components/button" class="text-muted-foreground hover:text-primary text-xs"
-						>docs →</a
-					>
-				</div>
-				<div class="flex flex-1 flex-wrap items-center justify-center gap-2">
-					<Button variant="primary" class="text-sm">Primary</Button>
-					<Button variant="secondary" class="text-sm">Secondary</Button>
-					<Button variant="outline" class="text-sm">Outline</Button>
-					<Button variant="ghost" class="text-sm">Ghost</Button>
-					<Button variant="destructive" class="text-sm">Danger</Button>
-				</div>
-				<p class="text-muted-foreground text-xs">
-					Five semantic variants, fully composable trigger surface
-				</p>
-			</div>
-
-			<!-- Badge -->
-			<div class="bg-card flex flex-col gap-4 p-6">
-				<div class="flex items-center justify-between">
-					<h3 class="text-sm font-semibold">Badge</h3>
-					<a href="/docs/components/badge" class="text-muted-foreground hover:text-primary text-xs"
-						>docs →</a
-					>
-				</div>
-				<div class="flex flex-1 flex-wrap items-center justify-center gap-2">
-					<Badge variant="primary">Primary</Badge>
-					<Badge variant="secondary">Secondary</Badge>
-					<Badge variant="outline">Outline</Badge>
-					<Badge variant="destructive">Error</Badge>
-				</div>
-				<p class="text-muted-foreground text-xs">
-					Inline labels for status, categories, and metadata
-				</p>
-			</div>
-
-			<!-- Input -->
-			<div class="bg-card flex flex-col gap-4 p-6">
-				<div class="flex items-center justify-between">
-					<h3 class="text-sm font-semibold">Input</h3>
-					<a href="/docs/components/input" class="text-muted-foreground hover:text-primary text-xs"
-						>docs →</a
-					>
-				</div>
-				<div class="flex-1 space-y-2">
-					<Input.Root class="rounded-md">
-						<Input.Control placeholder="Full name" class="px-3 py-2 text-sm" />
-					</Input.Root>
-					<Input.Root class="rounded-md">
-						<Input.Control type="email" placeholder="email@example.com" class="px-3 py-2 text-sm" />
-					</Input.Root>
-				</div>
-				<p class="text-muted-foreground text-xs">
-					Composable slots for prefix, suffix, and validation state
-				</p>
-			</div>
-
-			<!-- Alert -->
-			<div class="bg-card flex flex-col gap-4 p-6">
-				<div class="flex items-center justify-between">
-					<h3 class="text-sm font-semibold">Alert</h3>
-					<a href="/docs/components/alert" class="text-muted-foreground hover:text-primary text-xs"
-						>docs →</a
-					>
-				</div>
-				<div class="flex-1 space-y-2">
-					<Alert.Root variant="info" class="grid items-center" style={getAlertLayoutStyle()}>
-						<Alert.Icon>
-							<svg
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								class="h-4 w-4"
-							>
-								<circle cx="12" cy="12" r="10" /><path d="M12 16v-4M12 8h.01" />
-							</svg>
-						</Alert.Icon>
-						<Alert.Title class="text-sm font-medium">Heads up</Alert.Title>
-						<Alert.Description class="text-xs"
-							>Your session expires in 10 minutes.</Alert.Description
-						>
-					</Alert.Root>
-					<Alert.Root variant="success" class="grid items-center" style={getAlertLayoutStyle()}>
-						<Alert.Icon>
-							<svg
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								class="h-4 w-4"
-							>
-								<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><path d="m9 11 3 3L22 4" />
-							</svg>
-						</Alert.Icon>
-						<Alert.Title class="text-sm font-medium">Saved</Alert.Title>
-						<Alert.Description class="text-xs">Your changes have been saved.</Alert.Description>
-					</Alert.Root>
-				</div>
-				<p class="text-muted-foreground text-xs">
-					Four semantic variants — info, success, warning, error
-				</p>
-			</div>
-
-			<!-- Tabs -->
-			<div class="bg-card flex flex-col gap-4 p-6">
-				<div class="flex items-center justify-between">
-					<h3 class="text-sm font-semibold">Tabs</h3>
-					<a href="/docs/components/tabs" class="text-muted-foreground hover:text-primary text-xs"
-						>docs →</a
-					>
-				</div>
-				<div class="flex-1">
-					<Tabs.Root bind:value={tabValue} onvaluechange={() => {}} class="">
-						<Tabs.Header class="border-border border-b text-sm">
-							<Tab.Root value="account">
-								<Tab.Header>Account</Tab.Header>
-								<Tab.Body class="mt-3">
-									<p class="text-muted-foreground text-sm">Manage your account settings.</p>
-								</Tab.Body>
-							</Tab.Root>
-							<Tab.Root value="settings">
-								<Tab.Header>Settings</Tab.Header>
-								<Tab.Body class="mt-3">
-									<p class="text-muted-foreground text-sm">Configure your preferences.</p>
-								</Tab.Body>
-							</Tab.Root>
-						</Tabs.Header>
-						<Tabs.Body>
-							<Tabs.Content />
-						</Tabs.Body>
-					</Tabs.Root>
-				</div>
-				<p class="text-muted-foreground text-xs">
-					Controlled and uncontrolled modes, keyboard navigable
-				</p>
-			</div>
-
-			<!-- Select -->
-			<div class="bg-card flex flex-col gap-4 p-6">
-				<div class="flex items-center justify-between">
-					<h3 class="text-sm font-semibold">Select</h3>
-					<a href="/docs/components/select" class="text-muted-foreground hover:text-primary text-xs"
-						>docs →</a
-					>
-				</div>
-				<div class="flex-1">
-					<Select.Root bind:open={selectOpen} keys={fruits} offset={2}>
-						<Select.Trigger base={Input.Root} class="w-full h-12">
-							<Select.Placeholder>Pick a fruit</Select.Placeholder>
-							<Select.Selections />
-							<Select.Indicator class="ml-auto" />
-						</Select.Trigger>
-						<Select.Content>
-							{#each fruits as fruit, i (i)}
-								<Select.Item value={fruit} class="capitalize">{fruit}</Select.Item>
-							{/each}
-						</Select.Content>
-					</Select.Root>
-				</div>
-				<p class="text-muted-foreground text-xs">
-					Single and multi-select with keyboard navigation
-				</p>
-			</div>
-
-			<!-- Dropdown Menu -->
-			<div class="bg-card flex flex-col gap-4 p-6">
-				<div class="flex items-center justify-between">
-					<h3 class="text-sm font-semibold">Dropdown Menu</h3>
-					<a
-						href="/docs/components/dropdown-menu"
-						class="text-muted-foreground hover:text-primary text-xs">docs →</a
-					>
-				</div>
-				<div class="flex-1">
-					<DropdownMenu.Root bind:open={dropdownMenuOpen}>
-						<DropdownMenu.Trigger base={Button} variant="outline" class="w-full justify-between">
-							Actions
-							<DropdownMenu.Indicator class="ml-auto" />
-						</DropdownMenu.Trigger>
-						<DropdownMenu.Content>
-							<DropdownMenu.Item>Edit</DropdownMenu.Item>
-							<DropdownMenu.Item>Duplicate</DropdownMenu.Item>
-							<DropdownMenu.Item>Archive</DropdownMenu.Item>
-							<DropdownMenu.Item>Delete</DropdownMenu.Item>
-						</DropdownMenu.Content>
-					</DropdownMenu.Root>
-				</div>
-				<p class="text-muted-foreground text-xs">
-					Action menu with nested groups and keyboard traversal
-				</p>
-			</div>
-
-			<!-- Tooltip -->
-			<div class="bg-card flex flex-col gap-4 p-6">
-				<div class="flex items-center justify-between">
-					<h3 class="text-sm font-semibold">Tooltip</h3>
-					<a
-						href="/docs/components/tooltip"
-						class="text-muted-foreground hover:text-primary text-xs">docs →</a
-					>
-				</div>
-				<div class="flex flex-1 items-center">
-					<TooltipDemo />
-				</div>
-				<p class="text-muted-foreground text-xs">Disabled state with contextual explanation</p>
-			</div>
-
-			<!-- Popover -->
-			<div class="bg-card flex flex-col gap-4 p-6">
-				<div class="flex items-center justify-between">
-					<h3 class="text-sm font-semibold">Popover</h3>
-					<a
-						href="/docs/components/popover"
-						class="text-muted-foreground hover:text-primary text-xs">docs →</a
-					>
-				</div>
-				<div class="flex flex-1 items-center justify-center">
-					<PopoverDemo />
-				</div>
-				<p class="text-muted-foreground text-xs">Issue label filter — toggle multiple, clear all</p>
-			</div>
-
-			<!-- Dialog -->
-			<div class="bg-card flex flex-col gap-4 p-6">
-				<div class="flex items-center justify-between">
-					<h3 class="text-sm font-semibold">Dialog</h3>
-					<a href="/docs/components/dialog" class="text-muted-foreground hover:text-primary text-xs"
-						>docs →</a
-					>
-				</div>
-				<div class="flex flex-1 items-center">
-					<DialogDemo />
-				</div>
-				<p class="text-muted-foreground text-xs">Destructive confirm with typed phrase unlock</p>
-			</div>
-
-			<!-- Drawer -->
-			<div class="bg-card flex flex-col gap-4 p-6">
-				<div class="flex items-center justify-between">
-					<h3 class="text-sm font-semibold">Drawer</h3>
-					<a href="/docs/components/drawer" class="text-muted-foreground hover:text-primary text-xs"
-						>docs →</a
-					>
-				</div>
-				<div class="flex flex-1 items-center">
-					<DrawerDemo />
-				</div>
-				<p class="text-muted-foreground text-xs">Notification tray — mark read, dismiss per item</p>
-			</div>
-
-			<!-- Sidebar -->
-			<div class="bg-card flex flex-col gap-4 p-6">
-				<div class="flex items-center justify-between">
-					<h3 class="text-sm font-semibold">Sidebar</h3>
-					<a
-						href="/docs/components/sidebar"
-						class="text-muted-foreground hover:text-primary text-xs">docs →</a
-					>
-				</div>
-				<div class="bg-muted border-border h-24 overflow-hidden rounded-md border">
-					<Sidebar.Root bind:open={sidebarOpen}>
-						<div class="flex h-full">
-							<Sidebar.Content
-								class="bg-card border-border flex min-w-fit flex-col items-center border-r px-2 py-3 text-xs"
-								animate={animateSidebarContent({ '0': '48px', '1': '120px' })}
-							>
-								<span class="text-muted-foreground">{sidebarOpen ? 'Expanded' : 'Nav'}</span>
-							</Sidebar.Content>
-							<div class="text-muted-foreground flex flex-1 items-center justify-center text-xs">
-								Main content
-							</div>
+			{#key presetKey}
+				<PresetScope preset={activePreset.preset}>
+					<div class="flex flex-col items-stretch gap-5">
+						<div class="flex flex-wrap items-center gap-2.5">
+							<Button size="sm">Save changes</Button>
+							<Button variant="outline" size="sm">Cancel</Button>
+							<Badge variant="primary">stable</Badge>
 						</div>
-					</Sidebar.Root>
-				</div>
-				<Button variant="outline" class="w-full" onclick={() => (sidebarOpen = !sidebarOpen)}>
-					Toggle Sidebar
-				</Button>
-			</div>
-		</div>
+						<div class="flex flex-col gap-1.5">
+							<span class="text-muted-foreground text-xs">Workspace name</span>
+							<Input.Root>
+								<Input.TextControl value="atoms-demo" />
+							</Input.Root>
+						</div>
+					</div>
+				</PresetScope>
+			{/key}
 
-		<div class="mt-6 text-center">
-			<a href="/docs" class="text-primary text-sm font-medium hover:underline">
-				View all 30+ components →
-			</a>
+			<div class="relative">
+				<button
+					type="button"
+					onclick={() => copier.run(activePreset.code, 'preset')}
+					class="text-fg-faint hover:text-foreground absolute top-0 right-0 cursor-pointer border-0 bg-transparent px-1 py-0.5 text-[11px] transition-colors"
+					>{copier.label('preset')}</button
+				>
+				<pre
+					class="text-code-fg m-0 overflow-x-auto font-mono text-xs leading-[1.75]">{activePreset.code}</pre>
+			</div>
 		</div>
 	</div>
 </section>
 
-<!-- ============================================================
-     INSTALL
-     ============================================================ -->
-<section class="border-border/50 border-b">
-	<div class="mx-auto max-w-5xl px-4 py-20 sm:px-6 lg:px-8">
-		<!-- Header -->
-		<div class="mb-14 text-center">
-			<p class="text-primary mb-2 text-sm font-medium tracking-wide uppercase">Quick start</p>
-			<h2 class="mb-3 text-3xl font-bold">Up in minutes.</h2>
-			<p class="text-muted-foreground mx-auto max-w-md">
-				Install the package, configure your preset, and start composing.
-			</p>
-		</div>
-
-		<!-- Step tracker -->
-		<div class="relative mb-10 flex items-start justify-between px-6">
-			<div class="bg-border absolute top-3.5 left-6 right-6 h-px" aria-hidden="true"></div>
-			{#each [{ n: 0, title: 'Install' }, { n: 1, title: 'Import styles' }, { n: 2, title: 'Configure' }, { n: 3, title: 'Compose' }] as step (step.n)}
-				<button
-					onclick={() => (activeStep = step.n)}
-					class="group relative flex flex-col items-center gap-2"
+<!-- ═══ Three primitives ══════════════════════════════════════════════════ -->
+<section class="border-border border-b">
+	<div class="mx-auto max-w-[1280px] px-5 py-14">
+		<h2 class="font-display m-0 mb-1.5 text-2xl font-bold tracking-[-0.02em]">Three primitives</h2>
+		<p class="text-muted-foreground m-0 mb-7 max-w-[600px] text-[15px] leading-[1.6]">
+			Learn these once and every component in the library becomes predictable.
+		</p>
+		<div
+			class="bg-border border-border grid grid-cols-3 gap-px overflow-hidden rounded-[10px] border max-[900px]:grid-cols-1"
+		>
+			{#each layers as layer (layer.name)}
+				<a
+					href={layer.href}
+					class="bg-surface hover:bg-bg-subtle text-foreground flex flex-col gap-2 p-[22px] transition-colors"
 				>
-					<div
-						class="relative z-10 flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold transition-all duration-200 {activeStep ===
-						step.n
-							? 'bg-primary text-primary-foreground scale-110'
-							: activeStep > step.n
-								? 'border-primary/30 bg-primary/20 text-primary border'
-								: 'bg-background border-border text-muted-foreground border group-hover:border-primary/50 group-hover:text-primary/70'}"
-					>
-						{#if activeStep > step.n}
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								width="12"
-								height="12"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="3"
-								stroke-linecap="round"
-								stroke-linejoin="round"><path d="M20 6 9 17l-5-5" /></svg
-							>
-						{:else}
-							{step.n + 1}
-						{/if}
+					<div class="flex items-baseline justify-between">
+						<span class="font-display text-base font-semibold">{layer.name}</span>
+						<span class="text-fg-faint font-mono text-[11px]">{layer.num}</span>
 					</div>
-					<span
-						class="whitespace-nowrap text-xs font-medium transition-colors {activeStep === step.n
-							? 'text-foreground'
-							: 'text-muted-foreground group-hover:text-foreground/70'}">{step.title}</span
-					>
-				</button>
+					<code class="text-primary font-mono text-xs">{layer.sig}</code>
+					<p class="text-muted-foreground m-0 text-[13px] leading-[1.6]">{layer.desc}</p>
+				</a>
 			{/each}
 		</div>
+	</div>
+</section>
 
-		<!-- Terminal window -->
-		<div class="border-border overflow-hidden rounded-xl border shadow-xl">
-			<!-- Window chrome -->
-			<div class="bg-muted border-border flex items-center gap-4 border-b px-4 py-2.5">
-				<!-- Generic code indicator, not OS-specific -->
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					width="14"
-					height="14"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					class="text-muted-foreground/40 shrink-0"
-					><polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" /></svg
-				>
-
-				<div class="flex flex-1 items-center justify-center">
-					{#if activeStep === 0}
-						<!-- Segmented control -->
-						<div class="border-border flex overflow-hidden rounded-md border font-mono text-xs">
-							{#each ['npm', 'pnpm', 'yarn', 'bun'] as const as pm (pm)}
-								<button
-									onclick={() => (packageManager = pm)}
-									class="border-border border-r px-3 py-1 font-medium transition-colors last:border-r-0 {packageManager ===
-									pm
-										? 'bg-foreground text-background'
-										: 'text-muted-foreground hover:bg-border/60 hover:text-foreground'}"
-								>
-									{pm}
-								</button>
-							{/each}
-						</div>
-					{:else}
-						<span class="text-muted-foreground font-mono text-xs">
-							{activeStep === 3 ? '+page.svelte' : '+layout.svelte'}
-						</span>
-					{/if}
-				</div>
-
-				<button
-					onclick={copyCode}
-					class="text-muted-foreground hover:text-foreground shrink-0 rounded p-1 transition-colors"
-					title="Copy"
-				>
-					{#if copied}
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							width="13"
-							height="13"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="2.5"
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							class="text-green-400"><path d="M20 6 9 17l-5-5" /></svg
-						>
-					{:else}
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							width="13"
-							height="13"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="2"
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /><path
-								d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"
-							/></svg
-						>
-					{/if}
-				</button>
-			</div>
-
-			<!-- Code area -->
-			<div class="min-h-64 bg-[#0d1117] px-6 py-6 font-mono text-sm leading-7">
-				{#if activeStep === 0}
-					<div class="text-[#8b949e]"># Add to your SvelteKit project</div>
-					<div class="mt-4 flex items-center gap-2">
-						<span class="select-none text-[#8b949e]">$</span>
-						<span class="text-[#e6edf3]">{installCommands[packageManager]}</span>
-					</div>
-				{:else if activeStep === 1}
-					<div class="text-[#8b949e]">{'<!-- src/routes/+layout.svelte -->'}</div>
-					<div class="mt-3"><span class="text-[#7ee787]">&lt;script lang="ts"&gt;</span></div>
-					<div class="ml-4">
-						<span class="text-[#ff7b72]">import</span>
-						<span class="text-[#e6edf3]"> </span>
-						<span class="text-[#a5d6ff]">'@ixirjs/ui/styles/root.css'</span>
-						<span class="text-[#e6edf3]">;</span>
-					</div>
-					<div><span class="text-[#7ee787]">&lt;/script&gt;</span></div>
-				{:else if activeStep === 2}
-					<div class="text-[#8b949e]">{'<!-- src/routes/+layout.svelte -->'}</div>
-					<div class="mt-3"><span class="text-[#7ee787]">&lt;script lang="ts"&gt;</span></div>
-					<div class="ml-4">
-						<span class="text-[#ff7b72]">import</span>
-						<span class="text-[#e6edf3]"> {'{ '}</span>
-						<span class="text-[#d2a8ff]">setPreset</span>
-						<span class="text-[#e6edf3]">{' }'}</span>
-						<span class="text-[#ff7b72]"> from </span>
-						<span class="text-[#a5d6ff]">'@ixirjs/ui'</span>
-						<span class="text-[#e6edf3]">;</span>
-					</div>
-					<div class="mt-2 ml-4">
-						<span class="text-[#d2a8ff]">setPreset</span>
-						<span class="text-[#e6edf3]">{'({'}</span>
-					</div>
-					<div class="ml-8">
-						<span class="text-[#ffa657]">button</span>
-						<span class="text-[#e6edf3]">: () =&gt; {'({'}</span>
-					</div>
-					<div class="ml-12">
-						<span class="text-[#ffa657]">class</span>
-						<span class="text-[#e6edf3]">: </span>
-						<span class="text-[#a5d6ff]">'px-4 py-2 rounded-lg'</span>
-						<span class="text-[#e6edf3]">,</span>
-					</div>
-					<div class="ml-12">
-						<span class="text-[#ffa657]">variants</span>
-						<span class="text-[#e6edf3]">: {'{ ... }'}</span>
-					</div>
-					<div class="ml-8"><span class="text-[#e6edf3]">{'})'}</span></div>
-					<div class="ml-4"><span class="text-[#e6edf3]">{'}'});</span></div>
-					<div><span class="text-[#7ee787]">&lt;/script&gt;</span></div>
-				{:else}
-					<div class="text-[#8b949e]">{'<!-- src/routes/+page.svelte -->'}</div>
-					<div class="mt-3"><span class="text-[#7ee787]">&lt;script lang="ts"&gt;</span></div>
-					<div class="ml-4">
-						<span class="text-[#ff7b72]">import</span>
-						<span class="text-[#e6edf3]"> {'{ '}</span>
-						<span class="text-[#d2a8ff]">Button</span>
-						<span class="text-[#e6edf3]">{' }'}</span>
-						<span class="text-[#ff7b72]"> from </span>
-						<span class="text-[#a5d6ff]">'@ixirjs/ui/components/button'</span>
-						<span class="text-[#e6edf3]">;</span>
-					</div>
-					<div><span class="text-[#7ee787]">&lt;/script&gt;</span></div>
-					<div class="mt-3">
-						<span class="text-[#7ee787]">{'<Button'}</span>
-						<span class="text-[#79c0ff]"> variant</span>
-						<span class="text-[#e6edf3]">=</span>
-						<span class="text-[#a5d6ff]">"primary"</span>
-						<span class="text-[#7ee787]">{'>'}</span>
-						<span class="text-[#e6edf3]">Click me</span>
-						<span class="text-[#7ee787]">{'</Button>'}</span>
-					</div>
-				{/if}
-			</div>
-
-			<!-- Footer callout -->
-			<div class="bg-muted/50 border-border border-t px-6 py-3">
-				<p class="text-muted-foreground text-xs">
-					{#if activeStep === 0}
-						One package. No peer dependencies, no CSS framework required.
-					{:else if activeStep === 1}
-						Import the base reset once in your root layout — that's all the global CSS you need.
-					{:else if activeStep === 2}
-						<code class="bg-muted rounded px-1">setPreset()</code> runs once at startup and applies globally.
-						Override per component instance as needed.
-					{:else}
-						Every component is individually importable and tree-shakeable.
-					{/if}
+<!-- ═══ Components ════════════════════════════════════════════════════════ -->
+<section class="border-border border-b">
+	<div class="mx-auto max-w-[1280px] px-5 py-14">
+		<div class="mb-6 flex flex-wrap items-baseline justify-between gap-4">
+			<div>
+				<h2 class="font-display m-0 mb-1.5 text-2xl font-bold tracking-[-0.02em]">Components</h2>
+				<p class="text-muted-foreground m-0 text-[15px]">
+					Real components, not screenshots. Everything below responds — and follows whichever preset
+					is active.
 				</p>
 			</div>
+			<a href="/docs/components" class="text-primary text-sm font-medium"
+				>All {components.length} →</a
+			>
 		</div>
 
-		<div class="mt-8 text-center">
-			<a
-				href="/docs/quick-start"
-				class="text-primary inline-flex items-center gap-1 text-sm font-medium hover:underline"
-			>
-				Full setup guide
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					width="13"
-					height="13"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-					stroke-linecap="round"
-					stroke-linejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg
+		<div class="grid grid-cols-4 gap-3 max-[1180px]:grid-cols-3 max-[760px]:grid-cols-2">
+			{#each gallery as entry (entry.slug)}
+				<div
+					class="group border-border hover:border-border-strong bg-surface flex flex-col overflow-hidden rounded-[10px] border transition-colors"
 				>
-			</a>
+					<div class="border-border flex items-center gap-2 border-b px-2.5 py-2">
+						<a
+							href={entry.href}
+							class="text-foreground hover:text-primary text-[12.5px] font-medium transition-colors"
+							>{entry.title}</a
+						>
+						<span
+							class={[
+								'font-mono text-[10px]',
+								entry.status === 'beta' ? 'text-warn' : 'text-fg-faint'
+							]}>{entry.status === 'beta' ? 'beta' : entry.category}</span
+						>
+						<button
+							type="button"
+							onclick={() => copier.run(entry.importCode, entry.slug)}
+							class="border-border bg-bg-subtle text-muted-foreground hover:text-foreground ml-auto cursor-pointer rounded-[5px] border px-[7px] py-0.5 text-[10px] opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+							>{copier.label(entry.slug)}</button
+						>
+					</div>
+					<div
+						class="bg-bg-subtle flex min-h-[108px] flex-1 items-center justify-center px-3.5 py-[18px]"
+					>
+						<ComponentPreview name={entry.slug} />
+					</div>
+				</div>
+			{/each}
 		</div>
 	</div>
 </section>
 
-<!-- ============================================================
-     FINAL CTA
-     ============================================================ -->
-<section class="border-border/50 border-t bg-muted/30">
-	<div class="mx-auto max-w-5xl px-4 py-20 text-center sm:px-6 lg:px-8">
-		<h2 class="mb-4 text-3xl font-bold">Ready to build?</h2>
-		<p class="text-muted-foreground mx-auto mb-8 max-w-md">
-			Start with the quick-start guide or explore the component library. Everything is open source.
-		</p>
-		<div class="flex flex-wrap justify-center gap-3">
-			<Button variant="primary" class="gap-2 px-6" onclick={() => goto('/docs/quick-start')}>
-				Get started
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					width="14"
-					height="14"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-					stroke-linecap="round"
-					stroke-linejoin="round"
+<!-- ═══ Agent surface ═════════════════════════════════════════════════════ -->
+<section class="border-border bg-bg-subtle border-b">
+	<div class="mx-auto max-w-[1280px] px-5 py-12">
+		<div
+			class="grid grid-cols-[minmax(0,0.78fr)_minmax(0,1.22fr)] items-start gap-14 max-[900px]:grid-cols-[minmax(0,1fr)]"
+		>
+			<div class="flex flex-col gap-[18px] pt-1.5">
+				<span
+					class="border-accent-line text-primary self-start rounded-full border px-2.5 py-[3px] font-mono text-[10.5px] tracking-[0.06em] uppercase"
+					>Agent surface</span
 				>
-					<path d="M5 12h14" /><path d="m12 5 7 7-7 7" />
-				</svg>
-			</Button>
-			<Button
-				variant="outline"
-				class="gap-2 px-6"
-				onclick={() => window.open('https://github.com/ixirjs/ui', '_blank')}
-			>
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					width="14"
-					height="14"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-				>
-					<path
-						d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"
-					/>
-					<path d="M9 18c-4.51 2-5-2-7-2" />
-				</svg>
-				Star on GitHub
-			</Button>
+				<div>
+					<h2
+						class="font-display m-0 mb-2.5 text-[26px] leading-[1.2] font-bold tracking-[-0.025em]"
+					>
+						Built for the second reader
+					</h2>
+					<p class="text-muted-foreground m-0 text-[15px] leading-[1.65] text-pretty">
+						A growing share of documentation traffic is a coding agent, not a browser. Every page
+						here is served as clean Markdown, indexed in
+						<code class="text-primary font-mono text-[13px]">llms.txt</code>, and queryable live
+						over MCP — the same content, without the chrome.
+					</p>
+				</div>
+				<div class="border-border flex flex-col gap-[9px] border-t pt-4">
+					{#each agentFacts as fact (fact.k)}
+						<div class="flex items-baseline gap-2.5">
+							<span class="text-primary w-[68px] shrink-0 font-mono text-xs">{fact.k}</span>
+							<span class="text-muted-foreground min-w-0 text-[13px]">{fact.v}</span>
+						</div>
+					{/each}
+				</div>
+			</div>
+
+			<div class="border-border bg-surface overflow-hidden rounded-xl border">
+				<div class="border-border bg-bg-subtle flex items-center gap-1 border-b px-2">
+					{#each agentSurfaces as tab (tab.key)}
+						<button
+							type="button"
+							onclick={() => (agentTab = tab.key)}
+							aria-pressed={agentTab === tab.key}
+							class={[
+								'-mb-px cursor-pointer border-0 border-b-2 bg-transparent px-2.5 py-[11px] font-mono text-xs transition-colors',
+								agentTab === tab.key
+									? 'border-b-primary text-foreground'
+									: 'text-muted-foreground hover:text-foreground border-b-transparent'
+							]}>{tab.label}</button
+						>
+					{/each}
+					<button
+						type="button"
+						onclick={() => copier.run(surface.text, `surface-${surface.key}`)}
+						class="border-border bg-surface text-muted-foreground hover:text-foreground ml-auto cursor-pointer rounded-md border px-2.5 py-1 text-[11px] transition-colors"
+						>{copier.label(`surface-${surface.key}`)}</button
+					>
+				</div>
+
+				<div class="min-h-[196px] px-4 py-4">
+					{#each surfaceLines as line, i (i)}
+						<div class="flex gap-3.5 font-mono text-[12.5px] leading-[1.85]">
+							<span class="text-fg-faint w-3.5 shrink-0 text-right text-[11px]">{i + 1}</span>
+							<span
+								class={[
+									'min-w-0 whitespace-pre-wrap',
+									line.startsWith('#')
+										? 'text-primary'
+										: line.startsWith('>')
+											? 'text-muted-foreground italic'
+											: line.startsWith('- ')
+												? 'text-muted-foreground'
+												: 'text-foreground'
+								]}>{line === '' ? ' ' : line}</span
+							>
+						</div>
+					{/each}
+				</div>
+
+				<div class="border-border bg-bg-subtle flex items-center gap-2.5 border-t px-4 py-2.5">
+					<span class="bg-primary h-[7px] w-[7px] shrink-0 rounded-full" aria-hidden="true"></span>
+					<span class="text-muted-foreground min-w-0 flex-1 truncate font-mono text-[11px]"
+						>{surface.meta}</span
+					>
+					<span class="text-muted-foreground shrink-0 text-[11.5px]">{surface.note}</span>
+				</div>
+			</div>
 		</div>
 	</div>
 </section>

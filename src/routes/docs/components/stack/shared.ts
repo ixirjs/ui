@@ -56,7 +56,7 @@ const useCases = [
 ];
 
 export const metadata = {
-	title: 'Stack - Svelte Atoms',
+	title: 'Stack - IXIR UI',
 	description:
 		'Layout component for layering elements in the same visual space using CSS Grid. Keeps elements in document flow so the parent sizes to its largest child.',
 	componentTitle: 'Stack',

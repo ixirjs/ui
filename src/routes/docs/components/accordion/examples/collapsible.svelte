@@ -6,7 +6,7 @@
 	<Accordion class="border-border overflow-hidden rounded-lg border" collapsible>
 		<AccordionItem.Root>
 			<AccordionItem.Header>
-				<span class="text-foreground font-medium">What is Svelte Atoms?</span>
+				<span class="text-foreground font-medium">What is IXIR UI?</span>
 				<AccordionItem.Indicator class="ml-auto" />
 			</AccordionItem.Header>
 			<AccordionItem.Body>A modular UI component library for Svelte 5.</AccordionItem.Body>

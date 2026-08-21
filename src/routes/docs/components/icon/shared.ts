@@ -14,7 +14,7 @@ const useCases = [
 ];
 
 export const metadata = {
-	title: 'Icon - Svelte Atoms',
+	title: 'Icon - IXIR UI',
 	description: 'Render any icon component through a consistent, presettable wrapper.',
 	componentTitle: 'Icon',
 	componentDescription:

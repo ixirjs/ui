@@ -31,7 +31,7 @@ const useCases = [
 ];
 
 export const metadata = {
-	title: 'Calendar - Svelte Atoms',
+	title: 'Calendar - IXIR UI',
 	description: 'Composable month-grid calendar for single-date or range selection.',
 	componentTitle: 'Calendar',
 	componentDescription:

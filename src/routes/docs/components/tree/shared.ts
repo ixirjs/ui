@@ -73,7 +73,7 @@ const componentsSummary = [
 ];
 
 export const metadata = {
-	title: 'Tree - Svelte Atoms',
+	title: 'Tree - IXIR UI',
 	description: 'Hierarchical tree view component for displaying expandable nested data structures.',
 	componentTitle: 'Tree',
 	componentDescription:

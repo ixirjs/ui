@@ -28,7 +28,7 @@
 	{section.description}
 {/each}
 
-## Keyboard Navigation All interactive components in Svelte Atoms support comprehensive keyboard
+## Keyboard Navigation All interactive components in IXIR UI support comprehensive keyboard
 navigation:
 
 {list(metadata.keyboardNavigation)}
@@ -57,7 +57,7 @@ navigation:
 
 {ist(metadata.reducedMotion)}
 
-## Testing for Accessibility When building with Svelte Atoms, follow these testing practices:
+## Testing for Accessibility When building with IXIR UI, follow these testing practices:
 
 {ist(metadata.testingPractices, true)}
 

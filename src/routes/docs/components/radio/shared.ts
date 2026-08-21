@@ -58,7 +58,7 @@ const componentsSummary = [
 ];
 
 export const metadata = {
-	title: 'Radio - Svelte Atoms',
+	title: 'Radio - IXIR UI',
 	description:
 		'Radio button component for selecting a single option from a group of mutually exclusive choices.',
 	componentTitle: 'Radio',

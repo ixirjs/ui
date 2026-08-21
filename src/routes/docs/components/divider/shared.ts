@@ -49,7 +49,7 @@ const useCases = [
 ];
 
 export const metadata = {
-	title: 'Divider - Svelte Atoms',
+	title: 'Divider - IXIR UI',
 	description:
 		'Visual separator for structuring content sections, supporting horizontal, vertical, and labeled variants.',
 	componentTitle: 'Divider',
