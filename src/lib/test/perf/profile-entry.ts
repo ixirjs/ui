@@ -13,13 +13,18 @@ import { PerformanceObserver } from 'node:perf_hooks';
 import Ablation, { type AblationLayer } from './ablation.test.svelte';
 import DatagridAblation from './datagrid-ablation.test.svelte';
 import MenuAblation from './menu-ablation.test.svelte';
+import TreeAblation from './tree-ablation.test.svelte';
 
-const layer = (process.argv[2] ?? 'card') as AblationLayer | 'datagrid' | 'menu';
+const layer = (process.argv[2] ?? 'card') as AblationLayer | 'datagrid' | 'menu' | 'tree';
 const budgetMs = Number(process.argv[3] ?? 4000);
 const n = Number(process.argv[4] ?? 400);
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const STANDALONE: Record<string, any> = { datagrid: DatagridAblation, menu: MenuAblation };
+const STANDALONE: Record<string, any> = {
+	datagrid: DatagridAblation,
+	menu: MenuAblation,
+	tree: TreeAblation
+};
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const fixture: any = STANDALONE[layer] ?? Ablation;
 const props = STANDALONE[layer] ? { n } : { n, layer };

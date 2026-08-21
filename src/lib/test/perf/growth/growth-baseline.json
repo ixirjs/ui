@@ -1,0 +1,16 @@
+{
+	"note": "Fitted mount-growth exponents. Machine-independent — do NOT re-record these to make a regression pass.",
+	"recorded": "2026-08-21",
+	"exponents": {
+		"accordion": 1.31,
+		"tabs": 0.88,
+		"tree": 1.05,
+		"datagrid": 0.85,
+		"dropdown-menu": 0.79,
+		"select": 0.74,
+		"stepper": 0.95
+	},
+	"known": {
+		"accordion": "NOT a target, and the cause is now OPEN. 1.31 was 1.37. Collection's per-set membership publish -- long believed to be the cause -- was fixed on 2026-08-21 by coalescing the version bump (one bump per read instead of one per set, kept synchronous so the a11y invariant holds; see shared/bond/collection.svelte.ts). Interleaved A/B: accordion n=400 mount 234 -> 215 ms (-8%), but k did NOT move -- 1.30 before, 1.30 after. Round 1's memoized #enabledIds and focusedId equality gate had already removed the part batching would have helped, so the k=1.55 -> 0.67 prototype in perf-vs-shadcn-2026-08.md 7a does not reproduce against this baseline. Whatever still makes accordion superlinear is NOT collection marking. Never raise this entry."
+	}
+}
