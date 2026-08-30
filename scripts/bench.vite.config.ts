@@ -35,7 +35,10 @@ export default defineConfig({
 			},
 			{ find: /^@ixirjs\/ui$/, replacement: lib },
 			{ find: /^\$lib\//, replacement: lib + '/' },
-			{ find: /^\$app\/environment$/, replacement: path.join(lib, 'test/perf/app-environment.ts') }
+			{ find: /^\$app\/environment$/, replacement: path.join(lib, 'test/perf/app-environment.ts') },
+			// Vendored shadcn-svelte source for the head-to-head harness. Third-party, so it lives
+			// outside `src/lib` (and outside tsconfig/eslint) — see `bench/vs-shadcn/provenance.json`.
+			{ find: /^\$shadcn\//, replacement: path.join(root, 'bench/vs-shadcn') + '/' }
 		]
 	},
 	build: {

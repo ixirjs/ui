@@ -39,7 +39,14 @@
 		"scaffold": "node scripts/scaffold.mjs",
 		"sync:props": "node scripts/sync-props.mjs",
 		"sync:surface": "vitest --run public-surface -u",
-		"archive:surface": "node scripts/archive-surface.mjs"
+		"archive:surface": "node scripts/archive-surface.mjs",
+		"bench:vs-shadcn": "BENCH_ENTRY=test/perf/vs-shadcn/vs-bench.ts BENCH_OUT=.bench-out/vs vite build -c scripts/bench.vite.config.ts && node .bench-out/vs/vs-bench.js",
+		"bench:vs-shadcn:client": "BENCH_ENTRY=test/perf/vs-shadcn/ssr-entry.ts BENCH_OUT=.bench-out/vs-ssr vite build -c scripts/bench.vite.config.ts && BENCH_CLIENT_ENTRY=test/perf/vs-shadcn/vs-client.svelte.ts BENCH_CLIENT_NAME=VsBench BENCH_CLIENT_FILE=vs-client.js BENCH_CLIENT_OUT=.bench-out/vs-client vite build -c scripts/bench-client.vite.config.ts && node scripts/bench-vs-client.mjs",
+		"bench:vs-shadcn:fetch": "node scripts/fetch-shadcn.mjs",
+		"bench:vs-shadcn:size": "node scripts/bench-vs-size.mjs",
+		"bench:vs-shadcn:ab": "node scripts/bench-vs-ab.mjs",
+		"bench:vs-shadcn:own": "node scripts/bench-vs-own.mjs",
+		"bench:vs-shadcn:primitives": "node scripts/bench-vs-primitives.mjs"
 	},
 	"files": [
 		"dist",
@@ -144,7 +151,9 @@
 		"vite": "^7.3.2",
 		"vitest": "^3.2.4",
 		"vitest-browser-svelte": "^0.1.0",
-		"zod": "^4.3.6"
+		"zod": "^4.3.6",
+		"bits-ui": "2.19.0",
+		"tailwind-variants": "^3.3.1"
 	},
 	"keywords": [
 		"svelte",

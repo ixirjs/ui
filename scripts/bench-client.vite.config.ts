@@ -23,11 +23,12 @@ export default defineConfig({
 			{ find: /^\$ixirjs\/ui$/, replacement: lib },
 			{ find: /^\$ixirjs\/ui\//, replacement: lib + '/' },
 			{ find: /^\$lib\//, replacement: lib + '/' },
-			{ find: /^\$app\/environment$/, replacement: path.join(lib, 'test/perf/app-environment.ts') }
+			{ find: /^\$app\/environment$/, replacement: path.join(lib, 'test/perf/app-environment.ts') },
+			{ find: /^\$shadcn\//, replacement: path.join(root, 'bench/vs-shadcn') + '/' }
 		]
 	},
 	build: {
-		outDir: path.join(root, '.bench-out/client'),
+		outDir: path.join(root, process.env.BENCH_CLIENT_OUT ?? '.bench-out/client'),
 		emptyOutDir: true,
 		// Not minified, for the same reason the SSR bundle is not: the profile should name library
 		// frames. It is also never shipped, so size is irrelevant.
@@ -35,10 +36,16 @@ export default defineConfig({
 		target: 'esnext',
 		sourcemap: false,
 		lib: {
-			entry: path.join(lib, 'test/perf/nesting/nesting-client.svelte.ts'),
-			name: 'NestingBench',
+			// Parameterised for the same reason the SSR config is: a second client benchmark should
+			// share the alias block, the IIFE format and the environment stub rather than fork them.
+			// Defaults reproduce `bench:nesting:client` exactly.
+			entry: path.join(
+				lib,
+				process.env.BENCH_CLIENT_ENTRY ?? 'test/perf/nesting/nesting-client.svelte.ts'
+			),
+			name: process.env.BENCH_CLIENT_NAME ?? 'NestingBench',
 			formats: ['iife'],
-			fileName: () => 'nesting-client.js'
+			fileName: () => process.env.BENCH_CLIENT_FILE ?? 'nesting-client.js'
 		}
 	}
 });

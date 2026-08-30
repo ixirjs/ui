@@ -23,7 +23,11 @@ const config = {
 			'@ixirjs/ui/experimental': 'src/lib/public/experimental',
 			'@ixirjs/ui/utils': 'src/lib/public/utils',
 			'@ixirjs/ui/components/*': 'src/lib/public/components/*',
-			'@ixirjs/ui': 'src/lib'
+			'@ixirjs/ui': 'src/lib',
+			// Vendored shadcn-svelte source, used only by the head-to-head bench fixtures under
+			// `src/lib/test/perf/vs-shadcn/`. Declared here so `svelte-check` resolves the same
+			// specifier the two bench Vite configs already alias; nothing in `src/lib` imports it.
+			'$shadcn/*': 'bench/vs-shadcn/*'
 		}
 	},
 	extensions: ['.svelte', '.svx'],
