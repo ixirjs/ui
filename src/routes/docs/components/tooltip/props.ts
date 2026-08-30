@@ -55,7 +55,7 @@ export const tooltipRootProps: PropDefinition[] = [
 	},
 	{
 		name: 'onopenchange',
-		type: 'StateChangeCallback<boolean, PopoverBondBase<PopoverBondProps>> | undefined',
+		type: 'StateChangeCallback<boolean, TooltipBond> | undefined',
 		default: 'undefined',
 		description:
 			'Called after a real open-state transition commits; pointer and dismissal details are included when available.'
@@ -80,7 +80,7 @@ export const tooltipRootProps: PropDefinition[] = [
 	},
 	{
 		name: 'portal',
-		type: 'string | PortalBondBase<PortalBondProps>',
+		type: 'string | PortalBond',
 		default: 'ambient portal → root.l0',
 		description:
 			'Portal target selector or PortalBond instance. Resolution is explicit target → ambient portal → root.l0, preserving nested overlay containment.'

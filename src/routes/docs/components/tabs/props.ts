@@ -21,7 +21,7 @@ export const tabRootProps: PropDefinition[] = [
 	},
 	{
 		name: 'factory',
-		type: 'Factory<TabBond>',
+		type: 'Factory<TabBond<unknown>>',
 		default: 'undefined',
 		description: 'Replaces the Bond constructor, so a family can be extended or fused.'
 	},
@@ -42,13 +42,13 @@ export const tabRootProps: PropDefinition[] = [
 export const tabsRootProps: PropDefinition[] = [
 	{
 		name: 'factory',
-		type: 'Factory<TabsBond>',
+		type: 'Factory<TabsBond<unknown>>',
 		default: 'undefined',
 		description: 'Factory'
 	},
 	{
 		name: 'onvaluechange',
-		type: 'StateChangeCallback<D | undefined, TabsBond> | undefined',
+		type: 'StateChangeCallback<D | undefined, TabsBond<unknown>> | undefined',
 		default: 'undefined',
 		description:
 			'Semantic callback fired after the active value commits. Receives `(value, { bond? })`.'

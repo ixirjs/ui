@@ -9,7 +9,7 @@ export const paginationRootProps: PropDefinition[] = [
 	},
 	{
 		name: 'factory',
-		type: '(props: PaginationStateProps) => PaginationBondBase',
+		type: '(props: PaginationStateProps) => PaginationBond',
 		default: 'undefined',
 		description: 'Replaces the Bond constructor, so a family can be extended or fused.'
 	},

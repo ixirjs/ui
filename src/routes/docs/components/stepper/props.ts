@@ -15,7 +15,7 @@ export const stepRootProps: PropDefinition[] = [
 	},
 	{
 		name: 'factory',
-		type: 'Factory<StepBondBase>',
+		type: 'Factory<StepBond>',
 		default: 'undefined',
 		description: 'Custom factory for creating step bond'
 	},
@@ -57,7 +57,7 @@ export const stepperRootProps: PropDefinition[] = [
 	},
 	{
 		name: 'factory',
-		type: 'Factory<StepperBondBase>',
+		type: 'Factory<StepperBond>',
 		default: 'undefined',
 		description: 'Custom factory for creating stepper bond'
 	},
@@ -69,7 +69,7 @@ export const stepperRootProps: PropDefinition[] = [
 	},
 	{
 		name: 'onstepchange',
-		type: 'StateChangeCallback<number, StepperBondBase> | undefined',
+		type: 'StateChangeCallback<number, StepperBond> | undefined',
 		default: 'undefined',
 		description: 'Semantic callback; runs after the active step commits.'
 	},

@@ -253,7 +253,7 @@ export const datagridRowProps: PropDefinition[] = [
 	},
 	{
 		name: 'onclick',
-		type: 'MouseEventHandler<HTMLElementTagNameMap[E]>',
+		type: 'MouseEventHandler<HTMLDivElement>',
 		default: 'undefined',
 		description: 'Native click callback. Receives only the DOM event.'
 	},

@@ -3,13 +3,13 @@ import { renderPropsRow, type PropDefinition } from '$docs/types';
 export const stackRootProps: PropDefinition[] = [
 	{
 		name: 'factory',
-		type: 'Factory<StackBondBase>',
+		type: 'Factory<StackBond>',
 		default: 'built-in',
 		description: 'Custom factory for creating the StackBond instance.'
 	},
 	{
 		name: 'onvaluechange',
-		type: 'StateChangeCallback<string | undefined, StackBondBase> | undefined',
+		type: 'StateChangeCallback<string | undefined, StackBond> | undefined',
 		default: 'undefined',
 		description: 'Semantic callback; runs after the topmost value commits.'
 	},
@@ -25,17 +25,11 @@ export const stackRootProps: PropDefinition[] = [
 
 export const stackItemProps: PropDefinition[] = [
 	{
-		name: 'id',
-		type: 'string | undefined',
-		default: '$props.id()',
-		description:
-			'Unique identifier for this item within the stack. Used by Bond z-order methods such as bringToFront and sendToBack. Auto-generated if omitted.'
-	},
-	{
 		name: 'value',
 		type: 'string',
 		default: 'undefined',
-		description: 'Current value of the control.'
+		description:
+			'Unique identifier for this item within the stack. Used by Bond z-order methods such as bringToFront and sendToBack.'
 	},
 	renderPropsRow
 ];

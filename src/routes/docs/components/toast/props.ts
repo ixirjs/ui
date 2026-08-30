@@ -33,7 +33,7 @@ export const toastRootProps: PropDefinition[] = [
 	},
 	{
 		name: 'onopenchange',
-		type: 'StateChangeCallback<boolean, ToastBondBase> | undefined',
+		type: 'StateChangeCallback<boolean, ToastBond> | undefined',
 		default: 'undefined',
 		description:
 			'Called after a real open-state transition commits; close reasons are included when available.'

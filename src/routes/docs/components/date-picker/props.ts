@@ -61,7 +61,7 @@ export const datePickerRootProps: PropDefinition[] = [
 	},
 	{
 		name: 'factory',
-		type: 'Factory<DatePickerBondBase>',
+		type: 'Factory<DatePickerBond>',
 		default: 'undefined',
 		description: 'Replaces the Bond constructor, so a family can be extended or fused.'
 	},
@@ -91,25 +91,25 @@ export const datePickerRootProps: PropDefinition[] = [
 	},
 	{
 		name: 'onopenchange',
-		type: 'StateChangeCallback<boolean, DatePickerBondBase>',
+		type: 'StateChangeCallback<boolean, DatePickerBond>',
 		default: 'undefined',
 		description: 'Fired after open state commits.'
 	},
 	{
 		name: 'onpivotechange',
-		type: 'StateChangeCallback<Date, DatePickerBondBase>',
+		type: 'StateChangeCallback<Date, DatePickerBond>',
 		default: 'undefined',
 		description: 'Fired after the visible month pivote commits.'
 	},
 	{
 		name: 'onrangechange',
-		type: 'StateChangeCallback<CalendarRange, DatePickerBondBase>',
+		type: 'StateChangeCallback<CalendarRange, DatePickerBond>',
 		default: 'undefined',
 		description: 'Fired after the selected range commits in range mode.'
 	},
 	{
 		name: 'onvaluechange',
-		type: 'StateChangeCallback<Date | undefined, DatePickerBondBase>',
+		type: 'StateChangeCallback<Date | undefined, DatePickerBond>',
 		default: 'undefined',
 		description: 'Fired after the selected date commits in single mode.'
 	},
@@ -163,7 +163,7 @@ export const datePickerRootProps: PropDefinition[] = [
 	},
 	{
 		name: 'type',
-		type: '"single" | "range"',
+		type: '"range" | "single"',
 		default: 'undefined',
 		description: 'Selection mode: pick a single date or a date range.'
 	},

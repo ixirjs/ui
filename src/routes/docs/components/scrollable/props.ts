@@ -27,7 +27,7 @@ export const scrollableRootProps: PropDefinition[] = [
 	},
 	{
 		name: 'factory',
-		type: 'Factory<ScrollableBondBase>',
+		type: 'Factory<ScrollableBond>',
 		default: 'undefined',
 		description: 'Custom factory for creating the scrollable bond instance.'
 	},

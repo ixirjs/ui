@@ -76,6 +76,8 @@ export const dropdownMenuItemProps: PropDefinition[] = [
 	renderPropsRow
 ];
 
+export const dropdownMenuTriggerProps: PropDefinition[] = [renderPropsRow];
+
 export const dropdownMenuContentProps: PropDefinition[] = [renderPropsRow];
 
 export const dropdownMenuRootProps: PropDefinition[] = [
@@ -111,7 +113,7 @@ export const dropdownMenuRootProps: PropDefinition[] = [
 	},
 	{
 		name: 'onopenchange',
-		type: 'StateChangeCallback<boolean, DropdownMenuBondBase<PopoverBondProps>> | undefined',
+		type: 'StateChangeCallback<boolean, DropdownMenuBond> | undefined',
 		default: 'undefined',
 		description:
 			'Semantic callback; runs after the open state commits, not when the trigger is clicked.'
@@ -136,7 +138,7 @@ export const dropdownMenuRootProps: PropDefinition[] = [
 	},
 	{
 		name: 'portal',
-		type: 'string | PortalBondBase<PortalBondProps>',
+		type: 'string | PortalBond',
 		default: 'ambient portal → root.l0',
 		description:
 			'Portal target selector or PortalBond instance. Resolution is explicit target → ambient portal → root.l0, preserving nested overlay containment.'

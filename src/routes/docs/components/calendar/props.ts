@@ -27,7 +27,7 @@ export const calendarRootProps: PropDefinition[] = [
 	},
 	{
 		name: 'factory',
-		type: 'Factory<CalendarBondBase>',
+		type: 'Factory<CalendarBond>',
 		default: 'undefined',
 		description: 'Replaces the Bond constructor, so a family can be extended or fused.'
 	},
@@ -51,19 +51,19 @@ export const calendarRootProps: PropDefinition[] = [
 	},
 	{
 		name: 'onpivotechange',
-		type: 'StateChangeCallback<Date, CalendarBondBase>',
+		type: 'StateChangeCallback<Date, CalendarBond>',
 		default: 'undefined',
 		description: 'Fired after the visible month pivote commits.'
 	},
 	{
 		name: 'onrangechange',
-		type: 'StateChangeCallback<CalendarRange, CalendarBondBase>',
+		type: 'StateChangeCallback<CalendarRange, CalendarBond>',
 		default: 'undefined',
 		description: 'Fired after the selected range commits in range mode.'
 	},
 	{
 		name: 'onvaluechange',
-		type: 'StateChangeCallback<Date | undefined, CalendarBondBase>',
+		type: 'StateChangeCallback<Date | undefined, CalendarBond>',
 		default: 'undefined',
 		description: 'Fired after the selected date commits in single mode.'
 	},
@@ -93,7 +93,7 @@ export const calendarRootProps: PropDefinition[] = [
 	},
 	{
 		name: 'type',
-		type: '"single" | "range"',
+		type: '"range" | "single"',
 		default: 'undefined',
 		description: 'Selection mode: pick a single date or a date range.'
 	},

@@ -11,16 +11,17 @@ seam, adapter, leverage, locality). Use those terms exactly — don't substitute
 
 ## Library concepts
 
-**Bond** — a per-component class that owns shared reactive props, derived
-values, mutation methods, context, capabilities, and the registry of rendered
-Atoms. Implemented in `src/lib/shared/bond/bond.svelte.ts`. A compound component
-family has one root Bond; nested families can have child Bonds.
+**Bond** — a family's shared object: a **plain state class** (`CardBond`, `AccordionItemBond`) that
+owns the shared reactive props, derived values, mutation methods and element ids, published to
+context by the root. It has no base class, no registry and no capability host — those went with the
+Bond/Atom runtime on 2026-08-27. A compound family has one root Bond; nested families have child
+Bonds that take their parent from context at construction. The name "Bond" is kept for the role, not
+for a type.
 
-**BondState** — removed. It was a separate state host accepted by Bond constructors and by
-`defineBond({ state })`, whose members were forwarded onto the Bond. Shared state, derived values,
-mutation methods, collections, and capability lookup now live on `Bond` itself; a family that wants
-them on a reusable class puts them on a `Bond` subclass and names it as the definition's `base`.
-There is no instance-level `bond.state` facade.
+**Live props** — the object of getters a root builds and hands its Bond (`get open() { return open; }`),
+so the Bond reads a prop where it is read rather than snapshotting it. `bindCommit(...)` is the
+other half: the Bond decides a new value, the root writes the `$bindable`, and the semantic callback
+fires after the write with `{ bond }` plus the staged `event`/`reason`.
 
 **State-surface naming.** The **verb namespace is reserved for imperative
 methods** that mutate — `open()`, `close()`, `toggle()`, `select()`. State is
@@ -34,98 +35,74 @@ name is verb-shaped; noun state stays plain (`value` coexists with `select()`).
 read only when mapping straight to a DOM attribute); the `is*` getters are the
 normalized surface consumers read.
 
-**Bond context plumbing** — a bond family is published to Svelte context via the
-inherited `share()` / `static get()` / `static set()` on `Bond` (polymorphic
-`this`, keyed off `CONTEXT_KEY`). `defineBond(...)` generates a canonical key
-(`@ixirjs/context/<name>`) for an ordinary definition; `extends:` inherits its
-parent key. A raw Bond class declares `static CONTEXT_KEY = bondContextKey('<name>')`
-but never re-implements the trio. Don't hand-write the string.
+**Bond context plumbing** — `XContext = Kernel.context<XBond>('bond/<name>')` gives a family one
+key (`@ixirjs/context/bond/<name>`) and four operations: `share`, `get`, `getOptional`,
+`getOrThrow`. The root shares; every part reads. A fused family shares under each ancestor's key as
+well, which is what lets `PopoverDialog.Trigger` be `Popover.Trigger`. Don't hand-write the string.
 
-**Atom Component** — the Svelte component that renders a part such as Root,
-Trigger, Content, Item, Header, or Body.
+**Part** — the Svelte component that renders one slot (Root, Trigger, Content, Item, Header, Body).
+It reads its Bond from context, builds `Kernel.element(() => props, spec)`, and either spreads
+`el.attrs` on a literal tag or binds one leaf (`Kernel.render(el)`) when it has a reason to dispatch
+— a transition, a `base` renderer, a polymorphic `as`, or a preset that retags it. There is no
+runtime object between the component and its element: what an Atom used to project is written
+literally in the part's `attrs`.
 
-**Atom** — the runtime object owned by an Atom Component. It owns one DOM element
-ref, attrs, handlers, attachment lifecycle, role projection, and atom-local
-capabilities. Ordinary rendered parts compile `Kernel.part(...)` metadata and bind a
-`Kernel.node(...)`; Kernel registers a lazy semantic descriptor and materializes its Atom only when
-rendering semantics or a public query needs it. Repeated/runtime-polymorphic parts use
-`createAtomInstance(...)` by exception. Mounted consumers use registry queries.
+**Capability** — historical. Behaviour is composed from **models** — `createDisclosure`,
+`createSelection`, `createRovingFocus`, `createTypeahead`, `createInput`, `createSort`,
+`createPagination`, `createValidation`, `createStatus`, `createGeometry` — plain functions a Bond
+calls in its constructor, exported from `@ixirjs/ui/capability`. Their ARIA and `data-*` projections
+are written by the parts that own those elements. The registration protocol (`defineBondCapability`,
+`defineAtomCapability`, slot keys, the host) was deleted with the runtime.
 
-**Capability** — a reusable behavior unit installed on a Bond or an Atom. Bond
-capabilities own shared state, cross-atom coordination, role projection, and
-whole-bond effects. Atom capabilities own one node's local DOM behavior,
-presentation, and lifecycle. "Particle" is the docs metaphor; `Capability` is
-the API name.
+**Identity vocabulary** — three identifiers, each distinct. Don't conflate:
 
-**Identity vocabulary** — five identifiers, each distinct. Don't conflate:
+| id         | what it is                | set by / formula                                      | example (accordion item header) |
+| ---------- | ------------------------- | ----------------------------------------------------- | ------------------------------- |
+| seed       | the family's identity     | the root's `$props.id()`, or `value` where one exists | `s1`                            |
+| element id | what a part renders       | `Kernel.id(seed, '<family>-<part>')`                  | `accordion-item-header-s1`      |
+| preset key | the theme key a part uses | dotted path in the part's Kernel spec                 | `accordion.item.header`         |
 
-| id            | what it is                          | set by / formula                     | example (accordion item header) |
-| ------------- | ----------------------------------- | ------------------------------------ | ------------------------------- |
-| `key`/`name`  | atom slot id (`name` returns `key`) | `super(bond, 'header')` arg          | `header`                        |
-| `namespace`   | bond's DOM family                   | `super(state, '…')` / override       | `accordion-item`                |
-| `kind`        | qualified DOM `data-kind`           | `` `${namespace}-${name}` ``         | `accordion-item-header`         |
-| `bond.preset` | dotted preset base path             | defaults to `namespace`; overridable | `accordion.item`                |
-| `atom.preset` | atom's theme key                    | root → `bond.preset`, else `.name`   | `accordion.item.header`         |
+Element ids are hyphenated (DOM); preset keys are dotted (theme hierarchy) — deliberately different
+(see §preset). A part a consumer may render twice claims its id with `Kernel.claimId(bond, seed,
+part)`: the first keeps the canonical one, later ones take the lowest free suffix, released on
+teardown.
 
-`namespace` is hyphenated (DOM); `preset` is dotted (theme hierarchy) — they are
-deliberately different (see §preset). `kind` is computed; **don't hardcode a
-`data-kind` that diverges from it** (the old `accordion-header` override was
-removed for this reason).
-
-**Spread** — the merged object an atom exposes for `<div {...atom.spread}>`.
+**Spread** — the merged attribute object a part renders: `<div {...el.attrs}>`.
 Equals `{ ...attrs, ...handlers, ...attachments }`. The atom's interface is the
 spread; that's the test surface.
 
-**Behavior** — the low-level projection shape (`{ attrs?, handlers?, onmount? }`)
-that an Atom folds into its `spread`. Most authoring should wrap behavior in a
-Bond or Atom capability so it can be named, registered, replaced, and explained.
-Merge rules:
+**Attribute merge order** — one order, owned by `Kernel.element`: `class` first, then the preset's
+attributes, the variant's, the layer's, the part's own (`spec.attrs`), then the consumer's props.
+Handlers compose rather than replace — the consumer's runs first and the part's is skipped when the
+default was prevented — so a part's own handler must ALSO gate on `event.defaultPrevented`, for a
+consumer who prevents from their own listener and passes no prop.
 
-- `attrs` merge **after** the atom's own (last wins), like presets.
-- `handlers` are **chained** on key collision (atom first, then each behavior) —
-  behavior augments rather than clobbers; both run.
-- `onmount` joins the Atom's single stable attachment transaction. Own, Bond-projected,
-  and Atom-capability hooks mount in dependency order and clean up in reverse order.
+**Reactivity invariant** — a part reads Bond state **live and tracked**, inside the `attrs` thunk
+that `Kernel.element` evaluates within its own memo. Concretely:
 
-**Channel-B reactivity invariant** — Atoms read Bond state **live and tracked**;
-the _component_ owns the reactivity boundary by reading `atom.spread` inside a
-`$derived`. Concretely:
+- `attrs: () => ({ 'aria-disabled': bond.isDisabled })` reads the Bond directly. **Never `untrack` a
+  Bond read in `attrs`** — it freezes the attribute (the class of bug where `aria-disabled` stops
+  updating).
+- Handlers are closures: read state **inside the handler body** (event-time), never above the
+  `return` (derive-time), which captures a stale value.
+- `untrack` is legitimate **only** for one-shot snapshots: the root's `factory`, a part's `id` prop,
+  and mount-time reads. Those must _not_ become reactive dependencies.
+- **Nothing read from a dispatch block may depend on Bond state**, however well gated — a child
+  registering at mount is a write during effect flush, and a block effect re-runs eagerly on it.
 
-- `get attrs()` reads `this.bond.*` or `this.bond.props.*` directly. **Never `untrack` a Bond
-  read in `attrs`** — it freezes the attribute (the class of bug where
-  `aria-disabled` stops updating). The component's `$derived(atom.spread)`
-  re-runs because the getter is tracked.
-- `get handlers()` returns closures only. Read state **inside the handler body**
-  (event-time), never above the `return` (derive-time) — a derive-time read
-  captures a stale value into the closure.
-- `untrack` is legitimate **only** for one-shot snapshots: bond construction inside
-  `bindBond(...)` and mount-time reads in `onmount`. Those must _not_ become reactive
-  dependencies.
+**Collections** — a parent's mount-ordered `Map`, registered at the child's init (document order)
+and released on teardown. It replaces the node registry. Anything reactive derived from membership
+goes through ONE equality-gated `$state` — the accordion's tab stop — never a reactive array every
+child reads, which is the defect class `bench:growth` exists to catch.
 
-**Node registry** — Bond's indexed, render-safe Atom registry. `bond.register(node)` updates
-plain insertion/part indexes synchronously so sibling queries work during render. In the browser,
-one module-level microtask publishes a reactive membership revision for every registry touched in
-the turn; SSR needs no reactive publication. Read through `nodeByPart(name)`,
-`nodesByPart(name)`, or `nodeByRole(role)`.
+**Stable attachment keys** — a part mints its attachment symbols once, at init, never while
+computing attrs. Svelte keys attachments by symbol identity; reminting one on every read reruns
+mount/cleanup and breaks lifecycle locality. This is how an `animate`-only motion driver rides a
+literal element instead of escalating to `HtmlElement` (+2 hydration anchors per part).
 
-The deferred reactive publication is **load-bearing — do not "simplify" it away**:
-
-- atoms register during render, where mutating reactive state directly throws
-  `state_unsafe_mutation`;
-- plain indexes must update immediately for same-render sibling lookup;
-- tracked queries must read the registry revision so later registration/mount changes re-run;
-- one batched microtask, rather than one staging-map flush per Bond, owns that publication.
-
-**Stable attachment keys** — every Atom mints attachment symbols once per
-instance, not while computing `spread`. Svelte keys attachments by symbol
-identity; reminting a symbol on every spread read would rerun mount/cleanup and
-break lifecycle locality.
-
-**Share** — the low-level operation that sets a Bond into Svelte context. Roots use `useRoot(...)`,
-which constructs, activates, publishes and destroys the Bond (delegating to the experimental `bindBond(...)`, still
-the exported primitive, for the construction and lifecycle half). A root that renders no element of
-its own passes `atom: false`. Ordinary sub-components bind a module-scoped Kernel plan with
-`Kernel.node(...)`; lower-level code may retrieve context via `FooBond.get()`.
+**Share** — the operation that puts a Bond into Svelte context: `XContext.share(bond)` in the root,
+`XContext.get()` / `getOrThrow(message)` in the parts. The root also reads `factory` through
+`untrack` — a family takes its parent from context BEFORE it shares its own.
 See §"Bond context plumbing".
 
 **Preset record** — the closed presentation contract `{ class, attrs, variants,
@@ -138,39 +115,28 @@ variants/presets merge. Order: `defaults → preset → variants → restProps` 
 tracked snapshot. Kernel renders the ordinary native path directly; custom renderers, driver-only
 motion, or renderer lifecycle hooks enter the richer component leaves.
 
-**Runtime Kernel** — the sole first-party rendering seam. `Kernel.part(...)` compiles immutable
-slot metadata once per module, `Kernel.node(...)` binds one instance and its lazy semantic identity,
-`Kernel.element(...)` resolves the full presentation contract, and `Kernel.render(...)` selects the
-literal, dynamic, transition, element, or custom-renderer leaf. `definePart(...)` collapses the
-ordinary no-logic descendant shape onto Kernel. There is no parallel rendering interface.
+**Kernel** — the sole first-party rendering seam, `src/lib/kernel/kernel.svelte.ts`.
+`Kernel.element(() => props, spec)` resolves the whole presentation contract for one part,
+`Kernel.render(el)` returns the leaf a dispatching part renders (literal, dynamic, transition,
+`HtmlElement`, or a custom renderer), `Kernel.context` publishes a family's shared object,
+`Kernel.id`/`Kernel.claimId` derive element ids, and `Kernel.compose` composes a consumer handler
+with a part's. There is no parallel rendering interface and no other authoring seam.
 
-**`Bond.namespace` vs `Bond.preset`** — two _distinct_ identities, kept
-separate on purpose:
+**Preset keys** — dotted paths naming a theme entry, declared in each part's Kernel spec and
+registered in `src/lib/preset/manifest.ts`. A root takes the bare base (`accordion`,
+`accordion.item`); every other part appends its slot (`accordion.item.header`). Dots separate
+_hierarchy levels_, hyphens stay _inside_ a level (`dropdown-menu.item`). A fused family derives its
+keys from `bond.name`, which is what lets Dialog's parts resolve `popover-dialog.*` under
+PopoverDialog.
 
-- **`namespace`** — DOM identity (`data-bond`, `kind`, element ids).
-  Hyphenated for multi-word names (`accordion-item`, `dropdown-menu`). Defaults
-  to `name`; compound bonds override it (`combobox`, `select`).
-- **`preset`** (on the Bond) — the dotted preset _base path_. Source of truth
-  for atom preset keys. Defaults to `namespace` (correct for single-level
-  components: `popover.content`, `dropdown-menu.list`, `alert.close` — dots
-  separate _hierarchy levels_, hyphens stay _inside_ a level). Genuinely
-  **nested child bonds** override it because their preset depth exceeds their
-  hyphenated namespace: `accordion-item` (namespace) → `accordion.item`
-  (`bond.preset`).
-
-**`Atom.preset`** — the atom's default preset key, from `bond.preset`:
-the **root** atom maps to the bare base (`accordion`, `accordion.item`); every
-other atom appends its `name` (`accordion.item.header`). (`bond.preset` is the
-bond-level base; `atom.preset` is the atom-level full key — same name, two
 layers.) A re-exported atom re-namespaces automatically (combobox reusing the
 popover tail → `combobox.tail`).
 
-Components consume this as the **default**, caller overrides:
-`preset: preset ?? atom.preset`. Don't restate the literal key in the `.svelte`
-— the atom owns it. The `preset` prop is typed `PresetKey`, which also accepts
-an explicit fallback chain from `fallbackPreset(...)`, resolved first-registered-wins by
-`presentationStages.preset`. Collection-item components pass the canonical shared item
-preset explicitly rather than calling deprecated generated Atom methods.
+A part declares its key once, in its Kernel spec (`preset: 'accordion.item.header'`), and a
+consumer's `preset` prop overrides it. The `preset` prop is typed `PresetKey`, which also accepts an
+explicit fallback chain from `fallbackPreset(...)`. A part that re-skins another family's element
+names that family's key verbatim rather than waking its own fallback — the two differ
+(`list.item` is `px-4 py-3` against `select.item`'s `px-2 py-1.5`).
 
 ## Overlay architecture
 
@@ -213,21 +179,22 @@ depend on this small contract instead of the whole concrete Bond.
 
 ## Testing posture
 
-The Bond's interface is the test surface — Bond methods, `atom.spread`,
-atom identity, strategy substitution. Don't render DOM to assert ARIA; assert
-on the spread object directly.
+The **rendered outcome** is the test surface — ids, ARIA, `data-*`, keyboard behaviour — plus the
+Bond's own methods and derived state. Assert on the DOM, not on a runtime object: there is no spread
+object to inspect any more, and a spec that reaches for machinery pins an implementation rather than
+a contract.
 
 **Spec convention** — `*.svelte.spec.ts` colocated next to `bond.svelte.ts`.
 The Svelte-prefixed suffix lands in Vitest's browser project (Playwright +
 Chromium), where `$state` runes work. Pure (no-rune) specs use `*.spec.ts` and
 run in the node project.
 
-**Per-bond checklist** — each colocated browser Bond spec covers: (1) Bond method
-mutates props; (2) `atom.spread` is reactive; (3) handlers transition state
-when invoked; (4) rendered Atom identity/registration is stable; (5) capability
-or strategy substitution alters behavior; (6) teardown unregisters; (7) a required
-descendant fails outside root context; and (8) relationship projection is asserted through
-spread attrs. Collapsible is the canonical example.
+**Per-family checklist** — each colocated browser spec covers: (1) a Bond method mutates props;
+(2) the rendered attributes track that state; (3) pointer/keyboard gestures transition it;
+(4) every part renders its seeded id; (5) a model or `factory` substitution alters behaviour;
+(6) teardown releases what the family registered; (7) a required descendant throws outside its root
+context; and (8) cross-part ARIA names the element that actually rendered. Collapsible and Dialog
+are the canonical examples.
 
 **Adapter specs** — each strategy adapter (ClickTrigger, hoverTrigger,
 CloseOnEscape, ClearThenClose, TrappedFocus, FocusOnOpen, NoFocus) has a spec
@@ -266,26 +233,22 @@ Conventions:
 - Duplicate-id set throws in dev, replaces in prod.
 - Many collections per bond namespace by slot: `collection:item`, `collection:row`, …
 
-**Child→parent seam** — a child Bond or Atom should depend on a **narrow
+**Child→parent seam** — a child Bond or part should depend on a **narrow
 parent-facing interface**, not the whole parent Bond. The parent Bond exposes
 only what children need, such as ids, values, open/close/toggle methods,
 collection registration, or a specific capability surface. The child stores that
 small interface, which keeps tests simple and avoids reaching through
 `parent.parent.parent` chains.
 
-**RovingTabindex** — adapter `rovingTabindex(collection, highlightedIdState)`
-returning handlers (Arrow keys, Home/End) + `aria-activedescendant` attrs.
-Composes with `Collection<T>`; lives next to overlay strategies. Also reaches
-data-driven atom sets cached by data identity (see Calendar) via a thin
-`rovingCalendarGrid(bond)` variant that iterates cached day atoms in display
-order.
+**Roving focus** — `createRovingFocus({ ids, item })` from `@ixirjs/ui/capability`: a model over the
+ids currently reachable, with `next`/`previous`/`first`/`last`/`goto`. The keyboard handler and the
+`tabindex`/`aria-activedescendant` attributes are written by the part that owns the element. Tree
+owns one model at the outermost node, because navigation crosses node boundaries.
 
-**Data-driven atoms** — Atoms keyed by data identity, not only by slot name.
-Used when a component renders a fixed-shape collection driven by data, such as
-Calendar days keyed by `day.id` or weekday headers keyed by index. Prefer
-creating these Atoms in the rendered part with `createAtomInstance(key, ...)`
-and registering many nodes with `register: { cardinality: 'many' }`. Caller
-responsibility: keep the data identity stable across renders.
+**Data-driven parts** — a part rendered once per datum (Calendar days keyed by `day.id`, DataGrid
+rows). It derives its element id from the datum's identity rather than from a slot name, and
+registers with its parent's collection at init if the parent needs to see it. Caller responsibility:
+keep the data identity stable across renders.
 
 **ValidationSource** — the one seam between a Bond and whoever decides whether it
 is valid (`shared/validation`). Two directions, either or both: **pull**, where

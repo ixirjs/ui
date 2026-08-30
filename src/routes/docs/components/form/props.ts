@@ -15,7 +15,7 @@ export const fieldRootProps: PropDefinition[] = [
 	},
 	{
 		name: 'factory',
-		type: '((props: FieldStateProps) => FieldBond) | Factory<FieldBondBase<FieldStateProps<Record<string, unknown>, unknown>>>',
+		type: '((props: FieldStateProps) => FieldBond) | Factory<FieldBond<FieldStateProps<Record<string, unknown>, unknown>>>',
 		default: 'undefined',
 		description: 'Replaces the Bond constructor, so a family can be extended or fused.'
 	},

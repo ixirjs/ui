@@ -3,27 +3,31 @@
 Canonical agent instructions for `@ixirjs/ui`. Tool-specific instruction files symlink here
 (`CLAUDE.md`, `.github/copilot-instructions.md`) — never duplicate guidance into them.
 
-A Svelte 5 + TypeScript component library built on an **atom / bond / preset** architecture.
+A Svelte 5 + TypeScript component library. Every family is a plain state class published under
+`Kernel.context`, parts authored through `Kernel.element`, presentation resolved by **presets**.
 
 ## Orientation
 
-| Read this                    | For                                                            |
-| ---------------------------- | -------------------------------------------------------------- |
-| `CONTEXT.md`                 | Vocabulary: Bond, Atom, capability, preset, portal, testing.   |
-| `INDEX.md`                   | Repository map — where anything lives.                         |
-| `docs/adr/0008-*.md`         | Public contract, package layers, authoring seams.              |
-| `src/lib/shared/*/README.md` | Runtime binding decisions for bond / capability / authoring.   |
-| `.github/svelte.txt`         | Svelte 5 + SvelteKit reference. Use it when generating Svelte. |
+| Read this                                      | For                                                            |
+| ---------------------------------------------- | -------------------------------------------------------------- |
+| `CONTEXT.md`                                   | Vocabulary: Bond, capability, preset, portal, testing.         |
+| `INDEX.md`                                     | Repository map — where anything lives.                         |
+| `docs/adr/0008-*.md`                           | Public contract, package layers, authoring seams.              |
+| `docs/research/whiteboard-migration-recipe.md` | What a family looks like, and its gates.                       |
+| `src/lib/*/README.md`                          | Per-layer decisions: capability, kernel, preset.               |
+| `.github/svelte.txt`                           | Svelte 5 + SvelteKit reference. Use it when generating Svelte. |
 
-Copy the canonical exemplar rather than inventing a shape: **Button** for static modules,
-**Collapsible** for bonded modules. Older siblings may intentionally retain compatibility APIs.
+Copy the canonical exemplar rather than inventing a shape: **Button** for static modules, **Card**
+for a presentation family, **Accordion** for a behavioural one, **Popover**/**Dialog** for an
+overlay.
 
 Better than copying, for a **new** family: `bun run scaffold <name> --slots root,header:trigger,body`
-emits that shape directly — barrel, atom namespace, per-slot prop types and extension interfaces,
-one component per slot, the `defineBond` map — and registers the family's preset keys in
-`src/lib/preset/manifest.ts` (without which the generated code does not compile). Add `--static` for
-the Button shape, `--dry` to print instead of write. What it cannot write is the 30% worth writing:
-capabilities, ARIA and keyboard logic, Bond methods, markup. Those are marked `TODO`.
+emits the shape directly — a plain state class with one `Kernel.context` and one id getter per slot,
+a root that shares it, one literal-element part per slot, the barrels, the per-slot prop types and
+extension interfaces — and registers the family's preset keys in `src/lib/preset/manifest.ts`
+(without which the generated code does not compile). Add `--static` for the Button shape, `--dry` to
+print instead of write. What it cannot write is the 30% worth writing: behaviour models, ARIA and
+keyboard logic, Bond methods, markup. Those are marked `TODO`.
 
 ## Commands
 
@@ -33,7 +37,19 @@ bun run lint          # prettier --check + eslint
 bun run format        # prettier --write
 bun run test:unit     # vitest (append -- --run for one shot)
 bun run test:e2e      # playwright
+bun run bench:ssr     # SSR µs/bytes/sha per layer, gated (machine-specific: --no-gate elsewhere)
+bun run bench:growth  # mount growth shape per family, gated (machine-INdependent, safe anywhere)
+bun run bench:row     # what a DataGrid row's Bond costs, decomposed; ungated attribution tool
 ```
+
+**`bench:growth` is the gate for one specific defect class: a per-child read of something the
+parent owns.** It mounts n children under one Bond at four sizes and fits `t ∝ n^k`; `k ≈ 1` is
+linear, and anything near 2 means every child is reading an owner-wide getter, so each registration
+invalidates every sibling. Two of those shipped undetected and cost 92× (tree) and ~3× (accordion)
+on mount — `bench:ssr` could not see either, because children register from `onmount`, which never
+runs on the server. Add a family to `src/lib/test/perf/growth/` whenever its Bond gains a child
+`Collection`; `growth-coverage.spec.ts` fails until you do. Details and the fix pattern:
+`docs/research/perf-vs-shadcn-2026-08.md` §7.
 
 **Never run long-lived processes in the foreground** (`vite dev`, `storybook dev`, any
 `--watch`) — they hang the turn. Launch detached (Bash `run_in_background: true`, or
@@ -45,10 +61,15 @@ bun run test:e2e      # playwright
 - **Import internals through `$ixirjs/ui/…`, never `@ixirjs/ui/…`.** The `$` alias resolves to
   `src/lib`; the package specifier resolves to `src/lib/public` — the hand-curated published
   surface, a strict subset. Four families had drifted onto it and were authoring themselves through
-  their own public barrel. `no-restricted-imports` now enforces this under `components/`, `shared/`
-  and `preset/`; `src/lib/test/**` is exempt, since exercising the published surface is its job.
+  their own public barrel. `no-restricted-imports` enforces this under `components/` and every infra
+  layer; `src/lib/test/**` is exempt, since exercising the published surface is its job.
+- **A family imports the seam from `$ixirjs/ui/kernel/kernel.svelte`, its prop types and motion from
+  `$ixirjs/ui/authoring`, and behaviour models from `$ixirjs/ui/capability`.** Two barrels, one
+  division: authoring is how a part is built, capability is how it behaves. Reaching _inside_ a layer
+  is a lint error; the render-machinery files under `components/` that are exempt are named in
+  `kernel-authoring-audit.spec.ts`.
 - **An element generic is constrained on `HtmlElementTagName`** (exported from
-  `$ixirjs/ui/components/atom`), not on a re-spelled `keyof HTMLElementTagNameMap`. Same type; one
+  `$ixirjs/ui/authoring`), not on a re-spelled `keyof HTMLElementTagNameMap`. Same type; one
   place to widen it if `ElementTagName` ever has to cover SVG too, which is why the alias exists.
 - **A long list windows through `createVirtual`, never a hand-rolled one.** The rune
   (`src/lib/runes/virtual.svelte.ts`, exported from `@ixirjs/ui`) owns the scrolling, measuring and
@@ -86,87 +107,164 @@ bun run test:e2e      # playwright
 
 ---
 
+## Authoring on the redesigned Kernel
+
+`src/lib/kernel/kernel.svelte.ts` is **the** element seam. Every family authors through it
+(`docs/research/whiteboard-2026-08.md`, `docs/research/whiteboard-migration-recipe.md`); the Bond/Atom
+runtime, `defineBond`/`definePart`/`useRoot`/`defineLeaf` and the capability registry were deleted on
+2026-08-27. Import the seam from `$ixirjs/ui/kernel/kernel.svelte` — eslint and
+`kernel-authoring-audit.spec.ts` allow exactly that path.
+
+Copy **Card** for a presentation family, **Accordion** for a behavioural one, **Popover**/**Dialog**
+for an overlay.
+
 ## Component anatomy
 
 A multi-part component is a folder `src/lib/components/<name>/`:
 
-- `bond.svelte.ts` — the `Bond` subclass (via `defineBond`) plus each slot's `Atom`. The brain.
-- `<name>-root.svelte` — binds props, shares the Bond, creates the root Atom.
-- `<name>-<part>.svelte` — one presentational component per slot; descendants use `definePart(...)`,
-  or a module-scoped `Kernel.part(...)` plus instance-scoped `Kernel.node(...)` when the part has
-  logic of its own.
-- `types.ts`, `atoms.ts`, `index.ts`, `stories/<name>.stories.svelte`, optional
-  `motion.svelte.ts` / `attachments.svelte.ts`.
-- Colocated `*.svelte.spec.ts` for Bond behavior.
+- `bond.svelte.ts` — one plain state class per shared object (`CardBond`, `AccordionItemBond` — the
+  names stay), each with `static create(props)`, live `props` (an object of getters the root builds),
+  and `XContext = Kernel.context<XBond>('bond/<name>')`. The brain. No base class, no registry.
+- `<name>-root.svelte` — builds the live props, shares the Bond, wires the controlled props, renders
+  the root element.
+- `<name>-<part>.svelte` — one component per slot, each calling `Kernel.element`.
+- `types.ts`, `atoms.ts` (the namespace barrel), `index.ts`, `stories/<name>.stories.svelte`,
+  optional `motion.svelte.ts` / `attachments.svelte.ts`.
+- Colocated `*.svelte.spec.ts` asserting **rendered outcomes** — ids, ARIA, `data-*`, keyboard —
+  never machinery.
 
 Static modules (Button) use the smaller layout: component + `types.ts` + `index.ts`. Mirror the
 appropriate layout; don't invent a new file split.
 
-## Bond state surface
+## The Bond — a plain state class
 
-- **State lives on the Bond** — shared props, derived values, mutation methods, collections,
-  capability lookup.
-- **Mutate through methods** (`open()`, `toggle()`, `select()`). Atoms and components call these;
-  they never write props directly outside the Bond's own wiring.
-- **Read through predicates**: `is*`/`has*`/`can*` for booleans, plain nouns otherwise (`value`,
-  `count`). A getter must never shadow a verb — `isOpen`, not `get open()`.
-- **Props are shared reactive cells** wired to `$bindable`. Not a value bag, not a mirror — don't
-  snapshot them.
+- **State lives on the Bond**: shared props, `$derived` values, mutation methods, collections.
+- **Mutate through methods** (`open()`, `toggle()`, `select()`); parts call these and never write
+  props directly.
+- **Read through predicates**: `is*`/`has*`/`can*` for booleans, plain nouns otherwise. A getter
+  never shadows a verb — `isOpen`, not `get open()`.
+- **Identity**: the root passes `id: () => $props.id()` into the live props; the Bond exposes
+  `get id()` and one getter per part id, each `Kernel.id(this.id, '<family>-<part>')`. Ids are
+  SSR-deterministic and survive hydration. `generateId()` fills in outside a component and is never
+  rendered as a bare id. `root-identity-audit.spec.ts` enforces the seed.
+- **Cross-part ARIA** is either derived from the seed (the header names `bond.bodyId` even on the
+  server) or a child writing its id into a parent `$state` field at init (`card.titleId`), read back
+  in the parent's `attrs`. There is no registry to ask.
+- **A collection** is a mount-ordered `Map` the child registers at its own init and releases on
+  teardown (`const detach = parent.attach(id, self); $effect(() => detach)`). Anything reactive
+  derived from membership goes through ONE equality-gated `$state` (the accordion's tab stop), never
+  a reactive array every child reads — that is the `bench:growth` defect class.
+- **Behaviour models are plain functions**: `createDisclosure`, `createSelection`, `createRovingFocus`,
+  `createTypeahead`, `createInput`, `createSort`, `createPagination` from `$ixirjs/ui/capability`.
+  What a capability used to project onto an element is now written literally in a part's `attrs`.
+- **Controlled props**: the root owns the `$bindable`s and wires `bond.bindCommit((next, ctx) => {
+value = next; onvaluechange?.(next, ctx); })`. The write is equality-gated inside the Bond, so an
+  unchanged value reports nothing, and the callback fires after the write with `{ bond }` plus the
+  staged `event`/`reason`.
 
-## Atoms
+## Parts
 
-- Rendered parts create their atom via `createAtomInstance(...)` — it owns teardown and
-  `bond.register(node)`.
-- Override `get attrs()` / `get handlers()` on the `Atom` subclass, **always spreading
-  `...super.attrs` first** (see `CardRootAtom`). Cross-slot ARIA (`aria-expanded`,
-  `aria-controls`, `aria-labelledby`) comes from relationship capabilities, never hand-written
-  per atom.
-- **NEVER** call `createAttachmentKey()` inside `Atom.spread` or any `$derived` — mint the key
-  once per atom. Minting on every read remounts the element and re-fires `onmount`/`ondestroy`.
+```svelte
+const el = Kernel.element(() => restProps, {
+	preset: 'accordion.item.header',
+	class: 'relative box-border flex w-full cursor-pointer items-center',
+	state: bond,
+	layer: () => bond.props.presets?.header,
+	attrs: () => ({ id: bond.headerId, 'aria-expanded': bond.isOpen, onclick, onkeydown })
+});
+```
 
-## Capabilities, not per-root effects
+Then **either** spread it on a literal tag — `<div {...el.attrs}>` — **or**, when the part has a
+reason to dispatch, bind one leaf and render it:
 
-Compose cross-cutting behavior (focus restore, escape stack, disclosure) onto the Bond with
-`this.capability(...)` in the constructor — see `CollapsibleBondBase`. Every root that owns a Bond
-uses `useRoot(...)`, which owns props assembly, capability activation and teardown, context
-publication, controlled-prop adoption, and the root Atom. A root that renders no element of its own
-(`Select.Root`, `Popover.Root`, `Form.Root`) passes `atom: false` and gets back the Bond, its props
-and the binding — one seam, one option, rather than two functions split by a prose rule.
-`bindBond(...)` remains the underlying primitive, exported from `@ixirjs/ui/experimental`; `useRoot` delegates to it.
-Open/close components use `createDisclosure(...)` + `disclosureCapability(...)`.
+```svelte
+const leaf = Kernel.render(el);
+{@render leaf(el, children, { accordionItem: bond })}
+```
 
-Never sprinkle per-root `$effect`s in `*-root.svelte` for focus, escape, or animation — that
-pattern was deliberately removed.
+An identifier callee compiles to a direct call: no block, no branch, no hydration anchor. The inline
+`{@render Kernel.render(el)(…)}` form is a block with an anchor — never write it.
 
-## Bond identity
+**The reasons to dispatch, and only these:** real `enter`/`exit` transitions; a `base` renderer the
+part or a consumer may name; a polymorphic tag (`as` as a thunk); a preset that themes retag through
+`render.as`/`render.base` (a literal part cannot honour it, and DEV warns). Everything else is a
+literal tag, which is a block, a branch, a `BranchManager` and an anchor cheaper per part.
 
-Every root seeds its Bond from `$props.id()` — declare `const ID = $props.id();` above the props
-destructure and pass `{ id: () => ID }` in `useRoot`'s options (see
-`collapsible-root.svelte`). That seed is SSR-deterministic and survives hydration; a random id would
-make server output irreproducible. It is **not** a DOM id: Atoms derive element ids from it via
-`getElementId` (`collapsible-header-<seed>`), so the binding defines it non-enumerable and it never
-reaches the element through the props spread. A consumer's own `id` prop still flows through restProps
-and wins on the element it was passed to. Outside a component (tests, programmatic construction)
-`generateId()` fills in — never render its output as a bare id.
+**Config precedence** inside `attrs`: `class` first, then the preset's attributes, the variant's, the
+layer's, the part's own, then the consumer's props. A part's own `class` sits after the base class and
+before the preset and the consumer's. `'$preset'` inside a `class` array is replaced by the resolved
+preset classes.
 
-`root-identity-audit.spec.ts` enforces this mechanically over every `*-root.svelte`. It keys off the
-binding seam, so an unlisted seam would drop every root using it out of the audit while the suite
-kept reporting green. The list is therefore checked against the authoring barrel's own exports: add
-an export there and the spec fails until the new symbol is classified as a binding seam or not.
+**Interpreted props** in the props thunk: `class`, `as`, `base`, `defaults`, `variants`,
+`variantProps`, `motion`, `oninit`, `preset`, `presetLayer`, `bond`, `part`, `children`. Everything
+else is an element attribute. `part` is the exception that is both: a string is forwarded as the CSS
+shadow-parts attribute.
 
-## defineBond & context keys
+**Motion.** `enter`/`exit` select a transition leaf; an `animate`-only driver does NOT belong in
+`motion` — it escalates to `HtmlElement`, a component boundary worth **+2 hydration anchors per
+part**. Mint `createAttachmentKey()` once at init, put the driver in `attrs`, and return a cleanup
+that cancels the superseded run (`stopMotion(controller, node)`). Tree and Collapsible are the
+worked examples. A part that declares `motion: () => motion ?? defaults` and yields nothing at init
+falls back to the consumer's motion and then the preset's, both honoured by the Kernel.
 
-- New bonds use `defineBond({ name, base, atoms })`, declaring `role: 'trigger'` / `'content'`
-  where a relationship applies (see `CollapsibleBond`). Type alias: `BondOf<typeof X>`.
-- **A presentation-free slot declares no `atom`** — `title: { role: 'label' }`, `header: {}` — and
-  `defineBond` synthesizes `defineAtom({ key: slot, namespace: name })` for it, once per definition.
-  That is what a family's own `const slot = (key) => defineAtom({ key, namespace })` helper was
-  producing, with the slot name written three times (const, `defineAtom` key, map key) for one fact.
-  Declare `atom:` when the part carries attrs, handlers, or its own element type (`HTMLElement`).
-- `defineBond(...)` generates the context key; `parts:` also answers to each part's key. A raw Bond class
-  declares `static CONTEXT_KEY = bondContextKey('<name>')` but never re-implements
-  `share()`/`get()`/`set()`. Keys are canonical (`@ixirjs/context/<name>`) — don't hand-write the
-  string.
+**Handlers.** The seam composes a consumer's handler with the part's (consumer first, part skipped
+when the default was prevented). Gate the part's own handler on `event.defaultPrevented` as well —
+a consumer who calls `preventDefault()` from their own listener never passes a prop for the seam to
+compose. Never re-invoke a merged handler by hand.
+
+**Lifecycle has one owner.** `oninit` fires synchronously pre-mount on the server and again on client
+hydration (keep it idempotent); its returned cleanup runs on client teardown. `onmount`/`ondestroy`
+ride the motion path. Don't add competing lifecycle `$effect`s in parts.
+
+**Traps.** `Kernel.element` resolves during init and reads the thunk then, so a `$derived` the config
+names must be declared above the call. Never leave `class` in the destructure — it would drop the
+consumer's class from `restProps`. Never spread a rest-props proxy into a new object inside a
+`$derived`; hand it over as `() => restProps` so it is read inside the helper's tracked boundary.
+
+### Don't re-skin a leaf by mounting it
+
+A part that needs another part's presentation **renders the element itself** through the seam; it does
+not mount that component and spread into it. `Select.Item` and `DropdownMenu.Item` used to render
+`<List.Item {...itemAttrs}>`, which cost a second component boundary and a `spread_props` proxy:
+collapsing both took an item from **12.51 to 8.07 µs (−35%)**, **73 to 51 scavenges**, **445 to 422
+bytes** and **12 to 9 hydration anchors**. `docs/research/nesting-component-vs-snippet-2026-08.md`
+has the model; `{...spread}` into a component costs +165% on SSR and +451% on a targeted client
+update against explicit props.
+
+The shared presentation moves into a helper both sides call — `components/list/item-class.ts` exports
+`LIST_ITEM_AS` and `listItemClass(own, klass)` — so the class string still exists once. **Keep the
+preset expression verbatim** when doing it: waking a dead fallback is a silent restyle
+(`list.item` is `px-4 py-3` against `select.item`'s `px-2 py-1.5`).
+
+This applies only where the inner component is a plain leaf. It does **not** apply to the
+prop-defaulting wrappers (`Tooltip.Content` → popover `Content`, `Tabs.Body` → `Stack.Root`,
+`Combobox.Control` → `Input.Control`): those own real state, several take `bind:` props that cannot
+cross a snippet seam, and they are one-per-overlay rather than one-per-item. `menu-ssr.spec.ts` and
+the `menu item` case in `anchor-budget.spec.ts` are the gates.
+
+**A namespaced component costs more than the same component imported directly.** `<Card.Title>` is a
+member expression, so the compiler treats it as a _dynamic_ component and wraps its output in a
+fragment boundary. Re-measured on 2026-08-27 with `bench:vs-shadcn`, on the SAME shipped components
+with only the call site changed (`card` vs `card-direct`): **mount −20% (45.9 → 36.9 µs/card),
+hydrate −27% (57.9 → 42.1), broad update −41%, retained heap −21% (14.1 → 11.2 kB), and SSR 15 → 9
+hydration anchors** — about **2.2 µs and 1.5 anchors per part**. Against shadcn that flips card's
+mount from +23% to −23%.
+
+Every family barrel therefore publishes both: the namespace (`Card.Root`, the ergonomic default)
+and the parts by name (`export { CardRoot } from '@ixirjs/ui/components/card'`). Use the direct
+import where one part renders many times — a long list, a grid cell, a table row. A part whose name
+is already taken in its barrel by a type (`DropdownMenuItem`, `SelectSelection`) is not re-exported;
+import that file directly.
+
+### Handing props to another component
+
+`{...part.props}` / `mergePresetProps` remain for a part that hands its props to **another
+component** rather than rendering an element — `Input.Control`, `PortalHost`, `Stack.Root`,
+`Dialog.Content` → `PortalHost`. Rendering an element uses `Kernel.element`; a packet allocates a
+merged object and a signal the direct seam avoids.
+
+`PortalHost`'s `id` names the **portal** it opens, never the wrapper element (`Root` names its own
+`root.l0`). A part that must address its own element by id passes `elementId` as well.
 
 ## Consumer prop typing — the library ships the seam, not the union
 
@@ -185,244 +283,24 @@ should not get a redundant second route. `scaffold` emits the seams for new fami
 out-of-union value. Note aliases that merely re-point at another family's interface
 (`CardContentProps = CardBodyProps`) inherit that interface's augmentability and need no seam.
 
-## Presets: resolve in `<script>`, never inline
-
-Fold props into one `$derived` in the script, then spread it. Helpers live in
-`src/lib/shared/bond/presentation-props.ts` (re-exported from `$ixirjs/ui/components/atom`):
-
-- **Bonded descendant that only names itself** → `definePart`, which is the two calls below
-  collapsed. Thirty-six parts were the same thirty-four lines with a class string swapped — five
-  imports, and a destructure that pulled `class`/`preset`/`as`/`children` out only to hand all four
-  straight back. Five facts carried twenty-nine lines of ceremony each. See `card-title.svelte`:
-
-```svelte
-const props: CardTitleProps<E, B> & BasePropsOf<B> = $props();
-const el = definePart(CardBond, 'title', () => props, {
-	as: 'h3',
-	class: 'card-title …',
-	context: 'optional'
-});
-```
-
-```svelte
-{@render Kernel.render(el)(
-	el.tag(),
-	el.class(),
-	el.attrs(),
-	props.children,
-	undefined,
-	el.motion(),
-	el
-)}
-```
-
-`el.bond` carries the Bond for a part whose children take a snippet argument; pass the argument in
-`Kernel.render`'s fifth slot. The destructure is what goes, not the props: `Kernel.element` already
-splits rich render props from element attributes, so handing it the whole props object yields the
-same attrs `...restProps` did. Props arrive as a
-thunk for the usual reason: read inside the helper's tracked boundary, never captured at init.
-A part with logic of its own — a `$derived`, a handler, a `{#snippet}`, motion, a `$bindable` —
-keeps the two calls below; `definePart` covers only the ones with none.
-
-- **Bonded descendant, everything else** → compile `Kernel.part` once in module scope, bind the
-  instance with `Kernel.node`, then render it with `Kernel.element`. The node owns the lazy semantic
-  Atom, Bond, slot, preset and per-slot layer. Pass `rest: () => restProps` to `Kernel.node` **only**
-  for a part that reads the merged `part.props` packet. See `dialog-close.svelte`:
-
-```svelte
-<script module lang="ts">
-	const PART = Kernel.part(DialogBond, 'closeButton', { class: '' });
-</script>
-
-<script lang="ts">
-	const part = Kernel.node(PART, () => ({ preset }), { context: 'required' });
-	const el = Kernel.element(part, () => ({
-		as,
-		class: ['dialog-close …', '$preset', klass],
-		...restProps
-	}));
-</script>
-```
-
-Render with the same direct `Kernel.render(el)(...)` call shown above.
-
-Never re-derive the slot: `presetLayer={bond.presetLayer('title')}` duplicates the slot already held
-by the Kernel plan and silently degrades to no layer when one copy is renamed.
-
-- **Root** → `useRoot(Bond, propsSpec, { id: () => ID, preset: () => preset, factory })`, then pass
-  the result through the same seam. It resolves the root Atom's constructor, registration key and
-  role from `defineBond`'s `atoms.root`, so none of the three is restated in the component. See
-  `card-root.svelte`:
-
-```svelte
-const root = useRoot(CardBond, { disabled: [() => disabled, (v) => (disabled = v ?? false)] }, {
-	id: () => ID,
-	preset: () => preset,
-	factory
-});
-const el = Kernel.element(root, () => ({
-	class: ['card …', '$preset', klass],
-	...root.props,
-	...restProps
-}));
-```
-
-Spread `root.props` before `restProps` when the Bond's props select preset variants. Pass
-`presetLayer: true` only if that family already resolved `presets.root` for itself — six do, the
-rest ignore it, and the default preserves each one's rendered output.
-
-A controlled `$bindable` prop is declared with `controlledProp(...)` and placed **directly** in the
-props spec — `open: openProp`, not `open: openCell.cell`. It carries its own owner adoption and
-`useRoot` discharges it after the Bond is shared and before the root Atom is created, so no root
-writes a `connect` for one. The exception is a spec entry that _composes_ a controlled prop rather
-than being it (`popover-root.svelte` gates `open` on an owning overlay): the composed tuple is no
-longer the `ControlledProp`, so that root declares `connect` explicitly and says why. `connect`
-itself remains for any other late wiring — `calendar-root.svelte` binds a callback state with it.
-
-A root that owns a Bond but **no** root Atom (`Select.Root`, `Form.Root`, `Popover.Root`, …) passes
-`atom: false` to the same `useRoot`.
-
-A root re-exports the Bond accessor `useRoot` already returns — `export const getBond = root.getBond;`,
-not `() => bond`. It is a plain arrow over the shared Bond with no `this`, so assigning it out is
-safe, and `const bond = root.bond` then stays only where the snippet argument needs it.
-
-### `Kernel` — the element seam
-
-`Kernel` is the sole internal rendering interface. `Kernel.part`/`root` compile immutable metadata,
-`Kernel.node` binds a first-party Bond part, `Kernel.element` resolves the complete presentation
-contract, and `Kernel.render(handle)` returns the exact snippet the caller dispatches once. Keep
-literal first-party leaves in Kernel (`div`, `h3`) rather than reopening component-local dispatch.
-See `src/lib/components/atom/kernel/README.md`.
-
-**The config thunk returns rich render props.** Named props (`class`, `as`, `base`, `defaults`,
-`variants`, `motion`, `oninit`, `preset`, `presetLayer`, `bond`, `atom`, `part`) are interpreted;
-everything else is an element attribute. Precedence is ordinary object-literal order.
-
-`Kernel.render` decides per render from `render/render-mode.ts`: literal/dynamic leaf, transition
-leaf, `HtmlElement`, or a custom renderer. `oninit` and symbol lifecycle remain Kernel-owned and
-must never be forwarded into a rich renderer.
-
-Kernel and `HtmlElement` share the same predicate and transition leaves. Two rules are easy to
-undo by accident:
-
-- The dispatch must read **`presentation.base`**, not the destructured `base` prop. A preset can name
-  a renderer through `render.base`, and the raw prop is `undefined` for it — such an atom then renders
-  as a plain `div` carrying the preset's classes, which looks entirely correct.
-  `custom-renderer.svelte.spec.ts` covers it.
-- The rune gate must read **raw props**, never `presentation.motion`, or the presentation resolves
-  eagerly for every atom. `resolve-count.svelte.spec.ts` will not catch that — it counts recomputes,
-  and an init-time read of a `$derived` neither adds a count nor establishes a dependency.
-
-`html-element.svelte` keeps its own `bareDiv`/`bareElement`: the shared bare pair deliberately ignores
-motion and attaches nothing, where a bare `HtmlElement` still needs `attach` to drive `animate`,
-`onmount` and `ondestroy`. Sharing that pair needs two more leaves nothing can reach yet.
-
-**The migration is finished.** Every first-party component that renders an element authors directly
-through Kernel — bonded parts through `Kernel.element(part, ...)`, static leaves (Button, Badge,
-Icon, …) through `Kernel.element(Kernel.static, ...)`, and the form controls.
-
-- **Inline `{@attach}`** — mint the key once at init (`createAttachmentKey()`) and put it in the
-  returned object. Once, not per config evaluation: a fresh key each time tears the attachment down
-  and rebuilds it on every invalidation. `container`, `scrollable-container`, `teleport`,
-  `portal-surface`, `qr-code` all do this.
-- **No Atom to hand the seam** — pass the seam literally,
-  `{ atom: undefined, bond, preset: undefined, presetLayer: undefined }` (`form-root`,
-  `stepper-content`), or `Kernel.static` when there is no bond either.
-- **`animate` without a transition** — the `element` branch renders `HtmlElement` directly, so this
-  no longer costs two boundaries (`drawer-content`, `popover-content`).
-- **A conditionally-rendered element** — create it with `Kernel.element` in `<script>` and render it
-  from the snippet. Kernel owns effects and must be initialized during component init; a snippet body
-  is not init. `checkbox`, `radio`, `date-picker-months`, `date-picker-years` are this shape.
-
-A **declared `base`** still escalates, and going through the seam to escalate costs one extra
-hydration anchor (the dispatch `{@render}`). That is worth paying when the `base` is a _prop_ the
-consumer can leave unset — `field-control`, `select-selection`, `teleport`, `portal-surface` all
-reach a leaf when nobody passes one, and `alert-icon` pays the +1 to keep `base={null}` working.
-A hardcoded `base`, such as `date-picker-calendar`'s renderer slots, still authors through
-`Kernel.element` and reaches Kernel's custom-renderer branch directly. Do not add another
-component boundary around it.
-
-### Don't re-skin a leaf by mounting it
-
-A part that needs another part's presentation **renders the element itself** through the seam; it does
-not mount that component and spread into it. `Select.Item` and `DropdownMenu.Item` used to render
-`<List.Item {...itemAttrs}>`, which cost two things per item: a second component boundary, and a
-`spread_props` proxy. Measured on the `menu` bench layer, collapsing both took an item from **12.51 to
-8.07 µs (−35%)**, **73 to 51 scavenges (−30%)**, **445 to 422 bytes** and **12 to 9 hydration
-anchors** — the three anchors being the component invocation, the implicit `children` snippet handed
-to it, and the inner `{@render children?.(arg)}`. `docs/research/nesting-component-vs-snippet-2026-08.md`
-has the per-construct model; the short version is that `{...spread}` into a component costs +165% on
-SSR and +451% on a targeted client update against explicit props.
-
-The shared presentation moves into a helper both sides call — `components/list/item-class.ts` exports
-`LIST_ITEM_AS` and `listItemClass(own, klass)` — so the class string still exists once. Two rules when
-doing this:
-
-- **Keep the same seam the inner part used.** `List.Item` uses `Kernel.static`, so the bond was
-  never visible to preset resolution; a function-form preset entry is invoked as `entry({ bond })`, and
-  handing it a bond it never used to see changes what it resolves.
-- **Keep the preset expression verbatim.** `mergeAtomProps` always supplies a truthy `preset`, so
-  `List.Item`'s own `'list.item'` fallback was already dead for these parts — and waking it up is a
-  silent restyle, `list.item` being `px-4 py-3` against `select.item`'s `px-2 py-1.5`.
-
-This applies only where the inner component is a `Kernel.element` leaf with no Bond, context read,
-`$props.id()` or exported function. It does **not** apply to the prop-defaulting wrappers
-(`Tooltip.Content` → popover `Content`, `Tabs.Body` → `Stack.Root`, `Combobox.Control` →
-`Input.Control`, …): those inner components own real state, several take `bind:` props that cannot
-cross a snippet seam, and they are one-per-overlay rather than one-per-item. `menu-ssr.spec.ts` and
-the `menu item` case in `anchor-budget.spec.ts` are the gates.
-
-The individual `atom`/`bond`/`preset`/`presetLayer` props remain accepted as an escape hatch, and
-explicit props win over the seam. A root that hands its props to **another component**
-(`Dialog.Root` → `PortalSurface`) still builds the packet with
-`mergeAtomProps(root.atom, preset, { ...root.props, ...restProps }, root.presetLayer)`.
-
-`part` is also the CSS shadow-parts HTML attribute. Kernel treats a string as the HTML attribute and
-forwards it unchanged. Note that `Omit<…, 'part'>` does **not** work on element props:
-`ElementProps extends Record<string, unknown>`, so `keyof` is `string | number` and `Omit` collapses
-every named prop to the index signature. Removing that index signature is roadmap item 1.7.
-
-`{...part.props}` is the shape for handing a part's props to **another component** — `Input.Control`,
-`PortalHost`, `Stack.Root` — which has no renderer seam to pass the part through. Rendering an
-element uses `Kernel.element`. The packet allocates a merged object and a signal that Kernel's
-direct seam avoids.
-
-Do not re-invoke a merged handler by hand. The seam composes the consumer's handler and the atom's
-(consumer first, atom skipped when default is prevented), so a part that stages state before the
-atom acts just declares its handler and returns — calling `part.props.onclick` as well fires the
-atom twice. See `dialog-close.svelte`.
-
-- **Static part** (no Atom) → `mergePresetProps(preset, 'fallbackKey', restProps)`. See
-  `button.svelte`:
-
-```svelte
-const buttonProps = $derived(mergePresetProps(preset, 'button', restProps));
-```
-
-Keep the rest-props proxy intact. Pass semantic props (e.g. `type`) separately after the spread
-when they must beat the preset. Never inline `preset ?? …` in markup or hand-roll the merge.
-
-**The `$preset` sentinel:** in a Kernel element config, `'$preset'` inside `class={[...]}` is
-replaced with resolved preset classes. Order is `['base', '$preset', klass]` — base first, the
-consumer's `class` last so it wins.
-
 ## Svelte 5 runes traps (these have bitten us)
 
 - **A lazy collection inside a `$derived` poisons tracking.** If a class lazily creates a
   `collection()`, touch it eagerly in the constructor (`void this.rows`) so the dependency is
   established outside the derived.
 - **Never spread a rest-props proxy into a new object inside `$derived`.** Hand rest props to a
-  helper as `() => restProps` (`Kernel.element`'s config thunk, `Kernel.node`'s `rest` option) so it
-  reads them within its own tracked boundary.
-- **Lifecycle has one owner** — `Kernel.element` runs `mount` via `$effect.pre` (re-runs on bond
-  change) and `destroy` via `$effect` teardown. Kernel strips `oninit` and lifecycle symbols before
-  rich-renderer escalation; otherwise a renderer could fire
-  them twice. `render/lifecycle-seam.svelte.spec.ts` pins this. Don't add competing lifecycle
-  `$effect`s in parts.
-- **Init is the `oninit` prop**, not a symbol — symbols don't survive server `rest_props`. It fires
-  synchronously pre-mount on the server and again on client hydration, so keep it idempotent; the
-  returned cleanup runs on client teardown only. Once-per-bond SSR logic belongs in the `Bond`
-  constructor.
+  helper as `() => restProps` (`Kernel.element`'s config thunk) so it reads them within its own
+  tracked boundary.
+- **Init is the `oninit` prop**, not a symbol — symbols don't survive server `rest_props`, which is
+  why the symbol-keyed lifecycle keys were deleted with the old runtime. It fires synchronously
+  pre-mount on the server and again on client hydration, so keep it idempotent; the returned cleanup
+  runs on client teardown only. Once-per-family SSR logic belongs in the state class's constructor.
+  `kernel/render/lifecycle-seam.svelte.spec.ts` pins it.
+- **Nothing read from a dispatch block may depend on Bond state, however well gated.** Svelte re-runs
+  a block effect eagerly when a source it reaches through any derived chain is written during effect
+  flush, and a child registering at mount is exactly that write. That defect cost every accordion
+  header 1206 renders per item at n=800 (`bench:growth` k = 1.34 → 0.80).
+  `perf-vs-shadcn-2026-08.md` §15.
 
 ## Tests and stories
 
@@ -440,3 +318,14 @@ consumer's `class` last so it wins.
 Some code is intentionally vestigial or pending removal (e.g. element-less roots' vestigial
 `rest`). Confirm before deleting anything that merely looks dead, and flag out-of-scope bugs
 rather than fixing them mid-pass.
+
+## graphify
+
+This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
+
+Rules:
+
+- For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
+- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
+- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
+- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).

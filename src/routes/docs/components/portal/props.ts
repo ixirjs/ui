@@ -22,7 +22,7 @@ export const portalSurfaceProps: PropDefinition[] = [
 	},
 	{
 		name: 'owner',
-		type: 'OverlayView | undefined',
+		type: 'OverlayLike | undefined',
 		default: 'undefined',
 		description: 'Overlay that owns this surface, so dismissal and focus restore route back to it.'
 	},
@@ -46,7 +46,7 @@ export const portalSurfaceProps: PropDefinition[] = [
 export const portalOuterProps: PropDefinition[] = [
 	{
 		name: 'factory',
-		type: '(props: PortalBondProps) => PortalBondBase<PortalBondProps>',
+		type: '(props: PortalBondProps) => PortalBond',
 		default: 'undefined',
 		description: 'Replaces the Bond constructor, so a family can be extended or fused.'
 	},
@@ -58,6 +58,8 @@ export const portalOuterProps: PropDefinition[] = [
 	},
 	renderPropsRow
 ];
+
+export const portalInnerProps: PropDefinition[] = [renderPropsRow];
 
 export const activePortalProps: PropDefinition[] = [
 	{

@@ -15,13 +15,13 @@ export const treeRootProps: PropDefinition[] = [
 	},
 	{
 		name: 'factory',
-		type: '(props: DisclosureStateProps) => TreeBondBase',
+		type: '(props: TreeBondProps) => TreeBond',
 		default: 'undefined',
 		description: 'Replaces the Bond constructor, so a family can be extended or fused.'
 	},
 	{
 		name: 'onopenchange',
-		type: 'StateChangeCallback<boolean, TreeBondBase> | undefined',
+		type: 'StateChangeCallback<boolean, TreeBond> | undefined',
 		default: 'undefined',
 		description: 'Called after a real open-state transition commits.'
 	},
@@ -55,7 +55,7 @@ export const treeHeaderProps: PropDefinition[] = [
 	},
 	{
 		name: 'onpointerdown',
-		type: '(PointerEventHandler<ElementType<E> & Element> & ((event: PointerEvent) => void)) | undefined',
+		type: '(PointerEventHandler<HTMLDivElement & Element> & ((event: PointerEvent) => void)) | undefined',
 		default: 'undefined',
 		description: 'Pointer down event handler.'
 	},

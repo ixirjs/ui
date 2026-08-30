@@ -44,7 +44,7 @@ export const contextMenuRootProps: PropDefinition[] = [
 	},
 	{
 		name: 'onopenchange',
-		type: 'StateChangeCallback<boolean, ContextMenuBondBase<PopoverBondProps>> | undefined',
+		type: 'StateChangeCallback<boolean, ContextMenuBond> | undefined',
 		default: 'undefined',
 		description: 'Runs after an open-state transition commits.'
 	},
@@ -68,7 +68,7 @@ export const contextMenuRootProps: PropDefinition[] = [
 	},
 	{
 		name: 'portal',
-		type: 'string | PortalBondBase<PortalBondProps>',
+		type: 'string | PortalBond',
 		default: 'ambient portal → root.l0',
 		description:
 			'Portal target selector or PortalBond instance. Resolution is explicit target → ambient portal → root.l0, preserving nested overlay containment.'

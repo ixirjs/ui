@@ -36,7 +36,7 @@
 	<title>Philosophy — IXIR UI</title>
 	<meta
 		name="description"
-		content="The principles and architecture behind IXIR UI — Atom, Bond, and Preset — and why they lead to a better component development experience."
+		content="The principles and architecture behind IXIR UI — Part, Bond, and Preset — and why they lead to a better component development experience."
 	/>
 </svelte:head>
 
@@ -83,7 +83,7 @@
 		</Section.Subtitle>
 	</Section.Header>
 	<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-		<!-- Atom -->
+		<!-- Part -->
 		<div class="border-border rounded-lg border p-5 bg-card">
 			<div
 				class="bg-primary/10 text-primary mb-4 inline-flex h-9 w-9 items-center justify-center rounded-lg"
@@ -107,10 +107,10 @@
 					/>
 				</svg>
 			</div>
-			<p class="text-foreground mb-1 text-sm font-semibold">01 — Atom</p>
+			<p class="text-foreground mb-1 text-sm font-semibold">01 — Part</p>
 			<p class="text-muted-foreground text-sm leading-relaxed">
-				A composable rendered part backed by an Atom for spreads, element refs, and local
-				capabilities. Zero hardcoded styles — infinite flexibility.
+				A composable rendered part: one Svelte component, one element, resolved through the Kernel
+				seam. Zero hardcoded styles — infinite flexibility.
 			</p>
 		</div>
 		<!-- Bond -->
@@ -140,7 +140,7 @@
 				stores — state lives exactly where it's needed.
 			</p>
 		</div>
-		<!-- Capability -->
+		<!-- Behaviour model -->
 		<div class="border-border rounded-lg border p-5 bg-card">
 			<div
 				class="bg-primary/10 text-primary mb-4 inline-flex h-9 w-9 items-center justify-center rounded-lg"
@@ -163,10 +163,10 @@
 					<circle cx="12" cy="12" r="3" />
 				</svg>
 			</div>
-			<p class="text-foreground mb-1 text-sm font-semibold">03 — Capability</p>
+			<p class="text-foreground mb-1 text-sm font-semibold">03 — Behaviour model</p>
 			<p class="text-muted-foreground text-sm leading-relaxed">
-				Reusable behavior installed on a Bond or Atom. Capabilities handle shared state,
-				relationships, effects, and local DOM behavior without repeating code in every component.
+				Disclosure, selection, roving focus, typeahead — ordinary functions a Bond composes as
+				fields. They own the logic; each part writes the ARIA that logic implies.
 			</p>
 		</div>
 		<!-- Preset -->
@@ -211,10 +211,10 @@
 	</Section.Header>
 
 	<p class="text-muted-foreground mb-5 text-sm leading-relaxed">
-		A Bond is a class that holds the shared state and behavior of a compound component. The root
-		component creates its Bond, calls <code class="font-mono text-xs">.share()</code> to place it in
-		Svelte context, and every descendant retrieves it automatically via
-		<code class="font-mono text-xs">getContext</code> — no props passed between them.
+		A Bond is a plain state class that holds the shared state and behavior of a compound component.
+		The root component creates its Bond and publishes it with
+		<code class="font-mono text-xs">Context.share(...)</code>, and every descendant reads it from
+		Svelte context automatically — no props passed between them.
 	</p>
 
 	<div class="overflow-hidden rounded-lg mb-6">

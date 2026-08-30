@@ -2,150 +2,199 @@
 	import { Section, CodeBlock, DocCallout } from '$docs/components';
 	import { Button } from '$lib/components/button';
 
-	const bondCode = `import { Bond, defineAtom } from '@ixirjs/ui/experimental';
-import { defineBond, roles } from '@ixirjs/ui/shared';
+	const END = '<' + '/script>';
 
-export type TilesBondProps = { id?: string; value?: string; disabled?: boolean };
+	// src/lib/components/card/bond.svelte.ts
+	const bondCode = `import { Kernel } from '@ixirjs/ui/shared';
 
-class TilesBondBase extends Bond<TilesBondProps> {
-  get selectedValue() { return this.props.value; }
-  select(value: string) {
-    if (!this.props.disabled) this.props.value = value;
+export type CardBondProps = {
+  id?: string;
+  disabled?: boolean;
+  clickable?: boolean;
+};
+
+export const CardContext = Kernel.context<CardBond>('bond/card');
+
+export class CardBond {
+  readonly name = 'card';
+  readonly props: CardBondProps;
+  /** The Title's element id, once one has rendered. */
+  titleId = $state<string | undefined>();
+
+  constructor(props: CardBondProps = {}) {
+    this.props = props;
   }
-}
 
-const RootAtom = defineAtom('root');
-const ItemAtom = defineAtom('item');
+  /** The family's identity seed — the root's $props.id(). */
+  get id() { return this.props.id ?? 'card'; }
+  get rootId() { return Kernel.id(this.id, 'card-root'); }
+  get isDisabled() { return this.props.disabled ?? false; }
 
-export const TilesBond = defineBond({
-  name: 'tiles',
-  base: TilesBondBase,
-  atoms: {
-    root: RootAtom,
-    item: { atom: ItemAtom, role: roles.item }
-  }
-});`;
+  static create(props: CardBondProps = {}) { return new CardBond(props); }
+}`;
 
+	// src/lib/components/card/card-root.svelte
 	const rootCode = `<script lang="ts">
-  import { bindBond } from '@ixirjs/ui/experimental';
-  import { TilesBond } from './bond.svelte';
+  import { untrack } from 'svelte';
+  import { Kernel } from '@ixirjs/ui/shared';
+  import { CardBond, CardContext } from './bond.svelte';
 
-  let { value = $bindable(), disabled = false, children } = $props();
-  const binding = bindBond(
-    (props) => new TilesBond(props),
-    {
-      value: [() => value, (next) => { value = next; }],
-      disabled: () => disabled
+  const ID = $props.id();
+  let { disabled = false, factory, children, ...restProps } = $props();
+
+  // Live props: the Bond reads through these getters, so a prop change is
+  // seen where it is read.
+  const bondProps = {
+    get id() { return ID; },
+    get disabled() { return disabled; }
+  };
+  // \`factory\` is read once, at init, by design.
+  const build = untrack(() => factory);
+  const card = CardContext.share(build ? build(bondProps) : CardBond.create(bondProps));
+  export const getBond = () => card;
+
+  const el = Kernel.element(() => restProps, {
+    preset: 'card',
+    class: 'card bg-card border-border flex flex-col rounded-lg border',
+    state: card,
+    attrs: () => {
+      const attrs: Record<string, unknown> = { id: card.rootId };
+      if (card.titleId) attrs['aria-labelledby'] = card.titleId;
+      if (disabled) attrs['aria-disabled'] = true;
+      return attrs;
     }
+  });
+${END}
+
+<div {...el.attrs}>{@render children?.({ card })}</div>`;
+
+	// src/lib/components/card/card-title.svelte
+	const partCode = `<script lang="ts">
+  import { Kernel } from '@ixirjs/ui/shared';
+  import { CardContext } from './bond.svelte';
+  import type { CardTitleProps } from './types';
+
+  const props: CardTitleProps = $props();
+  // Optional context: a bare <Card.Title> renders without a root. With one, the
+  // part hands the root its id at init — the relationship without a registry.
+  const card = CardContext.get();
+  const id = card ? Kernel.id(card.id, 'card-title') : undefined;
+  if (card) card.titleId = id;
+
+  const el = Kernel.element(() => props, {
+    preset: 'card.title',
+    class: 'card-title text-lg leading-none font-semibold',
+    state: card,
+    attrs: () => (id ? { id } : {})
+  });
+${END}
+
+<h3 {...el.attrs}>{@render props.children?.()}</h3>`;
+
+	// src/lib/components/accordion/item/accordion-item-body.svelte
+	const leafCode = `<script lang="ts">
+  import { Kernel } from '@ixirjs/ui/shared';
+  import { AccordionItemContext } from './bond.svelte';
+  import { enterAccordionItemBody, exitAccordionItemBody } from './motion.svelte';
+
+  let { children, ...restProps } = $props();
+  const bond = AccordionItemContext.getOrThrow(
+    '<AccordionItem.Body /> must be used within an <AccordionItem.Root />'
   );
-  const bond = binding.bond.share(); // shared, activated, and destroyed by bindBond
-</scr${'ipt'}>
 
-<div data-bond={bond.name}>{@render children?.({ bond })}</div>`;
-
-	const atomCode = `<script lang="ts">
-  import {
-    createAtomInstance,
-    elementRef,
-    pressable,
-    dataState,
-    ariaRole
-  } from '@ixirjs/ui/shared';
-  import { TilesBond } from './bond.svelte';
-
-  let { value, children, ...props } = $props();
-
-  const node = createAtomInstance('item', {
-    bond: TilesBond.getOrThrow(),
-    register: { cardinality: 'many' },
-    capabilities: [
-      elementRef(),
-      pressable(),
-      ariaRole('option'),
-      dataState((_, bond) => bond?.selectedValue === value ? 'selected' : 'idle')
-    ]
+  const motion = {
+    enter: enterAccordionItemBody({ settled: () => bond.parent.settled }),
+    exit: exitAccordionItemBody()
+  };
+  const el = Kernel.element(() => restProps, {
+    preset: 'accordion.item.body',
+    class: 'box-content h-0 opacity-0',
+    state: bond,
+    motion: () => motion,
+    attrs: () => ({ id: bond.bodyId, role: 'region', 'aria-labelledby': bond.headerId })
   });
+  // Bound ONCE in the script: an identifier callee compiles to a direct call —
+  // no snippet block, no hydration anchor.
+  const leaf = Kernel.render(el);
+${END}
 
-  function select() {
-    TilesBond.getOrThrow().select(value);
-  }
-</scr${'ipt'}>
+{@render (bond.isOpen ? body : undefined)?.()}
 
-<button {...node.spread} {...props} onclick={select}>
-  {@render children?.()}
-</button>`;
+{#snippet body()}
+  {@render leaf(el, children, { accordionItem: bond })}
+{/snippet}`;
 
-	const registryCode = `const trigger = bond.nodeByPart('trigger');
-trigger?.element?.focus();
+	// src/lib/components/accordion/bond.svelte.ts + item/accordion-item-root.svelte
+	const collectionCode = `// On the parent: a plain Map, in mount order.
+export class AccordionBond {
+  readonly items = new Map<string, AccordionItemHandle>();
+  /** The fallback tab stop — written only when it changes. */
+  #first = $state<string | null>(null);
 
-const items = bond.nodesByPart('item');
-const selected = items.find((node) => node.get(SELECTED)?.value);
-
-// Many registrations are explicit:
-createAtomInstance('item', {
-  bond: TilesBond.getOrThrow(),
-  register: { cardinality: 'many' }
-});`;
-
-	const capabilityCode = `import {
-  capabilityKey,
-  customRole,
-  defineBondCapability,
-  defineAtomCapability
-} from '@ixirjs/ui/shared';
-
-const item = customRole<'item', string>({ owner: '@acme/tiles', name: 'item' });
-
-export const SELECTION = capabilityKey<{ select(value: string): void }>(
-  '@acme/tiles/selection'
-);
-
-export const selectionCapability = (select: (value: string) => void) =>
-  defineBondCapability({
-    slot: SELECTION,
-    surface: { select },
-    roles: {
-      [item]: (value) => ({
-        attrs: (bond) => ({ 'aria-selected': bond.props.value === value }),
-        handlers: () => ({ onclick: () => select(value) })
-      })
-    }
-  });
-
-export const selectedDataState = defineAtomCapability({
-  attach: {
-    attrs: (node, bond) => ({
-      'data-state': bond?.nodeByPart(node.name) === node ? 'active' : 'idle'
-    })
-  }
-});`;
-
-	const beforeAfterCode = `// Before: the Bond created and cached every part Atom.
-class TriggerAtom extends Atom<TilesBond> {
-  constructor(bond: TilesBond) {
-    super(bond, 'trigger');
+  attachItem(id: string, item: AccordionItemHandle): () => void {
+    this.items.set(id, item);
+    if (this.#first === null && !item.isDisabled) this.#first = id;
+    return () => {
+      this.items.delete(id);
+      if (this.#first === id) this.#first = this.#firstEnabled()?.id ?? null;
+    };
   }
 }
 
-class TilesBond extends Bond<TilesProps> {
-  trigger() {
-    return this.nodeByPart('trigger');
-  }
+// In the child's root, at init — document order — released on teardown.
+const detach = bond.parent.attachItem(bond.id, bond);
+$effect(() => detach);`;
+
+	// src/lib/components/dialog/dialog-close.svelte
+	const composeCode = `function close(event: Event) {
+  bond.stageOpenChange({ event, reason: 'close-button' });
+  bond.close();
+}
+// Gated on \`defaultPrevented\` here, not only through \`Kernel.compose\`: a consumer
+// can prevent the default from a listener of their own, with no \`onclick\` prop for
+// the seam to compose.
+function click(event: MouseEvent) {
+  if (event.defaultPrevented) return;
+  close(event);
 }
 
-// After: the component that renders the part owns its Atom.
-const trigger = createAtomInstance('trigger', {
-  bond: TilesBond.getOrThrow(),
-  factory: (bond) => new TriggerAtom(bond),
-  capabilities: [pressable(), ariaRole('button')]
-});`;
+attrs: () => ({
+  id,
+  // Theirs runs first; preventing default keeps the dialog open.
+  onclick: Kernel.compose(onclick, click)
+})`;
+
+	// src/lib/components/collapsible/bond.svelte.ts and select/bond.svelte.ts
+	const modelCode = `import { createDisclosure, createSelection } from '@ixirjs/ui/shared';
+
+// Collapsible — the disclosure model is a field on the plain class.
+this.disclosure = createDisclosure({
+  get: () => this.props.open,
+  set: (open) => this.#set(open)
+});
+
+// Select — the selection model owns the set algebra; storage stays yours.
+#selection = createSelection<string>({
+  get: () => this.props.values ?? [],
+  set: (v) => (this.props.values = v),
+  mode: () => (this.props.multiple ? 'multiple' : 'single'),
+  indexed: true
+});
+
+// What a capability used to project onto an element is written literally,
+// in the part that renders it:
+attrs: () => ({
+  'aria-expanded': bond.isOpen,
+  'aria-controls': bond.bodyId,
+  'data-state': bond.isOpen ? 'open' : 'closed'
+})`;
 </script>
 
 <svelte:head>
 	<title>Bonds — IXIR UI</title>
 	<meta
 		name="description"
-		content="Learn the vNext Bond model: Atom components create Atoms, Bonds coordinate shared state, and capabilities attach reusable behavior."
+		content="A Bond is a plain state class shared through Kernel.context; every part renders through Kernel.element."
 	/>
 </svelte:head>
 
@@ -157,8 +206,9 @@ const trigger = createAtomInstance('trigger', {
 		Coordination without prop drilling.
 	</h1>
 	<p class="text-muted-foreground m-0 mb-6 max-w-[640px] text-[17px] leading-[1.65]">
-		A Bond owns shared component state, context, registered Atoms, and compound coordination. Atom
-		components render the DOM; Atoms hold the runtime element behavior.
+		A Bond is a plain Svelte 5 state class that owns a family's shared state. The root publishes it
+		under a context key; every part reads it and renders through one seam,
+		<code class="font-mono text-sm">Kernel.element</code>.
 	</p>
 	<div class="flex flex-wrap gap-3">
 		<Button href="/docs/extending" as="a" variant="primary" class="gap-2 px-5">
@@ -187,58 +237,92 @@ const trigger = createAtomInstance('trigger', {
 <Section.Root>
 	<Section.Header>
 		<Section.Title>Core model</Section.Title>
-		<Section.Subtitle>Four names describe the public authoring model.</Section.Subtitle>
+		<Section.Subtitle>Four names describe the whole authoring model.</Section.Subtitle>
 	</Section.Header>
 
 	<div class="grid gap-3 sm:grid-cols-2">
 		<div class="border-border rounded-lg border p-4">
-			<p class="text-foreground mb-1 text-sm font-semibold">Atom Component</p>
-			<p class="text-muted-foreground text-sm">
-				The Svelte component that renders a part such as Trigger, Content, Item, or Header.
-			</p>
-		</div>
-		<div class="border-border rounded-lg border p-4">
-			<p class="text-foreground mb-1 text-sm font-semibold">Atom</p>
-			<p class="text-muted-foreground text-sm">
-				The runtime object owned by an Atom Component. It captures the element and produces the
-				spread attrs, handlers, attachments, and lifecycle behavior.
-			</p>
-		</div>
-		<div class="border-border rounded-lg border p-4">
 			<p class="text-foreground mb-1 text-sm font-semibold">Bond</p>
 			<p class="text-muted-foreground text-sm">
-				The compound controller. It owns shared props, derived values, mutations, context,
-				capabilities, and the registry of mounted Atoms.
+				A plain state class — props, derived getters, mutation methods, element ids. No base class,
+				no registry, no runtime. Published with
+				<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">Kernel.context</code>.
 			</p>
 		</div>
 		<div class="border-border rounded-lg border p-4">
-			<p class="text-foreground mb-1 text-sm font-semibold">Capability / Particle</p>
+			<p class="text-foreground mb-1 text-sm font-semibold">Part</p>
 			<p class="text-muted-foreground text-sm">
-				A reusable behavior unit installed on a Bond or an Atom. Particle is the metaphor;
-				capability is the API name.
+				The Svelte component that renders one slot — Trigger, Content, Item, Header. It reads the
+				Bond from context and calls
+				<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">Kernel.element</code>.
+			</p>
+		</div>
+		<div class="border-border rounded-lg border p-4">
+			<p class="text-foreground mb-1 text-sm font-semibold">Kernel</p>
+			<p class="text-muted-foreground text-sm">
+				The one element seam. It resolves presentation (preset → variants → your class), merges
+				attributes and handlers, and owns motion and renderer escalation.
+			</p>
+		</div>
+		<div class="border-border rounded-lg border p-4">
+			<p class="text-foreground mb-1 text-sm font-semibold">Behaviour model</p>
+			<p class="text-muted-foreground text-sm">
+				An ordinary function from
+				<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">@ixirjs/ui/shared</code>
+				— disclosure, selection, roving focus, typeahead — that owns a piece of logic and nothing about
+				the DOM.
 			</p>
 		</div>
 	</div>
+
+	<DocCallout variant="warning" title="Renamed in 2026-08">
+		<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">defineBond</code>,
+		<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">useRoot</code>,
+		<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">definePart</code>,
+		<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">createAtomInstance</code>
+		and the <code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">Bond</code>/<code
+			class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">Atom</code
+		>
+		base classes were removed, not renamed. See the
+		<a class="underline" href="/docs/migration">migration guide</a>.
+	</DocCallout>
 </Section.Root>
 
 <Section.Root>
 	<Section.Header>
-		<Section.Title>Create the Bond</Section.Title>
+		<Section.Title>Write the Bond</Section.Title>
 		<Section.Subtitle>
-			New components can put props, derived values, and mutation methods directly on the Bond.
+			A class with a <code class="bg-muted text-foreground rounded px-1.5 py-0.5 text-xs"
+				>props</code
+			>
+			object of live getters, a
+			<code class="bg-muted text-foreground rounded px-1.5 py-0.5 text-xs">static create</code>, and
+			one context key.
 		</Section.Subtitle>
 	</Section.Header>
 
 	<div class="overflow-hidden rounded-lg">
 		<CodeBlock lang="typescript" code={bondCode} />
 	</div>
+
+	<DocCallout variant="info" title="Ids come from the seed">
+		The root seeds the Bond with <code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs"
+			>$props.id()</code
+		>
+		and every element id derives from it through
+		<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">Kernel.id(seed, part)</code>.
+		That is SSR-deterministic and survives hydration. A part a consumer may render twice claims its
+		id with
+		<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">Kernel.claimId</code>
+		instead, which numbers the later ones.
+	</DocCallout>
 </Section.Root>
 
 <Section.Root>
 	<Section.Header>
 		<Section.Title>Use it from parts</Section.Title>
 		<Section.Subtitle>
-			Root components share the Bond. Part components create and register local Atoms.
+			The root builds and shares the Bond. Every part reads it and renders one element.
 		</Section.Subtitle>
 	</Section.Header>
 
@@ -250,131 +334,106 @@ const trigger = createAtomInstance('trigger', {
 			</div>
 		</div>
 		<div>
-			<p class="text-foreground mb-2 text-sm font-semibold">Atom component</p>
+			<p class="text-foreground mb-2 text-sm font-semibold">Part component</p>
 			<div class="overflow-hidden rounded-lg">
-				<CodeBlock lang="svelte" code={atomCode} />
+				<CodeBlock lang="svelte" code={partCode} />
 			</div>
 		</div>
 	</div>
-</Section.Root>
 
-<Section.Root>
-	<Section.Header>
-		<Section.Title>Required or optional</Section.Title>
-		<Section.Subtitle>
-			Use required helpers for compound parts and optional helpers for components that can stand
-			alone.
-		</Section.Subtitle>
-	</Section.Header>
-
-	<div class="grid gap-3 sm:grid-cols-2">
-		<DocCallout variant="info" title="Required Bond">
-			Parts such as <code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs"
-				>Tabs.Tab</code
-			>
-			or <code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">Dialog.Content</code>
-			should call a component-specific
-			<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">required()</code> helper and
-			throw a clear development error when rendered outside their root.
-		</DocCallout>
-		<DocCallout variant="info" title="Optional Bond">
-			Parts that also work independently should call
-			<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">optional()</code> and pass
-			the result to
-			<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">createAtomInstance</code>.
-			The Atom can still use local capabilities without a Bond.
-		</DocCallout>
-	</div>
-</Section.Root>
-
-<Section.Root>
-	<Section.Header>
-		<Section.Title>Registry lookup</Section.Title>
-		<Section.Subtitle>
-			Use <code class="bg-muted text-foreground rounded px-1.5 py-0.5 text-xs"
-				>bond.nodeByPart()</code
-			>,
-			<code class="bg-muted text-foreground rounded px-1.5 py-0.5 text-xs">bond.nodesByPart()</code
-			>, or
-			<code class="bg-muted text-foreground rounded px-1.5 py-0.5 text-xs">bond.nodeByRole()</code>
-			for rendered nodes.
-		</Section.Subtitle>
-	</Section.Header>
-
-	<div class="overflow-hidden rounded-lg">
-		<CodeBlock lang="typescript" code={registryCode} />
-	</div>
-
-	<DocCallout variant="info" title="Rendered nodes">
-		<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">createAtomInstance</code>
-		creates and registers the node where the DOM is rendered.
-		<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">bond.nodeByPart(key)</code>
-		and
-		<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">bond.nodesByPart(key)</code>
-		read that registry.
+	<DocCallout variant="info" title="Required or optional context">
+		A part that cannot work alone calls
+		<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs"
+			>Context.getOrThrow(message)</code
+		>
+		and gets a clear development error when rendered outside its root. A part that also stands alone calls
+		<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">Context.get()</code>
+		and treats <code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">undefined</code>
+		as "no root" — as
+		<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">Card.Title</code> does above.
 	</DocCallout>
 </Section.Root>
 
 <Section.Root>
 	<Section.Header>
-		<Section.Title>Capabilities</Section.Title>
+		<Section.Title>Two lanes, one seam</Section.Title>
 		<Section.Subtitle>
-			Capabilities attach reusable behavior to Bond or Atom hosts.
+			Spread <code class="bg-muted text-foreground rounded px-1.5 py-0.5 text-xs">el.attrs</code> on a
+			literal tag, unless the part has a reason to dispatch.
 		</Section.Subtitle>
 	</Section.Header>
 
-	<div class="space-y-4">
-		<div class="grid gap-3 sm:grid-cols-3">
-			<div class="border-border rounded-lg border p-4">
-				<p class="text-foreground mb-1 text-sm font-semibold">State-focused</p>
-				<p class="text-muted-foreground text-sm">
-					Own or expose reusable state such as disclosure, selection, validation, progress, or
-					collections.
-				</p>
-			</div>
-			<div class="border-border rounded-lg border p-4">
-				<p class="text-foreground mb-1 text-sm font-semibold">Coordination-focused</p>
-				<p class="text-muted-foreground text-sm">
-					Coordinate multiple Atoms with relationships, roving focus, typeahead, labels, or active
-					descendant links.
-				</p>
-			</div>
-			<div class="border-border rounded-lg border p-4">
-				<p class="text-foreground mb-1 text-sm font-semibold">Effectful</p>
-				<p class="text-muted-foreground text-sm">
-					Install whole-bond lifecycle work such as focus traps, escape stacks, outside press
-					listeners, or observers.
-				</p>
-			</div>
-		</div>
-		<div class="overflow-hidden rounded-lg">
-			<CodeBlock lang="typescript" code={capabilityCode} />
-		</div>
+	<p class="text-muted-foreground mb-4 text-sm leading-relaxed">
+		Most parts are a literal tag: <code class="font-mono text-xs">{'<div {...el.attrs}>'}</code>. A
+		part with real transitions, an
+		<code class="font-mono text-xs">animate</code> driver, a
+		<code class="font-mono text-xs">base</code> renderer, or a polymorphic
+		<code class="font-mono text-xs">as</code> declares that in the spec, binds its leaf once, and renders
+		it by name.
+	</p>
+
+	<div class="overflow-hidden rounded-lg">
+		<CodeBlock lang="svelte" code={leafCode} />
 	</div>
+
+	<DocCallout variant="warning" title="Bind the leaf once">
+		<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs"
+			>const leaf = Kernel.render(el)</code
+		>
+		in the script, then
+		<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs"
+			>{'{@render leaf(el, children)}'}</code
+		>. An identifier callee compiles to a direct call; the inline
+		<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs"
+			>{'{@render Kernel.render(el)(…)}'}</code
+		> form is a snippet block with a hydration anchor.
+	</DocCallout>
 </Section.Root>
 
 <Section.Root>
 	<Section.Header>
-		<Section.Title>Migration shape</Section.Title>
+		<Section.Title>Relationships and collections</Section.Title>
 		<Section.Subtitle>
-			The main shift is from Bond-owned atom factories to component-owned Atoms.
+			Cross-part ARIA is a child writing its id into the parent. A collection is a
+			<code class="bg-muted text-foreground rounded px-1.5 py-0.5 text-xs">Map</code>.
 		</Section.Subtitle>
 	</Section.Header>
 
 	<div class="overflow-hidden rounded-lg">
-		<CodeBlock lang="typescript" code={beforeAfterCode} />
+		<CodeBlock lang="typescript" code={collectionCode} />
 	</div>
 
-	<DocCallout variant="info" title="Stable and experimental authoring">
-		The stable
-		<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">shared</code> entry centers
-		on factories such as
-		<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">defineBond</code> and
-		<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">createAtomInstance</code>.
-		Concrete
-		<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">Bond</code> and
-		<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">Atom</code> classes are
-		expert escape hatches from
-		<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">experimental</code>.
+	<DocCallout variant="warning" title="Keep reactive facts narrow">
+		Derive what the children share from membership through one equality-gated
+		<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">$state</code> — the accordion's
+		tab-stop fallback above — never a reactive array every child reads. A per-child read of something
+		the parent owns turns mount from linear into quadratic.
 	</DocCallout>
+</Section.Root>
+
+<Section.Root>
+	<Section.Header>
+		<Section.Title>Behaviour models</Section.Title>
+		<Section.Subtitle>
+			Logic is reused as functions; the DOM projection is written where the element is.
+		</Section.Subtitle>
+	</Section.Header>
+
+	<div class="overflow-hidden rounded-lg">
+		<CodeBlock lang="typescript" code={modelCode} />
+	</div>
+</Section.Root>
+
+<Section.Root class="mb-0">
+	<Section.Header>
+		<Section.Title>Handlers</Section.Title>
+		<Section.Subtitle>
+			<code class="bg-muted text-foreground rounded px-1.5 py-0.5 text-xs">Kernel.compose</code> runs
+			the consumer's handler first and skips the part's when the default was prevented.
+		</Section.Subtitle>
+	</Section.Header>
+
+	<div class="overflow-hidden rounded-lg">
+		<CodeBlock lang="typescript" code={composeCode} />
+	</div>
 </Section.Root>

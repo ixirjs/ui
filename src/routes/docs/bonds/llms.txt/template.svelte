@@ -13,84 +13,102 @@
 {metadata.pageDescription}
 
 {list([
-	'Bond owns family state, domain methods, capabilities, context, and rendered-part registration.',
-	'Atom owns one rendered part and exposes its observable spread.',
-	'Definitions are inferred from one defineBond spec; runtime composition metadata is private.',
-	'bindBond is the root lifecycle owner.',
-	'createAtomInstance is the rendered-part ownership seam.'
+	'Bond: a plain Svelte 5 state class. No base class, no capability registry, no node registry.',
+	'The root builds the Bond from live prop getters and publishes it with Context.share(...).',
+	'Every part reads the Bond from context and renders through Kernel.element(() => props, spec).',
+	'A plain part spreads el.attrs on a literal tag; a part with motion, a base renderer or a polymorphic tag binds one leaf with Kernel.render(el).',
+	'Behaviour models (createDisclosure, createSelection, createRovingFocus, createTypeahead) are ordinary functions from @ixirjs/ui/shared; their ARIA projection is written literally in a part attrs.',
+	'defineBond, useRoot, definePart, defineLeaf, createAtomInstance and the Bond/Atom classes were removed on 2026-08-27.'
 ])}
 
-## Define a Bond
+## Write the Bond
 
 {codeBlock(
-	`import { Bond, defineAtom } from '@ixirjs/ui/experimental';
-import { defineBond, roles } from '@ixirjs/ui/shared';
+	`import { Kernel } from '@ixirjs/ui/shared';
 
-class TilesBondBase extends Bond<{ id?: string; value?: string }> {
-  select(value: string) { this.props.value = value; }
+export type CardBondProps = { id?: string; disabled?: boolean };
+
+export const CardContext = Kernel.context<CardBond>('bond/card');
+
+export class CardBond {
+  readonly name = 'card';
+  readonly props: CardBondProps;
+  titleId = $state<string | undefined>();
+
+  constructor(props: CardBondProps = {}) { this.props = props; }
+
+  get id() { return this.props.id ?? 'card'; }
+  get rootId() { return Kernel.id(this.id, 'card-root'); }
+  get isDisabled() { return this.props.disabled ?? false; }
+
+  static create(props: CardBondProps = {}) { return new CardBond(props); }
+}`,
+	'typescript'
+)}
+
+## Build and share it in the root
+
+{codeBlock(
+	`const ID = $props.id();
+let { disabled = false, factory, children, ...restProps } = $props();
+
+// Live props: getters, so a prop change is seen where the Bond reads it.
+const bondProps = {
+  get id() { return ID; },
+  get disabled() { return disabled; }
+};
+const build = untrack(() => factory);           // read once, at init, by design
+const card = CardContext.share(build ? build(bondProps) : CardBond.create(bondProps));
+export const getBond = () => card;
+
+const el = Kernel.element(() => restProps, {
+  preset: 'card',
+  class: 'card bg-card border-border flex flex-col rounded-lg border',
+  state: card,
+  attrs: () => ({ id: card.rootId })
+});`,
+	'typescript'
+)}
+
+Controlled props are committed through the Bond. The root calls `bond.bindCommit(...)` with a
+function that writes the bindable prop and then fires the semantic callback: the Bond decides, the
+root writes, the callback runs after the write, and an equal value does not fire. ## Render a part
+
+{codeBlock(
+	`const card = CardContext.get();                  // getOrThrow(message) when a root is required
+const id = card ? Kernel.id(card.id, 'card-title') : undefined;
+if (card) card.titleId = id;                     // cross-part ARIA, no registry
+
+const el = Kernel.element(() => props, {
+  preset: 'card.title',
+  class: 'card-title text-lg leading-none font-semibold',
+  state: card,
+  attrs: () => (id ? { id } : {})
+});
+
+// <h3 {...el.attrs}>{@render props.children?.()}</h3>`,
+	'typescript'
+)}
+
+A part with real transitions, an `animate` driver, a `base` renderer or a polymorphic `as` declares
+it in the spec and binds its leaf once in the script — `const leaf = Kernel.render(el);` — then
+renders that identifier. Rendering the inline `Kernel.render(el)(…)` call instead costs a snippet
+block and a hydration anchor. ## Collections
+
+{codeBlock(
+	`// Parent: a mount-ordered Map plus one equality-gated $state for the shared fact.
+attachItem(id: string, item: AccordionItemHandle): () => void {
+  this.items.set(id, item);
+  if (this.#first === null && !item.isDisabled) this.#first = id;
+  return () => { this.items.delete(id); };
 }
 
-const RootAtom = defineAtom('root');
-const ItemAtom = defineAtom('item');
-
-export const TilesBond = defineBond({
-  name: 'tiles',
-  base: TilesBondBase,
-  atoms: {
-    root: RootAtom,
-    item: { atom: ItemAtom, role: roles.item }
-  }
-});`,
+// Child root, at init — document order — released on teardown.
+const detach = bond.parent.attachItem(bond.id, bond);
+$effect(() => detach);`,
 	'typescript'
 )}
 
-## Bind the root
-
-{codeBlock(
-	`import { bindBond } from '@ixirjs/ui/experimental';
-
-const binding = bindBond(
-  (props) => new TilesBond(props),
-  { value: [() => value, (next) => { value = next; }] }
-);
-const bond = binding.bond.share();`,
-	'typescript'
-)}
-
-`binding.bond.share()` publishes context. `bindBond` validates and activates the complete capability
-graph, then disposes the Bond when the root is destroyed. Manual `useCapabilities()` wiring is not
-part of normal authoring. ## Render an Atom
-
-{codeBlock(
-	`import {
-  createAtomInstance,
-  dataState,
-  pressable
-} from '@ixirjs/ui/shared';
-
-const bond = TilesBond.getOrThrow();
-const item = createAtomInstance('item', {
-  bond,
-  register: { cardinality: 'many' },
-  factory: (owner) => new ItemAtom(owner!),
-  capabilities: [
-    pressable({ onPress: () => bond.select(value) }),
-    dataState(() => bond.selectedValue === value ? 'selected' : 'idle')
-  ]
-});`,
-	'typescript'
-)}
-
-## Query rendered parts
-
-{codeBlock(
-	`const trigger = bond.nodeByPart('trigger');
-const items = bond.nodesByPart('item');
-const content = bond.nodeByRole(roles.content);`,
-	'typescript'
-)}
-
-Part lookup, role lookup, and repeated-part lookup are separate. Registrations staged during render
-are synchronously visible; reactive invalidation is committed in a microtask. ## Removed methods
-`bond.root()` and similar generated methods are removed. Rendered parts create registered Atoms with
-`createAtomInstance`, and mounted parts are found with explicit query methods.
+## Handlers `Kernel.compose(consumerHandler, ownHandler)` runs the consumer's first and skips the
+part's when the default was prevented. A part's own handler also returns early on
+`event.defaultPrevented`, for a consumer who prevents from their own listener.

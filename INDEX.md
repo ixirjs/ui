@@ -11,7 +11,7 @@ Authoritative evidence: [`package.json`](package.json), [`svelte.config.js`](sve
 ## Start here
 
 - [`AGENTS.md`](AGENTS.md) — repository authoring and architecture rules.
-- [`CONTEXT.md`](CONTEXT.md) — Bond, Atom, capability, preset, portal, and testing vocabulary.
+- [`CONTEXT.md`](CONTEXT.md) — Bond, part, model, preset, portal, and testing vocabulary.
 - [`README.md`](README.md) — package purpose, consumer prerequisites, and basic development entry points.
 - [`package.json`](package.json) — package exports and verified scripts.
 - [`src/lib/index.ts`](src/lib/index.ts) — curated root package API.
@@ -29,7 +29,9 @@ This is a single project, so no subordinate indexes are required. The library, d
 | Path                                                                                             | Responsibility                                                                                                      | Index or source of truth                                                                                                 |
 | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | `src/lib/components/`                                                                            | Public and internal UI component families; most folders expose an `index.ts`.                                       | [`src/lib/index.ts`](src/lib/index.ts), [`AGENTS.md`](AGENTS.md)                                                         |
-| `src/lib/shared/`                                                                                | Runtime engine for Bonds, Atoms, capabilities, authoring helpers, and motion.                                       | [`src/lib/shared/README.md`](src/lib/shared/README.md)                                                                   |
+| `src/lib/kernel/`                                                                                | The element seam every part authors through (`Kernel.element`/`render`/`context`/`id`).                             | [`src/lib/kernel/README.md`](src/lib/kernel/README.md)                                                                   |
+| `src/lib/capability/`                                                                            | Behaviour models (`createDisclosure`, `createSelection`, `createRovingFocus`, …) as plain functions.                | [`src/lib/capability/README.md`](src/lib/capability/README.md)                                                           |
+| `src/lib/authoring/`                                                                             | Prop types every part declares, identity helpers, motion.                                                           | [`src/lib/authoring/README.md`](src/lib/authoring/README.md)                                                             |
 | `src/lib/preset/`, `src/lib/public/`, `src/lib/attachments/`, `src/lib/runes/`, `src/lib/utils/` | Presentation presets, constrained public facades, DOM/lifecycle helpers, reactive utilities, and general utilities. | [`package.json`](package.json), [`src/lib/public/types.ts`](src/lib/public/types.ts)                                     |
 | `src/docs/`                                                                                      | Documentation components, previews, markdown/LLM helpers, and docs-side utilities.                                  | [`src/docs/index.ts`](src/docs/index.ts)                                                                                 |
 | `src/routes/`                                                                                    | SvelteKit pages, component documentation, demos, and the MCP HTTP endpoint.                                         | [`svelte.config.js`](svelte.config.js), [`src/routes/api/[transport]/+server.ts`](src/routes/api/[transport]/+server.ts) |
@@ -45,12 +47,12 @@ There are no cross-project dependencies inside a monorepo. The repository has on
 ```text
 SvelteKit routes/docs/stories ──imports──> src/lib public/component APIs
                                               │
-                                              ├── components
+                                              ├── components ──> kernel (the element seam)
                                               ├── preset/public facades
-                                              └── shared Bond/Atom/capability runtime
+                                              └── capability (behaviour models), authoring (types)
 ```
 
-- Component families use the shared Bond/Atom/capability runtime; `src/lib/shared/README.md` and `CONTEXT.md` define the load-bearing vocabulary.
+- Component families are plain state classes on the Kernel seam; `docs/research/whiteboard-migration-recipe.md` and `CONTEXT.md` define the load-bearing vocabulary.
 - The package root facade in [`src/lib/index.ts`](src/lib/index.ts) and subpath facades configured in [`svelte.config.js`](svelte.config.js) / [`package.json`](package.json) are the consumer-facing boundary.
 - Presets feed component presentation; the site installs its preset in [`src/routes/+layout.svelte`](src/routes/+layout.svelte).
 - Overlay components share portal/teleport/z-layer infrastructure under `src/lib/components/portal/`; see [`docs/adr/0007-portal-containment-over-top-layer-and-body-detach.md`](docs/adr/0007-portal-containment-over-top-layer-and-body-detach.md).
@@ -90,21 +92,21 @@ SvelteKit routes/docs/stories ──imports──> src/lib public/component APIs
 
 - Follow [`AGENTS.md`](AGENTS.md) and [`CONTEXT.md`](CONTEXT.md) before changing public component modules.
 - Components and directories use kebab-case; variables/functions use camelCase.
-- New modules follow the static `Button` or bonded `Collapsible` anatomy. Shared state belongs on Bonds; cross-cutting behavior belongs in capabilities; rendered parts use Atoms.
+- New modules follow the static `Button` or bonded `Card`/`Accordion` anatomy. Shared state belongs on the family's state class; behaviour is composed from models; every part renders through `Kernel.element`.
 - Public package surfaces are explicit. A new top-level module generally requires updates to its component facade, [`src/lib/index.ts`](src/lib/index.ts), public facade, aggregate convention, and public-surface test; consult the authoring guide for the exact list.
 - Test-only Svelte files belong under `src/lib/test/` and use the `*.test.svelte` convention. Bond interface and `atom.spread` behavior are primary test surfaces.
 - Do not copy legacy patterns; `AGENTS.md` marks the canonical exemplar for each module shape and names the parts that are migration debt.
 
 ## Cross-project change guide
 
-| Change type                         | Affected indexes or projects                                                        | Validation                                                                               | Risks                                                                                          |
-| ----------------------------------- | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| Shared Bond/Atom/capability runtime | `src/lib/shared/`, component families, public consumers                             | Focused specs; `bun run check`; unit tests; `the external Bond runtime audit`            | Reactive lifecycle, registration, capability teardown, and cross-component ARIA coupling.      |
-| New or changed component API        | Component folder, `src/lib/index.ts`, `src/lib/public/`, docs/stories as applicable | Focused browser spec; `bun run prepack`; `the external component audit`; Storybook build | Export drift, preset compatibility, accessibility relationships, and package contract changes. |
-| Preset or presentation resolver     | `src/lib/preset/`, atom resolver/presentation code, stories/docs styling            | Resolver tests; `bun run check`; unit tests; package export checks                       | Precedence and reactive tracking are contract-sensitive.                                       |
-| Portal/overlay behavior             | `src/lib/components/portal/` and overlay families                                   | Focused component tests; E2E; Storybook build                                            | Containment, focus, escape, stacking, and nested-overlay behavior.                             |
-| Docs/MCP route                      | `src/routes/docs/`, `src/docs/`, `src/routes/api/[transport]/`                      | `bun run check`; `bun run build`                                                         | Docs paths are consumed by the MCP endpoint and may be generated/served in multiple forms.     |
-| Packaging or CI                     | `package.json`, configs, scripts, `.github/workflows/ci.yml`                        | Relevant script plus full CI sequence                                                    | Published exports and generated package output can diverge from source.                        |
+| Change type                      | Affected indexes or projects                                                        | Validation                                                                               | Risks                                                                                          |
+| -------------------------------- | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| Kernel seam and behaviour models | `src/lib/kernel/`, `src/lib/capability/`, component families, public consumers      | Focused specs; `bun run check`; unit tests; `kernel-authoring-audit`, `public-surface`   | Presentation resolution, motion and lifecycle, cross-part ARIA, and the published surface.     |
+| New or changed component API     | Component folder, `src/lib/index.ts`, `src/lib/public/`, docs/stories as applicable | Focused browser spec; `bun run prepack`; `the external component audit`; Storybook build | Export drift, preset compatibility, accessibility relationships, and package contract changes. |
+| Preset or presentation resolver  | `src/lib/preset/`, atom resolver/presentation code, stories/docs styling            | Resolver tests; `bun run check`; unit tests; package export checks                       | Precedence and reactive tracking are contract-sensitive.                                       |
+| Portal/overlay behavior          | `src/lib/components/portal/` and overlay families                                   | Focused component tests; E2E; Storybook build                                            | Containment, focus, escape, stacking, and nested-overlay behavior.                             |
+| Docs/MCP route                   | `src/routes/docs/`, `src/docs/`, `src/routes/api/[transport]/`                      | `bun run check`; `bun run build`                                                         | Docs paths are consumed by the MCP endpoint and may be generated/served in multiple forms.     |
+| Packaging or CI                  | `package.json`, configs, scripts, `.github/workflows/ci.yml`                        | Relevant script plus full CI sequence                                                    | Published exports and generated package output can diverge from source.                        |
 
 ## Generated, vendored, and ignored areas
 
@@ -114,7 +116,7 @@ Do not edit generated or build output directly: `node_modules/`, `.svelte-kit/`,
 
 **Verified facts:** the package root exports a large explicit component/type surface; tests intentionally split browser rune tests from Node tests; CI requires Chromium, and runs lint, typecheck, unit/browser tests, e2e, `prepack`, Storybook, and the SSR output-fingerprint bench; convention audits are Vitest specs under `src/lib/test/contracts/`; portal behavior has dedicated architecture documentation; the API route constructs URLs from request origins and reads docs endpoints.
 
-**Inference/risks:** shared runtime changes are likely high-coupling because many component families depend on `src/lib/shared/`; public-facade or preset changes can affect both package consumers and the in-repository docs/stories. Generated `dist/` and SvelteKit output can make local results look stale; validate from source and use the package/export scripts. Environment- or deployment-specific behavior beyond the Netlify adapter is not established by the repository.
+**Inference/risks:** Kernel changes are high-coupling — every family authors through `src/lib/kernel/kernel.svelte.ts`; public-facade or preset changes can affect both package consumers and the in-repository docs/stories. Generated `dist/` and SvelteKit output can make local results look stale; validate from source and use the package/export scripts. Environment- or deployment-specific behavior beyond the Netlify adapter is not established by the repository.
 
 ## Unindexed areas
 

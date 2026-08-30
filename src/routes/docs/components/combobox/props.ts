@@ -15,7 +15,7 @@ export const comboboxRootProps: PropDefinition[] = [
 	},
 	{
 		name: 'factory',
-		type: 'Factory<ComboboxBondBase>',
+		type: 'Factory<ComboboxBond>',
 		default: 'undefined',
 		description: 'Custom factory function to create a ComboboxBond instance.'
 	},
@@ -52,25 +52,25 @@ export const comboboxRootProps: PropDefinition[] = [
 	},
 	{
 		name: 'onopenchange',
-		type: 'StateChangeCallback<boolean, ComboboxBondBase>',
+		type: 'StateChangeCallback<boolean, ComboboxBond>',
 		default: 'undefined',
 		description: 'Fired after open state commits.'
 	},
 	{
 		name: 'onquerychange',
-		type: 'StateChangeCallback<string, ComboboxBondBase>',
+		type: 'StateChangeCallback<string, ComboboxBond>',
 		default: 'undefined',
 		description: 'Fired after the filter query commits.'
 	},
 	{
 		name: 'onvaluechange',
-		type: 'StateChangeCallback<unknown, ComboboxBondBase>',
+		type: 'StateChangeCallback<unknown, ComboboxBond>',
 		default: 'undefined',
 		description: 'Fired after the selected value commits in single mode.'
 	},
 	{
 		name: 'onvalueschange',
-		type: 'StateChangeCallback<unknown[], ComboboxBondBase>',
+		type: 'StateChangeCallback<unknown[], ComboboxBond>',
 		default: 'undefined',
 		description: 'Fired after the selected values commit in multiple mode.'
 	},

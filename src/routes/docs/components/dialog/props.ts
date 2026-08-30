@@ -21,7 +21,7 @@ export const dialogProps: PropDefinition[] = [
 	},
 	{
 		name: 'onopenchange',
-		type: 'StateChangeCallback<boolean, DialogBondBase<DialogBondProps>> | undefined',
+		type: 'StateChangeCallback<boolean, DialogBond> | undefined',
 		default: 'undefined',
 		description: 'Semantic callback; runs after the open state commits.'
 	},
@@ -39,7 +39,7 @@ export const dialogProps: PropDefinition[] = [
 	},
 	{
 		name: 'portal',
-		type: 'string | PortalBondBase<PortalBondProps>',
+		type: 'string | PortalBond',
 		default: 'undefined',
 		description:
 			'Portal surface to render into, by id or Bond. Defaults to the ambient portal, then the root portal.'

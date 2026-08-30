@@ -23,13 +23,13 @@ export const sidebarRootProps: PropDefinition[] = [
 	},
 	{
 		name: 'factory',
-		type: '(props: SidebarBondProps<Record<string, unknown>>) => SidebarBondBase',
+		type: '(props: SidebarBondProps<Record<string, unknown>>) => SidebarBond',
 		default: 'undefined',
 		description: 'Custom factory for creating the sidebar bond instance.'
 	},
 	{
 		name: 'onopenchange',
-		type: 'StateChangeCallback<boolean, SidebarBondBase> | undefined',
+		type: 'StateChangeCallback<boolean, SidebarBond> | undefined',
 		default: 'undefined',
 		description: 'Called after a real open-state transition commits.'
 	},
@@ -48,7 +48,7 @@ export const sidebarRootProps: PropDefinition[] = [
 	},
 	{
 		name: 'portal',
-		type: 'string | PortalBondBase<PortalBondProps>',
+		type: 'string | PortalBond',
 		default: 'undefined',
 		description: 'Portal target when `overlay` is set; defaults through explicit → ambient → root.'
 	},

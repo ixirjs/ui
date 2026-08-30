@@ -15,7 +15,7 @@ export const accordionItemRootProps: PropDefinition[] = [
 	},
 	{
 		name: 'factory',
-		type: 'Factory<AccordionItemBondBase>',
+		type: 'Factory<AccordionItemBond>',
 		default: 'undefined',
 		description: 'Custom factory for the item bond, enabling advanced behavioral customization'
 	},
@@ -62,7 +62,7 @@ export const accordionRootProps: PropDefinition[] = [
 	},
 	{
 		name: 'factory',
-		type: 'Factory<AccordionBondBase>',
+		type: 'Factory<AccordionBond>',
 		default: 'undefined',
 		description: 'Custom factory for the accordion bond, enabling advanced behavioral customization'
 	},
@@ -74,13 +74,13 @@ export const accordionRootProps: PropDefinition[] = [
 	},
 	{
 		name: 'onvaluechange',
-		type: 'StateChangeCallback<string | undefined, AccordionBondBase> | undefined',
+		type: 'StateChangeCallback<string | undefined, AccordionBond> | undefined',
 		default: 'undefined',
 		description: 'Single-mode callback; runs after the selected value commits.'
 	},
 	{
 		name: 'onvalueschange',
-		type: 'StateChangeCallback<string[], AccordionBondBase> | undefined',
+		type: 'StateChangeCallback<string[], AccordionBond> | undefined',
 		default: 'undefined',
 		description: 'Multiple-mode callback; runs after the set of open values commits.'
 	},

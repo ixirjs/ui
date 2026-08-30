@@ -48,7 +48,7 @@
 		},
 		{
 			title: 'Learn the Philosophy',
-			description: 'Understand the Atom → Bond → Preset architecture.',
+			description: 'Understand the Part → Bond → Preset architecture.',
 			href: '/docs/philosophy',
 			icon: 'book'
 		},

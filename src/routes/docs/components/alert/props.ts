@@ -15,7 +15,7 @@ export const alertRootProps: PropDefinition[] = [
 	},
 	{
 		name: 'factory',
-		type: 'Factory<AlertBondBase>',
+		type: 'Factory<AlertBond>',
 		default: 'undefined',
 		description: 'Custom factory for the alert bond, enabling advanced behavioral customization'
 	},

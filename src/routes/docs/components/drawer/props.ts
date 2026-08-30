@@ -9,7 +9,7 @@ export const slideoverRootProps: PropDefinition[] = [
 	},
 	{
 		name: 'factory',
-		type: 'Factory<DrawerBondBase>',
+		type: 'Factory<DrawerBond>',
 		default: 'undefined',
 		description: 'Custom factory function to create a DrawerBond instance with custom logic.'
 	},
@@ -21,7 +21,7 @@ export const slideoverRootProps: PropDefinition[] = [
 	},
 	{
 		name: 'onopenchange',
-		type: 'StateChangeCallback<boolean, DrawerBondBase> | undefined',
+		type: 'StateChangeCallback<boolean, DrawerBond> | undefined',
 		default: 'undefined',
 		description:
 			'Called after a real open-state transition commits; dismissal events and reasons are included when available.'
@@ -40,7 +40,7 @@ export const slideoverRootProps: PropDefinition[] = [
 	},
 	{
 		name: 'portal',
-		type: 'string | PortalBondBase<PortalBondProps>',
+		type: 'string | PortalBond',
 		default: 'undefined',
 		description:
 			'Portal surface to render into, by id or Bond. Defaults to the nearest active portal.'

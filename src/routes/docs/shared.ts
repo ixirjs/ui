@@ -59,7 +59,8 @@ export const metadata = {
 			{
 				title: 'Migration Guide',
 				href: '/docs/migration/llms.txt',
-				description: 'Move older BondState and Bond-owned Atom code to the current model'
+				description:
+					'Move a family authored against defineBond, useRoot or definePart onto the Kernel'
 			}
 		],
 		fundamentals: [
@@ -104,7 +105,7 @@ export const metadata = {
 			{
 				title: 'Extending & Fusing',
 				href: '/docs/extending/llms.txt',
-				description: 'Extend, compose, and author components with defineBond and capabilities'
+				description: 'Extend a family, reuse its parts, and author a new one on the Kernel seam'
 			},
 			{
 				title: 'Motion',

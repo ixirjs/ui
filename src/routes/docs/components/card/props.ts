@@ -16,7 +16,7 @@ export const cardRootProps: PropDefinition[] = [
 	},
 	{
 		name: 'factory',
-		type: 'Factory<CardBondBase>',
+		type: 'Factory<CardBond>',
 		default: 'undefined',
 		description: 'Custom factory for the card bond, enabling advanced behavioral customization'
 	},

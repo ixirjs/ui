@@ -81,7 +81,7 @@ export const inputColorControlOwnProps: PropDefinition[] = [
 	},
 	{
 		name: 'onvaluechange',
-		type: 'StateChangeCallback<string, InputBondBase>',
+		type: 'StateChangeCallback<string, InputBond>',
 		default: 'undefined',
 		description: 'Semantic color value callback with event, bond, and reason context.'
 	},
@@ -132,7 +132,7 @@ export const inputColorControlProps: PropDefinition[] = [
 	},
 	{
 		name: 'onvaluechange',
-		type: '(value: string, context: StateChangeContext<InputBondBase, Event>) => void',
+		type: '(value: string, context: StateChangeContext<InputBond, Event>) => void',
 		default: 'undefined',
 		description: 'Semantic color value callback with event, bond, and reason context.'
 	},
@@ -286,7 +286,7 @@ export const dateTimeControlImplProps: PropDefinition[] = [
 	},
 	{
 		name: 'onvaluechange',
-		type: '(value: string, context: StateChangeContext<InputBondBase, Event> & { date: Date | null; }) => void',
+		type: '(value: string, context: StateChangeContext<InputBond, Event> & { date: Date | null; }) => void',
 		default: 'undefined',
 		description: 'Semantic value callback with the synchronized `date` in context.'
 	},
@@ -333,7 +333,7 @@ export const inputRootProps: PropDefinition[] = [
 	},
 	{
 		name: 'factory',
-		type: '((props: InputStateProps) => InputBond) | Factory<InputBondBase>',
+		type: '((props: InputStateProps) => InputBond) | Factory<InputBond>',
 		default: 'undefined',
 		description: 'Replaces the Bond constructor, so a family can be extended or fused.'
 	},
@@ -457,13 +457,13 @@ export const inputNumber12HourControlProps: PropDefinition[] = [
 	},
 	{
 		name: 'max',
-		type: '`0${number}:0${number}` | `0${number}:1${number}` | `0${number}:2${number}` | `0${number}:3${number}` | `0${number}:4${number}` | `0${number}:5${number}` | `10:0${number}` | `10:1${number}` | `10:2${number}` | `10:3${number}` | `10:4${number}` | `10:5${number}` | `11:0${number}` | `11:1${number}` | `11:2${number}` | `11:3${number}` | `11:4${number}` | `11:5${number}` | `12:0${number}` | `12:1${number}` | `12:2${number}` | `12:3${number}` | `12:4${number}` | `12:5${number}`',
+		type: '`0${number}:0${number}` | `0${number}:2${number}` | `0${number}:1${number}` | `0${number}:3${number}` | `0${number}:4${number}` | `0${number}:5${number}` | `10:0${number}` | `10:2${number}` | `10:1${number}` | `10:3${number}` | `10:4${number}` | `10:5${number}` | `12:0${number}` | `12:2${number}` | `12:1${number}` | `12:3${number}` | `12:4${number}` | `12:5${number}` | `11:0${number}` | `11:2${number}` | `11:1${number}` | `11:3${number}` | `11:4${number}` | `11:5${number}`',
 		default: 'undefined',
 		description: 'Highest accepted value. Values above it are rejected.'
 	},
 	{
 		name: 'min',
-		type: '`0${number}:0${number}` | `0${number}:1${number}` | `0${number}:2${number}` | `0${number}:3${number}` | `0${number}:4${number}` | `0${number}:5${number}` | `10:0${number}` | `10:1${number}` | `10:2${number}` | `10:3${number}` | `10:4${number}` | `10:5${number}` | `11:0${number}` | `11:1${number}` | `11:2${number}` | `11:3${number}` | `11:4${number}` | `11:5${number}` | `12:0${number}` | `12:1${number}` | `12:2${number}` | `12:3${number}` | `12:4${number}` | `12:5${number}`',
+		type: '`0${number}:0${number}` | `0${number}:2${number}` | `0${number}:1${number}` | `0${number}:3${number}` | `0${number}:4${number}` | `0${number}:5${number}` | `10:0${number}` | `10:2${number}` | `10:1${number}` | `10:3${number}` | `10:4${number}` | `10:5${number}` | `12:0${number}` | `12:2${number}` | `12:1${number}` | `12:3${number}` | `12:4${number}` | `12:5${number}` | `11:0${number}` | `11:2${number}` | `11:1${number}` | `11:3${number}` | `11:4${number}` | `11:5${number}`',
 		default: 'undefined',
 		description: 'Lowest accepted value. Values below it are rejected.'
 	}
@@ -478,13 +478,13 @@ export const inputNumber24HourControlProps: PropDefinition[] = [
 	},
 	{
 		name: 'max',
-		type: '`0${number}:0${number}` | `0${number}:1${number}` | `0${number}:2${number}` | `0${number}:3${number}` | `0${number}:4${number}` | `0${number}:5${number}` | `1${number}:0${number}` | `1${number}:1${number}` | `1${number}:2${number}` | `1${number}:3${number}` | `1${number}:4${number}` | `1${number}:5${number}` | `20:0${number}` | `20:1${number}` | `20:2${number}` | `20:3${number}` | `20:4${number}` | `20:5${number}` | `21:0${number}` | `21:1${number}` | `21:2${number}` | `21:3${number}` | `21:4${number}` | `21:5${number}` | `22:0${number}` | `22:1${number}` | `22:2${number}` | `22:3${number}` | `22:4${number}` | `22:5${number}` | `23:0${number}` | `23:1${number}` | `23:2${number}` | `23:3${number}` | `23:4${number}` | `23:5${number}`',
+		type: '`0${number}:0${number}` | `0${number}:2${number}` | `0${number}:1${number}` | `0${number}:3${number}` | `0${number}:4${number}` | `0${number}:5${number}` | `1${number}:0${number}` | `1${number}:2${number}` | `1${number}:1${number}` | `1${number}:3${number}` | `1${number}:4${number}` | `1${number}:5${number}` | `20:0${number}` | `20:2${number}` | `20:1${number}` | `20:3${number}` | `20:4${number}` | `20:5${number}` | `22:0${number}` | `22:2${number}` | `22:1${number}` | `22:3${number}` | `22:4${number}` | `22:5${number}` | `21:0${number}` | `21:2${number}` | `21:1${number}` | `21:3${number}` | `21:4${number}` | `21:5${number}` | `23:0${number}` | `23:2${number}` | `23:1${number}` | `23:3${number}` | `23:4${number}` | `23:5${number}`',
 		default: 'undefined',
 		description: 'Highest accepted value. Values above it are rejected.'
 	},
 	{
 		name: 'min',
-		type: '`0${number}:0${number}` | `0${number}:1${number}` | `0${number}:2${number}` | `0${number}:3${number}` | `0${number}:4${number}` | `0${number}:5${number}` | `1${number}:0${number}` | `1${number}:1${number}` | `1${number}:2${number}` | `1${number}:3${number}` | `1${number}:4${number}` | `1${number}:5${number}` | `20:0${number}` | `20:1${number}` | `20:2${number}` | `20:3${number}` | `20:4${number}` | `20:5${number}` | `21:0${number}` | `21:1${number}` | `21:2${number}` | `21:3${number}` | `21:4${number}` | `21:5${number}` | `22:0${number}` | `22:1${number}` | `22:2${number}` | `22:3${number}` | `22:4${number}` | `22:5${number}` | `23:0${number}` | `23:1${number}` | `23:2${number}` | `23:3${number}` | `23:4${number}` | `23:5${number}`',
+		type: '`0${number}:0${number}` | `0${number}:2${number}` | `0${number}:1${number}` | `0${number}:3${number}` | `0${number}:4${number}` | `0${number}:5${number}` | `1${number}:0${number}` | `1${number}:2${number}` | `1${number}:1${number}` | `1${number}:3${number}` | `1${number}:4${number}` | `1${number}:5${number}` | `20:0${number}` | `20:2${number}` | `20:1${number}` | `20:3${number}` | `20:4${number}` | `20:5${number}` | `22:0${number}` | `22:2${number}` | `22:1${number}` | `22:3${number}` | `22:4${number}` | `22:5${number}` | `21:0${number}` | `21:2${number}` | `21:1${number}` | `21:3${number}` | `21:4${number}` | `21:5${number}` | `23:0${number}` | `23:2${number}` | `23:1${number}` | `23:3${number}` | `23:4${number}` | `23:5${number}`',
 		default: 'undefined',
 		description: 'Lowest accepted value. Values below it are rejected.'
 	}
@@ -525,7 +525,7 @@ export const inputNumberControlOwnProps: PropDefinition[] = [
 	},
 	{
 		name: 'onnumberchange',
-		type: 'StateChangeCallback<number | undefined, InputBondBase>',
+		type: 'StateChangeCallback<number | undefined, InputBond>',
 		default: 'undefined',
 		description: 'Semantic number callback; native `oninput` and `onchange` are event-only.'
 	},
@@ -796,7 +796,7 @@ export const inputFileControlOwnProps: PropDefinition[] = [
 	},
 	{
 		name: 'onfileschange',
-		type: 'StateChangeCallback<File[], InputBondBase>',
+		type: 'StateChangeCallback<File[], InputBond>',
 		default: 'undefined',
 		description: 'Semantic file-list callback; native `oninput` and `onchange` are event-only.'
 	},
@@ -835,7 +835,7 @@ export const inputTextControlProps: PropDefinition[] = [
 	},
 	{
 		name: 'onvaluechange',
-		type: 'StateChangeCallback<string, InputBondBase>',
+		type: 'StateChangeCallback<string, InputBond>',
 		default: 'undefined',
 		description: 'Semantic value callback; native `oninput` and `onchange` are event-only.'
 	},
@@ -900,7 +900,7 @@ export const inputPasswordControlProps: PropDefinition[] = [
 	},
 	{
 		name: 'onvaluechange',
-		type: 'StateChangeCallback<string, InputBondBase>',
+		type: 'StateChangeCallback<string, InputBond>',
 		default: 'undefined',
 		description: 'Semantic value callback; native `oninput` and `onchange` are event-only.'
 	},
@@ -1066,7 +1066,7 @@ export const inputPhoneControlProps: PropDefinition[] = [
 	},
 	{
 		name: 'onvaluechange',
-		type: 'StateChangeCallback<string, InputBondBase>',
+		type: 'StateChangeCallback<string, InputBond>',
 		default: 'undefined',
 		description: 'Semantic value callback; native `oninput` and `onchange` are event-only.'
 	},
@@ -1257,7 +1257,7 @@ export const inputPinControlProps: PropDefinition[] = [
 	},
 	{
 		name: 'onvaluechange',
-		type: 'StateChangeCallback<string, InputBondBase>',
+		type: 'StateChangeCallback<string, InputBond>',
 		default: 'undefined',
 		description: 'Semantic value callback; native `oninput` and `onchange` are event-only.'
 	},
@@ -1354,7 +1354,7 @@ export const inputNumberControlProps: PropDefinition[] = [
 	},
 	{
 		name: 'onnumberchange',
-		type: '(value: number | undefined, context: StateChangeContext<InputBondBase, Event>) => void',
+		type: '(value: number | undefined, context: StateChangeContext<InputBond, Event>) => void',
 		default: 'undefined',
 		description: 'Semantic number callback; native `oninput` and `onchange` are event-only.'
 	},
@@ -1431,7 +1431,7 @@ export const inputFileControlProps: PropDefinition[] = [
 	},
 	{
 		name: 'onfileschange',
-		type: '(value: File[], context: StateChangeContext<InputBondBase, Event>) => void',
+		type: '(value: File[], context: StateChangeContext<InputBond, Event>) => void',
 		default: 'undefined',
 		description: 'Semantic file-list callback; native `oninput` and `onchange` are event-only.'
 	},
@@ -1496,7 +1496,7 @@ export const inputUrlControlProps: PropDefinition[] = [
 	},
 	{
 		name: 'onvaluechange',
-		type: '(value: string, context: StateChangeContext<InputBondBase, Event>) => void',
+		type: '(value: string, context: StateChangeContext<InputBond, Event>) => void',
 		default: 'undefined',
 		description: 'Semantic value callback; native `oninput` and `onchange` are event-only.'
 	},
@@ -1555,7 +1555,7 @@ export const inputEmailControlProps: PropDefinition[] = [
 	},
 	{
 		name: 'onvaluechange',
-		type: '(value: string, context: StateChangeContext<InputBondBase, Event>) => void',
+		type: '(value: string, context: StateChangeContext<InputBond, Event>) => void',
 		default: 'undefined',
 		description: 'Semantic value callback; native `oninput` and `onchange` are event-only.'
 	},
@@ -1632,7 +1632,7 @@ export const inputOtpControlProps: PropDefinition[] = [
 	},
 	{
 		name: 'onvaluechange',
-		type: '(value: string, context: StateChangeContext<InputBondBase, Event>) => void',
+		type: '(value: string, context: StateChangeContext<InputBond, Event>) => void',
 		default: 'undefined',
 		description: 'Semantic value callback; native `oninput` and `onchange` are event-only.'
 	},

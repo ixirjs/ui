@@ -5,6 +5,13 @@
 Accepted for package layering. [ADR 0009](./0009-native-renderer-and-lazy-runtime-kernel.md)
 supersedes its rendering, descendant-authoring, and retired low-level public surfaces.
 
+**Superseded again, 2026-08-27, by the whiteboard migration** (`docs/research/whiteboard-2026-08.md`,
+`docs/research/whiteboard-migration-recipe.md`): every component family now authors through the
+redesigned Kernel, and the Bond/Atom runtime the sections below describe has been deleted. Read
+"Authoring after the whiteboard migration" for what replaced it. The package layering this ADR fixes
+is still current; `usePart`, `definePart`, `useRoot`, `defineBond` and `createAtomInstance` are all
+historical.
+
 ## Date
 
 2026-07-15
@@ -80,9 +87,71 @@ The contract includes:
 - Bonded roots use `useRoot` and `createAtomInstance`.
 - Ordinary declared descendants use `usePart`.
 - Repeated/data-driven parts use direct `createAtomInstance` with explicit cardinality.
+- **Card and Accordion are authored on the redesigned Kernel** (2026-08-26,
+  `docs/research/whiteboard-2026-08.md`): `Kernel.element`/`render`/`context`/`id` over plain
+  state classes that keep the `CardBond`/`AccordionBond`/`AccordionItemBond` names and surfaces
+  (`{ card }`, `getBond`, `factory`, `create`). `Factory<T>` no longer requires a `Bond`. A
+  preset's `render.as`/`render.base` is honoured by every part that dispatches through
+  `Kernel.render` (`AccordionItem.Root` does; Card's parts are literal elements and DEV warns when a
+  theme targets one); composability is per part, `as`/`base` where a part offers them. Other
+  families migrate the same way, one at a time, behind their existing surfaces.
+- A presentation-free descendant may be its own element — a literal tag spreading
+  `node.spread()` with no `{@render}` dispatch. Such a part's props are `PlainPartProps`, which
+  types `as`, `base`, motion and the renderer lifecycle attributes `never`: the dispatch existed to
+  honour them, and dropping it is a block, a branch and a hydration anchor per part (card −13…15%
+  on mount, 2026-08-25). Card's seven parts take this shape; a family adopts it per part, and the
+  removal of `as`/`base` on a part is a public-contract change recorded here.
+- The same shape applies to a **root** on either lane — `Card.Root` (class-only lane),
+  `DataGrid.Row`, `Tree.Root`/`Tree.Header`/`Tree.Body` and `AccordionItem.Root` are their own
+  `<div>` (2026-08-25, `PlainPartProps`): no `as`, no `base`, no motion, no renderer lifecycle
+  attributes on those parts. `AccordionItem.Header` (polymorphic `as="button"`) and
+  `AccordionItem.Body` (real enter/exit transitions) keep the dispatch. A root's own element still
+  resolves fully when its source is rich (`variants`, `presetLayer`, a function preset).
+- An Atom declares whether it captures its element: `static capturesElement = false` on a class,
+  `captures: false` in a `defineAtom` spec. Nothing in the public contract reads a part's `.element`
+  that its rendered `id` cannot find.
+- `Bond.isSettled` is public: false during the root's synchronous mount, true from the following
+  microtask. A recipe reads it to skip an enter animation for a part that was open at mount
+  (`AccordionItem.Body`).
 - Cross-part behavior is a Bond capability, not a root-level effect or hand-wired relationship.
 - Generated detached-Atom methods and `bond.state` are compatibility paths only and are removed
   before 1.0.
+
+### Authoring after the whiteboard migration (2026-08-27)
+
+Every family is a `bond.svelte.ts` of plain state classes published under `Kernel.context(...)`, and
+every part calls `Kernel.element(() => props, spec)` and either spreads `el.attrs` on a literal tag
+or binds one leaf (`const leaf = Kernel.render(el)`) and renders it. There is one authoring seam.
+
+**Removed from the published surface (a major break, decided 2026-08-27).** `@ixirjs/ui/shared` no
+longer exports `defineBond`, `useRoot`, `controlledProp`, `createAtomInstance`, `BondHandle` or
+`AtomHandle`; `@ixirjs/ui/experimental` no longer exports `Bond`, `Atom`, `defineAtom`, `bindBond`,
+`BondBinding`, `Collection`, the prop-cell types, the definition/spec types, or the six popover
+`*Atom` classes. A family authored against them does not compile; the replacement is a plain class
+plus `Kernel.element`, and the shape is documented in the migration recipe. `@ixirjs/ui/shared` gains
+`Kernel` and `ElementSpec`.
+
+**Removed from every part's prop contract.** Symbol-keyed lifecycle keys (`createLifecycleKey`,
+`mount`/`destroy`) are gone: they never survived server `rest_props`, no first-party part used them,
+and `oninit` — which fires on both platforms — covers the case.
+
+**Kept, and re-implemented in the Kernel where the redesign had dropped them** (each was found by an
+existing gate during the migration, and each applied library-wide, so each is fixed once, in
+`kernel.svelte.ts`, not per part): `oninit`; a consumer's `motion`/`initial`/`enter`/`exit`/`animate`
+on a part that declares none of its own; a preset-declared `motion`; `defaults` as lowest-precedence
+author attributes; and a string `part` as the CSS shadow-parts attribute.
+
+**Measured costs of the redesign, pinned rather than hidden.** A function-form preset entry resolves
+twice per part on mount — once at init to read `render.as`/`render.base`, once inside the tracked
+memo, which is what subscribes the part to what that entry reads — and a class-only part re-resolves
+when an unrelated attribute changes, because the Kernel assembles its attrs object inside the memo
+instead of passing the rest-props proxy through by reference. `kernel/render/resolve-count.svelte.spec.ts`
+holds both numbers and the reasoning.
+
+**A repeated part claims its id.** Ids derive from the family's seed, so two `<Dialog.Header>`s under
+one root would render the same id; `Kernel.claimId(bond, seed, part)` gives the first instance the
+canonical id and later ones the lowest free suffix, released on teardown. Deterministic across SSR
+and hydration, because both passes initialise in document order.
 
 ### State and callbacks
 

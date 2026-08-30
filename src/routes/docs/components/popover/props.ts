@@ -21,7 +21,7 @@ export const popoverRootProps: PropDefinition[] = [
 	},
 	{
 		name: 'factory',
-		type: 'Factory<PopoverBondBase<PopoverBondProps>>',
+		type: 'Factory<PopoverBond>',
 		default: 'undefined',
 		description: 'Factory'
 	},
@@ -33,7 +33,7 @@ export const popoverRootProps: PropDefinition[] = [
 	},
 	{
 		name: 'onopenchange',
-		type: 'StateChangeCallback<boolean, PopoverBondBase<PopoverBondProps>> | undefined',
+		type: 'StateChangeCallback<boolean, PopoverBond> | undefined',
 		default: 'undefined',
 		description:
 			'Called after a real open-state transition commits; dismissal events and reasons are included when available.'
@@ -58,7 +58,7 @@ export const popoverRootProps: PropDefinition[] = [
 	},
 	{
 		name: 'portal',
-		type: 'string | PortalBondBase<PortalBondProps>',
+		type: 'string | PortalBond',
 		default: 'ambient portal → root.l0',
 		description:
 			'Portal target selector or PortalBond instance. Resolution is explicit target → ambient portal → root.l0, preserving nested overlay containment.'
@@ -99,7 +99,7 @@ export const popoverOverlayProps: PropDefinition[] = [
 	},
 	{
 		name: 'portal',
-		type: 'string | PortalBondBase<PortalBondProps> | undefined',
+		type: 'string | PortalBond | undefined',
 		default: 'undefined',
 		description: 'Portal surface to render the overlay into, by id or Bond.'
 	},
@@ -188,25 +188,4 @@ export const popoverTailProps: PropDefinition[] = [
 	renderPropsRow
 ];
 
-export const popoverTriggerProps: PropDefinition[] = [
-	{
-		name: 'onclick',
-		type: '((event: MouseEvent) => void) | undefined',
-		default: 'undefined',
-		description: 'Native click event.'
-	},
-	{
-		name: 'onkeydown',
-		type: '((event: KeyboardEvent) => void) | undefined',
-		default: 'undefined',
-		description:
-			'Native keydown event. Runs before the atom’s own handler, which is skipped if the default is prevented.'
-	},
-	{
-		name: 'onpointerenter',
-		type: '((event: PointerEvent) => void) | undefined',
-		default: 'undefined',
-		description: 'Native pointerenter event, used by hover-opened popovers such as Tooltip.'
-	},
-	renderPropsRow
-];
+export const popoverTriggerProps: PropDefinition[] = [renderPropsRow];

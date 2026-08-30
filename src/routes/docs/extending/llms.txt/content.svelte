@@ -5,125 +5,168 @@
 
 	const frontmatter: Frontmatter = {
 		id: 'extending',
-		title: 'Extending & Fusing',
+		title: 'Extending & Authoring',
 		category: 'architecture',
 		depth: 'detailed',
-		prerequisites: ['bonds', 'atoms'],
-		related: ['composition', 'crafting']
+		prerequisites: ['bonds'],
+		related: ['composition', 'crafting', 'migration']
 	};
 </script>
 
 <FrontMatter {frontmatter} />
 
-# Extending & Fusing The stable factory-based authoring interface lives at `@ixirjs/ui/shared`.
-Concrete component Bond definitions used as composition operands are expert APIs from
-`@ixirjs/ui/experimental`. ## Extend a definition
+# Extending & Authoring A component family is a plain state class plus one Svelte component per
+part. The element seam `Kernel` lives at `@ixirjs/ui/shared`, together with the behaviour models
+(`createDisclosure`, `createSelection`, `createRovingFocus`, `createTypeahead`, …). Concrete Bond
+classes, used as extension bases, are expert APIs from `@ixirjs/ui/experimental`. ## Extend a family
 
 {codeBlock(
-	`import { DropdownMenuBond } from '@ixirjs/ui/experimental';
-import { defineBond } from '@ixirjs/ui/shared';
+	`import { Kernel } from '@ixirjs/ui/shared';
+import { DropdownMenuBond } from '@ixirjs/ui/experimental';
 
-export const CommandMenuBond = defineBond({
-  name: 'command-menu',
-  parts: [DropdownMenuBond],
-  atoms: {}
-});`,
-	'typescript'
-)}
+type Props = ConstructorParameters<typeof DropdownMenuBond>[0];
 
-## Fuse definitions
+export class CommandMenuBond extends DropdownMenuBond {
+  query = $state('');
 
-{codeBlock(
-	`import { DialogBond, PopoverBond } from '@ixirjs/ui/experimental';
-import { defineBond } from '@ixirjs/ui/shared';
-
-export const PopoverDialogBond = defineBond({
-  name: 'popover-dialog',
-  parts: [PopoverBond, DialogBond],
-  atoms: {}
-});`,
-	'typescript'
-)}
-
-Composition metadata is private. The definition value is the composition operand; no public `.spec`
-record is available. ## Author from scratch
-
-{codeBlock(
-	`import { Bond, defineAtom } from '@ixirjs/ui/experimental';
-import {
-  bindBond,
-  createAtomInstance,
-  defineBond,
-  roles
-} from '@ixirjs/ui/shared';
-
-class TilesBondBase extends Bond<{ id?: string; value?: string }> {
-  select(value: string) { this.props.value = value; }
+  constructor(props: Props) {
+    super(props, 'command-menu');   // the name drives the preset path
+  }
 }
 
-const RootAtom = defineAtom('root');
-const ItemAtom = defineAtom('item');
-
-export const TilesBond = defineBond({
-  name: 'tiles',
-  base: TilesBondBase,
-  atoms: {
-    root: RootAtom,
-    item: { atom: ItemAtom, role: roles.item }
-  }
-});
-
-// Root component owns context publication; bindBond owns activation and teardown.
-const binding = bindBond((props) => new TilesBond(props), {
-  value: [() => value, (next) => { value = next; }]
-});
-const bond = binding.bond.share();
-
-// Item component: creation and registration are explicit.
-const item = createAtomInstance('item', {
-  bond: TilesBond.getOrThrow(),
-  register: { cardinality: 'many' },
-  factory: (owner) => new ItemAtom(owner!)
-});`,
+export const CommandMenuContext = Kernel.context<CommandMenuBond>('bond/command-menu');`,
 	'typescript'
 )}
 
-## Custom capabilities and roles
+A Bond is an ordinary class, so extension is `extends`. There is no composition protocol and no spec
+record: `SelectBond` and `ComboboxBond` extend `DropdownMenuBondBase`, `DialogBond` and
+`PopoverBond` extend `OverlayBond`. ## Reuse parts you did not write A part resolves the context key
+its own family publishes. Share one instance under several keys and both families' parts bind to it
+— which is all `PopoverDialog` is.
 
 {codeBlock(
-	`import {
-  capabilityKey,
-  customRole,
-  defineAtomCapability,
-  defineBondCapability
-} from '@ixirjs/ui/shared';
+	`const bond = PopoverDialogContext.share(PopoverDialogBond.create(bondProps));
+DialogContext.share(bond);
+PopoverContext.share(bond);
+OverlayContext.share(bond);`,
+	'typescript'
+)}
 
-const BUSY = capabilityKey<{ readonly busy: boolean }>('@acme/cap:busy');
-const status = customRole<'status', void>({ owner: '@acme/widgets', name: 'status' });
+## Author a family
 
-const busyCapability = (isBusy: () => boolean) => defineBondCapability({
-  slot: BUSY,
-  surface: { get busy() { return isBusy(); } },
-  roles: {
-    [status]: () => ({ attrs: () => ({ 'aria-busy': isBusy() }) })
+{codeBlock(
+	`import { Kernel } from '@ixirjs/ui/shared';
+
+export type TilesBondProps = { id?: string; value?: string; disabled?: boolean };
+
+export const TilesContext = Kernel.context<TilesBond>('bond/tiles');
+
+export class TilesBond {
+  readonly name = 'tiles';
+  readonly props: TilesBondProps;
+  #commit: ((next: string, context: { bond: TilesBond }) => void) | undefined;
+
+  constructor(props: TilesBondProps) { this.props = props; }
+  static create(props: TilesBondProps) { return new TilesBond(props); }
+
+  bindCommit(commit: (next: string, context: { bond: TilesBond }) => void) {
+    this.#commit = commit;
   }
+
+  get id() { return this.props.id ?? 'tiles'; }
+  get rootId() { return Kernel.id(this.id, 'tiles-root'); }
+  get isDisabled() { return this.props.disabled ?? false; }
+  isSelected(value: string) { return this.props.value === value; }
+
+  select(value: string) {
+    if (this.isDisabled || this.props.value === value) return;
+    this.#commit?.(value, { bond: this });
+  }
+}`,
+	'typescript'
+)}
+
+The root builds live prop getters, shares the Bond, wires the commit, and renders one element:
+
+{codeBlock(
+	`const ID = $props.id();
+const bondProps = {
+  get id() { return ID; },
+  get value() { return value; },
+  get disabled() { return disabled; }
+};
+const build = untrack(() => factory);
+const bond = TilesContext.share(build ? build(bondProps) : TilesBond.create(bondProps));
+bond.bindCommit((next, context) => {
+  value = next;
+  onvaluechange?.(next, context);
 });
+export const getBond = () => bond;
 
-const statusPresentation = defineAtomCapability({
-  attach: {
-    attrs: (node) => ({ role: 'status', 'data-atom': node.name })
-  }
+const el = Kernel.element(() => restProps, {
+  preset: 'tiles',
+  class: 'flex flex-wrap gap-2',
+  state: bond,
+  attrs: () => ({ id: bond.rootId, role: 'listbox' })
 });`,
 	'typescript'
 )}
 
-Generated `bond.root()`-style methods are removed. Render with `createAtomInstance`; query mounted
-parts with `nodeByPart`, `nodesByPart`, and `nodeByRole`. ## Type your own props Preset-driven props
-(`variant`, `size`, …) are declared by the consumer, not the library: a preset is swappable, so only
-the application knows which values it defines. Two routes — augment the props interface directly,
-or, when a family declares its props as a type alias (which TypeScript cannot merge), augment its
-`*ExtendProps` interface. Until you declare them, a misspelt value renders with no variant classes
-and raises no error.
+Each part reads the Bond and writes its own ARIA — there is no role protocol projecting attributes
+onto it:
+
+{codeBlock(
+	`const bond = TilesContext.getOrThrow('<Tiles.Item /> must be used within a <Tiles.Root />');
+
+function click(event: MouseEvent) {
+  if (event.defaultPrevented) return;
+  bond.select(value);
+}
+
+const el = Kernel.element(() => restProps, {
+  preset: 'tiles.item',
+  class: 'cursor-pointer rounded-md px-3 py-2',
+  state: bond,
+  attrs: () => ({
+    id: Kernel.id(bond.id, 'tiles-item-' + value),
+    role: 'option',
+    'aria-selected': bond.isSelected(value),
+    'data-state': bond.isSelected(value) ? 'selected' : 'idle',
+    tabindex: bond.isSelected(value) ? 0 : -1,
+    onclick: Kernel.compose(onclick, click)
+  })
+});`,
+	'typescript'
+)}
+
+## Reuse the behaviour models
+
+{codeBlock(
+	`import { createRovingFocus, createSelection } from '@ixirjs/ui/shared';
+
+// "What's committed" — the model owns the set algebra; storage stays yours.
+#selection = createSelection<string>({
+  get: () => this.props.values ?? [],
+  set: (v) => (this.props.values = v),
+  mode: () => (this.props.multiple ? 'multiple' : 'single'),
+  indexed: true
+});
+
+// "Which item is highlighted" — the id list and id-to-item resolution are injected.
+#roving = createRovingFocus({
+  ids: () => [...this.items.keys()],
+  item: (id) => this.items.get(id)
+});`,
+	'typescript'
+)}
+
+A model is a field on the Bond. It owns the logic and nothing about the DOM; the attributes its
+state implies are written in the part that renders the element. ## Type your own props Preset-driven
+props (`variant`, `size`, …) are declared by the consumer, not the library: a preset is swappable,
+so only the application knows which values it defines. Two routes — augment the props interface
+directly, or, when a family declares its props as a type alias (which TypeScript cannot merge),
+augment its `*ExtendProps` interface. Until you declare them, a misspelt value renders with no
+variant classes and raises no error.
 
 {codeBlock(
 	`declare module '@ixirjs/ui/components/button' {
@@ -140,3 +183,8 @@ declare module '@ixirjs/ui/components/tree' {
 }`,
 	'typescript'
 )}
+
+## Removed authoring APIs `defineBond`, `useRoot`, `definePart`, `defineLeaf`, `createAtomInstance`,
+`bindBond`, `controlledProp`, `defineAtom`, the `Bond` and `Atom` classes, `Collection`, the
+capability definition helpers and the role/slot keys were removed on 2026-08-27. See the migration
+guide for the replacement of each.

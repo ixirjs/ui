@@ -15,13 +15,13 @@ export const collapsibleRootProps: PropDefinition[] = [
 	},
 	{
 		name: 'factory',
-		type: '(props: CollapsibleStateProps) => CollapsibleBondBase',
+		type: '(props: CollapsibleBondProps) => CollapsibleBond',
 		default: 'undefined',
 		description: 'Replaces the Bond constructor, so a family can be extended or fused.'
 	},
 	{
 		name: 'onopenchange',
-		type: '(value: boolean, context: StateChangeContext<CollapsibleBondBase, Event>) => void',
+		type: '(value: boolean, context: StateChangeContext<CollapsibleBond, Event>) => void',
 		default: 'undefined',
 		description:
 			'Semantic callback; runs after the open state commits, not when the toggle is clicked.'
