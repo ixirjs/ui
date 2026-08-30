@@ -23,8 +23,8 @@ export {
 	type ErrorRecord,
 	type StandardSchemaV1,
 	type ValidationSource
-} from '$ixirjs/ui/shared/validation';
+} from '$ixirjs/ui/validation';
 export type {
 	ValidationError,
 	ValidationResult
-} from '$ixirjs/ui/shared/capability/models/validation.svelte';
+} from '$ixirjs/ui/capability/models/validation.svelte';

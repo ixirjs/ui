@@ -1,53 +1,76 @@
-<script module lang="ts">
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
-	import { TreeBond } from './bond.svelte';
-	const PART = Kernel.plan(TreeBond, 'header', { class: '' });
-</script>
-
-<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
-	import { type Base, type BasePropsOf, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
+<script lang="ts">
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
+	import { TreeContext } from './bond.svelte';
 	import type { TreeHeaderProps } from './types';
 
-	// `& HTMLAttributes<…>` used to be needed here because `ElementProps` carried no DOM attributes.
-	// It does now, and intersecting a second source of `onpointerdown` only makes the handler type
-	// ambiguous, so the props type stands alone.
-	let {
-		class: klass = '',
-		preset = undefined,
-		children = undefined,
-		onpointerdown = undefined,
-		onkeydown = undefined,
-		...restProps
-	}: TreeHeaderProps<E, B> & BasePropsOf<B> = $props();
+	let { children = undefined, ...restProps }: TreeHeaderProps = $props();
+	const bond = TreeContext.getOrThrow('<Tree.Header /> must be used within a <Tree.Root />');
+	const owner = bond.keyboardOwner;
 
-	type PointerHandlerEvent = Parameters<NonNullable<typeof onpointerdown>>[0];
-	type KeyHandlerEvent = Parameters<NonNullable<typeof onkeydown>>[0];
+	// The treeitem's id, written here so the root (`aria-labelledby`) and the body
+	// (`aria-labelledby`) can name it — and so the keyboard model can list this node.
+	const id = Kernel.id(bond.id, 'tree-header');
+	bond.headerId = id;
 
-	const part = Kernel.node(PART, () => ({ preset }), { context: 'required' });
-
-	// These run before the atom's own disclosure handler and stage the reason for it. The seam
-	// composes the two — consumer handler first, then the atom's, skipped when default is prevented
-	// — so neither needs to invoke the atom handler by hand.
-	function handlePointerDown(event: PointerHandlerEvent) {
-		onpointerdown?.(event);
-		if (event.defaultPrevented) return;
-		part.bond.stageOpenChange({ event, reason: 'trigger' });
+	// A consumer's handler composes before these and cancels them by preventing default.
+	function onpointerdown(event: PointerEvent) {
+		if (event.defaultPrevented || event.button > 0 || event.isPrimary === false) return;
+		if (bond.isDisabled) return;
+		bond.stageOpenChange({ event, reason: 'trigger' });
+		bond.toggle();
 	}
-
-	function handleKeydown(event: KeyHandlerEvent) {
-		onkeydown?.(event);
+	function onkeydown(event: KeyboardEvent) {
 		if (event.defaultPrevented) return;
-		if (event.key === 'Enter' || event.key === ' ') {
-			part.bond.stageOpenChange({ event, reason: 'trigger' });
+		const key = event.key;
+		if (key === 'Enter' || key === ' ') {
+			if (event.repeat) return;
+			event.preventDefault();
+			if (bond.isDisabled) return;
+			bond.stageOpenChange({ event, reason: 'trigger' });
+			bond.toggle();
+			return;
 		}
+		// Horizontal arrows on a tree are expand/collapse, not "move the highlight"; vertical arrows
+		// and Home/End walk the owner's visible treeitems.
+		if (key === 'ArrowRight') {
+			if (!bond.isOpen && bond.hasChildren) bond.open();
+			else if (bond.isOpen) owner.focusNode(bond.firstChildHeaderId);
+			else return;
+		} else if (key === 'ArrowLeft') {
+			if (bond.isOpen) bond.close();
+			else owner.focusNode(bond.parentHeaderId);
+		} else if (!owner.move(key)) return;
+		event.preventDefault();
+	}
+	function onfocus() {
+		owner.notifyFocused(id);
 	}
 
-	const el = Kernel.element(part, () => ({
-		class: ['cursor-pointer', '$preset', klass],
-		...restProps,
-		onpointerdown: handlePointerDown,
-		onkeydown: handleKeydown
-	}));
+	const el = Kernel.element(() => restProps, {
+		preset: 'tree.header',
+		class: 'cursor-pointer',
+		state: bond,
+		layer: () => bond.props.presets?.header,
+		attrs: () => {
+			const disabled = bond.isDisabled;
+			// Roving tabindex over the visible treeitems — exactly one node is in the tab order.
+			const attrs: Record<string, unknown> = {
+				id,
+				tabindex: disabled || owner.focusedId !== id ? -1 : 0,
+				role: 'treeitem',
+				'aria-controls': bond.bodyId,
+				'aria-expanded': bond.isOpen,
+				onpointerdown,
+				onkeydown,
+				onfocus
+			};
+			if (disabled) {
+				attrs.disabled = true;
+				attrs['aria-disabled'] = 'true';
+			}
+			return attrs;
+		}
+	});
 </script>
 
-{@render Kernel.render(el)(el, children, { tree: part.bond })}
+<div {...el.attrs}>{@render children?.({ tree: bond })}</div>

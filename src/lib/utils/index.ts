@@ -11,7 +11,33 @@ export {
 } from './variant';
 import type { ClassValue as SvelteClassValue } from 'svelte/elements';
 import clsx from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import { extendTailwindMerge } from 'tailwind-merge';
+
+/**
+ * `tailwind-merge` treats the axis shorthands as conflicting only with their PHYSICAL siblings:
+ * `px-2` clears `pr-*`/`pl-*` but not `ps-*`/`pe-*`. A preset written in logical properties
+ * (`ps-2 pe-7`) therefore survives a consumer's `px-2`, and since Tailwind emits `.pe-*` after
+ * `.px-*`, the preset wins in the cascade — the consumer's class lands on the element and does
+ * nothing. Teach the shorthands their logical siblings so the last-writer rule holds.
+ */
+const twMerge = extendTailwindMerge({
+	extend: {
+		conflictingClassGroups: {
+			px: ['pr', 'pl', 'ps', 'pe'],
+			py: ['pt', 'pb', 'pbs', 'pbe'],
+			mx: ['mr', 'ml', 'ms', 'me'],
+			my: ['mt', 'mb', 'mbs', 'mbe'],
+			'scroll-px': ['scroll-pr', 'scroll-pl', 'scroll-ps', 'scroll-pe'],
+			'scroll-py': ['scroll-pt', 'scroll-pb', 'scroll-pbs', 'scroll-pbe'],
+			'scroll-mx': ['scroll-mr', 'scroll-ml', 'scroll-ms', 'scroll-me'],
+			'scroll-my': ['scroll-mt', 'scroll-mb', 'scroll-mbs', 'scroll-mbe'],
+			'border-w-x': ['border-w-r', 'border-w-l', 'border-w-s', 'border-w-e'],
+			'border-w-y': ['border-w-t', 'border-w-b', 'border-w-bs', 'border-w-be'],
+			'border-color-x': ['border-color-r', 'border-color-l', 'border-color-s', 'border-color-e'],
+			'border-color-y': ['border-color-t', 'border-color-b', 'border-color-bs', 'border-color-be']
+		}
+	}
+});
 
 export type ClassValueFunction = <T = unknown>(bond: T, ...args: unknown[]) => SvelteClassValue;
 export type ClassValue = SvelteClassValue | ClassValueFunction | undefined;

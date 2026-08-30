@@ -1,43 +1,54 @@
-<script module lang="ts">
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
-	import { CollapsibleBond } from './bond.svelte';
-	const PART = Kernel.plan(CollapsibleBond, 'indicator', { class: '' });
-</script>
-
-<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
-	import { animate as runAnimation } from '$ixirjs/ui/shared';
+<script lang="ts">
+	import { animate as runAnimation } from '$ixirjs/ui/authoring';
+	import { stopMotion } from '$ixirjs/ui/components/element/motion-host';
 	import { Icon } from '$ixirjs/ui/components/icon';
-	import { type Base, type BasePropsOf, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
 	import IconArrowDown from '$ixirjs/ui/icons/icon-arrow-down.svelte';
+	import { createAttachmentKey } from 'svelte/attachments';
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
+	import { CollapsibleContext } from './bond.svelte';
 	import type { CollapsibleIndicatorProps } from './types';
 
 	let {
-		class: klass = '',
-		preset = undefined,
 		animate = defaultAnimate,
+		as = undefined,
+		base = undefined,
 		children = undefined,
 		...restProps
-	}: CollapsibleIndicatorProps<E, B> & BasePropsOf<B> = $props();
-	const part = Kernel.node(PART, () => ({ preset }), { context: 'required' });
-	const isOpen = $derived(part.bond.isOpen);
+	}: CollapsibleIndicatorProps = $props();
+	const bond = CollapsibleContext.getOrThrow(
+		'<Collapsible.Indicator /> must be used within a <Collapsible.Root />'
+	);
 
+	// A driver, not a transition: the arrow rotates in place on mount and every toggle. It rides the
+	// element's own spread as an attachment rather than as a `motion` phase — `motion` escalates to
+	// `HtmlElement`, a component boundary worth +2 hydration anchors. The key is minted once, at init.
+	const motionKey = createAttachmentKey();
 	function defaultAnimate(node: HTMLElement) {
-		runAnimation(node, { rotate: 180 * +isOpen }, { duration: 0.3, ease: 'anticipate' });
+		// The cleanup cancels a superseded run; without it every toggle leaves another filled WAAPI
+		// animation on the element (what the `motion` driver used to do for this part).
+		const controller = runAnimation(
+			node,
+			{ rotate: 180 * +bond.isOpen },
+			{ duration: 0.3, ease: 'anticipate' }
+		);
+		return () => stopMotion(controller, node);
 	}
 
-	// Driver-only motion routes straight to HtmlElement.
-	const bodyArg = { collapsible: part.bond };
-	const el = Kernel.element(
-		{ atom: part.atom, bond: part.bond, preset: part.preset, presetLayer: part.presetLayer },
-		() => ({
-			animate,
-			class: ['border-border flex size-4 items-center justify-center', '$preset', klass],
-			...restProps
-		})
-	);
+	const bodyArg = { collapsible: bond };
+	const el = Kernel.element(() => restProps, {
+		preset: 'collapsible.indicator',
+		class: 'border-border flex size-4 items-center justify-center',
+		state: bond,
+		as: () => as,
+		base: () => base,
+		attrs: () => ({ [motionKey]: animate, id: bond.indicatorId, role: 'icon' })
+	});
+	// Bound once, in the script: `{@render leaf(...)}` with a plain identifier compiles to a direct
+	// call on both platforms — no snippet block, no hydration anchor.
+	const leaf = Kernel.render(el);
 </script>
 
-{@render Kernel.render(el)(el, children ?? fallback, bodyArg)}
+{@render leaf(el, children ?? fallback, bodyArg)}
 
 {#snippet fallback()}
 	<Icon src={IconArrowDown} />

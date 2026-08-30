@@ -18,24 +18,21 @@ describe('withDefaultBorder', () => {
 		expect(withDefaultBorder('px-2 border-border py-1')).toBe('px-2 border-border py-1');
 	});
 
-	it('matches border-border as a whole token only, not as a prefix', () => {
-		expect(withDefaultBorder('border-border-foo')).toBe('border-border border-border-foo');
+	it('lets a consumer border colour replace the default', () => {
+		expect(withDefaultBorder('border-border-foo')).toBe('border-border-foo');
+		expect(withDefaultBorder('border-red-500')).toBe('border-red-500');
 	});
 
-	it('keeps a consumer border colour after the default so source order lets it win', () => {
-		// `border-border` first, consumer `border-red-500` second → CSS source order gives the
-		// consumer the win — the same resolution the removed second twMerge produced.
-		expect(withDefaultBorder('border-red-500')).toBe('border-border border-red-500');
+	it('keeps a border WIDTH alongside the default colour', () => {
+		expect(withDefaultBorder('border-b')).toBe('border-border border-b');
 	});
 
-	it('flattens array/object class values via clsx', () => {
+	it('flattens array/object class values', () => {
 		expect(withDefaultBorder(['px-2', 'py-1'])).toBe('border-border px-2 py-1');
 		expect(withDefaultBorder({ 'px-2': true, hidden: false })).toBe('border-border px-2');
 	});
 
-	it('does NOT re-run twMerge — conflicting utilities are left as-is (kernel already merged)', () => {
-		// twMerge would collapse `px-2 px-4` → `px-4`; the renderer must not, proving the second
-		// merge pass is gone.
-		expect(withDefaultBorder('px-2 px-4')).toBe('border-border px-2 px-4');
+	it('merges conflicting utilities through cn', () => {
+		expect(withDefaultBorder('px-2 px-4')).toBe('border-border px-4');
 	});
 });

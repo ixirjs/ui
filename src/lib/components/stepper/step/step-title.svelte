@@ -1,16 +1,30 @@
-<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
-	import { type Base, type BasePropsOf, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
-	import { definePart } from '$ixirjs/ui/components/atom/define-part.svelte';
-	import { StepBond } from './bond.svelte';
+<script lang="ts">
+	import { untrack } from 'svelte';
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
+	import { StepContext } from './bond.svelte';
 	import type { StepTitleProps } from './types';
 
-	const props: StepTitleProps<E, B> & BasePropsOf<B> = $props();
+	let {
+		as = undefined,
+		base = undefined,
+		children = undefined,
+		...restProps
+	}: StepTitleProps = $props();
+	const bond = StepContext.getOrThrow('<Step.Title /> must be used within a <Step.Root />');
+	// The part hands the header its id at init; a consumer id wins on the element and is followed.
+	const id = untrack(() => restProps.id as string | undefined) ?? bond.partId('title');
+	bond.titleId = id;
 
-	const el = definePart(StepBond, 'title', () => props, {
-		as: 'div',
-		class: 'font-medium text-sm'
+	const el = Kernel.element(() => restProps, {
+		preset: 'stepper.step.title',
+		class: 'border-border font-medium text-sm',
+		state: bond,
+		as: () => as ?? 'div',
+		base: () => base,
+		attrs: () => ({ id })
 	});
+	// Bound once: an identifier callee compiles to a direct call — no snippet block, no anchor.
+	const leaf = Kernel.render(el);
 </script>
 
-{@render Kernel.render(el)(el, props.children, { step: el.bond })}
+{@render leaf(el, children, { step: bond })}

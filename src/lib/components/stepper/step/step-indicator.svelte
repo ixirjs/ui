@@ -1,44 +1,47 @@
-<script module lang="ts">
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
-	import { StepBond } from './bond.svelte';
-	const PART = Kernel.plan(StepBond, 'indicator', { class: '' });
-</script>
-
-<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
-	import { type Base, type BasePropsOf, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
+<script lang="ts">
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
+	import { StepContext } from './bond.svelte';
 	import type { StepIndicatorProps } from './types';
 
 	let {
-		class: klass = '',
-		preset = undefined,
+		as = undefined,
+		base = undefined,
 		children = undefined,
 		...restProps
-	}: StepIndicatorProps<E, B> & BasePropsOf<B> = $props();
+	}: StepIndicatorProps = $props();
+	const bond = StepContext.getOrThrow('<Step.Indicator /> must be used within a <Step.Root />');
+	const index = $derived(bond.props.index);
 
-	const part = Kernel.node(PART, () => ({ preset }), { context: 'required' });
-
-	const index = $derived(part.bond.props.index);
-
-	const el = Kernel.element(part, () => ({
-		class: [
-			'flex h-8 w-8 items-center justify-center border-border rounded-full border-2 transition-colors',
-			'transition-all',
-			part.bond.isActive
+	const el = Kernel.element(() => restProps, {
+		preset: 'stepper.step.indicator',
+		class:
+			'flex h-8 w-8 items-center justify-center border-border rounded-full border-2 transition-colors transition-all',
+		state: bond,
+		as: () => as,
+		base: () => base,
+		// The status classes ride the instance layer: applied after the preset, before the consumer.
+		layer: () => ({
+			class: bond.isActive
 				? 'bg-primary border-primary text-primary-foreground font-bold'
-				: part.bond.isCompleted
+				: bond.isCompleted
 					? 'bg-primary border-primary text-primary-foreground'
-					: 'border-border bg-background',
-			'$preset',
-			klass
-		],
-		...restProps
-	}));
+					: 'border-border bg-background'
+		}),
+		attrs: () => ({
+			id: bond.partId('indicator'),
+			'aria-current': bond.isActive ? 'step' : undefined,
+			...bond.statusAttrs,
+			role: 'presentation'
+		})
+	});
+	// Bound once: an identifier callee compiles to a direct call — no snippet block, no anchor.
+	const leaf = Kernel.render(el);
 </script>
 
-{@render Kernel.render(el)(el, body)}
+{@render leaf(el, body)}
 
 {#snippet body()}
-	{@render (children ?? (part.bond.isCompleted ? completedMark : ordinal))({ step: part.bond })}
+	{@render (children ?? (bond.isCompleted ? completedMark : ordinal))({ step: bond })}
 {/snippet}
 
 {#snippet completedMark()}

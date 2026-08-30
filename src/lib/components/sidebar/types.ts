@@ -1,12 +1,7 @@
 import type { Snippet } from 'svelte';
 import type { Factory, StateChangeCallback } from '$ixirjs/ui/types';
 import type { SidebarBond } from './bond.svelte';
-import type {
-	Base,
-	RenderProps,
-	SnippetProps,
-	HtmlElementTagName
-} from '$ixirjs/ui/components/atom';
+import type { Base, RenderProps, SnippetProps, HtmlElementTagName } from '$ixirjs/ui/authoring';
 import type { PortalBond, ZIndexInput } from '$ixirjs/ui/components/portal';
 
 // Sidebar Snippet Props

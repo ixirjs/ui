@@ -1,5 +1,5 @@
-import { animate, DURATION, type Easing } from '$ixirjs/ui/shared';
-import { TreeBond } from './bond.svelte';
+import { animate, DURATION, type Easing } from '$ixirjs/ui/authoring';
+import { TreeContext } from './bond.svelte';
 import { stopMotion } from '$ixirjs/ui/components/element/motion-host';
 
 export type AnimateTreeBodyParams = {
@@ -9,7 +9,7 @@ export type AnimateTreeBodyParams = {
 };
 
 function animateTreeBody(params: AnimateTreeBodyParams = {}) {
-	const bond = TreeBond.get();
+	const bond = TreeContext.get();
 	return (node: HTMLElement) => {
 		const { delay = 0, duration = DURATION.normal / 1000, ease = 'circOut' } = params;
 		const isOpen = bond?.isOpen ?? false;
@@ -29,8 +29,7 @@ function animateTreeBody(params: AnimateTreeBodyParams = {}) {
 }
 
 /**
- * Attachment form of the body motion. A symbol-keyed attachment handles this animate-only path
- * without a HtmlElement motion driver.
+ * The body's `animate` driver, handed to `Kernel.element`'s `motion`.
  *
  * Mount runs `initial` and stops there — the same shape, and the same reason, as
  * `collapsible/motion.svelte.ts`. Both phases read one disclosure state and resolve to the same

@@ -1,5 +1,5 @@
-import { animate, type Easing } from '$ixirjs/ui/shared';
-import { DrawerBond } from './bond.svelte';
+import { animate, type Easing } from '$ixirjs/ui/authoring';
+import { DrawerContext } from './bond.svelte';
 import { untrack } from 'svelte';
 
 export type DrawerSide = 'left' | 'right' | 'top' | 'bottom';
@@ -36,7 +36,7 @@ export function animateDrawerContent(params: AnimateDrawerContentParams = {}) {
 		inert = true
 	} = params;
 
-	const bond = untrack(() => DrawerBond.get());
+	const bond = untrack(() => DrawerContext.getOptional());
 
 	// side is set in Drawer.Root
 	const side = bond?.props.side ?? 'right';
@@ -154,7 +154,7 @@ export function animateDrawerRoot(params: AnimateDrawerRootParams = {}) {
 	const { duration = 0.3, delay = 0, ease = [0.16, 1, 0.3, 1] } = params;
 
 	return (node: HTMLElement) => {
-		const bond = DrawerBond.get();
+		const bond = DrawerContext.getOptional();
 		const isOpen = bond?.props.open ?? false;
 
 		animate(node, { opacity: +isOpen }, { duration, ease, delay });

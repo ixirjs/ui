@@ -1,9 +1,4 @@
-import type {
-	RenderProps,
-	Base,
-	SnippetProps,
-	HtmlElementTagName
-} from '$ixirjs/ui/components/atom';
+import type { RenderProps, Base, SnippetProps, HtmlElementTagName } from '$ixirjs/ui/authoring';
 import type { Snippet } from 'svelte';
 
 export interface TextareaSnippetProps extends SnippetProps {}

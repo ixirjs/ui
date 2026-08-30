@@ -15,7 +15,7 @@ describe('Field.Error', () => {
 			unmount,
 			field: capturedField!,
 			control: () => document.querySelector('[data-testid="probe-control"]')!,
-			error: () => document.querySelector('[data-kind="field-error"]')
+			error: () => document.querySelector('[id^="field-error-"]')
 		};
 	};
 
@@ -46,8 +46,8 @@ describe('Field.Error', () => {
 
 	it('describes the group by the error rather than the helper text once invalid', async () => {
 		const { field, error, unmount } = await setup();
-		const root = document.querySelector('[data-kind="field-root"]')!;
-		const helper = document.querySelector('[data-kind="field-description"]')!;
+		const root = document.querySelector('[id^="field-root-"]')!;
+		const helper = document.querySelector('[id^="field-description-"]')!;
 
 		expect(root.getAttribute('aria-describedby')).toBe(helper.id);
 
@@ -62,8 +62,8 @@ describe('Field.Error', () => {
 	// still describe itself — it falls back to the helper text instead of going silent.
 	it('falls back to the helper text when no error part is rendered', async () => {
 		const { field, unmount } = await setup({ renderError: false });
-		const root = document.querySelector('[data-kind="field-root"]')!;
-		const helper = document.querySelector('[data-kind="field-description"]')!;
+		const root = document.querySelector('[id^="field-root-"]')!;
+		const helper = document.querySelector('[id^="field-description-"]')!;
 
 		field.validate();
 		await tick();

@@ -1,5 +1,5 @@
 import type { Snippet } from 'svelte';
-import type { RenderProps } from '$ixirjs/ui/components/atom';
+import type { PlainPartProps } from '$ixirjs/ui/authoring';
 import type { StateChangeCallback } from '$ixirjs/ui/types';
 import type { PresetLike } from '$ixirjs/ui/preset';
 
@@ -16,7 +16,8 @@ export interface SwitchPresets {
 	thumb?: PresetLike;
 }
 
-export interface SwitchProps extends RenderProps<'button'>, SwitchExtendProps {
+// The switch IS its `<button>` — see `PlainPartProps` for what that gives up (`as`, `base`, motion).
+export interface SwitchProps extends PlainPartProps<'button'>, SwitchExtendProps {
 	/** On state. Bindable for two-way control. */
 	checked?: boolean;
 	/** Disables the control: it stops responding and is removed from the tab order. */

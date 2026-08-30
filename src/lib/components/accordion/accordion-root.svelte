@@ -1,8 +1,8 @@
-<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
-	import { type Base, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
-	import { controlledProp, useRoot } from '$ixirjs/ui/shared';
-	import { AccordionBond } from './bond.svelte';
+<script lang="ts">
+	import { untrack } from 'svelte';
+	import { BROWSER } from 'esm-env';
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
+	import { AccordionBond, AccordionContext } from './bond.svelte';
 	import type { AccordionRootProps } from './types';
 
 	const ID = $props.id();
@@ -11,7 +11,6 @@
 		value = $bindable(undefined),
 		values = $bindable([]),
 		data = $bindable([]),
-		class: klass = '',
 		multiple = false,
 		collapsible = false,
 		disabled = false,
@@ -19,53 +18,59 @@
 		onvalueschange = undefined,
 		children = undefined,
 		factory = undefined,
-		preset = undefined,
 		presets = undefined,
 		...restProps
-	}: AccordionRootProps<E, B> = $props();
+	}: AccordionRootProps = $props();
 
-	const valuesProp = controlledProp<string[], AccordionBond>({
-		get: () => (multiple ? values : ([value].filter(Boolean) as string[])),
-		set: (next) => {
-			values = next;
-			value = next[0];
+	// Live props: read through getters wherever the Bond needs them.
+	const bondProps = {
+		get id() {
+			return ID;
 		},
-		equals: sameValues,
-		onchange: (next, context) => {
-			if (multiple) onvalueschange?.(next, context);
-			else onvaluechange?.(next[0], context);
+		get values(): string[] {
+			return multiple ? values : ([value].filter(Boolean) as string[]);
+		},
+		get multiple() {
+			return multiple;
+		},
+		get collapsible() {
+			return collapsible;
+		},
+		get disabled() {
+			return disabled;
+		},
+		get data() {
+			return data;
+		},
+		get presets() {
+			return presets;
+		}
+	};
+	// `factory` is read once, at init, by design.
+	const build = untrack(() => factory);
+	const bond = AccordionContext.share(build ? build(bondProps) : AccordionBond.create(bondProps));
+	// Controlled state: the Bond decides, the root writes, the callback fires after the write.
+	bond.bindCommit((next, context) => {
+		values = next;
+		value = next[0];
+		if (multiple) onvalueschange?.(next, context);
+		else onvaluechange?.(next[0], context);
+	});
+	if (BROWSER) queueMicrotask(() => (bond.settled = true));
+	export const getBond = () => bond;
+
+	const el = Kernel.element(() => restProps, {
+		preset: 'accordion',
+		class: 'bg-card border-border flex list-none flex-col',
+		state: bond,
+		layer: () => presets?.root,
+		attrs: () => {
+			const attrs: Record<string, unknown> = { id: Kernel.id(ID, 'accordion-root') };
+			if (disabled) attrs['aria-disabled'] = true;
+			if (multiple) attrs['aria-multiselectable'] = true;
+			return attrs;
 		}
 	});
-
-	const root = useRoot(
-		AccordionBond,
-		{
-			open: () => valuesProp.value.length > 0,
-			values: valuesProp,
-			multiple: () => multiple,
-			collapsible: () => collapsible,
-			disabled: () => disabled,
-			presets: () => presets
-		},
-		{
-			preset: () => preset,
-			id: () => ID,
-			factory: () => factory
-		}
-	);
-	const bond = root.bond;
-
-	function sameValues(left: readonly string[], right: readonly string[]) {
-		return left.length === right.length && left.every((item, index) => item === right[index]);
-	}
-
-	export const getBond = root.getBond;
-
-	const el = Kernel.element(root, () => ({
-		class: ['bg-card border-border flex list-none flex-col', '$preset', klass],
-		variantProps: root.props,
-		...restProps
-	}));
 </script>
 
-{@render Kernel.render(el)(el, children, { accordion: bond })}
+<div {...el.attrs}>{@render children?.({ accordion: bond })}</div>

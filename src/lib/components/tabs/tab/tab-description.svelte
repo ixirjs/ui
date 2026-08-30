@@ -1,16 +1,22 @@
-<script lang="ts" generics="E extends HtmlElementTagName = 'p', B extends Base = Base">
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
+<script lang="ts">
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
+	import { TabContext } from './bond.svelte';
 	import type { TabDescriptionProps } from '$ixirjs/ui/components/tabs/types';
-	import { definePart } from '$ixirjs/ui/components/atom/define-part.svelte';
-	import { type Base, type BasePropsOf, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
-	import { TabBond } from './bond.svelte';
 
-	const props: TabDescriptionProps<E, B> & BasePropsOf<B> = $props();
+	let { as = undefined, base = undefined, children, ...restProps }: TabDescriptionProps = $props();
+	const bond = TabContext.getOrThrow('<Tab.Description /> must be used within a <Tab.Root />');
 
-	const el = definePart(TabBond, 'description', () => props, {
-		as: 'p',
-		class: ''
+	// Inert: it contributes no id, and nothing resolves one.
+	const el = Kernel.element(() => restProps, {
+		preset: 'tab.description',
+		class: 'border-border',
+		state: bond,
+		layer: () => bond.props.presets?.description,
+		as: () => as ?? 'p',
+		base: () => base
 	});
+	// Bound once: an identifier callee compiles to a direct call — no snippet block, no anchor.
+	const leaf = Kernel.render(el);
 </script>
 
-{@render Kernel.render(el)(el, props.children, { tab: el.bond })}
+{@render leaf(el, children, { tab: bond })}

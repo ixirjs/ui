@@ -1,13 +1,13 @@
-import { untrack, type Snippet } from 'svelte';
+import type { Snippet } from 'svelte';
+import { untrack } from 'svelte';
 import { SvelteMap } from 'svelte/reactivity';
+import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
 import type { PortalBond } from '$ixirjs/ui/components/portal/instance/bond.svelte';
 import type { Factory } from '$ixirjs/ui/types';
 import { LAYER_BASE, type LayerInput } from '$ixirjs/ui/components/portal/layering/z-layer.svelte';
-import type { OverlayView } from '$ixirjs/ui/components/overlay/types';
-import { Bond, type BondStateProps } from '$ixirjs/ui/shared/bond';
-import { defineBond, type BondOf } from '$ixirjs/ui/shared';
+import type { OverlayLike } from '$ixirjs/ui/components/overlay/model.svelte';
 
-export type PortalsStateProps = BondStateProps & {
+export type PortalsStateProps = {
 	id: string;
 };
 
@@ -17,8 +17,6 @@ export type PortalsProps = {
 	children?: Snippet<[{ portals: PortalsBond }]>;
 };
 
-// The single portal registry for a tree — every portal registers here, all consumers resolve from it.
-
 type OverlayScope = PortalBond | undefined;
 
 type OverlayStackEntry = {
@@ -26,14 +24,29 @@ type OverlayStackEntry = {
 	bands: Map<LayerInput, Map<OverlayScope, number>>;
 };
 
-class PortalsBondBase extends Bond<PortalsStateProps> {
+// `ZLayer` reads the band scope under this same key (`@ixirjs/context/portals`).
+export const PortalsContext = Kernel.context<PortalsBond>('portals');
+
+// The per-app-root registry: portals by id, named elevation bands, and the open-overlay stack
+// that decides which overlay Escape and outside-press act on.
+export class PortalsBond {
+	readonly name = 'portals';
+	readonly props: PortalsStateProps;
 	#portals = new SvelteMap<string, PortalBond>();
 	#bands = new SvelteMap<string, number>(Object.entries(LAYER_BASE));
-	#overlayStack = new SvelteMap<OverlayView, OverlayStackEntry>();
-	#topOverlay: OverlayView | undefined;
+	#overlayStack = new SvelteMap<OverlayLike, OverlayStackEntry>();
+	#topOverlay: OverlayLike | undefined;
 
-	constructor(props: PortalsStateProps, name = 'portals') {
-		super(props, name);
+	constructor(props: PortalsStateProps) {
+		this.props = props;
+	}
+
+	static create(props: PortalsStateProps): PortalsBond {
+		return new PortalsBond(props);
+	}
+
+	static get(): PortalsBond | undefined {
+		return PortalsContext.get();
 	}
 
 	get id() {
@@ -58,7 +71,6 @@ class PortalsBondBase extends Bond<PortalsStateProps> {
 		return base;
 	}
 
-	// Lifecycle pair: unregister only deletes if this portal still owns the id.
 	registerPortal(id: string, portal: PortalBond): () => void {
 		this.#portals.set(id, portal);
 		return () => {
@@ -66,44 +78,44 @@ class PortalsBondBase extends Bond<PortalsStateProps> {
 		};
 	}
 
+	// Enroll an open overlay. Without a band it is escape-only and promoted to the top; with a
+	// band it also ranks within that band per target portal, for elevation. Re-enrolling an
+	// escape-only overlay moves it back to the top.
 	enrollOverlay(
-		bond: OverlayView,
+		overlay: OverlayLike,
 		band?: LayerInput | undefined,
 		scope?: OverlayScope
 	): () => void {
 		return untrack(() => {
-			const current = this.#overlayStack.get(bond);
+			const current = this.#overlayStack.get(overlay);
 			const entry = cloneOverlayEntry(current);
 			entry.refs += 1;
 			if (band !== undefined) incrementBandScope(entry.bands, band, scope);
 
-			// Escape policy and PortalSurface metadata may enroll the same open owner. Adding
-			// surface metadata must not promote it; plain escape-only re-enrollment keeps its
-			// legacy defensive promotion behavior.
 			const shouldPromote = !current || (band === undefined && current.bands.size === 0);
-			if (shouldPromote && current) this.#overlayStack.delete(bond);
-			this.#overlayStack.set(bond, entry);
-			if (shouldPromote) this.#topOverlay = bond;
+			if (shouldPromote && current) this.#overlayStack.delete(overlay);
+			this.#overlayStack.set(overlay, entry);
+			if (shouldPromote) this.#topOverlay = overlay;
 
 			let active = true;
 			return () => {
 				if (!active) return;
 				active = false;
-				untrack(() => this.removeOverlay(bond, band, scope));
+				untrack(() => this.#removeOverlay(overlay, band, scope));
 			};
 		});
 	}
 
-	isTopOverlay(bond: OverlayView): boolean {
-		return !this.#overlayStack.has(bond) || this.#topOverlay === bond;
+	isTopOverlay(overlay: OverlayLike): boolean {
+		return !this.#overlayStack.has(overlay) || this.#topOverlay === overlay;
 	}
 
-	rankOf(bond: OverlayView, band: LayerInput, scope?: OverlayScope): number {
+	rankOf(overlay: OverlayLike, band: LayerInput, scope?: OverlayScope): number {
 		let rank = 0;
 		for (const [entry, stackEntry] of this.#overlayStack) {
 			if (!hasBandScope(stackEntry.bands, band, scope)) continue;
 			rank += 1;
-			if (entry === bond) return rank;
+			if (entry === overlay) return rank;
 		}
 		return 0;
 	}
@@ -113,12 +125,8 @@ class PortalsBondBase extends Bond<PortalsStateProps> {
 		this.#topOverlay = undefined;
 	}
 
-	private removeOverlay(
-		bond: OverlayView,
-		band?: LayerInput | undefined,
-		scope?: OverlayScope
-	): void {
-		const current = this.#overlayStack.get(bond);
+	#removeOverlay(overlay: OverlayLike, band?: LayerInput | undefined, scope?: OverlayScope): void {
+		const current = this.#overlayStack.get(overlay);
 		if (!current) return;
 
 		const entry = cloneOverlayEntry(current);
@@ -126,17 +134,17 @@ class PortalsBondBase extends Bond<PortalsStateProps> {
 		if (band !== undefined) decrementBandScope(entry.bands, band, scope);
 
 		if (entry.refs > 0) {
-			this.#overlayStack.set(bond, entry);
+			this.#overlayStack.set(overlay, entry);
 			return;
 		}
 
-		this.#overlayStack.delete(bond);
-		if (this.#topOverlay === bond) this.#topOverlay = this.#lastOverlay();
+		this.#overlayStack.delete(overlay);
+		if (this.#topOverlay === overlay) this.#topOverlay = this.#lastOverlay();
 	}
 
-	#lastOverlay(): OverlayView | undefined {
-		let last: OverlayView | undefined;
-		for (const bond of this.#overlayStack.keys()) last = bond;
+	#lastOverlay(): OverlayLike | undefined {
+		let last: OverlayLike | undefined;
+		for (const overlay of this.#overlayStack.keys()) last = overlay;
 		return last;
 	}
 }
@@ -178,13 +186,3 @@ function hasBandScope(
 ): boolean {
 	return (bands.get(band)?.get(scope) ?? 0) > 0;
 }
-
-// Context-only registry bond (no atoms); the portal map lives on PortalsBondBase.
-
-export const PortalsBond = defineBond({
-	name: 'portals',
-	base: PortalsBondBase,
-	atoms: {}
-});
-
-export type PortalsBond = BondOf<typeof PortalsBond>;

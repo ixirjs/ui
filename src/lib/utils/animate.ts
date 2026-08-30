@@ -1,0 +1,448 @@
+import { prefersReducedMotion } from '$ixirjs/ui/utils/dom.svelte';
+
+export type Easing = string | readonly [number, number, number, number];
+
+export type AnimationValue = string | number;
+export type AnimationKeyframeValue = AnimationValue | readonly AnimationValue[];
+export type AnimationKeyframes = Record<string, AnimationKeyframeValue | undefined>;
+
+export type AnimationOptions = {
+	// seconds
+	duration?: number;
+	// seconds
+	delay?: number;
+	ease?: Easing | readonly Easing[];
+	easing?: Easing;
+	// Compatibility with the old motion recipes: WAAPI cannot run physics springs, so
+	// `type: 'spring'` maps stiffness/damping to spring-like duration/easing.
+	type?: 'spring';
+	stiffness?: number;
+	damping?: number;
+	onComplete?: () => void;
+};
+
+export type AnimationController = {
+	finished: Promise<void>;
+	stop(): void;
+};
+
+const TRANSFORM_PROPS = new Set([
+	'x',
+	'y',
+	'translateX',
+	'translateY',
+	'scale',
+	'scaleX',
+	'scaleY',
+	'rotate'
+]);
+
+const NON_ANIMATABLE_PROPS = new Set([
+	'pointerEvents',
+	'display',
+	'position',
+	'top',
+	'right',
+	'bottom',
+	'left'
+]);
+const DIMENSION_PROPS = new Set([
+	'top',
+	'right',
+	'bottom',
+	'left',
+	'width',
+	'height',
+	'min-width',
+	'min-height',
+	'max-width',
+	'max-height',
+	'minWidth',
+	'minHeight',
+	'maxWidth',
+	'maxHeight'
+]);
+
+const ZERO_CONTROLLER: AnimationController = {
+	finished: Promise.resolve(),
+	stop() {}
+};
+
+// Tiny WAAPI-backed animation helper used by component recipes. Durations are seconds to
+// match the old motion factories; Svelte transitions still use milliseconds.
+export function animate(
+	node: HTMLElement,
+	input: AnimationKeyframes,
+	options: AnimationOptions = {}
+): AnimationController {
+	const reducedMotion = prefersReducedMotion();
+	const timing = resolveTiming(options);
+	const duration = reducedMotion ? 0 : timing.duration;
+	const delay = reducedMotion ? 0 : secondsToMs(options.delay ?? 0);
+	// Reading an element's current value (`getComputedStyle`, or the measured `auto`) forces a
+	// style flush, and a run that will not animate throws that value away: it only ever applies
+	// `finalStyles`, which comes from the target. So the decision has to precede the normalization,
+	// not follow it. A zero-duration `initial` phase over n mounted parts is otherwise n forced
+	// layouts for nothing.
+	const willAnimate = !!node.animate && duration > 0;
+
+	if (!willAnimate) {
+		applyFinalStyles(node, normalizeKeyframes(node, input, false).finalStyles);
+		options.onComplete?.();
+		return ZERO_CONTROLLER;
+	}
+
+	// A run that WILL animate is measured and started in a shared microtask, never here.
+	//
+	// Measuring `auto` is a write (`height: auto`), a read (`scrollHeight`) and a restore, and the
+	// read forces a layout of the whole document as it stands. Called synchronously from a Svelte
+	// `in:` transition, that is one full layout per element in the same mount — n open accordion
+	// bodies were n layouts of a growing page, `measuredAutoValue` alone 56% of an 800-item mount
+	// and the intro superlinear on its own. Batched, the flush writes every pending `auto` first,
+	// reads every measurement second, and restores and starts third: one layout for the batch. The
+	// animation starts one microtask later than it used to, which is inside the same frame.
+	const run: PendingRun = {
+		node,
+		input,
+		duration,
+		delay,
+		easing: timing.easing,
+		options,
+		stopped: false,
+		animation: undefined,
+		resolve: () => {},
+		reject: () => {}
+	};
+	const finished = new Promise<void>((resolve, reject) => {
+		run.resolve = resolve;
+		run.reject = reject;
+	}).catch(() => undefined);
+
+	pending.push(run);
+	if (pending.length === 1) queueMicrotask(flushPending);
+
+	return {
+		finished,
+		stop() {
+			run.stopped = true;
+			run.animation?.cancel();
+			run.resolve();
+		}
+	};
+}
+
+type PendingRun = {
+	node: HTMLElement;
+	input: AnimationKeyframes;
+	duration: number;
+	delay: number;
+	easing: string;
+	options: AnimationOptions;
+	stopped: boolean;
+	animation: Animation | undefined;
+	resolve: () => void;
+	reject: (error: unknown) => void;
+};
+
+const pending: PendingRun[] = [];
+
+/** Inline values displaced by the measurement pass, restored before any animation starts. */
+type Displaced = { node: HTMLElement; prop: 'width' | 'height'; previous: string };
+
+function flushPending(): void {
+	const runs = pending.splice(0);
+	const displaced: Displaced[] = [];
+
+	// 1. Writes. Every `auto` target goes to `auto` now, once per node and axis.
+	for (const run of runs) {
+		if (run.stopped) continue;
+		for (const prop in run.input) {
+			if (!hasAutoTarget(run.input[prop])) continue;
+			const axis = isWidthProperty(prop) ? 'width' : 'height';
+			if (displaced.some((d) => d.node === run.node && d.prop === axis)) continue;
+			displaced.push({ node: run.node, prop: axis, previous: run.node.style[axis] });
+			run.node.style[axis] = 'auto';
+		}
+	}
+
+	// 2. Reads. One layout serves every measurement below, because nothing is written in between.
+	const normalized = runs.map((run) =>
+		run.stopped ? undefined : normalizeKeyframes(run.node, run.input, true)
+	);
+
+	// 3. Restore, then start.
+	for (const { node, prop, previous } of displaced) node.style[prop] = previous;
+	for (const [index, run] of runs.entries()) {
+		const frames = normalized[index];
+		if (!frames || run.stopped) continue;
+		start(run, frames);
+	}
+}
+
+function hasAutoTarget(value: AnimationKeyframeValue | undefined): boolean {
+	if (value === undefined) return false;
+	return isArrayValue(value) ? value.includes('auto') : value === 'auto';
+}
+
+function start(run: PendingRun, normalized: NormalizedKeyframes): void {
+	const { node, options } = run;
+	const keyframes = normalized.keyframes;
+
+	if (!Object.keys(keyframes).length) {
+		applyFinalStyles(node, normalized.finalStyles);
+		options.onComplete?.();
+		run.resolve();
+		return;
+	}
+
+	const animation = node.animate(keyframes, {
+		duration: run.duration,
+		delay: run.delay,
+		easing: run.easing,
+		fill: 'both'
+	});
+	run.animation = animation;
+
+	animation.finished.then(
+		() => {
+			if (run.stopped) return;
+			applyFinalStyles(node, normalized.finalStyles);
+			// Release WAAPI's fill layer after committing inline final styles. A filled height
+			// animation keeps the last measured pixel height in the compositor, which prevents open
+			// containers from resizing when nested content expands.
+			animation.cancel();
+			options.onComplete?.();
+			run.resolve();
+		},
+		(error) => run.reject(error)
+	);
+}
+
+type NormalizedKeyframes = {
+	keyframes: Record<string, string[]>;
+	finalStyles: Record<string, string>;
+};
+
+function normalizeKeyframes(
+	node: HTMLElement,
+	input: AnimationKeyframes,
+	withKeyframes: boolean
+): NormalizedKeyframes {
+	const keyframes: Record<string, string[]> = {};
+	const finalStyles: Record<string, string> = {};
+	const transformInputs: Record<string, AnimationKeyframeValue> = {};
+	const immediate: Record<string, string> = {};
+
+	for (const prop in input) {
+		if (!Object.hasOwn(input, prop)) continue;
+		const value = input[prop];
+		if (value === undefined) continue;
+
+		if (TRANSFORM_PROPS.has(prop)) {
+			transformInputs[prop] = value;
+			continue;
+		}
+
+		const target = isArrayValue(value) ? value[value.length - 1]! : value;
+
+		if (NON_ANIMATABLE_PROPS.has(prop)) {
+			immediate[prop] = normalizeCssValue(node, prop, target);
+			continue;
+		}
+
+		finalStyles[prop] = normalizeFinalCssValue(prop, target);
+		if (!withKeyframes) continue;
+
+		const rawValues = isArrayValue(value) ? [...value] : [currentStyle(node, prop), value];
+		keyframes[toAnimationProperty(prop)] = rawValues.map((item) =>
+			normalizeCssValue(node, prop, item)
+		);
+	}
+
+	const transform = normalizeTransformValues(node, transformInputs, withKeyframes);
+	if (transform) {
+		if (withKeyframes) keyframes.transform = transform.values;
+		finalStyles.transform = transform.finalValue;
+	}
+
+	Object.assign(finalStyles, immediate);
+	return { keyframes, finalStyles };
+}
+
+function normalizeTransformValues(
+	node: HTMLElement,
+	input: Record<string, AnimationKeyframeValue>,
+	withKeyframes: boolean
+): { values: string[]; finalValue: string } | undefined {
+	const entries = Object.entries(input);
+	if (!entries.length) return undefined;
+
+	const props = new Map<string, Array<string | undefined>>();
+	let length = 2;
+	for (const [prop, value] of entries) {
+		const values = isArrayValue(value)
+			? value.map((item) => normalizeTransformValue(prop, item))
+			: [undefined, normalizeTransformValue(prop, value)];
+		props.set(prop, values);
+		length = Math.max(length, values.length);
+	}
+
+	// Same reason as above: `currentTransform` can hit `getComputedStyle`, and the final
+	// transform is index `length - 1`, never the current one.
+	if (!withKeyframes) return { values: [], finalValue: buildTransform(props, length - 1) };
+
+	const current = currentTransform(node);
+	const values: string[] = [];
+	for (let i = 0; i < length; i++) {
+		if (i === 0 && entries.every(([prop]) => props.get(prop)?.[0] === undefined)) {
+			values.push(current);
+			continue;
+		}
+		values.push(buildTransform(props, i));
+	}
+
+	return { values, finalValue: values[values.length - 1] ?? '' };
+}
+
+function buildTransform(props: Map<string, Array<string | undefined>>, index: number): string {
+	const value = (prop: string, fallback: string) => {
+		const values = props.get(prop);
+		if (!values) return fallback;
+		return values[Math.min(index, values.length - 1)] ?? fallback;
+	};
+
+	const x = value('translateX', value('x', '0px'));
+	const y = value('translateY', value('y', '0px'));
+	const scale = value('scale', '');
+	const scaleX = value('scaleX', '');
+	const scaleY = value('scaleY', '');
+	const rotate = value('rotate', '');
+	const parts: string[] = [];
+
+	if (x !== '0px' || y !== '0px') parts.push(`translate(${x}, ${y})`);
+	if (scale) parts.push(`scale(${scale})`);
+	if (scaleX) parts.push(`scaleX(${scaleX})`);
+	if (scaleY) parts.push(`scaleY(${scaleY})`);
+	if (rotate) parts.push(`rotate(${rotate})`);
+
+	return parts.join(' ') || 'none';
+}
+
+function isArrayValue(value: AnimationKeyframeValue): value is readonly AnimationValue[] {
+	return Array.isArray(value);
+}
+
+function applyFinalStyles(node: HTMLElement, styles: Record<string, string>): void {
+	for (const [prop, value] of Object.entries(styles)) {
+		if (prop === 'transform') {
+			node.style.transform = value === 'none' ? '' : value;
+			continue;
+		}
+		node.style.setProperty(toCssProperty(prop), value);
+	}
+}
+
+function normalizeCssValue(node: HTMLElement, prop: string, value: AnimationValue): string {
+	if (value === 'auto') return measuredAutoValue(node, prop);
+	if (typeof value === 'number' && DIMENSION_PROPS.has(prop)) return `${value}px`;
+	return String(value);
+}
+
+function normalizeFinalCssValue(prop: string, value: AnimationValue): string {
+	if (typeof value === 'number' && DIMENSION_PROPS.has(prop)) return `${value}px`;
+	return String(value);
+}
+
+function normalizeTransformValue(prop: string, value: AnimationValue): string {
+	if (typeof value !== 'number') return value;
+	if (prop === 'scale' || prop === 'scaleX' || prop === 'scaleY') return String(value);
+	if (prop === 'rotate') return `${value}deg`;
+	return `${value}px`;
+}
+
+// Read-only: `flushPending` has already put the axis at `auto`, for every node in the batch, before
+// the first measurement is taken. Writing here would re-dirty layout between two reads.
+function measuredAutoValue(node: HTMLElement, prop: string): string {
+	if (isWidthProperty(prop)) {
+		return `${node.scrollWidth || node.getBoundingClientRect().width}px`;
+	}
+	return `${node.scrollHeight || node.getBoundingClientRect().height}px`;
+}
+
+function currentStyle(node: HTMLElement, prop: string): string {
+	return getComputedStyle(node).getPropertyValue(toCssProperty(prop)) || '';
+}
+
+function currentTransform(node: HTMLElement): string {
+	const transform = node.style.transform || getComputedStyle(node).transform;
+	return !transform || transform === 'none' ? 'none' : transform;
+}
+
+function isWidthProperty(prop: string): boolean {
+	return prop === 'width' || prop === 'min-width' || prop === 'max-width' || prop.endsWith('Width');
+}
+
+function toAnimationProperty(prop: string): string {
+	return prop.includes('-')
+		? prop.replace(/-([a-z])/g, (_, letter: string) => letter.toUpperCase())
+		: prop;
+}
+
+function toCssProperty(prop: string): string {
+	return prop.replace(/[A-Z]/g, (match) => `-${match.toLowerCase()}`);
+}
+
+function resolveTiming(options: AnimationOptions): { duration: number; easing: string } {
+	if (options.type === 'spring') {
+		return {
+			duration: secondsToMs(options.duration ?? springDuration(options.stiffness, options.damping)),
+			easing: resolveEasing(options.ease ?? options.easing ?? springEasing(options.damping))
+		};
+	}
+
+	return {
+		duration: secondsToMs(options.duration ?? 0),
+		easing: resolveEasing(options.ease ?? options.easing)
+	};
+}
+
+function springDuration(stiffness = 300, damping = 30): number {
+	const stiffnessFactor = Math.sqrt(300 / clamp(1, 1000, stiffness));
+	const dampingFactor = Math.sqrt(clamp(1, 80, damping) / 30);
+	return clamp(0.18, 0.65, 0.3 * stiffnessFactor * dampingFactor);
+}
+
+function springEasing(damping = 30): Easing {
+	if (damping < 24) return 'cubic-bezier(0.34, 1.56, 0.64, 1)';
+	if (damping > 40) return 'cubic-bezier(0.22, 1, 0.36, 1)';
+	return 'cubic-bezier(0.16, 1, 0.3, 1)';
+}
+
+function clamp(min: number, max: number, value: number): number {
+	return Math.min(max, Math.max(min, value));
+}
+
+function secondsToMs(seconds: number): number {
+	return Math.max(0, seconds * 1000);
+}
+
+function resolveEasing(ease: Easing | readonly Easing[] | undefined): string {
+	const value = Array.isArray(ease) && typeof ease[0] !== 'number' ? ease[0] : ease;
+	if (!value) return 'linear';
+	if (Array.isArray(value)) return `cubic-bezier(${value.join(', ')})`;
+
+	switch (value) {
+		case 'easeInOut':
+			return 'ease-in-out';
+		case 'easeIn':
+			return 'ease-in';
+		case 'easeOut':
+			return 'ease-out';
+		case 'circOut':
+			return 'cubic-bezier(0, 0.55, 0.45, 1)';
+		case 'anticipate':
+			return 'cubic-bezier(0.68, -0.6, 0.32, 1.6)';
+		default:
+			return value;
+	}
+}

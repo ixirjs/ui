@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { componentBase } from '$ixirjs/ui/components/atom';
+	import { componentBase } from '$ixirjs/ui/authoring';
 	import KernelElement from '$ixirjs/ui/test/components/atom/kernel-element.test.svelte';
 	import CustomRenderer from './custom-renderer.test.svelte';
 

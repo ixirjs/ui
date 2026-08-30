@@ -1,44 +1,47 @@
-<script module lang="ts">
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
-	import { TreeBond } from './bond.svelte';
-	const PART = Kernel.plan(TreeBond, 'indicator', { class: '' });
-</script>
-
-<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
+<script lang="ts">
+	import { animate } from '$ixirjs/ui/authoring';
 	import { createAttachmentKey } from 'svelte/attachments';
-	import { type Base, type BasePropsOf, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
-	import { animate as runAnimation } from '$ixirjs/ui/shared';
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
 	import { stopMotion } from '$ixirjs/ui/components/element/motion-host';
+	import { TreeContext } from './bond.svelte';
 	import type { TreeIndicatorProps } from './types';
 
 	let {
 		open = $bindable(false),
-		class: klass = '',
-		preset = undefined,
+		as = undefined,
+		base = undefined,
 		children = undefined,
 		...restProps
-	}: TreeIndicatorProps<E, B> & BasePropsOf<B> = $props();
+	}: TreeIndicatorProps = $props();
+	const bond = TreeContext.getOrThrow('<Tree.Indicator /> must be used within a <Tree.Root />');
 
-	const part = Kernel.node(PART, () => ({ preset }), { context: 'required' });
-	const isOpen = $derived(part.bond.isOpen);
-
-	// An attachment rather than a `defaults` motion phase — see `attachTreeBodyMotion`. There is no
-	// `initial` phase here, so rotation runs on mount and every toggle. Key minted once at init.
-	function motion(node: HTMLElement) {
-		const controller = runAnimation(
+	// A driver, not a transition: the arrow rotates in place on mount and every toggle. It rides the
+	// element's own spread as an attachment rather than as a `motion` phase — `motion` escalates to
+	// `HtmlElement`, a component boundary worth +2 hydration anchors. The key is minted once, at init.
+	const motionKey = createAttachmentKey();
+	// The cleanup cancels a superseded run; without it every toggle leaves another filled WAAPI
+	// animation on the element (what the `motion` driver used to do for this part).
+	const rotate = (node: HTMLElement) => {
+		const controller = animate(
 			node,
-			{ rotate: 90 * +isOpen },
+			{ rotate: 90 * +bond.isOpen },
 			{ duration: 0.18, ease: 'circOut' }
 		);
 		return () => stopMotion(controller, node);
-	}
-	const motionKey = createAttachmentKey();
-
-	const el = Kernel.element(part, () => ({
-		class: ['aspect-square h-fit', '$preset', klass],
-		[motionKey]: motion,
-		...restProps
-	}));
+	};
+	// Composable on purpose: `as`/`base` stay available to a consumer, and a theme may retag it.
+	const el = Kernel.element(() => restProps, {
+		preset: 'tree.indicator',
+		class: 'border-border aspect-square h-fit',
+		state: bond,
+		layer: () => bond.props.presets?.indicator,
+		as: () => as,
+		base: () => base,
+		attrs: () => ({ [motionKey]: rotate })
+	});
+	// Bound once, in the script: `{@render leaf(...)}` with a plain identifier compiles to a direct
+	// call on both platforms — no snippet block, no hydration anchor.
+	const leaf = Kernel.render(el);
 </script>
 
-{@render Kernel.render(el)(el, children, { tree: part.bond })}
+{@render leaf(el, children, { tree: bond })}

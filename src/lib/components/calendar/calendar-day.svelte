@@ -1,12 +1,10 @@
 <script lang="ts">
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
 	import { isBefore, isSameDay, isWithinInterval } from '$ixirjs/ui/utils/date';
 	import { cn } from '$ixirjs/ui/utils';
-	import { createAtomInstance } from '$ixirjs/ui/shared/bond';
+	import type { PresetLike } from '$ixirjs/ui/preset';
 	import { CalendarBond } from './bond.svelte';
 	import type { CalendarDayProps } from './types';
-	import { mergeAtomProps } from '$ixirjs/ui/components/atom';
-	import { untrack } from 'svelte';
 
 	const calendarBond = CalendarBond.get();
 
@@ -14,26 +12,15 @@
 	const selectedDateEnd = $derived(calendarBond?.props.end);
 	const isRange = $derived(calendarBond?.props.type === 'range');
 
+	// `onclick` defaults to the part's own handler and a consumer's REPLACES it (never composes):
+	// the week-picker story writes its own range on click and must not also select the day.
 	let {
-		class: klass = '',
-		preset = undefined,
 		day,
 		as = 'button',
 		children = undefined,
 		onclick = handleClick,
 		...restProps
 	}: CalendarDayProps = $props();
-	const atom = calendarBond
-		? createAtomInstance(
-				untrack(() => `day-${day.id}`),
-				{
-					bond: calendarBond,
-					factory: (owner) => owner!.day(day)
-				}
-			)
-		: undefined;
-
-	const dayProps = $derived(mergeAtomProps(atom, preset ?? 'calendar.day', restProps));
 
 	const isSelected = $derived.by(() => {
 		if (selectedDateEnd && selectedDateStart) {
@@ -64,28 +51,27 @@
 		}
 	}
 
-	// `mergeAtomProps` already folded the Atom spread into the packet, so Kernel must not read it twice.
-	const el = Kernel.element(
-		{ atom: undefined, bond: calendarBond, preset: undefined, presetLayer: undefined },
-		() => ({
-			as,
-			class: [
-				'calendar-day text-foreground/80 aspect-square cursor-pointer',
-				'hover:bg-accent hover:text-accent-foreground',
-				// State modifiers
+	const el = Kernel.element(() => restProps, {
+		preset: 'calendar.day',
+		class:
+			'calendar-day text-foreground/80 aspect-square cursor-pointer hover:bg-accent hover:text-accent-foreground',
+		state: calendarBond,
+		as: () => as,
+		// DatePicker hands each day its `presets.day` layer as a prop.
+		layer: () => (restProps as { presetLayer?: PresetLike }).presetLayer,
+		attrs: () => ({
+			// State modifiers, between the base and the preset — selected overrides, disabled fades.
+			class: cn(
 				day.weekend && 'text-primary',
 				day.today && 'font-semibold z-1',
 				day.offmonth && 'text-muted-foreground/50 bg-muted/50 hover:text-muted-foreground/70',
-				// Selected state (overrides above)
 				isSelected && [
 					'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground transition-colors duration-100',
 					day.offmonth && 'bg-primary/80',
 					day.weekend && 'bg-primary/90'
 				],
-				// Disabled state (applies opacity on top)
-				day.disabled && 'pointer-events-none opacity-25',
-				klass
-			],
+				day.disabled && 'pointer-events-none opacity-25'
+			),
 			'data-disabled': day.disabled,
 			'data-prec': day.fromPreviousMonth,
 			'data-next': day.fromNextMonth,
@@ -93,15 +79,26 @@
 			'data-weekend': day.weekend,
 			'data-today': day.today,
 			'data-selected': isSelected,
-			onclick,
-			...dayProps
+			...(calendarBond
+				? {
+						id: calendarBond.dayId(day),
+						role: 'gridcell',
+						'aria-selected': calendarBond.isDaySelected(day),
+						'aria-disabled': day.disabled,
+						tabindex: day.disabled ? -1 : 0
+					}
+				: {}),
+			onclick
 		})
-	);
+	});
 	// Built once at init, never inside a tracked boundary (anchor-diet A3's constraint).
 	const bodyArg = { calendar: calendarBond! };
+	// Bound once: an identifier callee in `{@render}` compiles to a direct call — no snippet block, no
+	// hydration anchor. `as` is why this part dispatches at all.
+	const leaf = Kernel.render(el);
 </script>
 
-{@render Kernel.render(el)(el, children ?? defaultDay, bodyArg)}
+{@render leaf(el, children ?? defaultDay, bodyArg)}
 
 {#snippet defaultDay()}
 	<div

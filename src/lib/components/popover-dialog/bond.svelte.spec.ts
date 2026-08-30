@@ -1,106 +1,122 @@
+import { flushSync, tick } from 'svelte';
 import { describe, expect, it } from 'vitest';
-import { PopoverDialogBond, type PopoverDialogBondProps } from './bond.svelte';
-import { PopoverTriggerAtom, PopoverOverlayAtom } from '$ixirjs/ui/components/popover/bond.svelte';
-import {
-	DialogBodyAtom,
-	DialogContentAtom,
-	DialogDescriptionAtom,
-	DialogFooterAtom,
-	DialogHeaderAtom,
-	DialogRootAtom,
-	DialogTitleAtom
-} from '$ixirjs/ui/components/dialog/bond.svelte';
-import { FOCUS } from '$ixirjs/ui/components/overlay';
-import type { Preset } from '$ixirjs/ui/context';
+import { render } from 'vitest-browser-svelte';
+import { PopoverDialogBond, PopoverDialogContext } from './bond.svelte';
+import { DialogContext } from '$ixirjs/ui/components/dialog/bond.svelte';
+import { PopoverContext } from '$ixirjs/ui/components/popover/bond.svelte';
+import { OverlayContext } from '$ixirjs/ui/components/overlay/model.svelte';
+import TriggerProbe from '$ixirjs/ui/test/components/popover-dialog/popover-dialog-preset-probe.test.svelte';
+import KeyProbe from '$ixirjs/ui/test/components/popover-dialog/popover-dialog-preset-keys.test.svelte';
+import FocusProbe from '$ixirjs/ui/test/components/popover-dialog/popover-dialog-focus-restore.test.svelte';
 
-function makeBond(initial: Partial<PopoverDialogBondProps> = {}) {
-	const props = $state<PopoverDialogBondProps>({ open: false, disabled: false, ...initial });
-	return new PopoverDialogBond(props);
-}
+/**
+ * The fusion is one plain class now, so what used to be asserted against Atom instances and
+ * capability slots is asserted where it is observable: on the rendered DOM.
+ *
+ *  - "fused atom presets default to the popover-dialog base" → a preset installed under the
+ *    `popover-dialog.*` keys reaches every fused part's class.
+ *  - "trigger is popover's / root-content-title are dialog's" → the trigger is the popover trigger
+ *    (its ARIA and preset key) inside a `<dialog role="dialog" aria-modal>` carrying a
+ *    `role="document"` content — the modal presentation, not a floating panel.
+ *  - "modal focus wins the slot (restoreFocus 'previous')" → closing returns focus to whatever was
+ *    focused before the dialog opened, not to the trigger.
+ */
 
-describe('PopoverDialogBond — parts: [Popover, Dialog] (§9.4.1)', () => {
+describe('PopoverDialogBond — the Popover/Dialog fusion (§9.4.1)', () => {
 	it('rebrands identity to popover-dialog', () => {
-		expect(makeBond().namespace).toBe('popover-dialog');
-		expect(PopoverDialogBond.CONTEXT_KEY).toContain('popover-dialog');
+		const props = $state({ open: false, disabled: false });
+		expect(new PopoverDialogBond(props).name).toBe('popover-dialog');
+		expect(PopoverDialogContext.key).toContain('popover-dialog');
 	});
 
-	it('exposes popover-dialog preset keys for the fused public slots', () => {
-		const preset = {
-			'popover-dialog': () => ({}),
-			'popover-dialog.trigger': () => ({}),
-			'popover-dialog.content': () => ({}),
-			'popover-dialog.header': () => ({}),
-			'popover-dialog.title': () => ({}),
-			'popover-dialog.description': () => ({}),
-			'popover-dialog.body': () => ({}),
-			'popover-dialog.footer': () => ({}),
-			'popover-dialog.close': () => ({})
-		} satisfies Partial<Preset>;
-
-		expect(Object.keys(preset)).toEqual([
-			'popover-dialog',
-			'popover-dialog.trigger',
-			'popover-dialog.content',
-			'popover-dialog.header',
-			'popover-dialog.title',
-			'popover-dialog.description',
-			'popover-dialog.body',
-			'popover-dialog.footer',
-			'popover-dialog.close'
-		]);
+	it('answers to both halves context keys so their own parts resolve it', () => {
+		// What `parts: [PopoverBond, DialogBond]` bought: `<Popover.Trigger>` and `<Dialog.Content>`
+		// resolve the fused bond from their own context, and nested popovers see it as their host.
+		expect(
+			new Set([PopoverDialogContext.key, DialogContext.key, PopoverContext.key, OverlayContext.key])
+				.size
+		).toBe(4);
 	});
 
-	it('defaults fused atom presets to the popover-dialog base', () => {
-		const bond = makeBond();
+	it('resolves the popover-dialog preset keys for every fused public slot', () => {
+		const { unmount } = render(KeyProbe);
 
-		expect(new PopoverTriggerAtom(bond).preset).toBe('popover-dialog.trigger');
-		expect(new DialogContentAtom(bond).preset).toBe('popover-dialog.content');
-		expect(new DialogHeaderAtom(bond).preset).toBe('popover-dialog.header');
-		expect(new DialogTitleAtom(bond).preset).toBe('popover-dialog.title');
-		expect(new DialogDescriptionAtom(bond).preset).toBe('popover-dialog.description');
-		expect(new DialogBodyAtom(bond).preset).toBe('popover-dialog.body');
-		expect(new DialogFooterAtom(bond).preset).toBe('popover-dialog.footer');
+		const classOf = (selector: string) =>
+			document.querySelector(selector)?.getAttribute('class') ?? '';
+
+		expect(classOf('dialog')).toContain('key-root');
+		expect(classOf('[aria-haspopup="dialog"]')).toContain('key-trigger');
+		expect(classOf('[role="document"]')).toContain('key-content');
+		expect(classOf('[role="banner"]')).toContain('key-header');
+		expect(classOf('[role="region"]')).toContain('key-body');
+		expect(classOf('[role="contentinfo"]')).toContain('key-footer');
+		expect(classOf('[role="document"] button[type="button"]')).toContain('key-close');
+		unmount();
+	});
+
+	it('presents the modal, not a floating panel (dialog parts won their slots)', () => {
+		const { unmount } = render(TriggerProbe, { presets: {} });
+
+		const surface = document.querySelector<HTMLElement>('dialog[role="dialog"]')!;
+		expect(surface).not.toBeNull();
+		expect(surface.getAttribute('aria-modal')).toBe('true');
+		expect(surface.dataset.state).toBe('open');
+		// Dialog's content — `role="document"` is the modal content projection, and it is the popover's
+		// floating panel that does NOT render.
+		expect(document.querySelector('[role="document"]')).not.toBeNull();
+		unmount();
 	});
 
 	it('keeps the overlay disclosure contract so the popover trigger opens the dialog', () => {
-		const props = $state<PopoverDialogBondProps>({ open: false, disabled: false });
-		const bond = new PopoverDialogBond(props);
+		const { unmount } = render(TriggerProbe, { presets: {} });
+		const trigger = document.querySelector<HTMLElement>('[aria-haspopup="dialog"]')!;
 
-		(new PopoverTriggerAtom(bond).spread.onclick as (event: MouseEvent) => void)({
-			button: 0,
-			defaultPrevented: false
-		} as MouseEvent);
+		expect(trigger).not.toBeNull();
+		expect(trigger.getAttribute('aria-expanded')).toBe('true');
 
-		expect(props.open).toBe(true);
-		expect(bond.disclosure.isOpen).toBe(true);
+		// Dispatched, not `.click()`: the open modal marks its siblings — the trigger — inert.
+		const click = () => {
+			trigger.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+			flushSync();
+		};
+		click();
+		expect(trigger.getAttribute('aria-expanded')).toBe('false');
+		click();
+		expect(trigger.getAttribute('aria-expanded')).toBe('true');
+		unmount();
 	});
 
-	it("trigger is popover's (own override beats dialog's on the key)", () => {
-		expect(new PopoverTriggerAtom(makeBond())).toBeInstanceOf(PopoverTriggerAtom);
+	it('trigger points at the content it controls', () => {
+		const { unmount } = render(TriggerProbe, { presets: {} });
+		const trigger = document.querySelector<HTMLElement>('[aria-haspopup="dialog"]')!;
+		const content = document.querySelector<HTMLElement>('[role="document"]')!;
+
+		expect(trigger.getAttribute('aria-controls')).toBe(content.id);
+		expect(content.id).not.toBe('');
+		unmount();
 	});
 
-	it('root/content/title come from dialog — the modal presentation (part-2 wins)', () => {
-		const bond = makeBond();
-		// `!`: root/title come from the Dialog part; the composition's type doesn't surface every part-2 slot
-		// accessor as non-undefined (composed-parts typing gap), but they exist at runtime.
-		expect(new DialogRootAtom(bond)).toBeInstanceOf(DialogRootAtom);
-		expect(new DialogContentAtom(bond)).toBeInstanceOf(DialogContentAtom);
-		expect(new DialogTitleAtom(bond)).toBeInstanceOf(DialogTitleAtom);
-	});
+	it('restores focus to what was focused before opening — dialog modal, not popover trigger', async () => {
+		const { rerender, unmount } = render(FocusProbe, { open: false });
+		await tick();
 
-	it('modal focus wins the slot: trappedFocus + restoreFocus "previous" (dialog, not popover)', () => {
-		const focus = makeBond().capability(FOCUS)?.surface;
-		expect(focus?.restoreFocus).toBe('previous'); // dialog modal beats popover's 'trigger'
-		expect(focus?.captureFocusOnOpen).toBe(true);
-	});
+		const outside = document.querySelector<HTMLElement>('[data-testid="popover-dialog-outside"]')!;
+		const trigger = document.querySelector<HTMLElement>('[data-testid="popover-dialog-trigger"]')!;
+		outside.focus();
+		expect(document.activeElement).toBe(outside);
 
-	it('trigger projects the disclosure ARIA (aria-haspopup dialog, aria-expanded)', () => {
-		const spread = new PopoverTriggerAtom(makeBond()).spread;
-		expect(spread['aria-haspopup']).toBe('dialog');
-		expect(spread['aria-expanded']).toBe(false);
-	});
+		await rerender({ open: true });
+		await tick();
+		await Promise.resolve();
+		// Not vacuous: the modal takes focus off the outside button first.
+		const content = document.querySelector<HTMLElement>('[data-testid="popover-dialog-content"]')!;
+		expect(content.contains(document.activeElement)).toBe(true);
 
-	it("popover's floating atoms come along but are inert (present, never rendered by the modal)", () => {
-		expect(new PopoverOverlayAtom(makeBond())).toBeInstanceOf(PopoverOverlayAtom);
+		await rerender({ open: false });
+		await tick();
+
+		expect(document.activeElement).toBe(outside);
+		expect(document.activeElement).not.toBe(trigger);
+		unmount();
 	});
 });

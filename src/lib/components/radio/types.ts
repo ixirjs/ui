@@ -1,12 +1,13 @@
 import { type Component, type Snippet } from 'svelte';
-import { type RenderProps, type SnippetProps } from '$ixirjs/ui/components/atom';
+import { type PlainPartProps, type SnippetProps } from '$ixirjs/ui/authoring';
 import type { StateChangeCallback } from '$ixirjs/ui/types';
 
 export interface RadioSnippetProps extends SnippetProps {}
 
 export type RadioChildren = Snippet<[RadioSnippetProps]>;
 
-export interface RadioProps<T = string> extends RenderProps<'label', never, RadioChildren> {
+// The radio IS its `<label>` — see `PlainPartProps` for what that gives up (`as`, `base`, motion).
+export interface RadioProps<T = string> extends PlainPartProps<'label', RadioChildren> {
 	/** The value this radio button represents. Compared against `group` to determine the checked state. */
 	value?: T;
 	// Currently selected value (for standalone radios).
@@ -44,7 +45,8 @@ export interface RadioProps<T = string> extends RenderProps<'label', never, Radi
 	oninput?: (event: Event) => void;
 }
 
-export interface RadioGroupProps<T = string> extends RenderProps<'div', never, RadioChildren> {
+// The group IS its `<div>` — same trade as the radio.
+export interface RadioGroupProps<T = string> extends PlainPartProps<'div', RadioChildren> {
 	/** The currently selected value in the group. Bindable for two-way synchronization. */
 	value?: T;
 	/**

@@ -12,7 +12,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import type { ClassValue } from 'svelte/elements';
-import type { Bond } from '$ixirjs/ui/shared';
+import type { BondLike as Bond } from '$ixirjs/ui/kernel/types';
 
 // Tags functions returned by defineVariants so resolveLocalVariants can route through the cached engine.
 export const VARIANT_DEF_TAG = Symbol('ixirjs/variant-def');

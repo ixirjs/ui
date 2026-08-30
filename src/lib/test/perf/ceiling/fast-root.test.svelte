@@ -16,4 +16,4 @@
 	const klass = fastClass('card overflow-clip flex flex-col $preset', 'card');
 </script>
 
-<div class={klass} id="card-root-{ID}" aria-disabled="false">{@render children?.()}</div>
+<div class={klass} id="card-root-{ID}">{@render children?.()}</div>

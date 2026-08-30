@@ -1,5 +1,5 @@
 import type { ClassValue } from 'svelte/elements';
-import { definePreset } from '$ixirjs/ui/context/preset.svelte';
+import { definePreset } from '$ixirjs/ui/preset/context.svelte';
 import type { Preset, PresetEntry, PresetEntryRecord } from './types';
 import { BUILT_IN_PRESET_KEYS, type BuiltInPresetName } from './manifest';
 

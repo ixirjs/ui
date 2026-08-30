@@ -1,11 +1,7 @@
 <script lang="ts">
 	import { Form, Field, Input } from '$ixirjs/ui';
 	import type { FormBond } from '$ixirjs/ui/components/form/bond.svelte';
-	import type {
-		ErrorRecord,
-		StandardSchemaV1,
-		ValidationSource
-	} from '$ixirjs/ui/shared/validation';
+	import type { ErrorRecord, StandardSchemaV1, ValidationSource } from '$ixirjs/ui/validation';
 	import type { ValidationMode } from '$ixirjs/ui/components/form/bond.svelte';
 	import type { FormRootProps } from '$ixirjs/ui/components/form/types';
 

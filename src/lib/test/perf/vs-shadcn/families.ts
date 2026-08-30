@@ -1,11 +1,14 @@
 /** The parity set: one entry per family, both sides rendering the same fixture shape. */
 import IxirCard from './ixir-card.test.svelte';
 import ShadcnCard from './shadcn-card.test.svelte';
+import IxirCardDirect from './ixir-card-direct.test.svelte';
 import IxirButton from './ixir-button.test.svelte';
 import ShadcnButton from './shadcn-button.test.svelte';
 import IxirAccordion from './ixir-accordion.test.svelte';
 import ShadcnAccordion from './shadcn-accordion.test.svelte';
+import IxirAccordionDirect from './ixir-accordion-direct.test.svelte';
 import IxirTable from './ixir-table.test.svelte';
+import IxirTableDirect from './ixir-table-direct.test.svelte';
 import ShadcnTable from './shadcn-table.test.svelte';
 import IxirMenu from './ixir-menu.test.svelte';
 import ShadcnMenu from './shadcn-menu.test.svelte';
@@ -37,6 +40,17 @@ export type Family = {
 
 export const FAMILIES: Family[] = [
 	{ name: 'card', unit: 'per card', opponent: 'zero', ixir: IxirCard, shadcn: ShadcnCard },
+	// The same shipped card, imported part by part rather than through the `Card` namespace. A
+	// member expression is a dynamic component, so this arm prices the barrel — not a second
+	// architecture. (It replaced `card-wb`, which compared the shipped family against a
+	// design-phase prototype; that comparison ended when the family moved onto the same seam.)
+	{
+		name: 'card-direct',
+		unit: 'per card',
+		opponent: 'zero',
+		ixir: IxirCardDirect,
+		shadcn: ShadcnCard
+	},
 	{ name: 'button', unit: 'per button', opponent: 'zero', ixir: IxirButton, shadcn: ShadcnButton },
 	{
 		name: 'accordion',
@@ -51,7 +65,25 @@ export const FAMILIES: Family[] = [
 		// once the mount is linear.
 		clientCounts: [50, 200]
 	},
+	// The same shipped accordion, imported part by part. The behavioural counterpart of
+	// `card-direct`.
+	{
+		name: 'accordion-direct',
+		unit: 'per item',
+		opponent: 'bits',
+		ixir: IxirAccordionDirect,
+		shadcn: ShadcnAccordion,
+		clientCounts: [50, 200]
+	},
 	{ name: 'table', unit: 'per row', opponent: 'zero', ixir: IxirTable, shadcn: ShadcnTable },
+	// Four parts per row, so the namespace cost lands hardest here. Same components as `table`.
+	{
+		name: 'table-direct',
+		unit: 'per row',
+		opponent: 'zero',
+		ixir: IxirTableDirect,
+		shadcn: ShadcnTable
+	},
 	{ name: 'menu', unit: 'per item', opponent: 'bits', ixir: IxirMenu, shadcn: ShadcnMenu },
 	{
 		name: 'tree',

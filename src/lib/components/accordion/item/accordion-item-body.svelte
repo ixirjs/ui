@@ -1,52 +1,36 @@
-<script module lang="ts">
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
-	import { AccordionItemBond } from './bond.svelte';
-	const PART = Kernel.plan(AccordionItemBond, 'body', { class: '' });
-</script>
-
-<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
-	import { type Base, type BasePropsOf, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
+<script lang="ts">
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
+	import { AccordionItemContext } from './bond.svelte';
 	import { enterAccordionItemBody, exitAccordionItemBody } from './motion.svelte';
 	import type { AccordionItemBodyProps } from './types';
 
-	let {
-		class: klass = '',
-		children = undefined,
-		onmount = undefined,
-		ondestroy = undefined,
-		preset = undefined,
-		...restProps
-	}: AccordionItemBodyProps<E, B> & BasePropsOf<B> = $props();
+	let { children = undefined, ...restProps }: AccordionItemBodyProps = $props();
+	const bond = AccordionItemContext.getOrThrow(
+		'<AccordionItem.Body /> must be used within an <AccordionItem.Root />'
+	);
 
-	const defaults = {
-		enter: enterAccordionItemBody(),
+	// Real enter/exit transitions through the transition leaf. A body open at mount renders open
+	// (`settled`); a body opened later animates.
+	const motion = {
+		enter: enterAccordionItemBody({ settled: () => bond.parent.settled }),
 		exit: exitAccordionItemBody()
 	};
-
-	const part = Kernel.node(PART, () => ({ preset }), { context: 'required' });
-	const bond = part.bond;
-	const isOpen = $derived(bond.isOpen ?? false);
-	const content = $derived(isOpen ? body : undefined);
-
-	// Real `enter`/`exit` phases route directly to a transition leaf.
-	//
-	// `onmount`/`ondestroy` are spread conditionally: setting the keys unconditionally (even to
-	// `undefined`) used to route the part to a renderer, because the escalation test read key
-	// presence rather than value.
-	const el = Kernel.element(
-		{ atom: part.atom, bond, preset: part.preset, presetLayer: part.presetLayer },
-		() => ({
-			class: ['box-content h-0 opacity-0', '$preset', klass],
-			...(onmount ? { onmount: onmount.bind(bond) } : {}),
-			...(ondestroy ? { ondestroy: ondestroy.bind(bond) } : {}),
-			defaults,
-			...restProps
-		})
-	);
+	const el = Kernel.element(() => restProps, {
+		preset: 'accordion.item.body',
+		class: 'box-content h-0 opacity-0',
+		state: bond,
+		layer: () => bond.props.presets?.body,
+		motion: () => motion,
+		attrs: () => ({ id: bond.bodyId, role: 'region', 'aria-labelledby': bond.headerId })
+	});
+	// Bound once, in the script: `{@render leaf(...)}` with a plain identifier compiles to a direct
+	// call on both platforms — no snippet block, no hydration anchor. The inline
+	// `Kernel.render(el)(...)` form is a block with an anchor.
+	const leaf = Kernel.render(el);
 </script>
 
-{@render content?.(bond!)}
+{@render (bond.isOpen ? body : undefined)?.()}
 
-{#snippet body(accordionItem: AccordionItemBond)}
-	{@render Kernel.render(el)(el, children, { accordionItem })}
+{#snippet body()}
+	{@render leaf(el, children, { accordionItem: bond })}
 {/snippet}

@@ -3,8 +3,8 @@
 <script lang="ts" generics="T extends SvgElementTagName">
 	import type { SVGAttributes } from 'svelte/elements';
 	import { cn, toClassValue } from '$ixirjs/ui/utils';
-	import { createPresentation } from '$ixirjs/ui/components/atom/presentation.svelte';
-	import { extractMotion } from '$ixirjs/ui/components/atom/resolve/motion';
+	import { createPresentation } from '$ixirjs/ui/kernel/presentation.svelte';
+	import { extractMotion } from '$ixirjs/ui/kernel/resolve/motion';
 	import { useElementMotion } from './use-element-motion.svelte';
 	import type { ElementType, SvgElementProps, SvgElementTagName } from './types';
 

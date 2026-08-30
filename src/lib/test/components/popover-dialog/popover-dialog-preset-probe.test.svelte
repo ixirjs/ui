@@ -15,6 +15,7 @@
 						<PopoverDialog.CloseButton />
 					</PopoverDialog.Header>
 					<PopoverDialog.Body>Body</PopoverDialog.Body>
+					<PopoverDialog.Footer>Footer</PopoverDialog.Footer>
 				</PopoverDialog.Content>
 			{/snippet}
 		</PopoverDialog.Dialog>

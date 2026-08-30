@@ -1,12 +1,8 @@
-import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
-import { createPresentation } from '$ixirjs/ui/components/atom/presentation.svelte';
-import type { PresetKey, PresetLike } from '$ixirjs/ui/preset';
+import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
+import type { PresetLike, PresetModuleName } from '$ixirjs/ui/preset';
 import type { StateChangeContext } from '$ixirjs/ui/types';
-import { toClassValue } from '$ixirjs/ui/utils';
 import type { ClassValue } from 'svelte/elements';
-import { InputBond, type InputStateProps } from './bond.svelte';
-
-const INPUT_PART = Kernel.plan(InputBond, 'input', { class: '' });
+import { InputContext, type InputBond, type InputStateProps } from './bond.svelte';
 
 export interface ControlOptions {
 	preset: () => unknown;
@@ -14,24 +10,30 @@ export interface ControlOptions {
 	class?: () => ClassValue | null | undefined;
 	variantProps?: () => Record<string, unknown>;
 	instance?: () => PresetLike | undefined;
-	/** Semantic type for a control whose registered element is not an `<input>`. */
+	/**
+	 * The control's semantic input type, which `bond.number`/`bond.date`/the placeholder gate on. A
+	 * control rendering a real `<input>` names the type it renders; the segment-based ones (time,
+	 * datetime, color) render spans, so they declare theirs instead.
+	 */
 	type?: () => string | undefined;
 }
 
-/** Internal control seam: registration, presentation, state mutation, and callback context. */
+/** Internal control seam: identity, presentation, state mutation, and callback context. */
 export function useControl(options: ControlOptions) {
-	const part = Kernel.node(INPUT_PART, () => ({}), { context: 'optional' });
-	const bond = part.bond;
-	if (options.type) part.atom.declareType(options.type);
+	const bond = InputContext.get();
+	if (bond && options.type) bond.declareType(options.type);
 
 	const klass = options.class;
-	const presentation = createPresentation({
-		preset: () => options.preset() as PresetKey | undefined,
-		bond: () => bond,
-		class: klass && (() => toClassValue(klass() ?? '', bond)),
-		variantProps: options.variantProps,
-		instance: options.instance,
-		restProps: options.restProps ?? (() => ({}))
+	const rest = options.restProps ?? (() => ({}));
+	// The preset key is read once, at init, the way the seam always was; a consumer `preset` in the
+	// rest props still wins per resolution.
+	const el = Kernel.element(klass ? () => ({ class: klass(), ...rest() }) : rest, {
+		preset: options.preset() as PresetModuleName | undefined,
+		class: '',
+		state: bond,
+		...(options.variantProps && { variantProps: options.variantProps }),
+		...(options.instance && { layer: options.instance }),
+		attrs: () => (bond ? { id: bond.controlId } : {})
 	});
 
 	function context<Details extends object = Record<never, never>, E extends Event = Event>(
@@ -48,11 +50,14 @@ export function useControl(options: ControlOptions) {
 	}
 
 	return {
+		// `class` and the rest travel apart: every control folds its own base class in front of the
+		// resolved one, and the file control's hidden input keeps a literal `sr-only`.
 		get attrs() {
-			return { ...part.atom.spread, ...presentation.attrs };
+			const { class: _class, ...attrs } = el.attrs;
+			return attrs;
 		},
-		get class() {
-			return presentation.class;
+		get class(): string {
+			return el.attrs.class as string;
 		},
 		get isComposed() {
 			return bond !== undefined;

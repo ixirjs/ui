@@ -1,7 +1,7 @@
 import type { ClassValue } from 'svelte/elements';
 import type { TransitionConfig } from 'svelte/transition';
-import type { Base } from '$ixirjs/ui/components/atom';
-import type { Bond } from '$ixirjs/ui/shared';
+import type { Base } from '$ixirjs/ui/authoring';
+import type { BondLike as Bond } from '$ixirjs/ui/kernel/types';
 import type { BuiltInPresetName } from './manifest';
 
 export type MotionCleanup<T extends Element = Element> =

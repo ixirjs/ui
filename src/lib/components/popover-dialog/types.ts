@@ -1,10 +1,10 @@
 import type { Snippet } from 'svelte';
-import type { Base, RenderProps, HtmlElementTagName } from '$ixirjs/ui/components/atom';
+import type { Base, RenderProps, HtmlElementTagName } from '$ixirjs/ui/authoring';
 import type { PopoverDialogBond } from './bond.svelte';
 import type { PortalTarget, ZIndexInput } from '$ixirjs/ui/components/portal';
 import type { StateChangeCallback } from '$ixirjs/ui/types';
 import type { PresetLike } from '$ixirjs/ui/preset';
-import type { BondPresetLayers } from '$ixirjs/ui/shared/bond';
+import type { BondPresetLayers } from '$ixirjs/ui/authoring';
 
 // Children snippets receive the fused bond.
 type Slot = Snippet<[{ popoverDialog: PopoverDialogBond }]>;

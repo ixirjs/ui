@@ -1,9 +1,9 @@
 import type { Snippet } from 'svelte';
 import type { EventHandler, HTMLAttributes } from 'svelte/elements';
-import type { RenderProps, Base, HtmlElementTagName } from '$ixirjs/ui/components/atom';
+import type { RenderProps, Base, HtmlElementTagName } from '$ixirjs/ui/authoring';
 import type { Factory, Override, StateChangeCallback } from '$ixirjs/ui/types';
-import type { ValidationError } from '$ixirjs/ui/shared/capability/models/validation.svelte';
-import type { ErrorRecord, StandardSchemaV1, ValidationSource } from '$ixirjs/ui/shared/validation';
+import type { ValidationError } from '$ixirjs/ui/capability/models/validation.svelte';
+import type { ErrorRecord, StandardSchemaV1, ValidationSource } from '$ixirjs/ui/validation';
 import type { FormBond, ValidationMode } from './bond.svelte';
 import type { FieldBond, FieldStateProps } from './field/bond.svelte';
 

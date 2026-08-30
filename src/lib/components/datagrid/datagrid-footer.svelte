@@ -1,34 +1,27 @@
-<script module lang="ts">
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
-	import { DataGridBond } from './bond.svelte';
-	const PART = Kernel.plan(DataGridBond, 'footer', { class: '' });
-</script>
-
 <script
 	lang="ts"
 	generics="T = unknown, E extends HtmlElementTagName = 'div', B extends Base = Base"
 >
-	import { type Base, type BasePropsOf, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
+	import type { Base, BasePropsOf, HtmlElementTagName } from '$ixirjs/ui/authoring';
+	import { DataGridContext, type DataGridBond } from './bond.svelte';
+
 	import type { DatagridFooterProps } from './types';
 
-	let {
-		class: klass = '',
-		preset = undefined,
-		children = undefined,
-		...restProps
-	}: DatagridFooterProps<T, E, B> & BasePropsOf<B> = $props();
+	const props: DatagridFooterProps<T, E, B> & BasePropsOf<B> = $props();
 
-	const part = Kernel.node(PART, () => ({ preset }), {
-		context: 'required',
-		message: 'DataGrid.Footer must be used within DataGrid.Root.'
+	const bond = DataGridContext.getOrThrow(
+		'DataGrid.Footer must be used within DataGrid.Root.'
+	) as DataGridBond<T>;
+
+	const el = Kernel.element(() => props, {
+		preset: 'datagrid.footer',
+		class: 'contents',
+		state: bond,
+		as: () => props.as,
+		base: () => props.base
 	});
-	const bond = part.bond as DataGridBond<T>;
-
-	// Class order is preset, consumer, then the structural `contents`.
-	const el = Kernel.element(part, () => ({
-		class: ['$preset', klass, 'contents'],
-		...restProps
-	}));
+	const leaf = Kernel.render(el);
 </script>
 
-{@render Kernel.render(el)(el, children, { datagrid: bond })}
+{@render leaf(el, props.children, { datagrid: bond })}

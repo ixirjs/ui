@@ -2,17 +2,17 @@
 	// The inert-part fast path's contract fixture: one bonded card with an inert part (header — no
 	// atom, no role), two role-carrying parts (title, description) and the root. The spec next to
 	// `define-part.svelte.ts` asserts what registration skipping may and may not change.
-	import { Card } from '$ixirjs/ui/components/card';
+	import { Alert } from '$ixirjs/ui/components/alert';
 
 	let { onbond }: { onbond?: (bond: unknown) => void } = $props();
 </script>
 
-<Card.Root data-testid="root">
-	{#snippet children({ card })}
-		{onbond?.(card)}
-		<Card.Header data-testid="header">Header</Card.Header>
-		<Card.Title data-testid="title">Title</Card.Title>
-		<Card.Description data-testid="description">Description</Card.Description>
-		<Card.Body data-testid="body">Body</Card.Body>
+<Alert.Root data-testid="root">
+	{#snippet children({ alert })}
+		{onbond?.(alert)}
+		<Alert.Content data-testid="header">Header</Alert.Content>
+		<Alert.Title data-testid="title">Title</Alert.Title>
+		<Alert.Description data-testid="description">Description</Alert.Description>
+		<Alert.Actions data-testid="body">Body</Alert.Actions>
 	{/snippet}
-</Card.Root>
+</Alert.Root>

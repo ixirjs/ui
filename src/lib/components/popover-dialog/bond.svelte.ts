@@ -1,29 +1,44 @@
-import { defineBond, type BondOf } from '$ixirjs/ui/shared';
-import { PopoverBond, PopoverTriggerAtom } from '$ixirjs/ui/components/popover/bond.svelte';
-import {
-	DialogBond,
-	DialogBondBase,
-	type DialogBond as DialogBondInstance,
-	type DialogBondProps
-} from '$ixirjs/ui/components/dialog/bond.svelte';
+/**
+ * PopoverDialog's shared object — the Popover/Dialog fusion as one plain state class on the
+ * redesigned `Kernel`.
+ *
+ * The fusion used to be `defineBond({ parts: [PopoverBond, DialogBond] })`, which merged two
+ * capability bundles and two atom maps per slot. There is nothing left to merge: the trigger is
+ * `Popover.Trigger` writing `triggerAttrs`/`clickTrigger` literally, and the modal presentation is
+ * `useModal(bond)` on `<PopoverDialog.Dialog>`. What remains of the fusion is this one class, an
+ * overlay that a popover trigger opens and a dialog surface presents, shared under four context
+ * keys so both halves' parts resolve it.
+ */
+import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
+import { DialogBondBase, type DialogBondProps } from '$ixirjs/ui/components/dialog/bond.svelte';
+import type { OverlayLike } from '$ixirjs/ui/components/overlay/model.svelte';
+import type { PopoverDialogPresets } from './types';
 
-export type PopoverDialogBondProps = DialogBondProps;
+export type PopoverDialogBondProps = DialogBondProps & {
+	presets?: PopoverDialogPresets | undefined;
+};
 
-// Fusion of Popover + Dialog: popover's trigger opens a modal dialog instead of a floating panel.
-// Dialog atoms/capabilities win per-slot (last-wins); floating atoms are inert at runtime.
+export const PopoverDialogContext = Kernel.context<PopoverDialogBond>('popover-dialog');
 
-export const PopoverDialogBond = defineBond({
-	name: 'popover-dialog',
-	base: DialogBondBase,
-	parts: [PopoverBond, DialogBond],
-	atoms: { trigger: PopoverTriggerAtom }
-});
+export class PopoverDialogBond extends DialogBondBase<PopoverDialogBondProps> {
+	// `Popover.Trigger` starts tracking a floating position on pointer-enter. The modal surface never
+	// positions against the trigger, so this is written and never read — kept because the trigger is
+	// the popover's own component, not a copy.
+	tracking = $state<boolean | undefined>(undefined);
 
-// Narrows the composition's default props slot so PropsOf resolves correctly.
-export type PopoverDialogBond = BondOf<typeof PopoverDialogBond> &
-	DialogBondInstance & {
-		readonly __props?: PopoverDialogBondProps;
-		readonly props: PopoverDialogBondProps;
-	};
+	constructor(props: PopoverDialogBondProps, name = 'popover-dialog') {
+		super(props, name);
+	}
 
-// Constructor facade (TabsBond pattern): re-types new/get/set to prop-narrowed instance.
+	// The `OverlayLike` arm exists only to satisfy TS's static-side check against
+	// `OverlayBond.create(outer?)`; callers pass props.
+	static override create(props: PopoverDialogBondProps | OverlayLike = {}): PopoverDialogBond {
+		return new PopoverDialogBond(props as PopoverDialogBondProps);
+	}
+	static get(): PopoverDialogBond | undefined {
+		return PopoverDialogContext.get();
+	}
+	static getOrThrow(message?: string): PopoverDialogBond {
+		return PopoverDialogContext.getOrThrow(message);
+	}
+}

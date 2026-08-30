@@ -1,5 +1,5 @@
 import type { Component, Snippet } from 'svelte';
-import type { SnippetProps } from '$ixirjs/ui/components/atom';
+import type { SnippetProps } from '$ixirjs/ui/authoring';
 
 // Lazy snippet props
 

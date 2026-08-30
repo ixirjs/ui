@@ -1,12 +1,11 @@
 <script lang="ts">
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
-	import { mergePresetProps } from '$ixirjs/ui/components/atom';
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
 	import { useControl } from './shared';
 	import type { InputFileControlProps } from './types';
 
-	// The Atom goes on the hidden native input, not the visible trigger: that input is the control
-	// the bond should hold, and it is what reports `type === 'file'` to Input.Placeholder. The
-	// The trigger uses Kernel.static as a preset-driven presentational element — the Button shape,
+	// The control identity goes on the hidden native input, not the visible trigger: that input is
+	// the control the bond should hold, and it is what reports `type === 'file'` to
+	// Input.Placeholder. The trigger is a preset-driven presentational element — the Button shape,
 	// not a bonded part.
 	let {
 		class: klass = '',
@@ -27,8 +26,11 @@
 	// consumers target with `name`, `required`, `data-testid` and friends. The visible trigger is
 	// presentation, so it gets the preset only; spreading restProps onto both put the consumer's
 	// `id`/`aria-*`/`data-*` on two elements at once.
-	const control = useControl({ preset: () => undefined, restProps: () => restProps });
-	const fileControlProps = $derived(mergePresetProps(preset, 'input.file', {}));
+	const control = useControl({
+		preset: () => undefined,
+		restProps: () => restProps,
+		type: () => 'file'
+	});
 
 	let inputEl = $state<HTMLInputElement>();
 
@@ -62,19 +64,14 @@
 		control.notify(onfileschange, files, event, 'clear');
 	}
 
-	// Element seam instead of a component boundary; key order matches the previous call exactly.
-	const el = Kernel.element(Kernel.static, () => ({
-		as: 'button',
-		type: 'button',
-		disabled,
-		onclick: openPicker,
-		class: [
+	// The trigger IS its <button>; the preset only ever styled it.
+	const el = Kernel.element(() => ({ class: klass, preset }), {
+		preset: 'input.file',
+		class:
 			'text-foreground flex h-full w-full flex-1 cursor-pointer items-center gap-2 bg-transparent px-2 text-left outline-none disabled:cursor-not-allowed',
-			'$preset',
-			klass
-		],
-		...fileControlProps
-	}));
+		attrs: () => ({ type: 'button', disabled, onclick: openPicker })
+	});
+	const triggerContentSnippet = $derived(triggerContent ?? (hasFiles ? filesSummary : emptyPrompt));
 </script>
 
 <!-- hidden native file input -->
@@ -90,11 +87,9 @@
 	{oninput}
 />
 
-{@render Kernel.render(el)(el, triggerContent ?? (hasFiles ? filesSummary : emptyPrompt), {
-	files,
-	hasFiles,
-	open: openPicker
-})}
+<button {...el.attrs}>
+	{@render triggerContentSnippet({ files, hasFiles, open: openPicker })}
+</button>
 
 {#snippet filesSummary()}
 	{@render (files.length === 1 ? singleFile : multipleFiles)()}

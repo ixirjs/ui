@@ -1,50 +1,47 @@
-<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
-	import {
-		mergePresetProps,
-		type Base,
-		type BasePropsOf,
-		type HtmlElementTagName
-	} from '$ixirjs/ui/components/atom';
-	import { StepperBond, type StepContentSnippet } from './bond.svelte';
+<script lang="ts">
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
+	import { StepperContext, type StepContentSnippet } from './bond.svelte';
 	import type { StepperContentProps } from './types';
 
-	const bond = StepperBond.get();
+	const bond = StepperContext.get();
 
 	let {
 		class: klass = '',
+		as = undefined,
+		base = undefined,
 		// swallowed: this component renders the active step's content, not its own children
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		children = undefined,
-		preset = undefined,
 		...restProps
-	}: StepperContentProps<E, B> & BasePropsOf<B> = $props();
+	}: StepperContentProps = $props();
 
-	const activeStep = $derived(bond?.getStep(bond?.props?.step));
+	const activeStep = $derived(bond?.getStep(bond?.props.step));
 	const activeStepContent = $derived(bond?.activeStepContent);
-
-	const contentKlass = $derived(activeStepContent?.props.class);
-	const contentProps = $derived.by(() => {
-		const { class: klass, ...restContentProps } = activeStepContent?.props ?? {};
-		return mergePresetProps(preset, 'stepper.content', { ...restContentProps, ...restProps });
-	});
-
 	const content = $derived(activeStepContent && activeStep ? body : undefined);
 
-	// Element seam instead of a component boundary; key order matches the previous call exactly.
+	// The active body's registered props (its `Step.Body` attributes and class) land on this
+	// element, under this part's own props.
 	const el = Kernel.element(
-		{ atom: undefined, bond, preset: undefined, presetLayer: undefined },
-		() => ({
-			class: ['stepper-content w-full', '$preset', contentKlass, klass],
-			...contentProps
-		})
+		() => {
+			const { class: contentKlass, base: _base, ...contentRest } = activeStepContent?.props ?? {};
+			return { ...contentRest, ...restProps, class: [contentKlass, klass] };
+		},
+		{
+			preset: 'stepper.content',
+			class: 'stepper-content w-full',
+			state: bond,
+			as: () => as,
+			base: () => base
+		}
 	);
+	// Bound once: an identifier callee compiles to a direct call — no snippet block, no anchor.
+	const leaf = Kernel.render(el);
 </script>
 
 {@render content?.(activeStepContent!)}
 
 {#snippet body(stepContent: StepContentSnippet)}
-	{@render Kernel.render(el)(el, stepBody, stepContent)}
+	{@render leaf(el, stepBody, stepContent)}
 {/snippet}
 
 {#snippet stepBody(stepContent: StepContentSnippet)}

@@ -1,10 +1,5 @@
 import type { Snippet } from 'svelte';
-import type {
-	RenderProps,
-	Base,
-	SnippetProps,
-	HtmlElementTagName
-} from '$ixirjs/ui/components/atom';
+import type { RenderProps, Base, SnippetProps, HtmlElementTagName } from '$ixirjs/ui/authoring';
 import type { DividerProps } from '$ixirjs/ui/components/divider';
 
 // List Snippet Props

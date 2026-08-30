@@ -28,7 +28,7 @@ export type {
 	AlertTitleProps
 } from './components/alert';
 
-export type { RenderProps } from '$ixirjs/ui/components/atom/types';
+export type { RenderProps } from '$ixirjs/ui/kernel/types';
 export type { AvatarProps } from './components/avatar';
 export type { BadgeChildren, BadgeProps, BadgeSnippetProps } from './components/badge';
 export type {

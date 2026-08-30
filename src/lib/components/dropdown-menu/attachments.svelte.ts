@@ -1,8 +1,4 @@
-import { popover } from '$ixirjs/ui/components/popover/attachments.svelte';
-import { PopoverBond } from '$ixirjs/ui/components/popover/bond.svelte';
+import { createBondAttachment } from '$ixirjs/ui/components/internal/attachments.svelte';
+import { DropdownMenuContext, type DropdownMenuBondBase } from './bond.svelte';
 
-export function dropdownMenu(
-	callback: (node: HTMLElement, bond?: PopoverBond) => void | (() => void)
-) {
-	return popover(callback);
-}
+export const dropdownMenu = createBondAttachment<DropdownMenuBondBase>(DropdownMenuContext);

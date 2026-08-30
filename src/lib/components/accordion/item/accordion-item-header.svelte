@@ -1,42 +1,58 @@
-<script module lang="ts">
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
-	import { AccordionItemBond } from './bond.svelte';
-	const PART = Kernel.plan(AccordionItemBond, 'header', { class: '' });
-</script>
-
-<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
-	import { type Base, type BasePropsOf, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
+<script lang="ts">
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
+	import { AccordionItemContext } from './bond.svelte';
 	import type { AccordionItemHeaderProps } from './types';
 
-	let {
-		class: klass = '',
-		as = 'button',
-		children = undefined,
-		preset = undefined,
-		...restProps
-	}: AccordionItemHeaderProps<E, B> & BasePropsOf<B> = $props();
+	let { children = undefined, ...restProps }: AccordionItemHeaderProps = $props();
+	const bond = AccordionItemContext.getOrThrow(
+		'<AccordionItem.Header /> must be used within an <AccordionItem.Root />'
+	);
 
-	const part = Kernel.node(PART, () => ({ preset }), { context: 'required' });
-	const bond = part.bond;
+	// APG accordion: pointer and Enter/Space toggle; arrows and Home/End move focus and nothing else.
+	function onpointerdown(event: PointerEvent) {
+		if (event.defaultPrevented || bond.isDisabled) return;
+		bond.toggle();
+	}
+	function onkeydown(event: KeyboardEvent) {
+		if (event.defaultPrevented) return;
+		if (event.key === 'Enter' || event.key === ' ') {
+			event.preventDefault();
+			if (!bond.isDisabled) bond.toggle();
+			return;
+		}
+		if (bond.parent.move(bond, event.key)) event.preventDefault();
+	}
+	function onfocus() {
+		bond.parent.notifyFocused(bond.id);
+	}
 
-	const el = Kernel.element(part, () => ({
-		as,
-		class: [
-			'border-border relative box-border flex w-full cursor-pointer items-center',
-			'$preset',
-			klass
-		],
-		...restProps
-	}));
+	const el = Kernel.element(() => restProps, {
+		preset: 'accordion.item.header',
+		class: 'border-border relative box-border flex w-full cursor-pointer items-center',
+		state: bond,
+		layer: () => bond.props.presets?.header,
+		attrs: () => {
+			const disabled = bond.isDisabled;
+			const open = bond.isOpen;
+			const attrs: Record<string, unknown> = {
+				id: bond.headerId,
+				type: 'button',
+				'aria-expanded': open,
+				'aria-selected': bond.isActive,
+				'data-state': open ? 'open' : 'closed',
+				tabindex: bond.parent.isTabStop(bond) ? 0 : -1,
+				onpointerdown,
+				onkeydown,
+				onfocus
+			};
+			if (open) attrs['aria-controls'] = bond.bodyId;
+			if (disabled) {
+				attrs['aria-disabled'] = true;
+				attrs.disabled = true;
+			}
+			return attrs;
+		}
+	});
 </script>
 
-{@render Kernel.render(el)(el, body)}
-
-{#snippet body()}
-	{@render (bond ? headerContent : undefined)?.()}
-{/snippet}
-
-<!-- `bond!` is proven by the dispatch above; narrowing does not cross into a snippet body. -->
-{#snippet headerContent()}
-	{@render children?.({ accordionItem: bond! })}
-{/snippet}
+<button {...el.attrs}>{@render children?.({ accordionItem: bond })}</button>

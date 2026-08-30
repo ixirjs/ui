@@ -1,10 +1,6 @@
 import { onDestroy } from 'svelte';
-import type { ValidationError } from '$ixirjs/ui/shared/capability/models/validation.svelte';
-import {
-	flattenErrorRecord,
-	type ErrorRecord,
-	type ValidationSource
-} from '$ixirjs/ui/shared/validation';
+import type { ValidationError } from '$ixirjs/ui/capability/models/validation.svelte';
+import { flattenErrorRecord, type ErrorRecord, type ValidationSource } from '$ixirjs/ui/validation';
 
 /**
  * Superforms integration.

@@ -1,40 +1,66 @@
 <script lang="ts">
-	import { Root } from '$ixirjs/ui/components/dropdown-menu/atoms';
-	import type { DropdownMenuBond } from '$ixirjs/ui/components/dropdown-menu';
-	import type { StateChangeContext } from '$ixirjs/ui/types';
-	import { ContextMenuBond, type ContextMenuBondProps } from './bond.svelte';
+	import { untrack } from 'svelte';
+	import { useMenuRoot } from '$ixirjs/ui/components/dropdown-menu/bond.svelte';
+	import { ContextMenuBond, ContextMenuContext, type ContextMenuBondProps } from './bond.svelte';
 	import type { ContextMenuRootProps } from './types';
+
+	const ID = $props.id();
 
 	// Trigger is often a large element (row, card, image), so content sizes to its own `min-w-*`
 	// rather than the trigger. Opt back in per-instance with `minWidth` on the content.
 	let {
 		open = $bindable(false),
+		disabled = false,
+		placements = ['bottom-start', 'bottom-end', 'top-start', 'top-end', 'bottom', 'top'],
 		placement = 'bottom-start',
-		factory = defaultFactory,
+		offset = 2,
+		position = 'absolute',
+		portal = undefined,
+		presets = undefined,
+		factory = undefined,
 		onopenchange = undefined,
-		...restProps
+		children = undefined
 	}: ContextMenuRootProps = $props();
 
-	function defaultFactory(props: ContextMenuBondProps): ContextMenuBond {
-		return ContextMenuBond.create(props);
-	}
+	const bondProps: ContextMenuBondProps = {
+		get id() {
+			return ID;
+		},
+		get open() {
+			return open;
+		},
+		get disabled() {
+			return disabled;
+		},
+		get placement() {
+			return placement;
+		},
+		get offset() {
+			return offset;
+		},
+		get position() {
+			return position;
+		},
+		get placements() {
+			return placements ?? [];
+		},
+		get portal() {
+			return portal;
+		},
+		get presets() {
+			return presets;
+		}
+	};
+	const build = untrack(() => factory);
+	const bond = build ? build(bondProps) : ContextMenuBond.create(bondProps);
+	useMenuRoot(bond);
+	ContextMenuContext.share(bond);
+	bond.bindCommit((next, context) => {
+		open = next;
+		onopenchange?.(next, context);
+	});
 
-	function dropdownFactory(props: ContextMenuBondProps): DropdownMenuBond {
-		return factory(props);
-	}
-
-	function forwardOpenChange(value: boolean, context: StateChangeContext<DropdownMenuBond>): void {
-		onopenchange?.(value, {
-			...context,
-			bond: context.bond as ContextMenuBond
-		});
-	}
+	export const getBond = () => bond;
 </script>
 
-<Root
-	bind:open
-	{placement}
-	factory={dropdownFactory}
-	onopenchange={forwardOpenChange}
-	{...restProps}
-/>
+{@render children?.({ popover: bond })}

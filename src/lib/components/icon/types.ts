@@ -1,10 +1,5 @@
 import type { Component, Snippet } from 'svelte';
-import type {
-	RenderProps,
-	Base,
-	SnippetProps,
-	HtmlElementTagName
-} from '$ixirjs/ui/components/atom';
+import type { RenderProps, Base, SnippetProps, HtmlElementTagName } from '$ixirjs/ui/authoring';
 
 // Icon snippet props
 

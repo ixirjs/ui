@@ -33,7 +33,8 @@ describe('Tabs callbacks', () => {
 		expect(onvaluechange).toHaveBeenCalledTimes(1);
 
 		const changeEvent = new Event('change', { bubbles: true });
-		const root = bond.nodeByPart('root')?.element as HTMLElement;
+		// The consumer's own `id` wins on the element it was passed to.
+		const root = document.getElementById('tabs-callback-root') as HTMLElement;
 		root.dispatchEvent(changeEvent);
 		expect(onchange).toHaveBeenCalledWith(changeEvent);
 		expect(onvaluechange).toHaveBeenCalledTimes(1);

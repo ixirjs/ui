@@ -1,4 +1,4 @@
-import type { RenderProps, Base, HtmlElementTagName } from '$ixirjs/ui/components/atom';
+import type { RenderProps, Base, HtmlElementTagName } from '$ixirjs/ui/authoring';
 
 export interface DividerProps<
 	E extends HtmlElementTagName = 'div',

@@ -47,7 +47,6 @@ export type SideResult = {
 	/** Per-iteration cost of a change every unit reads. */
 	broad: Record<string, number>;
 	census: Record<string, Census>;
-	heap: Record<string, number>;
 };
 
 function makeTarget(): HTMLElement {
@@ -104,8 +103,7 @@ export async function run(
 				hydrate: {},
 				targeted: {},
 				broad: {},
-				census: {},
-				heap: {}
+				census: {}
 			};
 		}
 	}
@@ -185,50 +183,53 @@ export async function run(
 		}
 	}
 
-	// ── live heap, measured separately: it needs the tree HELD, which every leg above tears down ──
-	for (const family of families) {
-		for (const n of family.clientCounts ?? COUNTS) {
-			for (const side of SIDES) {
-				results[family.name]![side].heap[String(n)] = await liveHeap(family[side], n);
-			}
-		}
-	}
-
 	return results;
 }
 
 /**
- * Bytes of live heap the mounted tree retains. Chromium only, and only meaningful with
- * `--enable-precise-memory-info`. Returns 0 where the API is absent rather than inventing a number.
+ * Mount one tree and HOLD it, so the driver can take a heap snapshot while it is live.
+ *
+ * The heap leg used to run in here against `performance.memory.usedJSHeapSize`, and that number
+ * was not trustworthy: it is page-wide, so it carries V8's own fragmentation and every other
+ * allocation the page has made, and the ratio it reported for a card (+730%) was an order of
+ * magnitude off what the retained objects actually are (+85%). A real snapshot answers the
+ * question the column asks — bytes of reachable object per unit — and only the driver can take
+ * one, because it needs CDP. So the measurement moved out and this pair moved in.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function liveHeap(component: any, n: number): Promise<number> {
-	// `performance.memory` hands back a SNAPSHOT, not a live view — re-read the getter each sample.
-	const used = () =>
-		(performance as { memory?: { usedJSHeapSize: number } }).memory?.usedJSHeapSize;
-	const gc = (globalThis as { gc?: () => void }).gc;
-	if (used() === undefined || !gc) return 0;
-
+export function hold(family: string, side: Side, n: number): void {
+	const entry = FAMILIES.find((f) => f.name === family);
+	if (!entry) throw new Error(`[vs-bench] no family "${family}"`);
+	held?.();
 	const target = makeTarget();
-	await settle(gc);
-	const before = used()!;
-
-	const app = mount(component, { target, props: makeProps(n) });
+	const props = makeProps(n);
+	heldProps = props;
+	const app = mount(entry[side], { target, props });
 	flushSync();
-	await settle(gc);
-	const after = used()!;
-
-	unmount(app);
-	target.remove();
-	return after - before;
+	held = () => {
+		unmount(app);
+		target.remove();
+		held = undefined;
+		heldProps = undefined;
+	};
 }
 
-async function settle(gc: () => void): Promise<void> {
-	for (let i = 0; i < 2; i++) {
-		gc();
-		await new Promise((r) => setTimeout(r, 0));
-	}
+/**
+ * Drive the BROAD axis on a held tree: `tint` is the one prop every unit reads (each root spreads it
+ * as its `class`), so writing it invalidates every unit. The profiler drives this between flushes —
+ * `bench-vs-profile.mjs --broad`. The measurement itself stays in `bench-vs-shadcn:client`; this
+ * exists so the profiler can attribute the axis, which a mount profile cannot see.
+ */
+export function broadTick(tint: string): void {
+	if (!heldProps) throw new Error('[vs-bench] broadTick without hold()');
+	heldProps.tint = tint;
 }
+
+export function release(): void {
+	held?.();
+}
+
+let held: (() => void) | undefined;
+let heldProps: { n: number; tint: string; bump: string } | undefined;
 
 export const GEOMETRY = { SIDES, COUNTS, LOW, HIGH };
 

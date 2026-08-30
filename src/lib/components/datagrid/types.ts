@@ -5,8 +5,9 @@ import type { DataGridBond } from './bond.svelte';
 import type { CheckboxProps } from '$ixirjs/ui/components/checkbox/types';
 import type { Factory, StateChangeCallback } from '$ixirjs/ui/types';
 import type { DataGridRowBond } from './row/bond.svelte';
+import type { IDataGridRowApi } from './row/record.svelte';
 import type { DataGridColumnBond } from './column/bond.svelte';
-import type { RenderProps, Base, SnippetProps } from '$ixirjs/ui/components/atom';
+import type { RenderProps, Base, SnippetProps, PlainPartProps } from '$ixirjs/ui/authoring';
 import type { HtmlElementTagName } from '$ixirjs/ui/components/element';
 import type { Direction, SortableType, Override } from '$ixirjs/ui/types';
 
@@ -35,7 +36,12 @@ export interface DatagridColumnSnippetProps<T = unknown> extends SnippetProps {
 export type DatagridColumnChildren<T = unknown> = Snippet<[DatagridColumnSnippetProps<T>]>;
 
 export interface DatagridRowSnippetProps<T = unknown> extends SnippetProps {
-	row: DataGridRowBond<T>;
+	/**
+	 * The row, as the interface both shapes implement. A row is a `DataGridRowBond` only when this
+	 * component is given a `factory`; by default it is a lightweight record registered with the
+	 * grid. `row.select()`, `row.isSelected`, `row.id` and `row.datagrid` are identical either way.
+	 */
+	row: IDataGridRowApi<T>;
 }
 
 export type DatagridRowChildren<T = unknown> = Snippet<[DatagridRowSnippetProps<T>]>;
@@ -141,17 +147,14 @@ export interface DatagridCheckboxProps extends OmitKey<CheckboxProps, 'children'
 	onchange?: (event: Event) => void;
 }
 
-export interface DatagridRowProps<
-	T = unknown,
-	E extends HtmlElementTagName = 'div',
-	B extends Base = Base
-> extends Override<
-	RenderProps<E, B, DatagridRowChildren<T>>,
+// The row IS its `<div>` — no `as`/`base`/motion; see `PlainPartProps`.
+export interface DatagridRowProps<T = unknown> extends Override<
+	PlainPartProps<'div', DatagridRowChildren<T>>,
 	{
 		/** Renderer for this row’s cells. */
 		children?: DatagridRowChildren<T>;
 		/** Native click callback. Receives only the DOM event. */
-		onclick?: MouseEventHandler<HTMLElementTagNameMap[E]>;
+		onclick?: MouseEventHandler<HTMLDivElement>;
 	}
 > {
 	/**

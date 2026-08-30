@@ -1,15 +1,28 @@
-<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
-	import { type Base, type BasePropsOf, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
-	import { definePart } from '$ixirjs/ui/components/atom/define-part.svelte';
-	import { TabsBond } from './bond.svelte';
+<script lang="ts">
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
+	import { TabsContext } from './bond.svelte';
 	import type { TabsHeaderProps } from './types';
 
-	const props: TabsHeaderProps<E, B> & BasePropsOf<B> = $props();
+	let { as = undefined, base = undefined, children, ...restProps }: TabsHeaderProps = $props();
+	const bond = TabsContext.getOrThrow('<Tabs.Header /> must be used within a <Tabs.Root />');
 
-	const el = definePart(TabsBond, 'header', () => props, {
-		class: 'relative flex min-w-full'
+	// The tablist receives the navigation keydown: tab headers are portaled into it, so their
+	// arrow keys bubble here.
+	const el = Kernel.element(() => restProps, {
+		preset: 'tabs.header',
+		class: 'relative flex min-w-full',
+		state: bond,
+		layer: () => bond.props.presets?.header,
+		as: () => as,
+		base: () => base,
+		attrs: () => ({
+			id: bond.headerId,
+			role: 'tablist',
+			onkeydown: (event: KeyboardEvent) => bond.onkeydown(event)
+		})
 	});
+	// Bound once: an identifier callee compiles to a direct call — no snippet block, no anchor.
+	const leaf = Kernel.render(el);
 </script>
 
-{@render Kernel.render(el)(el, props.children, { tabs: el.bond })}
+{@render leaf(el, children, { tabs: bond })}

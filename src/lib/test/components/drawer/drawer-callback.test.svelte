@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Root } from '$ixirjs/ui/components/root';
 	import DrawerRoot from '$ixirjs/ui/components/drawer/drawer-root.svelte';
+	import DrawerBackdrop from '$ixirjs/ui/components/drawer/drawer-backdrop.svelte';
 	import { closeDrawer } from '$ixirjs/ui/components/drawer/attachments.svelte';
 	import type { DrawerBond } from '$ixirjs/ui/components/drawer/bond.svelte';
 	import type { SlideoverRootProps } from '$ixirjs/ui/components/drawer/types';
@@ -18,6 +19,7 @@
 <Root>
 	<DrawerRoot bind:this={drawerRoot} {open} {onclose} {onopenchange}>
 		{#snippet children()}
+			<DrawerBackdrop data-testid="drawer-backdrop" />
 			<button data-testid="drawer-attachment-close" {@attach closeDrawer()}>Close</button>
 		{/snippet}
 	</DrawerRoot>

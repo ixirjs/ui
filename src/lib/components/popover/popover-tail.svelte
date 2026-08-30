@@ -1,42 +1,32 @@
-<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
-	import {
-		mergeAtomProps,
-		type Base,
-		type BasePropsOf,
-		type HtmlElementTagName
-	} from '$ixirjs/ui/components/atom';
-	import { createAtomInstance, type Atom } from '$ixirjs/ui/shared/bond';
-	import { createPopoverAtom, PopoverBond } from './bond.svelte';
-	import { popoverTailGeometry } from './presentation.svelte';
+<script lang="ts">
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
+	import type { PresetModuleName } from '$ixirjs/ui/preset';
+	import { PopoverContext } from './bond.svelte';
+	import { tailGeometryAttrs } from './presentation.svelte';
 	import type { PopoverTailProps } from './types';
 
-	const bond = PopoverBond.getOrThrow('<Popover.Tail /> must be used within a <Popover />');
+	const bond = PopoverContext.getOrThrow('<Popover.Tail /> must be used within a <Popover />');
 
 	let {
-		class: klass = '',
-		preset = undefined,
+		as = undefined,
+		base = undefined,
 		children = undefined,
 		padding = 0,
 		size = 20,
 		...restProps
-	}: PopoverTailProps<E, B> & BasePropsOf<B> = $props();
+	}: PopoverTailProps = $props();
 
-	const atom = createAtomInstance<Atom<PopoverBond, HTMLElement>, PopoverBond, HTMLElement>(
-		'tail',
-		{
-			bond,
-			factory: (owner) => createPopoverAtom(owner as PopoverBond, 'tail'),
-			capabilities: [popoverTailGeometry({ padding: () => padding, size: () => size })]
-		}
-	);
+	const id = Kernel.id(bond.id, `${bond.name}-tail`);
+	const release = bond.attachPart('tail', id);
+	$effect(() => release);
 
-	const tailProps = $derived(mergeAtomProps(atom, preset, restProps, bond.presetLayer('tail')));
+	// Side, metrics and placement follow the live floating-ui position and the rendered rects.
+	const geometry = $derived(tailGeometryAttrs(bond, { padding: () => padding, size: () => size }));
 
-	const tailCross = $derived(readNumber(tailProps['data-tail-cross'], 28));
-	const tailCap = $derived(readNumber(tailProps['data-tail-cap'], 10));
-	const tailTip = $derived(readNumber(tailProps['data-tail-tip'], 10));
-	const tailMain = $derived(readNumber(tailProps['data-tail-main'], tailCap + tailTip));
+	const tailCross = $derived(readNumber(geometry['data-tail-cross'], 28));
+	const tailCap = $derived(readNumber(geometry['data-tail-cap'], 10));
+	const tailTip = $derived(readNumber(geometry['data-tail-tip'], 10));
+	const tailMain = $derived(readNumber(geometry['data-tail-main'], tailCap + tailTip));
 	const tailViewBox = $derived(`0 0 ${tailCross} ${tailMain}`);
 	const tailPath = $derived(roundedCapTailPath(tailCross, tailCap, tailTip));
 
@@ -51,8 +41,8 @@
 	// …) — a box's own background always paints before its descendants regardless of z-index.
 	// Clipping the overlap band off outright works unconditionally, independent of tail color
 	// or content's stacking context, since that band was never meant to be visible anyway.
-	const tailOverlap = $derived(readNumber(tailProps['data-tail-overlap'], 0));
-	const tailSide = $derived(tailProps['data-tail-side'] as string | undefined);
+	const tailOverlap = $derived(readNumber(geometry['data-tail-overlap'], 0));
+	const tailSide = $derived(geometry['data-tail-side'] as string | undefined);
 	const tailClipPath = $derived(overlapClipPath(tailSide, tailOverlap));
 
 	function overlapClipPath(side: string | undefined, overlap: number) {
@@ -72,7 +62,7 @@
 	}
 
 	const tailStyle = $derived(
-		[tailProps.style, tailClipPath && `clip-path: ${tailClipPath}`].filter(Boolean).join('; ')
+		[geometry.style, tailClipPath && `clip-path: ${tailClipPath}`].filter(Boolean).join('; ')
 	);
 
 	// Shape constants tuned against docs/architecture-review.md's tail tuner artifact.
@@ -128,24 +118,26 @@
 		].join(' ');
 	}
 
-	// The merged props already fold the Atom spread; build Kernel once during initialization.
 	const bodyArg = { popover: bond };
-	const el = Kernel.element(
-		{ atom: undefined, bond, preset: undefined, presetLayer: undefined },
-		() => ({
-			bond,
-			class: [
-				'sa-popover-tail text-popover border-border pointer-events-none absolute z-[-1]',
-				'$preset',
-				klass
-			],
-			...tailProps,
+	const el = Kernel.element(() => restProps, {
+		preset: `${bond.name}.tail` as PresetModuleName,
+		class: 'sa-popover-tail text-popover border-border pointer-events-none absolute z-[-1]',
+		state: bond,
+		as: () => as,
+		base: () => base,
+		layer: () => bond.props.presets?.tail,
+		attrs: () => ({
+			id,
+			role: 'presentation',
+			'aria-hidden': true,
+			...geometry,
 			style: tailStyle
 		})
-	);
+	});
+	const leaf = Kernel.render(el);
 </script>
 
-{@render Kernel.render(el)(el, children ?? fallback, bodyArg)}
+{@render leaf(el, children ?? fallback, bodyArg)}
 
 {#snippet fallback()}
 	<svg

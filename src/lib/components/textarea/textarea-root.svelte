@@ -1,12 +1,32 @@
-<script>
-	import { mergePresetProps } from '$ixirjs/ui/components/atom';
-	import { Input } from '$ixirjs/ui/components/input';
+<script lang="ts">
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
+	import type { TextareaRootProps } from './types';
 
-	let { class: klass = '', children, preset = undefined, ...restProps } = $props();
+	const ID = $props.id();
+	let {
+		as = undefined,
+		base = undefined,
+		initial = undefined,
+		enter = undefined,
+		exit = undefined,
+		animate = undefined,
+		children = undefined,
+		...restProps
+	}: TextareaRootProps = $props();
 
-	const textareaProps = $derived(mergePresetProps(preset, 'textarea', restProps));
+	// The root used to mount `Input.Root`; it renders that element itself now — same classes, same
+	// `input-root-<seed>` id — and dispatches because `base` is in use (`<Textarea.Root base={Stack.Root}>`).
+	const el = Kernel.element(() => restProps, {
+		preset: 'textarea',
+		class:
+			'text-foreground bg-input relative flex h-10 w-auto items-center overflow-hidden rounded-md border h-auto',
+		as: () => as,
+		base: () => base,
+		motion: () =>
+			initial || enter || exit || animate ? { initial, enter, exit, animate } : undefined,
+		attrs: () => ({ id: Kernel.id(ID, 'input-root') })
+	});
+	const leaf = Kernel.render(el);
 </script>
 
-<Input.Root class={['h-auto', klass]} {...textareaProps}>
-	{@render children?.()}
-</Input.Root>
+{@render leaf(el, children, {})}

@@ -1,8 +1,6 @@
-import { closeOverlay } from '$ixirjs/ui/components/overlay/policies/overlay-view';
-import { Atom, generateId } from '$ixirjs/ui/shared/bond';
-import { partCapability } from '$ixirjs/ui/shared/capability';
-import { lazyCapability } from '$ixirjs/ui/shared/capability/intern';
-import type { SelectBond } from '$ixirjs/ui/components/select/bond.svelte';
+import { generateId } from '$ixirjs/ui/authoring';
+import type { DropdownMenuItem } from '$ixirjs/ui/components/dropdown-menu/bond.svelte';
+import type { SelectBondBase } from '$ixirjs/ui/components/select/bond.svelte';
 
 export type SelectItemAtomProps<T = unknown> = {
 	value: string;
@@ -11,10 +9,15 @@ export type SelectItemAtomProps<T = unknown> = {
 	id?: string;
 };
 
-export class SelectItemAtom<Data = unknown, B extends SelectBond = SelectBond> extends Atom<
-	B,
-	HTMLElement
-> {
+/**
+ * One rendered option. A plain state class since the Kernel redesign: it carries the option's
+ * identity and answers `isHighlighted` / `isSelected` off the Bond's roving and selection models.
+ * `element` resolves by the id it rendered, so no capture attachment is minted per option.
+ */
+export class SelectItemAtom<
+	Data = unknown,
+	B extends SelectBondBase = SelectBondBase
+> implements DropdownMenuItem {
 	#id: string;
 	#props: SelectItemAtomProps<Data>;
 	#selectBond: B;
@@ -22,15 +25,9 @@ export class SelectItemAtom<Data = unknown, B extends SelectBond = SelectBond> e
 	#createdAt = new Date();
 
 	constructor(props: SelectItemAtomProps<Data>, selectBond: B) {
-		super(selectBond, `item-${props.value}`);
 		this.#props = props;
 		this.#selectBond = selectBond;
 		this.#id = props.id ?? generateId();
-		// Fold in the selection capability's `item` projection (aria-selected +
-		// data-selected from the shared model). Attrs-only — the .svelte keeps its
-		// own click (select + close).
-		this.role('item', props.value);
-		this.capability(selectItemPresentation());
 	}
 
 	get id() {
@@ -53,66 +50,48 @@ export class SelectItemAtom<Data = unknown, B extends SelectBond = SelectBond> e
 		return this.props.data;
 	}
 
+	/** The DOM id this option renders — also what `aria-activedescendant` points at. */
+	get domId() {
+		return `select-item-${this.#id}`;
+	}
+
+	get element(): HTMLElement | null {
+		return typeof document === 'undefined' ? null : document.getElementById(this.domId);
+	}
+
 	get label() {
-		const element = (this.element?.querySelector('[data-label]') ?? this.element) as
+		const element = this.element;
+		const labelled = (element?.querySelector('[data-label]') ?? element) as
 			| HTMLElement
 			| undefined
 			| null;
-		return element?.innerText ?? this.#props.label ?? '';
+		return labelled?.innerText ?? this.#props.label ?? '';
 	}
 
 	get isHighlighted() {
-		// Select items register into the roving by `value`, so the active id IS the value.
+		// Options register into the roving by `value`, so the active id IS the value.
 		return this.#selectBond.roving.activeId === this.value;
 	}
 
 	get isSelected() {
-		return this.#selectBond.props.values?.includes(this.value) ?? false;
-	}
-
-	override get attrs() {
-		const itemId = `select-item-${this.id}`;
-		// `aria-selected` + `data-selected` (selection capability) and `data-highlighted`
-		// (roving capability) all come from the `item` projections folded in by
-		// `.role('item', value)` in the constructor — none are hand-rolled here.
-		return {
-			...super.attrs,
-			id: itemId
-		};
+		// Through the model, not `props.values.includes`: this is read once per option per render.
+		return this.#selectBond.selection.isSelected(this.value);
 	}
 
 	select() {
-		this.#selectBond?.select([this.value]);
+		this.#selectBond.select([this.value]);
 	}
 
 	unselect() {
-		this.#selectBond?.unselect([this.value]);
+		this.#selectBond.unselect([this.value]);
 	}
 
 	toggle() {
-		if (this.isSelected) {
-			this.unselect();
-		} else {
-			this.select();
-		}
+		if (this.isSelected) this.unselect();
+		else this.select();
 	}
 
 	close() {
-		closeOverlay(this.#selectBond);
+		this.#selectBond.close();
 	}
 }
-
-// Built once, not per rendered option: the descriptor is surface-less and reads nothing from the
-// instance, so one frozen value serves every item in every select.
-const selectItemPresentation = lazyCapability(() =>
-	partCapability<SelectBond>(
-		'@ixirjs/select:item-node',
-		'item',
-		'Select rendered item option role projection.',
-		{
-			attrs: () => ({
-				role: 'option'
-			})
-		}
-	)
-);

@@ -1,9 +1,11 @@
 import { DEV } from 'esm-env';
 import { untrack } from 'svelte';
 import { SvelteMap } from 'svelte/reactivity';
-import { Atom, Bond, defineAtom, type BondStateProps } from '$ixirjs/ui/shared/bond';
-import { defineBond, type BondOf } from '$ixirjs/ui/shared';
-import { PortalsBond } from '$ixirjs/ui/components/portal/registry';
+import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
+import {
+	PortalsContext,
+	type PortalsBond
+} from '$ixirjs/ui/components/portal/registry/bond.svelte';
 import {
 	LAYER_BASE,
 	resolveZIndexOffset,
@@ -12,7 +14,7 @@ import {
 	type ZIndexInput
 } from '$ixirjs/ui/components/portal/layering/z-layer.svelte';
 
-export type PortalBondProps = BondStateProps & {
+export type PortalBondProps = {
 	id: string;
 };
 
@@ -25,22 +27,51 @@ export type PortalElevationEntry = {
 	'z-index'?: ZIndexInput | undefined;
 };
 
-export class PortalBondBase<Props extends PortalBondProps = PortalBondProps> extends Bond<Props> {
+// `ZLayer` reads the anchor scope under this same key (`@ixirjs/context/portal`).
+export const PortalContext = Kernel.context<PortalBond>('portal');
+
+// One portal: a teleport sink (its Inner, once mounted), local layer anchors, and elevation
+// resolution against the registry's bands.
+export class PortalBond {
+	readonly name = 'portal';
+	readonly props: PortalBondProps;
+	/** The Inner element — teleport sink and floating-ui boundary — written by Inner on mount. */
+	sink = $state<HTMLElement>();
 	#anchors = new SvelteMap<string, () => number>();
 	#portals: PortalsBond | undefined;
 
-	constructor(props: Props) {
-		super(props, 'portal');
-		this.#portals = PortalsBond.getOptional();
+	constructor(
+		props: PortalBondProps,
+		portals: PortalsBond | undefined = PortalsContext.getOptional()
+	) {
+		this.props = props;
+		this.#portals = portals;
 	}
 
-	// The teleport sink and floating-ui boundary are the same element.
+	static create(props: PortalBondProps): PortalBond {
+		return new PortalBond(props);
+	}
+
+	static get(): PortalBond | undefined {
+		return PortalContext.get();
+	}
+
+	/** Publishes this portal as the ambient one for its subtree. */
+	share(): this {
+		PortalContext.share(this);
+		return this;
+	}
+
+	get id(): string {
+		return this.props.id;
+	}
+
 	get boundaryElement(): HTMLElement | undefined {
 		return this.sinkElement;
 	}
 
 	get sinkElement(): HTMLElement | undefined {
-		return this.nodeByPart('inner')?.element as HTMLElement | undefined;
+		return this.sink;
 	}
 
 	anchor(name: string, value: () => number): () => void {
@@ -90,28 +121,3 @@ export class PortalBondBase<Props extends PortalBondProps = PortalBondProps> ext
 		return base;
 	}
 }
-
-type PortalBondView = PortalBondBase<PortalBondProps>;
-
-export class PortalRootAtom extends Atom<PortalBondView, HTMLElement> {
-	constructor(bond: PortalBondView) {
-		super(bond, 'root');
-	}
-
-	override get attrs() {
-		return {
-			...super.attrs,
-			id: this.requireBond().id
-		};
-	}
-}
-
-export const PortalInnerAtom = defineAtom<PortalBondView, HTMLElement>('inner');
-
-export const PortalBond = defineBond({
-	name: 'portal',
-	base: PortalBondBase,
-	atoms: { root: PortalRootAtom, inner: PortalInnerAtom }
-});
-
-export type PortalBond = BondOf<typeof PortalBond>;

@@ -1,38 +1,23 @@
-<script module lang="ts">
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
-	import { AlertBond } from './bond.svelte';
-	const PART = Kernel.plan(AlertBond, 'icon', { class: '' });
-</script>
-
-<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
+<script lang="ts">
 	import { Icon } from '$ixirjs/ui/components/icon';
-	import { type Base, type BasePropsOf, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
+	import { AlertContext } from './bond.svelte';
 	import type { AlertIconProps } from './types';
 
-	let {
-		class: klass = '',
-		base = Icon as unknown as B,
-		preset = undefined,
-		children = undefined,
-		...restProps
-	}: AlertIconProps<E, B> & BasePropsOf<B> = $props();
-
-	const part = Kernel.node(PART, () => ({ preset }), { context: 'optional' });
-	const bond = part.bond;
+	let { base = Icon, children = undefined, ...restProps }: AlertIconProps = $props();
+	const alert = AlertContext.getOptional();
 
 	// `base` defaults to Icon; `base={null}` deliberately selects a native element leaf.
-	const el = Kernel.element(
-		{ atom: part.atom, bond, preset: part.preset, presetLayer: part.presetLayer },
-		() => ({
-			base,
-			class: [
-				'alert-icon border-border inline-flex aspect-square h-5 items-center justify-center rounded-full text-sm font-medium',
-				'$preset',
-				klass
-			],
-			...restProps
-		})
-	);
+	const el = Kernel.element(() => restProps, {
+		preset: 'alert.icon',
+		class:
+			'alert-icon border-border inline-flex aspect-square h-5 items-center justify-center rounded-full text-sm font-medium',
+		state: alert,
+		as: () => restProps.as,
+		base: () => base,
+		attrs: () => (alert ? { id: alert.iconId, 'aria-hidden': true } : { 'aria-hidden': true })
+	});
+	const leaf = Kernel.render(el);
 </script>
 
-{@render Kernel.render(el)(el, children, { alert: bond! })}
+{@render leaf(el, children, { alert: alert! })}

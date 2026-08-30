@@ -1,9 +1,10 @@
 import type { QRCodeBrowser } from '@qrcode-js/browser';
-import type { RenderProps } from '$ixirjs/ui/components/atom';
+import type { PlainPartProps } from '$ixirjs/ui/authoring';
 
 type QRCodeOptions = Parameters<ReturnType<typeof QRCodeBrowser>['setOptions']>[0];
 
-export interface QRCodeProps extends RenderProps<'div'> {
+// The code IS its `<div>` — see `PlainPartProps` for what that gives up (`as`, `base`, motion).
+export interface QRCodeProps extends PlainPartProps<'div'> {
 	/** Current value of the control. */
 	value?: string | undefined;
 	/** Styling for the three large corner squares a scanner locks onto. */

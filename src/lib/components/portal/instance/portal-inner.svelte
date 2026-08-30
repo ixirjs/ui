@@ -1,24 +1,40 @@
-<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
-	import { PortalBond } from './bond.svelte';
-	import {
-		type RenderProps,
-		type Base,
-		type BasePropsOf,
-		type HtmlElementTagName
-	} from '$ixirjs/ui/components/atom';
-	import { definePart } from '$ixirjs/ui/components/atom/define-part.svelte';
+<script lang="ts">
+	import { createAttachmentKey } from 'svelte/attachments';
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
+	import type { PortalInnerProps } from '$ixirjs/ui/components/portal/types';
+	import { PortalContext } from './bond.svelte';
 
-	const props: RenderProps<E, B> & BasePropsOf<B> = $props();
+	let {
+		as = undefined,
+		base = undefined,
+		children = undefined,
+		...restProps
+	}: PortalInnerProps = $props();
 
-	const el = definePart(PortalBond, 'inner', () => props, {
+	const bond = PortalContext.getOrThrow('<Portal.Inner /> must be used within a <Portal.Outer />');
+
+	// The sink is the element itself; minted once so the node is not re-captured per invalidation.
+	const sinkKey = createAttachmentKey();
+	const capture = (node: HTMLElement) => {
+		bond.sink = node;
+		return () => {
+			if (bond.sink === node) bond.sink = undefined;
+		};
+	};
+
+	const el = Kernel.element(() => ({ [sinkKey]: capture, ...restProps }), {
+		preset: 'portal.inner',
 		class: 'relative size-full',
-		message: '<Portal.Inner /> must be used within a <Portal.Outer />'
+		state: bond,
+		as: () => as,
+		base: () => base,
+		attrs: () => ({ id: Kernel.id(bond.id, 'portal-inner') })
 	});
+	const leaf = Kernel.render(el);
 </script>
 
 <!--
 	Teleport sink and floating-ui boundary. `relative size-full` makes it the offsetParent the
 	teleported `absolute` overlays anchor against; no overflow clip keeps containment soft.
 -->
-{@render Kernel.render(el)(el, props.children)}
+{@render leaf(el, children, { portal: bond })}

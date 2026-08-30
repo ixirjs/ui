@@ -26,7 +26,7 @@ const SUBJECTS: ConstructSubject[] = [
 	'tree',
 	'select',
 	'select-input-only',
-	'dialog'
+	'context-menu'
 ];
 
 const debug = console.debug;
@@ -77,6 +77,6 @@ describe('Bond construction cost by family', () => {
 		}
 
 		// Card is the floor: one deferred capability, no stateful model.
-		expect(card).toBeLessThan(micros('dialog'));
+		expect(card).toBeLessThan(micros('context-menu'));
 	});
 });

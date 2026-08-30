@@ -1,9 +1,9 @@
 import type { Snippet } from 'svelte';
-import type { RenderProps, Base, SnippetProps } from '$ixirjs/ui/components/atom';
+import type { RenderProps, PlainPartProps, Base, SnippetProps } from '$ixirjs/ui/authoring';
 import type { LayerRelation, PortalBond, ZIndexInput } from '$ixirjs/ui/components/portal';
 import type { StateChangeCallback } from '$ixirjs/ui/types';
 import type { PresetLike } from '$ixirjs/ui/preset';
-import type { BondPresetLayers } from '$ixirjs/ui/shared/bond';
+import type { BondPresetLayers } from '$ixirjs/ui/authoring';
 import type { DialogBond, DialogBondProps } from './bond.svelte';
 
 export interface DialogSnippetProps extends SnippetProps {
@@ -56,35 +56,18 @@ export interface DialogContentProps<
 	B extends Base = Base
 > extends RenderProps<E, B, DialogChildren> {}
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface DialogHeaderProps<
-	E extends keyof HTMLElementTagNameMap = 'div',
-	B extends Base = Base
-> extends RenderProps<E, B, DialogChildren> {}
+// Every layout part below IS its element — a literal `<div>`/`<h3>`/`<p>` spreading the part's
+// attributes — so none takes `as`, `base` or motion. See `PlainPartProps`.
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface DialogBodyProps<
-	E extends keyof HTMLElementTagNameMap = 'div',
-	B extends Base = Base
-> extends RenderProps<E, B, DialogChildren> {}
+export interface DialogHeaderProps extends PlainPartProps<'div', DialogChildren> {}
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface DialogFooterProps<
-	E extends keyof HTMLElementTagNameMap = 'div',
-	B extends Base = Base
-> extends RenderProps<E, B, DialogChildren> {}
+export interface DialogBodyProps extends PlainPartProps<'div', DialogChildren> {}
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface DialogTitleProps<
-	E extends keyof HTMLElementTagNameMap = 'h2',
-	B extends Base = Base
-> extends RenderProps<E, B, DialogChildren> {}
+export interface DialogFooterProps extends PlainPartProps<'div', DialogChildren> {}
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface DialogDescriptionProps<
-	E extends keyof HTMLElementTagNameMap = 'p',
-	B extends Base = Base
-> extends RenderProps<E, B, DialogChildren> {}
+export interface DialogTitleProps extends PlainPartProps<'h3', DialogChildren> {}
+
+export interface DialogDescriptionProps extends PlainPartProps<'p', DialogChildren> {}
 
 export interface DialogCloseButtonProps<
 	E extends keyof HTMLElementTagNameMap = 'button',

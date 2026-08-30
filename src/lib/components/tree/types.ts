@@ -1,8 +1,8 @@
 import type { Snippet } from 'svelte';
-import type { RenderProps, Base, HtmlElementTagName } from '$ixirjs/ui/components/atom';
+import type { RenderProps, Base, HtmlElementTagName, PlainPartProps } from '$ixirjs/ui/authoring';
 import type { Factory, StateChangeCallback } from '$ixirjs/ui/types';
 import type { PresetLike } from '$ixirjs/ui/preset';
-import type { BondPresetLayers } from '$ixirjs/ui/shared/bond';
+import type { BondPresetLayers } from '$ixirjs/ui/authoring';
 import type { TreeBond } from './bond.svelte';
 
 // Extension points: merge custom props into tree parts by augmenting these interfaces.
@@ -22,10 +22,8 @@ export interface TreePresets extends BondPresetLayers {
 	indicator?: PresetLike;
 }
 
-export type TreeRootProps<
-	E extends HtmlElementTagName = 'div',
-	B extends Base = Base
-> = RenderProps<E, B> &
+// This part IS its `<div>` — no `as`/`base`/motion; see `PlainPartProps`.
+export type TreeRootProps = PlainPartProps<'div', Snippet<[{ tree: TreeBond }]>> &
 	TreeRootExtendProps & {
 		/** Additional classes, merged after the preset so they win. */
 		class?: string;
@@ -54,10 +52,8 @@ export type TreeRootProps<
 		children?: Snippet<[{ tree: TreeBond }]>;
 	};
 
-export type TreeHeaderProps<
-	E extends HtmlElementTagName = 'div',
-	B extends Base = Base
-> = RenderProps<E, B> &
+// This part IS its `<div>` — no `as`/`base`/motion; see `PlainPartProps`.
+export type TreeHeaderProps = PlainPartProps<'div', Snippet<[{ tree: TreeBond }]>> &
 	TreeHeaderExtendProps & {
 		/** Additional classes, merged after the preset so they win. */
 		class?: string;
@@ -71,10 +67,8 @@ export type TreeHeaderProps<
 		children?: Snippet<[{ tree: TreeBond }]>;
 	};
 
-export type TreeBodyProps<
-	E extends HtmlElementTagName = 'div',
-	B extends Base = Base
-> = RenderProps<E, B> &
+// This part IS its `<div>` — no `as`/`base`/motion; see `PlainPartProps`.
+export type TreeBodyProps = PlainPartProps<'div', Snippet<[{ tree?: TreeBond }]>> &
 	TreeBodyExtendProps & {
 		/** Mirrors the owning tree node's open state, for parts that style themselves from it. */
 		open?: boolean;

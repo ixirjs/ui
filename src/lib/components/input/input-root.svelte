@@ -1,9 +1,7 @@
-<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
-	import { InputBond, type InputStateProps } from './bond.svelte';
-	import { useRoot } from '$ixirjs/ui/shared';
-	import { type Base, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
-	import type { Factory } from '$ixirjs/ui/types';
+<script lang="ts">
+	import { untrack } from 'svelte';
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
+	import { InputBond, InputContext, type InputStateProps } from './bond.svelte';
 	import type { InputRootProps } from './types';
 
 	const ID = $props.id();
@@ -14,53 +12,62 @@
 		checked = undefined,
 		files = [],
 		preset = undefined,
+		as = undefined,
+		base = undefined,
+		initial = undefined,
+		enter = undefined,
+		exit = undefined,
+		animate = undefined,
 		children = undefined,
-		factory = (props: InputStateProps) => InputBond.create(props),
+		factory = undefined,
 		...restProps
-	}: InputRootProps<E, B> = $props();
+	}: InputRootProps = $props();
 
-	const root = useRoot(
-		InputBond,
-		{
-			// Bridge HTML-input prop shapes to the bond's domain props (was loose `defineProperty`).
-			value: [
-				() => value as InputStateProps['value'],
-				(v) => {
-					value = v as typeof value;
-				}
-			],
-			checked: [
-				() => checked as InputStateProps['checked'],
-				(v) => {
-					checked = v as typeof checked;
-				}
-			],
-			files: [
-				() => files as InputStateProps['files'],
-				(v) => {
-					files = [...(v ?? [])];
-				}
-			]
+	// Live props: the Bond reads and writes through these accessors, so the HTML-input prop shapes
+	// bridge to the bond's domain props where they are used.
+	const bondProps: InputStateProps = {
+		get id() {
+			return ID;
 		},
-		{
-			preset: () => preset,
-			id: () => ID,
-			factory: () => factory as Factory<InputBond>
+		get value() {
+			return value as InputStateProps['value'];
+		},
+		set value(v) {
+			value = v as typeof value;
+		},
+		get checked() {
+			return checked;
+		},
+		set checked(v) {
+			checked = v;
+		},
+		get files() {
+			return files as InputStateProps['files'];
+		},
+		set files(v) {
+			files = [...(v ?? [])];
 		}
-	);
-	const bond = root.bond;
+	};
+	// `factory` is read once, at init, by design.
+	const build = untrack(() => factory);
+	const bond = InputContext.share(build ? build(bondProps) : InputBond.create(bondProps));
+	export const getBond = () => bond;
 
-	export const getBond = root.getBond;
-
-	const el = Kernel.element(root, () => ({
-		class: [
+	// Dispatches: the root keeps `as`, `base` and transitions.
+	const root = Kernel.element(() => ({ ...restProps, class: klass, preset }), {
+		preset: 'input',
+		class:
 			'text-foreground bg-input relative flex h-10 w-auto items-center overflow-hidden rounded-md border',
-			'$preset',
-			klass
-		],
-		variantProps: root.props,
-		...restProps
-	}));
+		state: bond,
+		// The Bond's props select preset variants without reaching the DOM.
+		variantProps: () => ({ value, checked, files }),
+		as: () => as,
+		base: () => base,
+		motion: () =>
+			initial || enter || exit || animate ? { initial, enter, exit, animate } : undefined,
+		attrs: () => ({ id: bond.rootId, role: 'group' })
+	});
+	const leaf = Kernel.render(root);
 </script>
 
-{@render Kernel.render(el)(el, children, { input: bond })}
+{@render leaf(root, children, { input: bond })}

@@ -1,13 +1,8 @@
 import type { Snippet } from 'svelte';
-import type {
-	RenderProps,
-	Base,
-	SnippetProps,
-	HtmlElementTagName
-} from '$ixirjs/ui/components/atom';
+import type { SnippetProps, PlainPartProps, RenderProps, Base } from '$ixirjs/ui/authoring';
 import type { Factory } from '$ixirjs/ui/types';
 import type { PresetLike } from '$ixirjs/ui/preset';
-import type { BondPresetLayers } from '$ixirjs/ui/shared/bond';
+import type { BondPresetLayers } from '$ixirjs/ui/authoring';
 import type { AccordionItemBond } from './bond.svelte';
 
 // Accordion Item Snippet Props
@@ -25,10 +20,9 @@ export interface AccordionItemPresets extends BondPresetLayers {
 	indicator?: PresetLike;
 }
 
-export interface AccordionItemRootProps<
-	E extends HtmlElementTagName = 'div',
-	B extends Base = Base
-> extends RenderProps<E, B, AccordionItemChildren> {
+// The item root is the composable part of the family: it takes `as`/`base` and honours a preset's
+// `render.as`/`render.base` (the docs theme renders it as `<li>`).
+export interface AccordionItemRootProps extends RenderProps<'div', Base, AccordionItemChildren> {
 	/** Unique identifier for this accordion item. Used to control open state programmatically. */
 	value?: string;
 	/** Arbitrary payload carried on the Bond, returned by lookups and snippet props. */
@@ -45,17 +39,9 @@ export interface AccordionItemRootProps<
 	presets?: AccordionItemPresets | undefined;
 }
 
-export interface AccordionItemHeaderProps<
-	E extends HtmlElementTagName = 'div',
-	B extends Base = Base
-> extends RenderProps<E, B, AccordionItemChildren> {}
+// The header IS its `<button>`; the body and indicator keep their motion internally.
+export interface AccordionItemHeaderProps extends PlainPartProps<'button', AccordionItemChildren> {}
 
-export interface AccordionItemBodyProps<
-	E extends HtmlElementTagName = 'div',
-	B extends Base = Base
-> extends RenderProps<E, B, AccordionItemChildren> {}
+export interface AccordionItemBodyProps extends PlainPartProps<'div', AccordionItemChildren> {}
 
-export interface AccordionItemIndicatorProps<
-	E extends HtmlElementTagName = 'div',
-	B extends Base = Base
-> extends RenderProps<E, B, AccordionItemChildren> {}
+export interface AccordionItemIndicatorProps extends PlainPartProps<'div', AccordionItemChildren> {}

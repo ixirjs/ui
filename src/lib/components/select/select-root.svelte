@@ -1,6 +1,7 @@
 <script lang="ts" generics="T, Option = unknown">
-	import { controlledProp, useRoot } from '$ixirjs/ui/shared';
-	import { SelectBond, type SelectStateProps } from './bond.svelte';
+	import { untrack } from 'svelte';
+	import { useMenuRoot } from '$ixirjs/ui/components/dropdown-menu/bond.svelte';
+	import { SelectBond, SelectContext, type SelectStateProps } from './bond.svelte';
 	import type { SelectRootProps } from './types';
 
 	const ID = $props.id();
@@ -22,7 +23,6 @@
 		optionLabel = undefined,
 		query = $bindable(''),
 		presets = undefined,
-		// Arrow wrapper keeps the constructor facade bound when passed as a default factory.
 		factory = undefined,
 		children = undefined,
 		onopenchange = undefined,
@@ -37,69 +37,95 @@
 		);
 	}
 
-	const openProp = controlledProp<boolean, SelectBond>({
-		get: () => open,
-		set: (next) => (open = next),
-		onchange: (next, context) => onopenchange?.(next, context)
-	});
-	const valuesProp = controlledProp<SelectStateProps['values'], SelectBond>({
-		get: () =>
-			(multiple
-				? (values ?? [])
-				: value === undefined
-					? []
-					: [value]) as SelectStateProps['values'],
-		set: (next) => {
-			const selected = (next ?? []) as T[];
+	// Live props. The setters are the controlled seam: a write the Bond makes lands on the bindable
+	// and reports once; a write the PARENT makes never passes through here, so a re-render of the
+	// owner cannot echo back as a change callback.
+	const bondProps: SelectStateProps = {
+		get id() {
+			return ID;
+		},
+		get open() {
+			return open;
+		},
+		get disabled() {
+			return disabled;
+		},
+		get multiple() {
+			return multiple;
+		},
+		get placement() {
+			return placement as SelectStateProps['placement'];
+		},
+		get placements() {
+			return (placements ?? []) as SelectStateProps['placements'];
+		},
+		get offset() {
+			return offset;
+		},
+		get position() {
+			return 'absolute' as const;
+		},
+		get keys() {
+			return keys ?? [];
+		},
+		get options() {
+			return options;
+		},
+		get optionValue() {
+			return optionValue as SelectStateProps['optionValue'];
+		},
+		get optionLabel() {
+			return optionLabel as SelectStateProps['optionLabel'];
+		},
+		get presets() {
+			return presets;
+		},
+		get values() {
+			return (multiple ? (values ?? []) : value === undefined ? [] : [value]) as string[];
+		},
+		set values(next: string[]) {
+			const selected = next as unknown as T[];
+			const current = (multiple ? (values ?? []) : value === undefined ? [] : [value]) as T[];
+			if (valuesEqual(selected, current)) return;
 			values = selected;
 			value = selected[0] as T;
+			if (multiple) onvalueschange?.(selected, { bond });
+			else onvaluechange?.(selected[0], { bond });
 		},
-		equals: (left, right) => valuesEqual((left ?? []) as T[], (right ?? []) as T[]),
-		onchange: (next, context) => {
-			const selected = (next ?? []) as T[];
-			if (multiple) onvalueschange?.(selected, context);
-			else onvaluechange?.(selected[0], context);
+		get label() {
+			return label;
+		},
+		set label(next: string | undefined) {
+			label = next;
+		},
+		get labels() {
+			return labels;
+		},
+		set labels(next: string[] | undefined) {
+			labels = next;
+		},
+		get query() {
+			return query;
+		},
+		set query(next: string) {
+			const text = next;
+			if (text === query) return;
+			query = text;
+			onquerychange?.(text, { bond });
 		}
-	});
-	const labelProp = controlledProp<string | undefined, SelectBond>({
-		get: () => label,
-		set: (next) => (label = next)
-	});
-	const labelsProp = controlledProp<string[] | undefined, SelectBond>({
-		get: () => labels,
-		set: (next) => (labels = next)
-	});
-	const queryProp = controlledProp<string | undefined, SelectBond>({
-		get: () => query,
-		set: (next) => (query = next ?? ''),
-		onchange: (next, context) => onquerychange?.(next ?? '', context)
+	};
+
+	// `factory` is read once, at init, by design.
+	const build = untrack(() => factory);
+	const bond = build ? build(bondProps) : SelectBond.create(bondProps);
+	useMenuRoot(bond);
+	SelectContext.share(bond);
+	bond.bindCommit((next, context) => {
+		open = next;
+		onopenchange?.(next, context);
 	});
 
-	const root = useRoot(
-		SelectBond,
-		{
-			open: openProp,
-			values: valuesProp,
-			label: labelProp,
-			labels: labelsProp,
-			multiple: () => multiple,
-			disabled: () => disabled,
-			placement: () => placement as SelectStateProps['placement'],
-			offset: () => offset,
-			placements: () => (placements ?? []) as SelectStateProps['placements'],
-			keys: () => keys ?? [],
-			options: () => options,
-			optionValue: () => optionValue as SelectStateProps['optionValue'],
-			optionLabel: () => optionLabel as SelectStateProps['optionLabel'],
-			query: queryProp,
-			presets: () => presets
-		},
-		{ atom: false, id: () => ID, factory: () => factory }
-	);
-
-	const bond = root.bond;
-
-	export const getBond = root.getBond;
+	export const getBond = () => bond;
 </script>
 
 {@render children?.({ select: bond })}

@@ -1,4 +1,4 @@
-import type { RenderProps } from '$ixirjs/ui/components/atom';
+import type { PlainPartProps } from '$ixirjs/ui/authoring';
 
 interface ProgressSharedProps {
 	/**
@@ -13,6 +13,7 @@ interface ProgressSharedProps {
 	max?: number;
 }
 
-export interface ProgressLinearProps extends RenderProps<'div'>, ProgressSharedProps {}
+// Both roots ARE their `<div>` — no `as`/`base`/motion; see `PlainPartProps`.
+export interface ProgressLinearProps extends PlainPartProps<'div'>, ProgressSharedProps {}
 
-export interface ProgressCircularProps extends RenderProps<'div'>, ProgressSharedProps {}
+export interface ProgressCircularProps extends PlainPartProps<'div'>, ProgressSharedProps {}

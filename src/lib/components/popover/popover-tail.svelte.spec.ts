@@ -15,9 +15,9 @@ describe('Popover.Tail placement geometry', () => {
 		const top = render(TailPlacementProbe, { placement: 'top' });
 		await settle();
 
-		const triggerRect = rect('[data-kind="popover-trigger"]');
-		const tailRect = rect('[data-kind="popover-tail"]');
-		const svgRect = rect('[data-kind="popover-tail"] svg');
+		const triggerRect = rect('[aria-haspopup="dialog"]');
+		const tailRect = rect('[data-tail-side]');
+		const svgRect = rect('[data-tail-side] svg');
 		expect(center(tailRect, 'x')).toBeGreaterThanOrEqual(triggerRect.left - 1.5);
 		expect(center(tailRect, 'x')).toBeLessThanOrEqual(triggerRect.right + 1.5);
 		expect(Math.abs(center(tailRect, 'x') - center(triggerRect, 'x'))).toBeLessThanOrEqual(1.5);
@@ -42,9 +42,9 @@ describe('Popover.Tail placement geometry', () => {
 			const view = render(TailPlacementProbe, { placement, tailPadding });
 			await settle();
 
-			const triggerRect = rect('[data-kind="popover-trigger"]');
-			const contentRect = rect('[data-kind="popover-content"]');
-			const tailRect = rect('[data-kind="popover-tail"]');
+			const triggerRect = rect('[aria-haspopup="dialog"]');
+			const contentRect = rect('.popover-content');
+			const tailRect = rect('[data-tail-side]');
 			const axis = edge === 'left' || edge === 'right' ? 'x' : 'y';
 			const contentSize = axis === 'x' ? contentRect.width : contentRect.height;
 			const tailSize = axis === 'x' ? tailRect.width : tailRect.height;
@@ -83,10 +83,10 @@ describe('Popover.Tail placement geometry', () => {
 		const right = render(TailPlacementProbe, { placement: 'right' });
 		await settle();
 
-		let triggerRect = rect('[data-kind="popover-trigger"]');
-		let contentRect = rect('[data-kind="popover-content"]');
-		let tailRect = rect('[data-kind="popover-tail"]');
-		let svgRect = rect('[data-kind="popover-tail"] svg');
+		let triggerRect = rect('[aria-haspopup="dialog"]');
+		let contentRect = rect('.popover-content');
+		let tailRect = rect('[data-tail-side]');
+		let svgRect = rect('[data-tail-side] svg');
 		let tailOverlap = tailOverlapData();
 		expect(Math.abs(tailRect.right - (contentRect.left + tailOverlap))).toBeLessThanOrEqual(1.5);
 		expect(Math.abs(svgRect.right - (contentRect.left + tailOverlap))).toBeLessThanOrEqual(1.5);
@@ -104,10 +104,10 @@ describe('Popover.Tail placement geometry', () => {
 		const left = render(TailPlacementProbe, { placement: 'left' });
 		await settle();
 
-		triggerRect = rect('[data-kind="popover-trigger"]');
-		contentRect = rect('[data-kind="popover-content"]');
-		tailRect = rect('[data-kind="popover-tail"]');
-		svgRect = rect('[data-kind="popover-tail"] svg');
+		triggerRect = rect('[aria-haspopup="dialog"]');
+		contentRect = rect('.popover-content');
+		tailRect = rect('[data-tail-side]');
+		svgRect = rect('[data-tail-side] svg');
 		tailOverlap = tailOverlapData();
 
 		expect(Math.abs(tailRect.left - (contentRect.right - tailOverlap))).toBeLessThanOrEqual(1.5);
@@ -135,9 +135,9 @@ describe('Popover.Tail placement geometry', () => {
 			const view = render(TailPlacementProbe, { placement, borderWidth: border });
 			await settle();
 
-			const contentRect = rect('[data-kind="popover-content"]');
-			const tailRect = rect('[data-kind="popover-tail"]');
-			const svgRect = rect('[data-kind="popover-tail"] svg');
+			const contentRect = rect('.popover-content');
+			const tailRect = rect('[data-tail-side]');
+			const svgRect = rect('[data-tail-side] svg');
 			const tailOverlap = tailOverlapData();
 
 			// Main axis: base overlaps the content's outer (border-box) edge by the cap.
@@ -160,7 +160,7 @@ function center(rect: DOMRect, axis: 'x' | 'y') {
 }
 
 function tailOverlapData() {
-	const element = document.querySelector('[data-kind="popover-tail"]');
+	const element = document.querySelector('[data-tail-side]');
 	expect(element).toBeInstanceOf(HTMLElement);
 	return Number((element as HTMLElement).dataset.tailOverlap ?? 0);
 }

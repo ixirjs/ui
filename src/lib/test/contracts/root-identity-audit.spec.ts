@@ -30,9 +30,43 @@ const BINDING_SEAMS = ['bindBond', 'useRoot'];
  * Authoring exports that are deliberately not Bond-binding seams. `defineBond` is declaration-time
  * and renders nothing. Anything not listed in either set is unclassified and fails.
  */
-const NON_BINDING_EXPORTS = ['defineBond'];
+const NON_BINDING_EXPORTS = [
+	// Declaration-time. Renders nothing, binds nothing.
+	'defineBond',
+	'defineAtom',
+	'Bond',
+	'Atom',
+	'Collection',
+	'bondContextKey',
+	'generateId',
+	// Descendant seams. They resolve a Bond from context — they never construct or bind one, which
+	// is exactly why a part needs no identity seed of its own.
+	'definePart',
+	'defineLeaf',
+	'Kernel',
+	'createAtomInstance',
+	// A prop cell. It is *placed in* a root's props spec and adopted by `useRoot`; on its own it
+	// binds nothing, so a file mentioning it without `useRoot` owns no Bond.
+	'controlledProp',
+	// Presentation and lifecycle helpers. No Bond involvement.
+	'resolvePreset',
+	'mergeAtomProps',
+	'mergePresetProps',
+	'componentBase',
+	'createLifecycleKey',
+	'isLifecycleKey',
+	'lifecycleType',
+	'getLifecycleProps',
+	'runLifecycle',
+	'getElementId',
+	// Type-level only: re-introduces a generic parameter `typeof` erases. Returns its argument.
+	'specializeDefinition',
+	// Motion. A part animating itself owns no Bond.
+	'animate',
+	'DURATION'
+];
 
-const AUTHORING_BARREL = join(process.cwd(), 'src/lib/shared/authoring/index.ts');
+const AUTHORING_BARREL = join(process.cwd(), 'src/lib/authoring/index.ts');
 const COMPONENTS = join(process.cwd(), 'src/lib/components');
 
 /** Value exports only: a seam is something a root calls, and `export type` declares no callable. */

@@ -15,7 +15,7 @@ describe('Dialog callbacks', () => {
 		expect(onopenchange).not.toHaveBeenCalled();
 
 		const event = new MouseEvent('click', { bubbles: true });
-		(bond.elements.root as HTMLElement).dispatchEvent(event);
+		bond.element('root')!.dispatchEvent(event);
 
 		expect(onclick).toHaveBeenCalledWith(event);
 		expect(onclick.mock.calls[0]).toHaveLength(1);

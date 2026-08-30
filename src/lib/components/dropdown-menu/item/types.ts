@@ -2,7 +2,7 @@ import type { Snippet } from 'svelte';
 import type { TransitionConfig } from 'svelte/transition';
 import type { DropdownMenuItemAtom } from './bond.svelte';
 import type { ClassValue } from '$ixirjs/ui/utils';
-import type { Base, RenderProps, HtmlElementTagName } from '$ixirjs/ui/components/atom';
+import type { Base, RenderProps, HtmlElementTagName } from '$ixirjs/ui/authoring';
 import type { PresetKey } from '$ixirjs/ui/preset';
 
 export interface DropdownMenuItemProps<

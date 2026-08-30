@@ -1,14 +1,11 @@
 <script lang="ts">
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
 	import type { QRCodeBrowser } from '@qrcode-js/browser';
-	import { mergePresetProps } from '$ixirjs/ui/components/atom';
 	import type { QRCodeProps } from './types';
 
 	type Render = typeof QRCodeBrowser;
 
 	let {
-		class: klass = '',
-		preset = undefined,
 		value = '',
 		finder = {
 			round: 0.5
@@ -31,8 +28,6 @@
 	let isReady = $state(false);
 	let render: Render | undefined = $state();
 	let computedColor = $state('black');
-
-	const qrCodeProps = $derived(mergePresetProps(preset, 'qr-code', restProps));
 
 	import('@qrcode-js/browser').then((result) => {
 		render = result.QRCodeBrowser;
@@ -63,16 +58,10 @@
 		qrcode.draw();
 	});
 
-	// Element seam instead of a component boundary; key order matches the previous call exactly.
-	const el = Kernel.element(Kernel.static, () => ({
-		class: ['$preset', klass],
-		...qrCodeProps
-	}));
+	const el = Kernel.element(() => restProps, { preset: 'qr-code', class: '' });
 </script>
 
-{@render Kernel.render(el)(el, qrCodeBody)}
-
-{#snippet qrCodeBody()}
+<div {...el.attrs}>
 	<div bind:clientWidth class="size-full">
 		<canvas
 			{@attach (node) => {
@@ -83,4 +72,4 @@
 			height={clientWidth}
 		></canvas>
 	</div>
-{/snippet}
+</div>

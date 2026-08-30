@@ -1,21 +1,20 @@
 <script lang="ts">
 	import { DEV } from 'esm-env';
 	import type { ActivePortalProps } from '$ixirjs/ui/components/portal/types';
-	import { PortalBond } from '$ixirjs/ui/components/portal/instance/bond.svelte';
+	import { PortalContext } from '$ixirjs/ui/components/portal/instance/bond.svelte';
 	import {
 		describePortalTarget,
-		PortalsBond,
+		PortalsContext,
 		resolveTeleportTarget
 	} from '$ixirjs/ui/components/portal/registry';
 
 	let { portal, children }: ActivePortalProps = $props();
 
-	const portalsBond = PortalsBond.get();
-	const ambientPortal = $derived(PortalBond.get());
+	const portalsBond = PortalsContext.get();
+	const ambientPortal = PortalContext.get();
 
 	const activePortal = $derived(resolveTeleportTarget(portalsBond, portal, ambientPortal));
 
-	// Warn (in an effect, after registration settles) when no portal resolves.
 	$effect(() => {
 		if (DEV && !activePortal) {
 			console.warn(

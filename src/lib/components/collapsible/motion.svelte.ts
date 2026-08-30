@@ -1,6 +1,6 @@
-import { animate, type Easing } from '$ixirjs/ui/shared';
-import { CollapsibleBond } from '.';
-import { DURATION } from '$ixirjs/ui/shared';
+import { animate, type Easing } from '$ixirjs/ui/authoring';
+import { CollapsibleContext } from './bond.svelte';
+import { DURATION } from '$ixirjs/ui/authoring';
 import { stopMotion } from '$ixirjs/ui/components/element/motion-host';
 
 export type AnimateCollapsibleBodyParams = {
@@ -10,7 +10,7 @@ export type AnimateCollapsibleBodyParams = {
 };
 
 function animateCollapsibleBody(params: AnimateCollapsibleBodyParams = {}) {
-	const bond = CollapsibleBond.get();
+	const bond = CollapsibleContext.getOptional();
 	return (node: HTMLElement) => {
 		const { duration = DURATION.fast / 1000, delay = 0, ease } = params;
 

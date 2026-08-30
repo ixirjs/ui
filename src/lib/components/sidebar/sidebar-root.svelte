@@ -1,7 +1,8 @@
 <script lang="ts">
-	import { controlledProp, useRoot } from '$ixirjs/ui/shared';
+	import { untrack } from 'svelte';
 	import { PortalSurface } from '$ixirjs/ui/components/portal';
-	import { SidebarBond } from './bond.svelte';
+	import { OverlayContext } from '$ixirjs/ui/components/overlay/model.svelte';
+	import { SidebarBond, SidebarContext } from './bond.svelte';
 	import type { SidebarRootProps } from './types';
 
 	const ID = $props.id();
@@ -18,24 +19,31 @@
 		children = undefined
 	}: SidebarRootProps = $props();
 
-	const openProp = controlledProp<boolean, SidebarBond>({
-		get: () => open,
-		set: (value) => (open = value),
-		onchange: (value, context) => onopenchange?.(value, context),
-		context: (bond) => bond.takeOpenChangeContext()
-	});
-
-	const root = useRoot(
-		SidebarBond,
-		{
-			open: openProp,
-			disabled: () => disabled
+	// Live props: the Bond reads through these getters, so a prop change is seen where it is read.
+	const bondProps = {
+		get id() {
+			return ID;
 		},
-		{ atom: false, id: () => ID, factory: () => factory }
-	);
-	const bond = root.bond;
-
-	export const getBond = root.getBond;
+		get open() {
+			return open;
+		},
+		set open(value: boolean | undefined) {
+			open = value ?? false;
+		},
+		get disabled() {
+			return disabled;
+		}
+	};
+	// `factory` is read once, at init, by design.
+	const build = untrack(() => factory);
+	const bond = SidebarContext.share(build ? build(bondProps) : SidebarBond.create(bondProps));
+	// Nested popovers gate their `open` on the nearest overlay host.
+	OverlayContext.share(bond);
+	bond.bindCommit((next, context) => {
+		open = next;
+		onopenchange?.(next, context);
+	});
+	export const getBond = () => bond;
 </script>
 
 <!-- `overlay` is structural — the in-flow path intentionally has no portal or elevation. -->

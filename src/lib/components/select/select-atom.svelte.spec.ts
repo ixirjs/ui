@@ -1,23 +1,22 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
-import { Atom } from '$ixirjs/ui/shared/bond';
-import {
-	PopoverTailAtom,
-	PopoverIndicatorAtom,
-	PopoverOverlayAtom
-} from '$ixirjs/ui/components/popover/bond.svelte';
-import { SelectItemAtom } from './item/bond.svelte';
 import Probe, {
 	capturedBond,
 	resetCapturedBond
 } from '$ixirjs/ui/test/components/select/select-atom-probe.test.svelte';
 import LayerProbe from '$ixirjs/ui/test/components/select/select-preset-probe.test.svelte';
-import { SelectBond, SelectPlaceholderAtom, SelectQueryAtom } from './bond.svelte';
+import { SelectBond } from './bond.svelte';
 
-describe('Select component-owned Atoms', () => {
+/**
+ * Rewritten DOM-level. It used to assert Atom instances through `nodeByPart` — machinery the
+ * Kernel migration removed. Every rendered outcome it covered is asserted here instead: the
+ * listbox role and its multi-select projection, the query control's combobox role, the option's
+ * role and id, and the registration released on unmount. The per-instance layer case is unchanged.
+ */
+describe('Select rendered parts', () => {
 	beforeEach(resetCapturedBond);
 
-	it('registers rendered select nodes', () => {
+	it('renders the listbox roles and releases its option registration on unmount', () => {
 		const { unmount } = render(Probe);
 		const select = capturedBond;
 
@@ -25,45 +24,26 @@ describe('Select component-owned Atoms', () => {
 		expect(select).toBeInstanceOf(SelectBond);
 		expect(select?.isOpen).toBe(true);
 
-		const trigger = select?.nodeByPart('trigger');
-		const overlay = select?.nodeByPart('overlay');
-		const content = select?.nodeByPart('content');
-		const placeholder = select?.nodeByPart('placeholder');
-		const query = select?.nodeByPart('query');
-		const item = select?.nodeByPart('item');
-		const tail = select?.nodeByPart('tail');
-		const indicator = select?.nodeByPart('indicator');
+		const trigger = document.querySelector('[aria-haspopup="listbox"]');
+		expect(trigger).not.toBeNull();
+		expect(trigger?.id).toBe(`select-trigger-${select!.id}`);
 
-		expect(overlay).toBeInstanceOf(PopoverOverlayAtom);
-		expect(placeholder).toBeInstanceOf(SelectPlaceholderAtom);
-		expect(query).toBeInstanceOf(SelectQueryAtom);
-		expect(item).toBeInstanceOf(SelectItemAtom);
-		expect(tail).toBeInstanceOf(PopoverTailAtom);
-		expect(indicator).toBeInstanceOf(PopoverIndicatorAtom);
-		for (const node of [trigger, overlay, content, placeholder, query, item, tail, indicator]) {
-			expect(node).toBeInstanceOf(Atom);
-		}
+		const content = document.querySelector('[role="listbox"]');
+		expect(content).not.toBeNull();
+		expect(content?.getAttribute('aria-multiselectable')).toBe('false');
 
-		expect(content?.spread.role).toBe('listbox');
-		expect(content?.spread['aria-multiselectable']).toBe(false);
-		expect(query?.spread.role).toBe('combobox');
-		expect(item?.spread.role).toBe('option');
-		expect(select?.items.get('alpha')).toBe(item);
+		expect(document.querySelector('input[role="combobox"]')).not.toBeNull();
+
+		const option = document.querySelector('[role="option"]');
+		expect(option).not.toBeNull();
+		const item = select?.items.get('alpha');
+		expect(item).toBeDefined();
+		expect(option?.id).toBe(`select-item-${(item as unknown as { id: string }).id}`);
+		expect(item?.element).toBe(option);
 
 		unmount();
 
-		for (const part of [
-			'trigger',
-			'overlay',
-			'content',
-			'placeholder',
-			'query',
-			'item',
-			'tail',
-			'indicator'
-		]) {
-			expect(select?.nodesByPart(part)).toEqual([]);
-		}
+		expect(document.querySelector('[role="option"]')).toBeNull();
 		expect(select?.items.get('alpha')).toBeUndefined();
 	});
 

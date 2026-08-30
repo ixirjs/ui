@@ -1,9 +1,10 @@
-import { createBondTupleAttachment } from '$ixirjs/ui/components/internal/attachments.svelte';
-import { AccordionBond } from '$ixirjs/ui/components/accordion/bond.svelte';
-import { AccordionItemBond } from './bond.svelte';
+import { AccordionContext, type AccordionBond } from '$ixirjs/ui/components/accordion/bond.svelte';
+import { AccordionItemContext, type AccordionItemBond } from './bond.svelte';
 
-const accordionItemAttachment = createBondTupleAttachment([AccordionItemBond, AccordionBond]);
-
+/**
+ * An attachment that receives the item and accordion it is used under. Both contexts are read when
+ * this is called — during a component's init — and handed to the callback at mount.
+ */
 export function accordionItem(
 	callback: (
 		node: HTMLElement,
@@ -11,5 +12,7 @@ export function accordionItem(
 		accordion?: AccordionBond
 	) => void | (() => void)
 ) {
-	return accordionItemAttachment((node, item, accordion) => callback(node, item, accordion));
+	const item = AccordionItemContext.get();
+	const accordion = AccordionContext.get();
+	return (node: HTMLElement) => callback(node, item, accordion);
 }

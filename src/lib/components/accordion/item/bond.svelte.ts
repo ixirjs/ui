@@ -1,173 +1,79 @@
-import { AccordionBond, type IAccordion } from '$ixirjs/ui/components/accordion/bond.svelte';
-import { Bond, defineAtom, type BondStateProps } from '$ixirjs/ui/shared/bond';
-import { defineBond, type BondOf } from '$ixirjs/ui/shared';
+/**
+ * An accordion item's shared object. Registered with the parent at the root's init (document
+ * order); its ids derive from `value` so a consumer can address them, exactly as before.
+ */
+import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
+import type { PresetLike } from '$ixirjs/ui/preset';
 import {
-	createDisclosure,
-	disclosureCapability,
-	type Disclosure
-} from '$ixirjs/ui/shared/capability/models/disclosure.svelte';
-import { triggerContentLink } from '$ixirjs/ui/shared/capability/models/relationship.svelte';
-import { isBrowser } from '$ixirjs/ui/utils/dom.svelte';
+	AccordionContext,
+	type AccordionItemHandle,
+	type IAccordion
+} from '$ixirjs/ui/components/accordion/bond.svelte';
 
-export type AccordionItemBondProps = BondStateProps & {
-	value?: string;
-	disabled: boolean;
-	multiple: boolean;
-	collapsible: boolean;
+export type AccordionItemBondProps = {
+	id?: string | undefined;
+	value?: string | undefined;
+	disabled?: boolean | undefined;
 	data?: unknown;
+	presets?: { root?: PresetLike; header?: PresetLike; body?: PresetLike } | undefined;
 };
 
-export class AccordionItemBondBase extends Bond<AccordionItemBondProps> {
-	#parent: IAccordion | undefined;
+export const AccordionItemContext = Kernel.context<AccordionItemBond>('bond/accordion-item');
 
-	// Disclosure over the item's open state, driven by the parent accordion's selection.
-	#disclosure: Disclosure = createDisclosure({
-		get: () => this.isOpen ?? false,
-		set: (open) => (open ? this.open() : this.close())
-	});
+export class AccordionItemBond implements AccordionItemHandle {
+	readonly name = 'accordion-item';
+	readonly props: AccordionItemBondProps;
+	readonly #parent: IAccordion;
 
-	constructor(props: AccordionItemBondProps) {
-		super(props, 'accordion-item');
-		this.#parent = AccordionBond.get();
-		if (!this.#parent) {
-			throw new Error('AccordionItemAtom must be used within an AccordionAtom context.');
-		}
-		this.capability(disclosureCapability(this.#disclosure));
-		// Same capability instances as the parent's — the header atom projects them under
-		// role 'header' (arrow/Home/End keydown lives on the header, not on the root container).
-		for (const capability of this.#parent.keyboardCapabilities()) this.capability(capability);
-		// trigger↔content a11y link: header gets aria-expanded/aria-controls, body gets aria-labelledby/role=region; ids resolved via the role registry.
-		this.capability(triggerContentLink({ contentRole: 'region' }));
+	constructor(props: AccordionItemBondProps, parent?: IAccordion) {
+		this.props = props;
+		const resolved = parent ?? AccordionContext.get();
+		if (!resolved) throw new Error('AccordionItem.Root must be used within an <Accordion>.');
+		this.#parent = resolved;
 	}
 
-	get id() {
-		return this.props.value ?? super.id;
+	static create(props: AccordionItemBondProps): AccordionItemBond {
+		return new AccordionItemBond(props);
 	}
 
-	get accordionId() {
-		return this.parent?.id;
+	/** `value`, or the seed — the ids below derive from it. */
+	get id(): string {
+		return this.props.value ?? this.props.id ?? 'accordion-item';
 	}
-
-	// `isValueOpen` is O(1); the `includes` walk behind it is the fallback for an external
-	// `IAccordion` implementor that predates it. `??` and not `||`: a real `false` must win.
-	#isOpenValue(): boolean | undefined {
-		const parent = this.parent;
-		if (!parent) return undefined;
-		return parent.isValueOpen?.(this.id) ?? parent.values.includes(this.id);
+	get rootId(): string {
+		return Kernel.id(this.id, 'accordion-item-root');
 	}
-
-	get isOpen() {
-		return this.#isOpenValue();
+	get headerId(): string {
+		return Kernel.id(this.id, 'accordion-item-header');
 	}
-
-	get isActive() {
-		return !this.props.disabled && !this.parent?.isDisabled && this.#isOpenValue();
+	get bodyId(): string {
+		return Kernel.id(this.id, 'accordion-item-body');
 	}
-
-	get isDisabled() {
-		return this.props.disabled || this.parent?.isDisabled || false;
+	get indicatorId(): string {
+		return Kernel.id(this.id, 'accordion-item-indicator');
 	}
-
-	// Narrow parent contract, not the whole bond.
-	get parent(): IAccordion | undefined {
+	get parent(): IAccordion {
 		return this.#parent;
 	}
-
-	open() {
-		this.parent?.open([this.id]);
+	get accordionId(): string {
+		return this.#parent.id;
 	}
-
-	close() {
-		this.parent?.close([this.id]);
+	get isOpen(): boolean {
+		return this.#parent.isValueOpen(this.id);
 	}
-
-	toggle() {
-		this.parent?.toggle(this.id);
+	get isDisabled(): boolean {
+		return this.props.disabled || this.#parent.isDisabled || false;
+	}
+	get isActive(): boolean {
+		return !this.isDisabled && this.isOpen;
+	}
+	open(): void {
+		this.#parent.open([this.id]);
+	}
+	close(): void {
+		this.#parent.close([this.id]);
+	}
+	toggle(): void {
+		this.#parent.toggle(this.id);
 	}
 }
-
-export const AccordionItemRootAtom = defineAtom<AccordionItemBondBase>('root', {
-	slot: '@ixirjs/accordion-item:root',
-	docs: 'Registers a mounted accordion item with its parent accordion collection.',
-	onmount: (_element, _node, bond) => bond?.parent?.attachItem(bond.id, bond)
-});
-
-export const AccordionItemHeaderAtom = defineAtom<AccordionItemBondBase>('header', {
-	slot: '@ixirjs/accordion-item:header',
-	docs: 'Accordion item header button semantics and activation policy.',
-	attrs: (node, bond) => {
-		const isButtonElement = isBrowser() && node.element instanceof HTMLButtonElement;
-		const isDisabled = bond?.isDisabled ?? false;
-		const isActive = bond?.isActive ?? false;
-
-		// aria-controls + aria-expanded come from the trigger↔content link.
-		return {
-			'aria-disabled': isDisabled,
-			'aria-selected': isActive,
-			role: isButtonElement ? undefined : 'button',
-			// Roving tabindex over the headers — the focused header, not the open one. Keying it to
-			// `isActive` left a fully-collapsed accordion with no tabbable header at all.
-			tabindex: bond?.parent?.focusedId === bond?.id ? 0 : -1,
-			disabled: isButtonElement ? isDisabled : undefined
-		};
-	},
-	setup: (atom) => atom.role('header'),
-	handlers: (_node, bond) => ({
-		onfocus: () => {
-			if (bond) bond.parent?.notifyFocused(bond.id);
-		},
-		onpointerdown: (ev: PointerEvent) => {
-			if (!bond) return;
-			if (bond.isDisabled) return;
-			if (ev.defaultPrevented) return;
-
-			if (bond.parent?.multiple) {
-				bond.toggle();
-			} else {
-				if (bond.parent?.collapsible) {
-					const values = bond.parent?.values ?? [];
-					const isActive = bond.isActive;
-					bond.parent?.close([...values]);
-					if (!isActive) {
-						bond.open();
-					}
-				} else {
-					bond.open();
-				}
-			}
-		}
-	})
-});
-
-export const AccordionItemBodyAtom = defineAtom<AccordionItemBondBase>('body', {
-	slot: '@ixirjs/accordion-item:body',
-	docs: 'Accordion item body visibility projection.',
-	attrs: (_node, bond) => ({
-		// aria-labelledby + role=region come from the trigger↔content link.
-		'aria-hidden': !bond?.isOpen
-	})
-});
-
-export const AccordionItemIndicatorAtom = defineAtom<AccordionItemBondBase>('indicator', {
-	slot: '@ixirjs/accordion-item:indicator',
-	docs: 'Accordion item indicator relationship metadata.',
-	attrs: (_node, bond) => ({
-		'data-controled-by': bond?.accordionId ?? ''
-	})
-});
-
-// preset path `accordion.item` (dotted) is distinct from the DOM namespace `accordion-item`.
-
-export const AccordionItemBond = defineBond({
-	name: 'accordion-item',
-	preset: 'accordion.item',
-	base: AccordionItemBondBase,
-	atoms: {
-		root: { atom: AccordionItemRootAtom },
-		header: { atom: AccordionItemHeaderAtom, role: 'trigger' },
-		body: { atom: AccordionItemBodyAtom, role: 'content' },
-		indicator: AccordionItemIndicatorAtom
-	}
-});
-
-export type AccordionItemBond = BondOf<typeof AccordionItemBond>;

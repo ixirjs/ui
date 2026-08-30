@@ -1,30 +1,31 @@
-<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
-	import {
-		mergePresetProps,
-		type Base,
-		type BasePropsOf,
-		type HtmlElementTagName
-	} from '$ixirjs/ui/components/atom';
-	import { TabsBond } from './bond.svelte';
+<script lang="ts">
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
+	import { TabsContext } from './bond.svelte';
 	import type { TabsContentProps } from './types';
 
-	const bond = TabsBond.get();
+	const bond = TabsContext.get();
 
-	let { preset = undefined, ...restProps }: TabsContentProps<E, B> & BasePropsOf<B> = $props();
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	let { children = undefined, ...restProps }: TabsContentProps = $props();
 
 	const value = $derived(bond?.props.value);
 	const items = $derived(Array.from(bond?.tabContents ?? []));
 
-	const contentProps = $derived(mergePresetProps(preset, 'tabs.content', restProps));
-	const contentLayer = $derived(bond?.presetLayer('content'));
+	// This part owns no element: its presentation (the `tabs.content` preset, its layer and its
+	// own attributes) resolves here and lands on every registered panel.
+	const content = Kernel.element(() => restProps, {
+		preset: 'tabs.content',
+		class: '',
+		state: bond,
+		layer: () => bond?.props.presets?.content
+	});
 </script>
 
 {#each items as item (item.value)}
 	{@render item.render({
 		...(item.props ?? {}),
 		...(value === item.value ? {} : { children: undefined }),
-		...contentProps,
-		selected: value === item.value,
-		presetLayer: contentLayer
+		...content.attrs,
+		selected: value === item.value
 	})}
 {/each}

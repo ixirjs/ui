@@ -1,33 +1,22 @@
-import {
-	PopoverBond,
-	PopoverBondBase,
-	type PopoverBondProps
-} from '$ixirjs/ui/components/popover/bond.svelte';
-import { defineBond, type BondOf } from '$ixirjs/ui/shared';
+import { PopoverBondBase, type PopoverBondProps } from '$ixirjs/ui/components/popover/bond.svelte';
+import type { OverlayBond, OverlayLike } from '$ixirjs/ui/components/overlay/model.svelte';
 
 export type TooltipBondProps = PopoverBondProps;
 
 // TooltipBond — Popover re-branded as `tooltip`.
 //
-// `parts: [PopoverBond]` carries over popover's full atom set (trigger, overlay,
-// content, tail, indicator, virtual-trigger) and its positioned + focus capabilities,
-// and threads popover's context keys so `<Popover.*>` atom components still resolve via
-// `PopoverBond.get()` / `OverlayBond.get()` when they sit under a Tooltip.Root.
-//
-// `base: PopoverBondBase` inherits popover's runtime behaviour (floating position tracking).
-//
-// The only thing that changes is `namespace` → `'tooltip'`, so every atom's preset key
-// resolves as `tooltip.<slot>` (e.g. `tooltip.content`, `tooltip.trigger`) instead of
-// `popover.<slot>`. Atoms read the namespace off the bond at runtime, so no atom subclasses
-// are needed — the shared popover atoms pick up the tooltip preset namespace automatically.
-// Inlined deliberately: `defineBond<const S>` infers `parts` as a tuple only from a literal
-// argument. A hoisted spec widens it to an array, which makes `AtomsOf` resolve every inherited
-// slot to `never` and blocks `Kernel.part` on slots the runtime spec merge does provide.
-export const TooltipBond = defineBond({
-	parts: [PopoverBond],
-	name: 'tooltip',
-	base: PopoverBondBase,
-	atoms: {}
-});
+// The shared Popover parts read the family name off the bond, so every part's preset key resolves
+// as `tooltip.<slot>` (`tooltip.content`, `tooltip.trigger`) instead of `popover.<slot>`, and the
+// Tooltip root shares it under Popover's context so `<Popover.*>` parts still find it.
+export class TooltipBond extends PopoverBondBase<TooltipBondProps> {
+	constructor(props: TooltipBondProps) {
+		super(props, 'tooltip');
+	}
 
-export type TooltipBond = BondOf<typeof TooltipBond>;
+	// The second overload only keeps the static side compatible with `OverlayBond.create(outer?)`.
+	static override create(props: TooltipBondProps): TooltipBond;
+	static override create(outer?: OverlayLike): OverlayBond;
+	static override create(props?: TooltipBondProps | OverlayLike): OverlayBond {
+		return new TooltipBond(props as TooltipBondProps);
+	}
+}

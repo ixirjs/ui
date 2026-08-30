@@ -1,15 +1,11 @@
 <script lang="ts" generics="T extends HtmlElementTagName = 'div', B extends Base = Base">
-	import { Trigger } from '$ixirjs/ui/components/popover/atoms';
-	import {
-		mergePresetProps,
-		type Base,
-		type BasePropsOf,
-		type HtmlElementTagName
-	} from '$ixirjs/ui/components/atom';
-	import { SelectBond } from './bond.svelte';
+	import type { Base, BasePropsOf, HtmlElementTagName } from '$ixirjs/ui/authoring';
+	import { Trigger } from '$ixirjs/ui/components/dropdown-menu/atoms';
+	import type { DropdownMenuTriggerProps } from '$ixirjs/ui/components/dropdown-menu/types';
+	import { SelectContext } from './bond.svelte';
 	import type { SelectTriggerProps } from './types';
 
-	const bond = SelectBond.getOrThrow('SelectTrigger must be used within a Select');
+	const bond = SelectContext.getOrThrow('SelectTrigger must be used within a Select');
 
 	let {
 		class: klass = '',
@@ -18,18 +14,13 @@
 		children = undefined,
 		...restProps
 	}: SelectTriggerProps<T, B> & BasePropsOf<B> = $props();
-
-	// Forward only `preset` (+ restProps), not `atom.spread`: the inner popover `Trigger` resolves the
-	// same shared bond's `trigger` atom and applies `mergeAtomProps` itself, so spreading the atom here
-	// too would double-apply its attrs/handlers and re-mint attachment keys. Intentional omission.
-	const presentation = $derived(mergePresetProps(preset, 'select.trigger', restProps));
 </script>
 
 <Trigger
 	{as}
-	{bond}
+	{preset}
 	class={['border-border relative flex h-auto min-h-10 flex-wrap items-center', '$preset', klass]}
-	{...presentation}
+	{...restProps as DropdownMenuTriggerProps<T, B>}
 >
 	{@render children?.({ select: bond })}
 </Trigger>

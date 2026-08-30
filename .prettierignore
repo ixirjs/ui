@@ -7,3 +7,17 @@ bun.lockb
 
 # Miscellaneous
 /static/
+
+# Vendored shadcn-svelte source for the head-to-head harness. Third-party and refetched by
+# `bun run bench:vs-shadcn:fetch`; formatting it would make the registry hash drift on every run.
+/bench/vs-shadcn/shadcn/
+
+# Generated knowledge graph. `graphify update .` rewrites these on every run, so formatting them
+# is churn that reappears the next time the graph is rebuilt.
+/graphify-out/
+
+# Agent scratch: parallel migration worktrees live here and carry their own `.svelte-kit` output.
+/.claude/
+
+# Generated architecture diagrams (`docs/diagrams/*`), rewritten by the diagram tool on every run.
+/docs/diagrams/

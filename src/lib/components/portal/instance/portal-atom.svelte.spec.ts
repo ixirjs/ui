@@ -1,38 +1,32 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
-import { Atom } from '$ixirjs/ui/shared/bond';
 import Probe, {
 	capturedBond,
 	resetCapturedBond
 } from '$ixirjs/ui/test/components/portal/portal-atom-probe.test.svelte';
-import { PortalBond, PortalInnerAtom, PortalRootAtom } from './bond.svelte';
+import { PortalBond } from './bond.svelte';
 
-describe('Portal component-owned Atoms', () => {
+// The rendered parts announce themselves to the portal: Outer renders the portal id, Inner
+// hands the portal its sink element and withdraws it on unmount.
+describe('Portal rendered parts', () => {
 	beforeEach(resetCapturedBond);
 
-	it('registers rendered portal nodes', () => {
+	it('binds the Inner element as the sink for the portal it rendered under', () => {
 		const { unmount } = render(Probe);
 		const portal = capturedBond;
 
 		expect(portal).toBeDefined();
 		expect(portal).toBeInstanceOf(PortalBond);
 
-		const root = portal?.nodeByPart('root');
-		const inner = portal?.nodeByPart('inner');
-
-		expect(root).toBeInstanceOf(PortalRootAtom);
-		expect(inner).toBeInstanceOf(PortalInnerAtom);
-		for (const node of [root, inner]) {
-			expect(node).toBeInstanceOf(Atom);
-		}
-		expect(portal?.boundaryElement).toBe(inner?.element);
-
-		expect(portal?.nodeByPart('root')).toBe(root);
-		expect(portal?.nodeByPart('inner')).toBe(inner);
+		const root = document.getElementById('probe');
+		const inner = document.getElementById('portal-inner-probe');
+		expect(root).not.toBeNull();
+		expect(inner).not.toBeNull();
+		expect(root?.contains(inner)).toBe(true);
+		expect(portal?.boundaryElement).toBe(inner);
 
 		unmount();
 
-		expect(portal?.nodesByPart('root')).toEqual([]);
-		expect(portal?.nodesByPart('inner')).toEqual([]);
+		expect(portal?.boundaryElement).toBeUndefined();
 	});
 });

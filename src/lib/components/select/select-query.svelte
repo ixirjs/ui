@@ -1,12 +1,12 @@
-<script module lang="ts">
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
-	import { SelectBond } from './bond.svelte';
-	const PART = Kernel.plan(SelectBond, 'query', { class: '' });
-</script>
-
 <script lang="ts">
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
+	import type { PresetKey } from '$ixirjs/ui/preset';
 	import { Input } from '$ixirjs/ui/components/input';
+	import { SelectContext } from './bond.svelte';
+	import type { InputControlProps } from '$ixirjs/ui/components/input';
 	import type { SelectQueryProps } from './types';
+
+	const bond = SelectContext.getOrThrow('SelectQuery must be used within a Select');
 
 	let {
 		value = $bindable(),
@@ -15,19 +15,28 @@
 		...restProps
 	}: SelectQueryProps = $props();
 
-	// The `query` atom plays role 'input' (`'query'` target): its spread carries the
-	// projected combobox a11y (role, aria-autocomplete/expanded/controls/activedescendant)
-	// and an `oninput` that writes `props.query`.
-	const part = Kernel.node(PART, () => ({ preset }), {
-		context: 'required',
-		rest: () => restProps
+	const id = Kernel.id(bond.id, `${bond.name}-query`);
+
+	// The combobox a11y `inputCapability` projected onto the `'input'`/`'query'` role, written
+	// literally. The control's text IS the bond's `query`: typing filters the items, Escape
+	// (`onEscape` → clear-then-close) empties it.
+	const inputAttrs = $derived.by(() => {
+		const active = bond.roving.activeId;
+		const isDisabled = bond.isDisabled;
+		return {
+			id,
+			role: 'combobox',
+			'aria-autocomplete': 'list' as const,
+			'aria-expanded': bond.isOpen,
+			'aria-controls': bond.partId('content'),
+			'aria-activedescendant': active === null ? undefined : bond.itemDomId(active),
+			'aria-disabled': isDisabled,
+			disabled: isDisabled || undefined,
+			tabindex: isDisabled ? -1 : 0
+		};
 	});
-	const bond = part.bond;
 </script>
 
-<!-- The control's text IS the bond's `query` (the `'input'` capability's `query` field):
-     typing filters the items, Escape (`ClearThenClose` → `InputModel.clear`) empties it.
-     `value` mirrors it for the public bindable API. -->
 <Input.Control
 	bind:value={
 		() => bond.props.query ?? '',
@@ -37,5 +46,8 @@
 		}
 	}
 	class={['inline-flex h-auto w-auto flex-1 py-1', '$preset', klass]}
-	{...part.props}
+	preset={preset ?? (`${bond.name}.query` as PresetKey)}
+	presetLayer={bond.props.presets?.query}
+	{...inputAttrs}
+	{...restProps as unknown as InputControlProps}
 />

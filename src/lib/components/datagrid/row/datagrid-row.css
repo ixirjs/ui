@@ -2,6 +2,6 @@
 	display: grid;
 
 	grid-template-columns: subgrid;
-	grid-template-rows: var(--rows);
+	grid-template-rows: var(--rows, auto);
 	grid-column: 1 / -1;
 }

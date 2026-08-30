@@ -1,14 +1,15 @@
 import type { Snippet } from 'svelte';
 import type {
 	RenderProps,
+	PlainPartProps,
 	Base,
 	SnippetProps,
 	HtmlElementTagName
-} from '$ixirjs/ui/components/atom';
+} from '$ixirjs/ui/authoring';
 import type { Factory, StateChangeCallback } from '$ixirjs/ui/types';
 import type { LayerRelation, PortalBond, ZIndexInput } from '$ixirjs/ui/components/portal';
 import type { PresetLike } from '$ixirjs/ui/preset';
-import type { BondPresetLayers } from '$ixirjs/ui/shared/bond';
+import type { BondPresetLayers } from '$ixirjs/ui/authoring';
 import type { DrawerBond } from './bond.svelte';
 
 // Declaration-merge into these to add app-specific props per drawer part.
@@ -83,37 +84,26 @@ export interface SlideoverRootProps<E extends HtmlElementTagName, B extends Base
 	factory?: Factory<DrawerBond>;
 }
 
-export interface SlideoverContentProps<
-	E extends HtmlElementTagName = 'div',
-	B extends Base = Base
-> extends RenderProps<E, B, DrawerChildren> {}
+export interface SlideoverContentProps<E extends HtmlElementTagName = 'div', B extends Base = Base>
+	extends RenderProps<E, B, DrawerChildren>, DrawerContentExtendProps {}
 
-export interface SlideoverHeaderProps<
-	E extends HtmlElementTagName = 'div',
-	B extends Base = Base
-> extends RenderProps<E, B, DrawerChildren> {}
+// Every layout part below IS its element — a literal `<div>`/`<h3>`/`<p>` spreading the part's
+// attributes — so none takes `as`, `base` or motion. See `PlainPartProps`.
 
-export interface DrawerBodyProps<
-	E extends HtmlElementTagName = 'div',
-	B extends Base = Base
-> extends RenderProps<E, B, DrawerChildren> {}
+export interface SlideoverHeaderProps
+	extends PlainPartProps<'div', DrawerChildren>, DrawerHeaderExtendProps {}
 
-export interface SlideoverFooterProps<
-	E extends HtmlElementTagName = 'div',
-	B extends Base = Base
-> extends RenderProps<E, B, DrawerChildren> {}
+export interface DrawerBodyProps
+	extends PlainPartProps<'div', DrawerChildren>, DrawerBodyExtendProps {}
 
-export interface SlideoverTitleProps<
-	E extends HtmlElementTagName = 'h2',
-	B extends Base = Base
-> extends RenderProps<E, B, DrawerChildren> {}
+export interface SlideoverFooterProps
+	extends PlainPartProps<'div', DrawerChildren>, DrawerFooterExtendProps {}
 
-export interface SlideoverDescriptionProps<
-	E extends HtmlElementTagName = 'p',
-	B extends Base = Base
-> extends RenderProps<E, B, DrawerChildren> {}
+export interface SlideoverTitleProps
+	extends PlainPartProps<'h3', DrawerChildren>, DrawerTitleExtendProps {}
 
-export interface SlideoverBackdropProps<
-	E extends HtmlElementTagName = 'div',
-	B extends Base = Base
-> extends RenderProps<E, B, DrawerChildren> {}
+export interface SlideoverDescriptionProps
+	extends PlainPartProps<'p', DrawerChildren>, DrawerDescriptionExtendProps {}
+
+export interface SlideoverBackdropProps
+	extends PlainPartProps<'div', DrawerChildren>, DrawerBackdropExtendProps {}

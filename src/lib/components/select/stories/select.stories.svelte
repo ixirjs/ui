@@ -3,7 +3,6 @@
 	import { Select as ASelect, type SelectBond, type SelectSelection } from '..';
 	import { Input } from '$ixirjs/ui/components/input';
 	import { flip } from 'svelte/animate';
-	import { openOverlay } from '$ixirjs/ui/components/overlay/policies/overlay-view';
 
 	const { Story } = defineMeta({
 		title: 'Atoms/Select',
@@ -122,7 +121,7 @@
 						class="flex h-11 w-full items-center gap-2 px-3"
 						onclick={(ev: MouseEvent) => {
 							ev.preventDefault();
-							openOverlay(select);
+							select.open();
 						}}
 					>
 						<div class="text-foreground flex flex-1 flex-wrap items-center gap-1 text-sm">
@@ -179,7 +178,7 @@
 					class="flex h-11 w-full items-center gap-2 px-3"
 					onclick={(ev: MouseEvent) => {
 						ev.preventDefault();
-						openOverlay(select);
+						select.open();
 					}}
 				>
 					<div class="text-foreground flex flex-1 flex-wrap items-center gap-1 text-sm">
@@ -225,7 +224,7 @@
 					class="flex h-auto min-h-11 w-full flex-wrap items-center gap-1 px-3 py-2"
 					onclick={(ev: MouseEvent) => {
 						ev.preventDefault();
-						openOverlay(select);
+						select.open();
 					}}
 				>
 					<div class="flex flex-1 flex-wrap items-center gap-1">
@@ -283,7 +282,7 @@
 					class="flex h-11 w-full items-center gap-2 px-3"
 					onclick={(ev: MouseEvent) => {
 						ev.preventDefault();
-						openOverlay(select);
+						select.open();
 					}}
 				>
 					<div class="text-foreground flex flex-1 flex-wrap items-center gap-1 text-sm">
@@ -341,7 +340,7 @@
 					class="flex h-11 w-full items-center gap-2 px-3"
 					onclick={(ev: MouseEvent) => {
 						ev.preventDefault();
-						openOverlay(select);
+						select.open();
 					}}
 				>
 					<div class="text-foreground flex flex-1 flex-wrap items-center gap-1 text-sm">

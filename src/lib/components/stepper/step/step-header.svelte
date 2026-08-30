@@ -1,16 +1,37 @@
-<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
-	import { type Base, type BasePropsOf, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
-	import { definePart } from '$ixirjs/ui/components/atom/define-part.svelte';
-	import { StepBond } from './bond.svelte';
+<script lang="ts">
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
+	import { StepContext } from './bond.svelte';
 	import type { StepHeaderProps } from './types';
 
-	const props: StepHeaderProps<E, B> & BasePropsOf<B> = $props();
+	let {
+		as = undefined,
+		base = undefined,
+		children = undefined,
+		...restProps
+	}: StepHeaderProps = $props();
+	const bond = StepContext.getOrThrow('<Step.Header /> must be used within a <Step.Root />');
 
-	const el = definePart(StepBond, 'header', () => props, {
-		as: 'div',
-		class: 'font-medium text-sm flex flex-col'
+	// The step's rendered container: group semantics and the label linkage live here.
+	const el = Kernel.element(() => restProps, {
+		preset: 'stepper.step.header',
+		class: 'font-medium text-sm flex flex-col',
+		state: bond,
+		as: () => as,
+		base: () => base,
+		attrs: () => {
+			const attrs: Record<string, unknown> = {
+				id: bond.partId('header'),
+				...bond.statusAttrs,
+				role: 'group',
+				'aria-disabled': bond.isDisabled
+			};
+			if (bond.titleId) attrs['aria-labelledby'] = bond.titleId;
+			if (bond.descriptionId) attrs['aria-describedby'] = bond.descriptionId;
+			return attrs;
+		}
 	});
+	// Bound once: an identifier callee compiles to a direct call — no snippet block, no anchor.
+	const leaf = Kernel.render(el);
 </script>
 
-{@render Kernel.render(el)(el, props.children, { step: el.bond })}
+{@render leaf(el, children, { step: bond })}

@@ -1,9 +1,15 @@
 <script lang="ts">
-	import type { CalendarRange } from '$ixirjs/ui/components/calendar/types';
-	import { DatePickerBond } from './bond.svelte';
-	import type { DatePickerRootProps } from './types';
-	import { useRoot } from '$ixirjs/ui/shared';
 	import { untrack } from 'svelte';
+	import { OverlayContext } from '$ixirjs/ui/components/overlay/model.svelte';
+	import { useOutsidePress, usePositioned } from '$ixirjs/ui/components/overlay/behavior.svelte';
+	import {
+		PopoverContext,
+		type PopoverBond,
+		type PopoverBondBase
+	} from '$ixirjs/ui/components/popover/bond.svelte';
+	import type { CalendarRange } from '$ixirjs/ui/components/calendar/types';
+	import { DatePickerBond, DatePickerContext, type DatePickerBondProps } from './bond.svelte';
+	import type { DatePickerRootProps } from './types';
 
 	const ID = $props.id();
 
@@ -44,7 +50,6 @@
 		type === 'single' ? [valueState, undefined] : [startState, endState]
 	);
 	let pivoteState = $derived(pivote);
-	const callbackState = { bond: undefined as DatePickerBond | undefined };
 
 	function rangesEqual(left: CalendarRange, right: CalendarRange) {
 		return Object.is(left[0], right[0]) && Object.is(left[1], right[1]);
@@ -65,70 +70,127 @@
 		start = startState;
 		end = endState;
 
-		const callbackBond = callbackState.bond;
-		if (!callbackBond) return;
 		if (type === 'range') {
-			if (rangeChanged) onrangechange?.(rangeState, { bond: callbackBond });
+			if (rangeChanged) onrangechange?.(rangeState, { bond });
 		} else if (valueChanged) {
-			onvaluechange?.(rangeState[0], { bond: callbackBond });
+			onvaluechange?.(rangeState[0], { bond });
 		}
 	}
 
-	const root = useRoot(
-		DatePickerBond,
-		{
-			open: [
-				() => openState,
-				(v) => {
-					const changed = !Object.is(openState, v);
-					openState = v;
-					open = openState;
+	function commitPivote(next: Date) {
+		const changed = !Object.is(pivoteState, next);
+		pivoteState = next;
+		pivote = pivoteState;
+		if (changed) onpivotechange?.(pivoteState, { bond });
+	}
 
-					const callbackBond = callbackState.bond;
-					if (changed && callbackBond) {
-						onopenchange?.(openState, { bond: callbackBond });
-					}
-				}
-			],
-			range: [() => rangeState, commitRange],
-			value: [() => rangeState[0], (v) => commitRange([v, rangeState[1]])],
-			pivote: [
-				() => pivoteState,
-				(v) => {
-					const changed = !Object.is(pivoteState, v);
-					pivoteState = v as Date;
-					pivote = pivoteState;
-
-					const callbackBond = callbackState.bond;
-					if (changed && callbackBond) {
-						onpivotechange?.(pivoteState, { bond: callbackBond });
-					}
-				}
-			],
-			start: [() => rangeState[0], (v) => commitRange([v, rangeState[1]])],
-			end: [() => rangeState[1], (v) => commitRange([rangeState[0], v])],
-			min: [() => min, (v) => (min = v)],
-			max: [() => max, (v) => (max = v)],
-			type: () => type ?? 'single',
-			// Positioning props — without these the bond's offset/placement stay undefined,
-			// which makes popover-overlay's transform compute to NaN and the overlay renders
-			// pinned at top-left instead of anchored to the trigger.
-			placement: () => placement,
-			placements: () => placements ?? [],
-			offset: () => offset,
-			disabled: () => disabled,
-			placeholder: () => placeholder,
-			format: () => format,
-			presets: () => presets
+	// Live props: an object of accessors the Bond, the Calendar and the sub-pickers read and write
+	// through. Every write lands on the same commit the root's bindables and callbacks share.
+	const bondProps: DatePickerBondProps = {
+		get id() {
+			return ID;
 		},
-		{ atom: false, id: () => ID, factory: () => factory }
-	);
-	// useRoot publishes through the flat-composition share override, making this bond available
-	// under both the date-picker and popover context keys.
-	const bond = root.bond;
-	callbackState.bond = bond;
+		get open() {
+			return openState;
+		},
+		set open(next: boolean | undefined) {
+			openState = next ?? false;
+			open = openState;
+		},
+		get value() {
+			return rangeState[0];
+		},
+		set value(next: Date | undefined) {
+			commitRange([next, rangeState[1]]);
+		},
+		get range() {
+			return rangeState;
+		},
+		set range(next: CalendarRange) {
+			commitRange(next);
+		},
+		get start() {
+			return rangeState[0];
+		},
+		set start(next: Date | undefined) {
+			commitRange([next, rangeState[1]]);
+		},
+		get end() {
+			return rangeState[1];
+		},
+		set end(next: Date | undefined) {
+			commitRange([rangeState[0], next]);
+		},
+		get pivote() {
+			return pivoteState;
+		},
+		set pivote(next: Date | undefined) {
+			if (next) commitPivote(next);
+		},
+		get min() {
+			return min;
+		},
+		set min(next: Date | undefined) {
+			min = next;
+		},
+		get max() {
+			return max;
+		},
+		set max(next: Date | undefined) {
+			max = next;
+		},
+		get type() {
+			return type ?? 'single';
+		},
+		get disabled() {
+			return disabled;
+		},
+		get placeholder() {
+			return placeholder;
+		},
+		get format() {
+			return format;
+		},
+		// Positioning props — without these the bond's offset/placement stay undefined, which makes
+		// popover-overlay's transform compute to NaN and the overlay renders pinned at top-left
+		// instead of anchored to the trigger.
+		get placement() {
+			return placement;
+		},
+		get placements() {
+			return placements ?? [];
+		},
+		get offset() {
+			return offset;
+		},
+		get position() {
+			return 'absolute' as const;
+		},
+		get presets() {
+			return presets;
+		}
+	};
+	// `factory` is read once, at init, by design.
+	const build = untrack(() => factory);
+	const bond = DatePickerContext.share(build ? build(bondProps) : DatePickerBond.create(bondProps));
+	// Shared under Popover's and the overlay host's keys too: `DatePicker.Tail`/`DatePicker.Indicator`
+	// ARE the Popover parts, and a nested popover gates its own open state on the host.
+	PopoverContext.share(bond as unknown as PopoverBond);
+	OverlayContext.share(bond);
+	// Controlled state: the Bond decides, the root writes, the callback fires after the write with
+	// the staged `event`/`reason` a dismissal handed it.
+	bond.bindCommit((next, context) => {
+		openState = next;
+		open = openState;
+		onopenchange?.(next, context);
+	});
+	usePositioned(bond);
+	useOutsidePress(bond, {
+		event: 'click',
+		onDismiss: (event, o) => (o as PopoverBondBase).onclickoutside?.(event, o as PopoverBondBase)
+	});
 
-	export const getBond = root.getBond;
+	export const getBond = () => bond;
 </script>
 
 {@render children?.({ datePicker: bond })}

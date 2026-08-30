@@ -1,131 +1,131 @@
-import { Bond, type BondStateProps } from '$ixirjs/ui/shared/bond';
-import { defineBond, type BondOf } from '$ixirjs/ui/shared';
-import {
-	CalendarRootAtom,
-	CalendarBodyAtom,
-	CalendarHeaderAtom,
-	CalendarWeekDayAtom,
-	CalendarDayAtom,
-	type WeekdayIndex
-} from './atoms.svelte';
+/**
+ * Calendar's shared object — a plain state class on the redesigned `Kernel`.
+ *
+ * Same surface the family always had (`{ calendar }`, `getBond`, `factory`, `selectStart`/`selectEnd`,
+ * `nextMonth`/`previousMonth`, `isDaySelected`), none of the runtime. The root owns the bindables and
+ * wires how a new range or pivote is written through `bindCommit`; the parts read the element ids
+ * from here — the historic `calendar-month-*` / `calendar-weekdays-*` names included.
+ */
+import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
+import type { BondStateProps } from '$ixirjs/ui/authoring';
 import type { CalendarRange, Day, Month } from './types';
 
 export type CalendarBondProps = BondStateProps & {
-	value?: Date;
+	value?: Date | undefined;
 	range: CalendarRange;
-	start?: Date;
-	end?: Date;
-	min?: Date;
-	max?: Date;
-	pivote?: Date;
+	start?: Date | undefined;
+	end?: Date | undefined;
+	min?: Date | undefined;
+	max?: Date | undefined;
+	pivote?: Date | undefined;
 	disabled?: boolean;
-	type?: 'range' | 'single';
-	currentMonth?: Month;
-	previousMonth?: Month;
-	nextMonth?: Month;
-	extend?: Record<string, unknown>;
+	type?: 'range' | 'single' | undefined;
+	currentMonth?: Month | undefined;
+	previousMonth?: Month | undefined;
+	nextMonth?: Month | undefined;
+	extend?: Record<string, unknown> | undefined;
 };
 
-// Bond shape the calendar atoms type this.bond against — breaks the atom↔bond cycle.
+export const CalendarContext = Kernel.context<CalendarBond>('bond/calendar');
 
-// Hand-written base for CalendarBond — creates data-driven day/weekDay atoms.
-// Static parts (root/body/header) come from the defineBond spec below.
+/** @internal How the root writes a committed range or pivote back into its bindables. */
+export type CalendarCommit = {
+	range(next: CalendarRange): void;
+	pivote(next: Date): void;
+};
 
-class CalendarBondBase extends Bond<CalendarBondProps> {
-	constructor(props: CalendarBondProps, name = 'calendar') {
-		super(props, name);
+export class CalendarBond {
+	static readonly CONTEXT_KEY = CalendarContext.key;
+	static get(): CalendarBond | undefined {
+		return CalendarContext.get();
+	}
+	static getOrThrow(message?: string): CalendarBond {
+		return CalendarContext.getOrThrow(message);
+	}
+	static create(props: CalendarBondProps): CalendarBond {
+		return new CalendarBond(props);
 	}
 
-	// Per-weekday cell atom, cached by index (0=Sunday..6=Saturday).
-	weekDay(index: number) {
-		return new CalendarWeekDayAtom(this as CalendarBondBase, index as WeekdayIndex);
+	readonly name = 'calendar';
+	readonly props: CalendarBondProps;
+	#commit: CalendarCommit | undefined;
+
+	constructor(props: CalendarBondProps) {
+		this.props = props;
 	}
 
-	// Per-day cell atom, cached by day.id.
-	day(day: Day) {
-		return new CalendarDayAtom(this as CalendarBondBase, day);
+	/** @internal The root wires how a new range or pivote is written and reported. */
+	bindCommit(commit: CalendarCommit): void {
+		this.#commit = commit;
 	}
 
-	selectDate(date: Date) {
-		if (!this.props.start) {
-			this.props.range = [date, this.props.range[1]];
-		} else if (!this.props.end) {
-			this.props.range = [this.props.range[0], date];
-		} else {
-			this.props.range = [date, undefined];
-		}
+	get id(): string {
+		return this.props.id ?? this.name;
+	}
+	get rootId(): string {
+		return Kernel.id(this.id, 'calendar-root');
+	}
+	get headerId(): string {
+		return Kernel.id(this.id, 'calendar-weekdays');
+	}
+	get bodyId(): string {
+		return Kernel.id(this.id, 'calendar-month');
+	}
+	weekdayId(index: number): string {
+		return Kernel.id(this.id, `calendar-weekday-${index}`);
+	}
+	dayId(day: Day): string {
+		return Kernel.id(this.id, `calendar-day-${day.id}`);
 	}
 
-	selectStart(date: Date) {
-		this.props.range = [date, this.props.range[1]];
+	#setRange(next: CalendarRange): void {
+		this.#commit?.range(next);
 	}
 
-	selectEnd(date: Date) {
-		this.props.range = [this.props.range[0], date];
+	selectDate(date: Date): void {
+		if (!this.props.start) this.#setRange([date, this.props.range[1]]);
+		else if (!this.props.end) this.#setRange([this.props.range[0], date]);
+		else this.#setRange([date, undefined]);
+	}
+	selectStart(date: Date): void {
+		this.#setRange([date, this.props.range[1]]);
+	}
+	selectEnd(date: Date): void {
+		this.#setRange([this.props.range[0], date]);
+	}
+	unselect(): void {
+		this.#setRange([undefined, undefined]);
+	}
+	unselectStart(): void {
+		this.#setRange([undefined, this.props.range[1]]);
+	}
+	unselectEnd(): void {
+		this.#setRange([this.props.range[0], undefined]);
 	}
 
-	unselect() {
-		this.props.range = [undefined, undefined];
+	#shiftMonth(by: number): void {
+		const current = this.props.pivote;
+		if (!current) return;
+		// Assigned wholesale to the reactive prop cell (never mutated in place) — a plain Date is correct here.
+		// eslint-disable-next-line svelte/prefer-svelte-reactivity
+		this.#commit?.pivote(new Date(current.getFullYear(), current.getMonth() + by, 1));
 	}
-
-	unselectStart() {
-		this.props.range = [undefined, this.props.range[1]];
+	nextMonth(): void {
+		this.#shiftMonth(1);
 	}
-
-	unselectEnd() {
-		this.props.range = [this.props.range[0], undefined];
-	}
-
-	nextMonth() {
-		if (this.props.pivote) {
-			const current = this.props.pivote;
-			// Assigned wholesale to the reactive prop cell (never mutated in place) — a plain Date is correct here.
-			// eslint-disable-next-line svelte/prefer-svelte-reactivity
-			this.props.pivote = new Date(current.getFullYear(), current.getMonth() + 1, 1);
-		}
-	}
-
-	previousMonth() {
-		if (this.props.pivote) {
-			const current = this.props.pivote;
-			// Assigned wholesale to the reactive prop cell (never mutated in place) — a plain Date is correct here.
-			// eslint-disable-next-line svelte/prefer-svelte-reactivity
-			this.props.pivote = new Date(current.getFullYear(), current.getMonth() - 1, 1);
-		}
+	previousMonth(): void {
+		this.#shiftMonth(-1);
 	}
 
 	isDaySelected(day: Day): boolean {
 		if (this.props.type !== 'range') {
 			return this.props.value?.getTime() === day.date.getTime();
 		}
-
-		const start = this.props.range[0];
-		const end = this.props.range[1];
-
+		const [start, end] = this.props.range;
 		if (!start) return false;
-
 		const dayTime = day.date.getTime();
 		const startTime = start.getTime();
-
 		if (!end) return dayTime === startTime;
-
-		const endTime = end.getTime();
-		return dayTime >= startTime && dayTime <= endTime;
+		return dayTime >= startTime && dayTime <= end.getTime();
 	}
 }
-
-// CalendarBond via defineBond: declares root/body/header atoms; day/weekDay live on the base.
-// Selection/navigation logic lives on CalendarBondBase.
-
-export const CalendarBond = defineBond({
-	name: 'calendar',
-	base: CalendarBondBase,
-	atoms: {
-		root: CalendarRootAtom,
-		body: CalendarBodyAtom,
-		header: CalendarHeaderAtom
-	}
-});
-
-// Instance type — paired with the const above (value + type).
-export type CalendarBond = BondOf<typeof CalendarBond>;

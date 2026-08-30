@@ -15,7 +15,10 @@ import { FIXTURES } from './fixtures.js';
  * silently stops covering a new family keeps reporting green while the thing it guards walks out.
  */
 const COMPONENTS = join(process.cwd(), 'src/lib/components');
-const OWNS_COLLECTION = /\bthis\.collection</;
+// `this.collection<…>` on the older runtime; a mount-ordered `items` map on the redesigned Kernel.
+// The menu families' map is a `SvelteMap` — roving and typeahead read the membership itself, not
+// just facts derived from it — so the reactive spelling counts as ownership too.
+const OWNS_COLLECTION = /\bthis\.collection<|readonly items = new (Svelte)?Map<|new Collection</;
 
 function familiesOwningACollection(): string[] {
 	const owners = new Set<string>();
@@ -65,7 +68,11 @@ describe('growth benchmark coverage', () => {
 		// `select` and `context-menu` inherit their collection from `DropdownMenuBondBase` rather
 		// than declaring one, so they never appear in the source scan. Select still earns a fixture:
 		// it overrides `navigableItems`, which is the very seam the roving model reads.
-		const inherited = new Set(['select']);
+		// `datagrid-columns` and `tree-depth` are SECOND axes of their families, not families of
+		// their own: neither name can match a directory and neither must read as stale. A family
+		// earns more than one growth shape when a child reads more than one owner-wide thing --
+		// `datagrid` a second collection, `tree` its ancestor chain.
+		const inherited = new Set(['select', 'datagrid-columns', 'tree-depth']);
 		const stale = FIXTURES.map((fixture) => fixture.name).filter(
 			(name) => !owners.has(name) && !inherited.has(name)
 		);

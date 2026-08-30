@@ -1,6 +1,5 @@
 <script lang="ts" module>
 	import type { DropdownMenuBond } from '$ixirjs/ui/components/dropdown-menu/bond.svelte';
-	import type { PopoverBond } from '$ixirjs/ui/components/popover/bond.svelte';
 
 	export let capturedBond: DropdownMenuBond | undefined;
 
@@ -21,8 +20,8 @@
 
 <Root>
 	<DropdownMenu.Root open={true}>
-		{#snippet children({ popover }: { popover: PopoverBond | undefined })}
-			{capture(popover as unknown as DropdownMenuBond | undefined)}
+		{#snippet children({ popover }: { popover: unknown })}
+			{capture(popover as DropdownMenuBond | undefined)}
 			<DropdownMenu.Trigger>Open</DropdownMenu.Trigger>
 			<DropdownMenu.Content>
 				<DropdownMenu.Item id="alpha">Alpha</DropdownMenu.Item>

@@ -1,13 +1,8 @@
 import type { Snippet } from 'svelte';
-import type {
-	RenderProps,
-	Base,
-	SnippetProps,
-	HtmlElementTagName
-} from '$ixirjs/ui/components/atom';
+import type { PlainPartProps, SnippetProps } from '$ixirjs/ui/authoring';
 import type { Factory, StateChangeCallback } from '$ixirjs/ui/types';
 import type { PresetLike } from '$ixirjs/ui/preset';
-import type { BondPresetLayers } from '$ixirjs/ui/shared/bond';
+import type { BondPresetLayers } from '$ixirjs/ui/authoring';
 import type { AccordionBond } from './bond.svelte';
 
 // Accordion Snippet Props
@@ -23,10 +18,8 @@ export interface AccordionPresets extends BondPresetLayers {
 }
 
 // Accordion Root Props
-export interface AccordionRootProps<
-	E extends HtmlElementTagName = 'div',
-	B extends Base = Base
-> extends RenderProps<E, B, AccordionChildren> {
+// The root IS its `<div>` — no `as`/`base`/motion; see `PlainPartProps`.
+export interface AccordionRootProps extends PlainPartProps<'div', AccordionChildren> {
 	/** The value of the currently open item (controlled single-item mode) */
 	value?: string;
 	/** Array of currently open item values (controlled multiple-item mode) */

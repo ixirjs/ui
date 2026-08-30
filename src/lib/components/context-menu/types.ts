@@ -1,4 +1,4 @@
-import type { RenderProps, Base, HtmlElementTagName } from '$ixirjs/ui/components/atom';
+import type { RenderProps, Base, HtmlElementTagName } from '$ixirjs/ui/authoring';
 import type { OmitKey } from '$ixirjs/ui/types';
 import type {
 	PopoverContentProps,

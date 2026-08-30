@@ -4,7 +4,7 @@ import {
 	fallbackPreset as fallbackPresetInternal,
 	mergePresetLayers as mergePresetLayersInternal,
 	setPreset as setPresetInternal
-} from '$ixirjs/ui/context/preset.svelte';
+} from '$ixirjs/ui/preset/context.svelte';
 import type {
 	FallbackPreset,
 	MergedPresetLayers,

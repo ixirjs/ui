@@ -1,5 +1,5 @@
-import { animate, DURATION, type Easing } from '$ixirjs/ui/shared';
-import { DialogBond } from './bond.svelte';
+import { animate, DURATION, type Easing } from '$ixirjs/ui/authoring';
+import { DialogContext } from './bond.svelte';
 
 type AnimateDialogContentParams = {
 	duration?: number;
@@ -14,18 +14,18 @@ export function animateDialogContent(params: AnimateDialogContentParams = {}) {
 
 	return (node: HTMLElement) => {
 		// Read bond inside the callback so it works outside component init
-		const bond = DialogBond.get();
+		const bond = DialogContext.getOptional();
 
 		const isOpen = bond?.props.open ?? false;
 
 		if (isOpen) {
-			const rootElement = bond?.elements.root;
+			const rootElement = bond?.element('root');
 			if (rootElement instanceof HTMLDialogElement) {
 				rootElement.show();
 			}
 		}
 
-		const triggerElement = bond?.elements.trigger;
+		const triggerElement = bond?.element('trigger');
 
 		if (triggerElement) {
 			node.style.transform = '';

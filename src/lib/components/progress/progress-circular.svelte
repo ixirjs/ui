@@ -1,19 +1,10 @@
 <script lang="ts">
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
-	import { mergePresetProps } from '$ixirjs/ui/components/atom';
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
 	import { clamp } from '$ixirjs/ui/utils/math';
 	import type { ProgressCircularProps } from './types';
 	import { SvgElement } from '$ixirjs/ui/components/element';
 
-	let {
-		class: klass = '',
-		value = null,
-		max = 100,
-		preset = undefined,
-		...restProps
-	}: ProgressCircularProps = $props();
-
-	const circularProps = $derived(mergePresetProps(preset, 'progress.circular', restProps));
+	let { value = null, max = 100, ...restProps }: ProgressCircularProps = $props();
 
 	const isIndeterminate = $derived(value === null || value === undefined);
 	const percent = $derived(isIndeterminate ? null : clamp((value! / max) * 100, 0, 100));
@@ -24,28 +15,28 @@
 		isIndeterminate ? circumference : circumference - (percent! / 100) * circumference
 	);
 
-	// Element seam instead of a component boundary; key order matches the previous call exactly.
-	const el = Kernel.element(Kernel.static, () => ({
-		as: 'div',
-		class: [
-			'progress-root progress-root--circular relative inline-flex items-center justify-center',
-			'$preset',
-			klass
-		],
-		role: 'progressbar',
-		'aria-valuemin': 0,
-		'aria-valuemax': max,
-		'aria-valuenow': isIndeterminate ? undefined : (value ?? undefined),
-		'aria-valuetext': isIndeterminate ? undefined : `${Math.round(percent!)}%`,
-		'data-indeterminate': isIndeterminate,
-		'data-value': isIndeterminate ? undefined : (value ?? undefined),
-		'data-max': max,
-		'data-completed': !isIndeterminate && percent === 100,
-		...circularProps
-	}));
+	const el = Kernel.element(() => restProps, {
+		preset: 'progress.circular',
+		class: 'progress-root progress-root--circular relative inline-flex items-center justify-center',
+		attrs: () => ({
+			role: 'progressbar',
+			'aria-valuemin': 0,
+			'aria-valuemax': max,
+			'aria-valuenow': isIndeterminate ? undefined : (value ?? undefined),
+			'aria-valuetext': isIndeterminate ? undefined : `${Math.round(percent!)}%`,
+			'data-indeterminate': isIndeterminate,
+			'data-value': isIndeterminate ? undefined : (value ?? undefined),
+			'data-max': max,
+			'data-completed': !isIndeterminate && percent === 100
+		})
+	});
+	// Dispatches rather than writing a literal `<div>`: this component owns a style block with
+	// keyframes, and Svelte stamps its scope hash onto any spread-bearing element in the template.
+	// The leaf renders the element from Kernel's module, so the hash stays off it.
+	const leaf = Kernel.render(el);
 </script>
 
-{@render Kernel.render(el)(el, circularBody)}
+{@render leaf(el, circularBody)}
 
 {#snippet circularBody()}
 	<svg viewBox="0 0 48 48" class="h-full w-full -rotate-90" aria-hidden="true">

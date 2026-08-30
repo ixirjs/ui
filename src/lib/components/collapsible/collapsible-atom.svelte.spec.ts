@@ -5,46 +5,34 @@ import Probe, {
 	capturedBond,
 	resetCapturedBond
 } from '$ixirjs/ui/test/components/collapsible/collapsible-atom-probe.test.svelte';
-import { Atom } from '$ixirjs/ui/shared/bond';
-import { disclosureTrigger } from '$ixirjs/ui/shared/capability/models/disclosure.svelte';
 import Header from './collapsible-header.svelte';
-import {
-	CollapsibleBond,
-	CollapsibleBodyAtom,
-	CollapsibleHeaderAtom,
-	CollapsibleIndicatorAtom,
-	CollapsibleRootAtom,
-	type CollapsibleStateProps
-} from './bond.svelte';
+import { CollapsibleBond, type CollapsibleBondProps } from './bond.svelte';
 
-function makeBond(initial: Partial<CollapsibleStateProps> = {}) {
-	const props = $state<CollapsibleStateProps>({ open: false, disabled: false, ...initial });
+// Replaces the Atom-registry spec (`nodeByPart`, `register`, capability slots): the same rendered
+// outcome — every part carries its seeded id, the header names the body it controls, and the
+// disabled projection reaches the element.
+function makeBond(initial: Partial<CollapsibleBondProps> = {}) {
+	const props = $state<CollapsibleBondProps>({ open: false, disabled: false, ...initial });
 	return { bond: CollapsibleBond.create(props), props };
-}
-
-function clickEvent(): MouseEvent {
-	return { button: 0, defaultPrevented: false } as MouseEvent;
 }
 
 describe('Collapsible Bond interface', () => {
 	beforeEach(resetCapturedBond);
 
-	it('self-constructs without generated Atom methods and exposes predicate state', () => {
+	it('self-constructs and exposes predicate state', () => {
 		const { bond, props } = makeBond({ disabled: true });
 
 		expect(bond).toBeInstanceOf(CollapsibleBond);
 		expect(bond.props.open).toBe(false);
 		expect(bond.isOpen).toBe(false);
 		expect(bond.isDisabled).toBe(true);
-		expect((bond as unknown as Record<string, unknown>).header).toBeUndefined();
 
 		props.open = true;
 		expect(bond.isOpen).toBe(true);
 	});
 
-	it('mutates open state through methods and trigger handlers', () => {
+	it('mutates open state through methods', () => {
 		const { bond, props } = makeBond();
-		const header = new CollapsibleHeaderAtom(bond).role('trigger');
 
 		bond.open();
 		expect(props.open).toBe(true);
@@ -52,9 +40,6 @@ describe('Collapsible Bond interface', () => {
 		expect(props.open).toBe(false);
 		bond.toggle();
 		expect(props.open).toBe(true);
-
-		(header.spread.onclick as (event: MouseEvent) => void)(clickEvent());
-		expect(props.open).toBe(false);
 	});
 
 	it('toggles from a rendered click', async () => {
@@ -68,78 +53,31 @@ describe('Collapsible Bond interface', () => {
 		unmount();
 	});
 
-	it('projects reactive capability and relationship attrs onto registered Atoms', () => {
-		const { bond, props } = makeBond({ disabled: true });
-		const header = new CollapsibleHeaderAtom(bond).role('trigger');
-		const body = new CollapsibleBodyAtom(bond).role('content');
-		const indicator = new CollapsibleIndicatorAtom(bond);
-		bond.register(header);
-		bond.register(body);
-
-		expect(header?.capabilities.map((cap) => cap.slot.description)).toContain(
-			'@ixirjs/collapsible:header'
-		);
-		expect(body?.capabilities.map((cap) => cap.slot.description)).toContain(
-			'@ixirjs/collapsible:body'
-		);
-		expect(header.spread.role).toBe('button');
-		expect(header.spread.tabindex).toBe(-1);
-		expect(header.spread['aria-disabled']).toBe('true');
-		expect(header.spread['aria-controls']).toBe(body.id);
-		expect(header.spread['aria-expanded']).toBe(false);
-		expect(body.spread.role).toBe('region');
-		expect(body.spread['aria-labelledby']).toBe(header.id);
-		expect(body.spread.inert).toBe(true);
-		expect(indicator.spread.role).toBe('icon');
-
-		props.disabled = false;
-		props.open = true;
-		expect(header.spread['aria-disabled']).toBe('false');
-		expect(header.spread.tabindex).toBe(0);
-		expect(header.spread['aria-expanded']).toBe(true);
-		expect(body.spread.inert).toBeUndefined();
-	});
-
-	it('allows a last-wins trigger policy replacement', () => {
-		const { bond, props } = makeBond();
-		bond.capability(disclosureTrigger({ disabled: true }));
-		const header = new CollapsibleHeaderAtom(bond).role('trigger');
-
-		(header.spread.onclick as (event: MouseEvent) => void)(clickEvent());
-		expect(props.open).toBe(false);
-	});
-
-	it('registers rendered part Atoms once and cleans them up on unmount', () => {
+	it('renders every part with its id and cross-part ARIA', () => {
 		const { unmount } = render(Probe);
-		const bond = capturedBond;
+		const bond = capturedBond!;
+		const byId = (id: string) => document.getElementById(id)!;
 
-		expect(bond).toBeDefined();
-		expect(bond?.nodeByPart('root')).toBeInstanceOf(CollapsibleRootAtom);
-		expect(bond?.nodeByPart('header')).toBeInstanceOf(CollapsibleHeaderAtom);
-		expect(bond?.nodeByPart('body')).toBeInstanceOf(CollapsibleBodyAtom);
-		expect(bond?.nodeByPart('indicator')).toBeInstanceOf(CollapsibleIndicatorAtom);
-		expect(bond?.nodeByPart('header')).toBe(bond?.nodeByPart('header'));
-		expect(bond?.nodesByPart('header')).toHaveLength(1);
-		expect(
-			[
-				bond?.nodeByPart('root'),
-				bond?.nodeByPart('header'),
-				bond?.nodeByPart('body'),
-				bond?.nodeByPart('indicator')
-			].every((node) => node instanceof Atom)
-		).toBe(true);
+		const root = byId(bond.rootId);
+		const header = byId(bond.headerId);
+		const body = byId(bond.bodyId);
+		const indicator = byId(bond.indicatorId);
+
+		for (const node of [root, header, body, indicator]) expect(node).not.toBeNull();
+		expect(header.getAttribute('role')).toBe('button');
+		expect(header.getAttribute('tabindex')).toBe('0');
+		expect(header.getAttribute('aria-disabled')).toBe('false');
+		expect(header.getAttribute('aria-controls')).toBe(bond.bodyId);
+		expect(header.getAttribute('aria-expanded')).toBe('true');
+		expect(body.getAttribute('role')).toBe('region');
+		expect(body.getAttribute('aria-labelledby')).toBe(bond.headerId);
+		expect(body.hasAttribute('inert')).toBe(false);
+		expect(indicator.getAttribute('role')).toBe('icon');
 
 		unmount();
-		expect(bond?.nodesByPart('root')).toEqual([]);
-		expect(bond?.nodesByPart('header')).toEqual([]);
-		expect(bond?.nodesByPart('body')).toEqual([]);
-		expect(bond?.nodesByPart('indicator')).toEqual([]);
 	});
 
 	it('rejects descendant parts outside a root context', () => {
-		// `Header`'s props carry `BasePropsOf<B>`, a conditional over its own generic, so svelte2tsx
-		// emits a component type structurally unrelated to `render`'s parameter. Runtime is what this
-		// asserts; the cast only gets the call past that identity mismatch.
 		expect(() => render(Header as never)).toThrow(
 			'<Collapsible.Header /> must be used within a <Collapsible.Root />'
 		);

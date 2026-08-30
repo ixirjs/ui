@@ -27,7 +27,7 @@
 </Root>
 
 <style>
-	:global([data-kind='popover-tail']) {
+	:global([data-tail-side]) {
 		position: absolute;
 	}
 </style>

@@ -1,5 +1,5 @@
 import type { Snippet } from 'svelte';
-import type { RenderProps, SnippetProps } from '$ixirjs/ui/components/atom';
+import type { PlainPartProps, SnippetProps } from '$ixirjs/ui/authoring';
 
 // Container snippet props
 
@@ -10,7 +10,8 @@ export interface ContainerSnippetProps extends SnippetProps {
 
 export type ContainerChildren = Snippet<[ContainerSnippetProps]>;
 
-export interface ContainerProps extends RenderProps<'div', never, ContainerChildren> {
+// The container IS its `<div>` — no `as`/`base`/motion; see `PlainPartProps`.
+export interface ContainerProps extends PlainPartProps<'div', ContainerChildren> {
 	/** Containment axis. `inline-size` queries width only — the common case; `size` queries both axes and requires a fixed block size. */
 	type?: 'inline-size' | 'size';
 	/** Form field name, submitted with the form. */

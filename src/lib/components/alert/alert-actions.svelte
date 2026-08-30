@@ -1,16 +1,18 @@
-<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
-	import { type Base, type BasePropsOf, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
-	import { definePart } from '$ixirjs/ui/components/atom/define-part.svelte';
-	import { AlertBond } from './bond.svelte';
+<script lang="ts">
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
+	import { AlertContext } from './bond.svelte';
 	import type { AlertActionsProps } from './types';
 
-	const props: AlertActionsProps<E, B> & BasePropsOf<B> = $props();
-
-	const el = definePart(AlertBond, 'actions', () => props, {
+	const props: AlertActionsProps = $props();
+	const alert = AlertContext.getOptional();
+	const el = Kernel.element(() => props, {
+		preset: 'alert.actions',
 		class: 'alert-actions border-border mt-3 flex items-center gap-2',
-		context: 'optional'
+		state: alert,
+		as: () => props.as,
+		base: () => props.base
 	});
+	const leaf = Kernel.render(el);
 </script>
 
-{@render Kernel.render(el)(el, props.children, { alert: el.bond! })}
+{@render leaf(el, props.children, { alert: alert! })}

@@ -1,5 +1,5 @@
 import type { Component } from 'svelte';
-import type { Base, BasePropsOf, RenderProps } from '$ixirjs/ui/components/atom';
+import type { Base, BasePropsOf, RenderProps } from '$ixirjs/ui/authoring';
 
 /**
  * A `base` component's own props spread flat alongside element attributes and are typed from it.

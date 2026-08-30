@@ -1,9 +1,9 @@
 import { createContext, getContext } from 'svelte';
-import { bondContextKey } from '$ixirjs/ui/shared/bond';
 
 const [getLayer, setLayer] = createContext<ZLayer>();
-const PORTALS_CONTEXT_KEY = bondContextKey('portals');
-const PORTAL_CONTEXT_KEY = bondContextKey('portal');
+// The registry and the portal share themselves under these keys (`Kernel.context('portals' | 'portal')`).
+const PORTALS_CONTEXT_KEY = '@ixirjs/context/portals';
+const PORTAL_CONTEXT_KEY = '@ixirjs/context/portal';
 
 // Built-in layer bases: positioned floats < modal surfaces < ambient feedback.
 export const LAYER_BASE = {

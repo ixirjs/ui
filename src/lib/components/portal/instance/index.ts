@@ -2,10 +2,16 @@ export * as Portal from './atoms';
 export { default as PortalHost } from './portal-host.svelte';
 export {
 	PortalBond,
-	PortalBondBase,
-	PortalInnerAtom,
-	PortalRootAtom,
+	PortalContext,
 	type PortalBondProps,
 	type PortalElevationEntry,
 	type PortalStateProps
 } from './bond.svelte';
+
+// The same parts, named directly. `<Portal.Root>` is a member expression, so the compiler treats it as a
+// DYNAMIC component and wraps its output in a fragment boundary — measured at ~2.2 µs and ~1.5
+// hydration anchors per part (card mount −20%, hydrate −27%, retained heap −21% on the direct call
+// site; `bench:vs-shadcn`, 2026-08-27). The namespace stays the ergonomic default; reach for these
+// where one part renders many times — a long list, a grid cell, a table row.
+export { default as PortalOuter } from './portal-root.svelte';
+export { default as PortalInner } from './portal-inner.svelte';

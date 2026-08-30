@@ -1,19 +1,13 @@
 <script lang="ts">
+	import { createAttachmentKey } from 'svelte/attachments';
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
 	import { PortalSurface } from '$ixirjs/ui/components/portal';
-	import { createPopoverAtom, getPopoverPosition, PopoverBond, popoverNode } from './bond.svelte';
-	import { createAtomInstance, type Atom } from '$ixirjs/ui/shared/bond';
-	import { overlayIsOpen } from '$ixirjs/ui/components/overlay/policies/overlay-view';
+	import { surfaceKeydown } from '$ixirjs/ui/components/overlay/behavior.svelte';
+	import { focus } from '$ixirjs/ui/utils/dom.svelte';
+	import { PopoverContext } from './bond.svelte';
 	import type { PopoverOverlayProps } from './types';
-	import type { PresetLike } from '$ixirjs/ui/preset';
 
-	const bond = PopoverBond.getOrThrow('<Popover.Overlay /> must be used within a <Popover />');
-	const isOpen = $derived(overlayIsOpen(bond));
-
-	const strategy = $derived(getPopoverPosition(bond)?.strategy ?? 'absolute');
-
-	// CSS position and transform matching the strategy's coordinate basis. Keeping the computed
-	// transform in the reactive presentation layer makes the surface update when floating-ui
-	// publishes its first position after PortalSurface attaches the node.
+	const bond = PopoverContext.getOrThrow('<Popover.Overlay /> must be used within a <Popover />');
 
 	let {
 		portal,
@@ -21,31 +15,66 @@
 		order = undefined,
 		children = undefined,
 		'z-index': zIndex = undefined,
+		presetLayer = undefined,
+		onkeydown = undefined,
+		// The surface owns its style: the floating transform below is the whole point of this part.
+		style: _style = undefined,
 		...restProps
 	}: PopoverOverlayProps = $props();
 
-	const overlayAtom = createAtomInstance<Atom<PopoverBond, HTMLElement>, PopoverBond, HTMLElement>(
-		'overlay',
-		{
-			bond,
-			factory: (owner) => createPopoverAtom(owner as PopoverBond, 'overlay')
-		}
-	);
+	const id = Kernel.id(bond.id, `${bond.name}-overlay`);
+	const release = bond.attachPart('overlay', id);
+	$effect(() => release);
 
-	const overlayProps = $derived.by((): Record<string, unknown> => {
-		const { style: _style, ...props } = {
-			...(overlayAtom.spread as Record<string, unknown>),
-			...restProps
+	const isOpen = $derived(bond.isOpen);
+	const strategy = $derived(bond.position?.strategy ?? 'absolute');
+
+	// Escape (top-of-stack only) and the Tab trap, after the consumer's own handler.
+	const surface = surfaceKeydown(bond, (_o, event) => bond.onEscape(event));
+	function keydown(event: KeyboardEvent) {
+		onkeydown?.(event as Parameters<NonNullable<typeof onkeydown>>[0]);
+		if (!event.defaultPrevented) surface(event);
+	}
+
+	// Open at mount: move focus to the first text input in the surface unless the trigger already
+	// holds one. Minted once so the node is not re-attached per invalidation.
+	const focusKey = createAttachmentKey();
+	function focusOnMount(element: HTMLElement) {
+		const triggerElement = bond.element('trigger');
+		if (!triggerElement || !bond.isOpen) return;
+
+		const activeElement = document.activeElement as HTMLElement;
+		const triggerContainsFocus =
+			['input', 'textarea'].includes(activeElement.tagName.toLowerCase()) &&
+			triggerElement.contains(activeElement);
+
+		if (!triggerContainsFocus) {
+			setTimeout(() => focus(element, ['textarea:not([disabled])', 'input:not([disabled])']), 0);
+		}
+	}
+
+	// The dialog ARIA the surface carries; `aria-labelledby` only while a trigger rendered.
+	const overlayAttrs = $derived.by(() => {
+		const triggerId = bond.partId('trigger');
+		const isActive = isOpen && !bond.isDisabled;
+		return {
+			id,
+			role: 'dialog',
+			'aria-modal': false,
+			...(triggerId ? { 'aria-labelledby': triggerId } : {}),
+			inert: !isActive ? true : undefined,
+			tabindex: -1,
+			'data-active': isActive,
+			'data-state': isOpen ? 'open' : 'closed',
+			onkeydown: keydown,
+			[focusKey]: focusOnMount
 		};
-		return props as Record<string, unknown>;
 	});
-	const overlayPresetLayer = $derived(
-		bond.presetLayer('overlay') ?? (overlayProps.presetLayer as PresetLike | undefined)
-	);
+	const overlayPresetLayer = $derived(bond.props.presets?.overlay ?? presetLayer);
 
 	// Transform + opacity from the current floating-ui position.
 	function calculatePosition() {
-		const position = getPopoverPosition(bond);
+		const position = bond.position;
 
 		if (!position) {
 			return null;
@@ -71,8 +100,7 @@
 
 		// Tail dimensions. The default tail overlaps the content by a small square cap, so
 		// only the protruding depth should push the floating overlay away from the trigger.
-		const tail = popoverNode(bond, 'tail')?.element;
-		const tailEl = tail instanceof HTMLElement ? tail : null;
+		const tailEl = bond.element('tail');
 		const tailOverlap = Number(tailEl?.dataset.tailOverlap ?? 0) || 0;
 		const tailWidth = Math.max(0, (tailEl?.clientWidth ?? 0) - (directionX ? tailOverlap : 0));
 		const tailHeight = Math.max(0, (tailEl?.clientHeight ?? 0) - (directionY ? tailOverlap : 0));
@@ -110,7 +138,8 @@
 	class="top-0 left-0 h-min w-fit outline-none pointer-events-none"
 	style={surfaceStyle}
 	z-index={zIndex}
-	{...overlayProps}
+	{...overlayAttrs}
+	{...restProps}
 	presetLayer={overlayPresetLayer}
 >
 	{@render children?.({ popover: bond })}

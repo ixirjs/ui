@@ -1,33 +1,56 @@
+/**
+ * RadioGroup's shared object — a plain state class on the redesigned `Kernel`.
+ *
+ * Same surface the family always had (`RadioGroupBond`, `getBond`, `select`), none of the runtime.
+ * Radios register a handle at their init and are released on teardown; selection is the native
+ * radio's, so there is no roving tab stop to keep — the group only routes the checked-state
+ * callbacks in the order the family always fired them: write, previous item, next item, group.
+ */
+import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
 import type { StateChangeCallback } from '$ixirjs/ui/types';
-import { Bond, bondContextKey, type BondStateProps } from '$ixirjs/ui/shared/bond';
 
 export type RadioCheckedChangeListener = (checked: boolean, event: Event) => void;
 
-export type RadioGroupBondProps<T = string> = BondStateProps & {
+export type RadioGroupBondProps<T = string> = {
+	id?: string | undefined;
 	value: T | undefined;
 	disabled: boolean;
 	required: boolean;
 	readonly: boolean;
-	name?: string;
-	onvaluechange?: StateChangeCallback<T>;
+	name?: string | undefined;
+	onvaluechange?: StateChangeCallback<T> | undefined;
 };
 
-/** Owns group selection, item registration, and callback ordering for one RadioGroup subtree. */
-export class RadioGroupBond<T = string> extends Bond<RadioGroupBondProps<T>> {
-	static CONTEXT_KEY = bondContextKey('radio-group');
-	readonly #listeners = new Map<T, Set<RadioCheckedChangeListener>>();
+/** What a radio registers with its group: its live `value` and how to tell it its checked state moved. */
+export interface RadioItemHandle<T = string> {
+	readonly value: T | undefined;
+	readonly notify: RadioCheckedChangeListener;
+}
+
+export const RadioGroupContext = Kernel.context<RadioGroupBond<unknown>>('radio-group');
+
+export class RadioGroupBond<T = string> {
+	readonly name = 'radio-group';
+	readonly props: RadioGroupBondProps<T>;
+	/** Mounted radios in document order. A `Set`: the handle reads `value` live, so nothing keys on it. */
+	readonly items = new Set<RadioItemHandle<T>>();
 
 	constructor(props: RadioGroupBondProps<T>) {
-		super(props, 'radio-group');
+		this.props = props;
 	}
 
-	registerItem(itemValue: T, listener: RadioCheckedChangeListener): () => void {
-		const listeners = this.#listeners.get(itemValue) ?? new Set();
-		listeners.add(listener);
-		this.#listeners.set(itemValue, listeners);
+	static create<T = string>(props: RadioGroupBondProps<T>): RadioGroupBond<T> {
+		return new RadioGroupBond<T>(props);
+	}
+
+	get id(): string {
+		return this.props.id ?? 'radio-group';
+	}
+
+	attachItem(item: RadioItemHandle<T>): () => void {
+		this.items.add(item);
 		return () => {
-			listeners.delete(listener);
-			if (listeners.size === 0) this.#listeners.delete(itemValue);
+			this.items.delete(item);
 		};
 	}
 
@@ -48,9 +71,10 @@ export class RadioGroupBond<T = string> extends Bond<RadioGroupBondProps<T>> {
 		source?: RadioCheckedChangeListener
 	): boolean {
 		let sourceNotified = false;
-		for (const listener of this.#listeners.get(itemValue) ?? []) {
-			listener(checked, event);
-			if (listener === source) sourceNotified = true;
+		for (const item of this.items) {
+			if (item.value === undefined || !Object.is(item.value, itemValue)) continue;
+			item.notify(checked, event);
+			if (item.notify === source) sourceNotified = true;
 		}
 		return sourceNotified;
 	}

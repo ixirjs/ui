@@ -1,4 +1,4 @@
-import type { Base, RenderProps, HtmlElementTagName } from '$ixirjs/ui/components/atom';
+import type { Base, RenderProps, HtmlElementTagName } from '$ixirjs/ui/authoring';
 
 // Extension points: merge custom props into breadcrumb parts by augmenting these interfaces.
 // `BreadcrumbItemProps` is interface-shaped, so it is augmented directly instead.

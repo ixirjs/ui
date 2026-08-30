@@ -1,4 +1,3 @@
-import { tick } from 'svelte';
 import { expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import type { CardBond } from './bond.svelte';
@@ -19,43 +18,8 @@ it('forwards attributes and preserves clickable keyboard behavior on the leaf', 
 	expect(clicks).toBe(2);
 });
 
-it('keeps one semantic Atom while switching between the leaf and rich paths', async () => {
-	let bond: CardBond | undefined;
-	const screen = render(Probe, { rich: false, onbond: (value) => (bond = value) });
-	await tick();
-
-	const first = bond!.nodeByRole('label');
-	const title = () => document.querySelector('[data-testid="title"]') as HTMLElement;
-	expect(title().tagName).toBe('H3');
-	expect(first?.element).toBe(title());
-
-	screen.rerender({ rich: true, onbond: (value) => (bond = value) });
-	await tick();
-	expect(title().tagName).toBe('H2');
-	expect(bond!.nodeByRole('label')).toBe(first);
-	expect(first?.element).toBe(title());
-
-	screen.rerender({ rich: false, onbond: (value) => (bond = value) });
-	await tick();
-	expect(title().tagName).toBe('H3');
-	expect(bond!.nodeByRole('label')).toBe(first);
-	expect(first?.element).toBe(title());
-});
-
-it('routes a custom renderer through the rich path without replacing Bond identity', async () => {
-	let bond: CardBond | undefined;
-	const screen = render(Probe, { custom: false, onbond: (value) => (bond = value) });
-	await tick();
-	const identity = bond;
-
-	screen.rerender({ custom: true, onbond: (value) => (bond = value) });
-	await tick();
-	const title = document.querySelector('[data-testid="title"]') as HTMLElement;
-	expect(title.tagName).toBe('DIV');
-	expect(title.getAttribute('data-received')).toContain('data-testid');
-	expect(bond).toBe(identity);
-	expect(bond!.nodeByRole('label')).toBeDefined();
-});
+// The leaf ↔ rich switching and custom-renderer cases moved to `alert/kernel.svelte.spec.ts`:
+// Card's parts are their own element now and take no `as`/`base` (`PlainPartProps`).
 
 it('falls back to full presentation for local variants', () => {
 	render(Probe, { withVariants: true, onbond: () => {} });
@@ -79,5 +43,5 @@ it('preserves a custom factory and its Bond identity', () => {
 	expect(childBond).toBe(factoryBond);
 	const root = document.querySelector('[data-testid="factory-root"]');
 	expect(root).toBeTruthy();
-	expect(factoryBond!.nodeByPart('root')?.element).toBe(root);
+	expect(factoryBond!.element).toBe(root);
 });

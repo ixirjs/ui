@@ -1,10 +1,5 @@
 import type { Component, Snippet } from 'svelte';
-import type {
-	RenderProps,
-	Base,
-	SnippetProps,
-	HtmlElementTagName
-} from '$ixirjs/ui/components/atom';
+import type { RenderProps, Base, SnippetProps, HtmlElementTagName } from '$ixirjs/ui/authoring';
 import type { Factory, StateChangeCallback } from '$ixirjs/ui/types';
 import type { SelectBond } from './bond.svelte';
 import type { DropdownMenuPresets } from '$ixirjs/ui/components/dropdown-menu';

@@ -1,10 +1,5 @@
 import type { Snippet } from 'svelte';
-import type {
-	RenderProps,
-	Base,
-	SnippetProps,
-	HtmlElementTagName
-} from '$ixirjs/ui/components/atom';
+import type { RenderProps, Base, SnippetProps, HtmlElementTagName } from '$ixirjs/ui/authoring';
 import type { Factory, Override } from '$ixirjs/ui/types';
 import type { PresetKey } from '$ixirjs/ui/preset';
 import type { ScrollableBond } from './bond.svelte';

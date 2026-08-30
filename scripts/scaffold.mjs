@@ -107,13 +107,14 @@ function typesFile(n, slots) {
 	// Emitted already Prettier-clean: a root's extra members push the intersection onto its own
 	// line, a bare part's does not. Generating output that `bun run lint` immediately rewrites
 	// makes every scaffold start with a spurious diff.
+	// `PlainPartProps`, not `RenderProps`: a scaffolded part IS its element (`<div {...el.attrs}>`),
+	// which types `as`, `base`, motion and the renderer lifecycle attributes `never` so a consumer
+	// learns at the call site. A part that grows a reason to dispatch — a transition, a `base`, a
+	// polymorphic tag — swaps to `RenderProps` and binds a leaf.
 	const propsFor = (s) => {
-		const head = `export type ${n.Pascal}${pascal(s.slot)}Props<
-	E extends HtmlElementTagName = 'div',
-	B extends Base = Base
-> = RenderProps<E, B, ${n.Pascal}Children> &`;
+		const head = `export type ${n.Pascal}${pascal(s.slot)}Props = PlainPartProps<'div', ${n.Pascal}Children> &`;
 		if (s.slot !== 'root') {
-			return `${head} ${n.Pascal}${pascal(s.slot)}ExtendProps;`;
+			return `${head}\n\t${n.Pascal}${pascal(s.slot)}ExtendProps;`;
 		}
 		return `${head}
 	${n.Pascal}RootExtendProps & {
@@ -123,12 +124,7 @@ function typesFile(n, slots) {
 	};
 
 	return `import type { Snippet } from 'svelte';
-import type {
-	RenderProps,
-	Base,
-	HtmlElementTagName,
-	SnippetProps
-} from '$ixirjs/ui/components/atom';
+import type { PlainPartProps, SnippetProps } from '$ixirjs/ui/authoring';
 import type { Factory } from '$ixirjs/ui/types';
 import type { ${n.Pascal}Bond } from './bond.svelte';
 
@@ -147,41 +143,52 @@ ${slots.map(propsFor).join('\n\n')}
 }
 
 function bondFile(n, slots) {
-	// Every scaffolded slot starts presentation-free, so none declares an `atom`: `defineBond`
-	// synthesizes `defineAtom({ key: slot, namespace: name })` for it. Declare one — a `defineAtom`
-	// with an `attrs`/`handlers` spec, or an `Atom` subclass — at the point a slot grows behavior.
-	const atomMap = slots
-		.map((s) => (s.role ? `\t\t${s.slot}: { role: '${s.role}' }` : `\t\t${s.slot}: {}`))
-		.join(',\n');
+	// A family's shared object is a plain state class published under one `Kernel.context`. Ids
+	// derive from the root's `$props.id()` seed, so cross-part ARIA resolves on the server too.
+	const partIds = slots
+		.map(
+			(s) =>
+				`\tget ${camel(s.slot)}Id(): string {\n\t\treturn Kernel.id(this.id, '${n.kebab}-${s.slot}');\n\t}`
+		)
+		.join('\n');
 
-	const domElements = slots.map((s) => `\t${s.slot}: HTMLElement;`).join('\n');
-
-	return `import { Bond } from '$ixirjs/ui/shared/bond';
-import { defineBond } from '$ixirjs/ui/shared';
-import type { BondStateProps } from '$ixirjs/ui/shared/bond';
+	return `import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
+import type { BondStateProps } from '$ixirjs/ui/authoring';
 
 // -----------------------------------------------------------------------------
 // Public types
 // -----------------------------------------------------------------------------
 
-export type ${n.Pascal}StateProps = BondStateProps & {
-	disabled?: boolean;
-};
-
-export type ${n.Pascal}DomElements = {
-${domElements}
+export type ${n.Pascal}BondProps = BondStateProps & {
+	disabled?: boolean | undefined;
 };
 
 // -----------------------------------------------------------------------------
-// Bond implementation
+// Shared state
 // -----------------------------------------------------------------------------
 
-class ${n.Pascal}BondBase extends Bond<${n.Pascal}StateProps> {
-	constructor(props: ${n.Pascal}StateProps, name = '${n.kebab}') {
-		super(props, name);
-		// ${TODO}: compose cross-cutting behaviour here with this.capability(...) — disclosure,
-		// selection, relationship links. Never with a per-root $effect in the root component.
+export const ${n.Pascal}Context = Kernel.context<${n.Pascal}Bond>('bond/${n.kebab}');
+
+export class ${n.Pascal}Bond {
+	readonly name = '${n.kebab}';
+	readonly props: ${n.Pascal}BondProps;
+
+	constructor(props: ${n.Pascal}BondProps) {
+		this.props = props;
+		// ${TODO}: build the behaviour models this family needs — createDisclosure, createSelection,
+		// createRovingFocus from '$ixirjs/ui/capability'. They are plain functions; what they used to
+		// project onto an element is written literally in each part's \`attrs\`.
 	}
+
+	static create(props: ${n.Pascal}BondProps): ${n.Pascal}Bond {
+		return new ${n.Pascal}Bond(props);
+	}
+
+	/** The family's identity seed — the root's \`$props.id()\`. */
+	get id(): string {
+		return this.props.id ?? '${n.kebab}';
+	}
+${partIds}
 
 	// Read through predicates: is*/has*/can* for booleans, plain nouns otherwise.
 	get isDisabled(): boolean {
@@ -191,152 +198,100 @@ class ${n.Pascal}BondBase extends Bond<${n.Pascal}StateProps> {
 	// ${TODO}: mutate through methods (open(), toggle(), select()); parts call these and never
 	// write props directly.
 }
-
-// -----------------------------------------------------------------------------
-// Bond spec and constructor facade
-// -----------------------------------------------------------------------------
-
-const ${n.camel}Spec = {
-	name: '${n.kebab}',
-	base: ${n.Pascal}BondBase,
-	atoms: {
-${atomMap}
-	}
-};
-
-export const ${n.Pascal}Bond = defineBond(${n.camel}Spec);
-
-export type ${n.Pascal}Bond = ${n.Pascal}BondBase;
 `;
 }
 
 function rootFile(n) {
-	return `<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
-	import { useRoot } from '$ixirjs/ui/shared';
-	import { type Base, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
-	import { ${n.Pascal}Bond } from './bond.svelte';
+	return `<script lang="ts">
+	import { untrack } from 'svelte';
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
+	import { ${n.Pascal}Bond, ${n.Pascal}Context } from './bond.svelte';
 	import type { ${n.Pascal}RootProps } from './types';
 
 	const ID = $props.id();
 
 	let {
-		class: klass = '',
-		preset = undefined,
 		disabled = false,
 		factory = undefined,
 		children = undefined,
 		...restProps
-	}: ${n.Pascal}RootProps<E, B> = $props();
+	}: ${n.Pascal}RootProps = $props();
 
-	const root = useRoot(
-		${n.Pascal}Bond,
-		{
-			disabled: () => disabled
+	// Live props: the Bond reads through these getters, so a prop change is seen where it is read.
+	const bondProps = {
+		get id() {
+			return ID;
 		},
-		{
-			preset: () => preset,
-			id: () => ID,
-			// A getter, like preset and id: useRoot falls back to ${n.Pascal}Bond.create when the
-			// consumer passes none, so there is no local default to declare.
-			factory: () => factory
+		get disabled() {
+			return disabled;
 		}
+	};
+	// \`factory\` is read once, at init, by design.
+	const build = untrack(() => factory);
+	const ${n.camel} = ${n.Pascal}Context.share(
+		build ? build(bondProps) : ${n.Pascal}Bond.create(bondProps)
 	);
-	const bond = root.bond;
+	export const getBond = () => ${n.camel};
 
-	// The accessor useRoot already returns — assign it rather than rebuilding an arrow over bond.
-	export const getBond = root.getBond;
-
-	const el = Kernel.element(root, () => ({
-		class: ['${n.kebab}', '$preset', klass],
-		...root.props,
-		...restProps
-	}));
+	const el = Kernel.element(() => restProps, {
+		preset: '${n.kebab}',
+		class: '${n.kebab}',
+		state: ${n.camel},
+		variantProps: () => ({ disabled }),
+		attrs: () => ({ id: ${n.camel}.rootId })
+	});
 </script>
 
-{@render Kernel.render(el)(
-	el.tag(),
-	el.class(),
-	el.attrs(),
-	children,
-	{ ${n.camel}: bond },
-	el.motion(),
-	el
-)}
+<div {...el.attrs}>{@render children?.({ ${n.camel}: ${n.camel} })}</div>
 `;
 }
 
 function partFile(n, slot) {
-	return `<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
-	import { type Base, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
-	import { definePart } from '$ixirjs/ui/components/atom/define-part.svelte';
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
-	import { ${n.Pascal}Bond } from './bond.svelte';
+	return `<script lang="ts">
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
+	import { ${n.Pascal}Context } from './bond.svelte';
 	import type { ${n.Pascal}${pascal(slot)}Props } from './types';
 
-	const props: ${n.Pascal}${pascal(slot)}Props<E, B> = $props();
+	const props: ${n.Pascal}${pascal(slot)}Props = $props();
+	const ${n.camel} = ${n.Pascal}Context.getOrThrow(
+		'<${n.Pascal}.${pascal(slot)} /> must be used within a <${n.Pascal}.Root />'
+	);
 
-	const el = definePart(${n.Pascal}Bond, '${slot}', () => props, {
-		class: '${n.kebab}-${slot}'
+	const el = Kernel.element(() => props, {
+		preset: '${n.kebab}.${slot}',
+		class: '${n.kebab}-${slot}',
+		state: ${n.camel},
+		attrs: () => ({ id: ${n.camel}.${camel(slot)}Id })
 	});
 </script>
 
-{@render Kernel.render(el)(
-	el.tag(),
-	el.class(),
-	el.attrs(),
-	props.children,
-	{ ${n.camel}: el.bond },
-	el.motion(),
-	el
-)}
+<div {...el.attrs}>{@render props.children?.({ ${n.camel}: ${n.camel} })}</div>
 `;
 }
 
 /** A static module: component + types + index, no Bond, no Atom (the Button shape). */
 function staticFile(n) {
-	return `<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
-	import { mergePresetProps, type Base, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
+	return `<script lang="ts">
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
 	import type { ${n.Pascal}Props } from './types';
 
-	let {
-		class: klass = '',
-		preset = undefined,
-		children = undefined,
-		...restProps
-	}: ${n.Pascal}Props<E, B> = $props();
+	const props: ${n.Pascal}Props = $props();
 
-	const ${n.camel}Props = $derived(mergePresetProps(preset, '${n.kebab}', restProps));
-	const el = Kernel.element(Kernel.static, () => ({
-		class: ['${n.kebab}', '$preset', klass],
-		...${n.camel}Props
-	}));
+	const el = Kernel.element(() => props, { preset: '${n.kebab}', class: '${n.kebab}' });
 </script>
 
-{@render Kernel.render(el)(
-	el.tag(),
-	el.class(),
-	el.attrs(),
-	children,
-	undefined,
-	el.motion(),
-	el
-)}
+<div {...el.attrs}>{@render props.children?.()}</div>
 `;
 }
 
 function staticTypesFile(n) {
 	return `import type { Snippet } from 'svelte';
-import type { RenderProps, Base } from '$ixirjs/ui/components/atom';
+import type { RenderProps, Base, HtmlElementTagName } from '$ixirjs/ui/authoring';
 
 // Extension point: merge custom props by augmenting this interface.
 export interface ${n.Pascal}ExtendProps {}
 
-export type ${n.Pascal}Props<
-	E extends HtmlElementTagName = 'div',
-	B extends Base = Base
-> = RenderProps<E, B, Snippet> & ${n.Pascal}ExtendProps;
+export type ${n.Pascal}Props = RenderProps<'div', Base, Snippet> & ${n.Pascal}ExtendProps;
 `;
 }
 

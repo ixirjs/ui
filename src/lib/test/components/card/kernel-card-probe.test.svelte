@@ -2,16 +2,13 @@
 	import { Card } from '$ixirjs/ui/components/card';
 	import type { CardBond } from '$ixirjs/ui/components/card/bond.svelte';
 	import Reporter from './bond-reporter.test.svelte';
-	import Renderer from '$ixirjs/ui/test/components/atom/custom-renderer.test.svelte';
+	// `Card.Title` is its own `<h3>` and takes no `as`/`base`; the leaf ↔ rich switching probe is
+	// `test/components/alert/kernel-alert-probe.test.svelte`.
 	let {
-		rich = false,
-		custom = false,
 		withVariants = false,
 		onbond,
 		onrootclick
 	}: {
-		rich?: boolean;
-		custom?: boolean;
 		withVariants?: boolean;
 		onbond: (bond: CardBond) => void;
 		onrootclick?: (event: Event) => void;
@@ -23,8 +20,6 @@
 		<Reporter {card} {onbond} />
 		<Card.Header>
 			<Card.Title
-				{...rich ? { as: 'h2' as const } : {}}
-				{...custom ? { base: Renderer } : {}}
 				{...withVariants
 					? { variants: { variants: { tone: { hot: 'tone-hot' } } }, tone: 'hot' }
 					: {}}

@@ -13,7 +13,7 @@ describe('Stack callbacks', () => {
 			}
 		);
 		const { component } = render(StackRoot, { value: 'two', onvaluechange });
-		const bond = component.getBond();
+		const bond = (component as unknown as { getBond(): StackBond }).getBond();
 
 		expect(onvaluechange).not.toHaveBeenCalled();
 

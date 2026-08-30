@@ -1,10 +1,5 @@
 import type { Snippet } from 'svelte';
-import type {
-	RenderProps,
-	Base,
-	SnippetProps,
-	HtmlElementTagName
-} from '$ixirjs/ui/components/atom';
+import type { RenderProps, Base, SnippetProps } from '$ixirjs/ui/authoring';
 import type { Factory, StateChangeCallback } from '$ixirjs/ui/types';
 import type { CollapsibleBond } from './bond.svelte';
 
@@ -24,10 +19,7 @@ export interface CollapsibleSnippetProps extends SnippetProps {
 
 export type CollapsibleChildren = Snippet<[CollapsibleSnippetProps]>;
 
-export type CollapsibleRootProps<
-	E extends HtmlElementTagName = 'div',
-	B extends Base = Base
-> = RenderProps<E, B, CollapsibleChildren> &
+export type CollapsibleRootProps = RenderProps<'div', Base, CollapsibleChildren> &
 	CollapsibleRootExtendProps & {
 		/**
 		 * Whether the collapsible is open. Supports two-way binding with bind:open.
@@ -50,17 +42,11 @@ export type CollapsibleRootProps<
 		onopenchange?: StateChangeCallback<boolean, CollapsibleBond>;
 	};
 
-export type CollapsibleHeaderProps<
-	E extends HtmlElementTagName = 'div',
-	B extends Base = Base
-> = RenderProps<E, B, CollapsibleChildren> & CollapsibleHeaderExtendProps;
+export type CollapsibleHeaderProps = RenderProps<'div', Base, CollapsibleChildren> &
+	CollapsibleHeaderExtendProps;
 
-export type CollapsibleBodyProps<
-	E extends HtmlElementTagName = 'div',
-	B extends Base = Base
-> = RenderProps<E, B, CollapsibleChildren> & CollapsibleBodyExtendProps;
+export type CollapsibleBodyProps = RenderProps<'div', Base, CollapsibleChildren> &
+	CollapsibleBodyExtendProps;
 
-export type CollapsibleIndicatorProps<
-	E extends HtmlElementTagName = 'div',
-	B extends Base = Base
-> = RenderProps<E, B, CollapsibleChildren> & CollapsibleIndicatorExtendProps;
+export type CollapsibleIndicatorProps = RenderProps<'div', Base, CollapsibleChildren> &
+	CollapsibleIndicatorExtendProps;

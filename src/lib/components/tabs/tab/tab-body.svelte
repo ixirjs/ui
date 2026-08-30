@@ -1,30 +1,23 @@
-<script module lang="ts">
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
-	import { TabBond } from './bond.svelte';
-	const PART = Kernel.plan(TabBond, 'body', { class: '' });
-</script>
-
-<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
+<script lang="ts">
 	import type { Snippet } from 'svelte';
-	import { type Base, type BasePropsOf, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
-	import { TabsBond } from '$ixirjs/ui/components/tabs/bond.svelte';
-	import type { TabBodyProps } from '$ixirjs/ui/components/tabs/types';
+	import { createAttachmentKey } from 'svelte/attachments';
 	import { Stack } from '$ixirjs/ui/components/stack';
+	import { TabsContext } from '$ixirjs/ui/components/tabs/bond.svelte';
+	import { TabContext } from './bond.svelte';
+	import type { TabBodyProps } from '$ixirjs/ui/components/tabs/types';
 
-	let {
-		class: klass = '',
-		children,
-		preset = undefined,
-		...restProps
-	}: TabBodyProps<E, B> & BasePropsOf<B> = $props();
-
-	const part = Kernel.node(PART, () => ({ preset }), {
-		context: 'required',
-		rest: () => restProps
-	});
-	const tabBond = part.bond;
-	const tabsBond = TabsBond.get();
+	let { class: klass = '', preset = undefined, children, ...restProps }: TabBodyProps = $props();
+	const tabBond = TabContext.getOrThrow('<Tab.Body /> must be used within a <Tab.Root />');
+	const tabsBond = TabsContext.get();
 	const value = $derived(tabBond.props.value);
+
+	// The rendered panel hands the header its id (a consumer id wins on the element and is
+	// followed) for as long as `Tabs.Content` renders it.
+	const panelKey = createAttachmentKey();
+	const panel = (node: HTMLElement) => {
+		tabBond.panelId = node.id;
+		return () => (tabBond.panelId = undefined);
+	};
 
 	// Register synchronously, like TabRoot's `bond.mount()`, so `Tabs.Content` has this tab's
 	// content during SSR too — `$effect.pre` never runs server-side, so registering only inside
@@ -32,13 +25,8 @@
 	// and never changes post-mount, so a one-time registration is exactly as live as the effect
 	// version was).
 	// svelte-ignore state_referenced_locally
-	if (value && tabBond && tabsBond) {
-		tabsBond.registerTabContent(value, {
-			render: body,
-			props: {
-				children
-			}
-		});
+	if (value && tabsBond) {
+		tabsBond.registerTabContent(value, { render: body, props: { children } });
 	}
 
 	$effect.pre(() => {
@@ -53,27 +41,34 @@
 {#snippet body({
 	children = undefined,
 	selected = false,
+	class: contentClass = undefined,
 	...props
 }: {
 	children?: Snippet<[Record<string, unknown>]>;
 	selected?: boolean;
+	class?: string;
 	[key: string]: unknown;
 } = {})}
 	<Stack.Item
 		class={[
 			'tab-body pointer-events-none flex h-auto w-full min-w-full flex-1 flex-col',
 			selected && 'pointer-events-auto',
-			'$preset',
-			klass
+			klass,
+			contentClass
 		]}
 		{value}
+		preset={preset ?? 'tab.body'}
 		inert={selected ? undefined : true}
-		{...part.props}
+		id={tabBond.bodyId}
+		role="tabpanel"
+		aria-labelledby={tabBond.headerId}
+		hidden={selected ? undefined : true}
+		tabindex={selected ? 0 : -1}
+		data-active={tabBond.isActive}
+		{...restProps}
 		{...props}
+		{...{ [panelKey]: panel }}
 	>
-		{@render children?.({
-			...(tabBond ? { tab: tabBond } : {}),
-			...(tabsBond ? { tabs: tabsBond } : {})
-		})}
+		{@render children?.({ tab: tabBond, ...(tabsBond ? { tabs: tabsBond } : {}) })}
 	</Stack.Item>
 {/snippet}

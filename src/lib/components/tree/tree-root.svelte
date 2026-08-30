@@ -1,8 +1,7 @@
-<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
-	import { controlledProp, useRoot } from '$ixirjs/ui/shared';
-	import { type Base, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
-	import { TreeBond } from './bond.svelte';
+<script lang="ts">
+	import { untrack } from 'svelte';
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
+	import { TreeBond, TreeContext } from './bond.svelte';
 	import type { TreeRootProps } from './types';
 
 	const ID = $props.id();
@@ -10,44 +9,58 @@
 	let {
 		open = $bindable(false),
 		disabled = false,
-		class: klass = '',
-		preset = undefined,
 		presets = undefined,
 		children = undefined,
 		factory = undefined,
 		onopenchange = undefined,
 		...restProps
-	}: TreeRootProps<E, B> = $props();
+	}: TreeRootProps = $props();
 
-	const openProp = controlledProp<boolean, TreeBond>({
-		get: () => open,
-		set: (value) => (open = value),
-		onchange: (value, context) => onopenchange?.(value, context),
-		context: (bond) => bond.takeOpenChangeContext()
-	});
-
-	const root = useRoot(
-		TreeBond,
-		{
-			open: openProp,
-			disabled: () => disabled,
-			presets: () => presets
+	// Live props: read through getters wherever the Bond needs them.
+	const bondProps = {
+		get id() {
+			return ID;
 		},
-		{
-			preset: () => preset,
-			id: () => ID,
-			factory: () => factory
+		get open() {
+			return open;
+		},
+		set open(next: boolean) {
+			open = next;
+		},
+		get disabled() {
+			return disabled;
+		},
+		get presets() {
+			return presets;
 		}
-	);
-	const bond: TreeBond = root.bond;
+	};
+	// `factory` is read once, at init, by design. The Bond reads its parent from context BEFORE
+	// this node shares its own.
+	const build = untrack(() => factory);
+	const bond = TreeContext.share(build ? build(bondProps) : TreeBond.create(bondProps));
+	// Controlled state: the Bond decides, the root writes, the callback fires after the write.
+	bond.bindCommit((next, context) => {
+		open = next;
+		onopenchange?.(next, context);
+	});
+	// Registered with the parent node at init — document order — and released on teardown.
+	const detach = bond.attachToParent();
+	$effect(() => detach);
+	export const getBond = () => bond;
 
-	export const getBond = root.getBond;
-
-	const el = Kernel.element(root, () => ({
-		class: ['flex flex-col', '$preset', klass],
-		variantProps: root.props,
-		...restProps
-	}));
+	const el = Kernel.element(() => restProps, {
+		preset: 'tree',
+		class: 'flex flex-col',
+		state: bond,
+		layer: () => presets?.root,
+		variantProps: () => ({ open, disabled }),
+		// The root is labelled by its header; `aria-expanded` lives on the header (treeitem).
+		attrs: () => ({
+			id: bond.rootId,
+			'aria-labelledby': bond.headerId,
+			'aria-disabled': disabled
+		})
+	});
 </script>
 
-{@render Kernel.render(el)(el, children, { tree: bond })}
+<div {...el.attrs}>{@render children?.({ tree: bond })}</div>

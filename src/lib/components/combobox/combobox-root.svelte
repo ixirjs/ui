@@ -1,7 +1,9 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
+	import { useMenuRoot } from '$ixirjs/ui/components/dropdown-menu/bond.svelte';
+	import { SelectContext } from '$ixirjs/ui/components/select/bond.svelte';
+	import { ComboboxBond, ComboboxContext, type ComboboxBondProps } from './bond.svelte';
 	import type { ComboboxRootProps } from './types';
-	import { controlledProp, useRoot } from '$ixirjs/ui/shared';
-	import { ComboboxBond, type ComboboxBondProps } from './bond.svelte';
 
 	const ID = $props.id();
 
@@ -33,61 +35,87 @@
 		);
 	}
 
-	const openProp = controlledProp<boolean, ComboboxBond>({
-		get: () => open,
-		set: (next) => (open = next),
-		onchange: (next, context) => onopenchange?.(next, context)
-	});
-	const valuesProp = controlledProp<ComboboxBondProps['values'], ComboboxBond>({
-		get: () =>
-			(multiple ? (values ?? []) : value == null ? [] : [value]) as ComboboxBondProps['values'],
-		set: (next) => {
-			const selected = (next ?? []) as unknown[];
+	// Live props. The setters are the controlled seam: a write the Bond makes lands on the bindable
+	// and reports once; a write the PARENT makes never passes through here, so a re-render of the
+	// owner cannot echo back as a change callback.
+	const bondProps: ComboboxBondProps = {
+		get id() {
+			return ID;
+		},
+		get open() {
+			return open;
+		},
+		get disabled() {
+			return disabled;
+		},
+		get multiple() {
+			return multiple;
+		},
+		get placement() {
+			return placement as ComboboxBondProps['placement'];
+		},
+		get placements() {
+			return (placements ?? []) as ComboboxBondProps['placements'];
+		},
+		get offset() {
+			return offset;
+		},
+		get position() {
+			return 'absolute' as const;
+		},
+		get keys() {
+			return keys;
+		},
+		get presets() {
+			return presets;
+		},
+		get values() {
+			return (multiple ? (values ?? []) : value == null ? [] : [value]) as string[];
+		},
+		set values(next: string[]) {
+			const selected = next as unknown[];
+			const current = (multiple ? (values ?? []) : value == null ? [] : [value]) as unknown[];
+			if (valuesEqual(selected, current)) return;
 			values = selected;
 			value = selected[0];
+			if (multiple) onvalueschange?.(selected, { bond });
+			else onvaluechange?.(selected[0], { bond });
 		},
-		equals: (left, right) => valuesEqual(left ?? [], right ?? []),
-		onchange: (next, context) => {
-			const selected = (next ?? []) as unknown[];
-			if (multiple) onvalueschange?.(selected, context);
-			else onvaluechange?.(selected[0], context);
+		get label() {
+			return label;
+		},
+		set label(next: string | undefined) {
+			label = next;
+		},
+		get labels() {
+			return labels;
+		},
+		set labels(next: string[] | undefined) {
+			labels = next;
+		},
+		get query() {
+			return query;
+		},
+		set query(next: string) {
+			const text = next;
+			if (text === query) return;
+			query = text;
+			onquerychange?.(text, { bond });
 		}
-	});
-	const labelProp = controlledProp<string | undefined, ComboboxBond>({
-		get: () => label,
-		set: (next) => (label = next)
-	});
-	const labelsProp = controlledProp<string[] | undefined, ComboboxBond>({
-		get: () => labels,
-		set: (next) => (labels = next)
-	});
-	const queryProp = controlledProp<string | undefined, ComboboxBond>({
-		get: () => query,
-		set: (next) => (query = next ?? ''),
-		onchange: (next, context) => onquerychange?.(next ?? '', context)
+	};
+
+	// `factory` is read once, at init, by design.
+	const build = untrack(() => factory);
+	const bond = build ? build(bondProps) : ComboboxBond.create(bondProps);
+	useMenuRoot(bond);
+	SelectContext.share(bond);
+	ComboboxContext.share(bond);
+	bond.bindCommit((next, context) => {
+		open = next;
+		onopenchange?.(next, context);
 	});
 
-	const root = useRoot(
-		ComboboxBond,
-		{
-			open: openProp,
-			values: valuesProp,
-			label: labelProp,
-			labels: labelsProp,
-			disabled: () => disabled,
-			multiple: () => multiple,
-			placement: () => placement as ComboboxBondProps['placement'],
-			placements: () => (placements ?? []) as ComboboxBondProps['placements'],
-			offset: () => offset,
-			keys: () => keys,
-			query: queryProp,
-			presets: () => presets
-		},
-		{ atom: false, id: () => ID, factory: () => factory }
-	);
-	const bond = root.bond;
-
-	export const getBond = root.getBond;
+	export const getBond = () => bond;
 </script>
 
 {@render children?.({ combobox: bond })}

@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { useRoot } from '$ixirjs/ui/shared';
-	import { TabBond } from './bond.svelte';
-	import { TabsBond } from '$ixirjs/ui/components/tabs/bond.svelte';
+	import { untrack } from 'svelte';
+	import { TabBond, TabContext } from './bond.svelte';
+	import { TabsContext } from '$ixirjs/ui/components/tabs/bond.svelte';
 	import type { TabRootProps } from '$ixirjs/ui/components/tabs/types';
 
 	// Assert we're inside a <Tabs> (throws otherwise); the bond itself isn't needed here.
-	TabsBond.getOrThrow('TabRoot must be used within a Tabs component.');
+	TabsContext.getOrThrow('TabRoot must be used within a Tabs component.');
 
 	const ID = $props.id();
 
@@ -18,22 +18,30 @@
 		children
 	}: TabRootProps = $props();
 
-	const root = useRoot(
-		TabBond,
-		{
-			value: () => value,
-			disabled: () => disabled,
-			data: () => data,
-			presets: () => presets
+	const bondProps = {
+		get id() {
+			return ID;
 		},
-		{ atom: false, id: () => ID, factory: () => factory }
-	);
-	const bond = root.bond;
-
+		get value() {
+			return value;
+		},
+		get disabled() {
+			return disabled;
+		},
+		get data() {
+			return data;
+		},
+		get presets() {
+			return presets;
+		}
+	};
+	// `factory` is read once, at init, by design.
+	const build = untrack(() => factory);
+	const bond = TabContext.share(build ? build(bondProps) : TabBond.create(bondProps));
+	// Registered at init — document order — and released on teardown.
 	const unmount = bond.mount();
 	$effect.pre(() => unmount);
-
-	export const getBond = root.getBond;
+	export const getBond = () => bond;
 </script>
 
 {@render children?.({ tab: bond })}

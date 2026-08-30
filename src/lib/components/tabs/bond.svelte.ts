@@ -1,187 +1,144 @@
-import { tick, type Snippet } from 'svelte';
-import { Bond, defineAtom, type BondStateProps } from '$ixirjs/ui/shared/bond';
-import type { Capability } from '$ixirjs/ui/shared/capability';
-import { defineBond, type BondOf } from '$ixirjs/ui/shared';
-import {
-	createSelection,
-	selectionCapability,
-	SELECTION,
-	type SelectionModel
-} from '$ixirjs/ui/shared/capability/models/selection.svelte';
-import {
-	createRovingFocus,
-	rovingCapability,
-	type RovingFocus
-} from '$ixirjs/ui/shared/capability/models/roving.svelte';
-import { navigationCapability } from '$ixirjs/ui/shared/capability/models/navigation.svelte';
-import type { Collection } from '$ixirjs/ui/shared/bond/collection.svelte';
+/**
+ * Tabs' shared object — a plain state class on the redesigned `Kernel`.
+ *
+ * Same surface the family always had (`{ tabs }`, `getBond`, `factory`, `select`/`unselect`,
+ * `items`, `roving`, `tabContents`), none of the runtime. Tabs register at their root's init in
+ * document order; the roving highlight over the enabled ones IS the selection (APG automatic
+ * activation), so it is controlled by `props.value`; tab bodies register their content for
+ * `Tabs.Content`.
+ */
+import { SvelteMap } from 'svelte/reactivity';
+import type { Snippet } from 'svelte';
+import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
+import type { PresetLike } from '$ixirjs/ui/preset';
+import { createRovingFocus, type RovingFocus } from '$ixirjs/ui/capability/models/roving.svelte';
 import type { TabBond } from './tab/bond.svelte';
 
-export type TabsBondProps<T extends Record<string, unknown> = Record<string, unknown>> =
-	BondStateProps & {
-		value?: string | undefined;
-		multiple?: boolean;
-		extend?: T;
-	};
+export type TabsBondProps = {
+	id?: string | undefined;
+	value?: string | undefined;
+	presets?:
+		| { root?: PresetLike; header?: PresetLike; body?: PresetLike; content?: PresetLike }
+		| undefined;
+};
+
+export type TabContent = {
+	value: string;
+	render: Snippet<[Record<string, unknown>]>;
+	props: Record<string, unknown>;
+};
 
 // Narrow parent contract a TabBond child depends on, not the whole TabsBond.
 export interface ITabs<T = unknown> {
 	readonly id: string;
 	readonly activeValue: string | undefined;
 	readonly headerElement: HTMLElement | undefined;
-	selectionCapability(): Capability | undefined;
 	mountItem(value: string, tab: TabBond<T>): () => void;
 	unmountItem(id: string): void;
 	select(value: string): void;
 	unselect(): void;
 }
 
-export const TabsRootAtom = defineAtom<TabsBondBase>('root', {
-	slot: '@ixirjs/tabs:root',
-	docs: 'Tabs root orientation projection.',
-	attrs: () => ({
-		'aria-orientation': 'horizontal' as const
-	})
-});
+export const TabsContext = Kernel.context<TabsBond>('bond/tabs');
 
-export const TabsHeaderAtom = defineAtom<TabsBondBase>('header', { role: 'tablist' });
+export class TabsBond<T = unknown> implements ITabs<T> {
+	readonly name = 'tabs';
+	readonly props: TabsBondProps;
+	/** Mounted tabs in document order. */
+	readonly items = new Map<string, TabBond<T>>();
+	readonly #contents = new SvelteMap<string, TabContent>();
+	readonly #roving: RovingFocus<TabBond<T>>;
 
-export const TabsBodyAtom = defineAtom<TabsBondBase>('body', { role: 'group' });
+	constructor(props: TabsBondProps) {
+		this.props = props;
+		// Controlled by `props.value`: an internal cell would drift the moment a tab is clicked and
+		// the next arrow key would resume from the wrong tab.
+		this.#roving = createRovingFocus<TabBond<T>>({
+			ids: () => this.#enabledValues(),
+			item: (id) => this.items.get(id),
+			active: {
+				get: () => this.props.value ?? null,
+				set: (id) => (id === null ? this.unselect() : this.select(id))
+			}
+		});
+	}
 
-// Hand-written base for TabsBond. Parent selection, mounted tab/content collections,
-// and child coordination live on the Bond instance.
+	static create(props: TabsBondProps): TabsBond {
+		return new TabsBond(props);
+	}
+	static get = (): TabsBond | undefined => TabsContext.get();
 
-class TabsBondBase extends Bond<TabsBondProps> implements ITabs {
-	#selectedItem = $derived(this.props?.value ? this.items.get(this.props?.value) : undefined) as
-		| TabBond
-		| undefined;
+	get id(): string {
+		return this.props.id ?? 'tabs';
+	}
+	get rootId(): string {
+		return Kernel.id(this.id, 'tabs-root');
+	}
+	get headerId(): string {
+		return Kernel.id(this.id, 'tabs-header');
+	}
+	get bodyId(): string {
+		return Kernel.id(this.id, 'tabs-body');
+	}
 
-	// Selection capability (single mode). Tabs store a scalar `props.value`; the backing
-	// adapts it to the array surface (value <-> [value]). `interactive: false` means
-	// state-reflection only because the tab-header owns its disabled-guarded onclick.
-	#selectionCap = this.capability(
-		selectionCapability(
-			createSelection<string>({
-				get: () => (this.props.value ? [this.props.value] : []),
-				set: (vs) => (this.props.value = vs[0]),
-				mode: () => 'single'
-			}),
-			{ commit: 'select', interactive: false }
-		)
-	);
-
-	/**
-	 * Enabled tab values, MEMOIZED — declared before `#roving` so it is initialized before the
-	 * backing that reads it. Same defect and same fix as `AccordionBondBase.#enabledIds`: a plain
-	 * getter here allocated two arrays over every tab on every read, and every tab header reads it
-	 * through the roving tabindex. A tab strip is short enough that this never showed up in a
-	 * benchmark, which is exactly why it survived — the shape is O(n²) regardless of the constant.
-	 */
-	#enabledValues: readonly string[] = $derived(
-		this.items.entries.filter(([, tab]) => !tab.props.disabled).map(([id]) => id)
-	);
-
-	// Roving highlight over the enabled tab values. Controlled by `props.value`: for tabs the
-	// highlight *is* the selection (APG automatic activation), so an internal cell would drift the
-	// moment a tab is clicked and the next arrow key would resume from the wrong tab.
-	#roving: RovingFocus<TabBond> = createRovingFocus<TabBond>({
-		ids: () => this.#enabledValues,
-		item: (id) => this.items.get(id),
-		active: {
-			get: () => this.props.value ?? null,
-			set: (id) => (id === null ? this.unselect() : this.select(id))
-		}
-	});
-
-	constructor(props: TabsBondProps, name = 'tabs') {
-		super(props, name);
-		// Eagerly create owned collections outside derived reads; collection() registers a capability.
-		void this.items;
-		void this.#contents;
-		// Registered to satisfy navigation's `requires: [ROVING]`. No atom claims role 'container',
-		// so no aria-activedescendant is emitted: tab headers carry real DOM focus.
-		this.capability(rovingCapability(this.#roving));
-		// Arrow/Home/End on the tablist. Moving the highlight selects (controlled cell above);
-		// onMove then follows with DOM focus, which the roving model itself never touches.
-		this.capability(
-			navigationCapability(this.#roving, {
-				roles: ['tablist'],
-				orientation: 'horizontal',
-				preventScroll: true,
-				onMove: (id) => this.focusTab(id)
-			})
-		);
+	#enabledValues(): string[] {
+		const ids: string[] = [];
+		for (const [id, tab] of this.items) if (!tab.props.disabled) ids.push(id);
+		return ids;
 	}
 
 	// The roving highlight, exposed for the tab header's roving tabindex.
-	get roving(): RovingFocus<TabBond> {
+	get roving(): RovingFocus<TabBond<T>> {
 		return this.#roving;
 	}
 
+	/** Arrow/Home/End on the tablist. Moving the highlight selects; DOM focus then follows. */
+	onkeydown(event: KeyboardEvent): void {
+		if (event.defaultPrevented) return;
+		let moved: string | null;
+		if (event.key === 'ArrowRight') moved = this.#roving.next();
+		else if (event.key === 'ArrowLeft') moved = this.#roving.previous();
+		else if (event.key === 'Home') moved = this.#roving.first();
+		else if (event.key === 'End') moved = this.#roving.last();
+		else return;
+		event.preventDefault();
+		this.focusTab(moved);
+	}
+
 	focusTab(id: string | null) {
-		if (id === null) return;
-		const header = () => this.items.get(id)?.elements?.header;
-		const element = header();
-		if (!(element instanceof HTMLElement)) return;
-		element.focus();
-		// ponytail: re-assert focus after the flush. Selecting a tab re-runs the tab header's
-		// portal attachment, whose cleanup `remove()`s the node and blurs it. The root fix is that
-		// re-parent churn (TabHeaderAtom's onmount re-running on a state change at all); until
-		// then, only restore focus we actually lost — never steal it back from elsewhere.
-		tick().then(() => {
-			const active = document.activeElement;
-			if (active && active !== document.body) return;
-			const next = header();
-			if (next instanceof HTMLElement) next.focus();
-		});
+		if (id === null || typeof document === 'undefined') return;
+		const header = this.items.get(id)?.headerId;
+		if (header) document.getElementById(header)?.focus();
 	}
 
 	get activeValue() {
 		return this.props.value;
 	}
 
-	get headerElement() {
-		return this.nodeByPart('header')?.element as HTMLElement | undefined;
+	get headerElement(): HTMLElement | undefined {
+		return typeof document === 'undefined'
+			? undefined
+			: (document.getElementById(this.headerId) ?? undefined);
 	}
 
-	selectionCapability(): Capability | undefined {
-		return this.capability(SELECTION);
+	get selectedItem(): TabBond<T> | undefined {
+		return this.props.value ? this.items.get(this.props.value) : undefined;
 	}
 
-	get selection(): SelectionModel<string> {
-		return this.#selectionCap.surface!;
-	}
-
-	get items(): Collection<TabBond> {
-		return this.collection<TabBond>('item');
-	}
-
-	get #contents() {
-		return this.collection<{
-			value: string;
-			render: Snippet<[Record<string, unknown>]>;
-			props: Record<string, unknown>;
-		}>('content');
-	}
-
-	get selectedItem() {
-		return this.#selectedItem;
-	}
-
-	get tabContents() {
-		return this.#contents.values;
+	get tabContents(): Iterable<TabContent> {
+		return this.#contents.values();
 	}
 
 	get activeTabContent() {
-		return this.props?.value ? this.#contents.get(this.props.value) : undefined;
+		return this.props.value ? this.#contents.get(this.props.value) : undefined;
 	}
 
-	mountItem<I>(id: string, item: TabBond<I>) {
+	mountItem<I extends T>(id: string, item: TabBond<I>) {
 		if (this.items.size && !this.props.value) {
 			this.props.value = item.props.value;
 		}
-
-		return this.items.set(id, item as unknown as TabBond);
+		this.items.set(id, item as unknown as TabBond<T>);
+		return () => this.unmountItem(id);
 	}
 
 	unmountItem(id: string) {
@@ -189,48 +146,25 @@ class TabsBondBase extends Bond<TabsBondProps> implements ITabs {
 	}
 
 	select(id: string) {
-		this.selection.select(id);
+		this.props.value = id;
 	}
 
 	unselect() {
-		this.selection.clear();
+		this.props.value = undefined;
 	}
 
 	registerTabContent(
 		id: string,
 		content: { render: Snippet<[Record<string, unknown>]>; props: Record<string, unknown> }
 	) {
-		this.#contents.set(id, {
-			value: id,
-			...content
-		});
+		this.#contents.set(id, { value: id, ...content });
 	}
 
 	unregisterTabContent(id: string) {
 		this.#contents.delete(id);
 	}
 
-	getTab(id: string) {
+	getTab(id: string): TabBond<T> | undefined {
 		return this.items.get(id);
 	}
 }
-
-export const TabsBond = defineBond({
-	name: 'tabs',
-	base: TabsBondBase,
-	atoms: {
-		root: { atom: TabsRootAtom },
-		// role 'tablist' receives the navigation keydown; tab headers are portaled into it, so their
-		// arrow keys bubble here. Deliberately not 'container': that would also pull in roving's
-		// aria-activedescendant projection, which is for widgets whose items never take DOM focus.
-		header: { atom: TabsHeaderAtom, role: 'tablist' },
-		body: TabsBodyAtom
-	}
-});
-
-export type TabsBond<T = unknown> = BondOf<typeof TabsBond> & {
-	readonly items: Collection<TabBond<T>>;
-	readonly selectedItem: TabBond<T> | undefined;
-	mountItem<I extends T>(id: string, item: TabBond<I>): () => void;
-	getTab(id: string): TabBond<T> | undefined;
-} & ITabs<T>;

@@ -23,7 +23,8 @@
 		preset: () => presetKey,
 		restProps: () => restProps,
 		class: () => klass,
-		variantProps: () => ({ disabled, readonly, visible })
+		variantProps: () => ({ disabled, readonly, visible }),
+		type: () => (visible ? 'text' : 'password')
 	});
 
 	function handleInput(event: Event) {

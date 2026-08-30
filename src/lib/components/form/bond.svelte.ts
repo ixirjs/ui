@@ -1,12 +1,18 @@
+/**
+ * Form's shared object — a plain state class on the redesigned `Kernel`.
+ *
+ * Same surface the family always had (`{ form }`, `getBond`, `factory`, `validate`, `fields`,
+ * `values`, `errors`), none of the runtime. Fields register at their root's init in document order.
+ */
 import type { FieldBond } from './field/bond.svelte';
-import { bondContextKey, Bond, type BondStateProps } from '$ixirjs/ui/shared/bond';
+import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
 import {
 	createValidation,
 	isPromise,
 	type ValidationError,
 	type ValidationModel,
 	type ValidationResult
-} from '$ixirjs/ui/shared/capability/models/validation.svelte';
+} from '$ixirjs/ui/capability/models/validation.svelte';
 import {
 	errorsForPath,
 	flattenErrorRecord,
@@ -16,7 +22,7 @@ import {
 	type ErrorRecord,
 	type StandardSchemaV1,
 	type ValidationSource
-} from '$ixirjs/ui/shared/validation';
+} from '$ixirjs/ui/validation';
 
 /**
  * When a field re-checks itself.
@@ -30,31 +36,41 @@ import {
  */
 export type ValidationMode = 'submit' | 'blur' | 'input' | 'touched' | 'manual';
 
-export type FormProps<Extension extends Record<string, unknown> = Record<string, unknown>> =
-	BondStateProps & {
-		renderless?: boolean;
-		/** Any Standard Schema — Zod, Valibot, ArkType, Effect. No adapter. */
-		schema?: StandardSchemaV1;
-		/** An externally owned validation source, for state this form does not own. */
-		source?: ValidationSource;
-		/** An externally owned error bag, flat or nested. Superforms' `$errors` fits directly. */
-		errors?: ErrorRecord;
-		mode?: ValidationMode;
-		extend: Extension;
-	};
+export type FormProps<Extension extends Record<string, unknown> = Record<string, unknown>> = {
+	id?: string | undefined;
+	renderless?: boolean | undefined;
+	/** Any Standard Schema — Zod, Valibot, ArkType, Effect. No adapter. */
+	schema?: StandardSchemaV1 | undefined;
+	/** An externally owned validation source, for state this form does not own. */
+	source?: ValidationSource | undefined;
+	/** An externally owned error bag, flat or nested. Superforms' `$errors` fits directly. */
+	errors?: ErrorRecord | undefined;
+	mode?: ValidationMode | undefined;
+	extend?: Extension | undefined;
+};
 
-export class FormBond<Props extends FormProps = FormProps> extends Bond<Props> {
-	static CONTEXT_KEY = bondContextKey('form');
+export const FormContext = Kernel.context<FormBond>('bond/form');
 
+export class FormBond<Props extends FormProps = FormProps> {
+	readonly name = 'form';
+	readonly props: Props;
+	/** Mounted fields in document order. */
+	readonly items = new Map<string, FieldBond>();
 	/** Form-level results only. Field-level results live on each `FieldBond`. */
 	readonly validation: ValidationModel = createValidation({ run: () => this.#run() });
 
 	#submitted = $state(false);
 
-	constructor(props: Props, name = 'form') {
-		super(props, name);
-		// Fields mount after the root activates capabilities; establish this collection first.
-		void this.fields;
+	constructor(props: Props) {
+		this.props = props;
+	}
+
+	static create(props: FormProps): FormBond {
+		return new FormBond(props);
+	}
+
+	get id(): string {
+		return this.props.id ?? 'form';
 	}
 
 	get mode(): ValidationMode {
@@ -132,16 +148,17 @@ export class FormBond<Props extends FormProps = FormProps> extends Bond<Props> {
 	}
 
 	get fields(): FieldBond[] {
-		return [...this.collection<FieldBond>('field').values];
+		return [...this.items.values()];
 	}
 
-	mountField(id: string, atom: FieldBond) {
-		// Collection.set registers + returns the cleanup (see shared/bond/collection.svelte.ts).
-		return this.collection<FieldBond>('field').set(id, atom);
+	/** Registers a field; returns its release. */
+	mountField(id: string, field: FieldBond): () => void {
+		this.items.set(id, field);
+		return () => this.items.delete(id);
 	}
 
-	unmountField(id: string) {
-		this.collection<FieldBond>('field').delete(id);
+	unmountField(id: string): void {
+		this.items.delete(id);
 	}
 
 	/** The form-level source only — no fan-out. What a single field's blur triggers. */

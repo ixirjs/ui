@@ -1,11 +1,12 @@
-import type { RenderProps, SnippetProps } from '$ixirjs/ui/components/atom/types';
+import type { PlainPartProps, SnippetProps } from '$ixirjs/ui/authoring';
 import type { Snippet } from 'svelte';
 
 export interface ChipSnippetProps extends SnippetProps {}
 
 export type ChipChildren = Snippet<[ChipSnippetProps]>;
 
-export interface ChipProps extends RenderProps<'div', never> {
+// The chip IS its `<div>` and the close button its `<button>` — no `as`/`base`/motion; see `PlainPartProps`.
+export interface ChipProps extends PlainPartProps<'div'> {
 	// Custom icon rendered inside the default close button.
 	/** Custom icon rendered inside the default close button (replaces the default ✕). */
 	icon?: Snippet | undefined;
@@ -22,7 +23,7 @@ export interface ChipProps extends RenderProps<'div', never> {
 	ondismiss?: ((ev: MouseEvent) => void) | undefined;
 }
 
-export interface ChipCloseButtonProps extends RenderProps<'button', never> {
+export interface ChipCloseButtonProps extends PlainPartProps<'button'> {
 	// Custom icon to render inside the close button.
 	/** Custom icon to render inside the close button. */
 	icon?: Snippet | undefined;

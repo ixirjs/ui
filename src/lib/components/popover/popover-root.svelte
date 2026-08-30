@@ -1,10 +1,12 @@
 <script lang="ts">
-	import { PopoverBond } from './bond.svelte';
-	import { OverlayBond } from '$ixirjs/ui/components/overlay';
-	import { controlledProp, useRoot } from '$ixirjs/ui/shared';
+	import { untrack } from 'svelte';
+	import { OverlayContext } from '$ixirjs/ui/components/overlay/model.svelte';
+	import { useOutsidePress, usePositioned } from '$ixirjs/ui/components/overlay/behavior.svelte';
+	import { PopoverBond, PopoverContext, type PopoverBondBase } from './bond.svelte';
 	import type { PopoverRootProps } from './types';
 
-	const owner = OverlayBond.get() ?? null;
+	// The nearest overlay host: an owning overlay gates this popover's open state.
+	const owner = OverlayContext.get();
 
 	const ID = $props.id();
 
@@ -22,38 +24,53 @@
 		children = undefined
 	}: PopoverRootProps = $props();
 
-	const openProp = controlledProp<boolean, PopoverBond>({
-		get: () => open,
-		set: (value) => (open = value),
-		onchange: (value, context) => onopenchange?.(value, context),
-		context: (bond) => bond.takeOpenChangeContext()
+	// Live props: read through getters wherever the Bond needs them.
+	const bondProps = {
+		get id() {
+			return ID;
+		},
+		get open() {
+			return open && (owner?.isOpen ?? true);
+		},
+		get disabled() {
+			return disabled;
+		},
+		get placement() {
+			return placement;
+		},
+		get offset() {
+			return offset;
+		},
+		get position() {
+			return position;
+		},
+		get placements() {
+			return placements ?? [];
+		},
+		get portal() {
+			return portal;
+		},
+		get presets() {
+			return presets;
+		}
+	};
+	// `factory` is read once, at init, by design.
+	const build = untrack(() => factory);
+	const bond = PopoverContext.share(build ? build(bondProps) : PopoverBond.create(bondProps));
+	OverlayContext.share(bond);
+	// Controlled state: the Bond decides, the root writes, the callback fires after the write with
+	// the staged `event`/`reason` a dismissal handed it.
+	bond.bindCommit((next, context) => {
+		open = next;
+		onopenchange?.(next, context);
+	});
+	usePositioned(bond);
+	useOutsidePress(bond, {
+		event: 'click',
+		onDismiss: (event, o) => (o as PopoverBondBase).onclickoutside?.(event, o as PopoverBondBase)
 	});
 
-	const root = useRoot(
-		PopoverBond,
-		{
-			// Composed, not the controlled prop itself: an owning overlay gates this popover's open
-			// state. Because the spec entry is a derived tuple rather than the `ControlledProp`, it
-			// carries no adoption of its own and this root declares `connect` explicitly.
-			open: [() => openProp.value && (owner?.isOpen ?? true), openProp[1]],
-			disabled: () => disabled,
-			placement: () => placement,
-			offset: () => offset,
-			position: () => position,
-			placements: () => placements ?? [],
-			portal: () => portal,
-			presets: () => presets
-		},
-		{
-			atom: false,
-			id: () => ID,
-			factory: () => factory,
-			connect: (bond) => void openProp.connect(bond)
-		}
-	);
-	const bond = root.bond;
-
-	export const getBond = root.getBond;
+	export const getBond = () => bond;
 </script>
 
 {@render children?.({ popover: bond })}

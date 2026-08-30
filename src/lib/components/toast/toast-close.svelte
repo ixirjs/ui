@@ -1,65 +1,72 @@
-<script module lang="ts">
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
-	import { ToastBond } from './bond.svelte';
-	const PART = Kernel.plan(ToastBond, 'dismiss', { class: '' });
-</script>
-
-<script lang="ts" generics="E extends HtmlElementTagName = 'button', B extends Base = Base">
+<script lang="ts">
 	import { Icon } from '$ixirjs/ui/components/icon';
 	import Close from '$ixirjs/ui/icons/icon-close.svelte';
-	import { type Base, type BasePropsOf, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
+	import { shouldSkipPolicy } from '$ixirjs/ui/capability/models/interaction-policies/shared';
+	import { ToastContext } from './bond.svelte';
 	import type { ToastCloseProps } from './types';
 
 	let {
-		class: klass = '',
-		as = 'button' as E,
-		preset = undefined,
+		as = 'button',
+		base = undefined,
 		children = undefined,
 		onclick = undefined,
 		onkeydown = undefined,
 		...restProps
-	}: ToastCloseProps<E, B> & BasePropsOf<B> = $props();
+	}: ToastCloseProps = $props();
+	const bond = ToastContext.getOrThrow('<Toast.Close /> must be used within a <Toast.Root />');
 
-	const part = Kernel.node(PART, () => ({ preset }), {
-		context: 'required',
-		message: '<Toast.Close /> must be used within a <Toast.Root />'
-	});
-	const bond = part.bond;
-
-	const defaults = $derived({
-		type: as === 'button' ? 'button' : undefined,
-		role: as === 'button' ? undefined : 'button',
-		tabindex: as === 'button' ? undefined : 0
-	});
-
-	// These run before the atom's own dismiss handler and stage the reason for it. The seam composes
-	// the two — consumer handler first, then the atom's, skipped when default is prevented — so
-	// neither needs to invoke the atom handler by hand.
+	// The close policy: a consumer handler runs first and cancels by preventing default; the part
+	// then stages the reason, skips secondary buttons, repeats and a non-dismissible toast, stops
+	// propagation and closes.
+	const undismissible = () => bond.props.dismissible === false;
+	function dismiss(event: Event) {
+		bond.stageOpenChange({ event, reason: 'close-button' });
+		if (shouldSkipPolicy(undismissible, bond as never, event)) return;
+		event.stopPropagation();
+		bond.close();
+	}
 	function onclick_(event: MouseEvent) {
 		onclick?.(event);
 		if (event.defaultPrevented) return;
-		bond.stageOpenChange({ event, reason: 'close-button' });
+		dismiss(event);
 	}
-
 	function onkeydown_(event: KeyboardEvent) {
 		onkeydown?.(event);
-		if (event.defaultPrevented) return;
-		if (event.key === 'Enter' || event.key === ' ') {
-			bond.stageOpenChange({ event, reason: 'close-button' });
-		}
+		if (event.defaultPrevented || (event.key !== 'Enter' && event.key !== ' ')) return;
+		event.preventDefault();
+		dismiss(event);
 	}
 
-	const el = Kernel.element(part, () => ({
-		as,
-		class: ['cursor-pointer text-current h-6', '$preset', klass],
-		defaults,
-		...restProps,
-		onclick: onclick_,
-		onkeydown: onkeydown_
-	}));
+	const el = Kernel.element(() => restProps, {
+		preset: 'toast.close',
+		class: 'cursor-pointer text-current h-6',
+		state: bond,
+		as: () => as,
+		base: () => base,
+		attrs: () => {
+			const attrs: Record<string, unknown> = {
+				type: as === 'button' ? 'button' : undefined,
+				role: as === 'button' ? undefined : 'button',
+				tabindex: as === 'button' ? undefined : 0,
+				id: bond.closeId,
+				'aria-label': 'Dismiss notification',
+				onclick: onclick_,
+				onkeydown: onkeydown_
+			};
+			if (undismissible()) {
+				attrs.disabled = true;
+				attrs['aria-disabled'] = 'true';
+				attrs.tabindex = -1;
+			}
+			return attrs;
+		}
+	});
+	// Bound once: an identifier callee compiles to a direct call — no snippet block, no anchor.
+	const leaf = Kernel.render(el);
 </script>
 
-{@render Kernel.render(el)(el, body)}
+{@render leaf(el, body)}
 
 {#snippet body()}
 	{@render (children ?? fallback)({ toast: bond })}

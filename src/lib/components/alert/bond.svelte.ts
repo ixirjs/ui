@@ -1,81 +1,60 @@
-import { Atom, Bond, type BondStateProps } from '$ixirjs/ui/shared/bond';
-import { defineBond, type BondOf } from '$ixirjs/ui/shared';
-import {
-	labelledControl,
-	liveRegionRelationship
-} from '$ixirjs/ui/shared/capability/models/relationship.svelte';
+/**
+ * Alert's shared object — a plain state class on the redesigned `Kernel`.
+ *
+ * Same surface the family always had (`{ alert }` in snippets, `getBond`, `factory`,
+ * `AlertBond.create`) and none of the runtime: no capability registry, no node registry, no Atoms.
+ * The live region the alert projects (`role="alert"`, which already implies assertive + atomic) and
+ * the ids its Title and Description render are written literally by the parts.
+ * `docs/research/whiteboard-2026-08.md`.
+ */
+import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
 
-export type AlertBondProps = BondStateProps & {
-	disabled?: boolean;
-	extend?: Record<string, unknown>;
+export type AlertBondProps = {
+	id?: string | undefined;
+	disabled?: boolean | undefined;
+	extend?: Record<string, unknown> | undefined;
 };
 
-class AlertRootAtom extends Atom<AlertBondBase> {
-	constructor(bond: AlertBondBase | undefined) {
-		super(bond, 'root', { namespace: 'alert' });
+export const AlertContext = Kernel.context<AlertBond>('bond/alert');
+
+export class AlertBond {
+	readonly name = 'alert';
+	readonly props: AlertBondProps;
+
+	constructor(props: AlertBondProps = {}) {
+		this.props = props;
 	}
 
-	override get attrs() {
-		const disabled = this.bond?.props.disabled ?? false;
-
-		// role comes from liveRegionRelationship; role="alert" already implies assertive + atomic,
-		// so no aria-live/aria-atomic is emitted alongside it.
-		return {
-			...super.attrs,
-			'aria-disabled': disabled ? 'true' : 'false'
-		};
-	}
-}
-
-class AlertIconAtom extends Atom<AlertBondBase> {
-	constructor(bond: AlertBondBase | undefined) {
-		super(bond, 'icon', { namespace: 'alert' });
+	static create(props: AlertBondProps = {}): AlertBond {
+		return new AlertBond(props);
 	}
 
-	override get attrs() {
-		return {
-			...super.attrs,
-			'aria-hidden': true
-		};
+	/** The family's identity seed — the root's `$props.id()`. */
+	get id(): string {
+		return this.props.id ?? 'alert';
 	}
-}
-
-class AlertCloseAtom extends Atom<AlertBondBase> {
-	constructor(bond: AlertBondBase | undefined) {
-		super(bond, 'close', { namespace: 'alert' });
+	get rootId(): string {
+		return Kernel.id(this.id, 'alert-root');
 	}
-
-	override get attrs() {
-		return {
-			...super.attrs,
-			'aria-label': 'Dismiss alert'
-		};
+	get iconId(): string {
+		return Kernel.id(this.id, 'alert-icon');
 	}
-}
-
-class AlertBondBase extends Bond<AlertBondProps> {
-	constructor(props: AlertBondProps, name = 'alert') {
-		super(props, name);
-		this.registerCapabilities([
-			labelledControl(),
-			liveRegionRelationship({ role: 'control', liveRole: 'alert' })
-		]);
+	get titleId(): string {
+		return Kernel.id(this.id, 'alert-title');
+	}
+	get descriptionId(): string {
+		return Kernel.id(this.id, 'alert-description');
+	}
+	get closeId(): string {
+		return Kernel.id(this.id, 'alert-close');
+	}
+	get isDisabled(): boolean {
+		return this.props.disabled ?? false;
+	}
+	/** The root element, by the id it renders. */
+	get element(): HTMLElement | undefined {
+		return typeof document === 'undefined'
+			? undefined
+			: (document.getElementById(this.rootId) ?? undefined);
 	}
 }
-
-export const AlertBond = defineBond({
-	name: 'alert',
-	base: AlertBondBase,
-	atoms: {
-		root: { atom: AlertRootAtom, role: 'control' },
-		icon: AlertIconAtom,
-		// Presentation-free slots: `defineBond` synthesizes the Atom from the slot name and `name`.
-		title: { role: 'label' },
-		description: { role: 'description' },
-		content: {},
-		actions: {},
-		closeButton: { atom: AlertCloseAtom, part: 'close' }
-	}
-});
-
-export type AlertBond = BondOf<typeof AlertBond>;

@@ -32,6 +32,28 @@ keyboard owner with an empty child collection, so the per-tree cost never multip
 quadratic is structurally unreachable. A fixture that does not concentrate n children under one
 owner cannot catch this, however many nodes it renders.
 
+## A family can have more than one axis
+
+The fixture rule says _one owner, n children_ — but a family often has more than one thing a child
+reads per instance, and the gate is blind to every axis it has no fixture for. Two are registered:
+
+- **`datagrid-columns`** — the row fixture scales rows at **zero columns**, so the grid's only
+  owner-wide per-child read (every cell resolving its column through `columns.values`) was
+  unreachable from it.
+- **`tree-depth`** — the node fixture renders n siblings at **depth 2**, so every read that walks the
+  _ancestor_ chain costs O(1) there. On the depth axis the same tree measures **k = 1.40** against
+  0.91 on breadth, and a bare self-recursive component at the same depths measures 0.86 — so that
+  gap is the library's, not Svelte's nesting.
+
+When adding a fixture, ask what the child reads that the parent owns, and then whether the fixture
+you wrote actually varies it. `growth-coverage.spec.ts` can only check that a family is covered at
+all; it cannot know a family has a second axis.
+
+Deeply nested fixtures build one effect frame per level, so the driver launches Chromium with
+`--stack-size`: the default page stack overflows around ten levels, far below where growth becomes
+visible. It is a mounting constraint only — the other eight families measure identically with and
+without it.
+
 ## Running
 
 ```

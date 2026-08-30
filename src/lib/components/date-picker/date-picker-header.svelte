@@ -1,6 +1,5 @@
 <script lang="ts">
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
-	import { mergePresetProps } from '$ixirjs/ui/components/atom';
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
 	import { DatePickerBond } from './bond.svelte';
 	import { CalendarBond } from '$ixirjs/ui/components/calendar/bond.svelte';
 	import { Icon } from '$ixirjs/ui/components/icon';
@@ -9,9 +8,12 @@
 	const datePickerBond = DatePickerBond.get();
 	const calendarBond = CalendarBond.get();
 
-	let { class: klass = '', preset = undefined, ...restProps }: DatePickerHeaderProps = $props();
-
-	const headerProps = $derived(mergePresetProps(preset, 'datepicker.header', restProps));
+	let {
+		as = 'nav',
+		base = undefined,
+		presetLayer = undefined,
+		...restProps
+	}: DatePickerHeaderProps = $props();
 
 	const calendarBondProps = $derived(datePickerBond?.props);
 
@@ -34,14 +36,20 @@
 	}
 
 	// Element seam instead of a component boundary; key order matches the previous call exactly.
-	const el = Kernel.element(Kernel.static, () => ({
-		as: 'nav',
-		class: ['border-border flex items-center justify-between gap-2 border-b p-2', '$preset', klass],
-		...headerProps
-	}));
+	const el = Kernel.element(() => restProps, {
+		preset: 'datepicker.header',
+		class: 'border-border flex items-center justify-between gap-2 border-b p-2',
+		state: datePickerBond,
+		as: () => as ?? 'nav',
+		base: () => base,
+		layer: () => presetLayer
+	});
+	// Bound once: an identifier callee in `{@render}` compiles to a direct call — no snippet block, no
+	// hydration anchor. A part whose props turn rich after init keeps this leaf (trade-off accepted, 2026-08-26).
+	const leaf = Kernel.render(el);
 </script>
 
-{@render Kernel.render(el)(el, headerBody)}
+{@render leaf(el, headerBody)}
 
 {#snippet headerBody()}
 	<button

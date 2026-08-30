@@ -1,5 +1,5 @@
 import type { Snippet } from 'svelte';
-import type { SnippetProps } from '$ixirjs/ui/components/atom';
+import type { SnippetProps } from '$ixirjs/ui/authoring';
 import type { Factory, StateChangeCallback } from '$ixirjs/ui/types';
 import type { CalendarBond } from './bond.svelte';
 import type { PresetKey } from '$ixirjs/ui/preset';

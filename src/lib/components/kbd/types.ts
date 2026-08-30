@@ -1,16 +1,17 @@
 import type { Snippet } from 'svelte';
-import type { RenderProps } from '$ixirjs/ui/components/atom';
+import type { PlainPartProps } from '$ixirjs/ui/authoring';
 
 export interface KbdExtendProps {}
 
 export interface ShortcutExtendProps {}
 
-export interface KbdProps extends RenderProps<'kbd'>, KbdExtendProps {
+// Both parts ARE their element — no `as`/`base`/motion; see `PlainPartProps`.
+export interface KbdProps extends PlainPartProps<'kbd'>, KbdExtendProps {
 	/** The key label to render inside the kbd element. */
 	children?: Snippet<[]>;
 }
 
-export interface ShortcutProps extends RenderProps<'span'>, ShortcutExtendProps {
+export interface ShortcutProps extends PlainPartProps<'span'>, ShortcutExtendProps {
 	/** Keys to render in sequence, e.g. `['⌘', 'K']` or `['Ctrl', 'Shift', 'P']`. */
 	keys?: string[];
 	// Separator between keys (default '+')

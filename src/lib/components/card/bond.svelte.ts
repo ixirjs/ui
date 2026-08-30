@@ -1,54 +1,55 @@
-import { Atom, Bond, type BondStateProps } from '$ixirjs/ui/shared/bond';
-import { defineBond, type BondOf } from '$ixirjs/ui/shared';
-import { labelledControl } from '$ixirjs/ui/shared/capability/models/relationship.svelte';
+/**
+ * Card's shared object — a plain state class on the redesigned `Kernel`.
+ *
+ * It keeps the name and the surface the family always had (`{ card }` in snippets, `getBond`,
+ * `factory`, `CardBond.create`) and none of the runtime: no capability registry, no node registry,
+ * no Atoms. The one relationship the card projects — the root's `aria-labelledby`/`aria-describedby`
+ * to a Title/Description that may or may not render — is a child writing its id into one `$state`
+ * field here. `docs/research/whiteboard-2026-08.md`.
+ */
+import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
 
-export type CardBondProps = BondStateProps & {
+export type CardBondProps = {
+	id?: string;
 	disabled?: boolean;
 	clickable?: boolean;
 };
 
-class CardRootAtom extends Atom<CardBondBase> {
-	constructor(bond: CardBondBase | undefined) {
-		super(bond, 'root', { namespace: 'card' });
+export const CardContext = Kernel.context<CardBond>('bond/card');
+
+export class CardBond {
+	readonly name = 'card';
+	readonly props: CardBondProps;
+	/** The Title's element id, once one has rendered. */
+	titleId = $state<string | undefined>();
+	/** The Description's element id, once one has rendered. */
+	descriptionId = $state<string | undefined>();
+
+	constructor(props: CardBondProps = {}) {
+		this.props = props;
 	}
 
-	override get attrs() {
-		const isClickable = this.bond?.props.clickable ?? false;
-		const isDisabled = this.bond?.props.disabled ?? false;
+	/** The family's identity seed — the root's `$props.id()`. */
+	get id(): string {
+		return this.props.id ?? 'card';
+	}
+	get rootId(): string {
+		return Kernel.id(this.id, 'card-root');
+	}
+	get isDisabled(): boolean {
+		return this.props.disabled ?? false;
+	}
+	get isClickable(): boolean {
+		return this.props.clickable ?? false;
+	}
+	/** The root element, by the id it renders. */
+	get element(): HTMLElement | undefined {
+		return typeof document === 'undefined'
+			? undefined
+			: (document.getElementById(this.rootId) ?? undefined);
+	}
 
-		return {
-			...super.attrs,
-			role: isClickable ? 'button' : undefined,
-			tabindex: isClickable && !isDisabled ? 0 : undefined,
-			'aria-disabled': isDisabled
-		};
+	static create(props: CardBondProps = {}): CardBond {
+		return new CardBond(props);
 	}
 }
-
-class CardBondBase extends Bond<CardBondProps> {
-	constructor(props: CardBondProps, name = 'card') {
-		super(props, name);
-		this.deferSetupFreeCapability(labelledControl);
-	}
-}
-
-export const CardBond = defineBond({
-	name: 'card',
-	base: CardBondBase,
-	atoms: {
-		root: { atom: CardRootAtom, role: 'control' },
-		// Presentation-free slots: `defineBond` synthesizes the Atom from the slot name and `name`,
-		// which is what a bondless `<Card.Title>` (every card part resolves its bond optionally)
-		// derives its kind and preset key from.
-		header: {},
-		title: { role: 'label' },
-		subtitle: {},
-		description: { role: 'description' },
-		content: {},
-		media: {},
-		actions: {},
-		footer: {}
-	}
-});
-
-export type CardBond = BondOf<typeof CardBond>;

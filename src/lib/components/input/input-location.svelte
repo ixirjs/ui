@@ -33,7 +33,8 @@
 	// No `class` here: `klass` goes to <SegmentedField>, which folds it against the bond itself.
 	const control = useControl({
 		preset: () => presetKey,
-		restProps: () => restProps
+		restProps: () => restProps,
+		type: () => 'text'
 	});
 
 	let isFocused = $state(false);

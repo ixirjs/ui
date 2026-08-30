@@ -1,16 +1,29 @@
-<script lang="ts" generics="E extends HtmlElementTagName = 'p', B extends Base = Base">
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
-	import { type Base, type BasePropsOf, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
-	import { definePart } from '$ixirjs/ui/components/atom/define-part.svelte';
-	import { ToastBond } from './bond.svelte';
+<script lang="ts">
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
+	import { ToastContext } from './bond.svelte';
 	import type { ToastTitleProps } from './types';
 
-	const props: ToastTitleProps<E, B> & BasePropsOf<B> = $props();
+	let {
+		as = undefined,
+		base = undefined,
+		children = undefined,
+		...restProps
+	}: ToastTitleProps = $props();
+	const bond = ToastContext.getOrThrow('<Toast.Title /> must be used within a <Toast.Root />');
+	// The part hands the root its id at init — the live region's labelling without a registry.
+	const id = Kernel.id(bond.id, 'toast-title');
+	bond.titleId = id;
 
-	const el = definePart(ToastBond, 'title', () => props, {
-		as: 'p',
-		class: ''
+	const el = Kernel.element(() => restProps, {
+		preset: 'toast.title',
+		class: 'border-border',
+		state: bond,
+		as: () => as ?? 'p',
+		base: () => base,
+		attrs: () => ({ id })
 	});
+	// Bound once: an identifier callee compiles to a direct call — no snippet block, no anchor.
+	const leaf = Kernel.render(el);
 </script>
 
-{@render Kernel.render(el)(el, props.children, { toast: el.bond })}
+{@render leaf(el, children, { toast: bond })}

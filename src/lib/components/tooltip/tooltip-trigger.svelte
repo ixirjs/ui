@@ -1,53 +1,35 @@
 <script lang="ts">
-	import { mergePresetProps } from '$ixirjs/ui/components/atom';
-	import { PopoverBond } from '$ixirjs/ui/components/popover/bond.svelte';
+	import { PopoverContext } from '$ixirjs/ui/components/popover/bond.svelte';
 	import { Trigger } from '$ixirjs/ui/components/popover/atoms';
+	import type { TooltipTriggerProps } from './types';
 
-	const popoverBond = PopoverBond.get();
+	const popoverBond = PopoverContext.get();
 
 	let {
-		preset = undefined,
-		onmount = undefined,
 		children,
-		onclick = undefined,
+		onpointerenter: enter = undefined,
+		onpointerleave: leave = undefined,
 		...restProps
-	} = $props();
+	}: TooltipTriggerProps<'button'> = $props();
 
-	const triggerProps = $derived(mergePresetProps(preset, 'tooltip.trigger', restProps));
-
-	function tooltip(node: HTMLElement) {
-		const onpointerenter = (event: PointerEvent) => {
-			requestAnimationFrame(() => {
-				if (!popoverBond) return;
-				popoverBond.stageOpenChange({ event, reason: 'pointer-enter' });
-				popoverBond.open();
-			});
-			node.addEventListener('pointerleave', onpointerleave);
-		};
-		const onpointerleave = (event: PointerEvent) => {
-			if (popoverBond) {
-				popoverBond.stageOpenChange({ event, reason: 'pointer-leave' });
-				popoverBond.close();
-			}
-			node.removeEventListener('pointerleave', onpointerleave);
-		};
-
-		node.addEventListener('pointerenter', onpointerenter, { passive: true });
-
-		const cleanup = () => {
-			node.removeEventListener('pointerenter', onpointerenter);
-			node.removeEventListener('pointerleave', onpointerleave);
-		};
-
-		const unmount = onmount?.(node);
-
-		return () => {
-			cleanup?.();
-			unmount?.();
-		};
+	// Hover opens on the next frame and leave closes; both report their reason. The consumer's own
+	// handlers run first; the Popover trigger's (position tracking on enter) compose after these.
+	function onpointerenter(event: PointerEvent) {
+		enter?.(event as Parameters<NonNullable<typeof enter>>[0]);
+		requestAnimationFrame(() => {
+			if (!popoverBond) return;
+			popoverBond.stageOpenChange({ event, reason: 'pointer-enter' });
+			popoverBond.open();
+		});
+	}
+	function onpointerleave(event: PointerEvent) {
+		leave?.(event as Parameters<NonNullable<typeof leave>>[0]);
+		if (!popoverBond) return;
+		popoverBond.stageOpenChange({ event, reason: 'pointer-leave' });
+		popoverBond.close();
 	}
 </script>
 
-<Trigger onmount={tooltip} {onclick} {...triggerProps}>
-	{@render children?.()}
+<Trigger {onpointerenter} {onpointerleave} {...restProps}>
+	{@render children?.({})}
 </Trigger>

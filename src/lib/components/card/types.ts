@@ -1,11 +1,6 @@
 import type { Snippet } from 'svelte';
 import type { CardBond } from './bond.svelte';
-import type {
-	RenderProps,
-	Base,
-	SnippetProps,
-	HtmlElementTagName
-} from '$ixirjs/ui/components/atom';
+import type { PlainPartProps, SnippetProps } from '$ixirjs/ui/authoring';
 import type { Factory } from '$ixirjs/ui/types';
 
 // Card Snippet Props
@@ -16,10 +11,8 @@ export interface CardSnippetProps extends SnippetProps {
 export type CardChildren = Snippet<[CardSnippetProps]>;
 
 // Card Root Props
-export interface CardRootProps<
-	E extends HtmlElementTagName = 'div',
-	B extends Base = Base
-> extends RenderProps<E, B, CardChildren> {
+// The root IS its `<div>` — see `PlainPartProps` for what that gives up (`as`, `base`, motion).
+export interface CardRootProps extends PlainPartProps<'div', CardChildren> {
 	/**
 	 * Disable the card, preventing interaction when clickable
 	 * @default false
@@ -36,44 +29,24 @@ export interface CardRootProps<
 }
 
 // Card Sub-component Props
+//
+// Every part below IS its element — a literal `<div>`/`<h3>`/`<p>` spreading the node's attributes —
+// so none takes `as`, `base` or motion. `PlainPartProps` types those `never`; the dispatch they used
+// to buy was a block, a branch and a hydration anchor per part. See `PlainPartProps`.
 
-export interface CardHeaderProps<
-	E extends HtmlElementTagName = 'div',
-	B extends Base = Base
-> extends RenderProps<E, B> {}
+export interface CardHeaderProps extends PlainPartProps<'div'> {}
 
-export interface CardBodyProps<
-	E extends HtmlElementTagName = 'div',
-	B extends Base = Base
-> extends RenderProps<E, B> {}
+export interface CardBodyProps extends PlainPartProps<'div'> {}
 
-export interface CardFooterProps<
-	E extends HtmlElementTagName = 'div',
-	B extends Base = Base
-> extends RenderProps<E, B> {}
+export interface CardFooterProps extends PlainPartProps<'div'> {}
 
-export interface CardTitleProps<
-	E extends HtmlElementTagName = 'h3',
-	B extends Base = Base
-> extends RenderProps<E, B> {}
+export interface CardTitleProps extends PlainPartProps<'h3'> {}
 
-export interface CardSubtitleProps<
-	E extends HtmlElementTagName = 'p',
-	B extends Base = Base
-> extends RenderProps<E, B> {}
+export interface CardSubtitleProps extends PlainPartProps<'p'> {}
 
-export interface CardDescriptionProps<
-	E extends HtmlElementTagName = 'p',
-	B extends Base = Base
-> extends RenderProps<E, B> {}
+export interface CardDescriptionProps extends PlainPartProps<'p'> {}
 
-export interface CardMediaProps<
-	E extends HtmlElementTagName = 'div',
-	B extends Base = Base
-> extends RenderProps<E, B> {}
+export interface CardMediaProps extends PlainPartProps<'div'> {}
 
 // Alias for CardBodyProps (used in card-body.svelte).
-export type CardContentProps<
-	E extends HtmlElementTagName = 'div',
-	B extends Base = Base
-> = CardBodyProps<E, B>;
+export type CardContentProps = CardBodyProps;

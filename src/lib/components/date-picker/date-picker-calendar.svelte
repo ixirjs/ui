@@ -1,9 +1,7 @@
 <script lang="ts">
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
-	import { mergePresetProps } from '$ixirjs/ui/components/atom';
-	import { Content } from '$ixirjs/ui/components/popover/atoms';
+	import Content from '$ixirjs/ui/components/popover/popover-content.svelte';
 	import {
-		Root,
+		Root as CalendarRoot,
 		Header as CalendarHeader,
 		Body as CalendarBody,
 		Day as CalendarDay
@@ -26,34 +24,23 @@
 		day: Day = CalendarDay,
 		months: Months = DatePickerMonths,
 		years: Years = DatePickerYears,
+		// swallowed: the calendar composes its own parts, so a consumer body never reached the panel
+		// (the fragment below always won over the spread). Kept off the spread rather than typed away.
+		children: _children = undefined,
 		...restProps
 	}: DatePickerCalendarProps = $props();
 
-	const calendarProps = $derived(mergePresetProps(preset, 'datepicker.calendar', restProps));
-	const calendarLayer = $derived(datePickerBond?.presetLayer('calendar'));
-	const headerLayer = $derived(datePickerBond?.presetLayer('header'));
-	const weekdaysLayer = $derived(datePickerBond?.presetLayer('weekdays'));
-	const bodyLayer = $derived(datePickerBond?.presetLayer('body'));
-	const dayLayer = $derived(datePickerBond?.presetLayer('day'));
-	const monthsLayer = $derived(datePickerBond?.presetLayer('months'));
-	const yearsLayer = $derived(datePickerBond?.presetLayer('years'));
-
-	const headerEl = Kernel.element(Kernel.static, () => ({
-		base: Header,
-		class: 'col-span-full',
-		presetLayer: headerLayer
-	}));
-	const weekdaysEl = Kernel.element(Kernel.static, () => ({
-		base: Weekdays,
-		class: 'border-0',
-		presetLayer: weekdaysLayer
-	}));
-	const bodyEl = Kernel.element(Kernel.static, () => ({ base: Body, presetLayer: bodyLayer }));
-	const monthsEl = Kernel.element(Kernel.static, () => ({
-		base: Months,
-		presetLayer: monthsLayer
-	}));
-	const yearsEl = Kernel.element(Kernel.static, () => ({ base: Years, presetLayer: yearsLayer }));
+	// The calendar IS the popover content: `Popover.Content` renders `Calendar.Root` as its element
+	// (`base`), so the panel and the calendar are one element, as they always were. `role="dialog"`
+	// and the label are what `DatePickerContentAtom` projected; a consumer attribute wins over the
+	// part's own, so they override Calendar.Root's `application`/`Calendar`.
+	const calendarLayer = $derived(datePickerBond?.props.presets?.calendar);
+	const headerLayer = $derived(datePickerBond?.props.presets?.header);
+	const weekdaysLayer = $derived(datePickerBond?.props.presets?.weekdays);
+	const bodyLayer = $derived(datePickerBond?.props.presets?.body);
+	const dayLayer = $derived(datePickerBond?.props.presets?.day);
+	const monthsLayer = $derived(datePickerBond?.props.presets?.months);
+	const yearsLayer = $derived(datePickerBond?.props.presets?.years);
 
 	function handleValueChange(value: Date | undefined) {
 		if (datePickerBond) datePickerBond.props.value = value;
@@ -70,9 +57,12 @@
 
 <Content
 	class={['relative overflow-hidden p-0 max-w-[96svw] md:max-w-xs', klass]}
-	base={Root}
-	{...calendarProps}
+	base={CalendarRoot}
+	preset={preset ?? 'datepicker.calendar'}
+	{...restProps}
 	presetLayer={calendarLayer}
+	role="dialog"
+	aria-label="Choose date"
 	value={datePickerBond?.props.value}
 	range={datePickerBond?.props.range ?? [undefined, undefined]}
 	pivote={datePickerBond?.props.pivote ?? new Date()}
@@ -85,11 +75,11 @@
 	onrangechange={handleRangeChange}
 	onpivotechange={handlePivoteChange}
 >
-	{@render Kernel.render(headerEl)(headerEl)}
-	{@render Kernel.render(weekdaysEl)(weekdaysEl)}
-	{@render Kernel.render(bodyEl)(bodyEl, dayBody, Kernel.forward)}
-	{@render Kernel.render(monthsEl)(monthsEl)}
-	{@render Kernel.render(yearsEl)(yearsEl)}
+	<Header class="col-span-full" presetLayer={headerLayer} />
+	<Weekdays class="border-0" presetLayer={weekdaysLayer} />
+	<Body presetLayer={bodyLayer} children={dayBody} />
+	<Months presetLayer={monthsLayer} />
+	<Years presetLayer={yearsLayer} />
 </Content>
 
 {#snippet dayBody({ day }: { day: CalendarDayType })}

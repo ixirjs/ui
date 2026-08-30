@@ -1,16 +1,25 @@
-<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
+<script lang="ts">
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
+	import { ScrollableContext } from './bond.svelte';
 	import type { ScrollableContentProps } from './types';
-	import { definePart } from '$ixirjs/ui/components/atom/define-part.svelte';
-	import { ScrollableBond } from './bond.svelte';
-	import { type Base, type BasePropsOf, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
 
-	const props: ScrollableContentProps<E, B> & BasePropsOf<B> = $props();
+	let {
+		as = undefined,
+		base = undefined,
+		children,
+		...restProps
+	}: ScrollableContentProps = $props();
 
-	const el = definePart(ScrollableBond, 'content', () => props, {
-		as: 'div',
-		class: 'scrollable-content border-border h-full max-h-full'
+	// Inert: it contributes no id, and nothing resolves one.
+	const el = Kernel.element(() => restProps, {
+		preset: 'scrollable.content',
+		class: 'scrollable-content border-border h-full max-h-full',
+		state: ScrollableContext.get(),
+		as: () => as,
+		base: () => base
 	});
+	// Bound once: an identifier callee compiles to a direct call — no snippet block, no anchor.
+	const leaf = Kernel.render(el);
 </script>
 
-{@render Kernel.render(el)(el, props.children)}
+{@render leaf(el, children)}

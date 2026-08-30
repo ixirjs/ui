@@ -1,33 +1,18 @@
-<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
-	import {
-		mergePresetProps,
-		type RenderProps,
-		type Base,
-		type BasePropsOf,
-		type HtmlElementTagName
-	} from '$ixirjs/ui/components/atom';
+<script lang="ts">
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
+	import type { LinkProps } from './types';
 
-	let {
-		class: klass = '',
-		preset = undefined,
-		children,
-		...restProps
-	}: RenderProps<E, B> & BasePropsOf<B> = $props();
+	let { as = 'a', base = undefined, children = undefined, ...restProps }: LinkProps = $props();
 
-	const linkProps = $derived(mergePresetProps(preset, 'link', restProps));
-
-	// Element seam instead of a component boundary: identical output, one less boundary. Key
-	// order below is the order the previous call had; precedence is object-literal order.
-	const el = Kernel.element(Kernel.static, () => ({
-		class: [
+	// Polymorphic by contract (`LinkProps<E, B>`), so it dispatches: `as` and `base` stay honoured.
+	const el = Kernel.element(() => restProps, {
+		preset: 'link',
+		class:
 			'hover:text-primary/80 active:text-primary cursor-pointer underline transition-colors duration-200',
-			'$preset',
-			klass
-		],
-		as: 'a',
-		...linkProps
-	}));
+		as: () => as,
+		base: () => base
+	});
+	const leaf = Kernel.render(el);
 </script>
 
-{@render Kernel.render(el)(el, children)}
+{@render leaf(el, children)}

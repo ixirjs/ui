@@ -1,4 +1,4 @@
-import type { Bond, BondStateProps } from '$lib/shared/bond';
+import type { BondStateProps } from '$lib/kernel/types';
 
 export interface StateChangeContext<B = never, E extends Event = Event> {
 	event?: E;
@@ -28,29 +28,17 @@ export type OmitKey<T, K extends PropertyKey> = {
 // every property of T that U does not redeclare silently degraded to `unknown`.
 export type Override<T, U> = OmitKey<T, keyof U> & U;
 
-// Partial override maintaining optional properties.
-export type PartialOverride<T, U extends Partial<T>> = OmitKey<T, keyof U> & U;
-
-// Deep override for nested objects.
-export type DeepOverride<T, U> = U extends object
-	? T extends object
-		? {
-				[K in keyof T | keyof U]: K extends keyof U ? U[K] : K extends keyof T ? T[K] : never;
-			}
-		: U
-	: U;
-
-// Extracts the props type a Bond was parameterized with; reads the bond first so props-owned
-// defineBond bases resolve directly from the base class.
-type PropsOf<T extends Bond> = T extends { readonly __props?: infer P }
+// Extracts the props type a family's shared object was parameterized with — every state class
+// exposes `readonly props`, which is what a `factory` is handed.
+type PropsOf<T> = T extends { readonly __props?: infer P }
 	? P
 	: T extends { readonly props: infer P }
 		? P
-		: T extends Bond<infer P>
-			? P
-			: BondStateProps;
+		: BondStateProps;
 
-export type Factory<T extends Bond> = (props: PropsOf<T>) => T;
+// `T` is the family's shared object: a plain state class (`CardBond`, `AccordionBond`) the root
+// builds and shares under its `Kernel.context`.
+export type Factory<T> = (props: PropsOf<T>) => T;
 
 // Sort direction.
 export type Direction = 'asc' | 'desc';

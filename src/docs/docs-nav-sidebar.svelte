@@ -2,7 +2,7 @@
 	// The docs sidebar: sticky on desktop, a left Drawer below 900px. One rendering for both — the
 	// drawer wraps it in its own scroll surface rather than restyling every row.
 	import { animateDrawerContent, Drawer } from '$lib/components/drawer';
-	import { DURATION } from '$ixirjs/ui/shared';
+	import { DURATION } from '$ixirjs/ui/authoring';
 	import { isActive, navGroups } from './nav';
 
 	type Props = { pathname: string; open?: boolean; ondismiss?: () => void };

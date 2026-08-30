@@ -1,6 +1,6 @@
-import { animate } from '$ixirjs/ui/shared';
+import { animate } from '$ixirjs/ui/authoring';
 import { untrack } from 'svelte';
-import { getPopoverPosition, PopoverBond } from './bond.svelte';
+import { PopoverContext } from './bond.svelte';
 
 export type AnimatePopoverContentParams = {
 	// Animation duration in seconds (default: 0.05)
@@ -20,7 +20,7 @@ export type AnimatePopoverContentParams = {
 export function animatePopoverContent(params: AnimatePopoverContentParams = {}) {
 	let prevOpen: boolean | undefined;
 
-	const bond = PopoverBond.get();
+	const bond = PopoverContext.getOptional();
 
 	return (node: HTMLElement) => {
 		const {
@@ -32,7 +32,7 @@ export function animatePopoverContent(params: AnimatePopoverContentParams = {}) 
 		} = params;
 
 		const isOpen = bond?.props.open ?? false;
-		const position = bond ? getPopoverPosition(bond) : undefined;
+		const position = bond?.position;
 
 		if (!position) return;
 
@@ -49,7 +49,7 @@ export function animatePopoverContent(params: AnimatePopoverContentParams = {}) 
 			const [side = 'bottom', alignment = ''] = placement?.split('-') ?? ['bottom', ''];
 
 			const offset = untrack(() => bond?.props.offset ?? 0);
-			const hasTail = untrack(() => Boolean(bond?.nodeByPart('tail')));
+			const hasTail = untrack(() => bond?.partId('tail') !== undefined);
 
 			const transformOrigin = getTransformOrigin(side, alignment);
 

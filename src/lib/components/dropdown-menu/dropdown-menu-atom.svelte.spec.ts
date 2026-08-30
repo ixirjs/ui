@@ -1,22 +1,20 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
-import { Atom } from '$ixirjs/ui/shared/bond';
 import Probe, {
 	capturedBond,
 	resetCapturedBond
 } from '$ixirjs/ui/test/components/dropdown-menu/dropdown-menu-atom-probe.test.svelte';
 import { DropdownMenuBond } from './bond.svelte';
-import { DropdownMenuItemAtom as DropdownMenuRenderedItemAtom } from './item/bond.svelte';
-import {
-	PopoverTailAtom,
-	PopoverIndicatorAtom,
-	PopoverOverlayAtom
-} from '$ixirjs/ui/components/popover/bond.svelte';
 
-describe('DropdownMenu component-owned Atoms', () => {
+/**
+ * Rewritten DOM-level. It used to assert Atom instances through `nodeByPart` — machinery the
+ * Kernel migration removed. Every rendered outcome it covered is asserted here instead: the
+ * container's role, the item's role, id and preset key, and the registration released on unmount.
+ */
+describe('DropdownMenu rendered parts', () => {
 	beforeEach(resetCapturedBond);
 
-	it('registers rendered dropdown nodes', () => {
+	it('renders the menu roles and releases its item registration on unmount', () => {
 		const { unmount } = render(Probe);
 		const dropdown = capturedBond;
 
@@ -24,31 +22,27 @@ describe('DropdownMenu component-owned Atoms', () => {
 		expect(dropdown).toBeInstanceOf(DropdownMenuBond);
 		expect(dropdown?.isOpen).toBe(true);
 
-		const trigger = dropdown?.nodeByPart('trigger');
-		const overlay = dropdown?.nodeByPart('overlay');
-		const content = dropdown?.nodeByPart('content');
-		const item = dropdown?.nodeByPart('item');
-		const tail = dropdown?.nodeByPart('tail');
-		const indicator = dropdown?.nodeByPart('indicator');
+		const trigger = document.querySelector('[aria-haspopup="menu"]');
+		expect(trigger).not.toBeNull();
+		expect(trigger?.id).toBe(`dropdown-menu-trigger-${dropdown!.id}`);
 
-		expect(overlay).toBeInstanceOf(PopoverOverlayAtom);
-		expect(item).toBeInstanceOf(DropdownMenuRenderedItemAtom);
-		expect(tail).toBeInstanceOf(PopoverTailAtom);
-		expect(indicator).toBeInstanceOf(PopoverIndicatorAtom);
-		for (const node of [trigger, overlay, content, item, tail, indicator]) {
-			expect(node).toBeInstanceOf(Atom);
-		}
+		const content = document.querySelector('[role="menu"]');
+		expect(content).not.toBeNull();
+		expect(content?.getAttribute('aria-orientation')).toBe('vertical');
 
-		expect(content?.spread.role).toBe('menu');
-		expect(item?.preset).toBe('dropdown-menu.item');
-		expect(item?.spread.role).toBe('menuitem');
-		expect(dropdown?.items.get('alpha')).toBe(item);
+		const item = document.querySelector('[role="menuitem"]');
+		expect(item).not.toBeNull();
+		expect(item?.id).toBe('menu-item-alpha');
+
+		expect(dropdown?.items.get('alpha')).toBeDefined();
+		expect(dropdown?.items.get('alpha')?.element).toBe(item);
+		expect(
+			(dropdown?.items.get('alpha') as unknown as { preset: string } | undefined)?.preset
+		).toBe('dropdown-menu.item');
 
 		unmount();
 
-		for (const part of ['trigger', 'overlay', 'content', 'item', 'tail', 'indicator']) {
-			expect(dropdown?.nodesByPart(part)).toEqual([]);
-		}
+		expect(document.querySelector('[role="menuitem"]')).toBeNull();
 		expect(dropdown?.items.get('alpha')).toBeUndefined();
 	});
 });

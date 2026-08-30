@@ -1,35 +1,30 @@
-<script module lang="ts">
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
-	import { TabsBond } from './bond.svelte';
-	const PART = Kernel.plan(TabsBond, 'body', { class: '' });
-</script>
-
-<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
-	import { type Base, type BasePropsOf, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
+<script lang="ts">
 	import { Stack } from '$ixirjs/ui/components/stack';
+	import { TabsContext } from './bond.svelte';
 	import type { TabsBodyProps } from './types';
 
 	let {
 		class: klass = '',
-		as = 'div' as E,
-		children,
+		as = 'div',
 		preset = undefined,
+		children,
 		...restProps
-	}: TabsBodyProps<E, B> & BasePropsOf<B> = $props();
-
-	const part = Kernel.node(PART, () => ({ preset }), {
-		context: 'required',
-		rest: () => restProps
-	});
-	const value = $derived(part.bond.props.value);
+	}: TabsBodyProps = $props();
+	const bond = TabsContext.getOrThrow('<Tabs.Body /> must be used within a <Tabs.Root />');
+	const value = $derived(bond.props.value);
 </script>
 
+<!-- A Stack of the registered panels: the active one is on top. The tabs body preset resolves
+     on the Stack's element in place of `stack.root`. -->
 <Stack.Root
 	{value}
-	bond={part.bond}
 	{as}
-	class={['tabs-body relative flex-1 flex flex-col', '$preset', klass]}
-	{...part.props}
+	preset={preset ?? 'tabs.body'}
+	presetLayer={bond.props.presets?.body}
+	class={['tabs-body relative flex-1 flex flex-col', klass]}
+	id={bond.bodyId}
+	role="group"
+	{...restProps}
 >
-	{@render children?.({ tabs: part.bond })}
+	{@render children?.({ tabs: bond })}
 </Stack.Root>

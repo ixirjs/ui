@@ -1,14 +1,14 @@
 <script module lang="ts">
-	import { DialogBond, type DialogBondProps } from '$ixirjs/ui/components/dialog/bond.svelte';
+	import { ContextMenuBond } from '$ixirjs/ui/components/context-menu/bond.svelte';
 	import { SelectBond } from '$ixirjs/ui/components/select/bond.svelte';
 	import { CollapsibleBond } from '$ixirjs/ui/components/collapsible/bond.svelte';
-	import { CardBond } from '$ixirjs/ui/components/card/bond.svelte';
-	import { createInput, inputCapability } from '$ixirjs/ui/shared/capability/models';
+	import { AlertBond } from '$ixirjs/ui/components/alert/bond.svelte';
+	import { createInput } from '$ixirjs/ui/capability/models';
 	import { DropdownMenuBond } from '$ixirjs/ui/components/dropdown-menu/bond.svelte';
 	import { TreeBond } from '$ixirjs/ui/components/tree/bond.svelte';
 
 	export type ConstructSubject =
-		| 'dialog'
+		| 'context-menu'
 		| 'select'
 		| 'collapsible'
 		| 'card'
@@ -18,43 +18,52 @@
 
 	/**
 	 * Population A of the on-demand-init study: what one Bond costs to construct, which is where the
-	 * stateful models (`createDisclosure`, `createSelection`, `createInput`) and their per-host
-	 * descriptors are built. These are the N-per-page Bonds, so this is the SSR-relevant cost.
+	 * stateful models (`createDisclosure`, `createSelection`, `createInput`) are built. These are the N-per-page Bonds, so this is the SSR-relevant cost.
 	 */
 	const FACTORIES: Record<ConstructSubject, () => { destroy(): void }> = {
-		dialog: () => {
-			const props = $state<DialogBondProps>({ open: false, disabled: false });
-			return DialogBond.create(props);
+		// ContextMenu is a plain state class on the redesigned Kernel: nothing to destroy. It is the
+		// deepest overlay in the library — a menu bundle plus its own manual trigger.
+		'context-menu': () => {
+			const props = $state({ open: false, disabled: false });
+			ContextMenuBond.create(props as never);
+			return { destroy: () => undefined };
 		},
+		// Select is a plain state class on the redesigned Kernel: nothing to destroy.
 		select: () => {
 			const props = $state({ open: false, disabled: false, values: [] as string[] });
-			return SelectBond.create(props as never);
+			SelectBond.create(props as never);
+			return { destroy: () => undefined };
 		},
+		// Collapsible is a plain state class on the redesigned Kernel: nothing to destroy.
 		collapsible: () => {
 			const props = $state({ open: false, disabled: false });
-			return CollapsibleBond.create(props);
+			CollapsibleBond.create(props);
+			return { destroy: () => undefined };
 		},
-		card: () => CardBond.create({ disabled: false, clickable: false }),
+		// The presentation-family baseline: a Bond with no models at all.
+		card: () => {
+			AlertBond.create({ disabled: false });
+			return { destroy: () => undefined };
+		},
 		// Select extends the menu base; this splits inherited cost from Select's own.
 		menu: () => {
 			const props = $state({ open: false, disabled: false });
-			return DropdownMenuBond.create(props as never);
+			DropdownMenuBond.create(props as never);
+			return { destroy: () => undefined };
 		},
+		// Tree is a plain state class on the redesigned Kernel: nothing to destroy.
 		tree: () => {
 			const props = $state({ open: false, disabled: false });
-			return TreeBond.create(props as never);
+			TreeBond.create(props);
+			return { destroy: () => undefined };
 		},
 		// Just the piece Select builds for every instance and a non-filterable Select never uses:
-		// the query input model plus its per-host descriptor. This is what deferral would reclaim.
+		// the query input model. This is what deferral would reclaim. The per-host descriptor that
+		// used to be measured alongside it went with the capability runtime on 2026-08-27.
 		'select-input-only': () => {
 			const props = $state({ query: '' });
-			const model = createInput({
+			void createInput({
 				query: { get: () => props.query, set: (v: string) => (props.query = v) }
-			});
-			void inputCapability(model, {
-				itemDomId: (id: string) => id,
-				expanded: () => false,
-				disabled: () => false
 			});
 			return { destroy: () => undefined };
 		}

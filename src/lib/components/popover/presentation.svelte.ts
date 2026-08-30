@@ -1,24 +1,10 @@
-import { untrack } from 'svelte';
-import {
-	defineAtomCapability,
-	sharedCapabilityKey,
-	type AtomHost
-} from '$ixirjs/ui/shared/capability';
-import { focus, isBrowser } from '$ixirjs/ui/utils/dom.svelte';
-import type { OverlayView } from '$ixirjs/ui/components/overlay';
-import {
-	closeOverlay,
-	overlayIsDisabled,
-	overlayIsOpen
-} from '$ixirjs/ui/components/overlay/policies/overlay-view';
-import { getPopoverPosition, popoverNode } from '$ixirjs/ui/components/popover/position-state';
-
-const POPOVER_TAIL = sharedCapabilityKey<void>('@ixirjs/popover:tail');
-const POPOVER_TAIL_GEOMETRY = sharedCapabilityKey<void>('@ixirjs/popover:tail-geometry');
-const POPOVER_OVERLAY = sharedCapabilityKey<void>('@ixirjs/popover:overlay');
-const POPOVER_CONTENT = sharedCapabilityKey<void>('@ixirjs/popover:content');
-const POPOVER_INDICATOR = sharedCapabilityKey<void>('@ixirjs/popover:indicator');
-const POPOVER_TRIGGER = sharedCapabilityKey<void>('@ixirjs/popover:trigger');
+/**
+ * Popover tail geometry — plain functions over the bond. The part spreads what `tailGeometryAttrs`
+ * returns; nothing here is a capability any more.
+ */
+import { isBrowser } from '$ixirjs/ui/utils/dom.svelte';
+import type { OverlayPart } from '$ixirjs/ui/components/overlay/model.svelte';
+import type { PopoverBondBase } from './bond.svelte';
 
 type PopoverSide = 'top' | 'bottom' | 'left' | 'right';
 export interface PopoverTailPresentationOptions {
@@ -46,61 +32,38 @@ const TAIL_TIP_DEPTH = 1.0;
  */
 const MAX_CROSS_EDGE_RATIO = 0.45;
 
-export function popoverTailPresentation<B extends OverlayView>() {
-	return defineAtomCapability<void, AtomHost, B>({
-		slot: POPOVER_TAIL,
-		meta: {
-			projects: ['tail'],
-			docs: 'Popover tail presentational ARIA projection.'
-		},
-		attach: {
-			attrs: () => ({
-				role: 'presentation',
-				'aria-hidden': true
-			})
-		}
-	});
-}
-
-export function popoverTailGeometry<B extends OverlayView>(
+/**
+ * Tail side geometry and trigger-safe placement, as the attributes the Tail part spreads. Reads the
+ * current floating-ui position and the rendered trigger/content rects through the bond.
+ */
+export function tailGeometryAttrs(
+	bond: PopoverBondBase,
 	options: PopoverTailPresentationOptions = {}
 ) {
-	return defineAtomCapability<void, AtomHost, B>({
-		slot: POPOVER_TAIL_GEOMETRY,
-		meta: {
-			projects: ['tail'],
-			docs: 'Popover tail side geometry and trigger-safe placement projection.'
-		},
-		attach: {
-			attrs: (_node, bond) => {
-				if (!bond) return {};
-				const position = getPopoverPosition(bond);
-				const placement = position?.placement ?? placementProp(bond) ?? 'top';
-				const side = getPlacementSide(placement);
-				const metrics = tailMetrics(bond, options, side);
-				const borders = getContentBorders(bond);
-				return {
-					style: tailStyle(bond, options, metrics, borders),
-					'data-tail-overlap': metrics.overlap,
-					'data-tail-side': side,
-					'data-tail-cross': metrics.cross,
-					'data-tail-cap': metrics.cap,
-					'data-tail-tip': metrics.tip,
-					'data-tail-main': metrics.main
-				};
-			}
-		}
-	});
+	const position = bond.position;
+	const placement = position?.placement ?? bond.props.placement ?? 'top';
+	const side = getPlacementSide(placement);
+	const metrics = tailMetrics(bond, options, side);
+	const borders = getContentBorders(bond);
+	return {
+		style: tailStyle(bond, options, metrics, borders),
+		'data-tail-overlap': metrics.overlap,
+		'data-tail-side': side,
+		'data-tail-cross': metrics.cross,
+		'data-tail-cap': metrics.cap,
+		'data-tail-tip': metrics.tip,
+		'data-tail-main': metrics.main
+	};
 }
 
 function tailStyle(
-	bond: OverlayView,
+	bond: PopoverBondBase,
 	options: PopoverTailPresentationOptions,
 	metrics: TailMetrics,
 	borders: BorderWidths
 ) {
-	const position = getPopoverPosition(bond);
-	const placement = position?.placement ?? placementProp(bond) ?? 'top';
+	const position = bond.position;
+	const placement = position?.placement ?? bond.props.placement ?? 'top';
 	const side = getPlacementSide(placement);
 	const tailSize = getTailSize(side, metrics);
 	// The tail's containing block is the content's padding box, but `calc(100% - cap)`
@@ -118,10 +81,6 @@ function tailStyle(
 		`--sa-popover-tail-transform: ${svgTransform(side)}`,
 		`--sa-popover-tail-overlap: ${metrics.overlap}px`
 	].join('; ');
-}
-
-function placementProp(bond: OverlayView) {
-	return (bond as unknown as { props?: { placement?: string } }).props?.placement;
 }
 
 function svgTransform(side: PopoverSide) {
@@ -170,9 +129,9 @@ type BorderWidths = { top: number; right: number; bottom: number; left: number }
 const ZERO_BORDERS: BorderWidths = { top: 0, right: 0, bottom: 0, left: 0 };
 
 /** Content's computed border widths, in px. Zero on the server (no layout to read). */
-function getContentBorders(bond: OverlayView): BorderWidths {
+function getContentBorders(bond: PopoverBondBase): BorderWidths {
 	if (!isBrowser()) return ZERO_BORDERS;
-	const element = popoverNode(bond, 'content')?.element;
+	const element = bond.element('content');
 	if (!(element instanceof Element)) return ZERO_BORDERS;
 	const style = getComputedStyle(element);
 	return {
@@ -198,9 +157,9 @@ function tailEdgeBorder(side: PopoverSide, borders: BorderWidths) {
 }
 
 /** Content's computed corner radius for the two corners on `side`'s edge, in px. */
-function getContentRadius(bond: OverlayView, side: PopoverSide): number {
+function getContentRadius(bond: PopoverBondBase, side: PopoverSide): number {
 	if (!isBrowser()) return 0;
-	const element = popoverNode(bond, 'content')?.element;
+	const element = bond.element('content');
 	if (!(element instanceof Element)) return 0;
 	const style = getComputedStyle(element);
 	const topLeft = parseFloat(style.borderTopLeftRadius) || 0;
@@ -236,7 +195,7 @@ function cornerSink(radius: number, edge: number, cross: number, cap: number) {
 }
 
 function tailMetrics(
-	bond: OverlayView,
+	bond: PopoverBondBase,
 	options: PopoverTailPresentationOptions,
 	side: PopoverSide
 ): TailMetrics {
@@ -311,7 +270,7 @@ function axisSpan(rect: DOMRect, axis: Axis): AxisSpan {
  * `crossAxisProperty`: trailing edge for `-end` placements, leading otherwise.
  */
 function crossAxisOffset(
-	bond: OverlayView,
+	bond: PopoverBondBase,
 	side: PopoverSide,
 	placement: string,
 	tailSize: { width: number; height: number },
@@ -380,9 +339,9 @@ function crossAxisBorder(axis: Axis, fromEnd: boolean, borders: BorderWidths) {
 }
 
 /** Fallback when trigger/content rects are unavailable (e.g. before first measure). */
-function middlewareTailOffset(bond: OverlayView, axis: Axis, size: number, fromEnd: boolean) {
+function middlewareTailOffset(bond: PopoverBondBase, axis: Axis, size: number, fromEnd: boolean) {
 	// `middlewareData.arrow` is floating-ui's own `arrow()` middleware output — not our naming.
-	const tailData = getPopoverPosition(bond)?.middlewareData?.arrow;
+	const tailData = bond.position?.middlewareData?.arrow;
 	const offset = axis === 'x' ? tailData?.x : tailData?.y;
 	if (typeof offset !== 'number') return `calc(50% - ${size / 2}px)`;
 	// Middleware offsets are measured from the leading edge; mirror for trailing anchors.
@@ -397,18 +356,16 @@ function triggerTailCenter(reference: AxisSpan, placement: string, tailSize: num
 	return (reference.start + reference.end) / 2;
 }
 
-function getReferenceRect(bond: OverlayView) {
-	const reference =
-		popoverNode(bond, 'virtual-trigger')?.element ?? popoverNode(bond, 'trigger')?.element;
-	return getRect(reference);
+function getReferenceRect(bond: PopoverBondBase) {
+	return getRect(bond.element('trigger'));
 }
 
-function getFloatingRect(bond: OverlayView) {
-	return getRect(popoverNode(bond, 'content')?.element);
+function getFloatingRect(bond: PopoverBondBase) {
+	return getRect(bond.element('content'));
 }
 
-function getElementRect(bond: OverlayView, key: string) {
-	return getRect(popoverNode(bond, key)?.element);
+function getElementRect(bond: PopoverBondBase, part: OverlayPart) {
+	return getRect(bond.element(part));
 }
 
 function getRect(value: unknown) {
@@ -425,129 +382,4 @@ function clamp(value: number, min: number, max: number) {
 
 function round(value: number) {
 	return Math.round(value * 100) / 100;
-}
-
-export function popoverOverlayPresentation<B extends OverlayView>() {
-	return defineAtomCapability<void, AtomHost, B, HTMLElement>({
-		slot: POPOVER_OVERLAY,
-		meta: {
-			projects: ['overlay'],
-			docs: 'Popover overlay dialog ARIA, active-state projection, and open-focus behavior.'
-		},
-		attach: {
-			attrs: (_node, bond) => {
-				if (!bond) return {};
-				// Resolved through the node registry, not rebuilt from the id convention: a consumer
-				// id on the trigger wins on that element, which left this pointing at nothing.
-				const triggerId = bond.nodeByPart('trigger')?.id;
-				const isOpen = overlayIsOpen(bond);
-				const isDisabled = overlayIsDisabled(bond);
-				const isActive = isOpen && !isDisabled;
-
-				return {
-					role: 'dialog',
-					'aria-modal': false,
-					...(triggerId ? { 'aria-labelledby': triggerId } : {}),
-					inert: !isActive ? true : undefined,
-					tabindex: -1,
-					'data-active': isActive,
-					'data-state': isOpen ? 'open' : 'closed'
-				};
-			},
-			onmount: (element, _node, bond) => {
-				if (!bond) return;
-				const triggerElement = popoverNode(bond, 'trigger')?.element as Element | undefined;
-				if (!triggerElement) return;
-
-				const isOpen = untrack(() => overlayIsOpen(bond));
-				if (!isOpen) return;
-
-				const activeElement = document.activeElement as HTMLElement;
-				const triggerContainsFocus =
-					['input', 'textarea'].includes(activeElement.tagName.toLowerCase()) &&
-					triggerElement.contains(activeElement);
-
-				if (!triggerContainsFocus) {
-					setTimeout(
-						() => focus(element, ['textarea:not([disabled])', 'input:not([disabled])']),
-						0
-					);
-				}
-			}
-		}
-	});
-}
-
-export function popoverContentPresentation<B extends OverlayView>() {
-	return defineAtomCapability<void, AtomHost, B>({
-		slot: POPOVER_CONTENT,
-		meta: {
-			projects: ['content'],
-			docs: 'Popover content active-state projection.'
-		},
-		attach: {
-			attrs: (_node, bond) => {
-				if (!bond) return {};
-				const isOpen = overlayIsOpen(bond);
-				const isDisabled = overlayIsDisabled(bond);
-				return {
-					'data-active': isOpen && !isDisabled,
-					'data-state': isOpen ? 'open' : 'closed'
-				};
-			}
-		}
-	});
-}
-
-export function popoverIndicatorPresentation<B extends OverlayView>() {
-	return defineAtomCapability<void, AtomHost, B>({
-		slot: POPOVER_INDICATOR,
-		meta: {
-			projects: ['indicator'],
-			docs: 'Popover indicator live-state projection.'
-		},
-		attach: {
-			attrs: (_node, bond) => {
-				const isOpen = bond ? overlayIsOpen(bond) : false;
-				return {
-					'aria-hidden': true,
-					'aria-live': isOpen ? ('polite' as const) : ('off' as const)
-				};
-			}
-		}
-	});
-}
-
-export function popoverTriggerPresentation<B extends OverlayView>() {
-	return defineAtomCapability<void, AtomHost, B>({
-		slot: POPOVER_TRIGGER,
-		meta: {
-			projects: ['trigger'],
-			docs: 'Popover trigger button semantics and keyboard routing.'
-		},
-		attach: {
-			attrs: (node, bond) => {
-				const isButtonElement = isBrowser() ? node.element instanceof HTMLButtonElement : false;
-				const isDisabled = bond ? overlayIsDisabled(bond) : false;
-				return {
-					role: isButtonElement ? '' : 'button',
-					disabled: isButtonElement ? isDisabled : undefined
-				};
-			},
-			handlers: (_node, bond) => ({
-				onkeydown: (ev: KeyboardEvent) => {
-					if (!bond || overlayIsDisabled(bond)) return;
-
-					if (ev.key === 'Tab') {
-						(popoverNode(bond, 'content')?.element as HTMLElement | undefined)?.focus();
-						return;
-					}
-
-					if (ev.key === 'Escape') {
-						closeOverlay(bond);
-					}
-				}
-			})
-		}
-	});
 }

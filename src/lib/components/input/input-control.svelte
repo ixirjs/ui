@@ -1,7 +1,6 @@
-<script lang="ts" generics="B extends Base = Base">
+<script lang="ts">
 	import { useControl, INPUT_FIELD_CLASS, toFiniteNumber } from './shared';
 	import { cn } from '$ixirjs/ui/utils';
-	import type { Base, BasePropsOf } from '$ixirjs/ui/components/atom';
 	import { DATE_INPUT_TYPES } from './bond.svelte';
 	import type { InputControlProps } from './types';
 	import type { PresetLike } from '$ixirjs/ui/preset';
@@ -27,13 +26,14 @@
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		children = undefined,
 		...restProps
-	}: InputControlProps<B> & BasePropsOf<B> = $props();
+	}: InputControlProps = $props();
 
 	const control = useControl({
 		preset: () => presetKey,
 		restProps: () => restProps,
 		class: () => klass,
-		instance: () => presetLayer as PresetLike | undefined
+		instance: () => presetLayer as PresetLike | undefined,
+		type: () => type ?? 'text'
 	});
 
 	const valueProps = $derived(control.attrs);

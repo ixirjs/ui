@@ -1,9 +1,7 @@
-<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
-	import { useRoot } from '$ixirjs/ui/shared';
-	import { type Base, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
-	import { StepBond } from './bond.svelte';
+<script lang="ts">
+	import { onDestroy, untrack } from 'svelte';
+	import { StepBond, StepContext } from './bond.svelte';
 	import type { StepRootProps } from './types';
-	import { onDestroy } from 'svelte';
 
 	const ID = $props.id();
 
@@ -17,28 +15,31 @@
 		optional = false,
 		children = undefined,
 		factory = undefined
-	}: StepRootProps<E, B> = $props();
+	}: StepRootProps = $props();
 
-	const bond = useRoot(
-		StepBond,
-		{
-			index: () => index,
-			disabled: () => disabled,
-			completed: () => completed,
-			optional: () => optional
+	const bondProps = {
+		get id() {
+			return ID;
 		},
-		// Renderless: Step.Root owns the Bond and renders `children` only, so it declares no root
-		// Atom. It previously created one whose attrs — role="group", the label linkage, the status
-		// data attributes — had no element to land on and were never emitted.
-		{ id: () => ID, factory: () => factory, atom: false }
-	).bond;
-
+		get index() {
+			return index;
+		},
+		get disabled() {
+			return disabled;
+		},
+		get completed() {
+			return completed;
+		},
+		get optional() {
+			return optional;
+		}
+	};
+	// `factory` is read once, at init, by design.
+	const build = untrack(() => factory);
+	const bond = StepContext.share(build ? build(bondProps) : StepBond.create(bondProps));
+	// Registered at init — document order — and released on teardown.
 	const unmountStep = bond.mount(bond);
-
-	onDestroy(() => {
-		unmountStep?.();
-	});
-
+	onDestroy(() => unmountStep());
 	export const getBond = () => bond;
 </script>
 

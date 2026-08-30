@@ -1,8 +1,9 @@
 <script lang="ts">
-	// One fixture covers Kernel's leaf and custom-renderer branches. Lifecycle stays owned by
+	// Through Alert.Root, a root that still dispatches: Card.Root IS its element and takes no
+	// `base`/motion (PlainPartProps). One fixture covers Kernel's leaf and custom-renderer branches. Lifecycle stays owned by
 	// Kernel.element in both modes and must fire exactly once.
-	import { Card } from '$ixirjs/ui/components/card';
-	import type { ComponentBase } from '$ixirjs/ui/components/atom';
+	import { Alert } from '$ixirjs/ui/components/alert';
+	import type { ComponentBase } from '$ixirjs/ui/authoring';
 
 	let {
 		lifecycleProps = {},
@@ -15,6 +16,6 @@
 	} = $props();
 </script>
 
-<Card.Root data-testid="seam-lifecycle" {...rest} {...lifecycleProps} {...base ? { base } : {}}>
+<Alert.Root data-testid="seam-lifecycle" {...rest} {...lifecycleProps} {...base ? { base } : {}}>
 	hello-seam
-</Card.Root>
+</Alert.Root>

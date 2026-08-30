@@ -1,8 +1,8 @@
+import { tick } from 'svelte';
 import { describe, expect, it } from 'vitest';
-import { DialogBond, DialogRootAtom, type DialogBondProps } from './bond.svelte';
-import { ignoreEscape, FOCUS } from '$ixirjs/ui/components/overlay';
-
-// Bond-seam specs: assert atom.spread, state methods, atom identity, strategy substitution. No DOM rendering.
+import { render } from 'vitest-browser-svelte';
+import ModalFixture from '$ixirjs/ui/test/components/dialog/dialog-modal.test.svelte';
+import { DialogBond, type DialogBondProps } from './bond.svelte';
 
 function makeBond(initial: Partial<DialogBondProps> = {}) {
 	const props = $state<DialogBondProps>({
@@ -12,6 +12,12 @@ function makeBond(initial: Partial<DialogBondProps> = {}) {
 	});
 	const bond = DialogBond.create(props);
 	return { bond, props };
+}
+
+async function settle() {
+	await tick();
+	await Promise.resolve();
+	await tick();
 }
 
 describe('DialogBond overlay lifecycle methods', () => {
@@ -41,34 +47,72 @@ describe('DialogBond overlay lifecycle methods', () => {
 	});
 });
 
-describe('Strategy substitution via capabilities (slot resolution)', () => {
-	it('overriding the escape capability with IgnoreEscape: Escape does not close', () => {
-		const props = $state<DialogBondProps>({ open: true, disabled: false });
-		const bond = DialogBond.create(props);
-		// last-wins-per-slot replaces the bundle's CloseOnEscape (before the root atom is built)
-		bond.capability(ignoreEscape);
+// Replaces the capability-slot specs ("strategy substitution", the FOCUS surface, `DialogRootAtom`
+// spreads): the same outcomes, asserted on what renders. A consumer overrides the escape policy the
+// way it overrides any handler now — its `onkeydown` runs first and `preventDefault` keeps the
+// dialog open.
+describe('Dialog modal behaviour (rendered)', () => {
+	function escape(target: HTMLElement) {
+		target.dispatchEvent(
+			new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })
+		);
+	}
 
-		const onkeydown = new DialogRootAtom(bond).spread.onkeydown as (ev: KeyboardEvent) => void;
-		onkeydown({ key: 'Escape', preventDefault: () => undefined } as KeyboardEvent);
-		expect(props.open).toBe(true); // would be false with CloseOnEscape
+	it('Escape on the surface closes the dialog with reason "escape"', async () => {
+		const { component, unmount } = render(ModalFixture);
+		await settle();
+		const bond = (component as unknown as { getBond(): DialogBond }).getBond();
+		const root = document.querySelector<HTMLElement>('[data-testid="dialog-root"]')!;
+
+		expect(bond.isOpen).toBe(true);
+		escape(root);
+		expect(bond.isOpen).toBe(false);
+		unmount();
 	});
 
-	it('default focus policy is trappedFocus (restoreFocus:previous, captureFocusOnOpen:true)', () => {
-		const { bond } = makeBond();
-		const focus = bond.capability(FOCUS)?.surface;
-		expect(focus?.restoreFocus).toBe('previous');
-		expect(focus?.captureFocusOnOpen).toBe(true);
+	it('a consumer onkeydown that prevents default keeps the dialog open on Escape', async () => {
+		const { component, unmount } = render(ModalFixture, {
+			onkeydown: (event: KeyboardEvent) => event.preventDefault()
+		});
+		await settle();
+		const bond = (component as unknown as { getBond(): DialogBond }).getBond();
+
+		escape(document.querySelector<HTMLElement>('[data-testid="dialog-root"]')!);
+		expect(bond.isOpen).toBe(true);
+		unmount();
 	});
 
-	it('uses modal behavior by default and suppresses modal ARIA/inert when modal is false', () => {
-		const { bond: modal } = makeBond({ open: false });
-		const { bond: nonModal } = makeBond({ open: false, modal: false });
+	it('moves focus into the content on open and restores the previously focused element on close', async () => {
+		const { component, rerender, unmount } = render(ModalFixture, { open: false });
+		await settle();
+		const outside = document.querySelector<HTMLElement>('[data-testid="outside"]')!;
+		outside.focus();
+		expect(document.activeElement).toBe(outside);
 
-		expect(modal.modal).toBe(true);
-		expect(new DialogRootAtom(modal).spread['aria-modal']).toBe(true);
-		expect(new DialogRootAtom(modal).spread.inert).toBe(true);
-		expect(nonModal.modal).toBe(false);
-		expect(new DialogRootAtom(nonModal).spread['aria-modal']).toBeUndefined();
-		expect(new DialogRootAtom(nonModal).spread.inert).toBeUndefined();
+		await rerender({ open: true });
+		await settle();
+		expect(document.activeElement).toBe(document.querySelector('[data-testid="inside"]'));
+
+		(component as unknown as { getBond(): DialogBond }).getBond().close();
+		await settle();
+		expect(document.activeElement).toBe(outside);
+		unmount();
+	});
+
+	it('projects modal ARIA and inert by default, and neither when non-modal', async () => {
+		const { rerender, unmount } = render(ModalFixture, { open: false });
+		await settle();
+		const root = document.querySelector<HTMLElement>('[data-testid="dialog-root"]')!;
+
+		expect(root.getAttribute('role')).toBe('dialog');
+		expect(root.getAttribute('aria-modal')).toBe('true');
+		expect(root.hasAttribute('inert')).toBe(true);
+		expect(root.dataset.state).toBe('closed');
+
+		await rerender({ type: 'non-modal' });
+		await settle();
+		expect(root.getAttribute('aria-modal')).toBeNull();
+		expect(root.hasAttribute('inert')).toBe(false);
+		unmount();
 	});
 });

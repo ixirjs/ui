@@ -1,58 +1,55 @@
 {
 	"machine": "AMD Ryzen 9 PRO 8945HS w/ Radeon 780M Graphics ×16",
 	"node": "v24.13.1",
-	"recorded": "2026-08-15",
+	"recorded": "2026-08-27",
 	"layers": {
 		"plain": {
-			"micros": 0.27,
-			"gcShare": 0.734,
+			"micros": 0.29,
+			"gcShare": 0.635,
 			"bytesPerUnit": 346,
 			"sha": "c637c8c7f82b"
 		},
 		"cardroot": {
-			"micros": 3.77,
-			"gcShare": 0.409,
-			"bytesPerUnit": 213,
-			"sha": "9dc883fba5fa"
+			"micros": 2.31,
+			"gcShare": 0.272,
+			"bytesPerUnit": 184,
+			"sha": "ae600a0dc975"
 		},
 		"card": {
-			"micros": 14.54,
-			"gcShare": 0.286,
-			"bytesPerUnit": 607,
-			"sha": "49ce40f336cc"
+			"micros": 9.59,
+			"gcShare": 0.211,
+			"bytesPerUnit": 516,
+			"sha": "78163b788860"
 		},
 		"collapsible": {
-			"micros": 48.56,
-			"gcShare": 0.161,
-			"bytesPerUnit": 572,
-			"sha": "7d60ee06ee0e"
+			"micros": 17.17,
+			"gcShare": 0.225,
+			"bytesPerUnit": 587,
+			"sha": "08a64f27ee21"
 		},
 		"datagrid": {
-			"micros": 25.47,
-			"gcShare": 0.163,
-			"bytesPerUnit": 725,
-			"sha": "e217614d6dd2"
+			"micros": 12.6,
+			"gcShare": 0.197,
+			"bytesPerUnit": 743,
+			"sha": "6ab456e7c00b"
 		},
 		"tree": {
-			"micros": 69.45,
-			"gcShare": 0.139,
-			"bytesPerUnit": 569,
-			"sha": "460d99917901"
+			"micros": 23.74,
+			"gcShare": 0.233,
+			"bytesPerUnit": 518,
+			"sha": "fe87985b91f2"
 		},
 		"card-preset": {
-			"micros": 15.73,
-			"gcShare": 0.274,
-			"bytesPerUnit": 661,
-			"sha": "b66589e771fa"
+			"micros": 11.8,
+			"gcShare": 0.17,
+			"bytesPerUnit": 570,
+			"sha": "dff279fe63de"
 		},
 		"menu": {
-			"micros": 9.09,
-			"gcShare": 0.165,
-			"bytesPerUnit": 415,
-			"sha": "1463d698858e"
+			"micros": 5.1,
+			"gcShare": 0.217,
+			"bytesPerUnit": 406,
+			"sha": "1a6fb57f2ee9"
 		}
-	},
-	"fingerprintNotes": {
-		"menu": "2026-08-21: 422 B/sha=62edaf171bf6 -> 415 B/sha=1463d698858e. Kernel gained a literal <button> leaf, so a button-tagged part no longer renders through `svelte:element` and drops the three comment anchors `$.element` emits (open, close, empty-content). The menu layer's change is its Trigger, one per fixture; `bytesPerUnit` is body.length/3 at n=3, so a 24-byte constant reads as -7. Verified anchor-only: 18 SSR-fidelity snapshots re-recorded, 183 anchors removed, zero semantic differences."
 	}
 }

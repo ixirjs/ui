@@ -3,9 +3,8 @@ import type { Placement } from '@floating-ui/dom';
 import type { Factory, StateChangeCallback } from '$ixirjs/ui/types';
 import type { PopoverBond } from './bond.svelte';
 import type { PresetLike } from '$ixirjs/ui/preset';
-import type { BondPresetLayers } from '$ixirjs/ui/shared/bond';
-import type { Base, RenderProps } from '$ixirjs/ui/components/atom';
-import type { HtmlElementTagName } from '$ixirjs/ui/components/element';
+import type { BondPresetLayers } from '$ixirjs/ui/authoring';
+import type { Base, HtmlElementTagName, RenderProps } from '$ixirjs/ui/authoring';
 import type {
 	LayerInput,
 	LayerRelation,
@@ -158,15 +157,9 @@ export interface PopoverTailProps<
 	size?: number | undefined;
 }
 
+// The native handlers (`onclick`, `onkeydown`, `onpointerenter`, …) come from `RenderProps`; a
+// consumer's runs before the part's own, which is skipped when the default is prevented.
 export interface PopoverTriggerProps<
 	T extends HtmlElementTagName,
 	B extends Base = Base
-> extends RenderProps<T, B, PopoverChildren> {
-	// Explicit so the trigger can preserve native handlers before built-in activation.
-	/** Native click event. */
-	onclick?: ((event: MouseEvent) => void) | undefined;
-	/** Native keydown event. Runs before the atom’s own handler, which is skipped if the default is prevented. */
-	onkeydown?: ((event: KeyboardEvent) => void) | undefined;
-	/** Native pointerenter event, used by hover-opened popovers such as Tooltip. */
-	onpointerenter?: ((event: PointerEvent) => void) | undefined;
-}
+> extends RenderProps<T, B, PopoverChildren> {}

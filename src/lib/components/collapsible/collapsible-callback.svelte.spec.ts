@@ -11,7 +11,7 @@ describe('Collapsible callbacks', () => {
 			committedStates.push(bond?.isOpen === value);
 		});
 		const { component } = render(CollapsibleRoot, { open: true, onopenchange });
-		const bond = component.getBond();
+		const bond = (component as unknown as { getBond(): CollapsibleBond }).getBond();
 
 		expect(onopenchange).not.toHaveBeenCalled();
 

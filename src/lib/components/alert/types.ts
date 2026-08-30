@@ -1,10 +1,5 @@
 import type { Snippet } from 'svelte';
-import type {
-	RenderProps,
-	Base,
-	SnippetProps,
-	HtmlElementTagName
-} from '$ixirjs/ui/components/atom';
+import type { RenderProps, Base, SnippetProps } from '$ixirjs/ui/authoring';
 import type { Factory } from '$ixirjs/ui/types';
 import type { AlertBond } from './bond.svelte';
 
@@ -16,10 +11,7 @@ export interface AlertSnippetProps extends SnippetProps {
 export type AlertChildren = Snippet<[AlertSnippetProps]>;
 
 // Alert Root Props
-export interface AlertRootProps<
-	E extends HtmlElementTagName = 'div',
-	B extends Base = Base
-> extends RenderProps<E, B, AlertChildren> {
+export interface AlertRootProps extends RenderProps<'div', Base, AlertChildren> {
 	/**
 	 * Disable interaction with the alert (e.g., prevent close button)
 	 * @default false
@@ -33,32 +25,14 @@ export interface AlertRootProps<
 
 // Alert Sub-component Props
 
-export interface AlertContentProps<
-	E extends HtmlElementTagName = 'div',
-	B extends Base = Base
-> extends RenderProps<E, B, AlertChildren> {}
+export interface AlertContentProps extends RenderProps<'div', Base, AlertChildren> {}
 
-export interface AlertTitleProps<
-	E extends HtmlElementTagName = 'div',
-	B extends Base = Base
-> extends RenderProps<E, B, AlertChildren> {}
+export interface AlertTitleProps extends RenderProps<'div', Base, AlertChildren> {}
 
-export interface AlertDescriptionProps<
-	E extends HtmlElementTagName = 'div',
-	B extends Base = Base
-> extends RenderProps<E, B, AlertChildren> {}
+export interface AlertDescriptionProps extends RenderProps<'div', Base, AlertChildren> {}
 
-export interface AlertIconProps<
-	E extends HtmlElementTagName = 'div',
-	B extends Base = Base
-> extends RenderProps<E, B, AlertChildren> {}
+export interface AlertIconProps extends RenderProps<'div', Base, AlertChildren> {}
 
-export interface AlertActionsProps<
-	E extends HtmlElementTagName = 'div',
-	B extends Base = Base
-> extends RenderProps<E, B, AlertChildren> {}
+export interface AlertActionsProps extends RenderProps<'div', Base, AlertChildren> {}
 
-export interface AlertCloseButtonProps<
-	E extends HtmlElementTagName = 'button',
-	B extends Base = Base
-> extends RenderProps<E, B, AlertChildren> {}
+export interface AlertCloseButtonProps extends RenderProps<'button', Base, AlertChildren> {}

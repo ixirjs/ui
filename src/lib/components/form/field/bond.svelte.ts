@@ -1,59 +1,77 @@
-import { Bond, defineAtom, type BondStateProps } from '$ixirjs/ui/shared/bond';
-import { defineBond, type BondOf } from '$ixirjs/ui/shared';
-import {
-	labelledControl,
-	errorMessageLink
-} from '$ixirjs/ui/shared/capability/models/relationship.svelte';
+/**
+ * A field's shared object — a plain state class on the redesigned `Kernel`.
+ *
+ * Same surface the family always had (`{ field }`, `getBond`, `factory`, `validate`, `errors`,
+ * `status`), none of the runtime. The parent form comes from context; the label/control/description/
+ * error ids are `$state` here, written by each part at its init, and every cross-part ARIA reference
+ * (`for`, `aria-labelledby`, `aria-describedby`, `aria-errormessage`) is read from them.
+ */
+import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
 import {
 	createValidation,
 	isPromise,
-	validationCapability,
 	type ValidationError,
 	type ValidationModel,
 	type ValidationResult
-} from '$ixirjs/ui/shared/capability/models/validation.svelte';
-import { createStatus, statusCapability } from '$ixirjs/ui/shared/capability/models/status.svelte';
-import { standardSchemaSource, type StandardSchemaV1 } from '$ixirjs/ui/shared/validation';
-import { FormBond, type ValidationMode } from '$ixirjs/ui/components/form/bond.svelte';
+} from '$ixirjs/ui/capability/models/validation.svelte';
+import { createStatus } from '$ixirjs/ui/capability/models/status.svelte';
+import { standardSchemaSource, type StandardSchemaV1 } from '$ixirjs/ui/validation';
+import {
+	FormContext,
+	type FormBond,
+	type ValidationMode
+} from '$ixirjs/ui/components/form/bond.svelte';
 
 export type { ValidationError, ValidationResult };
 
 export type FieldStateProps<
 	Extension extends Record<string, unknown> = Record<string, unknown>,
 	Value = unknown
-> = BondStateProps & {
+> = {
+	id?: string | undefined;
 	disabled: boolean;
 	readonly: boolean;
 	// Optional, unlike disabled/readonly: absent reads as false, so existing constructors stand.
-	required?: boolean;
-	name?: string;
-	value?: Value;
-	files?: File[];
-	date?: Date | null;
-	number?: number;
-	checked?: boolean;
-	type?: string;
+	required?: boolean | undefined;
+	name?: string | undefined;
+	value?: Value | undefined;
+	files?: File[] | undefined;
+	date?: Date | null | undefined;
+	number?: number | undefined;
+	checked?: boolean | undefined;
+	type?: string | undefined;
 	/** A Standard Schema checked against this field's value alone, independent of the form's. */
-	schema?: StandardSchemaV1;
+	schema?: StandardSchemaV1 | undefined;
 	/** Overrides the form's trigger mode for this field. */
-	mode?: ValidationMode;
-	onvalidation?: (result: ValidationResult<Value>) => void;
+	mode?: ValidationMode | undefined;
+	onvalidation?: ((result: ValidationResult<Value>) => void) | undefined;
 	extend: Extension;
 };
 
 /** What caused a validation attempt. `shouldValidateOn` turns this into a yes or no. */
 export type ValidationTrigger = 'input' | 'blur' | 'submit';
 
-export class FieldBondBase<Props extends FieldStateProps = FieldStateProps> extends Bond<Props> {
+export const FieldContext = Kernel.context<FieldBond>('bond/field');
+
+function optionalForm(): FormBond | undefined {
+	// Outside component init (a unit test) there is no context to read.
+	try {
+		return FormContext.get();
+	} catch {
+		return undefined;
+	}
+}
+
+export class FieldBond<Props extends FieldStateProps = FieldStateProps> {
+	readonly name = 'field';
+	readonly props: Props;
 	/** Results from this field's own `schema`. Form-level errors are merged in by `errors`. */
 	readonly validation: ValidationModel = createValidation({ run: () => this.#run() });
-
 	/**
 	 * The parent form, when there is one. A Field works standalone; everything that reads this
 	 * treats absence as "no form-level errors, default mode".
 	 */
 	readonly form: FormBond | undefined;
-
 	readonly status = createStatus({
 		disabled: () => this.props.disabled,
 		readonly: () => this.props.readonly,
@@ -63,26 +81,30 @@ export class FieldBondBase<Props extends FieldStateProps = FieldStateProps> exte
 		dirty: () => this.isDirty
 	});
 
+	/** Part element ids, once each has rendered. */
+	labelId = $state<string | undefined>();
+	controlId = $state<string | undefined>();
+	descriptionId = $state<string | undefined>();
+	errorId = $state<string | undefined>();
+
 	#touched = $state(false);
 	#initial: unknown;
 
-	constructor(props: Props, name = 'field') {
-		super(props, name);
-		this.form = FormBond.getOptional<FormBond>();
+	constructor(props: Props, form?: FormBond) {
+		this.props = props;
+		this.form = form ?? optionalForm();
 		this.#initial = props.value;
+	}
 
-		// A labelled, validated field. Declared here rather than behind a recipe: field is the only
-		// caller, and the recipe's own status default was already overridden by `status` above.
-		this.registerCapabilities([
-			labelledControl({ nativeFor: true }),
-			statusCapability(this.status, { roles: ['control'] }),
-			// The merged view, not `this.validation` — otherwise a form-level error would style and
-			// announce nothing, because the field's own model never saw it.
-			validationCapability(this.#mergedValidation()),
-			// `live` promotes the error node to role="alert". Safe here because `Field.Error` renders
-			// only while the field is invalid, so the alert fires when the error appears, not on mount.
-			errorMessageLink({ invalid: () => this.isInvalid, live: true })
-		]);
+	static create(props: FieldStateProps): FieldBond {
+		return new FieldBond(props);
+	}
+
+	get id(): string {
+		return this.props.id ?? 'field';
+	}
+	get rootId(): string {
+		return Kernel.id(this.id, 'field-root');
 	}
 
 	get value() {
@@ -188,26 +210,6 @@ export class FieldBondBase<Props extends FieldStateProps = FieldStateProps> exte
 		};
 	}
 
-	/** A read-through view over `errors`, so every consumer of the VALIDATION slot sees both sources. */
-	#mergedValidation(): ValidationModel {
-		// eslint-disable-next-line @typescript-eslint/no-this-alias
-		const field = this;
-		return {
-			get errors() {
-				return field.errors;
-			},
-			get isInvalid() {
-				return field.isInvalid;
-			},
-			get isValidating() {
-				return field.isValidating;
-			},
-			validate: () => this.validate(),
-			set: (result) => this.validation.set(result),
-			clear: () => this.clear()
-		};
-	}
-
 	#run(): ValidationResult | Promise<ValidationResult> {
 		const { schema, value, onvalidation } = this.props;
 
@@ -230,51 +232,3 @@ export class FieldBondBase<Props extends FieldStateProps = FieldStateProps> exte
 		return outcome;
 	}
 }
-
-export const FieldRootAtom = defineAtom<FieldBondBase>('root', {
-	slot: '@ixirjs/field:root',
-	docs: 'Field root group labelling and validation state projection.',
-	attrs: (_node, bond) => {
-		const hasErrors = (bond?.errors.length ?? 0) > 0;
-		// Prefer the error message when there is one, but fall back to the helper text: a field
-		// with errors and no `Field.Error` rendered still has something to describe it.
-		const described = hasErrors
-			? (bond?.nodeByRole('error') ?? bond?.nodeByRole('description'))
-			: bond?.nodeByRole('description');
-
-		return {
-			role: 'group',
-			'aria-labelledby': bond?.nodeByRole('label')?.id,
-			'aria-describedby': described?.id,
-			'aria-invalid': `${hasErrors}`
-		};
-	}
-});
-
-export const FieldLabelAtom = defineAtom<FieldBondBase>('label');
-// `for` and id come from the labelledControl link (role:'label', nativeFor).
-
-export const FieldControlAtom = defineAtom<FieldBondBase>('control');
-
-export const FieldDescriptionAtom = defineAtom<FieldBondBase>('description');
-
-// The error message target. Separate from the description: the helper text used to claim the
-// 'error' role too, which pointed `aria-errormessage` at prose that is not the error.
-export const FieldErrorAtom = defineAtom<FieldBondBase>('error');
-
-// FieldBond — label/control fold in the labelled-control link via their roles; validation lives on the Bond.
-
-export const FieldBond = defineBond({
-	name: 'field',
-	base: FieldBondBase,
-	atoms: {
-		root: FieldRootAtom,
-		label: { atom: FieldLabelAtom, role: 'label' },
-		control: { atom: FieldControlAtom, role: 'control' },
-		description: { atom: FieldDescriptionAtom, role: 'description' },
-		error: { atom: FieldErrorAtom, role: 'error' }
-	}
-});
-
-// Instance type — paired with the const above.
-export type FieldBond = BondOf<typeof FieldBond>;

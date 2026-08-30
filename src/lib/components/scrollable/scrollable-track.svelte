@@ -1,61 +1,57 @@
-<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
+<script lang="ts">
 	import { untrack } from 'svelte';
-	import type { ScrollableTrackProps } from './types';
-	import { ScrollableBond, ScrollableTrackAtom } from './bond.svelte';
-	import { createAtomInstance } from '$ixirjs/ui/shared/bond';
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
 	import {
-		mergeAtomProps,
-		type Base,
-		type BasePropsOf,
-		type HtmlElementTagName
-	} from '$ixirjs/ui/components/atom';
+		shouldSkipPolicy,
+		trackPressDetail
+	} from '$ixirjs/ui/capability/models/interaction-policies/shared';
+	import { ScrollableContext } from './bond.svelte';
+	import type { ScrollableTrackProps } from './types';
 
 	let {
-		class: klass = '',
-		preset = undefined,
+		as = undefined,
+		base = undefined,
 		orientation = 'vertical',
 		children,
 		...restProps
-	}: ScrollableTrackProps<E, B> & BasePropsOf<B> = $props();
+	}: ScrollableTrackProps = $props();
+	const bond = ScrollableContext.getOrThrow('ScrollableTrack must be used within a ScrollableRoot');
 
-	const bond = ScrollableBond.getOrThrow('ScrollableTrack must be used within a ScrollableRoot');
+	// The axis is fixed at init, like the Atom it replaces was.
+	const axis = untrack(() => orientation) === 'horizontal' ? 'x' : 'y';
 
-	const hasYScroll = $derived(bond.props.scrollHeight > bond.props.clientHeight);
-	const hasXScroll = $derived(bond.props.scrollWidth > bond.props.clientWidth);
-	const hasScroll = $derived(hasXScroll || hasYScroll);
-	const isOpen = $derived(bond?.props?.open ?? true);
-	const isScrolling = $derived(bond?.props?.isScrolling ?? false);
+	const hasScroll = $derived(bond.canScrollX || bond.canScrollY);
+	const isOpen = $derived(bond.props.open ?? true);
+	const isScrolling = $derived(bond.props.isScrolling ?? false);
 
-	const atom = createAtomInstance(
-		untrack(() => (orientation === 'horizontal' ? 'trackX' : 'trackY')),
-		{
-			bond,
-			factory: (owner, key) => new ScrollableTrackAtom(owner!, key === 'trackX' ? 'x' : 'y')
-		}
-	);
+	// Track press: jump to the pressed fraction. Pointer, primary button, not disabled.
+	const disabled = () => bond.props.disabled;
+	function onpointerdown(event: PointerEvent) {
+		if (shouldSkipPolicy(disabled, bond as never, event)) return;
+		event.preventDefault();
+		const detail = trackPressDetail(event);
+		bond.scrollToTrackFraction(axis, axis === 'x' ? detail.percentX : detail.percentY);
+	}
 
-	const trackProps = $derived(mergeAtomProps(atom, preset ?? 'scrollable.track', restProps));
-
-	// `mergeAtomProps` already folded the Atom spread into the packet, so Kernel must not read it twice.
-	const el = Kernel.element(
-		{ atom: undefined, bond, preset: undefined, presetLayer: undefined },
-		() => ({
-			bond,
-			as: 'div',
-			class: [
-				'scrollable-track bg-foreground/10 hover:bg-foreground/15 absolute z-10 rounded transition-opacity',
-				{ vertical: 'inset-y-0 right-0 w-2', horizontal: 'inset-x-0 bottom-0 h-2' }[orientation],
-				'$preset',
-				klass
-			],
-			...trackProps
+	const el = Kernel.element(() => restProps, {
+		preset: 'scrollable.track',
+		class: `scrollable-track bg-foreground/10 hover:bg-foreground/15 absolute z-10 rounded transition-opacity ${axis === 'y' ? 'inset-y-0 right-0 w-2' : 'inset-x-0 bottom-0 h-2'}`,
+		state: bond,
+		as: () => as,
+		base: () => base,
+		attrs: () => ({
+			id: bond.partId(axis === 'x' ? 'trackX' : 'trackY'),
+			'data-visible': axis === 'x' ? bond.canScrollX : bond.canScrollY,
+			'data-direction': axis === 'x' ? 'horizontal' : 'vertical',
+			onpointerdown
 		})
-	);
+	});
+	// Bound once: an identifier callee compiles to a direct call — no snippet block, no anchor.
+	const leaf = Kernel.render(el);
 </script>
 
 {@render ((isOpen || isScrolling) && hasScroll ? track : undefined)?.()}
 
 {#snippet track()}
-	{@render Kernel.render(el)(el, children)}
+	{@render leaf(el, children)}
 {/snippet}

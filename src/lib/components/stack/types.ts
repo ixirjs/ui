@@ -1,9 +1,4 @@
-import type {
-	RenderProps,
-	Base,
-	SnippetProps,
-	HtmlElementTagName
-} from '$ixirjs/ui/components/atom';
+import type { RenderProps, Base, SnippetProps, HtmlElementTagName } from '$ixirjs/ui/authoring';
 import type { Snippet } from 'svelte';
 import type { Factory, StateChangeCallback } from '$ixirjs/ui/types';
 import type { StackBond } from './bond.svelte';
@@ -34,13 +29,6 @@ export interface StackItemProps<
 	E extends HtmlElementTagName = 'div',
 	B extends Base = Base
 > extends RenderProps<E, B, StackChildren> {
-	/**
-	 * Unique identifier for this item within the stack. Used by Bond z-order methods such as bringToFront and sendToBack. Auto-generated if omitted.
-	 * @default $props.id()
-	 */
-	id?: string | undefined;
-
-	// Unique identifier for this stack item.
-	/** Current value of the control. */
+	/** Unique identifier for this item within the stack. Used by Bond z-order methods such as bringToFront and sendToBack. */
 	value: string;
 }

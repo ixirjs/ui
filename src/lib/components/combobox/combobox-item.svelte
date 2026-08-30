@@ -2,20 +2,13 @@
 	lang="ts"
 	generics="T = unknown, E extends HtmlElementTagName = 'li', B extends Base = Base"
 >
-	import { ComboboxBond } from './bond.svelte';
+	import type { Base, BasePropsOf, HtmlElementTagName } from '$ixirjs/ui/authoring';
 	import { Item } from '$ixirjs/ui/components/select/atoms';
-	import {
-		mergePresetProps,
-		type Base,
-		type BasePropsOf,
-		type HtmlElementTagName
-	} from '$ixirjs/ui/components/atom';
-	import { closeOverlay } from '$ixirjs/ui/components/overlay/policies/overlay-view';
+	import type { SelectItemProps } from '$ixirjs/ui/components/select/item/types';
+	import { ComboboxContext } from './bond.svelte';
 	import type { ComboboxItemProps } from './types';
 
-	const bond = ComboboxBond.getOrThrow(
-		'ComboboxItem must be used within a Combobox'
-	) as ComboboxBond;
+	const bond = ComboboxContext.getOrThrow('ComboboxItem must be used within a Combobox');
 
 	let {
 		class: klass = '',
@@ -25,25 +18,23 @@
 		...restProps
 	}: ComboboxItemProps<T, E, B> & BasePropsOf<B> = $props();
 
-	const presentation = $derived(mergePresetProps(preset, 'combobox.item', restProps));
-
-	// `Select.Item`'s own handler runs this first, then bails if we've `preventDefault`ed — so we
-	// own the commit here. Toggle (so multi-select can deselect; single-select replaces), then
-	// close only when single-select. Updates `props.values`, which drives `allSelections` → chips.
+	// `Select.Item`'s own handler is composed after this one and bails once we've preventDefaulted,
+	// so the commit is owned here. Toggle (so multi-select can deselect; single-select replaces),
+	// then close only in single-select. Updates `props.values`, which drives `allSelections` → chips.
 	function onItemClick(ev: MouseEvent) {
 		ev.preventDefault();
 		const selected = bond.props.values?.includes(value) ?? false;
 		if (selected) bond.unselect([value]);
 		else bond.select([value]);
-		if (!bond.props.multiple) closeOverlay(bond);
+		if (!bond.props.multiple) bond.close();
 	}
 </script>
 
 <Item
-	{bond}
 	{value}
+	preset={preset ?? 'combobox.item'}
 	class={['border-border', '$preset', klass].filter(Boolean).join(' ')}
-	{...presentation}
+	{...restProps as SelectItemProps<T>}
 	onclick={onItemClick}
 >
 	{@render children?.({ combobox: bond })}

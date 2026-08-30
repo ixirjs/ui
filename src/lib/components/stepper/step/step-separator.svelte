@@ -1,38 +1,39 @@
-<script module lang="ts">
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
-	import { StepBond } from './bond.svelte';
-	const PART = Kernel.plan(StepBond, 'separator', { class: '' });
-</script>
-
-<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
-	import { type Base, type BasePropsOf, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
-	import { StepperBond } from '$ixirjs/ui/components/stepper/bond.svelte';
+<script lang="ts">
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
+	import { StepContext } from './bond.svelte';
+	import { StepperContext } from '$ixirjs/ui/components/stepper/bond.svelte';
 	import type { StepSeparatorProps } from './types';
 
 	let {
-		class: klass = '',
-		preset = undefined,
+		as = undefined,
+		base = undefined,
 		children = undefined,
 		...restProps
-	}: StepSeparatorProps<E, B> & BasePropsOf<B> = $props();
-
-	const part = Kernel.node(PART, () => ({ preset }), { context: 'required' });
-	const stepperBond = StepperBond.getOrThrow(
+	}: StepSeparatorProps = $props();
+	const bond = StepContext.getOrThrow('<Step.Separator /> must be used within a <Step.Root />');
+	const stepper = StepperContext.getOrThrow(
 		'StepSeparator must be used within a Stepper component.'
 	);
 
-	const isVertical = $derived(stepperBond?.props?.orientation === 'vertical');
-
-	const el = Kernel.element(part, () => ({
-		class: [
-			'flex-1 data-[active=true]:bg-primary data-[completed=true]:bg-primary/70',
-			isVertical ? 'h-8 w-0.5 mx-auto' : 'h-0.5 w-full my-auto',
-			'bg-border',
-			'$preset',
-			klass
-		],
-		...restProps
-	}));
+	const el = Kernel.element(() => restProps, {
+		preset: 'stepper.step.separator',
+		class: 'flex-1 data-[active=true]:bg-primary data-[completed=true]:bg-primary/70',
+		state: bond,
+		as: () => as,
+		base: () => base,
+		// The orientation classes ride the instance layer: applied after the preset, before the consumer.
+		layer: () => ({
+			class: `${stepper.props.orientation === 'vertical' ? 'h-8 w-0.5 mx-auto' : 'h-0.5 w-full my-auto'} bg-border`
+		}),
+		attrs: () => ({
+			id: bond.partId('separator'),
+			'aria-hidden': 'true',
+			role: 'presentation',
+			...bond.statusAttrs
+		})
+	});
+	// Bound once: an identifier callee compiles to a direct call — no snippet block, no anchor.
+	const leaf = Kernel.render(el);
 </script>
 
-{@render Kernel.render(el)(el, children, { step: part.bond })}
+{@render leaf(el, children, { step: bond })}

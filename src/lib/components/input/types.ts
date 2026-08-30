@@ -1,9 +1,4 @@
-import type {
-	Base,
-	RenderProps,
-	SnippetProps,
-	HtmlElementTagName
-} from '$ixirjs/ui/components/atom';
+import type { Base, RenderProps, SnippetProps, HtmlElementTagName } from '$ixirjs/ui/authoring';
 import type { Snippet } from 'svelte';
 import type { HTMLInputAttributes } from 'svelte/elements';
 import type { Override, StateChangeCallback } from '$ixirjs/ui/types';

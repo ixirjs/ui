@@ -1,107 +1,101 @@
 <script lang="ts" generics="D">
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
 	import { untrack } from 'svelte';
-	import { SelectItemAtom, type SelectItemAtomProps } from './bond.svelte';
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
+	import type { PresetModuleName } from '$ixirjs/ui/preset';
+	import { LIST_ITEM_AS, LIST_ITEM_CLASS } from '$ixirjs/ui/components/list/item-class';
+	import { SelectContext } from '$ixirjs/ui/components/select/bond.svelte';
+	import { SelectItemAtom } from './bond.svelte';
 	import type { SelectItemProps } from './types';
-	import { SelectBond } from '$ixirjs/ui/components/select/bond.svelte';
-	import { LIST_ITEM_AS, listItemClass } from '$ixirjs/ui/components/list/item-class';
-	import { mergeAtomProps } from '$ixirjs/ui/components/atom';
-	import { createAtomInstance } from '$ixirjs/ui/shared/bond';
-	import { closeOverlay } from '$ixirjs/ui/components/overlay/policies/overlay-view';
 
-	const select = SelectBond.getOrThrow('<SelectItem> must be used within a <Select>.');
+	const select = SelectContext.getOrThrow('<SelectItem> must be used within a <Select>.');
 
 	const ID = $props.id();
-
+	// `class` and `preset` deliberately stay in restProps: the seam reads the consumer's class from
+	// there and falls back to `spec.preset` when no explicit key is passed.
 	let {
-		class: klass = '',
-		preset = undefined,
 		id = ID,
 		value,
 		data = undefined,
+		as = LIST_ITEM_AS,
 		children = undefined,
-		onclick = undefined as ((ev: MouseEvent) => void) | undefined,
 		...restProps
 	}: SelectItemProps<D> = $props();
 
-	const itemProps = $derived({
-		id,
-		value,
-		data
-	} as SelectItemAtomProps<D>);
-
-	const atom = createAtomInstance<SelectItemAtom<D, typeof select>, typeof select, HTMLElement>(
-		untrack(() => `item-${value}`),
+	// Live getters, not a `$derived` snapshot: the option is constructed once and read through.
+	const item = new SelectItemAtom<D, typeof select>(
 		{
-			bond: select,
-			required: true,
-			register: { key: 'item', cardinality: 'many' },
-			factory: () => new SelectItemAtom<D, typeof select>(itemProps, select)
-		}
+			get id() {
+				return id;
+			},
+			get value() {
+				return value;
+			},
+			get data() {
+				return data;
+			}
+		} as never,
+		select
 	);
 
-	const isHighlighted = $derived(atom.isHighlighted);
-	const isSelected = $derived(atom.isSelected);
-
-	// `atom`'s name is value-specific (`item-<value>`), so use the shared item preset key.
-	const itemAttrs = $derived(
-		mergeAtomProps(atom, preset ?? 'select.item', restProps, select.presetLayer('item'))
+	// `onmount`/`ondestroy` and the motion props are Kernel-owned and need the motion rune. Declaring
+	// it unconditionally would put EVERY item on the motion leaf, so the question is asked once, at
+	// init, and only an item that actually declares one pays for it.
+	const declaresMotion = untrack(() =>
+		Boolean(
+			restProps.onmount ??
+			restProps.ondestroy ??
+			restProps.animate ??
+			restProps.enter ??
+			restProps.exit ??
+			restProps.initial ??
+			restProps.motion
+		)
 	);
 
-	// Register into select state; unregister on teardown.
-	$effect.pre(() => {
-		const itemValue = value;
-		if (itemValue == null) return;
+	// Registered by VALUE, at init, so membership follows document order.
+	const key = untrack(() => value);
+	const release = key == null ? undefined : select.registerItem(key, item);
+	$effect(() => release);
 
-		select.registerItem(itemValue, atom);
-
-		return () => {
-			select.unregisterItem(itemValue);
-		};
-	});
-
-	function handleClick(ev: MouseEvent) {
-		(onclick as ((ev: MouseEvent) => void) | undefined)?.(ev);
-
-		if (ev.defaultPrevented) {
-			return;
-		}
-
-		ev.preventDefault();
-
-		atom.select();
-		closeOverlay(select);
+	// Composed by the seam ahead of a consumer's own `onclick`: theirs runs first and this is
+	// skipped when they prevented the default. `Combobox.Item` relies on exactly that.
+	function onclick(event: MouseEvent) {
+		event.preventDefault();
+		item.select();
+		select.close();
 	}
 
-	// Renders the item element itself instead of mounting `<List.Item>` to do it — see the same
-	// comment on `dropdown-menu-item.svelte` for the measured cost of that wrapper. This one also
-	// shortens the combobox chain, whose items are `Select.Item` output, from three boundaries to two.
-	//
-	// The class carried TWO `$preset` sentinels before: this component's, inside the string it handed
-	// down, and `List.Item`'s own. Only the last one ever placed — `mergeClassesWithPreset` uses
-	// `lastIndexOf` and strips the earlier ones — so this component's sentinel always won and
-	// `List.Item`'s never did. `listItemClass` puts these classes exactly where that resolved to,
-	// with one sentinel.
-	//
-	// `preset` keeps its `?? 'select.item'` default and stays on the config: `List.Item`'s own
-	// `'list.item'` fallback was already dead here, because `mergeAtomProps` always supplies a truthy
-	// preset. That is load-bearing — `list.item` resolves to `px-4 py-3` where `select.item` resolves
-	// to `px-2 py-1.5`, so letting the fallback wake up would restyle every option in every app.
-	const el = Kernel.element(Kernel.static, () => ({
-		as: LIST_ITEM_AS,
-		class: listItemClass(
-			[
-				'cursor-pointer',
-				isHighlighted && 'bg-foreground/5',
-				isSelected && 'bg-primary/5 hover:bg-primary/10 active:bg-primary/15'
-			],
-			klass
-		),
-		...itemAttrs,
-		onclick: handleClick
-	}));
+	const el = Kernel.element(() => restProps, {
+		preset: 'select.item' as PresetModuleName,
+		class: LIST_ITEM_CLASS,
+		state: select,
+		as: () => as,
+		layer: () => select.props.presets?.item,
+		...(declaresMotion ? { motion: () => restProps.motion as never } : {}),
+		attrs: () => {
+			const isSelected = item.isSelected;
+			return {
+				class: [
+					'cursor-pointer',
+					item.isHighlighted && 'bg-foreground/5',
+					isSelected && 'bg-primary/5 hover:bg-primary/10 active:bg-primary/15'
+				]
+					.filter(Boolean)
+					.join(' '),
+				id: item.domId,
+				role: 'option',
+				'data-highlighted': item.isHighlighted,
+				'aria-selected': isSelected,
+				'data-selected': isSelected ? '' : undefined,
+				onclick
+			};
+		}
+	});
+	// Bound once: an identifier callee in `{@render}` compiles to a direct call — no snippet block,
+	// no hydration anchor.
+	const leaf = Kernel.render(el);
 </script>
 
-{@render Kernel.render(el)(el, children, {
-	selectItem: atom as unknown as import('./controller.svelte').SelectItemController<D>
+{@render leaf(el, children, {
+	selectItem: item as unknown as import('./controller.svelte').SelectItemController<D>
 })}

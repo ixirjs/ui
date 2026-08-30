@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
+import type { TreeBond } from './bond.svelte';
 import TreeRoot from './tree-root.svelte';
 import type { TreePresets } from './types';
 
@@ -11,7 +12,9 @@ describe('Tree root presets', () => {
 		const { component, unmount } = render(TreeRoot, { presets });
 
 		expect(document.querySelector('.instance-root[data-instance="root"]')).not.toBeNull();
-		expect(component.getBond().props.presets).toBeDefined();
+		// `Tree.Root` is no longer generic, so `render` types `component` precisely as the constructor;
+		// the export lives on the instance.
+		expect((component as unknown as { getBond(): TreeBond }).getBond().props.presets).toBeDefined();
 		expect(document.querySelector('[presets]')).toBeNull();
 
 		unmount();

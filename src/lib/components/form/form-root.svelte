@@ -1,15 +1,14 @@
-<script lang="ts" generics="B extends Base = Base">
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
-	import { mergePresetProps, type Base } from '$ixirjs/ui/components/atom';
-	import { useRoot } from '$ixirjs/ui/shared';
-	import { isPromise } from '$ixirjs/ui/shared/capability/models/validation.svelte';
-	import { FormBond } from './bond.svelte';
+<script lang="ts">
+	import { untrack } from 'svelte';
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
+	import type { Base } from '$ixirjs/ui/authoring';
+	import { isPromise } from '$ixirjs/ui/capability/models/validation.svelte';
+	import { FormBond, FormContext } from './bond.svelte';
 	import type { FormRootProps } from './types';
 
 	const ID = $props.id();
 
 	let {
-		class: klass = '',
 		renderless = false,
 		schema = undefined,
 		source = undefined,
@@ -20,26 +19,34 @@
 		onsubmit = undefined,
 		factory = undefined,
 		children = undefined,
-		preset = undefined,
 		...restProps
-	}: FormRootProps<B> = $props();
+	}: FormRootProps = $props();
 
-	const formProps = $derived(mergePresetProps(preset, 'form', restProps));
-
-	const root = useRoot(
-		FormBond,
-		{
-			renderless: () => renderless,
-			schema: () => schema,
-			source: () => source,
-			errors: () => errors,
-			mode: () => mode
+	// Live props: read through getters wherever the Bond needs them.
+	const bondProps = {
+		get id() {
+			return ID;
 		},
-		{ atom: false, id: () => ID, factory: () => factory }
-	);
-	const bond = root.bond;
-
-	export const getBond = root.getBond;
+		get renderless() {
+			return renderless;
+		},
+		get schema() {
+			return schema;
+		},
+		get source() {
+			return source;
+		},
+		get errors() {
+			return errors;
+		},
+		get mode() {
+			return mode;
+		}
+	};
+	// `factory` is read once, at init, by design.
+	const build = untrack(() => factory);
+	const bond = FormContext.share(build ? build(bondProps) : FormBond.create(bondProps));
+	export const getBond = () => bond;
 
 	function handleSubmit(event: SubmitEvent & { currentTarget: EventTarget & HTMLFormElement }) {
 		bond.markSubmitted();
@@ -69,22 +76,22 @@
 
 	const content = $derived(renderless ? children : renderfull);
 
-	// Element seam instead of a component boundary; key order matches the previous call exactly.
-	// The seam is spelled out rather than passed `root`: an `atom: false` root owns a Bond and
-	// nothing else, so it has no `atom`/`preset`/`presetLayer` to hand over.
-	const el = Kernel.element(
-		{ atom: undefined, bond, preset: undefined, presetLayer: undefined },
-		() => ({
-			class: ['$preset', klass],
-			as: 'form',
-			...formProps,
-			onsubmit: handleSubmit
-		})
-	);
+	// `base` lives only on the render-full half of the props union, so it is read off the rest.
+	const el = Kernel.element(() => restProps, {
+		preset: 'form',
+		class: '',
+		as: 'form',
+		base: () => (restProps as { base?: Base }).base,
+		state: bond,
+		attrs: () => ({ onsubmit: handleSubmit })
+	});
+	// Bound once, in the script: `{@render leaf(...)}` with a plain identifier compiles to a direct
+	// call on both platforms — no snippet block, no hydration anchor.
+	const leaf = Kernel.render(el);
 </script>
 
 {@render content?.({ form: bond })}
 
 {#snippet renderfull({ form }: { form: FormBond })}
-	{@render Kernel.render(el)(el, children, { form })}
+	{@render leaf(el, children, { form })}
 {/snippet}

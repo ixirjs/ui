@@ -5,20 +5,16 @@ import Probe, {
 	resetCapturedBond
 } from '$ixirjs/ui/test/components/popover/popover-atom-probe.test.svelte';
 import LayerProbe from '$ixirjs/ui/test/components/popover/popover-preset-probe.test.svelte';
-import { Atom } from '$ixirjs/ui/shared/bond';
-import {
-	PopoverTailAtom,
-	PopoverBond,
-	PopoverContentAtom,
-	PopoverIndicatorAtom,
-	PopoverOverlayAtom,
-	PopoverTriggerAtom
-} from './bond.svelte';
+import { PopoverBond } from './bond.svelte';
 
-describe('Popover component-owned Atoms', () => {
+/**
+ * DOM-level: the family no longer registers Atoms, so what used to be asserted on `nodeByPart`
+ * instances and their `spread` is asserted on the rendered elements and the ids the parts announce.
+ */
+describe('Popover rendered parts', () => {
 	beforeEach(resetCapturedBond);
 
-	it('registers rendered popover nodes', () => {
+	it('renders every part with its id, ARIA and state, and releases the ids on unmount', () => {
 		const { unmount } = render(Probe);
 		const popover = capturedBond;
 
@@ -27,50 +23,35 @@ describe('Popover component-owned Atoms', () => {
 		expect(popover?.isOpen).toBe(true);
 		expect(popover?.shouldTrackPosition).toBe(true);
 
-		const trigger = popover?.nodeByPart('trigger');
-		const overlay = popover?.nodeByPart('overlay');
-		const content = popover?.nodeByPart('content');
-		const tail = popover?.nodeByPart('tail');
-		const indicator = popover?.nodeByPart('indicator');
-
-		expect(trigger).toBeInstanceOf(PopoverTriggerAtom);
-		expect(overlay).toBeInstanceOf(PopoverOverlayAtom);
-		expect(content).toBeInstanceOf(PopoverContentAtom);
-		expect(tail).toBeInstanceOf(PopoverTailAtom);
-		expect(indicator).toBeInstanceOf(PopoverIndicatorAtom);
-		for (const node of [trigger, overlay, content, tail, indicator]) {
-			expect(node).toBeInstanceOf(Atom);
+		const parts = ['trigger', 'overlay', 'content', 'tail', 'indicator'] as const;
+		for (const part of parts) {
+			expect(popover?.partId(part), part).toBe(`popover-${part}-${popover?.id}`);
+			expect(popover?.element(part), part).toBeInstanceOf(HTMLElement);
 		}
-		expect(popover?.nodesByPart('trigger')).toEqual([trigger]);
-		expect(popover?.nodesByPart('overlay')).toEqual([overlay]);
-		expect(popover?.nodesByPart('content')).toEqual([content]);
-		expect(popover?.nodesByPart('tail')).toEqual([tail]);
-		expect(popover?.nodesByPart('indicator')).toEqual([indicator]);
 
-		expect(overlay?.spread.role).toBe('dialog');
-		expect(overlay?.spread['data-active']).toBe(true);
-		expect(content?.spread['data-active']).toBe(true);
-		expect(tail?.spread.role).toBe('presentation');
-		expect(indicator?.spread['aria-hidden']).toBe(true);
+		const trigger = popover!.element('trigger')!;
+		const overlay = popover!.element('overlay')!;
+		const content = popover!.element('content')!;
+		const tail = popover!.element('tail')!;
+		const indicator = popover!.element('indicator')!;
 
-		const legacyNodes = [
-			popover?.nodeByPart('trigger'),
-			popover?.nodeByPart('overlay'),
-			popover?.nodeByPart('content'),
-			popover?.nodeByPart('tail'),
-			popover?.nodeByPart('indicator')
-		];
-		for (const node of legacyNodes) {
-			expect(node).toBeInstanceOf(Atom);
-		}
-		expect(legacyNodes[0]).toBeInstanceOf(PopoverTriggerAtom);
-		expect(legacyNodes[1]).toBeInstanceOf(PopoverOverlayAtom);
-		expect(legacyNodes[2]).toBeInstanceOf(PopoverContentAtom);
+		expect(trigger.getAttribute('aria-haspopup')).toBe('dialog');
+		expect(trigger.getAttribute('aria-expanded')).toBe('true');
+		expect(trigger.getAttribute('aria-controls')).toBe(content.id);
+		expect(overlay.getAttribute('role')).toBe('dialog');
+		expect(overlay.getAttribute('aria-labelledby')).toBe(trigger.id);
+		expect(overlay.dataset.active).toBe('true');
+		expect(content.dataset.active).toBe('true');
+		expect(content.dataset.state).toBe('open');
+		expect(tail.getAttribute('role')).toBe('presentation');
+		expect(tail.getAttribute('aria-hidden')).toBe('true');
+		expect(indicator.getAttribute('aria-hidden')).toBe('true');
+		expect(indicator.getAttribute('aria-live')).toBe('polite');
 
 		unmount();
 
-		for (const part of ['trigger', 'overlay', 'content', 'tail', 'indicator']) {
-			expect(popover?.nodesByPart(part)).toEqual([]);
+		for (const part of parts) {
+			expect(popover?.partId(part), part).toBeUndefined();
 		}
 	});
 

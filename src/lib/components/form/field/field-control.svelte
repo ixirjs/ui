@@ -1,11 +1,6 @@
-<script module lang="ts">
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
-	import { FieldBond } from './bond.svelte';
-	const PART = Kernel.plan(FieldBond, 'control', { class: '' });
-</script>
-
-<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
-	import { type Base, type BasePropsOf, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
+<script lang="ts">
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
+	import { FieldContext } from './bond.svelte';
 	import type { StateChangeContext } from '$ixirjs/ui/types';
 	import type {
 		FieldControlChangeDetails,
@@ -13,9 +8,8 @@
 	} from '$ixirjs/ui/components/form/types';
 
 	let {
-		class: klass = '',
+		as = undefined,
 		base = undefined,
-		preset = undefined,
 		value = $bindable(),
 		checked = $bindable(false),
 		number = $bindable<number | undefined>(),
@@ -31,11 +25,13 @@
 		ondatechange = undefined,
 		oncheckedchange = undefined,
 		...restProps
-	}: FieldControlProps<E, B> & BasePropsOf<B> = $props();
+	}: FieldControlProps = $props();
 
-	const part = Kernel.node(PART, () => ({ preset }), { context: 'required' });
-	const bond = part.bond;
-	const name = $derived(bond.props.name);
+	const bond = FieldContext.getOrThrow('<Field.Control /> must be used within a <Field.Root />');
+
+	// The control's id, written here so the label can name it in `for`.
+	const id = Kernel.id(bond.id, 'field-control');
+	bond.controlId = id;
 
 	type IncomingContext = StateChangeContext<unknown> & Partial<FieldControlChangeDetails>;
 
@@ -125,20 +121,17 @@
 		oncheckedchange?.(checked, callbackContext(context));
 	}
 
-	// The ordinary control reaches a native leaf unless the consumer supplies `base`.
+	// The ordinary control reaches a native leaf unless the consumer supplies `base`; the value
+	// shapes and handlers travel as element props so a renderer receives them unchanged.
 	const el = Kernel.element(
-		{ atom: part.atom, bond, preset: part.preset, presetLayer: part.presetLayer },
 		() => ({
-			class: ['flex items-center', '$preset', klass],
 			...restProps,
-			base,
 			value,
 			checked,
 			number,
 			date,
 			...(files === undefined ? {} : { files }),
-			name,
-			bond,
+			name: bond.props.name,
 			oninput: handleInput,
 			onchange: handleChange,
 			onblur: handleBlur,
@@ -147,8 +140,43 @@
 			onfileschange: handleFilesChange,
 			ondatechange: handleDateChange,
 			oncheckedchange: handleCheckedChange
-		})
+		}),
+		{
+			preset: 'field.control',
+			class: 'border-border flex items-center',
+			state: bond,
+			as: () => as,
+			base: () => base,
+			attrs: () => {
+				const disabled = bond.props.disabled;
+				const readonly = bond.props.readonly;
+				const required = bond.props.required ?? false;
+				const invalid = bond.isInvalid;
+				return {
+					id,
+					'aria-labelledby': bond.labelId,
+					'aria-describedby': bond.descriptionId,
+					'data-disabled': disabled ? '' : undefined,
+					'aria-disabled': disabled ? 'true' : 'false',
+					'data-readonly': readonly ? '' : undefined,
+					'aria-readonly': readonly ? 'true' : 'false',
+					'data-required': required ? '' : undefined,
+					// No meaningful "false": an optional control does not advertise the attribute.
+					'aria-required': required ? 'true' : undefined,
+					'data-invalid': invalid ? '' : undefined,
+					'aria-invalid': invalid ? 'true' : 'false',
+					'data-touched': bond.isTouched ? '' : undefined,
+					'data-dirty': bond.isDirty ? '' : undefined,
+					'data-validating': bond.isValidating ? '' : undefined,
+					// Points at the error text only while it is actually on the page.
+					'aria-errormessage': invalid && bond.errorId ? bond.errorId : undefined
+				};
+			}
+		}
 	);
+	// Bound once, in the script: `{@render leaf(...)}` with a plain identifier compiles to a direct
+	// call on both platforms — no snippet block, no hydration anchor.
+	const leaf = Kernel.render(el);
 </script>
 
-{@render Kernel.render(el)(el, children, { field: bond })}
+{@render leaf(el, children, { field: bond })}

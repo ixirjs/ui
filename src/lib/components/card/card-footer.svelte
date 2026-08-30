@@ -1,17 +1,14 @@
-<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
-	import { type Base, type BasePropsOf, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
-	import { definePart } from '$ixirjs/ui/components/atom/define-part.svelte';
-	import { CardBond } from './bond.svelte';
+<script lang="ts">
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
+	import { CardContext } from './bond.svelte';
 	import type { CardFooterProps } from './types';
 
-	const props: CardFooterProps<E, B> & BasePropsOf<B> = $props();
-
-	const el = definePart(CardBond, 'footer', () => props, {
-		as: 'div',
+	const props: CardFooterProps = $props();
+	const el = Kernel.element(() => props, {
+		preset: 'card.footer',
 		class: 'card-footer border-border flex items-center gap-2 px-4 pb-4',
-		context: 'optional'
+		state: CardContext.get()
 	});
 </script>
 
-{@render Kernel.render(el)(el, props.children)}
+<div {...el.attrs}>{@render props.children?.()}</div>

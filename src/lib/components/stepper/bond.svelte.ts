@@ -1,9 +1,14 @@
-import type { StepBond } from './step/bond.svelte';
-import { Bond, defineAtom, type BondStateProps } from '$ixirjs/ui/shared/bond';
-import { defineBond, type BondOf } from '$ixirjs/ui/shared';
+/**
+ * Stepper's shared object — a plain state class on the redesigned `Kernel`. Steps register at
+ * their root's init in document order; step bodies register their content for `Stepper.Content`.
+ */
 import type { Snippet } from 'svelte';
+import { SvelteMap } from 'svelte/reactivity';
+import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
+import type { StepBond } from './step/bond.svelte';
 
-export type StepperBondProps = BondStateProps & {
+export type StepperBondProps = {
+	id?: string;
 	step: number;
 	linear?: boolean;
 	disabled?: boolean;
@@ -25,27 +30,35 @@ export interface IStepper {
 	goto(index: number): void;
 }
 
-export const StepperRootAtom = defineAtom<StepperBondBase>('root', { role: 'group' });
+export const StepperContext = Kernel.context<StepperBond>('bond/stepper');
 
-// Stepper orchestration lives on the Bond instance.
+export class StepperBond implements IStepper {
+	readonly name = 'stepper';
+	readonly props: StepperBondProps;
+	/** Mounted steps in document order, keyed by index. */
+	readonly items = new Map<string, StepBond>();
+	/** Registered step bodies, rendered by `Stepper.Content`. */
+	readonly stepContents = new SvelteMap<string, StepContentSnippet>();
+	/** `items.size`, as one equality-gated reactive fact. */
+	#count = $state(0);
 
-class StepperBondBase extends Bond<StepperBondProps> implements IStepper {
-	constructor(props: StepperBondProps, name = 'stepper') {
-		super(props, name);
-		// Eagerly create owned collections outside derived reads; collection() registers a capability.
-		void this.steps;
-		void this.stepContents;
+	constructor(props: StepperBondProps) {
+		this.props = props;
+	}
+
+	static create(props: StepperBondProps): StepperBond {
+		return new StepperBond(props);
+	}
+
+	get id(): string {
+		return this.props.id ?? 'stepper';
+	}
+	get rootId(): string {
+		return Kernel.id(this.id, 'stepper-root');
 	}
 
 	get steps() {
-		return this.collection<StepBond>('step');
-	}
-
-	get stepContents() {
-		return this.collection<{
-			props: Record<string, unknown>;
-			children: Snippet<[{ step: StepBond }]>;
-		}>('content');
+		return this.items;
 	}
 
 	get activeStep() {
@@ -57,7 +70,7 @@ class StepperBondBase extends Bond<StepperBondProps> implements IStepper {
 	}
 
 	get totalSteps() {
-		return this.steps.size;
+		return this.#count;
 	}
 
 	get isFirstStep() {
@@ -106,15 +119,19 @@ class StepperBondBase extends Bond<StepperBondProps> implements IStepper {
 	}
 
 	mountStep(index: number, step: StepBond) {
-		return this.steps.set(String(index), step);
+		const key = String(index);
+		this.items.set(key, step);
+		this.#count = this.items.size;
+		return () => this.unmountStep(index);
 	}
 
 	unmountStep(index: number) {
-		this.steps.delete(String(index));
+		this.items.delete(String(index));
+		this.#count = this.items.size;
 	}
 
 	getStep(index: number) {
-		return this.steps.get(String(index));
+		return this.items.get(String(index));
 	}
 
 	registerStepContent(
@@ -122,18 +139,11 @@ class StepperBondBase extends Bond<StepperBondProps> implements IStepper {
 		props: Record<string, unknown>,
 		children: Snippet<[{ step: StepBond }]>
 	) {
-		return this.stepContents.set(String(index), { props, children });
+		this.stepContents.set(String(index), { props, children });
+		return () => this.unregisterStepContent(index);
 	}
 
 	unregisterStepContent(index: number) {
 		this.stepContents.delete(String(index));
 	}
 }
-
-export const StepperBond = defineBond({
-	name: 'stepper',
-	base: StepperBondBase,
-	atoms: { root: StepperRootAtom }
-});
-
-export type StepperBond = BondOf<typeof StepperBond>;

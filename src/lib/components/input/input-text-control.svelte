@@ -21,7 +21,8 @@
 		preset: () => presetKey,
 		restProps: () => restProps,
 		class: () => klass,
-		variantProps: () => ({ disabled, readonly, type })
+		variantProps: () => ({ disabled, readonly, type }),
+		type: () => type
 	});
 
 	function handleInput(event: Event) {

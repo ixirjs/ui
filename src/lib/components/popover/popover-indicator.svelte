@@ -1,31 +1,41 @@
-<script module lang="ts">
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
-	import { PopoverBond } from './bond.svelte';
-	const PART = Kernel.plan(PopoverBond, 'indicator', { class: '' });
-</script>
-
 <script lang="ts">
-	import { animate } from '$ixirjs/ui/shared';
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
+	import type { PresetModuleName } from '$ixirjs/ui/preset';
+	import { animate } from '$ixirjs/ui/authoring';
 	import { Icon } from '$ixirjs/ui/components/icon';
 	import IconArrowDown from '$ixirjs/ui/icons/icon-arrow-down.svelte';
-	import type { PresetKey } from '$ixirjs/ui/preset';
-	import { overlayIsOpen } from '$ixirjs/ui/components/overlay/policies/overlay-view';
+	import { PopoverContext } from './bond.svelte';
+	import type { PopoverIndicatorProps } from './types';
+
+	const bond = PopoverContext.getOrThrow('<Popover.Indicator /> must be used within a <Popover />');
 
 	let {
-		class: klass = '',
-		preset = undefined as PresetKey | undefined,
-		children = undefined
-	} = $props();
+		as = undefined,
+		base = undefined,
+		children = undefined,
+		...restProps
+	}: PopoverIndicatorProps = $props();
 
-	const part = Kernel.node(PART, () => ({ preset }), { context: 'required' });
-	const el = Kernel.element(part, () => ({
-		class: ['border-border flex h-5 items-center justify-center', '$preset', klass]
-	}));
+	const id = Kernel.id(bond.id, `${bond.name}-indicator`);
+	const release = bond.attachPart('indicator', id);
+	$effect(() => release);
 
-	const isOpen = $derived(overlayIsOpen(part.bond));
+	const isOpen = $derived(bond.isOpen);
+
+	const bodyArg = { popover: bond };
+	const el = Kernel.element(() => restProps, {
+		preset: `${bond.name}.indicator` as PresetModuleName,
+		class: 'border-border flex h-5 items-center justify-center',
+		state: bond,
+		as: () => as,
+		base: () => base,
+		layer: () => bond.props.presets?.indicator,
+		attrs: () => ({ id, 'aria-hidden': true, 'aria-live': bond.isOpen ? 'polite' : 'off' })
+	});
+	const leaf = Kernel.render(el);
 </script>
 
-{@render Kernel.render(el)(el, children ?? fallback, { popover: part.bond })}
+{@render leaf(el, children ?? fallback, bodyArg)}
 
 {#snippet fallback()}
 	<Icon

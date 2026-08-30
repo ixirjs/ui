@@ -1,7 +1,6 @@
 <script lang="ts">
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
-	import { mergePresetProps } from '$ixirjs/ui/components/atom';
-	import { animate } from '$ixirjs/ui/shared';
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
+	import { animate } from '$ixirjs/ui/authoring';
 	import { getYear, getMonth, setMonth } from '$ixirjs/ui/utils/date';
 	import { cn } from '$ixirjs/ui/utils';
 	import { DatePickerBond } from './bond.svelte';
@@ -31,9 +30,12 @@
 		'Dec'
 	];
 
-	let { class: klass = '', preset = undefined, ...restProps }: DatePickerMonthsProps = $props();
-
-	const monthsProps = $derived(mergePresetProps(preset, 'datepicker.months', restProps));
+	let {
+		as = undefined,
+		base = undefined,
+		presetLayer = undefined,
+		...restProps
+	}: DatePickerMonthsProps = $props();
 
 	function enter(node: HTMLElement) {
 		animate(
@@ -85,30 +87,40 @@
 		return { duration: 100 };
 	}
 
+	// The inner panel carries no consumer props of its own.
+	const EMPTY_PROPS = {};
+
 	// Element seams instead of component boundaries. Declared here, not in the snippet: the seam owns
 	// effects and must be created during init, and a snippet body is not init.
-	const overlayEl = Kernel.element(Kernel.static, () => ({
-		class: ['absolute inset-0 z-1 flex flex-col gap-2 bg-inherit opacity-0', '$preset', klass],
-		enter: fadeIn,
-		exit: fadeOut,
-		...monthsProps
-	}));
+	const overlayEl = Kernel.element(() => restProps, {
+		preset: 'datepicker.months',
+		class: 'absolute inset-0 z-1 flex flex-col gap-2 bg-inherit opacity-0',
+		state: datePicker,
+		as: () => as,
+		base: () => base,
+		layer: () => presetLayer,
+		motion: () => ({ enter: fadeIn, exit: fadeOut })
+	});
 
-	const panelEl = Kernel.element(Kernel.static, () => ({
+	const panelEl = Kernel.element(() => EMPTY_PROPS, {
 		class: 'flex flex-1 flex-col gap-2',
-		enter,
-		exit
-	}));
+		motion: () => ({ enter, exit })
+	});
+
+	// Bound once: an identifier callee in `{@render}` compiles to a direct call — no snippet block, no
+	// hydration anchor. A part whose props turn rich after init keeps this leaf (trade-off accepted, 2026-08-26).
+	const leaf_overlayEl = Kernel.render(overlayEl);
+	const leaf_panelEl = Kernel.render(panelEl);
 </script>
 
 {@render (datePicker.isMonthsPickerOpen ? monthsPicker : undefined)?.()}
 
 {#snippet monthsPicker()}
-	{@render Kernel.render(overlayEl)(overlayEl, monthsOverlay)}
+	{@render leaf_overlayEl(overlayEl, monthsOverlay)}
 {/snippet}
 
 {#snippet monthsOverlay()}
-	{@render Kernel.render(panelEl)(panelEl, monthsPanel)}
+	{@render leaf_panelEl(panelEl, monthsPanel)}
 {/snippet}
 
 {#snippet monthsPanel()}

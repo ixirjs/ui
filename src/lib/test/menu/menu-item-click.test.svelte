@@ -10,14 +10,13 @@
 	// item's own `close()` on an already-closed menu is a no-op, so the `onopenchange` count would
 	// read 1 whether the Atom's handler fired once or twice.
 	//
-	// `outsidePressListener({ listen: false })` re-registers the same slot (last-wins) with its
-	// listener suppressed, leaving every other overlay policy intact.
+	// The root's outside-press dismissal stages `reason: 'outside-press'`, never `'item-select'`, so
+	// it cannot inflate the count this fixture reads; the item's own handler is the only source.
 	import { DropdownMenu } from '$ixirjs/ui/components/dropdown-menu';
 	import {
 		DropdownMenuBond,
 		type DropdownMenuBondProps
 	} from '$ixirjs/ui/components/dropdown-menu/bond.svelte';
-	import { outsidePressListener } from '$ixirjs/ui/shared/capability/models';
 
 	let {
 		open = $bindable(true),
@@ -38,7 +37,6 @@
 	// unconditionally by both the Atom's handler and `atom.close()`, so counting it does have teeth.
 	function factory(props: DropdownMenuBondProps) {
 		const bond = DropdownMenuBond.create(props);
-		bond.capability(outsidePressListener({ listen: false }));
 		const staged = bond.stageOpenChange.bind(bond);
 		bond.stageOpenChange = (context) => {
 			if (context?.reason === 'item-select') onselect?.();

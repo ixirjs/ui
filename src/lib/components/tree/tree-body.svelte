@@ -1,33 +1,34 @@
-<script module lang="ts">
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
-	import { TreeBond } from './bond.svelte';
-	const PART = Kernel.plan(TreeBond, 'body', { class: '' });
-</script>
-
-<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
+<script lang="ts">
 	import { createAttachmentKey } from 'svelte/attachments';
-	import { type Base, type BasePropsOf, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
-	import type { TreeBodyProps } from './types';
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
+	import { TreeContext } from './bond.svelte';
 	import { attachTreeBodyMotion } from './motion.svelte';
+	import type { TreeBodyProps } from './types';
 
-	let {
-		class: klass = '',
-		preset = undefined,
-		children = undefined,
-		...restProps
-	}: TreeBodyProps<E, B> & BasePropsOf<B> = $props();
+	let { children = undefined, ...restProps }: TreeBodyProps = $props();
+	const bond = TreeContext.getOrThrow('<Tree.Body /> must be used within a <Tree.Root />');
 
-	// An attachment keeps this animate-only path on a native element leaf. See the motion module.
-	// Key minted once at init; the attachment rides the rest layer under its own stable symbol.
+	// The group's id, written here so the header can name it in `aria-controls`.
+	const id = Kernel.id(bond.id, 'tree-body');
+	bond.bodyId = id;
+
+	// An attachment, not a `motion` phase: an animate-only driver rides the element's own spread and
+	// keeps this part on a literal leaf. Handing it to `motion` escalates to `HtmlElement`, which is
+	// a component boundary — +2 hydration anchors per part. The key is minted once, at init.
 	const motion = attachTreeBodyMotion();
 	const motionKey = createAttachmentKey();
-
-	const part = Kernel.node(PART, () => ({ preset }), { context: 'required' });
-	const el = Kernel.element(part, () => ({
-		class: ['overflow-hidden pl-4', '$preset', klass],
-		[motionKey]: motion,
-		...restProps
-	}));
+	const el = Kernel.element(() => restProps, {
+		preset: 'tree.body',
+		class: 'overflow-hidden pl-4',
+		state: bond,
+		layer: () => bond.props.presets?.body,
+		attrs: () => ({
+			[motionKey]: motion,
+			id,
+			role: 'group',
+			'aria-labelledby': bond.headerId
+		})
+	});
 </script>
 
-{@render Kernel.render(el)(el, children, { tree: part.bond })}
+<div {...el.attrs}>{@render children?.({ tree: bond })}</div>

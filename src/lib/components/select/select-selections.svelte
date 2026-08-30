@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
 	import SelectSelection from './select-selection.svelte';
-	import { SelectBond } from './bond.svelte';
+	import { SelectContext } from './bond.svelte';
 	import type { SelectSelectionsProps } from './types';
 	import { onMount, type Component } from 'svelte';
 
-	const bond = SelectBond.getOrThrow('SelectSelections must be used within a Select');
+	const bond = SelectContext.getOrThrow('SelectSelections must be used within a Select');
 
 	let {
 		class: klass = '',
@@ -46,10 +46,13 @@
 	const isMultiple = $derived(bond.props.multiple);
 
 	// Element seam instead of a component boundary; key order matches the previous call exactly.
-	const el = Kernel.element(Kernel.static, () => ({
-		class: ['flex flex-wrap items-center gap-2', klass],
-		...restProps
-	}));
+	const el = Kernel.element(() => restProps, {
+		class: 'flex flex-wrap items-center gap-2',
+		attrs: () => ({ class: klass as string })
+	});
+	// Bound once: an identifier callee in `{@render}` compiles to a direct call — no snippet block, no
+	// hydration anchor. A part whose props turn rich after init keeps this leaf (trade-off accepted, 2026-08-26).
+	const leaf = Kernel.render(el);
 </script>
 
 {@render (isMultiple && selections.length
@@ -61,7 +64,7 @@
 			: undefined)?.()}
 
 {#snippet multipleSelections()}
-	{@render Kernel.render(el)(el, children ? consumerSelection : selectionChips)}
+	{@render leaf(el, children ? consumerSelection : selectionChips)}
 {/snippet}
 
 {#snippet consumerSelection()}

@@ -33,6 +33,7 @@
 	import { Calendar } from '$ixirjs/ui/components/calendar';
 	import type { Day } from '$ixirjs/ui/components/calendar/types';
 	import { Scrollable } from '$ixirjs/ui/components/scrollable';
+	import { DataGrid } from '$ixirjs/ui/components/datagrid';
 
 	// Calendar defaults `pivote` to `new Date()`; a snapshot off the wall clock would change daily, so
 	// pin a date.
@@ -56,7 +57,8 @@
 		| 'scrollable'
 		| 'button'
 		| 'badge'
-		| 'primitives';
+		| 'primitives'
+		| 'datagrid';
 
 	let { family }: { family: Family } = $props();
 </script>
@@ -203,6 +205,27 @@
 	<Image src="/x.png" alt="x" />
 	<Avatar>AB</Avatar>
 	<Shortcut keys={['Ctrl', 'K']} />
+{:else if family === 'datagrid'}
+	<!-- Appended last, for the reason `toast` and `button` were: inserting mid-chain shifts every
+	     later family's `$props.id()` seed and rewrites snapshots that did not change.
+
+	     The grid is the only family whose ARIA is spread over four Bonds — the grid, a column, a row,
+	     and (nominally) a cell — so a snapshot is the only thing that can show the subtree is a valid
+	     one. `bench:ssr` measures the same family and cannot see a missing role at all. -->
+	<DataGrid.Root>
+		<DataGrid.Header>
+			<DataGrid.Row>
+				<DataGrid.Column id="name" sortable>Name</DataGrid.Column>
+				<DataGrid.Column id="role">Role</DataGrid.Column>
+			</DataGrid.Row>
+		</DataGrid.Header>
+		<DataGrid.Body>
+			<DataGrid.Row value="a">
+				<DataGrid.Cell>Ada</DataGrid.Cell>
+				<DataGrid.Cell>Admin</DataGrid.Cell>
+			</DataGrid.Row>
+		</DataGrid.Body>
+	</DataGrid.Root>
 {:else}
 	<Stack.Root>
 		<!-- Item, not bare divs: it is the part that carries an Atom and the z-index style, and it

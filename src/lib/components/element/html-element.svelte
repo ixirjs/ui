@@ -3,8 +3,8 @@
 	import type { HTMLAttributes } from 'svelte/elements';
 	import { toClassValue } from '$ixirjs/ui/utils';
 	import { withDefaultBorder } from './class';
-	import { createPresentation } from '$ixirjs/ui/components/atom/presentation.svelte';
-	import { extractMotion, resolveMotionLayers } from '$ixirjs/ui/components/atom/resolve/motion';
+	import { createPresentation } from '$ixirjs/ui/kernel/presentation.svelte';
+	import { extractMotion, resolveMotionLayers } from '$ixirjs/ui/kernel/resolve/motion';
 	import { useElementMotion } from './use-element-motion.svelte';
 	import {
 		divLocal,
@@ -13,7 +13,7 @@
 		dynamicGlobal,
 		type ElementBody,
 		type ElementView
-	} from '$ixirjs/ui/components/atom/render/element-branches.svelte';
+	} from '$ixirjs/ui/kernel/render/element-branches.svelte';
 	import type { ElementType, HtmlElementProps, HtmlElementTagName } from './types';
 
 	type Element = ElementType<T>;

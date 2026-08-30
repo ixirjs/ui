@@ -6,8 +6,8 @@
  * activation — so the stand-in has to be the cheapest thing that can still produce the same ids.
  */
 import { getContext, setContext } from 'svelte';
-import { getPreset } from '$ixirjs/ui/context';
-import { mergeClassesWithPreset } from '$ixirjs/ui/components/atom/resolve/classes';
+import { getPreset } from '$ixirjs/ui/preset/context.svelte';
+import { mergeClassesWithPreset } from '$ixirjs/ui/kernel/resolve/classes';
 import type { PresetModuleName } from '$ixirjs/ui/preset';
 
 const SEED = Symbol('ceiling.seed');

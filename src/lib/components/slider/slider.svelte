@@ -1,14 +1,7 @@
 <script lang="ts">
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
-	import { mergePresetProps } from '$ixirjs/ui/components/atom';
-	import { createPresentation } from '$ixirjs/ui/components/atom/presentation.svelte';
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
 	import { clamp } from '$ixirjs/ui/utils/math';
-	import type {
-		SliderProps,
-		SliderValueChangeDetails,
-		SliderResolvedPartProps,
-		SliderTrackContentProps
-	} from './types';
+	import type { SliderProps, SliderValueChangeDetails, SliderTrackContentProps } from './types';
 
 	let {
 		class: klass = '',
@@ -20,7 +13,6 @@
 		id,
 		name,
 		orientation = 'horizontal',
-		preset = undefined,
 		thumbContent = undefined,
 		trackContent = undefined,
 		presets = undefined,
@@ -30,8 +22,6 @@
 		children = undefined,
 		...restProps
 	}: SliderProps = $props();
-
-	const sliderProps = $derived(mergePresetProps(preset, 'slider', restProps));
 
 	function clampNumber(current: number, lower: number, upper: number) {
 		if (!Number.isFinite(current)) return lower;
@@ -50,52 +40,39 @@
 		return ((normalizedValue - normalizedMin) / range) * 100;
 	});
 
-	const trackPresentation = createPresentation({
-		preset: () => 'slider.track',
-		instance: () => presets?.track,
-		class: () => [
-			'slider-track bg-input border-border relative overflow-hidden rounded-full',
-			isVertical ? 'h-full w-2' : 'h-2 w-full'
-		],
-		variantProps: () => ({ orientation, disabled }),
-		restProps: () => ({})
+	// The three parts' resolved props are spread by the default snippets and handed to the custom
+	// ones, so each resolves through the seam without an element of its own.
+	const variantProps = () => ({ orientation, disabled });
+	const track = Kernel.element(() => ({ class: isVertical ? 'h-full w-2' : 'h-2 w-full' }), {
+		preset: 'slider.track',
+		class: 'slider-track bg-input border-border relative overflow-hidden rounded-full',
+		layer: () => presets?.track,
+		variantProps
 	});
-	const trackProps = $derived({
-		class: trackPresentation.class,
-		...trackPresentation.attrs
-	} as SliderResolvedPartProps);
-	const fillPresentation = createPresentation({
-		preset: () => 'slider.fill',
-		instance: () => presets?.fill,
-		class: () => [
-			'slider-fill bg-foreground absolute rounded-full',
-			isVertical ? 'bottom-0 left-0 w-full' : 'left-0 top-0 h-full'
-		],
-		variantProps: () => ({ orientation, disabled }),
-		restProps: () => ({})
-	});
-	const fillProps = $derived({
-		class: fillPresentation.class,
-		...fillPresentation.attrs,
-		style: isVertical ? `height: ${percent}%` : `width: ${percent}%`
-	} as SliderResolvedPartProps);
-	const thumbPresentation = createPresentation({
-		preset: () => 'slider.thumb',
-		instance: () => presets?.thumb,
-		class: () => [
-			'slider-thumb pointer-events-none absolute h-5 w-5',
-			isVertical
+	const fill = Kernel.element(
+		() => ({ class: isVertical ? 'bottom-0 left-0 w-full' : 'left-0 top-0 h-full' }),
+		{
+			preset: 'slider.fill',
+			class: 'slider-fill bg-foreground absolute rounded-full',
+			layer: () => presets?.fill,
+			variantProps,
+			attrs: () => ({ style: isVertical ? `height: ${percent}%` : `width: ${percent}%` })
+		}
+	);
+	const thumb = Kernel.element(
+		() => ({
+			class: isVertical
 				? 'left-1/2 -translate-x-1/2 translate-y-1/2'
 				: 'top-1/2 -translate-x-1/2 -translate-y-1/2'
-		],
-		variantProps: () => ({ orientation, disabled }),
-		restProps: () => ({})
-	});
-	const thumbProps = $derived({
-		class: thumbPresentation.class,
-		...thumbPresentation.attrs,
-		style: isVertical ? `bottom: ${percent}%` : `left: ${percent}%`
-	} as SliderResolvedPartProps);
+		}),
+		{
+			preset: 'slider.thumb',
+			class: 'slider-thumb pointer-events-none absolute h-5 w-5',
+			layer: () => presets?.thumb,
+			variantProps,
+			attrs: () => ({ style: isVertical ? `bottom: ${percent}%` : `left: ${percent}%` })
+		}
+	);
 
 	let hasInitialized = false;
 
@@ -147,30 +124,31 @@
 		commitValue(nextValue, event, onchange);
 	}
 
-	// Element seam instead of a component boundary; key order matches the previous call exactly.
-	const el = Kernel.element(Kernel.static, () => ({
-		as: 'div',
-		class: [
-			'slider-root relative flex items-center',
-			isVertical ? 'h-full w-6 flex-col' : 'h-6 w-full flex-row',
-			disabled && 'cursor-not-allowed opacity-50',
-			'$preset',
-			klass
-		],
-		'aria-orientation': orientation,
-		...sliderProps
-	}));
+	// State classes ride the consumer layer's `class` (Kernel's own-attrs `class` is not merged).
+	const el = Kernel.element(
+		() => ({
+			class: [
+				isVertical ? 'h-full w-6 flex-col' : 'h-6 w-full flex-row',
+				disabled && 'cursor-not-allowed opacity-50',
+				klass
+			],
+			...restProps
+		}),
+		{
+			preset: 'slider',
+			class: 'slider-root relative flex items-center',
+			attrs: () => ({ 'aria-orientation': orientation })
+		}
+	);
 </script>
 
-{@render Kernel.render(el)(el, sliderBody)}
-
-{#snippet sliderBody()}
+<div {...el.attrs}>
 	{@render (trackContent ?? defaultTrack)({
 		value: normalizedValue,
 		percent,
 		min: normalizedMin,
 		max: normalizedMax,
-		props: trackProps
+		props: track.attrs
 	})}
 
 	<!-- Native range input — invisible, full coverage, handles all a11y + keyboard -->
@@ -199,24 +177,20 @@
 		aria-disabled={disabled || undefined}
 	/>
 
-	{@render thumbWrapper()}
-{/snippet}
+	<div {...thumb.attrs}>
+		{@render (thumbContent ?? defaultThumb)({
+			value: normalizedValue,
+			percent,
+			props: thumb.attrs
+		})}
+	</div>
+</div>
 
 {@render children?.()}
 
 {#snippet defaultTrack({ props }: SliderTrackContentProps)}
 	<div {...props}>
-		<div {...fillProps}></div>
-	</div>
-{/snippet}
-
-{#snippet thumbWrapper()}
-	<div {...thumbProps}>
-		{@render (thumbContent ?? defaultThumb)({
-			value: normalizedValue,
-			percent,
-			props: thumbProps
-		})}
+		<div {...fill.attrs}></div>
 	</div>
 {/snippet}
 

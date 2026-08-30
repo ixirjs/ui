@@ -1,6 +1,6 @@
-import { animate, type Easing } from '$ixirjs/ui/shared';
-import { DURATION } from '$ixirjs/ui/shared';
-import { SidebarBond } from './bond.svelte';
+import { animate, type Easing } from '$ixirjs/ui/authoring';
+import { DURATION } from '$ixirjs/ui/authoring';
+import { SidebarContext } from './bond.svelte';
 
 type AnimateSidebarContentParams = {
 	duration?: number;
@@ -20,7 +20,7 @@ export function animateSidebarContent(params: AnimateSidebarContentParams) {
 		'0': collapsedSize = '96px',
 		'1': expandedSize = 'auto'
 	} = params;
-	const bond = SidebarBond.get();
+	const bond = SidebarContext.getOptional();
 
 	return (node: HTMLElement) => {
 		const isOpen = bond?.props.open ?? false;

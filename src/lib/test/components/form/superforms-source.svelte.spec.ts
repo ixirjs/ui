@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { superformsSource } from '$ixirjs/ui/components/form/sources/superforms.svelte';
-import type { ErrorRecord } from '$ixirjs/ui/shared/validation';
+import type { ErrorRecord } from '$ixirjs/ui/validation';
 
 /** The minimum a Svelte store is: subscribe, emit synchronously, return an unsubscriber. */
 function store<T>(initial: T) {

@@ -3,7 +3,8 @@ import { render } from 'vitest-browser-svelte';
 import { tick } from 'svelte';
 import Probe from '$ixirjs/ui/test/components/form/field/field-a11y.test.svelte';
 
-// The unit suite proves the role stitch on hand-built atoms. This proves the rendered control
+// Parts are located by the ids they render (`field-<part>-<seed>`): the redesigned Kernel emits no
+// DEV `data-kind` markers. This proves the rendered control
 // actually ends up wearing it — including aria-describedby, which resolves only once the helper
 // text registers, a tick after the control mounts.
 describe('Field — the rendered control carries the field ARIA contract', () => {
@@ -15,7 +16,7 @@ describe('Field — the rendered control carries the field ARIA contract', () =>
 
 	it('is described by the helper text', async () => {
 		const el = await control();
-		const helper = document.querySelector('[data-kind="field-description"]')!;
+		const helper = document.querySelector('[id^="field-description-"]')!;
 
 		expect(helper.id).toBeTruthy();
 		expect(el.getAttribute('aria-describedby')).toBe(helper.id);
@@ -23,7 +24,7 @@ describe('Field — the rendered control carries the field ARIA contract', () =>
 
 	it('is labelled by the label and reports its required and validity state', async () => {
 		const el = await control();
-		const label = document.querySelector('[data-kind="field-label"]')!;
+		const label = document.querySelector('[id^="field-label-"]')!;
 
 		expect(el.getAttribute('aria-labelledby')).toBe(label.id);
 		expect(el.getAttribute('aria-required')).toBe('true');
@@ -37,7 +38,7 @@ describe('Field.Root — Bond state does not leak onto the element', () => {
 	it('renders no attribute for a non-presentational Bond prop', async () => {
 		render(Probe, { value: '' });
 		await tick();
-		const root = document.querySelector('[data-kind="field-root"]')!;
+		const root = document.querySelector('[id^="field-root-"]')!;
 
 		for (const attr of ['schema', 'mode', 'extend', 'type', 'value']) {
 			expect(root.hasAttribute(attr), `${attr} leaked onto the field root`).toBe(false);

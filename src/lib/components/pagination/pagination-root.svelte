@@ -1,16 +1,14 @@
-<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
-	import { useRoot } from '$ixirjs/ui/shared';
-	import { type Base, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
-	import { PaginationBond } from './bond.svelte';
+<script lang="ts">
+	import { untrack } from 'svelte';
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
+	import { PaginationBond, PaginationContext } from './bond.svelte';
 	import type { PaginationRootProps } from './types';
 
 	const ID = $props.id();
 
 	let {
-		class: klass = '',
-		preset = undefined,
-		as = 'nav' as E,
+		as = 'nav',
+		base = undefined,
 		disabled = false,
 		page = $bindable(1),
 		pageSize = undefined,
@@ -19,34 +17,57 @@
 		factory = undefined,
 		children = undefined,
 		...restProps
-	}: PaginationRootProps<E, B> = $props();
+	}: PaginationRootProps<'nav'> = $props();
 
-	const root = useRoot(
-		PaginationBond,
-		{
-			disabled: () => disabled,
-			// Two-way: Previous/Next commit through this cell, so `bind:page` round-trips.
-			page: [() => page, (v: number | undefined) => (page = v ?? 1)],
-			pageSize: () => pageSize,
-			total: () => total
+	// Live props. Previous/Next commit through the `page` setter, so `bind:page` round-trips.
+	const bondProps = {
+		get id() {
+			return ID;
 		},
-		{
-			preset: () => preset,
-			id: () => ID,
-			factory: () => factory
+		get disabled() {
+			return disabled;
+		},
+		get page() {
+			return page;
+		},
+		set page(next: number | undefined) {
+			page = next ?? 1;
+		},
+		get pageSize() {
+			return pageSize;
+		},
+		get total() {
+			return total;
 		}
-	);
-	const bond = root.bond;
+	};
+	// `factory` is read once, at init, by design.
+	const build = untrack(() => factory);
+	const bond = PaginationContext.share(build ? build(bondProps) : PaginationBond.create(bondProps));
+	export const getBond = () => bond;
 
-	export const getBond = root.getBond;
-
-	const el = Kernel.element(root, () => ({
-		as,
-		class: ['pagination', '$preset', klass],
-		'aria-label': label,
-		variantProps: root.props,
-		...restProps
-	}));
+	const el = Kernel.element(() => restProps, {
+		preset: 'pagination',
+		class: 'pagination',
+		state: bond,
+		variantProps: () => bondProps,
+		as: () => as,
+		base: () => base,
+		attrs: () => {
+			const model = bond.pagination;
+			return {
+				id: bond.rootId,
+				'data-page': model.page,
+				'data-page-size': model.pageSize,
+				'data-total': model.total,
+				'data-page-count': model.pageCount,
+				'data-start-index': model.startIndex,
+				'data-end-index': model.endIndex,
+				'aria-label': label
+			};
+		}
+	});
+	// Bound once: an identifier callee compiles to a direct call — no snippet block, no anchor.
+	const leaf = Kernel.render(el);
 </script>
 
-{@render Kernel.render(el)(el, children, { pagination: bond })}
+{@render leaf(el, children, { pagination: bond })}

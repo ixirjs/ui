@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { render } from 'svelte/server';
 import Ablation from '$ixirjs/ui/test/perf/ablation.test.svelte';
+import TreeAblation from '$ixirjs/ui/test/perf/tree-ablation.test.svelte';
 import DatagridAblation from '$ixirjs/ui/test/perf/datagrid-ablation.test.svelte';
 import PresetAblation from '$ixirjs/ui/test/perf/preset-ablation.test.svelte';
 import MenuAblation from '$ixirjs/ui/test/perf/menu-ablation.test.svelte';
 import TransitionAnchors from '$ixirjs/ui/test/perf/transition-anchors.test.svelte';
 import VirtualTest from '$ixirjs/ui/test/runes/virtual.test.svelte';
 import Ceiling from '$ixirjs/ui/test/perf/ceiling/ceiling-ablation.test.svelte';
-import LaneAblation from '$ixirjs/ui/test/perf/lanes/lane-ablation.test.svelte';
 
 /**
  * Hydration-anchor budget — the DOM-mass ratchet.
@@ -35,21 +35,40 @@ function marginalComments(
 	return (count(HIGH) - count(LOW)) / (HIGH - LOW);
 }
 
+// 2026-08-26: every part binds its leaf once (`const leaf = Kernel.render(el)`), which compiles to
+// a direct call with no snippet block and no anchor — one anchor fewer per dispatching part across
+// the library (792 → 611 in the SSR snapshots). The trade-off, accepted: a part whose props turn
+// rich after init keeps its initial leaf. Rows re-pinned: collapsible 16 → 13, tree 16 → 15, menu
+// item 9 → 8, the two lane rows 13 → 11 (still equal). docs/research/whiteboard-2026-08.md.
 describe('hydration-anchor budget (comments per rendered unit)', () => {
+	// Card's parts became their own element on 2026-08-25 (`PlainPartProps`): Header, Title and Body
+	// each dropped the `{@render Kernel.render(el)}` dispatch and its one anchor, so every card row
+	// below is three lower than it was — 20 → 17, 19 → 16 — and the two lane rows one lower
+	// (9), still equal to each other. perf-vs-shadcn-2026-08.md §16. Round 7 did the same for
+	// `Card.Root` (17 → 16, 16 → 15, lane rows 9 → 8): the root IS its element too. §17.
+	// 2026-08-26: Card moved to the redesigned Kernel, so the two lane rows (which measure the OLD
+	// runtime's lanes) now render Alert.Root + Alert.Title instead — 13, still equal to each other.
 	it('card (Root + Header/Title + Body)', () => {
-		expect(marginalComments(Ablation, (n) => ({ n, layer: 'card' }))).toBe(20);
+		expect(marginalComments(Ablation, (n) => ({ n, layer: 'card' }))).toBe(16);
 	});
 
 	it('card with defaultPreset installed', () => {
-		expect(marginalComments(PresetAblation, (n) => ({ n }))).toBe(19);
+		expect(marginalComments(PresetAblation, (n) => ({ n }))).toBe(15);
 	});
 
 	it('collapsible (stateful compound)', () => {
-		expect(marginalComments(Ablation, (n) => ({ n, layer: 'collapsible' }))).toBe(16);
+		expect(marginalComments(Ablation, (n) => ({ n, layer: 'collapsible' }))).toBe(13);
 	});
 
-	it('datagrid row (Bond row + three cells)', () => {
-		expect(marginalComments(DatagridAblation, (n) => ({ n }))).toBe(20);
+	// 20 → 19 on 2026-08-25: the row IS its element (`PlainPartProps`), no dispatch anchor. §17.
+	it('datagrid row (record row + three cells)', () => {
+		expect(marginalComments(DatagridAblation, (n) => ({ n }))).toBe(19);
+	});
+
+	// Pinned the day Tree's root/header/body became their element: 3 anchors fewer per node than the
+	// dispatching shape (the family-ssr snapshot moved 19 → 13 over two nodes). §17.
+	it('tree node (Root + Header + Body)', () => {
+		expect(marginalComments(TreeAblation, (n) => ({ n }))).toBe(15);
 	});
 
 	/**
@@ -63,7 +82,7 @@ describe('hydration-anchor budget (comments per rendered unit)', () => {
 	 * wrapper, and it is the number that keeps the wrapper from coming back.
 	 */
 	it('menu item (Atom + registration, rendering its own element)', () => {
-		expect(marginalComments(MenuAblation, (n) => ({ n }))).toBe(9);
+		expect(marginalComments(MenuAblation, (n) => ({ n }))).toBe(8);
 	});
 
 	/**
@@ -77,37 +96,18 @@ describe('hydration-anchor budget (comments per rendered unit)', () => {
 	 * Kernel and the retained public HtmlElement renderer share the transition leaves. A number that
 	 * rises is a regression; a number that falls should be re-pinned only after reading the markup.
 	 */
+	// 4 → 3 on 2026-08-27: the Kernel arm's probe binds its leaf once (`const leaf = Kernel.render(el)`)
+	// instead of dispatching inline, which is the house rule every part now follows.
 	it('transitioning element via Kernel', () => {
-		expect(marginalComments(TransitionAnchors, (n) => ({ n, arm: 'kernel' }))).toBe(4);
+		expect(marginalComments(TransitionAnchors, (n) => ({ n, arm: 'kernel' }))).toBe(3);
 	});
 
 	it('transitioning element via <HtmlElement>', () => {
 		expect(marginalComments(TransitionAnchors, (n) => ({ n, arm: 'element' }))).toBe(4);
 	});
 
-	/**
-	 * The two Kernel lanes on ONE part, and the bridge between them.
-	 *
-	 * Both rows render `card.title` inside `<Card.Root>`, byte-identical (`lane-bench.ts` asserts that
-	 * before it times the same fixture). They differ only in whether the consumer passed a rich prop —
-	 * `defaults={{}}`, which forces the lane and resolves to nothing.
-	 *
-	 * That one prop used to cost four extra anchors, because `Kernel.render` decides per render and
-	 * effects cannot be created mid-render, so escalation had to mount `RichPart` purely to obtain a
-	 * deferred rune-init context. The leaf seam now decides at INIT, where building the element is
-	 * legal, so the escalated part renders through the same leaf as the plain one and the two numbers
-	 * agree. `RichPart` remains for the late case only — a rich prop that appears after init — which
-	 * is why the bridge is still reachable and still correct.
-	 *
-	 * If these two diverge again, the lane decision moved back into the render pass.
-	 */
-	it('card title, class-only lane', () => {
-		expect(marginalComments(LaneAblation, (n) => ({ n, arm: 'node' }))).toBe(10);
-	});
-
-	it('card title, consumer passed a rich prop at init', () => {
-		expect(marginalComments(LaneAblation, (n) => ({ n, arm: 'escalated' }))).toBe(10);
-	});
+	// The two lane rows lived here until 2026-08-27. They measured the OLD runtime's class-only and
+	// escalated lanes on one part; that runtime is gone, and with it the distinction they policed.
 
 	// The library-free control: if this moves, Svelte's own anchor emission changed (compiler
 	// upgrade) and every budget above needs re-reading, not just re-pinning.
@@ -128,7 +128,7 @@ describe('hydration-anchor budget (comments per rendered unit)', () => {
 	 * but "what does a card cost the way it actually ships".
 	 */
 	it('card inside <Root> (production shape)', () => {
-		expect(marginalComments(Ceiling, (n) => ({ n, arm: 'card-root' }))).toBe(19);
+		expect(marginalComments(Ceiling, (n) => ({ n, arm: 'card-root' }))).toBe(15);
 	});
 
 	// The same markup with each part's machinery stripped to a preset lookup and an id — the floor a

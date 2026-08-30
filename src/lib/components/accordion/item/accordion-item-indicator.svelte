@@ -1,51 +1,38 @@
-<script module lang="ts">
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
-	import { AccordionItemBond } from './bond.svelte';
-	const PART = Kernel.plan(AccordionItemBond, 'indicator', { class: '' });
-</script>
-
-<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
-	import { animate } from '$ixirjs/ui/shared';
+<script lang="ts">
+	import { animate } from '$ixirjs/ui/authoring';
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
 	import { Icon } from '$ixirjs/ui/components/icon';
 	import IconArrowDown from '$ixirjs/ui/icons/icon-arrow-down.svelte';
-	import { type Base, type BasePropsOf, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
+	import { AccordionItemContext } from './bond.svelte';
 	import type { AccordionItemIndicatorProps } from './types';
 
-	let {
-		class: klass = '',
-		children = undefined,
-		preset = undefined,
-		...restProps
-	}: AccordionItemIndicatorProps<E, B> & BasePropsOf<B> = $props();
-
-	const part = Kernel.node(PART, () => ({ preset }), { context: 'required' });
-	const bond = part.bond;
-	const isOpen = $derived(bond.isOpen ?? false);
-
-	function _animate(node: HTMLElement) {
-		return animate(node, { rotate: 180 * +isOpen }, { duration: 0.3, ease: 'anticipate' });
-	}
-
-	// Driver-only motion routes straight to HtmlElement.
-	const el = Kernel.element(
-		{ atom: part.atom, bond: part.bond, preset: part.preset, presetLayer: part.presetLayer },
-		() => ({
-			animate: _animate,
-			class: [
-				'border-border pointer-events-none flex items-center justify-center',
-				'$preset',
-				klass
-			],
-			...restProps
-		})
+	let { children = undefined, ...restProps }: AccordionItemIndicatorProps = $props();
+	const bond = AccordionItemContext.getOrThrow(
+		'<AccordionItem.Indicator /> must be used within an <AccordionItem.Root />'
 	);
+
+	// A driver, not a transition: the arrow rotates in place on every open/close.
+	const motion = {
+		animate: (node: HTMLElement) =>
+			animate(node, { rotate: 180 * +bond.isOpen }, { duration: 0.3, ease: 'anticipate' })
+	};
+	const el = Kernel.element(() => restProps, {
+		preset: 'accordion.item.indicator',
+		class: 'border-border pointer-events-none flex items-center justify-center',
+		state: bond,
+		motion: () => motion,
+		attrs: () => ({ id: bond.indicatorId, 'data-controled-by': bond.accordionId })
+	});
+	// Bound once, in the script: `{@render leaf(...)}` with a plain identifier compiles to a direct
+	// call on both platforms — no snippet block, no hydration anchor. The inline
+	// `Kernel.render(el)(...)` form is a block with an anchor.
+	const leaf = Kernel.render(el);
 </script>
 
-{@render Kernel.render(el)(el, children && bond ? consumerIndicator : defaultIndicator)}
+{@render leaf(el, children ? consumerIndicator : defaultIndicator)}
 
-<!-- `bond!` is proven by the dispatch above; narrowing does not cross into a snippet body. -->
 {#snippet consumerIndicator()}
-	{@render children?.({ accordionItem: bond! })}
+	{@render children?.({ accordionItem: bond })}
 {/snippet}
 
 {#snippet defaultIndicator()}

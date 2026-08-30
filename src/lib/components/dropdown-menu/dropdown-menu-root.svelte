@@ -1,35 +1,66 @@
 <script lang="ts">
-	import { DropdownMenuBond, type DropdownMenuBondProps } from './bond.svelte';
-	import { Root } from '$ixirjs/ui/components/popover/atoms';
-	import type { PopoverBond } from '$ixirjs/ui/components/popover/bond.svelte';
-	import type { StateChangeContext } from '$ixirjs/ui/types';
+	import { untrack } from 'svelte';
+	import { DropdownMenuBond, useMenuRoot, type DropdownMenuBondProps } from './bond.svelte';
 	import type { DropdownMenuRootProps } from './types';
+
+	const ID = $props.id();
 
 	let {
 		open = $bindable(false),
-		factory = defaultFactory,
+		disabled = false,
+		placements = ['bottom-start', 'bottom-end', 'top-start', 'top-end', 'bottom', 'top'],
+		placement = 'bottom',
+		offset = 2,
+		position = 'absolute',
+		portal = undefined,
+		presets = undefined,
+		factory = undefined,
 		onopenchange = undefined,
-		...restProps
+		children = undefined
 	}: DropdownMenuRootProps = $props();
 
-	// DropdownMenuBond composes PopoverBond (`parts:`) so it shares its atoms/context and is a
-	// valid bond for <Root> — which drives open state via the bindable and never calls bond-level
-	// open/close/toggle. defineBond's type doesn't surface those PopoverBond convenience methods
-	// (parts: compose atoms+capabilities, not methods), so the factory needs the cast below.
-	function defaultFactory(props: DropdownMenuBondProps): DropdownMenuBond {
-		return DropdownMenuBond.create(props);
-	}
+	// Live props: read through getters wherever the Bond needs them.
+	const bondProps: DropdownMenuBondProps = {
+		get id() {
+			return ID;
+		},
+		get open() {
+			return open;
+		},
+		get disabled() {
+			return disabled;
+		},
+		get placement() {
+			return placement;
+		},
+		get offset() {
+			return offset;
+		},
+		get position() {
+			return position;
+		},
+		get placements() {
+			return placements ?? [];
+		},
+		get portal() {
+			return portal;
+		},
+		get presets() {
+			return presets;
+		}
+	};
+	// `factory` is read once, at init, by design.
+	const build = untrack(() => factory);
+	const bond = build ? build(bondProps) : DropdownMenuBond.create(bondProps);
+	useMenuRoot(bond);
+	// Controlled state: the Bond decides, the root writes, the callback fires after the write with
+	// the staged `event`/`reason` a dismissal handed it.
+	bond.bindCommit((next, context) => {
+		open = next;
+		onopenchange?.(next, context);
+	});
 
-	function popoverFactory(props: DropdownMenuBondProps): PopoverBond {
-		return factory(props);
-	}
-
-	function forwardOpenChange(value: boolean, context: StateChangeContext<PopoverBond>): void {
-		onopenchange?.(value, {
-			...context,
-			bond: context.bond as DropdownMenuBond
-		});
-	}
+	export const getBond = () => bond;
 </script>
 
-<Root bind:open factory={popoverFactory} onopenchange={forwardOpenChange} {...restProps} />
+{@render children?.({ popover: bond })}

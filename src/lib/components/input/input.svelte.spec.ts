@@ -87,11 +87,21 @@ describe('Input — value flows through the InputModel', () => {
 	});
 
 	it('keeps Input.Control usable without Input.Root', async () => {
-		render(Control, { placeholder: 'standalone' });
+		const onvaluechange = vi.fn();
+		render(Control, { placeholder: 'standalone', onvaluechange });
 
-		await expect
-			.element(page.getByPlaceholder('standalone'))
-			.toHaveAttribute('data-kind', 'input-control');
+		const field = page.getByPlaceholder('standalone');
+		await expect.element(field).toBeInTheDocument();
+		// No root, no identity: a bare control carries no generated id.
+		await expect.element(field).not.toHaveAttribute('id');
+
+		await field.fill('typed');
+
+		await expect.element(field).toHaveValue('typed');
+		expect(onvaluechange).toHaveBeenLastCalledWith(
+			'typed',
+			expect.objectContaining({ reason: 'input' })
+		);
 	});
 });
 

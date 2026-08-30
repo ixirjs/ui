@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { setPreset } from '$ixirjs/ui/preset';
 	import KernelElement from '$ixirjs/ui/test/components/atom/kernel-element.test.svelte';
-	import { createPresentation } from '$ixirjs/ui/components/atom/presentation.svelte';
+	import { createPresentation } from '$ixirjs/ui/kernel/presentation.svelte';
 
 	setPreset({
 		button: () => ({

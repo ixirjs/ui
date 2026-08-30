@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { PortalBond } from '$ixirjs/ui/components/portal/instance/bond.svelte';
 import { PortalsBond } from './bond.svelte';
-import type { OverlayView } from '$ixirjs/ui/components/overlay';
+import type { OverlayLike } from '$ixirjs/ui/components/overlay';
 
 function fakeOverlay(name: string) {
-	return { name } as unknown as OverlayView;
+	return { name } as unknown as OverlayLike;
 }
 
 describe('PortalsBond bands', () => {

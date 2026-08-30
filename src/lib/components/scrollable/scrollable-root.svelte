@@ -1,8 +1,7 @@
-<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
-	import { useRoot } from '$ixirjs/ui/shared';
-	import { type Base, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
-	import { ScrollableBond } from './bond.svelte';
+<script lang="ts">
+	import { untrack } from 'svelte';
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
+	import { ScrollableBond, ScrollableContext } from './bond.svelte';
 	import type { ScrollableRootProps } from './types';
 
 	const ID = $props.id();
@@ -14,84 +13,96 @@
 		scrollHeight = $bindable(0),
 		clientWidth = $bindable(0),
 		clientHeight = $bindable(0),
-		class: klass = '',
-		preset = undefined,
+		as = undefined,
+		base = undefined,
 		disabled = false,
 		open = true,
 		factory = undefined,
 		children,
 		...restProps
-	}: ScrollableRootProps<E, B> = $props();
+	}: ScrollableRootProps = $props();
 
-	let scrollXState = $derived(scrollX);
-	let scrollYState = $derived(scrollY);
-	let scrollWidthState = $derived(scrollWidth);
-	let scrollHeightState = $derived(scrollHeight);
-	let clientWidthState = $derived(clientWidth);
-	let clientHeightState = $derived(clientHeight);
 	let isScrolling = $state(false);
 
-	const root = useRoot(
-		ScrollableBond,
-		{
-			scrollX: [
-				() => scrollXState,
-				(v) => {
-					scrollXState = v;
-					scrollX = scrollXState;
-				}
-			],
-			scrollY: [
-				() => scrollYState,
-				(v) => {
-					scrollYState = v;
-					scrollY = scrollYState;
-				}
-			],
-			scrollWidth: [
-				() => scrollWidthState,
-				(v) => {
-					scrollWidthState = v;
-					scrollWidth = scrollWidthState;
-				}
-			],
-			scrollHeight: [
-				() => scrollHeightState,
-				(v) => {
-					scrollHeightState = v;
-					scrollHeight = scrollHeightState;
-				}
-			],
-			clientWidth: [
-				() => clientWidthState,
-				(v) => {
-					clientWidthState = v;
-					clientWidth = clientWidthState;
-				}
-			],
-			clientHeight: [
-				() => clientHeightState,
-				(v) => {
-					clientHeightState = v;
-					clientHeight = clientHeightState;
-				}
-			],
-			disabled: () => disabled,
-			open: [() => open, (v) => (open = v)],
-			isScrolling: [() => isScrolling, (v) => (isScrolling = v ?? false)]
+	// Live props: the Bond measures and drags through these setters, so every `bind:` round-trips.
+	const bondProps = {
+		get id() {
+			return ID;
 		},
-		{ preset: () => preset, id: () => ID, factory: () => factory }
+		get scrollX() {
+			return scrollX;
+		},
+		set scrollX(v: number) {
+			scrollX = v;
+		},
+		get scrollY() {
+			return scrollY;
+		},
+		set scrollY(v: number) {
+			scrollY = v;
+		},
+		get scrollWidth() {
+			return scrollWidth;
+		},
+		set scrollWidth(v: number) {
+			scrollWidth = v;
+		},
+		get scrollHeight() {
+			return scrollHeight;
+		},
+		set scrollHeight(v: number) {
+			scrollHeight = v;
+		},
+		get clientWidth() {
+			return clientWidth;
+		},
+		set clientWidth(v: number) {
+			clientWidth = v;
+		},
+		get clientHeight() {
+			return clientHeight;
+		},
+		set clientHeight(v: number) {
+			clientHeight = v;
+		},
+		get disabled() {
+			return disabled;
+		},
+		get open() {
+			return open;
+		},
+		set open(v: boolean) {
+			open = v;
+		},
+		get isScrolling() {
+			return isScrolling;
+		},
+		set isScrolling(v: boolean | undefined) {
+			isScrolling = v ?? false;
+		}
+	};
+	// `factory` is read once, at init, by design.
+	const build = untrack(() => factory);
+	const bond: ScrollableBond = ScrollableContext.share(
+		build ? build(bondProps) : ScrollableBond.create(bondProps)
 	);
-	const bond: ScrollableBond = root.bond;
+	export const getBond = () => bond;
 
-	export const getBond = root.getBond;
-
-	const el = Kernel.element(root, () => ({
-		as: 'div',
-		class: ['scrollable-root relative box-content overflow-hidden', '$preset', klass],
-		variantProps: root.props,
-		...restProps
-	}));
+	const el = Kernel.element(() => restProps, {
+		preset: 'scrollable',
+		class: 'scrollable-root relative box-content overflow-hidden',
+		state: bond,
+		variantProps: () => bondProps,
+		as: () => as,
+		base: () => base,
+		attrs: () => ({
+			id: bond.partId('root'),
+			'data-disabled': bond.props.disabled,
+			'data-open': bond.props.open
+		})
+	});
+	// Bound once: an identifier callee compiles to a direct call — no snippet block, no anchor.
+	const leaf = Kernel.render(el);
 </script>
 
-{@render Kernel.render(el)(el, children, { scrollable: bond })}
+{@render leaf(el, children, { scrollable: bond })}

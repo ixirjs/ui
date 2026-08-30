@@ -1,27 +1,53 @@
-import {
-	PopoverBond,
-	PopoverBondBase,
-	PopoverTriggerAtom,
-	PopoverContentAtom,
-	type PopoverStateProps
-} from '$ixirjs/ui/components/popover/bond.svelte';
-import { Atom } from '$ixirjs/ui/shared/bond';
-import { defineBond, type BondOf } from '$ixirjs/ui/shared';
+/**
+ * DatePicker's shared object on the redesigned `Kernel` — a plain state class over Popover's.
+ *
+ * The family is a Popover whose content is a Calendar, so `DatePickerBond extends PopoverBondBase`
+ * and the root shares it under the DatePicker, Popover and Overlay context keys: `Popover.Tail` and
+ * `Popover.Indicator` are re-exported as `DatePicker.Tail`/`DatePicker.Indicator` and read the same
+ * object, exactly as the flat `defineBond({ parts: [PopoverBond] })` composition used to arrange.
+ *
+ * The trigger/content ARIA the old `DatePickerTriggerAtom`/`DatePickerContentAtom` projected is now
+ * written literally by `date-picker-trigger.svelte` and by `date-picker-calendar.svelte`'s props on
+ * `Popover.Content`. `name` stays `'date-picker'` so every element id is the one the family always
+ * rendered (`date-picker-trigger-<seed>`); the preset keys stay under `datepicker.*`.
+ */
+import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
+import { PopoverBondBase, type PopoverBondProps } from '$ixirjs/ui/components/popover/bond.svelte';
+import type { OverlayBond, OverlayLike } from '$ixirjs/ui/components/overlay/model.svelte';
 import type { CalendarBondProps } from '$ixirjs/ui/components/calendar/bond.svelte';
+import type { DatePickerPresets } from './types';
 
-export type DatePickerBondProps = PopoverStateProps &
-	Omit<CalendarBondProps, 'value' | 'start' | 'end'> & {
+export type DatePickerBondProps = Omit<PopoverBondProps, 'presets'> &
+	Omit<CalendarBondProps, 'value' | 'start' | 'end' | 'presets'> & {
 		value?: Date | undefined;
 		start?: Date | undefined;
 		end?: Date | undefined;
 		format?: string;
 		placeholder?: string;
+		presets?: DatePickerPresets | undefined;
 		readonly rest?: Record<string, unknown>;
 	};
 
-// Extends PopoverBondBase with date selection (single/range), value formatting, and sub-picker disclosure.
+export const DatePickerContext = Kernel.context<DatePickerBond>('bond/date-picker');
 
-class DatePickerBondBase extends PopoverBondBase<DatePickerBondProps> {
+// Popover disclosure + date selection (single/range), value formatting, and the two sub-picker
+// disclosures the calendar header opens.
+export class DatePickerBond extends PopoverBondBase<DatePickerBondProps> {
+	static readonly CONTEXT_KEY = DatePickerContext.key;
+	static get(): DatePickerBond | undefined {
+		return DatePickerContext.get();
+	}
+	static getOrThrow(message?: string): DatePickerBond {
+		return DatePickerContext.getOrThrow(message);
+	}
+	// The second overload only keeps the static side compatible with `OverlayBond.create(outer?)`,
+	// the host-delegating constructor this family never calls.
+	static override create(props: DatePickerBondProps): DatePickerBond;
+	static override create(outer?: OverlayLike): OverlayBond;
+	static override create(props?: DatePickerBondProps | OverlayLike): OverlayBond {
+		return new DatePickerBond(props as DatePickerBondProps);
+	}
+
 	#isYearsPickerOpen = $state(false);
 	#isMonthsPickerOpen = $state(false);
 
@@ -134,87 +160,3 @@ class DatePickerBondBase extends PopoverBondBase<DatePickerBondProps> {
 		this.#isMonthsPickerOpen = !this.#isMonthsPickerOpen;
 	}
 }
-
-// Bond shape date-picker atoms type against — breaks the atom↔bond declaration cycle.
-
-// Combobox surface over PopoverTriggerAtom — adds aria-expanded/controls, readonly, and disabled wiring.
-
-class DatePickerTriggerAtom extends PopoverTriggerAtom<DatePickerBondBase> {
-	declare protected bond: DatePickerBondBase;
-
-	override get attrs() {
-		const isDisabled = this.requireBond().props.disabled ?? false;
-		const placeholder = this.requireBond().props.placeholder ?? 'Select a date';
-
-		// aria-expanded, aria-controls, aria-disabled and tabindex come from the overlay trigger
-		// policy via role:'trigger' (see super.attrs). They were restated here, and the restated
-		// aria-controls rebuilt the content id from the naming convention rather than resolving the
-		// registered content Atom.
-		return {
-			...super.attrs,
-			role: 'combobox',
-			'aria-label': 'Date picker',
-			placeholder,
-			disabled: isDisabled,
-			readonly: true
-		};
-	}
-}
-
-// Popover content panel relabelled as the date-choosing dialog (role=dialog).
-class DatePickerContentAtom extends PopoverContentAtom<DatePickerBondBase> {
-	declare protected bond: DatePickerBondBase;
-
-	override get attrs() {
-		return {
-			...super.attrs,
-			role: 'dialog',
-			'aria-label': 'Choose date'
-		};
-	}
-}
-
-// Clears value/range; removed from tab order when nothing to clear. Tracked as bond.elements['clear-button'].
-class DatePickerClearButtonAtom extends Atom<DatePickerBondBase, HTMLElement> {
-	constructor(bond: DatePickerBondBase) {
-		super(bond, 'clear-button');
-	}
-
-	override get attrs() {
-		const hasValue = this.requireBond().hasValue;
-
-		return {
-			...super.attrs,
-			type: 'button',
-			'aria-label': 'Clear date',
-			tabindex: hasValue ? 0 : -1
-		};
-	}
-
-	override get handlers() {
-		return {
-			onclick: (ev: Event) => {
-				ev.preventDefault();
-				ev.stopPropagation();
-				this.requireBond().clear();
-			}
-		};
-	}
-}
-
-// DatePickerBond — flat composition over PopoverBond; overrides trigger/content atoms and adds clear-button.
-
-export const DatePickerBond = defineBond({
-	parts: [PopoverBond],
-	name: 'date-picker',
-	base: DatePickerBondBase,
-	preset: 'datepicker',
-	atoms: {
-		trigger: DatePickerTriggerAtom,
-		content: DatePickerContentAtom,
-		'clear-button': DatePickerClearButtonAtom
-	}
-});
-
-// Instance type paired with the const above (value + type same name).
-export type DatePickerBond = BondOf<typeof DatePickerBond>;

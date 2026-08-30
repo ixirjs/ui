@@ -1,4 +1,4 @@
-import type { Preset } from '$lib/context';
+import type { Preset } from '$lib/preset/context.svelte';
 
 /**
  * Minimalist preset for Storybook stories.

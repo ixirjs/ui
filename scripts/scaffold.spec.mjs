@@ -61,57 +61,71 @@ describe('scaffold — bonded family', () => {
 	it('seeds the root Bond from $props.id(), which root-identity-audit requires', () => {
 		const root = files['date-picker-root.svelte'];
 		expect(root).toContain('const ID = $props.id();');
-		expect(root).toContain('id: () => ID');
+		// The seed reaches the Bond through the live-props getters, never as a rendered id prop.
+		expect(root).toContain('get id() {');
+		expect(root).toContain('return ID;');
 	});
 
-	it('binds the root through useRoot and never through bindBond', () => {
-		expect(files['date-picker-root.svelte']).toContain('useRoot(');
-		expect(files['date-picker-root.svelte']).not.toContain('bindBond');
+	it('shares one plain state class under the family context', () => {
+		const root = files['date-picker-root.svelte'];
+		expect(root).toContain('DatePickerContext.share(');
+		expect(root).toContain('DatePickerBond.create(bondProps)');
+		// The seams the old runtime authored with are gone; a scaffold that names one does not compile.
+		expect(root).not.toContain('useRoot(');
+		expect(root).not.toContain('bindBond');
 	});
 
-	// Pin exact call shape and arity: `bun run check` does not see dry-run scaffold output.
-	// Whoever changes `definePart`/`useRoot` must scaffold once and typecheck it.
-	it('binds each descendant with definePart, naming its slot exactly once', () => {
+	// Pin exact call shape: `bun run check` does not see dry-run scaffold output. Whoever changes
+	// `Kernel.element`'s config must scaffold once and typecheck it.
+	it('builds each descendant through Kernel.element against the family context', () => {
 		const header = files['date-picker-header.svelte'];
-		expect(header).toContain("definePart(DatePickerBond, 'header', () => props, {");
-		// The slot string must not be restated — a second copy silently degrades when one is renamed.
-		expect(header.match(/'header'/g)).toHaveLength(1);
+		expect(header).toContain('DatePickerContext.getOrThrow(');
+		expect(header).toContain('Kernel.element(() => props, {');
+		expect(header).toContain("preset: 'date-picker.header'");
 		expect(header).not.toContain('presetLayer=');
-		// definePart owns the destructure; reintroducing one is the boilerplate it removed.
+		// A scaffolded part IS its element: no dispatch, no destructure to reassemble.
+		expect(header).toContain('<div {...el.attrs}>');
 		expect(header).not.toContain('...restProps');
 	});
 
-	it('orders the class list base → $preset → consumer', () => {
-		// The root composes the list itself; a `definePart` part hands its base classes to the
-		// helper, which composes exactly the same three-element list.
-		expect(files['date-picker-root.svelte']).toContain("'$preset', klass]");
+	it('names base classes once and lets the seam compose the list', () => {
+		// The seam composes `[spec.class, '$preset', consumer class]`; a scaffolded file names its
+		// own class once and never rebuilds that list. The consumer's class rides `restProps`/`props`
+		// into the thunk, so it must not be destructured out.
+		expect(files['date-picker-root.svelte']).toContain("class: 'date-picker'");
+		expect(files['date-picker-root.svelte']).not.toContain('class: klass = ');
 		expect(files['date-picker-header.svelte']).toContain("class: 'date-picker-header'");
 	});
 
-	it('forwards the root factory prop as a getter, not as a call', () => {
-		// `useRoot`'s `factory` option is `() => BondFactory | undefined`. Passing
-		// `(props) => factory(props)` type-errors and silently defeats the Bond.create fallback.
-		expect(files['date-picker-root.svelte']).toContain('factory: () => factory');
-		expect(files['date-picker-root.svelte']).toContain('factory = undefined');
+	it('reads the root factory once, at init, and falls back to create', () => {
+		// `factory` is read through `untrack` by design: the Bond takes its parent from context
+		// BEFORE this root shares its own, so a reactive read here would re-run that.
+		const root = files['date-picker-root.svelte'];
+		expect(root).toContain('const build = untrack(() => factory);');
+		expect(root).toContain('build ? build(bondProps) : DatePickerBond.create(bondProps)');
+		expect(root).toContain('factory = undefined');
 	});
 
-	it('renders directly through Kernel rather than compatibility adapters', () => {
-		expect(files['date-picker-root.svelte']).toContain('Kernel.element(root, () => ({');
+	it('renders a literal element, never an inline dispatch', () => {
+		// A scaffolded part has no reason to dispatch (no transition, no `base`, no polymorphic tag),
+		// and the literal tag is a block, a branch and a hydration anchor cheaper. A part that grows
+		// one binds its leaf ONCE — `const leaf = Kernel.render(el)` — never the inline call form.
 		for (const file of ['date-picker-root.svelte', 'date-picker-header.svelte']) {
-			expect(files[file]).toContain('{@render Kernel.render(el)(');
-			expect(files[file]).not.toContain('{#snippet body()}');
+			expect(files[file]).toContain('Kernel.element(');
+			expect(files[file]).toContain('{...el.attrs}');
+			expect(files[file]).not.toContain('{@render Kernel.render(');
 			expect(files[file]).not.toContain('...part.props');
 		}
 	});
 
-	it('declares roles in the atom map so relationships can respond to them', () => {
+	it('derives one element id per slot from the family seed', () => {
 		const bond = files['bond.svelte.ts'];
-		// Slots start presentation-free: no `atom`, so `defineBond` synthesizes one from the slot
-		// name and the definition's `name`.
-		expect(bond).toContain("header: { role: 'trigger' }");
-		expect(bond).toContain("body: { role: 'content' }");
-		expect(bond).toContain('root: {}');
+		// Cross-part ARIA resolves from the seed, on the server too — there is no registry to ask.
+		expect(bond).toContain("return Kernel.id(this.id, 'date-picker-root');");
+		expect(bond).toContain("return Kernel.id(this.id, 'date-picker-header');");
+		expect(bond).toContain("return Kernel.id(this.id, 'date-picker-body');");
 		expect(bond).not.toContain('defineAtom');
+		expect(bond).not.toContain('defineBond');
 	});
 
 	it('derives every identifier from the kebab name', () => {
@@ -126,7 +140,7 @@ describe('scaffold — bonded family', () => {
 		const types = files['types.ts'];
 		for (const slot of ['Root', 'Header', 'Body']) {
 			expect(types).toContain(`export interface DatePicker${slot}ExtendProps {}`);
-			expect(types).toContain(`export type DatePicker${slot}Props<`);
+			expect(types).toContain(`export type DatePicker${slot}Props = PlainPartProps<`);
 		}
 	});
 
@@ -136,12 +150,15 @@ describe('scaffold — bonded family', () => {
 
 	// Two conventions the generator had drifted off, both invisible to a text-contains assertion
 	// that only looks for the happy string, so each is asserted as an absence of the old form.
-	it('constrains element generics on the exported alias, not on the raw tag map', () => {
+	// A scaffolded part IS its element, so its props carry no element generic at all — `as` and
+	// `base` are typed `never` by `PlainPartProps`. A raw `keyof HTMLElementTagNameMap` would still
+	// be wrong wherever a generic does appear.
+	it('emits no element generic, and never the raw tag map', () => {
 		for (const file of Object.values(files)) {
 			expect(file).not.toContain('keyof HTMLElementTagNameMap');
 		}
-		expect(files['types.ts']).toContain("E extends HtmlElementTagName = 'div'");
-		expect(files['types.ts']).toContain('HtmlElementTagName');
+		expect(files['types.ts']).not.toContain("E extends HtmlElementTagName = 'div'");
+		expect(files['types.ts']).toContain("PlainPartProps<'div', DatePickerChildren>");
 	});
 
 	it('emits no eslint-disable for empty interfaces — the rule allows them outright', () => {
@@ -150,10 +167,9 @@ describe('scaffold — bonded family', () => {
 		}
 	});
 
-	it('re-exports useRoot’s own Bond accessor rather than rebuilding it', () => {
+	it('exports the Bond accessor over the shared instance', () => {
 		const root = files['date-picker-root.svelte'];
-		expect(root).toContain('export const getBond = root.getBond;');
-		expect(root).not.toContain('() => bond;');
+		expect(root).toContain('export const getBond = () => datePicker;');
 	});
 
 	it('imports library internals through the $ alias, never the published package specifier', () => {
@@ -169,15 +185,16 @@ describe('scaffold — static module', () => {
 	it('emits the smaller Button-shaped layout with no Bond', () => {
 		expect(Object.keys(files).sort()).toEqual(['badge-lite.svelte', 'index.ts', 'types.ts']);
 		expect(files['badge-lite.svelte']).not.toContain('Bond');
-		expect(files['badge-lite.svelte']).toContain(
-			"mergePresetProps(preset, 'badge-lite', restProps)"
-		);
+		expect(files['badge-lite.svelte']).toContain("preset: 'badge-lite'");
 	});
 
-	it('resolves the preset and renders directly through Kernel', () => {
-		expect(files['badge-lite.svelte']).toContain('$derived(mergePresetProps(');
-		expect(files['badge-lite.svelte']).toContain('Kernel.element(Kernel.static');
-		expect(files['badge-lite.svelte']).toContain('{@render Kernel.render(el)(');
+	it('resolves the preset and renders a literal element', () => {
+		// One seam: `Kernel.element` caches its config thunk, so there is no `$derived` cell holding
+		// a merged packet and no dispatch to choose a leaf for a static module.
+		expect(files['badge-lite.svelte']).toContain('Kernel.element(() => props, {');
+		expect(files['badge-lite.svelte']).not.toContain('mergePresetProps');
+		expect(files['badge-lite.svelte']).not.toContain('{@render Kernel.render(');
+		expect(files['badge-lite.svelte']).toContain('{...el.attrs}');
 	});
 });
 

@@ -5,87 +5,53 @@ import Probe, {
 	resetCapturedBond
 } from '$ixirjs/ui/test/components/dialog/dialog-atom-probe.test.svelte';
 import LayerProbe from '$ixirjs/ui/test/components/dialog/dialog-preset-probe.test.svelte';
-import { Atom } from '$ixirjs/ui/shared/bond';
-import {
-	DialogBodyAtom,
-	DialogBond,
-	DialogCloseAtom,
-	DialogContentAtom,
-	DialogDescriptionAtom,
-	DialogFooterAtom,
-	DialogHeaderAtom,
-	DialogRootAtom,
-	DialogTitleAtom
-} from './bond.svelte';
+import { DialogBond } from './bond.svelte';
 
-describe('Dialog component-owned Atoms', () => {
+// Replaces the Atom-registry spec (`nodeByPart`, `instanceof DialogRootAtom`): the same rendered
+// outcome — every part carries its seeded id and role, the root's relationship ARIA points at the
+// title and description that rendered, and a part's id is released when it unmounts.
+describe('Dialog rendered parts', () => {
 	beforeEach(resetCapturedBond);
 
-	it('registers rendered dialog nodes', () => {
+	it('renders every part with its id, role and cross-part ARIA', () => {
 		const { unmount } = render(Probe);
 		const dialog = capturedBond;
 
-		expect(dialog).toBeDefined();
 		expect(dialog).toBeInstanceOf(DialogBond);
 		expect(dialog?.isOpen).toBe(true);
 
-		const root = dialog?.nodeByPart('root');
-		const content = dialog?.nodeByPart('content');
-		const header = dialog?.nodeByPart('header');
-		const title = dialog?.nodeByPart('title');
-		const description = dialog?.nodeByPart('description');
-		const body = dialog?.nodeByPart('body');
-		const footer = dialog?.nodeByPart('footer');
-		const close = dialog?.nodeByPart('close');
+		const seed = dialog!.id;
+		const byPart = (part: string) => document.getElementById(`dialog-${part}-${seed}`);
+		const root = byPart('root')!;
+		const content = byPart('content')!;
+		const header = byPart('header')!;
+		const title = byPart('title')!;
+		const description = byPart('description')!;
+		const body = byPart('body')!;
+		const footer = byPart('footer')!;
+		const close = byPart('close')!;
 
-		expect(root).toBeInstanceOf(DialogRootAtom);
-		expect(content).toBeInstanceOf(DialogContentAtom);
-		expect(header).toBeInstanceOf(DialogHeaderAtom);
-		expect(title).toBeInstanceOf(DialogTitleAtom);
-		expect(description).toBeInstanceOf(DialogDescriptionAtom);
-		expect(body).toBeInstanceOf(DialogBodyAtom);
-		expect(footer).toBeInstanceOf(DialogFooterAtom);
-		expect(close).toBeInstanceOf(DialogCloseAtom);
 		for (const node of [root, content, header, title, description, body, footer, close]) {
-			expect(node).toBeInstanceOf(Atom);
+			expect(node).not.toBeNull();
 		}
-		for (const [part, node] of [
-			['root', root],
-			['content', content],
-			['header', header],
-			['title', title],
-			['description', description],
-			['body', body],
-			['footer', footer],
-			['close', close]
-		] as const) {
-			expect(dialog?.nodesByPart(part)).toEqual([node]);
-		}
+		expect(dialog?.element('root')).toBe(root);
+		expect(dialog?.element('content')).toBe(content);
 
-		expect(root?.spread.role).toBe('dialog');
-		expect(root?.spread['aria-modal']).toBe(true);
-		expect(root?.spread['aria-labelledby']).toBe(title?.id);
-		expect(root?.spread['aria-describedby']).toBe(description?.id);
-		expect(root?.spread['data-open']).toBe(true);
-		expect(content?.spread.role).toBe('document');
-		expect(header?.spread.role).toBe('banner');
-		expect(title?.spread.role).toBe('heading');
-		expect(body?.spread.role).toBe('region');
-		expect(footer?.spread.role).toBe('contentinfo');
+		expect(root.getAttribute('role')).toBe('dialog');
+		expect(root.getAttribute('aria-modal')).toBe('true');
+		expect(root.getAttribute('aria-labelledby')).toBe(title.id);
+		expect(root.getAttribute('aria-describedby')).toBe(description.id);
+		expect(root.dataset.open).toBe('true');
+		expect(content.getAttribute('role')).toBe('document');
+		expect(header.getAttribute('role')).toBe('banner');
+		expect(title.getAttribute('role')).toBe('heading');
+		expect(body.getAttribute('role')).toBe('region');
+		expect(footer.getAttribute('role')).toBe('contentinfo');
 
 		unmount();
 
-		for (const part of [
-			'root',
-			'content',
-			'header',
-			'title',
-			'description',
-			'body',
-			'footer',
-			'close'
-		]) {
-			expect(dialog?.nodesByPart(part)).toEqual([]);
+		for (const part of ['content', 'title', 'description'] as const) {
+			expect(dialog?.partId(part)).toBeUndefined();
 		}
 	});
 

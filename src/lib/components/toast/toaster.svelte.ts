@@ -1,5 +1,5 @@
 import { createContext, type Component } from 'svelte';
-import { generateId } from '$ixirjs/ui/shared/bond';
+import { generateId } from '$ixirjs/ui/authoring';
 import { SvelteMap } from 'svelte/reactivity';
 
 export type ToastType = 'info' | 'success' | 'error' | 'warning' | 'default';

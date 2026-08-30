@@ -5,8 +5,8 @@
 		mergePresetLayers,
 		setPreset,
 		type PresetEntryRecord
-	} from '$ixirjs/ui/context';
-	import { resolvePreset } from '$ixirjs/ui/components/atom';
+	} from '$ixirjs/ui/preset/context.svelte';
+	import { resolvePreset } from '$ixirjs/ui/authoring';
 
 	setPreset({
 		button: () => ({ class: 'base', attrs: { 'data-base': 'yes' } })

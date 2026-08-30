@@ -1,68 +1,43 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
-import { Atom } from '$ixirjs/ui/shared/bond';
+import { tick } from 'svelte';
 import Probe, {
 	capturedBond,
 	resetCapturedBond
 } from '$ixirjs/ui/test/components/form/field/field-atom-probe.test.svelte';
-import {
-	FieldBond,
-	FieldControlAtom,
-	FieldDescriptionAtom,
-	FieldLabelAtom,
-	FieldRootAtom
-} from './bond.svelte';
+import { FieldBond } from './bond.svelte';
 
-describe('Field component-owned Atoms', () => {
+// This used to assert the Atom registry (`nodeByPart`, `spread`). On the redesigned Kernel each part
+// writes its id into the Bond at init and the siblings read it, so the rendered ARIA is the contract.
+describe('Field parts wear the field ARIA contract', () => {
 	beforeEach(resetCapturedBond);
 
-	it('registers rendered field nodes', () => {
+	it('links root, label, control and description by their rendered ids', async () => {
 		const { unmount } = render(Probe);
+		await tick();
 		const bond = capturedBond;
 
-		expect(bond).toBeDefined();
 		expect(bond).toBeInstanceOf(FieldBond);
 
-		const root = bond?.nodeByPart('root');
-		const label = bond?.nodeByPart('label');
-		const control = bond?.nodeByPart('control');
-		const description = bond?.nodeByPart('description');
+		const root = document.querySelector('[id^="field-root-"]')!;
+		const label = document.querySelector('[id^="field-label-"]')!;
+		const control = document.querySelector('[id^="field-control-"]')!;
+		const description = document.querySelector('[id^="field-description-"]')!;
 
-		expect(root).toBeInstanceOf(FieldRootAtom);
-		expect(label).toBeInstanceOf(FieldLabelAtom);
-		expect(control).toBeInstanceOf(FieldControlAtom);
-		expect(description).toBeInstanceOf(FieldDescriptionAtom);
-		for (const node of [root, label, control, description]) {
-			expect(node).toBeInstanceOf(Atom);
-		}
-		expect(bond?.nodesByPart('root')).toEqual([root]);
-		expect(bond?.nodesByPart('label')).toEqual([label]);
-		expect(bond?.nodesByPart('control')).toEqual([control]);
-		expect(bond?.nodesByPart('description')).toEqual([description]);
+		expect(root.getAttribute('role')).toBe('group');
+		expect(root.getAttribute('aria-labelledby')).toBe(label.id);
+		expect(root.getAttribute('aria-describedby')).toBe(description.id);
+		expect(control.getAttribute('aria-labelledby')).toBe(label.id);
+		expect(control.getAttribute('aria-describedby')).toBe(description.id);
+		expect(label.getAttribute('for')).toBe(control.id);
+		expect(label.id).not.toBe(control.id);
 
-		expect(control?.spread['aria-labelledby']).toBe(label?.id);
-		expect(label?.spread.for).toBe(control?.id);
-		expect(root?.spread.role).toBe('group');
-		expect(root?.spread['aria-labelledby']).toBe(label?.id);
-		expect(root?.spread['aria-describedby']).toBe(description?.id);
-
-		expect(bond?.nodeByPart('root')).toBeInstanceOf(FieldRootAtom);
-		expect(bond?.nodeByPart('label')).toBeInstanceOf(FieldLabelAtom);
-		expect(bond?.nodeByPart('control')).toBeInstanceOf(FieldControlAtom);
-		expect(bond?.nodeByPart('description')).toBeInstanceOf(FieldDescriptionAtom);
-		for (const node of [
-			bond?.nodeByPart('root'),
-			bond?.nodeByPart('label'),
-			bond?.nodeByPart('control'),
-			bond?.nodeByPart('description')
-		]) {
-			expect(node).toBeInstanceOf(Atom);
-		}
+		expect(control.getAttribute('aria-invalid')).toBe('false');
+		expect(control.getAttribute('aria-disabled')).toBe('false');
+		expect(control.getAttribute('aria-readonly')).toBe('false');
+		expect(control.hasAttribute('data-invalid')).toBe(false);
+		expect(control.hasAttribute('aria-required')).toBe(false);
 
 		unmount();
-
-		for (const part of ['root', 'label', 'control', 'description']) {
-			expect(bond?.nodesByPart(part)).toEqual([]);
-		}
 	});
 });

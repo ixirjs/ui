@@ -9,9 +9,14 @@
 		onclose = undefined,
 		onopenchange = undefined,
 		duration = 0,
+		disabled = false,
+		dismissible = true,
 		// See the dialog probe: a non-button close control has to grow role and tabindex itself.
 		as = 'button'
-	}: Pick<ToastRootProps, 'open' | 'onclose' | 'onopenchange' | 'duration'> & {
+	}: Pick<
+		ToastRootProps,
+		'open' | 'onclose' | 'onopenchange' | 'duration' | 'disabled' | 'dismissible'
+	> & {
 		as?: 'button' | 'span';
 	} = $props();
 	let toastRoot: { getBond(): ToastBond };
@@ -21,7 +26,15 @@
 	}
 </script>
 
-<ToastRoot bind:this={toastRoot} {open} {onclose} {onopenchange} {duration}>
+<ToastRoot
+	bind:this={toastRoot}
+	{open}
+	{onclose}
+	{onopenchange}
+	{duration}
+	{disabled}
+	{dismissible}
+>
 	{#snippet children()}
 		<ToastClose {as} data-testid="toast-close" />
 	{/snippet}

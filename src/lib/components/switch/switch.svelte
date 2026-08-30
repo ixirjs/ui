@@ -1,7 +1,5 @@
 <script lang="ts">
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
-	import { mergePresetProps } from '$ixirjs/ui/components/atom';
-	import { createPresentation } from '$ixirjs/ui/components/atom/presentation.svelte';
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
 	import type { SwitchProps, SwitchThumbSnippetProps } from './types';
 
 	let {
@@ -11,7 +9,6 @@
 		id,
 		name,
 		value,
-		preset = undefined,
 		onclick = undefined,
 		oncheckedchange = undefined,
 		children = undefined,
@@ -19,22 +16,6 @@
 		presets = undefined,
 		...restProps
 	}: SwitchProps = $props();
-
-	const switchProps = $derived(mergePresetProps(preset, 'switch', restProps));
-	const thumbPresentation = createPresentation({
-		preset: () => 'switch.thumb',
-		instance: () => presets?.thumb,
-		class: () => [
-			'switch-thumb bg-background pointer-events-none block h-4 w-4 rounded-full shadow-sm transition-transform duration-200',
-			checked ? 'translate-x-6' : 'translate-x-1'
-		],
-		variantProps: () => ({ checked }),
-		restProps: () => ({ 'data-checked': checked })
-	});
-	const thumbProps = $derived({
-		class: thumbPresentation.class,
-		...thumbPresentation.attrs
-	} as Record<string, unknown>);
 
 	function handleClick(event: MouseEvent) {
 		onclick?.(event);
@@ -45,29 +26,40 @@
 		oncheckedchange?.(checked, { event });
 	}
 
-	// Element seam instead of a component boundary; key order matches the previous call exactly.
-	const el = Kernel.element(Kernel.static, () => ({
-		as: 'button',
-		type: 'button',
-		class: [
-			'switch-root bg-input outline-primary relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border transition-colors duration-200 outline-0 outline-offset-2',
-			checked && 'bg-foreground',
-			disabled && 'cursor-not-allowed opacity-50',
-			'$preset',
-			klass
-		],
-		role: 'switch',
-		'aria-checked': checked,
-		'aria-disabled': disabled || undefined,
-		'data-checked': checked,
-		onclick: handleClick,
-		...switchProps
-	}));
+	// State classes ride the consumer layer's `class` (Kernel's own-attrs `class` is not merged);
+	// everything the part owns is in `attrs`.
+	const el = Kernel.element(
+		() => ({
+			class: [checked && 'bg-foreground', disabled && 'cursor-not-allowed opacity-50', klass],
+			...restProps
+		}),
+		{
+			preset: 'switch',
+			class:
+				'switch-root bg-input outline-primary relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border transition-colors duration-200 outline-0 outline-offset-2',
+			attrs: () => ({
+				type: 'button',
+				role: 'switch',
+				'aria-checked': checked,
+				'aria-disabled': disabled || undefined,
+				'data-checked': checked,
+				onclick: handleClick
+			})
+		}
+	);
+	// The thumb's resolved props are handed to the thumb snippet, so they resolve through the seam
+	// without an element of their own.
+	const thumb = Kernel.element(() => ({ class: checked ? 'translate-x-6' : 'translate-x-1' }), {
+		preset: 'switch.thumb',
+		class:
+			'switch-thumb bg-background pointer-events-none block h-4 w-4 rounded-full shadow-sm transition-transform duration-200',
+		layer: () => presets?.thumb,
+		variantProps: () => ({ checked }),
+		attrs: () => ({ 'data-checked': checked })
+	});
 </script>
 
-{@render Kernel.render(el)(el, switchBody)}
-
-{#snippet switchBody()}
+<button {...el.attrs}>
 	<input
 		{id}
 		{name}
@@ -82,8 +74,8 @@
 	/>
 
 	<!-- Thumb -->
-	{@render (thumbContent ?? defaultThumb)({ checked, props: thumbProps })}
-{/snippet}
+	{@render (thumbContent ?? defaultThumb)({ checked, props: thumb.attrs })}
+</button>
 
 {@render children?.()}
 

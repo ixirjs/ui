@@ -1,16 +1,22 @@
 {
 	"note": "Fitted mount-growth exponents. Machine-independent — do NOT re-record these to make a regression pass.",
-	"recorded": "2026-08-21",
+	"recorded": "2026-08-25",
 	"exponents": {
-		"accordion": 1.31,
+		"accordion": 0.86,
 		"tabs": 0.88,
-		"tree": 1.05,
+		"tree": 0.91,
+		"tree-depth": 1.23,
 		"datagrid": 0.85,
+		"datagrid-columns": 0.75,
 		"dropdown-menu": 0.79,
 		"select": 0.74,
 		"stepper": 0.95
 	},
+	"note3": "tree-depth is the tree family's SECOND axis, recorded 2026-08-23. The node fixture renders n siblings at depth 2, so every read that walks the ANCESTOR chain costs O(1) there and was unmeasured -- the same blind spot datagrid-columns closed for the grid. k=1.40 on depth against 0.91 on breadth. The residual is OURS, not Svelte's: a bare self-recursive component with a div and a span per level, mounted at the same four depths, measures k=0.86.",
+	"note2": "datagrid-columns is the datagrid's SECOND axis, recorded 2026-08-23. The row fixture renders no columns, so the family's only owner-wide per-child read -- every cell resolving its column through columns.values -- was unreachable from the gate that exists for it. k=0.75 confirms Collection's cached `values` holds: without that cache an R x C grid is O(R*C^2) and this arm reads ~2.",
+	"note4": "2026-08-25: accordion re-recorded at k=0.86 (was 1.31), tree 0.91 (was 1.05) and tree-depth 1.23 (was 1.40, lowered by the tree header/body Atoms no longer capturing their element). Every other entry is its 2026-08-21/23 value, untouched.",
+	"note5": "accordion's k=1.31 entry (OPEN since 2026-08-21) was CLOSED on 2026-08-25. The cause was never the collection: Svelte re-runs a BLOCK_EFFECT eagerly, without is_dirty, when a source it reaches through any derived chain is written during effect flush, and the {@render Kernel.render(el)} dispatch block reached the item collection through KernelElement.mode() -> presentation.attrs -> header attrs -> focusedId. Every header's dispatch re-ran once per item mounted after it (1206 renders/item at n=800). mode() now reads the config tracked and the snapshot untracked; k 1.34 -> 0.80..0.86, n=400 mount 261 -> 82..92 ms. perf-vs-shadcn-2026-08.md 15-16.",
 	"known": {
-		"accordion": "NOT a target, and the cause is now OPEN. 1.31 was 1.37. Collection's per-set membership publish -- long believed to be the cause -- was fixed on 2026-08-21 by coalescing the version bump (one bump per read instead of one per set, kept synchronous so the a11y invariant holds; see shared/bond/collection.svelte.ts). Interleaved A/B: accordion n=400 mount 234 -> 215 ms (-8%), but k did NOT move -- 1.30 before, 1.30 after. Round 1's memoized #enabledIds and focusedId equality gate had already removed the part batching would have helped, so the k=1.55 -> 0.67 prototype in perf-vs-shadcn-2026-08.md 7a does not reproduce against this baseline. Whatever still makes accordion superlinear is NOT collection marking. Never raise this entry."
+		"tree-depth": "NOT a target, and the cause is OPEN. `keyboardOwner` walked `#parentNode?.keyboardOwner` on every read and every header's `attrs` reads it, which is O(depth) per header and O(n^2) over a chain; caching it at construction (the parent chain is fixed then) moved k only 1.37 -> 1.30, inside run-to-run spread. So that walk was real and is fixed, but it was not the dominant term. Ruled out as the cause: Svelte's own component nesting (control fixture, k=0.86). 2026-08-25: also ruled out the eager block re-run that was accordion's cause -- the call-count probe shows every per-level count flat (44 effects, 16 deriveds, 3 renders, 6 mark_reactions per level) and the mode() fix left k unchanged. What grows is per-level work in an uncounted frame; DOM insertion depth and the effect-tree walk are the remaining suspects. Still unexplained. Never raise this entry."
 	}
 }

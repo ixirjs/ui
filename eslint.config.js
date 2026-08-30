@@ -17,12 +17,17 @@ export default ts.config(
 	{
 		ignores: [
 			'.svelte-kit/**',
+			// Agent scratch: parallel migration worktrees, each with its own `.svelte-kit` output.
+			'.claude/**',
 			'build/**',
 			'dist/**',
 			'storybook-static/**',
 			'test-results/**',
 			'src/routes/**/llms.txt/**',
-			'**/llms.txt/**'
+			'**/llms.txt/**',
+			// Vendored shadcn-svelte source — see bench/vs-shadcn/provenance.json. Linting someone
+			// else's code is noise, and any fix would be undone by the next fetch.
+			'bench/vs-shadcn/shadcn/**'
 		]
 	},
 	{
@@ -79,7 +84,16 @@ export default ts.config(
 		//
 		// Product code takes the internal alias. `src/lib/public/**` is the barrel itself and
 		// `src/lib/test/**` legitimately imports the public surface — that is what it is testing.
-		files: ['src/lib/components/**/*', 'src/lib/shared/**/*', 'src/lib/preset/**/*'],
+		files: [
+			'src/lib/components/**/*',
+			'src/lib/authoring/**/*',
+			'src/lib/kernel/**/*',
+			'src/lib/bond/**/*',
+			'src/lib/capability/**/*',
+			'src/lib/validation/**/*',
+			'src/lib/shared/**/*',
+			'src/lib/preset/**/*'
+		],
 		rules: {
 			'no-restricted-imports': [
 				'error',
@@ -89,6 +103,63 @@ export default ts.config(
 							group: ['@ixirjs/ui', '@ixirjs/ui/*'],
 							message:
 								"Import library internals through the '$ixirjs/ui/…' alias. '@ixirjs/ui/…' is the published barrel (src/lib/public), and product code must not author itself through its own public surface."
+						}
+					]
+				}
+			]
+		}
+	},
+	{
+		// One seam and two barrels for family code.
+		//
+		// `Kernel` was once reached by 151 deep imports and `definePart` by 35, neither exported from
+		// any barrel — so "import the seam, not the machinery" was prose, and prose is what let five
+		// different ways to write one part accumulate. The seam is now one file every family imports
+		// by name, and this rule is what keeps the machinery behind it.
+		//
+		// The layer barrels stay reachable: `$ixirjs/ui/capability` is where behaviour models live,
+		// `$ixirjs/ui/authoring` carries the prop types and motion, and `$ixirjs/ui/preset` is a peer.
+		// What is blocked is reaching *inside* a layer.
+		files: ['src/lib/components/**/*'],
+		ignores: [
+			// Render machinery that happens to live under components/. See the same list, and the
+			// reasoning, in `src/lib/test/contracts/kernel-authoring-audit.spec.ts`.
+			'src/lib/components/element/html-element.svelte',
+			'src/lib/components/element/svg-element.svelte',
+			'src/lib/components/input/shared.ts',
+			'src/lib/components/popover/bond.svelte.ts',
+			'src/lib/components/slider/slider.svelte',
+			'src/lib/components/switch/switch.svelte',
+			'src/lib/components/textarea/textarea-input.svelte'
+		],
+		rules: {
+			'no-restricted-imports': [
+				'error',
+				{
+					patterns: [
+						{
+							group: ['@ixirjs/ui', '@ixirjs/ui/*'],
+							message:
+								"Import library internals through the '$ixirjs/ui/…' alias. '@ixirjs/ui/…' is the published barrel (src/lib/public), and product code must not author itself through its own public surface."
+						},
+						{
+							group: [
+								'$ixirjs/ui/authoring/*',
+								// Everything under kernel/ EXCEPT `kernel/kernel.svelte`, the element seam every
+								// family authors through (kernel-authoring-audit.spec.ts). Listed by file, not as
+								// the directory: a directory pattern excludes its whole subtree and a negation
+								// cannot re-include beneath it.
+								'$ixirjs/ui/kernel/element.svelte',
+								'$ixirjs/ui/kernel/element-render.svelte',
+								'$ixirjs/ui/kernel/presentation.svelte',
+								'$ixirjs/ui/kernel/merge',
+								'$ixirjs/ui/kernel/snippet.svelte',
+								'$ixirjs/ui/kernel/types',
+								'$ixirjs/ui/kernel/render/*',
+								'$ixirjs/ui/kernel/resolve/*'
+							],
+							message:
+								"Author parts through '$ixirjs/ui/kernel/kernel.svelte' (Kernel.element/render/context/id/claimId) and take prop types, identity helpers and motion from '$ixirjs/ui/authoring'. Behaviour models come from '$ixirjs/ui/capability'. Reaching inside a layer is what the barrels exist to replace."
 						}
 					]
 				}

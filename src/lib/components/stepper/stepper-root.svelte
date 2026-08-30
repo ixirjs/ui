@@ -1,54 +1,64 @@
-<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
-	import { controlledProp, useRoot } from '$ixirjs/ui/shared';
-	import { type Base, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
-	import { StepperBond } from './bond.svelte';
+<script lang="ts">
+	import { untrack } from 'svelte';
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
+	import { StepperBond, StepperContext } from './bond.svelte';
 	import type { StepperRootProps } from './types';
 
 	const ID = $props.id();
 
 	let {
 		step = $bindable(0),
+		as = undefined,
+		base = undefined,
 		linear = false,
 		disabled = false,
 		orientation = 'horizontal',
 		onstepchange = undefined,
-		class: klass = '',
 		children = undefined,
 		factory = undefined,
-		preset = undefined,
 		...restProps
-	}: StepperRootProps<E, B> = $props();
+	}: StepperRootProps = $props();
 
-	const stepProp = controlledProp<number, StepperBond>({
-		get: () => step,
-		set: (value) => (step = value),
-		onchange: (value, context) => onstepchange?.(value, context)
-	});
-
-	const root = useRoot(
-		StepperBond,
-		{
-			step: stepProp,
-			linear: () => linear,
-			disabled: () => disabled,
-			orientation: () => orientation
+	// Live props; the `step` setter is the commit: the callback fires after the write, never for
+	// an equal value.
+	const bondProps = {
+		get id() {
+			return ID;
 		},
-		{
-			preset: () => preset,
-			id: () => ID,
-			factory: () => factory
+		get step() {
+			return step;
+		},
+		set step(next: number) {
+			const changed = next !== step;
+			step = next;
+			if (changed) onstepchange?.(next, { bond });
+		},
+		get linear() {
+			return linear;
+		},
+		get disabled() {
+			return disabled;
+		},
+		get orientation() {
+			return orientation;
 		}
-	);
-	const bond = root.bond;
+	};
+	// `factory` is read once, at init, by design.
+	const build = untrack(() => factory);
+	const bond = StepperContext.share(build ? build(bondProps) : StepperBond.create(bondProps));
+	export const getBond = () => bond;
 
-	export const getBond = root.getBond;
-
-	const el = Kernel.element(root, () => ({
-		class: ['flex flex-col', '$preset', klass],
-		variantProps: root.props,
-		...restProps
-	}));
+	const el = Kernel.element(() => restProps, {
+		preset: 'stepper',
+		class: 'flex flex-col',
+		state: bond,
+		variantProps: () => bondProps,
+		as: () => as,
+		base: () => base,
+		attrs: () => ({ id: bond.rootId, role: 'group' })
+	});
+	// Bound once: an identifier callee compiles to a direct call — no snippet block, no anchor.
+	const leaf = Kernel.render(el);
 </script>
 
-{@render Kernel.render(el)(el, children, { stepper: bond })}
+{@render leaf(el, children, { stepper: bond })}

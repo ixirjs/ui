@@ -1,4 +1,4 @@
-import type { RenderProps } from '$ixirjs/ui/components/atom/types';
+import type { RenderProps } from '$ixirjs/ui/authoring';
 
 // Button props — extend to override children snippet type in custom implementations.
 export interface ButtonProps extends RenderProps<'button'> {

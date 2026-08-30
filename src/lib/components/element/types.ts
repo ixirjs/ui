@@ -3,7 +3,7 @@ import type { TransitionConfig } from 'svelte/transition';
 import type { ClassValue } from '$ixirjs/ui/utils';
 import type { Snippet } from 'svelte';
 import type { Motion, PresetKey } from '$ixirjs/ui/preset';
-import type { Variants } from '$ixirjs/ui/components/atom/types';
+import type { Variants } from '$ixirjs/ui/authoring';
 
 export type { Motion } from '$ixirjs/ui/preset';
 

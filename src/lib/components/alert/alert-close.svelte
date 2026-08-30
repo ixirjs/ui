@@ -1,47 +1,42 @@
-<script module lang="ts">
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
-	import { AlertBond } from './bond.svelte';
-	const PART = Kernel.plan(AlertBond, 'closeButton', { class: '' });
-</script>
-
-<script lang="ts" generics="E extends HtmlElementTagName = 'button', B extends Base = Base">
-	import { type Base, type BasePropsOf, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
-	import type { AlertCloseButtonProps } from './types';
+<script lang="ts">
 	import { Icon } from '$ixirjs/ui/components/icon';
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
+	import { AlertContext } from './bond.svelte';
+	import type { AlertCloseButtonProps } from './types';
 
 	let {
-		class: klass = '',
-		as = 'button' as E,
-		preset = undefined,
+		as = 'button',
+		base = undefined,
 		children = undefined,
 		...restProps
-	}: AlertCloseButtonProps<E, B> & BasePropsOf<B> = $props();
+	}: AlertCloseButtonProps = $props();
+	const alert = AlertContext.getOptional();
 
-	const part = Kernel.node(PART, () => ({ preset }), { context: 'optional' });
-	const bond = part.bond;
-
-	const defaults = $derived({
-		type: as === 'button' ? 'button' : undefined,
-		role: as === 'button' ? undefined : 'button',
-		tabindex: as === 'button' ? undefined : 0
-	});
-
-	const el = Kernel.element(part, () => ({
-		as,
-		defaults,
-		class: [
+	const el = Kernel.element(() => restProps, {
+		preset: 'alert.close',
+		class:
 			'alert-close-button border-border flex size-6 items-center justify-center rounded p-0.5 transition-colors hover:bg-black/10 dark:hover:bg-white/10',
-			'$preset',
-			klass
-		],
-		...restProps
-	}));
+		state: alert,
+		as: () => as,
+		base: () => base,
+		attrs: () => {
+			const isButton = as === 'button';
+			return {
+				type: isButton ? 'button' : undefined,
+				role: isButton ? undefined : 'button',
+				tabindex: isButton ? undefined : 0,
+				...(alert ? { id: alert.closeId } : {}),
+				'aria-label': 'Dismiss alert'
+			};
+		}
+	});
+	const leaf = Kernel.render(el);
 </script>
 
-{@render Kernel.render(el)(el, body)}
+{@render leaf(el, body)}
 
 {#snippet body()}
-	{@render (children ?? fallback)({ alert: bond! })}
+	{@render (children ?? fallback)({ alert: alert! })}
 {/snippet}
 
 {#snippet fallback()}

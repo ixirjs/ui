@@ -1,27 +1,14 @@
 <script lang="ts">
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
-	import { mergePresetProps } from '$ixirjs/ui/components/atom';
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
 	import type { BadgeProps } from './types';
 
-	let {
-		class: klass = '',
-		preset = undefined,
-		as = 'span',
-		children = undefined,
-		...restProps
-	}: BadgeProps = $props();
+	const props: BadgeProps = $props();
 
-	const badgeProps = $derived(mergePresetProps(preset, 'badge', restProps));
-
-	const el = Kernel.element(Kernel.static, () => ({
-		class: [
-			'bg-foreground/10 border-border text-foreground inline-flex h-auto w-fit items-center rounded-full px-2.5 py-0.5 text-xs font-medium',
-			'$preset',
-			klass
-		],
-		as,
-		...badgeProps
-	}));
+	const el = Kernel.element(() => props, {
+		preset: 'badge',
+		class:
+			'bg-foreground/10 border-border text-foreground inline-flex h-auto w-fit items-center rounded-full px-2.5 py-0.5 text-xs font-medium'
+	});
 </script>
 
-{@render Kernel.render(el)(el, children)}
+<span {...el.attrs}>{@render props.children?.()}</span>

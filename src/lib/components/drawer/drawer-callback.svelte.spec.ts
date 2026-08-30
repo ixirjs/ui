@@ -15,7 +15,7 @@ describe('Drawer callbacks', () => {
 		expect(onopenchange).not.toHaveBeenCalled();
 
 		const closeEvent = new Event('close');
-		(bond.elements.root as HTMLElement).dispatchEvent(closeEvent);
+		bond.element('root')!.dispatchEvent(closeEvent);
 		expect(onclose).toHaveBeenCalledWith(closeEvent);
 		expect(onopenchange).not.toHaveBeenCalled();
 
@@ -28,5 +28,21 @@ describe('Drawer callbacks', () => {
 			event: clickEvent,
 			reason: 'close-trigger'
 		});
+	});
+});
+
+// Replaces the capability-slot spec (`BACKDROP_PRESS`, `DrawerBackdropAtom.spread.onclick`): the
+// same outcome on the rendered backdrop.
+describe('Drawer backdrop', () => {
+	it('closes on a backdrop press and reports the reason', () => {
+		const onopenchange = vi.fn();
+		const { component } = render(CallbackFixture, { open: true, onopenchange });
+		const bond = (component as unknown as { getBond(): DrawerBond }).getBond();
+		const event = new MouseEvent('click', { bubbles: true });
+
+		document.querySelector<HTMLElement>('[data-testid="drawer-backdrop"]')!.dispatchEvent(event);
+
+		expect(bond.isOpen).toBe(false);
+		expect(onopenchange).toHaveBeenCalledWith(false, { bond, event, reason: 'backdrop-press' });
 	});
 });

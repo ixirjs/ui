@@ -1,19 +1,21 @@
 <script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
 	import { DEV } from 'esm-env';
 	import { createAttachmentKey } from 'svelte/attachments';
-	import { type Base, type BasePropsOf } from '$ixirjs/ui/components/atom';
-	import type { HtmlElementTagName } from '$ixirjs/ui/components/element';
-	import { overlayIsOpen } from '$ixirjs/ui/components/overlay/policies/overlay-view';
-	import { PortalBond } from '$ixirjs/ui/components/portal/instance/bond.svelte';
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
+	import {
+		PortalContext,
+		type PortalBond
+	} from '$ixirjs/ui/components/portal/instance/bond.svelte';
 	import {
 		describePortalTarget,
-		PortalsBond,
+		PortalsContext,
 		resolveTeleportTarget
 	} from '$ixirjs/ui/components/portal/registry';
 	import { hasUnresolvedExplicitTarget } from '$ixirjs/ui/components/portal/registry/utils';
 	import { port } from '$ixirjs/ui/components/portal/mounting/port';
 	import type { PortalSurfaceProps } from '$ixirjs/ui/components/portal/types';
+	import type { Base, HtmlElementTagName } from '$ixirjs/ui/authoring';
+	import type { Motion, PresetLike } from '$ixirjs/ui/preset';
 	import ActivePortal from '$ixirjs/ui/components/portal/mounting/active-portal.svelte';
 
 	let {
@@ -22,20 +24,19 @@
 		band = undefined,
 		order = undefined,
 		'z-index': zIndex = undefined,
-		as,
-		base,
+		as = undefined,
+		base = undefined,
 		children,
 		style = undefined,
-		class: klass = undefined,
 		...restProps
-	}: PortalSurfaceProps<E, B> & BasePropsOf<B> = $props();
+	}: PortalSurfaceProps<E, B> = $props();
 
-	const portalsBond = PortalsBond.get();
-	const ambientPortal = $derived(PortalBond.get());
+	const portalsBond = PortalsContext.get();
+	const ambientPortal = PortalContext.get();
 	const targetPortal = $derived(resolveTeleportTarget(portalsBond, portal, ambientPortal));
 	const targetElement = $derived(targetPortal?.sinkElement);
 	const unresolvedExplicitTarget = $derived(hasUnresolvedExplicitTarget(portalsBond, portal));
-	const isOpen = $derived(owner ? overlayIsOpen(owner) : true);
+	const isOpen = $derived(owner ? owner.isOpen : true);
 	const liveRank = $derived(
 		owner !== undefined && band !== undefined && targetPortal
 			? (portalsBond?.rankOf(owner, band, targetPortal) ?? 0)
@@ -103,29 +104,35 @@
 		return port(node, targetElement);
 	}
 
-	// `{@attach}` is markup syntax; the seam takes a props object, so the attachment rides its own
-	// key. Minted once per instance so the node is not re-ported on every invalidation.
+	// The attachment rides its own key, minted once so the node is not re-ported per invalidation.
 	const teleportKey = createAttachmentKey();
 
-	// Element seam instead of a component boundary; key order matches the previous call exactly.
-	// A consumer `base` still escalates — the seam decides that, rather than this call site
-	// committing to a component boundary whether one was passed or not.
-	const el = Kernel.element(Kernel.static, () => ({
-		[teleportKey]: teleport,
-		as: as as E,
-		base,
-		class: klass ?? undefined,
-		...(restProps as Record<string, unknown>),
-		style: surfaceStyle,
-		'data-band': band,
-		'data-portal': targetPortal?.props.id
-	}));
+	// Own attributes after the consumer's: the surface owns its elevation style and band markers.
+	const el = Kernel.element(
+		() => ({
+			[teleportKey]: teleport,
+			...restProps,
+			style: surfaceStyle,
+			'data-band': band,
+			'data-portal': targetPortal?.props.id
+		}),
+		{
+			class: '',
+			as: () => as,
+			base: () => base,
+			// A root that hands its props here passes its `presets` slot as `presetLayer`, and its
+			// driver motion as `defaults` (Drawer.Root fades its surface) — the same two PortalHost forwards.
+			layer: () => restProps.presetLayer as PresetLike | undefined,
+			motion: () => (restProps.motion ?? restProps.defaults) as Motion<never> | undefined
+		}
+	);
+	const leaf = Kernel.render(el);
 </script>
 
 {@render content?.()}
 
 {#snippet ui()}
-	{@render Kernel.render(el)(el, surfaceBody)}
+	{@render leaf(el, surfaceBody)}
 {/snippet}
 
 {#snippet surfaceBody()}

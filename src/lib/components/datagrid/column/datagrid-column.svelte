@@ -2,18 +2,17 @@
 	lang="ts"
 	generics="T = unknown, E extends HtmlElementTagName = 'div', B extends Base = Base"
 >
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
-	import { useRoot } from '$ixirjs/ui/shared';
-	import { type Base, type BasePropsOf, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
-	import { DataGridColumnBond } from './bond.svelte';
+	import { untrack } from 'svelte';
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
+	import type { Base, BasePropsOf, HtmlElementTagName } from '$ixirjs/ui/authoring';
+	import { DataGridColumnBond, DataGridColumnContext } from './bond.svelte';
 	import type { DatagridColumnProps } from '$ixirjs/ui/components/datagrid/types';
-	import type { Direction } from '$ixirjs/ui/types';
 
 	const ID = $props.id();
 
 	let {
-		class: klass = '',
-		preset = undefined,
+		as = undefined,
+		base = undefined,
 		id = ID,
 		width = '1fr',
 		direction = 'asc',
@@ -26,25 +25,32 @@
 		...restProps
 	}: DatagridColumnProps<T, E, B> & BasePropsOf<B> = $props();
 
-	const root = useRoot(
-		DataGridColumnBond,
-		{
-			id: () => id,
-			width: () => width,
-			sortable: () => sortable,
-			hidden: () => hidden,
-			// Two-way: the sort capability commits the toggled direction back through this cell, and
-			// `bond.asc()` / `bond.desc()` write it too. As a read-only getter both threw.
-			direction: [() => direction, (v: Direction | undefined) => (direction = v ?? 'asc')]
+	const bondProps = {
+		get id() {
+			return id;
 		},
-		{ preset: () => preset, factory: () => factory as never }
-	);
-	const bond = root.bond as DataGridColumnBond<T>;
+		get width() {
+			return width;
+		},
+		get sortable() {
+			return sortable;
+		},
+		get hidden() {
+			return hidden;
+		},
+		get direction() {
+			return direction;
+		},
+		set direction(next) {
+			direction = next ?? 'asc';
+		}
+	};
+	const build = untrack(() => factory);
+	const bond = DataGridColumnContext.share(
+		(build ? build(bondProps) : DataGridColumnBond.create(bondProps)) as DataGridColumnBond
+	) as DataGridColumnBond<T>;
+	const grid = bond.datagrid;
 
-	const isSortable = $derived(bond.isSortable);
-
-	// The sort capability owns the toggle, so the committed state arrives here rather than being
-	// computed at the click site. `direction` is written before this runs.
 	bond.onSortCommit = (column) => {
 		const activation = column.takeSortActivation();
 		onsort?.(
@@ -62,40 +68,49 @@
 	};
 
 	const unmount = bond.mount();
-
 	$effect(() => unmount);
 
-	// Both handlers run before the capability's (the seam composes consumer-first), so they stage
-	// the activation and let the capability perform the toggle. A consumer calling preventDefault
-	// stops the capability's handler outright, which is how sort cancellation still works.
 	function handleClick(event: MouseEvent) {
-		const onClick = onclick as ((event: MouseEvent) => void) | undefined;
-		onClick?.(event);
-		if (event.defaultPrevented || !isSortable) return;
-		bond.beginSort(event, 'click');
+		(onclick as ((event: MouseEvent) => void) | undefined)?.(event);
+		if (event.defaultPrevented || !bond.isSortable) return;
+		bond.activate(event, 'click');
 	}
-
 	function handleKeydown(event: KeyboardEvent) {
-		if (event.defaultPrevented || !isSortable) return;
-		if (event.key !== 'Enter' && event.key !== ' ') return;
-		bond.beginSort(event, 'keyboard');
+		if (event.defaultPrevented || !bond.isSortable) return;
+		if (event.repeat || (event.key !== 'Enter' && event.key !== ' ')) return;
+		event.preventDefault();
+		bond.activate(event, 'keyboard');
 	}
 
-	const el = Kernel.element(root, () => ({
-		...restProps,
-		class: [
-			'flex cursor-pointer py-1 font-medium select-none',
-			!!sortable && 'sortable',
-			'$preset',
-			klass
-		],
-		onclick: handleClick,
-		onkeydown: handleKeydown
-	}));
+	const el = Kernel.element(() => restProps, {
+		preset: 'datagrid.column',
+		class: 'flex cursor-pointer py-1 font-medium select-none',
+		state: bond,
+		as: () => as,
+		base: () => base,
+		attrs: () => {
+			const sorted = grid.sort.directionFor(bond.id);
+			return {
+				id: bond.elementId,
+				class: sortable ? 'sortable' : undefined,
+				'data-sortable': sortable ? 'true' : undefined,
+				'data-direction': direction,
+				role: 'columnheader',
+				'aria-sort': sorted === 'asc' ? 'ascending' : sorted === 'desc' ? 'descending' : undefined,
+				tabindex: 0,
+				'data-sort': sorted,
+				'data-sort-field': bond.id,
+				'data-sort-priority': sorted ? grid.sort.priority : undefined,
+				onclick: handleClick,
+				onkeydown: handleKeydown
+			};
+		}
+	});
+	const leaf = Kernel.render(el);
 </script>
 
 {@render (!hidden ? columnElement : undefined)?.()}
 
 {#snippet columnElement()}
-	{@render Kernel.render(el)(el, children, { column: bond })}
+	{@render leaf(el, children, { column: bond })}
 {/snippet}

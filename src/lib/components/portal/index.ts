@@ -2,9 +2,7 @@ export * from './types';
 export * as Portal from './instance/atoms';
 export {
 	PortalBond,
-	PortalBondBase,
-	PortalInnerAtom,
-	PortalRootAtom,
+	PortalContext,
 	type PortalBondProps,
 	type PortalElevationEntry,
 	type PortalStateProps

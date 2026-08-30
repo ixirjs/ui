@@ -1,31 +1,46 @@
+/**
+ * ContextMenu's shared object on the redesigned `Kernel` — a plain state class over DropdownMenu.
+ *
+ * Two things separate it from its parent: the trigger opens from the native `contextmenu` gesture
+ * only (`triggerToggles` is false, which is what `manualTrigger` used to express), and the floating
+ * anchor is a virtual element built from the pointer position rather than the trigger's own box.
+ */
+import type { VirtualElement } from '@floating-ui/dom';
+import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
 import {
-	DropdownMenuBond,
 	DropdownMenuBondBase,
 	type DropdownMenuBondProps
 } from '$ixirjs/ui/components/dropdown-menu/bond.svelte';
-import { defineBond, type BondOf } from '$ixirjs/ui/shared';
-import { manualTrigger } from '$ixirjs/ui/components/overlay';
+import type { OverlayLike } from '$ixirjs/ui/components/overlay/model.svelte';
 
 export type ContextMenuBondProps = DropdownMenuBondProps;
+
+export const ContextMenuContext = Kernel.context<ContextMenuBondBase>('bond/context-menu');
 
 export class ContextMenuBondBase<
 	Props extends ContextMenuBondProps = ContextMenuBondProps
 > extends DropdownMenuBondBase<Props> {
+	/** The pointer-anchored reference the trigger writes on right-click. */
+	virtualElement = $state<VirtualElement | undefined>(undefined);
+
 	constructor(props: Props) {
 		super(props, 'context-menu');
 	}
+
+	/** ARIA only: a context menu never opens from a plain click or Enter/Space on its trigger. */
+	override get triggerToggles(): boolean {
+		return false;
+	}
+
+	override get reference(): Element | VirtualElement | null {
+		return this.virtualElement ?? super.reference;
+	}
 }
 
-// Inlined deliberately: `defineBond<const S>` infers `parts` as a tuple only from a literal
-// argument. Hoisting the spec to its own `const` widened it to an array, which made `AtomsOf`
-// resolve every inherited slot to `never` — `Kernel.plan(ContextMenuBond, 'virtual-trigger')` could not
-// type-check even though the runtime spec merge had always provided it.
-export const ContextMenuBond = defineBond({
-	parts: [DropdownMenuBond],
-	name: 'context-menu',
-	base: ContextMenuBondBase,
-	atoms: {},
-	capabilities: () => [manualTrigger({ ariaHasPopup: 'menu' })]
-});
-
-export type ContextMenuBond = BondOf<typeof ContextMenuBond>;
+export class ContextMenuBond extends ContextMenuBondBase {
+	static override create(props: ContextMenuBondProps): ContextMenuBond;
+	static override create(outer?: OverlayLike): ContextMenuBond;
+	static override create(props?: ContextMenuBondProps | OverlayLike): ContextMenuBond {
+		return new ContextMenuBond(props as ContextMenuBondProps);
+	}
+}

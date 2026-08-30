@@ -1,5 +1,5 @@
 import type { Snippet } from 'svelte';
-import type { RenderProps, Base, HtmlElementTagName } from '$ixirjs/ui/components/atom';
+import type { RenderProps, Base, HtmlElementTagName } from '$ixirjs/ui/authoring';
 import type { ToastBond, ToastBondProps } from './bond.svelte';
 import type { StateChangeCallback } from '$ixirjs/ui/types';
 

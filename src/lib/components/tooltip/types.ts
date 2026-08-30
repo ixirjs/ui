@@ -1,11 +1,6 @@
 import type { Snippet } from 'svelte';
 import type { OmitKey } from '$ixirjs/ui/types';
-import type {
-	RenderProps,
-	Base,
-	SnippetProps,
-	HtmlElementTagName
-} from '$ixirjs/ui/components/atom';
+import type { RenderProps, Base, SnippetProps, HtmlElementTagName } from '$ixirjs/ui/authoring';
 import type {
 	PopoverPresets,
 	PopoverRootProps,

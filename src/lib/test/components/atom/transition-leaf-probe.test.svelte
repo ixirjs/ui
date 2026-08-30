@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Card } from '$ixirjs/ui/components/card';
+	import { Alert } from '$ixirjs/ui/components/alert';
 	import KernelElement from '$ixirjs/ui/test/components/atom/kernel-element.test.svelte';
 
 	export type LeafHost = 'bonded' | 'static';
@@ -50,11 +50,11 @@
 {/snippet}
 
 {#snippet bondedLeaf()}
-	<Card.Root
+	<Alert.Root
 		data-testid="leaf"
 		motion={withMotion ? { enter: fade, exit: fade, animate } : {}}
 		{...handlers}
 	>
 		Body
-	</Card.Root>
+	</Alert.Root>
 {/snippet}

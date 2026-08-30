@@ -1,40 +1,50 @@
-<script module lang="ts">
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
-	import { FieldBond } from './bond.svelte';
-	const PART = Kernel.plan(FieldBond, 'error', { class: '' });
-</script>
-
-<script lang="ts" generics="E extends HtmlElementTagName = 'p', B extends Base = Base">
-	import { type Base, type BasePropsOf, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
+<script lang="ts">
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
+	import { FieldContext } from './bond.svelte';
 	import type { FieldErrorProps } from '$ixirjs/ui/components/form/types';
 
 	let {
-		class: klass = '',
 		as = 'p',
-		preset = undefined,
+		base = undefined,
 		children = undefined,
 		...restProps
-	}: FieldErrorProps<E, B> & BasePropsOf<B> = $props();
+	}: FieldErrorProps = $props();
+	const bond = FieldContext.getOrThrow('<Field.Error /> must be used within a <Field.Root />');
 
-	const part = Kernel.node(PART, () => ({ preset }), { context: 'required' });
-	const bond = part.bond;
-	// Rendering nothing while the field is valid is what keeps `aria-errormessage` honest: the
-	// atom registers only while this element exists, so the control points at a message that is
-	// actually on the page.
+	// The error's id, written here so the control (`aria-errormessage`) and the root
+	// (`aria-describedby`) can name it. Both read it only while the field is invalid — which is
+	// exactly when this element renders — so the reference never dangles.
+	const id = Kernel.id(bond.id, 'field-error');
+	bond.errorId = id;
+
+	const el = Kernel.element(() => restProps, {
+		preset: 'field.error',
+		class: 'border-border text-destructive mt-1 text-xs',
+		state: bond,
+		as: () => as,
+		base: () => base,
+		// `role="alert"` is safe here because the element renders only while invalid, so the
+		// announcement fires when the error appears, not on mount.
+		attrs: () => ({
+			id,
+			'data-invalid': '',
+			'data-validating': bond.isValidating ? '' : undefined,
+			role: 'alert'
+		})
+	});
+
+	// Rendering nothing while the field is valid is what keeps `aria-errormessage` honest.
 	const isInvalid = $derived(bond.isInvalid);
 	const message = $derived(bond.errors[0]?.message ?? '');
-
-	const el = Kernel.element(part, () => ({
-		as,
-		class: ['text-destructive mt-1 text-xs', '$preset', klass],
-		...restProps
-	}));
+	// Bound once, in the script: `{@render leaf(...)}` with a plain identifier compiles to a direct
+	// call on both platforms — no snippet block, no hydration anchor.
+	const leaf = Kernel.render(el);
 </script>
 
 {@render (isInvalid ? error : undefined)?.()}
 
 {#snippet error()}
-	{@render Kernel.render(el)(el, children ?? defaultMessage, { field: bond })}
+	{@render leaf(el, children ?? defaultMessage, { field: bond })}
 {/snippet}
 
 <!-- Consumers who want every message iterate `field.errors` themselves; one line is the common case. -->

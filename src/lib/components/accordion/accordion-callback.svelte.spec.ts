@@ -18,7 +18,7 @@ describe('Accordion callbacks', () => {
 			onvaluechange,
 			onvalueschange
 		});
-		const bond = component.getBond();
+		const bond = (component as unknown as { getBond(): AccordionBond }).getBond();
 
 		expect(onvaluechange).not.toHaveBeenCalled();
 		expect(onvalueschange).not.toHaveBeenCalled();
@@ -49,7 +49,7 @@ describe('Accordion callbacks', () => {
 			onvaluechange,
 			onvalueschange
 		});
-		const bond = component.getBond();
+		const bond = (component as unknown as { getBond(): AccordionBond }).getBond();
 
 		expect(onvaluechange).not.toHaveBeenCalled();
 		expect(onvalueschange).not.toHaveBeenCalled();

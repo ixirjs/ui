@@ -11,7 +11,7 @@ describe('Stepper callbacks', () => {
 			committedStates.push(bond?.activeStep === value);
 		});
 		const { component } = render(StepperRoot, { step: 1, onstepchange });
-		const bond = component.getBond();
+		const bond = (component as unknown as { getBond(): StepperBond }).getBond();
 
 		expect(onstepchange).not.toHaveBeenCalled();
 

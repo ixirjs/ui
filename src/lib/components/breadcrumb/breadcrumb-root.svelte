@@ -1,26 +1,23 @@
-<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
-	import { mergePresetProps, type Base, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
-	import type { BreadcrumbRootProps } from './types';
-
-	let {
-		class: klass = '',
-		as = 'div',
-		preset = undefined,
-		children = undefined,
-		...restProps
-	}: BreadcrumbRootProps<E, B> = $props();
-
-	const rootProps = $derived(mergePresetProps(preset, 'breadcrumb', restProps));
-
-	// Element seam instead of a component boundary: identical output, one less boundary. Key
-	// order below is the order the previous call had; precedence is object-literal order.
-	const el = Kernel.element(Kernel.static, () => ({
-		as,
-		class: ['border-border flex flex-nowrap items-center gap-1', '$preset', klass],
-		'data-kind': 'breadcrumb-root',
-		...rootProps
-	}));
+<script lang="ts" module>
+	const ROOT_ATTRS = { 'data-kind': 'breadcrumb-root' };
+	const rootAttrs = () => ROOT_ATTRS;
 </script>
 
-{@render Kernel.render(el)(el, children)}
+<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
+	import type { Base, HtmlElementTagName } from '$ixirjs/ui/authoring';
+	import type { BreadcrumbRootProps } from './types';
+
+	const props: BreadcrumbRootProps<E, B> = $props();
+
+	const el = Kernel.element(() => props, {
+		preset: 'breadcrumb',
+		class: 'border-border flex flex-nowrap items-center gap-1',
+		as: () => props.as,
+		base: () => props.base,
+		attrs: rootAttrs
+	});
+	const leaf = Kernel.render(el);
+</script>
+
+{@render leaf(el, props.children)}

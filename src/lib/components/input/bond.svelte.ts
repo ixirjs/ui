@@ -1,79 +1,50 @@
-import { Bond, Atom, type BondStateProps } from '$ixirjs/ui/shared/bond';
-import { createInput, defineBond, type BondOf, type InputModel } from '$ixirjs/ui/shared';
+/**
+ * Input's shared object — a plain state class on the redesigned `Kernel`.
+ *
+ * Same names and surface as before (`{ input }` in snippets, `getBond`, `factory`,
+ * `InputBond.create`, the `value` InputModel, `number`/`date`/`files`), none of the runtime: no
+ * Atoms, no capability registry, no node registry. The one fact a control used to register — its
+ * semantic type, which `number`/`date`/`shouldShowPlaceholder` gate on — is declared into one
+ * `$state` field at the control's init (`useControl`'s `type` option).
+ */
+import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
+import { createInput, type InputModel } from '$ixirjs/ui/capability/models/input.svelte';
 import { SvelteDate } from 'svelte/reactivity';
 
-export type InputStateProps = BondStateProps & {
+export type InputStateProps = {
+	id?: string;
 	value?: string | number | Date | undefined;
 	readonly number?: number;
 	readonly date?: Date;
-	files?: File[];
-	checked?: boolean;
+	files?: File[] | undefined;
+	checked?: boolean | undefined;
 	group?: unknown[];
 };
 
 // Input types whose value the bond coerces to Date; the element type disambiguates ambiguous strings.
 export const DATE_INPUT_TYPES = ['date', 'time', 'datetime-local', 'month', 'week'];
 
-// Bond shape input atoms type against — breaks the atom↔bond cycle.
+export const InputContext = Kernel.context<InputBond>('bond/input');
 
-class InputRootAtom extends Atom<InputBondBase> {
-	constructor(bond: InputBondBase) {
-		super(bond, 'root');
+export class InputBond {
+	static readonly CONTEXT_KEY = InputContext.key;
+	static get(): InputBond | undefined {
+		return InputContext.get();
+	}
+	static getOrThrow(message?: string): InputBond {
+		return InputContext.getOrThrow(message);
+	}
+	static create(props: InputStateProps = {}): InputBond {
+		return new InputBond(props);
 	}
 
-	override get attrs() {
-		return {
-			...super.attrs,
-			role: 'group'
-		};
-	}
-}
+	readonly name = 'input';
+	readonly props: InputStateProps;
 
-export class InputControlAtom extends Atom<InputBondBase, HTMLElement> {
-	#domType = $state<string>();
-	#declaredType = $state<() => string | undefined>();
+	// The registered control's semantic type, as a reactive accessor: `datetime-control` switches
+	// type with its `mode` prop, and a plain `<input>` control reports the type it renders.
+	#type = $state.raw<() => string | undefined>();
 
-	constructor(bond?: InputBondBase) {
-		// Named `control` (not `input`) to avoid the redundant `input-input-*` id prefix.
-		super(bond, 'control', { namespace: 'input' });
-	}
-
-	/**
-	 * The control's semantic input type, which `bond.number` and `bond.date` gate on.
-	 *
-	 * A control that renders a real `<input>` gets this for free from the mounted element. The
-	 * segment-based controls (time, datetime, color) render spans, so the DOM has no type to read
-	 * and they declare theirs instead — without that, `bond.date` was permanently `undefined` for
-	 * exactly the controls that produce dates.
-	 */
-	get type() {
-		return this.#declaredType?.() ?? this.#domType;
-	}
-
-	/** Reactive accessor, not a value: `datetime-control` switches type with its `mode` prop. */
-	declareType(type: () => string | undefined) {
-		this.#declaredType = type;
-	}
-
-	override onmount(node: HTMLElement) {
-		const cleanup = super.onmount(node);
-
-		this.#domType = node instanceof HTMLInputElement ? node.type : undefined;
-
-		return cleanup;
-	}
-}
-
-class InputPlaceholderAtom extends Atom<InputBondBase> {
-	constructor(bond?: InputBondBase) {
-		super(bond, 'placeholder', { namespace: 'input' });
-	}
-}
-
-// Hand-written base for InputBond — holds value-coercion getters that read the value model
-// and the live element `type` (via the `input` atom). `defineBond` extends this.
-
-class InputBondBase extends Bond<InputStateProps> {
 	// InputModel backed by the bindable `value` prop; typed coercions (number/date/files) stay on props.
 	readonly value: InputModel = createInput({
 		value: {
@@ -82,8 +53,28 @@ class InputBondBase extends Bond<InputStateProps> {
 		}
 	});
 
-	constructor(props: InputStateProps, name = 'input') {
-		super(props, name);
+	constructor(props: InputStateProps = {}) {
+		this.props = props;
+	}
+
+	/** The family's identity seed — the root's `$props.id()`. */
+	get id(): string {
+		return this.props.id ?? 'input';
+	}
+	get rootId(): string {
+		return Kernel.id(this.id, 'input-root');
+	}
+	// Named `control` (not `input`) to avoid the redundant `input-input-*` id prefix.
+	get controlId(): string {
+		return Kernel.id(this.id, 'input-control');
+	}
+	get placeholderId(): string {
+		return Kernel.id(this.id, 'input-placeholder');
+	}
+
+	/** @internal The control declares its semantic type at init. */
+	declareType(type: () => string | undefined): void {
+		this.#type = type;
 	}
 
 	setValue(value: InputStateProps['value']) {
@@ -99,7 +90,7 @@ class InputBondBase extends Bond<InputStateProps> {
 	}
 
 	get controlType() {
-		return (this.nodeByPart('input') as InputControlAtom | undefined)?.type;
+		return this.#type?.();
 	}
 
 	get shouldShowPlaceholder() {
@@ -121,7 +112,6 @@ class InputBondBase extends Bond<InputStateProps> {
 
 	// Value coerced to Date; undefined if not a date-like input type or value doesn't parse.
 	get date(): Date | undefined {
-		const control = this.nodeByPart('input') as InputControlAtom | undefined;
 		if (!this.controlType || !DATE_INPUT_TYPES.includes(this.controlType)) return undefined;
 
 		const raw = this.value.get();
@@ -131,9 +121,9 @@ class InputBondBase extends Bond<InputStateProps> {
 		const parsed = Date.parse(raw);
 		if (!Number.isNaN(parsed)) return new SvelteDate(parsed);
 
-		const element = control?.element;
-		const fromInput =
-			element?.tagName === 'INPUT' ? (element as HTMLInputElement).valueAsDate : null;
+		const element =
+			typeof document === 'undefined' ? null : document.getElementById(this.controlId);
+		const fromInput = element instanceof HTMLInputElement ? element.valueAsDate : null;
 		return fromInput ? new SvelteDate(fromInput) : undefined;
 	}
 
@@ -141,18 +131,3 @@ class InputBondBase extends Bond<InputStateProps> {
 		return this.props.files ?? [];
 	}
 }
-
-// InputBond via defineBond over InputBondBase; the `input` atom's live type drives number/date coercion.
-
-export const InputBond = defineBond({
-	name: 'input',
-	base: InputBondBase,
-	atoms: {
-		root: InputRootAtom,
-		input: InputControlAtom,
-		placeholder: InputPlaceholderAtom
-	}
-});
-
-// Instance type of the input bond — paired with the const above.
-export type InputBond = BondOf<typeof InputBond>;

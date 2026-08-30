@@ -1,48 +1,61 @@
-import { Bond, defineAtom } from '$ixirjs/ui/shared/bond';
-import { defineBond } from '$ixirjs/ui/shared';
+/**
+ * Pagination's shared object — a plain state class on the redesigned `Kernel`. The page model is
+ * still `createPagination`; the projections it used to put on each part are written in the parts.
+ */
+import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
 import {
 	createPagination,
-	paginationCapability,
 	type PaginationModel
-} from '$ixirjs/ui/shared/capability/models/pagination.svelte';
-import type { BondStateProps } from '$ixirjs/ui/shared/bond';
+} from '$ixirjs/ui/capability/models/pagination.svelte';
 
-export type PaginationStateProps = BondStateProps & {
+export type PaginationStateProps = {
+	id?: string;
 	disabled?: boolean;
 	/** 1-based current page. */
-	page?: number;
-	pageSize?: number;
+	page?: number | undefined;
+	pageSize?: number | undefined;
 	/** Total item count across all pages. Omit for an unknown-length source. */
-	total?: number;
+	total?: number | undefined;
 };
 
-// Roles, not hand-written attributes: the page data attributes, `aria-disabled` at each boundary,
-// and both click handlers are projected by the shared paginationCapability.
-const PaginationRootAtom = defineAtom<PaginationBondBase>('root', (atom) => atom.role('container'));
-
-const PaginationPreviousAtom = defineAtom<PaginationBondBase>('previous', (atom) =>
-	atom.role('previous')
-);
-
-const PaginationNextAtom = defineAtom<PaginationBondBase>('next', (atom) => atom.role('next'));
+export const PaginationContext = Kernel.context<PaginationBond>('bond/pagination');
 
 const DEFAULT_PAGE_SIZE = 10;
 
-class PaginationBondBase extends Bond<PaginationStateProps> {
-	readonly pagination: PaginationModel = createPagination({
-		page: () => this.props.page ?? 1,
-		pageSize: () => this.props.pageSize ?? DEFAULT_PAGE_SIZE,
-		total: () => this.props.total,
-		setPage: (page) => {
-			if (this.isDisabled) return;
-			this.props.page = page;
-		},
-		setPageSize: (pageSize) => (this.props.pageSize = pageSize)
-	});
+export class PaginationBond {
+	readonly name = 'pagination';
+	readonly props: PaginationStateProps;
+	readonly pagination: PaginationModel;
 
-	constructor(props: PaginationStateProps, name = 'pagination') {
-		super(props, name);
-		this.capability(paginationCapability(this.pagination));
+	constructor(props: PaginationStateProps) {
+		this.props = props;
+		this.pagination = createPagination({
+			page: () => this.props.page ?? 1,
+			pageSize: () => this.props.pageSize ?? DEFAULT_PAGE_SIZE,
+			total: () => this.props.total,
+			setPage: (page) => {
+				if (this.isDisabled) return;
+				this.props.page = page;
+			},
+			setPageSize: (pageSize) => (this.props.pageSize = pageSize)
+		});
+	}
+
+	static create(props: PaginationStateProps): PaginationBond {
+		return new PaginationBond(props);
+	}
+
+	get id(): string {
+		return this.props.id ?? 'pagination';
+	}
+	get rootId(): string {
+		return Kernel.id(this.id, 'pagination-root');
+	}
+	get previousId(): string {
+		return Kernel.id(this.id, 'pagination-previous');
+	}
+	get nextId(): string {
+		return Kernel.id(this.id, 'pagination-next');
 	}
 
 	get isDisabled(): boolean {
@@ -88,17 +101,3 @@ class PaginationBondBase extends Bond<PaginationStateProps> {
 		this.pagination.previousPage();
 	}
 }
-
-const paginationSpec = {
-	name: 'pagination',
-	base: PaginationBondBase,
-	atoms: {
-		root: PaginationRootAtom,
-		previous: PaginationPreviousAtom,
-		next: PaginationNextAtom
-	}
-};
-
-export const PaginationBond = defineBond(paginationSpec);
-
-export type PaginationBond = PaginationBondBase;

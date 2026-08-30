@@ -5,10 +5,10 @@ import type {
 	PortalBond,
 	PortalElevationEntry
 } from '$ixirjs/ui/components/portal/instance/bond.svelte';
-import type { OverlayView } from '$ixirjs/ui/components/overlay';
+import type { OverlayLike } from '$ixirjs/ui/components/overlay';
 import type { PortalSurfaceChildren, PortalSurfaceProps } from '$ixirjs/ui/components/portal/types';
 import {
-	PortalsBond,
+	PortalsContext,
 	type PortalsBond as PortalsBondView
 } from '$ixirjs/ui/components/portal/registry';
 import PortalSurface from './portal-surface.svelte';
@@ -103,15 +103,15 @@ describe('PortalSurface', () => {
 		const sink = document.createElement('div');
 		document.body.append(sink);
 		const portal = portalTarget('local', sink, sink, (entry) => 30 + (entry.rank ?? 0));
-		const first = { isOpen: true } as OverlayView;
-		const replacement = { isOpen: false } as OverlayView;
+		const first = { isOpen: true } as OverlayLike;
+		const replacement = { isOpen: false } as OverlayLike;
 		const portals = {
-			rankOf: (owner: OverlayView) => (owner.isOpen ? 2 : 0),
+			rankOf: (owner: OverlayLike) => (owner.isOpen ? 2 : 0),
 			enrollOverlay: () => () => undefined
 		} as unknown as PortalsBondView;
 		const { rerender, unmount } = render(TestPortalSurface, {
 			props: { portal, owner: first, band: 'ambient', class: 'ranked-surface' },
-			context: new Map([[PortalsBond.CONTEXT_KEY, portals]])
+			context: new Map([[PortalsContext.key, portals]])
 		});
 		await tick();
 		const surface = sink.querySelector<HTMLElement>('.ranked-surface');
@@ -131,7 +131,7 @@ describe('PortalSurface', () => {
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 		const { unmount } = render(TestPortalSurface, {
 			props: { portal: 'missing', class: 'fallback-surface' },
-			context: new Map([[PortalsBond.CONTEXT_KEY, portalRegistry(root)]])
+			context: new Map([[PortalsContext.key, portalRegistry(root)]])
 		});
 		await tick();
 

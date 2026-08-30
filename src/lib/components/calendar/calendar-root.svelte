@@ -1,18 +1,15 @@
 <script lang="ts">
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
+	import { untrack } from 'svelte';
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
 	import { addMonths, format, isToday, startOfDay, subMonths } from '$ixirjs/ui/utils/date';
 	import type { CalendarRange, CalendarRootProps, Day, Month } from './types';
-	import { CalendarBond } from './bond.svelte';
+	import { CalendarBond, CalendarContext } from './bond.svelte';
 
 	import './calendar.css';
-	import { useRoot } from '$ixirjs/ui/shared';
-	import { untrack } from 'svelte';
 
 	const ID = $props.id();
 
 	let {
-		class: klass = '',
-		preset = undefined,
 		value = $bindable(),
 		range = $bindable([undefined, undefined]),
 		pivote = $bindable(new Date()),
@@ -36,7 +33,6 @@
 	if (untrack(() => valueState) === undefined) valueState = untrack(() => range[0]);
 	let rangeState = $derived<CalendarRange>(type === 'single' ? [valueState, undefined] : range);
 	let pivoteState = $derived(pivote);
-	const callbackState = { bond: undefined as CalendarBond | undefined };
 
 	const monthCurrentDays = $derived(generator(pivoteState));
 
@@ -137,72 +133,89 @@
 		return Object.is(left[0], right[0]) && Object.is(left[1], right[1]);
 	}
 
-	function commitRange(nextRange: CalendarRange) {
-		const previousRange = rangeState;
-		const previousValue = previousRange[0];
-		const rangeChanged = !rangesEqual(previousRange, nextRange);
-		const valueChanged = !Object.is(previousValue, nextRange[0]);
-
-		rangeState = nextRange;
-		valueState = rangeState[0];
-		range = rangeState;
-		value = valueState;
-		start = rangeState[0];
-		end = rangeState[1];
-
-		const callbackBond = callbackState.bond;
-		if (!callbackBond) return;
-		if (type === 'range') {
-			if (rangeChanged) onrangechange?.(rangeState, { bond: callbackBond });
-		} else if (valueChanged) {
-			onvaluechange?.(rangeState[0], { bond: callbackBond });
-		}
-	}
-
-	const root = useRoot(
-		CalendarBond,
-		{
-			range: [() => rangeState, commitRange],
-			value: [() => rangeState[0], (v) => commitRange([v, rangeState[1]])],
-			pivote: [
-				() => pivoteState,
-				(v) => {
-					const changed = !Object.is(pivoteState, v);
-					pivoteState = v as Date;
-					pivote = pivoteState;
-
-					const callbackBond = callbackState.bond;
-					if (changed && callbackBond) {
-						onpivotechange?.(pivoteState, { bond: callbackBond });
-					}
-				}
-			],
-			start: [() => rangeState[0], (v) => commitRange([v, rangeState[1]])],
-			end: [() => rangeState[1], (v: Date | undefined) => commitRange([rangeState[0], v])],
-			min: [() => min, (v: Date | undefined) => (min = v)],
-			max: [() => max, (v: Date | undefined) => (max = v)],
-			type: () => type ?? 'single',
-			nextMonth: () => monthNext,
-			currentMonth: () => monthCurrent,
-			previousMonth: () => monthPrevious
+	// Live props: the Bond reads through these getters, so a prop change is seen where it is read.
+	const bondProps = {
+		get id() {
+			return ID;
 		},
-		{
-			preset: () => preset ?? 'calendar',
-			id: () => ID,
-			factory: () => factory,
-			// The callback bond must be live before the root Atom's capabilities can fire a change.
-			connect: (owner) => (callbackState.bond = owner)
+		get value() {
+			return rangeState[0];
+		},
+		get range() {
+			return rangeState;
+		},
+		get start() {
+			return rangeState[0];
+		},
+		get end() {
+			return rangeState[1];
+		},
+		get pivote() {
+			return pivoteState;
+		},
+		get min() {
+			return min;
+		},
+		get max() {
+			return max;
+		},
+		get type() {
+			return type ?? 'single';
+		},
+		get nextMonth() {
+			return monthNext;
+		},
+		get currentMonth() {
+			return monthCurrent;
+		},
+		get previousMonth() {
+			return monthPrevious;
 		}
-	);
-	const bond = root.bond;
+	};
+	// `factory` is read once, at init, by design.
+	const build = untrack(() => factory);
+	const bond = CalendarContext.share(build ? build(bondProps) : CalendarBond.create(bondProps));
+	// Controlled state: the Bond decides, the root writes, the callback fires after the write.
+	bond.bindCommit({
+		range(nextRange) {
+			const previousRange = rangeState;
+			const rangeChanged = !rangesEqual(previousRange, nextRange);
+			const valueChanged = !Object.is(previousRange[0], nextRange[0]);
 
-	export const getBond = root.getBond;
+			rangeState = nextRange;
+			valueState = rangeState[0];
+			range = rangeState;
+			value = valueState;
+			start = rangeState[0];
+			end = rangeState[1];
 
-	const el = Kernel.element(root, () => ({
-		class: ['h-fit w-full gap-px', '$preset', klass],
-		'data-atom': 'calendar-root',
-		...restProps
-	}));
+			if (type === 'range') {
+				if (rangeChanged) onrangechange?.(rangeState, { bond });
+			} else if (valueChanged) {
+				onvaluechange?.(rangeState[0], { bond });
+			}
+		},
+		pivote(next) {
+			const changed = !Object.is(pivoteState, next);
+			pivoteState = next;
+			pivote = pivoteState;
+			if (changed) onpivotechange?.(pivoteState, { bond });
+		}
+	});
+	export const getBond = () => bond;
+
+	const el = Kernel.element(() => restProps, {
+		preset: 'calendar',
+		class: 'h-fit w-full gap-px',
+		state: bond,
+		attrs: () => ({
+			id: bond.rootId,
+			role: 'application',
+			'aria-label': 'Calendar',
+			'aria-disabled': bond.props.disabled ?? false,
+			'data-atom': 'calendar-root'
+		})
+	});
 </script>
 
-{@render Kernel.render(el)(el, children, { calendar: bond })}
+<div {...el.attrs}>{@render children?.({ calendar: bond })}</div>

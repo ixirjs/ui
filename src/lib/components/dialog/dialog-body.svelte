@@ -1,15 +1,26 @@
-<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
+<script lang="ts">
+	import { untrack } from 'svelte';
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
+	import type { PresetModuleName } from '$ixirjs/ui/preset';
+	import { DialogContext } from './bond.svelte';
 	import type { DialogBodyProps } from './types';
-	import { definePart } from '$ixirjs/ui/components/atom/define-part.svelte';
-	import { DialogBond } from './bond.svelte';
-	import { type Base, type BasePropsOf, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
 
-	const props: DialogBodyProps<E, B> & BasePropsOf<B> = $props();
-
-	const el = definePart(DialogBond, 'body', () => props, {
-		class: 'px-4 py-2'
+	const props: DialogBodyProps = $props();
+	const bond = DialogContext.getOrThrow('<Dialog.Body /> must be used within a <Dialog.Root />');
+	// A repeatable part: two of these under one root would otherwise render the same id.
+	// The first keeps the canonical one; the slot is released when this instance goes away.
+	const claimed = untrack(() => props.id)
+		? { id: untrack(() => props.id) as string, release: () => undefined }
+		: Kernel.claimId(bond, bond.id, `${bond.name}-body`);
+	const id = claimed.id;
+	$effect(() => claimed.release);
+	const el = Kernel.element(() => props, {
+		preset: `${bond.name}.body` as PresetModuleName,
+		class: 'px-4 py-2',
+		state: bond,
+		layer: () => bond.props.presets?.body,
+		attrs: () => ({ id, role: 'region', 'aria-live': 'polite' })
 	});
 </script>
 
-{@render Kernel.render(el)(el, props.children, { dialog: el.bond })}
+<div {...el.attrs}>{@render props.children?.({ dialog: bond })}</div>

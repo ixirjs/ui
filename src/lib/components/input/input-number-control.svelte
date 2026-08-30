@@ -26,7 +26,8 @@
 		preset: () => presetKey,
 		restProps: () => restProps,
 		class: () => klass ?? '',
-		variantProps: () => ({ disabled, min, max, step })
+		variantProps: () => ({ disabled, min, max, step }),
+		type: () => 'number'
 	});
 	const numberValue = $derived(number ?? 0);
 

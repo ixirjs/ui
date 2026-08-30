@@ -1,54 +1,78 @@
-<script lang="ts" generics="E extends HtmlElementTagName = 'div', B extends Base = Base">
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
-	import { type Base, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
-	import { ToastBond } from './bond.svelte';
+<script lang="ts">
+	import { untrack } from 'svelte';
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
+	import { ToastBond, ToastContext } from './bond.svelte';
 	import type { ToastRootProps } from './types';
-	import { controlledProp, useRoot } from '$ixirjs/ui/shared';
 
 	const ID = $props.id();
 
 	let {
 		open = $bindable(true),
+		as = undefined,
+		base = undefined,
 		disabled = false,
 		duration = 0,
 		dismissible = true,
-		preset = undefined,
 		factory = undefined,
 		children = undefined,
 		onopenchange = undefined,
 		...restProps
-	}: ToastRootProps<E, B> = $props();
+	}: ToastRootProps = $props();
 
-	const openProp = controlledProp<boolean, ToastBond>({
-		get: () => open,
-		set: (value) => (open = value),
-		onchange: (value, context) => onopenchange?.(value, context),
-		context: (bond) => bond.takeOpenChangeContext()
-	});
-
-	const root = useRoot(
-		ToastBond,
-		{
-			open: openProp,
-			disabled: () => disabled,
-			dismissible: () => dismissible,
-			duration: () => duration
+	// Live props; the `open` setter is the commit: the callback fires after the write with the
+	// staged reason, never for an equal value.
+	const bondProps = {
+		get id() {
+			return ID;
 		},
-		{
-			preset: () => preset,
-			id: () => ID,
-			factory: () => factory
+		get open() {
+			return open;
+		},
+		set open(next: boolean) {
+			const changed = next !== open;
+			open = next;
+			if (changed) onopenchange?.(next, { bond, ...bond.takeOpenChangeContext() });
+		},
+		get disabled() {
+			return disabled;
+		},
+		get dismissible() {
+			return dismissible;
+		},
+		get duration() {
+			return duration;
 		}
-	);
-	const bond = root.bond;
+	};
+	// `factory` is read once, at init, by design.
+	const build = untrack(() => factory);
+	const bond = ToastContext.share(build ? build(bondProps) : ToastBond.create(bondProps));
+	export const getBond = () => bond;
 
-	export const getBond = root.getBond;
-
-	const el = Kernel.element(root, () => ({
+	const el = Kernel.element(() => restProps, {
+		preset: 'toast',
+		// No base classes of its own — the preset owns this element's appearance entirely.
 		class: '',
-		variantProps: root.props,
-		...restProps
-	}));
+		state: bond,
+		as: () => as,
+		base: () => base,
+		attrs: () => {
+			const isOpen = bond.props.open ?? false;
+			const attrs: Record<string, unknown> = {
+				id: bond.rootId,
+				'aria-disabled': bond.props.disabled ? 'true' : 'false',
+				'data-open': isOpen,
+				'data-state': isOpen ? 'open' : 'closed',
+				role: 'status',
+				'aria-live': 'polite',
+				'aria-atomic': 'true'
+			};
+			if (bond.titleId) attrs['aria-labelledby'] = bond.titleId;
+			if (bond.descriptionId) attrs['aria-describedby'] = bond.descriptionId;
+			return attrs;
+		}
+	});
+	// Bound once: an identifier callee compiles to a direct call — no snippet block, no anchor.
+	const leaf = Kernel.render(el);
 </script>
 
-{@render Kernel.render(el)(el, children, { toast: bond })}
+{@render leaf(el, children, { toast: bond })}

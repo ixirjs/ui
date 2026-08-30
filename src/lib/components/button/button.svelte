@@ -1,31 +1,27 @@
 <script lang="ts">
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
 	import type { ButtonProps } from './types';
-	import { mergePresetProps } from '$ixirjs/ui/components/atom';
 
 	let {
-		class: klass = '',
 		type = 'button',
-		preset = undefined,
+		as = 'button',
+		base = undefined,
 		children = undefined,
 		...restProps
 	}: ButtonProps = $props();
 
-	// Keep the rest-props proxy intact: `type` is passed separately, after this spread, so the
-	// semantic default and an explicit caller value both win over preset attributes.
-	const buttonProps = $derived(mergePresetProps(preset, 'button', restProps));
-
-	// Object-literal order preserves presentation and attribute precedence.
-	const el = Kernel.element(Kernel.static, () => ({
-		as: 'button',
-		class: [
+	// Dispatches rather than writing a literal `<button>`: the docs render it as `<a>` through `as`,
+	// and `base` stays available to a consumer. `type` is the part's own attribute, so it beats a
+	// preset's `attrs` and a consumer's `type` still wins over it.
+	const el = Kernel.element(() => restProps, {
+		preset: 'button',
+		class:
 			'button border-border disabled:bg-muted disabled:text-muted-foreground w-fit cursor-pointer rounded-md px-3 py-2 transition-colors duration-200',
-			'$preset',
-			klass
-		],
-		...buttonProps,
-		type
-	}));
+		as: () => as,
+		base: () => base,
+		attrs: () => ({ type })
+	});
+	const leaf = Kernel.render(el);
 </script>
 
-{@render Kernel.render(el)(el, children)}
+{@render leaf(el, children)}

@@ -7,6 +7,7 @@ import Column from './column/datagrid-column.svelte';
 import { DataGridColumnBond, type DataGridColumnBondProps } from './column/bond.svelte';
 import Row from './row/datagrid-row.svelte';
 import { DataGridRowBond, type DataGridRowBondProps } from './row/bond.svelte';
+import { DATAGRID_ROW_CONTEXT_KEY } from './context';
 import Cell from './cell/datagrid-cell.svelte';
 import Checkbox from './datagrid-checkbox.svelte';
 import type { SortBy } from './types';
@@ -59,9 +60,13 @@ describe('DataGrid callbacks', () => {
 		});
 		if (!row) throw new Error('Expected the row factory to run synchronously.');
 		const checkboxRender = render(Checkbox, {
+			// Both keys: the Bond key is what `<Checkbox bond={…}>` resolves for preset entries, and
+			// the row key is the interface the checkbox reads row state and actions through. A row
+			// rendered normally publishes both when it is given a `factory`, as this one is.
 			context: new Map<string, unknown>([
 				[DataGridBond.CONTEXT_KEY, datagrid],
-				[DataGridRowBond.CONTEXT_KEY, row]
+				[DataGridRowBond.CONTEXT_KEY, row],
+				[DATAGRID_ROW_CONTEXT_KEY, row]
 			])
 		});
 		const input = checkboxRender.container.querySelector<HTMLInputElement>('input')!;

@@ -44,7 +44,11 @@ const FAMILIES: Family[] = [
 	'button',
 	'badge',
 	// The small static leaves, grouped: divider, label, link, kbd, chip.
-	'primitives'
+	'primitives',
+	// The grid: the only family whose ARIA subtree is spread over separate Bonds (grid, column, row,
+	// cell). It is also the family `bench:ssr` measures most and the one this suite covered least —
+	// which is how it shipped rows and columnheaders with unroled children.
+	'datagrid'
 ];
 
 describe('component family SSR fidelity', () => {

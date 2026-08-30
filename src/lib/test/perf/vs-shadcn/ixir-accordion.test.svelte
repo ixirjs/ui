@@ -7,8 +7,14 @@
 	import { Accordion } from '$ixirjs/ui/components/accordion';
 	import { AccordionItem } from '$ixirjs/ui/components/accordion/item';
 	import type { FixtureProps } from './props.js';
+	import { defaultPreset, setPreset } from '$ixirjs/ui/preset';
 
 	let { n = 100, tint = '', bump = '' }: FixtureProps = $props();
+
+	// A real app installs the preset, and without one `klass()` answers from the memoised
+	// fallback while shadcn runs `cn()` on every element — ~0.8 µs/part the head-to-head was not
+	// charging us. perf-vs-shadcn-2026-08.md §17.
+	setPreset(defaultPreset);
 
 	// Every item open on BOTH sides. bits-ui renders a closed panel anyway (`hidden` + a style
 	// block); we render nothing for one. Leaving them closed would have compared n bodies against

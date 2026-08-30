@@ -1,8 +1,7 @@
 import { getContext, setContext } from 'svelte';
 import { createAttachmentKey } from 'svelte/attachments';
-import { generateId } from '$ixirjs/ui/shared/bond';
-import { SelectBond } from '$ixirjs/ui/components/select/bond.svelte';
-import { closeOverlay } from '$ixirjs/ui/components/overlay/policies/overlay-view';
+import { generateId } from '$ixirjs/ui/authoring';
+import { SelectContext, type SelectBondBase } from '$ixirjs/ui/components/select/bond.svelte';
 import type { DropdownMenuItemControllerInterface } from '$ixirjs/ui/components/dropdown-menu/item/controller.svelte';
 
 export type SelectItemProps<T = unknown> = {
@@ -20,7 +19,7 @@ export class SelectItemController<T = unknown> implements DropdownMenuItemContro
 	#id: string;
 	#props: SelectItemProps<T>;
 	#element: HTMLElement | null = null;
-	#select: SelectBond | undefined;
+	#select: SelectBondBase | undefined;
 
 	#unmount?: (() => void) | undefined;
 
@@ -31,7 +30,7 @@ export class SelectItemController<T = unknown> implements DropdownMenuItemContro
 		this.#props = props;
 		this.#id = this.props.id ?? generateId();
 
-		this.#select = SelectBond.get() as SelectBond | undefined;
+		this.#select = SelectContext.get();
 
 		if (!this.#select) {
 			throw new Error('SelectItem must be used within a Select context.');
@@ -115,7 +114,7 @@ export class SelectItemController<T = unknown> implements DropdownMenuItemContro
 	}
 
 	close() {
-		if (this.#select) closeOverlay(this.#select);
+		this.#select?.close();
 	}
 
 	share() {

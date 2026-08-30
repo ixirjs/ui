@@ -11,7 +11,7 @@ describe('Toast callbacks', () => {
 		});
 		const { component } = render(CallbackFixture, { open: true, onclose, onopenchange });
 		const bond = (component as unknown as { getBond(): ToastBond }).getBond();
-		const root = bond.elements.root as HTMLElement;
+		const root = document.getElementById(bond.rootId) as HTMLElement;
 
 		expect(onopenchange).not.toHaveBeenCalled();
 

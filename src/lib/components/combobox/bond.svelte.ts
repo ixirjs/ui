@@ -1,60 +1,51 @@
-import {
-	SelectBond as DropdownBond,
-	SelectBondBase as DropdownBondBase,
-	type SelectStateProps as DropdownStateProps
-} from '$ixirjs/ui/components/select/bond.svelte';
-import { defineAtom } from '$ixirjs/ui/shared/bond';
-import { defineBond, type BondOf, createInput, inputCapability } from '$ixirjs/ui/shared';
+/**
+ * Combobox's shared object on the redesigned `Kernel` — a plain state class over Select.
+ *
+ * It inherits selection, roving, typeahead and the clear-then-close Escape from Select, and adds
+ * the two independent text stores an editable combobox needs: `query` (the filter box) and `value`
+ * (the trigger box, which commits a selection on set).
+ */
+import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
 import { SvelteMap } from 'svelte/reactivity';
-import { generateId } from '$ixirjs/ui/shared/bond';
-import type { ComboboxSelection } from './types';
+import { generateId } from '$ixirjs/ui/authoring';
+import { createInput, type InputModel } from '$ixirjs/ui/capability/models/input.svelte';
+import { SelectBondBase, type SelectStateProps } from '$ixirjs/ui/components/select/bond.svelte';
+import type { OverlayLike } from '$ixirjs/ui/components/overlay/model.svelte';
+import type { ComboboxPresets, ComboboxSelection } from './types';
 
-// Inherits query/ClearThenClose from Select. Combobox overrides the 'input' capability so
-// query (filter box) and value (trigger box) are independent stores, not a shared mirror.
+export type ComboboxBondProps = SelectStateProps & { presets?: ComboboxPresets | undefined };
 
-export type ComboboxBondProps = DropdownStateProps;
+export const ComboboxContext = Kernel.context<ComboboxBondBase>('bond/combobox');
 
-// Selection, roving, and the `ClearThenClose` escape are inherited from Select.
-
-export class ComboboxBondBase extends DropdownBondBase<ComboboxBondProps> {
+export class ComboboxBondBase extends SelectBondBase<ComboboxBondProps> {
 	#userSelections = new SvelteMap<string, ComboboxSelection>();
+
+	/**
+	 * Two independent fields, not a shared mirror: `query` is the filter text and `value` is the
+	 * selected item's value. Setting `value` commits the selection.
+	 */
+	readonly input: InputModel = createInput({
+		query: { get: () => this.props.query ?? '', set: (v) => (this.props.query = v) },
+		value: {
+			get: () => this.props.values?.[0] ?? '',
+			set: (v) => this.selection.select(v ? [v] : [])
+		}
+	});
 
 	constructor(props: ComboboxBondProps, name = 'combobox') {
 		super(props, name);
-		// Override Select's filter-only input with two independent fields:
-		// query → filter text; value → selected item's value (commits selection on set).
-		this.capability(
-			inputCapability(
-				createInput({
-					query: { get: () => this.props.query ?? '', set: (v) => (this.props.query = v) },
-					value: {
-						get: () => this.props.values?.[0] ?? '',
-						set: (v) => this.selection.select(v ? [v] : [])
-					}
-				}),
-				{
-					itemDomId: (id) => this.itemDomId(id),
-					expanded: () => this.isOpen,
-					disabled: () => this.isDisabled
-				}
-			)
-		);
 	}
 
 	override select(ids: string[]) {
 		super.select(ids);
-		// In single mode, reflect the committed value back into the query box so the
-		// trigger input shows what was picked (not the stale filter text).
-		if (!this.props.multiple) {
-			this.props.query = ids[0] ?? '';
-		}
+		// In single mode, reflect the committed value back into the query box so the trigger input
+		// shows what was picked (not the stale filter text).
+		if (!this.props.multiple) this.props.query = ids[0] ?? '';
 	}
 
 	override unselect(ids: string[]) {
 		super.unselect(ids);
-		if (!this.props.multiple) {
-			this.props.query = '';
-		}
+		if (!this.props.multiple) this.props.query = '';
 	}
 
 	addSelection(label: string) {
@@ -84,10 +75,9 @@ export class ComboboxBondBase extends DropdownBondBase<ComboboxBondProps> {
 		const itemSelections = this.selections.map((controller) => ({
 			id: controller.id,
 			label: controller.label,
-			createdAt: controller.createdAt, // default date for items from the list
+			createdAt: controller.createdAt,
 			controller,
-			// Deselect by the item's VALUE — `props.values` holds values, not the atom's
-			// `id` (a generated identity); passing `id` matched nothing, so dismiss was a no-op.
+			// Deselect by the item's VALUE — `props.values` holds values, not the item's generated id.
 			unselect: () => this.unselect([controller.value])
 		}));
 
@@ -96,57 +86,17 @@ export class ComboboxBondBase extends DropdownBondBase<ComboboxBondProps> {
 		);
 	}
 
-	protected updateLabels(): void {
+	protected override updateLabels(): void {
 		const labels = this.allSelections.map((s) => s.label);
 		this.props.labels = labels;
 		this.props.label = labels[0] ?? '';
 	}
 }
 
-// Narrow bond view used by ComboboxControlAtom to avoid the atom↔bond cycle.
-
-export const ComboboxControlAtom = defineAtom<ComboboxBondBase, HTMLInputElement>('control', {
-	slot: '@ixirjs/combobox:control',
-	docs: 'Combobox control single-selection clearing and multi-selection entry policy.',
-	handlers: (_node, bond) => {
-		const isMultiselect = bond?.props.multiple ?? false;
-		return {
-			// Typing replaces the current single selection; the input capability also writes value.
-			oninput: () => {
-				if (!bond || isMultiselect) return;
-				bond.props.values = [];
-			},
-			onkeydown: (ev: KeyboardEvent) => {
-				if (!bond || bond.isDisabled) return;
-
-				if (ev.key === 'Enter' && isMultiselect) {
-					const currentTarget = ev.currentTarget as HTMLInputElement;
-					const value = currentTarget.value.trim();
-					if (value !== '') {
-						bond.addSelection(value);
-					}
-				}
-			}
-		};
-	},
-	// Play the 'input' capability's 'value' role (combobox aria-*, oninput→value).
-	// The handlers above chain on top via composeHandlers.
-	setup: (atom) => atom.role('input', 'value')
-});
-
-// ComboboxBond — flat composition over DropdownBond, adds an editable control atom.
-// 'input' capability, ClearThenClose escape, and trigger are all inherited from Select.
-// Inlined deliberately: `defineBond<const S>` infers `parts` as a tuple only from a literal
-// argument. A hoisted spec widens it to an array, which makes `AtomsOf` resolve every inherited
-// slot to `never` and blocks `Kernel.part` on slots the runtime spec merge does provide.
-export const ComboboxBond = defineBond({
-	parts: [DropdownBond],
-	name: 'combobox',
-	base: ComboboxBondBase,
-	atoms: {
-		control: ComboboxControlAtom
+export class ComboboxBond extends ComboboxBondBase {
+	static override create(props: ComboboxBondProps): ComboboxBond;
+	static override create(outer?: OverlayLike): ComboboxBond;
+	static override create(props?: ComboboxBondProps | OverlayLike): ComboboxBond {
+		return new ComboboxBond(props as ComboboxBondProps);
 	}
-});
-
-// Instance type — paired with the const above (value + type).
-export type ComboboxBond = BondOf<typeof ComboboxBond>;
+}

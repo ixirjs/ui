@@ -10,6 +10,9 @@ import type { ClassValue } from '$ixirjs/ui/utils';
  */
 export const LIST_ITEM_AS = 'li';
 
+/** The shared base classes. `List.Item` hands this to its spec; the wrappers below compose it. */
+export const LIST_ITEM_CLASS = 'flex w-full gap-2 px-4 py-1';
+
 /**
  * The class array `List.Item` hands the element seam.
  *
@@ -24,5 +27,5 @@ export const LIST_ITEM_AS = 'li';
  * `[isSelected && '…']` directly rather than pre-filtering.
  */
 export function listItemClass(own: ClassValue, klass: ClassValue): ClassValue[] {
-	return ['flex w-full gap-2 px-4 py-1', own, '$preset', klass];
+	return [LIST_ITEM_CLASS, own, '$preset', klass];
 }

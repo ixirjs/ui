@@ -4,7 +4,7 @@
 		type Base,
 		type BasePropsOf,
 		type HtmlElementTagName
-	} from '$ixirjs/ui/components/atom';
+	} from '$ixirjs/ui/authoring';
 	import { Divider } from '$ixirjs/ui/components/divider';
 	import { cn, toClassValue } from '$ixirjs/ui/utils';
 	import type { ListDividerProps } from './types';

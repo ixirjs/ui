@@ -1,4 +1,4 @@
-import type { RenderProps, Base, HtmlElementTagName } from '$ixirjs/ui/components/atom';
+import type { RenderProps, Base, HtmlElementTagName } from '$ixirjs/ui/authoring';
 import type { OmitKey } from '$ixirjs/ui/types';
 import type { PopoverPresets, PopoverRootProps } from '$ixirjs/ui/components/popover';
 import type { PresetLike } from '$ixirjs/ui/preset';
@@ -21,6 +21,11 @@ export type DropdownMenuRootProps = OmitKey<
 	/** Semantic callback; runs after the open state commits, not when the trigger is clicked. */
 	onopenchange?: StateChangeCallback<boolean, DropdownMenuBond> | undefined;
 };
+
+export interface DropdownMenuTriggerProps<
+	T extends HtmlElementTagName = 'button',
+	B extends Base = Base
+> extends RenderProps<T, B> {}
 
 export interface DropdownMenuContentProps<
 	E extends HtmlElementTagName = 'div',

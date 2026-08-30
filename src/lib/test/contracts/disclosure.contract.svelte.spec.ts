@@ -2,10 +2,10 @@ import { render } from 'vitest-browser-svelte';
 import CollapsibleRoot from '$ixirjs/ui/components/collapsible/collapsible-root.svelte';
 import PopoverRoot from '$ixirjs/ui/components/popover/popover-root.svelte';
 import OverlayDisclosureProbe from './overlay-disclosure-probe.test.svelte';
-import type { Bond } from '$ixirjs/ui/shared/bond/bond.svelte';
 import { defineDisclosureContract, type DisclosureContractDriver } from './disclosure-contract';
 
-type DisclosureBond = Bond & {
+// Structural: Popover is on the redesigned Kernel (no `Bond` base), the others still are.
+type DisclosureBond = {
 	readonly isOpen: boolean;
 	open(): void;
 	close(): void;

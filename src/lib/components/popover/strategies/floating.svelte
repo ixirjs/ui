@@ -1,66 +1,53 @@
 <script lang="ts">
 	import { DEV } from 'esm-env';
 	import * as floating from '@floating-ui/dom';
-	import type { ComputePositionConfig, Strategy } from '@floating-ui/dom';
-	import {
-		notifyPopoverComputed,
-		popoverNode,
-		PopoverBond,
-		shouldTrackPopoverPosition,
-		type PopoverParams
-	} from '$ixirjs/ui/components/popover/bond.svelte';
-	import type { BondVirtualElement } from '$ixirjs/ui/shared/bond';
+	import type { ComputePositionConfig, ReferenceElement, Strategy } from '@floating-ui/dom';
+	import { PopoverContext, type PopoverBondBase, type PopoverParams } from '../bond.svelte';
 	import type { PortalBond } from '$ixirjs/ui/components/portal';
 
 	let { portal = undefined }: { portal?: PortalBond | undefined } = $props();
 
-	const bond = PopoverBond.get();
+	const bond = PopoverContext.get();
 
 	type AutoUpdate = typeof floating.autoUpdate;
 
 	// The content-resolved Portal owns both the teleport sink and floating boundary.
 	const boundary = $derived(portal?.sinkElement);
 
-	const tracking = $derived(bond ? shouldTrackPopoverPosition(bond) : false);
-	const reference = $derived(
-		(bond
-			? (popoverNode(bond, 'virtual-trigger')?.element as BondVirtualElement | undefined)
-			: undefined) ??
-			(bond ? (popoverNode(bond, 'trigger')?.element as Element | undefined) : undefined)
-	);
-	const overlay = $derived(
-		bond ? (popoverNode(bond, 'overlay')?.element as HTMLElement | undefined) : undefined
-	);
-
-	// CSS positioning strategy, set explicitly by the consumer via the `position` root prop.
-	const position = $derived<Strategy>(bond?.props.position ?? 'absolute');
-
+	// The elements are looked up inside the effect, not in a `$derived`: a part announces its id at
+	// init, before its element is in the DOM, and the effect runs after the flush that inserted it.
+	// Reading `bond.element(part)` tracks the announced id, so a tail mounting later re-runs this.
 	$effect(() => {
 		// Run after PortalSurface commits its attachment so floating-ui measures the canonical sink.
 		void boundary;
 
-		if (!bond || !reference || !overlay || !tracking) return;
+		if (!bond || !bond.shouldTrackPosition) return;
+		const reference = bond.reference;
+		const overlay = bond.element('overlay');
+		const tail = bond.element('tail');
+		if (!reference || !overlay) return;
 
-		// Re-runs if the `position` strategy changes: tears down auto-update, recomputes.
-		const cleanup = compute(bond, position)({}, floating.autoUpdate);
+		// CSS positioning strategy, set explicitly by the consumer via the `position` root prop.
+		// Re-runs if it changes: tears down auto-update, recomputes.
+		const strategy: Strategy = bond.props.position ?? 'absolute';
+		const cleanup = compute(bond, strategy, reference, overlay, tail)({}, floating.autoUpdate);
 
 		return () => cleanup?.();
 	});
 
-	function compute(bond: PopoverBond, strategy: Strategy) {
+	function compute(
+		bond: PopoverBondBase,
+		strategy: Strategy,
+		referenceElement: ReferenceElement,
+		overlayElement: HTMLElement,
+		tailElement: HTMLElement | null
+	) {
 		// AutoUpdate may invoke its callback after the owning effect is destroyed. Snapshot all
-		// derived inputs at setup so late measurements never read inert Svelte deriveds.
+		// inputs at setup so late measurements never read inert Svelte state.
 		const boundaryElement = boundary;
-		const referenceElement = reference;
-		const overlayElement = overlay;
 		const { offset: ofs, placements, placement } = bond.props;
-		const tailElement = popoverNode(bond, 'tail')?.element as HTMLElement | undefined;
 
 		return (props: Record<string, unknown>, updater: AutoUpdate | undefined = undefined) => {
-			if (!referenceElement || !overlayElement) {
-				return;
-			}
-
 			// Middleware stack. flip/shift/hide measure overflow against the resolved Portal sink,
 			// so positioning and porting share the same containment boundary.
 			const middleware: ComputePositionConfig['middleware'] = [
@@ -118,7 +105,7 @@
 				const x = Math.round((position.x ?? 0) * 100) / 100;
 				const y = Math.round((position.y ?? 0) * 100) / 100;
 
-				notifyPopoverComputed(bond, {
+				bond.notifyComputed({
 					middlewareData: position.middlewareData,
 					placement: position.placement,
 					strategy: position.strategy,
@@ -130,6 +117,7 @@
 				// Publish the trigger's measured size as CSS vars so content can match it — via a
 				// class (`min-w-[var(--sa-anchor-width)]`) or the sizing props
 				// (`minWidth="var(--sa-anchor-width)"`). Reuses computePosition's layout read.
+				// A virtual anchor (ContextMenu) has no box to publish.
 				if (referenceElement instanceof Element) {
 					overlayElement.style.setProperty(
 						'--sa-anchor-width',

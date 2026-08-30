@@ -1,5 +1,5 @@
 import type { Snippet } from 'svelte';
-import type { RenderProps } from '$ixirjs/ui/components/atom';
+import type { PlainPartProps } from '$ixirjs/ui/authoring';
 import type { StateChangeCallback } from '$ixirjs/ui/types';
 import type { PresetLike } from '$ixirjs/ui/preset';
 
@@ -52,7 +52,8 @@ export type SliderValueChangeCallback = (
 	context: Parameters<SliderStateChangeCallback>[1] & SliderValueChangeDetails
 ) => ReturnType<SliderStateChangeCallback>;
 
-export interface SliderProps extends RenderProps<'div'> {
+// The slider IS its `<div>` — see `PlainPartProps` for what that gives up (`as`, `base`, motion).
+export interface SliderProps extends PlainPartProps<'div'> {
 	/**
 	 * Current slider value. Supports two-way binding with bind:value.
 	 * @default 0

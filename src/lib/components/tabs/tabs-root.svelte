@@ -1,56 +1,63 @@
-<script
-	lang="ts"
-	generics="D extends string, E extends HtmlElementTagName = 'div', B extends Base = Base"
->
-	import { Kernel } from '$ixirjs/ui/components/atom/kernel/index.svelte';
-	import { onMount } from 'svelte';
-	import { TabsBond } from './bond.svelte';
-	import { controlledProp, useRoot } from '$ixirjs/ui/shared';
-	import { type Base, type HtmlElementTagName } from '$ixirjs/ui/components/atom';
+<script lang="ts" generics="D extends string">
+	import { onMount, untrack } from 'svelte';
+	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
+	import { TabsBond, TabsContext } from './bond.svelte';
 	import type { TabsRootProps } from './types';
 
 	const ID = $props.id();
 
 	let {
-		class: klass = '',
 		value = $bindable(),
+		as = undefined,
+		base = undefined,
 		children,
 		onvaluechange = undefined,
-		onchange = undefined,
-		preset = undefined,
 		presets = undefined,
+		factory = undefined,
 		...restProps
-	}: TabsRootProps<D, E, B> = $props();
+	}: TabsRootProps<D> = $props();
 
+	// Callbacks report transitions after mount, never the ones registration makes during it.
 	let callbacksReady = false;
-	const valueProp = controlledProp<string | undefined, TabsBond>({
-		get: () => value,
-		set: (next) => (value = next as D | undefined),
-		onchange: (next, context) => onvaluechange?.(next as D | undefined, context),
-		notifyWhen: () => callbacksReady
-	});
-
-	const root = useRoot(
-		TabsBond,
-		{ value: valueProp, presets: () => presets },
-		{
-			preset: () => preset,
-			id: () => ID
-		}
-	);
-	const bond = root.bond;
 	onMount(() => {
 		callbacksReady = true;
 	});
 
-	export const getBond = root.getBond;
+	// Live props; the `value` setter is the commit: the callback fires after the write, never for
+	// an equal value.
+	const bondProps = {
+		get id() {
+			return ID;
+		},
+		get value(): string | undefined {
+			return value;
+		},
+		set value(next: string | undefined) {
+			const changed = next !== value;
+			value = next as D | undefined;
+			if (changed && callbacksReady) onvaluechange?.(next as D | undefined, { bond });
+		},
+		get presets() {
+			return presets;
+		}
+	};
+	// `factory` is read once, at init, by design.
+	const build = untrack(() => factory);
+	const bond = TabsContext.share(build ? build(bondProps) : TabsBond.create(bondProps));
+	export const getBond = () => bond;
 
-	const el = Kernel.element(root, () => ({
-		class: ['flex w-full flex-1 flex-col', '$preset', klass],
-		variantProps: root.props,
-		...restProps,
-		onchange
-	}));
+	const el = Kernel.element(() => restProps, {
+		preset: 'tabs',
+		class: 'flex w-full flex-1 flex-col',
+		state: bond,
+		variantProps: () => bondProps,
+		layer: () => presets?.root,
+		as: () => as,
+		base: () => base,
+		attrs: () => ({ id: bond.rootId, 'aria-orientation': 'horizontal' })
+	});
+	// Bound once: an identifier callee compiles to a direct call — no snippet block, no anchor.
+	const leaf = Kernel.render(el);
 </script>
 
-{@render Kernel.render(el)(el, children, { tabs: bond })}
+{@render leaf(el, children, { tabs: bond })}
