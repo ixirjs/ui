@@ -1,3 +1,11 @@
+<script module lang="ts">
+	// Installed once at module scope — the recommended app setup — rather than per-render
+	// `setPreset`. See preset/context.svelte.ts `installPreset`.
+	import { defaultPreset, installPreset } from '$ixirjs/ui/preset';
+
+	installPreset(defaultPreset);
+</script>
+
 <script lang="ts">
 	// The SHIPPED Accordion, imported part by part instead of through the `AccordionItem` namespace.
 	// The behavioural counterpart of `ixir-card-direct`: same components, same props, one call-site
@@ -7,11 +15,8 @@
 	import ItemHeader from '$ixirjs/ui/components/accordion/item/accordion-item-header.svelte';
 	import ItemBody from '$ixirjs/ui/components/accordion/item/accordion-item-body.svelte';
 	import type { FixtureProps } from './props.js';
-	import { defaultPreset, setPreset } from '$ixirjs/ui/preset';
 
 	let { n = 100, tint = '', bump = '' }: FixtureProps = $props();
-
-	setPreset(defaultPreset);
 
 	const values = $derived([...Array.from({ length: n }, (_, i) => String(i)), 'probe']);
 </script>

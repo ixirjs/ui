@@ -1,3 +1,11 @@
+<script module lang="ts">
+	// Installed once at module scope — the recommended app setup — rather than per-render
+	// `setPreset`. See preset/context.svelte.ts `installPreset`.
+	import { defaultPreset, installPreset } from '$ixirjs/ui/preset';
+
+	installPreset(defaultPreset);
+</script>
+
 <script lang="ts">
 	// The SHIPPED Card, imported part by part instead of through the `Card` namespace.
 	//
@@ -14,11 +22,8 @@
 	import CardTitle from '$ixirjs/ui/components/card/card-title.svelte';
 	import CardBody from '$ixirjs/ui/components/card/card-body.svelte';
 	import type { FixtureProps } from './props.js';
-	import { defaultPreset, setPreset } from '$ixirjs/ui/preset';
 
 	let { n = 100, tint = '', bump = '' }: FixtureProps = $props();
-
-	setPreset(defaultPreset);
 </script>
 
 {#each { length: n } as _, i (i)}

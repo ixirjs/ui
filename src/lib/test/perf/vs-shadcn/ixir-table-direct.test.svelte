@@ -1,3 +1,11 @@
+<script module lang="ts">
+	// Installed once at module scope — the recommended app setup — rather than per-render
+	// `setPreset`. See preset/context.svelte.ts `installPreset`.
+	import { defaultPreset, installPreset } from '$ixirjs/ui/preset';
+
+	installPreset(defaultPreset);
+</script>
+
 <script lang="ts">
 	// The SHIPPED DataGrid, imported part by part. Four parts per row (row + three cells) means this
 	// family multiplies the namespace cost harder than any other in the set — see `card-direct`.
@@ -6,10 +14,8 @@
 	import DataGridRow from '$ixirjs/ui/components/datagrid/row/datagrid-row.svelte';
 	import DataGridCell from '$ixirjs/ui/components/datagrid/cell/datagrid-cell.svelte';
 	import type { FixtureProps } from './props.js';
-	import { defaultPreset, setPreset } from '$ixirjs/ui/preset';
 
 	let { n = 100, tint = '', bump = '' }: FixtureProps = $props();
-	setPreset(defaultPreset);
 </script>
 
 <DataGridRoot>

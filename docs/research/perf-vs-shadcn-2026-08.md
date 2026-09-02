@@ -1922,3 +1922,230 @@ failed memo split should have taught first: **profile the axis before proposing 
    the memo re-runs it to subscribe). Only function entries pay it; a static record is cached.
 3. Preset resolution with variants per leaf per render (§17's open item 1) is unchanged and still the
    biggest lever for a real app, where every part has a preset installed.
+
+## §19 — Round 8: the double merge, the unstorable variant, and the literal cell (2026-08-30)
+
+The first attribution pass on the redesigned Kernel (§18 only re-scored it). Three instruments,
+all on the current bundle: `bench:vs-shadcn:primitives`, `bench:vs-shadcn:own` at n=2000, and
+`bench-vs-profile --broad`, plus `LAYER=<x> bun run profile:ssr`. Every µs claim below is an
+interleaved two-bundle A/B in one session — the before-bundle built from a worktree at HEAD —
+because the same `Datagrid_cell` frame read **48.0 µs/row on a box at load 4 and 23.3 µs/row at
+load 1.7**. A profile taken across two sessions says nothing; this round nearly shipped a change on
+that basis.
+
+### What the primitives said first
+
+Card, button and a grid row already construct **fewer** Svelte primitives than shadcn's
+equivalents — card 21 effects to 29, button 4 to 8, row 28 to 29. The remaining loss is per-unit
+work _inside_ frames, and the SSR profile named it: `tailwind-merge`'s LRU `get` was the largest
+our-side frame on every layer — **8.0% of card, 6.5% of cardroot, 4.0% of datagrid** self time.
+
+### Three causes, all verified in source
+
+1. **Every part merged its class twice per render.** `mergeClassesWithPreset` (memoised) and then
+   `withDefaultBorder` = `cn('border-border', merged)` — a second `clsx` + `twMerge` on the string
+   the memo had just returned, never cached, every part, every resolve. The function's own comment
+   admitted it. **Fix:** the border is an argument of the memoised merge
+   (`mergeClassesWithPreset(…, border = true)`), so the cached result already carries it and a
+   consumer's `border-*` colour still replaces it. Byte-identical: all eight `bench:ssr` fingerprints
+   unchanged.
+2. **A variant-bearing part never hit the class memo.** `resolveVariants` pushed the preset's
+   frozen class _array_ as element 0 of its result, so `storable()` rejected the nested array and
+   every button and badge re-ran the full merge — twice, with #1 — per instance per render. That
+   was the whole of button's +225%. **Fix:** the array is flattened into the result; `clsx`
+   flattens identically, so nothing rendered changes. Byte-identical.
+3. **A grid cell dispatched through `Kernel.render`** — `as`/`base` thunks and a computed-callee
+   `@render` for the hidden-column case. The first fix (drop `as`/`base`, keep the snippet for
+   hidden columns) **measured as a wash** on a quiet box: cell 23.3 → 24.1 µs mount at n=2000. The
+   snippet block, not the leaf, was the cost. **Shipped instead:** the cell is a literal `<div>`
+   with no block of its own, and a hidden column's cell carries the `hidden` attribute — out of the
+   layout and the accessibility tree, present in the DOM and in SSR output. `DatagridCellProps<T>`
+   loses `as`/`base` and its `E`/`B` type parameters (ADR 0008); the one in-tree user (the story's
+   row-menu `base={Select.Root}`) nests the Select inside the cell instead. Per row: effects
+   28 → 22, deriveds 11 → **5** (shadcn: 8), blocks 11 → 8, anchors 19 → 16.
+
+### Results
+
+SSR slope A/B, before-bundle vs after, 7 rounds, floors per endpoint:
+
+| family | before | after |          Δ |
+| ------ | -----: | ----: | ---------: |
+| card   |   9.38 |  8.38 | **−10.7%** |
+| table  |  12.21 |  9.88 | **−19.1%** |
+| button |   3.40 |  1.82 | **−46.5%** |
+
+Own-cost at n=2000, same session, table row (µs/row, all frames): **77.3 → 58.4 mount (−24%)**,
+59.0 → 54.9 hydrate (−7%); the cell frame 23.3 → 17.3. Mount A/B (`bench-vs-ab`) could not
+resolve it — table read +6.6% and table-direct −8.6% on the same bundles, which is that
+instrument's noise floor; the primitive table and the own-cost profile are the evidence.
+
+Scoreboard, medians of three, load 2.2–2.9 (SSR) / 2.3–4.6 (client). Parenthetical provenance,
+stated because the history of these ratios spans harness versions and is easy to misquote: the
+SSR, broad and heap parentheticals are THIS session's pre-change runs (the L0 baseline, same box,
+same day); the mount/hydrate parentheticals are §18's medians (a different session — read them as
+direction, not distance). Button's SSR ratio in particular has read **+10%~** (§11–§13, the UNFAIR
+harness: no preset installed, so `klass()` answered from a memoised fallback while shadcn paid
+`cn()` per element), **+225%** (§17, which installed `defaultPreset` and charged us the variant
+resolution L2 has now removed — this session's L0 reproduced +225%), and **+80%~** (§18's
+session). None of those pairs is comparable across sessions; the same-session two-bundle A/B
+above is the only µs delta this round claims:
+
+| family       |            SSR vs |           mount vs |  hydrate vs |      broad vs |         heap vs |
+| ------------ | ----------------: | -----------------: | ----------: | ------------: | --------------: |
+| button       | **+24%~** (+225%) |        −33% (−17%) |   −9% (+8%) |   +85% (+44%) |            −15% |
+| card         |  **+73%** (+117%) |        −37% (+22%) |  −8% (+70%) | +105% (+251%) |             +6% |
+| card-direct  |              +90% |               +44% |        +10% |          +65% |            −15% |
+| table        |  **+79%** (+100%) |        +68% (+51%) | +89% (+27%) | +121% (+198%) | **+10%** (+55%) |
+| table-direct |              +80% | **−38%** (+44…51%) |    **−33%** |         +193% | **−14%** (+31%) |
+| accordion    |              −74% |               −66% |        −79% |          −38% |               — |
+| menu         |              −77% |               −61% |        −65% |          −66% |               — |
+
+Button's SSR verdict is `~` in all three runs — inside its own spread, i.e. parity, where the
+census already put it (2 anchors to their 4). Table's direct arm flips from a loss to a win on
+both mount and hydrate. Broad update did not move on any family at this point, and the A/B said
+why before the scoreboard did: the broad leg writes a fresh `class` string every tick, so the
+root's merge misses the memo either way; the remaining broad cost is `resolve` rebuilding the
+attribute object, `consumerAttrs`, the part's `attrs` thunk, and Svelte's
+`set_class`/`set_attributes`.
+
+### A fourth lever, landed after the scoreboard: the attrs thunk as its own memo
+
+The broad profile's next frame was the part's own `attrs` thunk (5.4% card, 8.1% table) plus its
+Bond reads (`get clickable` 3%) — re-run on a change that only touched the consumer's `class`. §18
+split the _class_ half of the memo and measured worse; this is the other half, and the spec's own
+note ("the lever is a separate consumer-attrs signal, not the fold") pointed here. On the client
+only, `spec.attrs` now evaluates inside its own `$derived`: a consumer-prop change re-reads the
+cached object, and the thunk's Bond reads re-run only when the Bond state they name changes. The
+server path is untouched — SSR resolves once, so there is nothing to memoise.
+
+Two-bundle A/B, 7 rounds: **card broad 5.93 → 4.89 µs/flush (−17.6%)**, table −8.0% (arms
+overlap), button −2.3% (its attrs thunk is one constant key). Mount is a wash — +7.8% at 9
+rounds, **−4.3%** at 15, i.e. the instrument's floor — and the own-cost profile at n=2000 agrees
+(59.5 → 57.4 µs/card, the thunk-bearing frames flat). All eight fingerprints unchanged, 756
+tests, `bench:growth` unchanged (datagrid 0.81, accordion 0.90).
+
+### Open after this round
+
+1. **`card-direct` reads ixir slower than `card`** (42 vs 37 µs mount) while shadcn's _same_
+   component reads 29 in one arm and 57 in the other. The harness runs the families in order and
+   the second arm inherits the first's heap; the ratio inside `card-direct` is therefore suspect,
+   and the own-cost profile (§18: shipped = prototype, parity) is the number to believe. The
+   harness should GC and re-warm between families.
+2. **Broad update after the attrs memo** — the residual is `resolve` rebuilding the merged object,
+   `consumerAttrs`'s proxy walk, and Svelte's `set_class`/`set_attributes`; no single frame
+   dominates. §18's memo split stays measured-worse; retry nothing here without a new profile.
+3. **The class memo's bucket cap (8 per base class)** now bounds variant-bearing parts: a page
+   using more than eight `(variant × size)` combinations of one part misses on the ninth. Raise it
+   only against a profile of a real page.
+4. **Card at +73% SSR is the design's floor** for this shape — one Bond, two ids, four context
+   reads, and Svelte's per-component context-map copy (`get_or_init_context_map`, 4%). §13's
+   conclusion stands; nothing left here is a micro-lever.
+
+## §20 — Round 9: the seam stops touching context, and stops allocating (2026-09-01)
+
+Plan: `~/.claude/plans/investigate-the-current-codebase-mellow-squid.md` (levers L1–L5), plus a
+follow-up L6 found by profiling after L1–L5 landed. Every lever is **byte-identical on the wire** —
+all eight `bench:ssr` fingerprints unchanged after each one — and 772 unit tests pass. Nothing here
+changes a feature: presets stay swappable and subtree-overridable, function-form entries still get
+the Bond, ids stay deterministic.
+
+### What landed
+
+1. **L1 — static fast path in `Kernel.element`.** A static preset entry (a `simpleRecord` hit or a
+   non-function entry, no layer/variantProps/variants/compounds) is classified once at init and
+   `resolve()` returns a shared frozen `staticBase` **by reference** when the consumer passed
+   nothing; own attrs, an own state class (merged once per distinct value per instance) and a
+   consumer class layer onto it without the variant/layer machinery. One `Reflect.ownKeys` pass at
+   init replaces six proxy reads; `mergeSpreadProps` recognises the shared `EMPTY` by reference;
+   `spec.attrs` may be a plain object (no client `$derived`). Verified with a counter in the built
+   bundle: **every** resolve on the card and table SSR runs takes the static lane.
+2. **L2 — class memo on the stable axis.** `mergePresetClasses` caches (base, own, preset, variant,
+   border); `withConsumerClass` layers the consumer's class with one `cn()` — shadcn's own cost.
+   A changing consumer class no longer stores junk entries or scans a full bucket. A consumer class
+   carrying its own `$preset` sentinel (Select's trigger → menu trigger) falls back to the single
+   merge.
+3. **L3 — `installPreset`.** Module-level registry; `getPreset()` reads context only once a
+   `setPreset`/`mergePreset` has flipped a monotonic process flag, so an app that installs at module
+   scope pays zero context reads per part. `setPreset` stays the subtree/per-request override,
+   layered over the registry. DEV warns when `installPreset` runs inside a component. Re-installing
+   the same entry is a no-op (a self-merge broke the `entry === defaultPreset[key]` identity the
+   static lane keys on — found by the primitives tool, fixed). Public addition, ADR 0008.
+4. **L4 — lazy Bond context.** `spec.state` accepts the `Kernel.context` handle; the seam calls
+   `.get()` only when a function entry, layer, variants, a live `preset` or `oninit` will read it.
+   Card header/body/footer/media/subtitle and scrollable-content pass the handle.
+5. **L5 — row diet.** `bondProps` only under `factory`; `onDestroy(unmount)` instead of an
+   `$effect`; the row's steady-state attrs object cached per instance (selected / not).
+6. **L6 — allocation diet.** The frozen `staticBase` and `userBase` are cached at module level per
+   (record, base class); `entryFor`/`staticRecord` are module functions; `resolve`, `ownMerged` and
+   every per-part field live on the `Handle` so a part allocates one object instead of ~8 closures;
+   the init scan is a `for…in` on the server's plain `rest_props` object; `consumerAttrs` likewise.
+
+### Deterministic evidence (`bench:vs-shadcn:primitives`, per unit)
+
+| unit        | getContext before → after | effects (shadcn) | deriveds (shadcn) |
+| ----------- | ------------------------- | ---------------- | ----------------- |
+| card        | 7 → **1**                 | 21 (29)          | 6 (8)             |
+| table row+3 | 9 → **5**                 | 22 (29)          | 9 (8)             |
+| button      | 1 → **0**                 | 4 (8)            | 3 (2)             |
+
+### SSR parity, medians of three `bench:vs-shadcn` runs (load 4.6–6.1 — box flagged busy; ratios only)
+
+| family       | §19 (before) | now                |
+| ------------ | ------------ | ------------------ |
+| card         | +73%         | **+38%**           |
+| card-direct  | +90%         | **+36%**           |
+| button       | +24%~        | **+13%~** (parity) |
+| table        | +79%         | **+69%**           |
+| table-direct | +80%         | **+59%**           |
+| accordion    | −74%         | −76%               |
+| menu         | −77%         | −84%               |
+
+L6 alone, same-session before/after pair on the agent's run: card 11.35 → 7.80 µs, table 13.79 →
+11.29. The SSR card-direct profile after L6 has no seam frame above `consumerAttrs` at 3.6%; the
+rest is Svelte's renderer, the root component body and GC.
+
+### Client — own-cost profile at n=2000 (the steadier instrument), HEAD tree vs now
+
+| family       | HEAD    | now     | Δ        |
+| ------------ | ------- | ------- | -------- |
+| card-direct  | 50.7 µs | 53.3 µs | **+5%**  |
+| table-direct | 71.0 µs | 51.8 µs | **−27%** |
+
+`bench:vs-shadcn:ab` (interleaved, both orders, 15 rounds) reads card-direct mount **+8…13% vs
+HEAD**; bisected with a pre-L6 bundle it splits ~+3% (L1–L5) / ~+4% (L6), each inside the
+instrument's floor. Per-component own cost puts it on the title (+2 µs) and body/header (+0.5–1 µs)
+as diffuse self time — no single frame moved. Note HEAD here is pre-Round-8; the table win is mostly
+Round 8's literal cell plus L5.
+
+Client scoreboard runs (`bench:vs-shadcn:client`, two runs, load ~5, busy-flagged): button mount
+−26…−34%, hydrate −2…−4%, broad **+1…+5%** (was +85%); card-direct broad **−12…+19%** (was +65%);
+table-direct mount −9…−32%, hydrate −30…−32%. The namespace `card` arm's broad column swung
++70% / +293% between the two runs — §19's open item 1 (the arm inherits the previous family's heap)
+and not readable under this load.
+
+### Open
+
+1. **Card client mount +5% own-cost vs HEAD.** Diffuse; candidates are the `Handle` construction
+   (many private fields) and the init key scan on a proxy. Needs a quiet box and a per-lever A/B at
+   ≥15 rounds before touching anything.
+2. **Card SSR +38%, table +69%**: the remaining our-side cost is the root body (Bond, `$props.id`,
+   `setContext`, the attrs thunk), one `getContext` per title, and Svelte's per-component context-map
+   copy for the components that still read context. The parts themselves now do less than a shadcn
+   part. The row keeps two reads and two writes that buy selection and hidden columns.
+3. Re-record the client scoreboard on a quiet box (load < 3); every client figure above is
+   direction, not distance.
+
+### Re-run at session end (load 2.9 at start; the harness itself lifts it to 3–4)
+
+SSR, medians of three: card **+59%**, card-direct **+32%**, button **+20%~** (parity), table
+**+56%**, table-direct **+51%~**, accordion −75%, menu −83%. Client, one run: card mount **+8%**,
+hydrate **+3%**, broad +55%; card-direct mount +51%, hydrate +89% (same components as `card` —
+§19's arm-order artefact, still unresolved); button mount −26%, hydrate 0%, broad +57%; table mount
++69%, hydrate +91%, broad +64%; table-direct mount **−16%**, hydrate **−33%**, broad +76%.
+
+Read against §19: card SSR +73% → ~+59%, card-direct +90% → ~+32%, table-direct +80% → ~+51%,
+button parity on every axis but broad. Card mount and hydrate are now inside ±10% of shadcn on the
+namespace arm. Broad update remains the axis we lose on every presentational family (+55…76%);
+after L2 its residue is `resolve` rebuilding the object, `consumerAttrs`, and Svelte's
+`set_attributes`, with no single frame to attack — the next profile should be `--broad` on this
+tree, not another memo.

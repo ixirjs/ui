@@ -1,3 +1,11 @@
+<script module lang="ts">
+	// Installed once at module scope — the recommended app setup — rather than per-render
+	// `setPreset`. See preset/context.svelte.ts `installPreset`.
+	import { defaultPreset, installPreset } from '$ixirjs/ui/preset';
+
+	installPreset(defaultPreset);
+</script>
+
 <script lang="ts">
 	// One tree of `n` sibling nodes under one open root — NOT `n` separate roots.
 	//
@@ -10,14 +18,8 @@
 	// treeitem↔group ARIA link, and a share of the tree-wide roving model.
 	import { Tree } from '$ixirjs/ui/components/tree';
 	import type { FixtureProps } from './props.js';
-	import { defaultPreset, setPreset } from '$ixirjs/ui/preset';
 
 	let { n = 100, tint = '', bump = '' }: FixtureProps = $props();
-
-	// A real app installs the preset, and without one `klass()` answers from the memoised
-	// fallback while shadcn runs `cn()` on every element — ~0.8 µs/part the head-to-head was not
-	// charging us. perf-vs-shadcn-2026-08.md §17.
-	setPreset(defaultPreset);
 </script>
 
 <Tree.Root open>
