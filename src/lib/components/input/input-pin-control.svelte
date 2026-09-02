@@ -24,6 +24,7 @@
 		placeholder = '·',
 		disabled = false,
 		readonly = false,
+		// manifest key keeps the pre-rename name so existing presets stay valid
 		preset: presetKey = 'input.otp',
 		onchange = undefined,
 		oninput = undefined,
@@ -35,7 +36,8 @@
 	const control = useControl({
 		preset: () => presetKey,
 		restProps: () => restProps,
-		class: () => klass
+		class: () => klass,
+		type: () => 'text'
 	});
 
 	let inputEl = $state<HTMLInputElement>();
@@ -49,7 +51,7 @@
 	const isFull = $derived(value.length >= length);
 
 	// Tracks previous full state so oncomplete fires only once per fill.
-	let wasFull = $state(false);
+	let wasFull = false;
 
 	function isValidChar(char: string): boolean {
 		if (type === 'numeric') return /^\d$/.test(char);

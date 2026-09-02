@@ -45,6 +45,10 @@ export class InputBond {
 	// type with its `mode` prop, and a plain `<input>` control reports the type it renders.
 	#type = $state.raw<() => string | undefined>();
 
+	// The last date the control parsed out of its element (`input.valueAsDate`), for the types
+	// Date.parse cannot read back from the raw string — time and week.
+	#valueAsDate = $state.raw<Date | null>(null);
+
 	// InputModel backed by the bindable `value` prop; typed coercions (number/date/files) stay on props.
 	readonly value: InputModel = createInput({
 		value: {
@@ -75,6 +79,11 @@ export class InputBond {
 	/** @internal The control declares its semantic type at init. */
 	declareType(type: () => string | undefined): void {
 		this.#type = type;
+	}
+
+	/** @internal The control reports its element's parsed date on input. */
+	declareDate(date: Date | null): void {
+		this.#valueAsDate = date;
 	}
 
 	setValue(value: InputStateProps['value']) {
@@ -117,14 +126,12 @@ export class InputBond {
 		const raw = this.value.get();
 		if (raw.trim() === '') return undefined;
 
-		// Date.parse covers date/datetime-local/month; fall back to valueAsDate for time/week.
+		// Date.parse covers date/datetime-local/month; time/week fall back to the date the control
+		// declared from its element's `valueAsDate`.
 		const parsed = Date.parse(raw);
 		if (!Number.isNaN(parsed)) return new SvelteDate(parsed);
 
-		const element =
-			typeof document === 'undefined' ? null : document.getElementById(this.controlId);
-		const fromInput = element instanceof HTMLInputElement ? element.valueAsDate : null;
-		return fromInput ? new SvelteDate(fromInput) : undefined;
+		return this.#valueAsDate ? new SvelteDate(this.#valueAsDate) : undefined;
 	}
 
 	get files() {

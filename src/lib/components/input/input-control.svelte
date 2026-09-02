@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { useControl, INPUT_FIELD_CLASS, toFiniteNumber } from './shared';
-	import { cn } from '$ixirjs/ui/utils';
 	import { DATE_INPUT_TYPES } from './bond.svelte';
 	import type { InputControlProps } from './types';
 	import type { PresetLike } from '$ixirjs/ui/preset';
@@ -33,7 +32,8 @@
 		restProps: () => restProps,
 		class: () => klass,
 		instance: () => presetLayer as PresetLike | undefined,
-		type: () => type ?? 'text'
+		type: () => type ?? 'text',
+		base: INPUT_FIELD_CLASS
 	});
 
 	const valueProps = $derived(control.attrs);
@@ -72,6 +72,7 @@
 
 		if (DATE_INPUT_TYPES.includes(inputType)) {
 			date = input.valueAsDate;
+			control.setDate(date);
 			control.notify(ondatechange, date, event, 'input', changeDetails());
 		}
 
@@ -92,7 +93,7 @@
 </script>
 
 <input
-	class={cn(INPUT_FIELD_CLASS, control.class)}
+	class={control.class}
 	{...valueProps}
 	type={type ?? 'text'}
 	value={type === 'file' ? undefined : value}

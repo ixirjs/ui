@@ -21,7 +21,7 @@
 	const control = useControl({
 		preset: () => presetKey,
 		restProps: () => restProps,
-		type: () => 'text'
+		type: () => 'url'
 	});
 
 	const segments = $derived(parseUrlSegments(value));

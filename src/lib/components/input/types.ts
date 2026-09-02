@@ -36,9 +36,12 @@ export type InputControlType =
 	| 'datetime-local'
 	| 'date'
 	| 'color'
-	| 'otp'
-	| 'currency'
-	| 'location'
+	| 'password'
+	| 'checkbox'
+	| 'radio'
+	| 'hidden'
+	| 'month'
+	| 'week'
 	| null;
 
 export interface InputRootProps<
@@ -46,7 +49,7 @@ export interface InputRootProps<
 	B extends Base = Base
 > extends RenderProps<E, B, InputChildren> {
 	/** The current value of the input. Bind this prop for two-way value binding. */
-	value?: string | number | string[] | null;
+	value?: string | number | Date | string[] | null;
 	/**
 	 * The checked state for checkbox or radio input types.
 	 * @default false
@@ -194,7 +197,7 @@ export interface InputNumberControlOwnProps {
 	/** Replaces the increment button. Receives the action to call and whether the step is available. */
 	increment?: Snippet<[{ action: (event?: MouseEvent) => void; disabled: boolean }]>;
 	/** Semantic number callback; native `oninput` and `onchange` are event-only. */
-	onnumberchange?: StateChangeCallback<number | undefined, InputBond>;
+	onnumberchange?: InputStateChangeCallback<number | undefined>;
 }
 
 // Time Control
@@ -281,7 +284,7 @@ export interface InputFileControlOwnProps {
 	 */
 	triggerContent?: Snippet<[{ files: File[]; hasFiles: boolean; open: () => void }]>;
 	/** Semantic file-list callback; native `oninput` and `onchange` are event-only. */
-	onfileschange?: StateChangeCallback<File[], InputBond>;
+	onfileschange?: InputStateChangeCallback<File[]>;
 }
 
 // Single source of truth for shared string-value text controls. Native callbacks receive only
@@ -290,7 +293,7 @@ export interface TextControlPropsBase extends ControlPropsBase {
 	/** Bindable text value. */
 	value?: string;
 	/** Semantic value callback; native `oninput` and `onchange` are event-only. */
-	onvaluechange?: StateChangeCallback<string, InputBond>;
+	onvaluechange?: InputStateChangeCallback<string>;
 }
 
 export type InputUrlControlProps = TextControlPropsBase;
@@ -368,7 +371,7 @@ export interface InputPhoneControlProps extends ControlPropsBase {
 	/** Color map for segment highlighting. */
 	segments?: Record<string, number>;
 	/** Semantic value callback; native `oninput` and `onchange` are event-only. */
-	onvaluechange?: StateChangeCallback<string, InputBond>;
+	onvaluechange?: InputStateChangeCallback<string>;
 	/** Renders each overlay span of the formatted number — its text, class and segment type. */
 	span?: Snippet<[PhoneSpan]>;
 }
@@ -423,7 +426,7 @@ export interface InputPinControlProps extends ControlPropsBase {
 	/** Visual grouping (gap every N slots). */
 	groupSize?: number;
 	/** Semantic value callback; native `oninput` and `onchange` are event-only. */
-	onvaluechange?: StateChangeCallback<string, InputBond>;
+	onvaluechange?: InputStateChangeCallback<string>;
 	// fires when all slots are filled
 	/** Fires once when all slots are filled. */
 	oncomplete?: (value: string) => void;

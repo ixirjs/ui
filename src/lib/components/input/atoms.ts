@@ -13,6 +13,7 @@ export { default as PhoneControl } from './input-phone-control.svelte';
 export { default as LocationControl } from './input-location.svelte';
 export { default as PinControl } from './input-pin-control.svelte';
 /** @deprecated Renamed to `Input.PinControl`. */
+/** @deprecated Renamed to `PinControl`. */
 export { default as OtpControl } from './input-pin-control.svelte';
 export { default as CurrencyControl } from './input-currency-control.svelte';
 export { default as ColorControl } from './color/color-control.svelte';
