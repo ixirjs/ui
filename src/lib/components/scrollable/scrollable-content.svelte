@@ -14,7 +14,7 @@
 	const el = Kernel.element(() => restProps, {
 		preset: 'scrollable.content',
 		class: 'scrollable-content border-border h-full max-h-full',
-		state: ScrollableContext.get(),
+		state: ScrollableContext,
 		as: () => as,
 		base: () => base
 	});

@@ -1,5 +1,5 @@
 <script lang="ts" generics="T = unknown">
-	import { untrack } from 'svelte';
+	import { onDestroy, untrack } from 'svelte';
 	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
 	import type { LeafAttrs } from '$ixirjs/ui/authoring';
 	import { DataGridRowBond, DataGridRowContext } from './bond.svelte';
@@ -32,21 +32,22 @@
 
 	// A row is a Bond only when the consumer asks for one through `factory`; by default it is a
 	// plain record registered with the grid (`docs/research/datagrid-row-record-2026-08.md`).
+	// `bondProps` is only ever read by `build`, so it is allocated in that branch alone — dead
+	// weight on the default (record) path otherwise.
 	const build = untrack(() => factory);
-	const bondProps = {
-		get id() {
-			return ID;
-		},
-		get value() {
-			return value;
-		},
-		get data() {
-			return data;
-		}
-	};
 	const row: IDataGridRowApi<T> = build
 		? (DataGridRowContext.share(
-				build(bondProps) as DataGridRowBond
+				build({
+					get id() {
+						return ID;
+					},
+					get value() {
+						return value;
+					},
+					get data() {
+						return data;
+					}
+				}) as DataGridRowBond
 			) as unknown as DataGridRowBond<T>)
 		: new DataGridRowRecord<T>(grid, { seed: ID, value: () => value, data: () => data, isHeader });
 
@@ -57,7 +58,16 @@
 	// `untrack`ed: registering reads the collection's version, and a tracked read here would
 	// subscribe the registering effect to the signal it bumps.
 	const unmount = row.isHeader ? undefined : untrack(() => row.mount());
-	$effect(() => unmount);
+	// `onDestroy` over `$effect(() => unmount)`: no per-row effect signal for a value that never
+	// changes after init — just a client-only teardown callback. No-op on the server.
+	if (unmount) onDestroy(unmount);
+
+	// The two steady-state (non-header, `rows === 'auto'`) shapes a row ever renders, cached once
+	// per instance and reused — `row.elementId` is stable for the row's lifetime, so there is
+	// nothing left to vary once `selected` picks one. Frozen because the seam only ever reads it.
+	let cachedElementId: string | undefined;
+	let selectedAttrs: Record<string, unknown> | undefined;
+	let unselectedAttrs: Record<string, unknown> | undefined;
 
 	const el = Kernel.element(() => restProps, {
 		preset: 'datagrid.row',
@@ -66,6 +76,28 @@
 		attrs: () => {
 			const header = row.isHeader;
 			const selected = !header && row.isSelected;
+			if (!header && rows === 'auto') {
+				const elementId = row.elementId;
+				if (cachedElementId !== elementId) {
+					cachedElementId = elementId;
+					selectedAttrs = unselectedAttrs = undefined;
+				}
+				return selected
+					? (selectedAttrs ??= Object.freeze({
+							id: elementId,
+							role: 'row',
+							class:
+								'hover:bg-foreground/2 active:bg-foreground/4 transition-colors duration-100 bg-primary/2 hover:bg-primary/4 active:bg-primary/6',
+							'aria-selected': true,
+							'data-selected': ''
+						}))
+					: (unselectedAttrs ??= Object.freeze({
+							id: elementId,
+							role: 'row',
+							class: 'hover:bg-foreground/2 active:bg-foreground/4 transition-colors duration-100',
+							'aria-selected': false
+						}));
+			}
 			const attrs: Record<string, unknown> = {
 				id: row.elementId,
 				role: 'row',

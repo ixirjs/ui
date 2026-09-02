@@ -7,7 +7,7 @@
 	const el = Kernel.element(() => props, {
 		preset: 'card.media',
 		class: 'card-media border-border overflow-hidden',
-		state: CardContext.get()
+		state: CardContext
 	});
 </script>
 

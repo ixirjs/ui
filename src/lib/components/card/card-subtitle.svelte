@@ -7,7 +7,7 @@
 	const el = Kernel.element(() => props, {
 		preset: 'card.subtitle',
 		class: 'card-subtitle border-border text-sm font-medium text-gray-600',
-		state: CardContext.get()
+		state: CardContext
 	});
 </script>
 

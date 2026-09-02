@@ -7,7 +7,7 @@
 	const el = Kernel.element(() => props, {
 		preset: 'card.header',
 		class: 'card-header border-border flex flex-col space-y-1.5 px-4 py-4',
-		state: CardContext.get()
+		state: CardContext
 	});
 </script>
 

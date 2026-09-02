@@ -7,7 +7,7 @@
 	const el = Kernel.element(() => props, {
 		preset: 'card.footer',
 		class: 'card-footer border-border flex items-center gap-2 px-4 pb-4',
-		state: CardContext.get()
+		state: CardContext
 	});
 </script>
 
