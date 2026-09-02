@@ -286,6 +286,18 @@ without application-level compatibility guarantees.
 - Documentation and examples are part of the interface and must be compiled against the packed
   package rather than checked only as prose.
 
+## Addendum: `installPreset` (2026-09)
+
+`@ixirjs/ui/preset` also exports `installPreset(preset)`, a module-level registry `getPreset()`
+falls back to when no context provider is in scope — config, not per-request state, the same model
+as `defaultPreset` itself. It exists so an app that never needs a per-request/per-subtree override
+pays zero context reads per part on both platforms. **Module scope only**: call it once from a root
+layout or entry file, never inside a component (DEV warns if it detects one). `setPreset` keeps its
+existing contract — a per-subtree or per-request/per-tenant theme, layered over whatever is
+installed — and stays the right call for anything that varies at runtime. An app that installed its
+theme via `setPreset` in the root layout (the previously documented pattern) gains nothing until it
+moves that one call to `installPreset`.
+
 ## Migration order
 
 1. Snapshot this decision and restore green check/lint gates.

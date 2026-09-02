@@ -193,6 +193,7 @@
 		"defaultPreset",
 		"definePreset",
 		"fallbackPreset",
+		"installPreset",
 		"mergePresetLayers",
 		"setPreset"
 	],

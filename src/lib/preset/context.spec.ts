@@ -1,7 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 import { render } from 'svelte/server';
 import PresetContextProbe from '$ixirjs/ui/test/context/preset-context.test.svelte';
-import { definePreset } from './context.svelte';
+import PresetInstallContextProbe from '$ixirjs/ui/test/context/preset-install-context.test.svelte';
+import PresetInstallOnlyProbe from '$ixirjs/ui/test/context/preset-install-only.test.svelte';
+import PresetInstallWarnProbe from '$ixirjs/ui/test/context/preset-install-warn.test.svelte';
+import { definePreset, installPreset } from './context.svelte';
 import type { Preset } from '$ixirjs/ui/preset/types';
 
 describe('preset context', () => {
@@ -11,6 +14,40 @@ describe('preset context', () => {
 		expect(body).toContain('data-base="yes"');
 		expect(body).toContain('data-layer="yes"');
 		expect(body).toContain('data-role="link"');
+	});
+
+	it('installPreset answers getPreset with no context provider', () => {
+		installPreset({ button: () => ({ class: 'installed-only' }) });
+		const { body } = render(PresetInstallOnlyProbe);
+		expect(body).toContain('data-class="installed-only"');
+	});
+
+	it('a setPreset override wins over the installed preset for its own key and falls back to the installed entry otherwise', () => {
+		installPreset({
+			'card.title': () => ({ class: 'installed-title' })
+		});
+		const { body } = render(PresetInstallContextProbe);
+		// The fixture's own `setPreset` layers a `button` override on top of whatever is installed:
+		// the override always resolves last, proving it wins rather than being shadowed.
+		expect(body).toMatch(/data-button-class="[^"]*\boverride\b"/);
+		expect(body).toContain('data-button-layer="yes"');
+		// `card.title` was never overridden by the fixture, so it falls through to the installed entry.
+		expect(body).toContain('data-title-class="installed-title"');
+		expect(body).toContain('data-role="b"');
+	});
+
+	it('warns in DEV when installPreset is called during component initialization', () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+		try {
+			const { body } = render(PresetInstallWarnProbe);
+			void body;
+			const warned = warn.mock.calls.map(([message]) => String(message));
+			expect(warned.some((message) => message.includes('installPreset() called during'))).toBe(
+				true
+			);
+		} finally {
+			warn.mockRestore();
+		}
 	});
 
 	it('warns on a near-miss preset key and stays silent on a genuinely custom one', () => {

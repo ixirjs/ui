@@ -2,6 +2,7 @@ export { defaultPreset } from './default';
 import {
 	definePreset as definePresetInternal,
 	fallbackPreset as fallbackPresetInternal,
+	installPreset as installPresetInternal,
 	mergePresetLayers as mergePresetLayersInternal,
 	setPreset as setPresetInternal
 } from '$ixirjs/ui/preset/context.svelte';
@@ -43,6 +44,11 @@ export function definePreset<const P extends Partial<Preset>>(preset: P): P {
 
 export function setPreset(preset: Partial<Preset>): void {
 	setPresetInternal(preset as Parameters<typeof setPresetInternal>[0]);
+}
+
+/** Installs a preset at module scope — the app's recommended default-theme setup. */
+export function installPreset(preset: Partial<Preset>): void {
+	installPresetInternal(preset as Parameters<typeof installPresetInternal>[0]);
 }
 
 export function fallbackPreset(...presets: readonly PresetModuleName[]): FallbackPreset {

@@ -49,12 +49,66 @@ export function definePreset<const P extends Partial<Preset>>(preset: P): P {
 	return Object.freeze({ ...preset }) as P;
 }
 
+// Module-level registry an app installs once at import time — config, not per-request state, so
+// it is safe to share across requests the same way `defaultPreset` itself is. `setPreset`/
+// `mergePreset` stay a subtree override layered over it via `getPreset()` below.
+let installed: Partial<Preset> | undefined;
+
+// Monotonic false→true: flips the first time a `setPreset`/`mergePreset` call runs, so `getPreset`
+// knows a context override might exist and falls back to a context read. A stale `true` on a
+// long-lived server can only make reads *more* conservative (today's behaviour), never wrong.
+let contextPresetsInUse = false;
+
 export function getPreset<K extends PresetModuleName>(key: K): PresetEntry | undefined;
 export function getPreset(): Partial<Preset> | undefined;
-export function getPreset(...args: unknown[]) {
-	const preset = getContext<Partial<Preset> | undefined>(CONTEXT_KEY);
-	if (args.length) return preset?.[args[0] as PresetModuleName];
+export function getPreset(key?: PresetModuleName) {
+	const preset = contextPresetsInUse
+		? (getContext<Partial<Preset> | undefined>(CONTEXT_KEY) ?? installed)
+		: installed;
+	if (key) return preset?.[key];
 	return preset;
+}
+
+// Shared by `installPreset` and `mergePreset` so the two merge rules cannot drift: same-key
+// entries compose via `mergePresetEntries`, an unset override key is skipped, and DEV warns once
+// on a near-miss of a shipped key.
+function mergeIntoPreset(target: Partial<Preset>, override: Partial<Preset>): Partial<Preset> {
+	for (const key of Object.keys(override) as PresetModuleName[]) {
+		const next = override[key];
+		if (!next) continue;
+		if (DEV) warnOnMisspelledKey(key);
+		const existing = target[key];
+		// Re-installing the SAME entry is a no-op, not a self-merge: wrapping it in a merge closure
+		// would break the `entry === defaultPreset[key]` identity `simpleRecord` caches on, and with
+		// it the static fast path — for every part, after the second `installPreset(defaultPreset)`.
+		if (existing === next) continue;
+		target[key] = existing ? mergePresetEntries(existing, next) : next;
+	}
+	return target;
+}
+
+/**
+ * Installs a preset into the module-level registry `getPreset()` falls back to. Config, not
+ * per-request state — call once at module scope (a root layout, an entry file), never inside a
+ * component: a per-request or per-tenant theme belongs on `setPreset` (context-scoped).
+ */
+export function installPreset(preset: Partial<Preset>): void {
+	if (DEV) {
+		let insideComponent: boolean;
+		try {
+			getContext(CONTEXT_KEY);
+			insideComponent = true;
+		} catch {
+			insideComponent = false;
+		}
+		if (insideComponent) {
+			console.warn(
+				'[ixirjs] installPreset() called during component initialization. Install at module ' +
+					'scope instead; use setPreset() for a subtree or per-request theme.'
+			);
+		}
+	}
+	installed = mergeIntoPreset({ ...installed }, preset);
 }
 
 function resolvePresetEntry(entry: PresetEntry, context: PresetContext): PresetEntryValue {
@@ -124,17 +178,9 @@ export function setPreset(preset: Partial<Preset>): void {
 export function mergePreset(
 	callback: (currentPreset: Partial<Preset> | undefined) => Partial<Preset>
 ): void {
+	contextPresetsInUse = true;
 	const currentPreset = getPreset();
 	const override = callback(currentPreset);
-	const result: Partial<Preset> = { ...currentPreset };
-
-	for (const key of Object.keys(override) as PresetModuleName[]) {
-		const next = override[key];
-		if (!next) continue;
-		if (DEV) warnOnMisspelledKey(key);
-		const existing = result[key];
-		result[key] = existing ? mergePresetEntries(existing, next) : next;
-	}
-
+	const result = mergeIntoPreset({ ...currentPreset }, override);
 	setContext(CONTEXT_KEY, result);
 }
