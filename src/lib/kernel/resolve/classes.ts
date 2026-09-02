@@ -1,4 +1,4 @@
-import clsx from 'clsx';
+import { clsx } from 'cn';
 import { cn, type ClassValue } from '$ixirjs/ui/utils';
 
 const PLACEHOLDER = '$preset';

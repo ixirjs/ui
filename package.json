@@ -185,9 +185,8 @@
 	},
 	"dependencies": {
 		"@floating-ui/dom": "^1.7.6",
-		"clsx": "^2.1.1",
-		"esm-env": "^1.2.2",
-		"tailwind-merge": "^3.5.0"
+		"cn": "^0.2.4",
+		"esm-env": "^1.2.2"
 	},
 	"peerDependenciesMeta": {
 		"@qrcode-js/browser": {

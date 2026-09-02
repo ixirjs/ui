@@ -1,4 +1,4 @@
-import { type ClassValue } from 'clsx';
+import { type ClassValue } from 'cn';
 export declare function cn(...inputs: ClassValue[]): string;
 export type WithoutChild<T> = T extends {
     child?: any;

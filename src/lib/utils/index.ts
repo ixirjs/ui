@@ -10,17 +10,16 @@ export {
 	type VariantPropsType
 } from './variant';
 import type { ClassValue as SvelteClassValue } from 'svelte/elements';
-import clsx from 'clsx';
-import { extendTailwindMerge } from 'tailwind-merge';
+import { createCn } from 'cn/config';
 
 /**
- * `tailwind-merge` treats the axis shorthands as conflicting only with their PHYSICAL siblings:
+ * The merge engine treats the axis shorthands as conflicting only with their PHYSICAL siblings:
  * `px-2` clears `pr-*`/`pl-*` but not `ps-*`/`pe-*`. A preset written in logical properties
  * (`ps-2 pe-7`) therefore survives a consumer's `px-2`, and since Tailwind emits `.pe-*` after
  * `.px-*`, the preset wins in the cascade — the consumer's class lands on the element and does
  * nothing. Teach the shorthands their logical siblings so the last-writer rule holds.
  */
-const twMerge = extendTailwindMerge({
+export const cn = createCn({
 	extend: {
 		conflictingClassGroups: {
 			px: ['pr', 'pl', 'ps', 'pe'],
@@ -43,9 +42,6 @@ export type ClassValueFunction = <T = unknown>(bond: T, ...args: unknown[]) => S
 export type ClassValue = SvelteClassValue | ClassValueFunction | undefined;
 
 export type Cn = SvelteClassValue | undefined | false;
-export function cn(...inputs: Cn[]) {
-	return twMerge(clsx(...inputs));
-}
 
 export function toClassValue(
 	this: unknown,

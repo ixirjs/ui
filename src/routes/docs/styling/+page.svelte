@@ -381,8 +381,7 @@ ${'<'}/div>`;
 	<Section.Header>
 		<Section.Title>The cn() utility</Section.Title>
 		<Section.Subtitle>
-			Intelligent class merging — combines clsx for conditionals with tailwind-merge for conflict
-			resolution.
+			Intelligent class merging — conditionals and Tailwind conflict resolution in one call.
 		</Section.Subtitle>
 	</Section.Header>
 
