@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { mergeClassesWithPreset } from './classes';
+import {
+	mergeClassesWithPreset,
+	mergePresetClasses,
+	withConsumerClass,
+	__memoSizeForTests
+} from './classes';
+import { cn } from '$ixirjs/ui/utils';
 
 describe('mergeClassesWithPreset', () => {
 	it('inserts preset and variant classes automatically before consumer classes', () => {
@@ -107,6 +113,88 @@ describe('mergeClassesWithPreset — array user class (the component-root shape)
 	it('tailwind-merges conflicts across the placeholder (user wins over preset)', () => {
 		const result = mergeClassesWithPreset(['$preset', 'p-6'], 'p-2 text-sm', undefined);
 		expect(result).toBe('text-sm p-6');
+	});
+});
+
+describe('mergeClassesWithPreset — the default border rides the memoised merge', () => {
+	it('prepends the default border once, and a consumer colour replaces it', () => {
+		expect(mergeClassesWithPreset(['bd-a', '$preset'], 'p-2', undefined, true)).toBe(
+			'border-border bd-a p-2'
+		);
+		expect(
+			mergeClassesWithPreset(['bd-b', '$preset', 'border-red-500'], 'p-2', undefined, true)
+		).toBe('bd-b p-2 border-red-500');
+		expect(mergeClassesWithPreset(['bd-c border-border', '$preset'], 'p-2', undefined, true)).toBe(
+			'bd-c border-border p-2'
+		);
+	});
+
+	it('keeps bordered and unbordered results apart in the same bucket', () => {
+		const user = ['bd-d', '$preset'];
+		expect(mergeClassesWithPreset(user, 'p-2', undefined, true)).toBe('border-border bd-d p-2');
+		expect(mergeClassesWithPreset(user, 'p-2', undefined)).toBe('bd-d p-2');
+		expect(mergeClassesWithPreset(user, 'p-2', undefined, true)).toBe('border-border bd-d p-2');
+	});
+});
+
+describe('mergePresetClasses / withConsumerClass — L2, consumer class off the stable axis', () => {
+	// A local reference implementation mirroring the pre-L2 single-`cn()` shape: border, everything
+	// before the LAST `$preset` (arrays only, joined), the preset class, the variant class, then
+	// whatever followed the placeholder (the consumer class).
+	function referenceMerge(
+		base: readonly string[],
+		presetClass: string | undefined,
+		variantClass: string | undefined,
+		consumerClass: string | undefined,
+		border = false
+	): string {
+		return cn(
+			border && 'border-border',
+			...base.filter((x) => x !== '$preset'),
+			presetClass,
+			variantClass,
+			consumerClass
+		);
+	}
+
+	it('a changing consumer class across 20 calls leaves the bucket at exactly one entry', () => {
+		const base = ['l2-stable-a', '$preset'];
+		mergePresetClasses(base, 'bg-white', undefined, true);
+		for (let i = 0; i < 20; i++) {
+			const stable = mergePresetClasses(base, 'bg-white', undefined, true);
+			withConsumerClass(stable, `t${i}`);
+		}
+		expect(__memoSizeForTests('l2-stable-a')).toBe(1);
+	});
+
+	it('an own state class rebuilt fresh each call (content-stable) also hits, not misses', () => {
+		for (let i = 0; i < 5; i++) {
+			const own = ['l2-own-b', 'is-selected', '$preset']; // fresh array, same content each call
+			mergePresetClasses(own, 'p-2', undefined, true);
+		}
+		expect(__memoSizeForTests('l2-own-b')).toBe(1);
+	});
+
+	it.each([
+		// [base (always carries '$preset', as the Kernel always builds it), preset, variant, consumer]
+		[['btn', '$preset'], 'p-4', undefined, 'p-2'],
+		[['card', 'is-selected', '$preset'], 'p-2 border-border', undefined, 'border-red-500'],
+		[['x', '$preset'], undefined, 'font-bold', undefined],
+		[['y', '$preset'], 'p-2', 'text-sm', 'p-6 text-lg']
+	] as const)(
+		'two-step result matches the old single-cn() result for %#',
+		(base, presetClass, variantClass, consumerClass) => {
+			const stable = mergePresetClasses(base, presetClass, variantClass, true);
+			const actual = withConsumerClass(stable, consumerClass);
+			const expected = referenceMerge(base, presetClass, variantClass, consumerClass, true);
+			expect(actual).toBe(expected);
+		}
+	);
+
+	it('never stores an entry whose base carries a consumer class (routed through the two-step path)', () => {
+		mergeClassesWithPreset(['l2-guard', '$preset', 'consumer-tail'], 'p-2', undefined);
+		mergeClassesWithPreset(['l2-guard', '$preset', 'consumer-tail-2'], 'p-2', undefined);
+		expect(__memoSizeForTests('l2-guard')).toBe(0);
 	});
 });
 

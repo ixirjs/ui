@@ -14,6 +14,14 @@ export type MergeLayerOptions = {
 	warn?: (message: string) => void;
 };
 
+/**
+ * The one frozen "no props" object every empty layer returns, shared with `kernel.svelte.ts`'s
+ * `consumerAttrs` so `mergeSpreadProps` can recognise it by reference and skip `isEmptyProps`
+ * (which allocates a symbols array to prove the same thing) on the common case: a part with no
+ * consumer-passed attributes.
+ */
+export const EMPTY: Record<string | symbol, unknown> = Object.freeze({});
+
 const TRUE_WINS_ATTRIBUTES = new Set(['disabled', 'inert', 'hidden']);
 const ARIA_TOKEN_LIST_ATTRIBUTES = new Set([
 	'aria-controls',
@@ -77,7 +85,10 @@ export function mergeSpreadProps<
 	// Only this direction is safe. With `base` absent, `next` still has to go through the loop
 	// below: `mergeAttributeValue` transforms values even with no prior (class through cn, style
 	// parsed and re-serialised), so `next` cannot be handed back untouched.
-	if (base && isEmptyProps(next)) return base;
+	// The reference check comes first: `consumerAttrs` hands back the shared `EMPTY` whenever a part
+	// has no consumer props at all, which is the common case, and comparing by reference skips
+	// `isEmptyProps`'s own-key walk plus its `getOwnPropertySymbols` allocation entirely.
+	if (base && (next === EMPTY || isEmptyProps(next))) return base;
 
 	// Spread rather than a hand-written string+symbol key walk. Equivalent because spread takes own
 	// enumerable string AND symbol keys, and every symbol on these layers arrives through an object

@@ -35,7 +35,18 @@ export function resolveVariants(
 	const attributes: Record<string, unknown> = {};
 	let motion: Motion | null | undefined;
 
-	if (baseClass) classes.push(baseClass);
+	// A preset record's `class` is a frozen ARRAY of strings. Pushed as one element it nests, and
+	// `mergeClassesWithPreset` never stores a nested array — so every variant-bearing part (button,
+	// badge) re-ran clsx + tailwind-merge per instance per render, +225% on button SSR. Flattened,
+	// the result is a flat string array the memo stores and compares element-wise. clsx flattens
+	// identically, so the merged string does not change.
+	if (baseClass) {
+		if (Array.isArray(baseClass)) {
+			for (const item of baseClass) classes.push(item);
+		} else {
+			classes.push(baseClass);
+		}
+	}
 
 	if (variantMap) {
 		for (const key of variantKeys) {

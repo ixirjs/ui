@@ -11,6 +11,22 @@ describe('resolveVariants', () => {
 		expect(result.class).toEqual(['base-class']);
 	});
 
+	it('flattens a preset class array so the merge memo can store the result', () => {
+		// A shipped preset record's `class` is a frozen array; nested inside the result it would be
+		// unstorable and every variant-bearing part would re-merge per render.
+		const result = resolveVariants(
+			{
+				class: Object.freeze(['base-a', 'base-b']),
+				variants: { tone: { hot: 'tone-hot' } },
+				compounds: [],
+				defaults: { tone: 'hot' }
+			},
+			null,
+			{}
+		);
+		expect(result.class).toEqual(['base-a', 'base-b', 'tone-hot']);
+	});
+
 	it('picks the matching variant class', () => {
 		const result = resolveVariants(
 			{

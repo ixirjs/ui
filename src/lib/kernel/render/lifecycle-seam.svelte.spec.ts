@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import Fixture from '$ixirjs/ui/test/components/atom/lifecycle-seam-fixture.test.svelte';
+import StaticFastPathProbe from '$ixirjs/ui/test/components/atom/static-fast-path-probe.test.svelte';
 
 /**
  * Client lifecycle through Kernel's bonded leaf.
@@ -30,5 +31,19 @@ describe('bond lifecycle through Kernel', () => {
 		unmount();
 		await settle();
 		expect(cleanups).toBe(1);
+	});
+
+	// L1's static fast path (`kernel.svelte.ts`) resolves a class-only preset entry (no variants, no
+	// layer) via the cached `staticRecordValue`/`staticBase` — `oninit` must still fire exactly once
+	// through that branch, since the classification only changes how attrs resolve, never lifecycle.
+	it('fires oninit once on a static preset entry', async () => {
+		let inits = 0;
+		const oninit = () => {
+			inits += 1;
+		};
+
+		render(StaticFastPathProbe, { oninit } as never);
+		await settle();
+		expect(inits).toBe(1);
 	});
 });

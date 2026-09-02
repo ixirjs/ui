@@ -40,7 +40,22 @@ function withoutPreset(value: string): string {
  * read can never be served from here. The preset factory itself runs upstream, in
  * `resolvePresentation`'s `resolveEntry`, and is untouched by this cache.
  */
-type MergedClass = { user: readonly unknown[]; preset: unknown; variant: unknown; result: string };
+type MergedClass = {
+	user: readonly unknown[];
+	preset: unknown;
+	variant: unknown;
+	border: boolean;
+	result: string;
+};
+
+/**
+ * The default border colour the Kernel gives every element. Merged INSIDE the memoised merge, so a
+ * consumer's `border-*` colour still replaces it and the result is cached with everything else —
+ * `withDefaultBorder(mergeClassesWithPreset(…))` re-ran `tailwind-merge` on a class this function
+ * had just merged, and that second, uncached merge was the largest our-side frame on a card's SSR
+ * profile (8% self time, `perf-vs-shadcn-2026-08.md` §19).
+ */
+const BORDER_DEFAULT = 'border-border';
 
 const merged = new Map<string, MergedClass[]>();
 const KEY_LIMIT = 512;
@@ -71,12 +86,14 @@ function sameClass(a: unknown, b: unknown): boolean {
 export function mergeClassesWithPreset(
 	userClass: string | ClassValue | undefined,
 	presetClass: ClassValue | undefined,
-	variantClass: ClassValue | undefined
+	variantClass: ClassValue | undefined,
+	border = false
 ): string {
 	if (typeof userClass === 'string') {
 		const index = userClass.lastIndexOf(PLACEHOLDER);
 		if (index !== -1) {
 			return cn(
+				border && BORDER_DEFAULT,
 				withoutPreset(userClass.slice(0, index)),
 				presetClass,
 				variantClass,
@@ -92,7 +109,7 @@ export function mergeClassesWithPreset(
 		// `''` is deliberately not a key. Roughly 25 plans declare an empty base class, so they would
 		// all share one bucket and the scan would cost more than the merge it replaces.
 		if (typeof first !== 'string' || first === '') {
-			return mergeClassesWithPreset(clsx(userClass as never[]), presetClass, variantClass);
+			return mergeClassesWithPreset(clsx(userClass as never[]), presetClass, variantClass, border);
 		}
 
 		const bucket = merged.get(first);
@@ -101,6 +118,7 @@ export function mergeClassesWithPreset(
 			// first differing element.
 			for (const hit of bucket) {
 				if (
+					hit.border === border &&
 					sameClass(hit.user, userClass) &&
 					sameClass(hit.preset, presetClass) &&
 					sameClass(hit.variant, variantClass)
@@ -110,16 +128,33 @@ export function mergeClassesWithPreset(
 			}
 		}
 
-		const result = mergeClassesWithPreset(clsx(userClass as never[]), presetClass, variantClass);
+		const result = mergeClassesWithPreset(
+			clsx(userClass as never[]),
+			presetClass,
+			variantClass,
+			border
+		);
 		// Room is checked BEFORE the snapshot: building an entry only to drop it on a full bucket
 		// would allocate four objects per call forever, on exactly the call sites hot enough to have
 		// filled the bucket in the first place.
 		const room = bucket === undefined || bucket.length < BUCKET_LIMIT;
-		if (room && storable(userClass) && storable(presetClass) && storable(variantClass)) {
+		// L2: a consumer class riding along in `userClass` (anything after the last `$preset`) makes
+		// the array a fresh shape almost every call — storing it fills the bucket with one-shot junk
+		// that is scanned and missed forever. `mergePresetClasses` never passes such an array; this
+		// guard only protects a caller that still does.
+		const hasConsumerTail = userClass[userClass.length - 1] !== PLACEHOLDER;
+		if (
+			room &&
+			!hasConsumerTail &&
+			storable(userClass) &&
+			storable(presetClass) &&
+			storable(variantClass)
+		) {
 			const entry: MergedClass = {
 				user: userClass.slice(),
 				preset: Array.isArray(presetClass) ? presetClass.slice() : presetClass,
 				variant: Array.isArray(variantClass) ? variantClass.slice() : variantClass,
+				border,
 				result
 			};
 			// ponytail: 512 keys, 8 per bucket. The bucket cap is the load-bearing one — a fixed first
@@ -135,5 +170,51 @@ export function mergeClassesWithPreset(
 		return result;
 	}
 
-	return cn(presetClass, variantClass, userClass);
+	return cn(border && BORDER_DEFAULT, presetClass, variantClass, userClass);
+}
+
+/**
+ * True when a class value carries the `$preset` sentinel anywhere inside it — a part that forwards
+ * its OWN class-with-placeholder as another part's consumer class (`Select.Trigger` building
+ * `class={[..., '$preset', klass]}` and handing it to `DropdownMenu`'s `Trigger`; see
+ * `select-trigger.svelte`). Such a value cannot be layered on top of an already-resolved string
+ * through {@link withConsumerClass} — its placeholder must be substituted by the SAME merge, so the
+ * two-step split does not apply and the caller must fall back to one `mergeClassesWithPreset` call
+ * with the consumer class still inside the array, exactly as before L2.
+ */
+export function containsPlaceholder(value: unknown): boolean {
+	if (typeof value === 'string') return value.includes(PLACEHOLDER);
+	if (Array.isArray(value)) return value.some(containsPlaceholder);
+	return false;
+}
+
+/**
+ * L2 — the stable axis only. `base` is `[spec.class, ownClass?, '$preset']`, built without the
+ * consumer's class, so it is either reference-stable (the common part, no own class) or content-
+ * stable across a broad-update tick (an own state class rebuilt each call but equal in value) — the
+ * memo above hits every time instead of missing on a changing consumer class. Apply the consumer's
+ * class on top with {@link withConsumerClass}.
+ */
+export function mergePresetClasses(
+	base: readonly string[],
+	presetClass: ClassValue | undefined,
+	variantClass: ClassValue | undefined,
+	border = false
+): string {
+	return mergeClassesWithPreset(base, presetClass, variantClass, border);
+}
+
+/**
+ * Layers the consumer's class on top of a stable merge — one `cn()`, the same cost shadcn's own
+ * call site pays, and nothing is ever stored for it: a changing consumer class can no longer evict
+ * or pollute the bucket `mergePresetClasses` fills.
+ */
+export function withConsumerClass(merged: string, consumerClass: ClassValue | undefined): string {
+	return consumerClass ? cn(merged, consumerClass) : merged;
+}
+
+/** Test-only: the bucket size for a stable-axis key, to pin that a changing consumer class no
+ * longer grows it. */
+export function __memoSizeForTests(first: string): number {
+	return merged.get(first)?.length ?? 0;
 }

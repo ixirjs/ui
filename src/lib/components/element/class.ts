@@ -5,10 +5,10 @@ import type { ClassValue } from 'svelte/elements';
 const BORDER_DEFAULT = 'border-border';
 
 // Merged with `cn`, so a consumer border colour replaces the default instead of relying on CSS
-// source order, and the hand-rolled whole-token dedup is gone — `tailwind-merge` collapses the
-// duplicate itself. This re-runs `twMerge` on a class the kernel already merged
-// (`mergeClassesWithPreset`), which the previous clsx-only version existed to avoid; the cost is
-// one merge per rendered element (docs/performance/presentation-kernel-perf.md).
+// source order. The Kernel seam no longer calls this: it folds the border into its one memoised
+// merge (`mergeClassesWithPreset(…, border = true)`), because running `twMerge` a second time on
+// an already-merged class was 8% of a card's SSR self time. Kept for `HtmlElement`, which
+// receives an arbitrary class value.
 export function withDefaultBorder(klass: ClassValue | null | undefined): string {
 	return cn(BORDER_DEFAULT, klass as never);
 }
