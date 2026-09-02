@@ -1,6 +1,4 @@
 <script lang="ts">
-	import type { HTMLAttributes } from 'svelte/elements';
-	import { cn } from '$ixirjs/ui/utils';
 	import { useControl, toFiniteNumber } from './shared';
 	import type { InputNumberControlProps } from './types';
 
@@ -12,6 +10,7 @@
 		step = 1,
 		showControls = true,
 		disabled = false,
+		readonly = false,
 		placeholder = undefined,
 		preset: presetKey = 'input.number',
 		decrement = undefined,
@@ -20,19 +19,24 @@
 		oninput = undefined,
 		onnumberchange = undefined,
 		...restProps
-	}: InputNumberControlProps & HTMLAttributes<HTMLDivElement> = $props();
+	}: InputNumberControlProps = $props();
 
 	const control = useControl({
 		preset: () => presetKey,
 		restProps: () => restProps,
 		class: () => klass ?? '',
-		variantProps: () => ({ disabled, min, max, step }),
-		type: () => 'number'
+		variantProps: () => ({ disabled, readonly, min, max, step }),
+		type: () => 'number',
+		base: 'input-number-field text-foreground placeholder:text-muted-foreground h-full w-full flex-1 bg-transparent text-center text-sm outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none'
 	});
 	const numberValue = $derived(number ?? 0);
 
-	const canDecrement = $derived(!disabled && (min === undefined || numberValue - step >= min));
-	const canIncrement = $derived(!disabled && (max === undefined || numberValue + step <= max));
+	const canDecrement = $derived(
+		!disabled && !readonly && (min === undefined || numberValue - step >= min)
+	);
+	const canIncrement = $derived(
+		!disabled && !readonly && (max === undefined || numberValue + step <= max)
+	);
 
 	const decrementSnippet = $derived(showControls ? (decrement ?? defaultDecrement) : undefined);
 	const incrementSnippet = $derived(showControls ? (increment ?? defaultIncrement) : undefined);
@@ -72,11 +76,9 @@
 	{max}
 	{step}
 	{disabled}
+	{readonly}
 	{placeholder}
-	class={cn(
-		'input-number-field text-foreground placeholder:text-muted-foreground h-full w-full flex-1 bg-transparent text-center text-sm outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none',
-		control.class
-	)}
+	class={control.class}
 	{...control.attrs}
 	oninput={handleInput}
 	{onchange}

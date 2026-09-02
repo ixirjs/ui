@@ -16,6 +16,8 @@ export interface ControlOptions {
 	 * datetime, color) render spans, so they declare theirs instead.
 	 */
 	type?: () => string | undefined;
+	/** The control's own base class, merged once by the seam ahead of the preset's. */
+	base?: string;
 }
 
 /** Internal control seam: identity, presentation, state mutation, and callback context. */
@@ -29,10 +31,13 @@ export function useControl(options: ControlOptions) {
 	// rest props still wins per resolution.
 	const el = Kernel.element(klass ? () => ({ class: klass(), ...rest() }) : rest, {
 		preset: options.preset() as PresetModuleName | undefined,
-		class: '',
+		class: options.base ?? '',
 		state: bond,
 		...(options.variantProps && { variantProps: options.variantProps }),
 		...(options.instance && { layer: options.instance }),
+		// A consumer-supplied `id` (Field.Control passes its own `field-control-*`) wins over
+		// `bond.controlId` in restProps merge order — which is why nothing keys a lookup on the
+		// bond id; `bond.date` is told the parsed date via `setDate` instead.
 		attrs: () => (bond ? { id: bond.controlId } : {})
 	});
 
@@ -50,8 +55,9 @@ export function useControl(options: ControlOptions) {
 	}
 
 	return {
-		// `class` and the rest travel apart: every control folds its own base class in front of the
-		// resolved one, and the file control's hidden input keeps a literal `sr-only`.
+		// `class` and the rest travel apart: a plain-field control hands its base class to the seam
+		// via `base`, while the overlay/pin controls whose class depends on focus/composition state
+		// still fold it at the tag, and the file control's hidden input keeps a literal `sr-only`.
 		get attrs() {
 			const { class: _class, ...attrs } = el.attrs;
 			return attrs;
@@ -71,7 +77,32 @@ export function useControl(options: ControlOptions) {
 		setChecked(checked: boolean) {
 			bond?.setChecked(checked);
 		},
+		setDate(date: Date | null) {
+			bond?.declareDate(date);
+		},
 		context,
+		/**
+		 * The plain-field input handler: consumer hook first, then the bindable write, the bond
+		 * write, and the semantic callback. Controls whose value is not the element's own text
+		 * (number, currency, phone's mask mode) write their own.
+		 */
+		handleInput(
+			oninput: ((event: Event) => void) | undefined,
+			onvaluechange:
+				| ((value: string, context: StateChangeContext<InputBond, Event>) => void)
+				| undefined,
+			onvalue: (value: string) => void
+		) {
+			return (event: Event) => {
+				oninput?.(event);
+				if (event.defaultPrevented) return;
+
+				const next = (event.currentTarget as HTMLInputElement).value;
+				onvalue(next);
+				bond?.setValue(next);
+				onvaluechange?.(next, context(event, 'input'));
+			};
+		},
 		notify<Value, Details extends object = Record<never, never>, E extends Event = Event>(
 			callback:
 				| ((value: Value, context: StateChangeContext<InputBond, E> & Details) => void)
@@ -95,7 +126,7 @@ export function toFiniteNumber(input: HTMLInputElement): number | undefined {
 }
 
 export const INPUT_FIELD_CLASS =
-	'text-foreground placeholder:text-muted-foreground h-full w-full flex-1 bg-transparent px-2 leading-1 outline-none';
+	'text-foreground placeholder:text-muted-foreground h-full w-full flex-1 bg-transparent px-2 leading-1 outline-none disabled:cursor-not-allowed disabled:opacity-50';
 
 /**
  * The field class for controls that paint their text in an `aria-hidden` overlay behind a
@@ -105,7 +136,7 @@ export const INPUT_FIELD_CLASS =
  * text shows through differs — on focus, on parse, or never.
  */
 export const INPUT_OVERLAY_FIELD_CLASS =
-	'relative h-full w-full flex-1 bg-transparent px-2 font-mono text-sm caret-foreground outline-none';
+	'relative h-full w-full flex-1 bg-transparent px-2 font-mono text-sm caret-foreground outline-none disabled:cursor-not-allowed disabled:opacity-50';
 
 /** Disabled affordance, applied by every control that renders its own element. */
 export const INPUT_DISABLED_CLASS = 'cursor-not-allowed opacity-50';

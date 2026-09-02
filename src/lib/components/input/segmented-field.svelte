@@ -6,10 +6,7 @@
   `parseSegments`-derived `segments` and per-kind `kindStyle`.
 -->
 <script lang="ts">
-	import {
-		INPUT_DISABLED_CLASS,
-		INPUT_OVERLAY_FIELD_CLASS
-	} from '$ixirjs/ui/components/input/shared';
+	import { INPUT_OVERLAY_FIELD_CLASS } from '$ixirjs/ui/components/input/shared';
 	import { cn, type ClassValue } from '$ixirjs/ui/utils';
 	import SegmentOverlay from './segment-overlay.svelte';
 	import type { InputControlHandle } from './shared';
@@ -27,10 +24,15 @@
 		class: klass = '',
 		overlayWhen = true,
 		control,
+		inputmode = undefined,
+		autocomplete = undefined,
+		spellcheck = undefined,
+		onpaste = undefined,
+		onfocus = undefined,
+		onblur = undefined,
 		onchange = undefined,
 		oninput = undefined,
-		onvaluechange = undefined,
-		...restProps
+		onvaluechange = undefined
 	}: {
 		value?: string;
 		segments: Segment[];
@@ -45,12 +47,17 @@
 		// from their own focus state; the always-on callers (email, url) leave it alone.
 		overlayWhen?: boolean;
 		control: InputControlHandle;
+		inputmode?: import('svelte/elements').HTMLInputAttributes['inputmode'];
+		autocomplete?: import('svelte/elements').HTMLInputAttributes['autocomplete'];
+		spellcheck?: boolean;
+		onpaste?: ((event: ClipboardEvent) => void) | undefined;
+		onfocus?: ((event: FocusEvent) => void) | undefined;
+		onblur?: ((event: FocusEvent) => void) | undefined;
 		onchange?: ((event: Event) => void) | undefined;
 		oninput?: ((event: Event) => void) | undefined;
 		onvaluechange?:
 			| import('$ixirjs/ui/types').StateChangeCallback<string, import('./bond.svelte').InputBond>
 			| undefined;
-		[key: string]: unknown;
 	} = $props();
 
 	let inputEl = $state<HTMLInputElement>();
@@ -63,15 +70,12 @@
 		scrollLeft = inputEl?.scrollLeft ?? 0;
 	}
 
-	function handleInput(event: Event) {
-		oninput?.(event);
-		if (event.defaultPrevented) return;
-
-		value = (event.currentTarget as HTMLInputElement).value;
-		control.setValue(value);
-		syncScroll();
-		control.notify(onvaluechange, value, event, 'input');
-	}
+	const handleInput = $derived(
+		control.handleInput(oninput, onvaluechange, (next) => {
+			value = next;
+			syncScroll();
+		})
+	);
 </script>
 
 <span class="relative flex h-full w-full flex-1 items-center overflow-hidden">
@@ -91,12 +95,16 @@
 			overlayWhen
 				? 'text-transparent placeholder:text-transparent'
 				: 'text-foreground placeholder:text-muted-foreground',
-			disabled && INPUT_DISABLED_CLASS,
 			control.class,
 			klass
 		)}
 		{...control.attrs}
-		{...restProps}
+		{inputmode}
+		{autocomplete}
+		{spellcheck}
+		{onpaste}
+		{onfocus}
+		{onblur}
 		oninput={handleInput}
 		{onchange}
 		onscroll={syncScroll}

@@ -1,9 +1,5 @@
 <script lang="ts">
-	import {
-		useControl,
-		INPUT_DISABLED_CLASS,
-		INPUT_OVERLAY_FIELD_CLASS
-	} from '$ixirjs/ui/components/input/shared';
+	import { useControl, INPUT_OVERLAY_FIELD_CLASS } from '$ixirjs/ui/components/input/shared';
 	import { cn } from '$ixirjs/ui/utils';
 	import SegmentOverlay from './segment-overlay.svelte';
 	import {
@@ -40,7 +36,7 @@
 		preset: () => presetKey,
 		restProps: () => restProps,
 		class: () => klass,
-		type: () => 'text'
+		type: () => 'tel'
 	});
 
 	let inputEl = $state<HTMLInputElement>();
@@ -71,7 +67,8 @@
 		// re-place caret via rAF to beat the browser's own placement
 		if (isFocused) {
 			const pos = nextPhoneCursorPos(tokens, value);
-			requestAnimationFrame(() => inputEl?.setSelectionRange(pos, pos));
+			const raf = requestAnimationFrame(() => inputEl?.setSelectionRange(pos, pos));
+			return () => cancelAnimationFrame(raf);
 		}
 	});
 
@@ -129,17 +126,9 @@
 
 	// Paste handler
 	function handlePaste(ev: ClipboardEvent) {
+		if (!format) return; // free mode: let native paste fire the `input` event handleInput handles
 		ev.preventDefault();
 		const pasted = ev.clipboardData?.getData('text') ?? '';
-
-		if (!format) {
-			// free mode: insert at caret
-			const input = ev.currentTarget as HTMLInputElement;
-			const start = input.selectionStart ?? value.length;
-			const end = input.selectionEnd ?? value.length;
-			commitValue(value.slice(0, start) + pasted + value.slice(end), ev, 'paste');
-			return;
-		}
 
 		// mask mode: keep digits only, clamp to maxDigits
 		const digits = pasted.replace(/\D/g, '').slice(0, maxDigits);
@@ -188,7 +177,6 @@
 			class={cn(
 				INPUT_OVERLAY_FIELD_CLASS,
 				'text-transparent placeholder:text-transparent',
-				disabled && INPUT_DISABLED_CLASS,
 				control.class
 			)}
 			{...control.attrs}
@@ -205,18 +193,18 @@
 
 {#snippet freeInput()}
 	<!-- Free mode: plain input -->
+	<!-- value is an attribute, not a binding: handleInput is the sole writer -->
 	<input
 		bind:this={inputEl}
 		type="text"
 		inputmode="tel"
-		bind:value
+		{value}
 		{placeholder}
 		{disabled}
 		{readonly}
 		class={cn(
-			'h-full w-full flex-1 bg-transparent px-2 font-mono text-sm outline-none',
+			'h-full w-full flex-1 bg-transparent px-2 font-mono text-sm outline-none disabled:cursor-not-allowed disabled:opacity-50',
 			'text-foreground placeholder:text-muted-foreground',
-			disabled && INPUT_DISABLED_CLASS,
 			control.class
 		)}
 		{...control.attrs}

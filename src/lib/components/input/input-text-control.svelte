@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { useControl, INPUT_FIELD_CLASS } from './shared';
-	import { cn } from '$ixirjs/ui/utils';
 	import type { InputTextControlProps } from './types';
 
 	let {
@@ -22,28 +21,20 @@
 		restProps: () => restProps,
 		class: () => klass,
 		variantProps: () => ({ disabled, readonly, type }),
-		type: () => type
+		type: () => type,
+		base: INPUT_FIELD_CLASS
 	});
-
-	function handleInput(event: Event) {
-		oninput?.(event);
-		if (event.defaultPrevented) return;
-
-		value = (event.currentTarget as HTMLInputElement).value;
-		control.setValue(value);
-		control.notify(onvaluechange, value, event, 'input');
-	}
 </script>
 
-<!-- `value` is an attribute, not a binding: `handleInput` below is the sole writer. -->
+<!-- `value` is an attribute, not a binding: `control.handleInput` below is the sole writer. -->
 <input
 	{value}
 	{type}
 	{placeholder}
 	{disabled}
 	{readonly}
-	class={cn(INPUT_FIELD_CLASS, control.class)}
+	class={control.class}
 	{...control.attrs}
 	{onchange}
-	oninput={handleInput}
+	oninput={control.handleInput(oninput, onvaluechange, (next) => (value = next))}
 />

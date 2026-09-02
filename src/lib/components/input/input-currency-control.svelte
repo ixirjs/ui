@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { useControl, INPUT_DISABLED_CLASS, INPUT_OVERLAY_FIELD_CLASS } from './shared';
+	import { useControl, INPUT_OVERLAY_FIELD_CLASS } from './shared';
 	import { cn } from '$ixirjs/ui/utils';
 	import SegmentOverlay from './segment-overlay.svelte';
 	import { clamp as clampRange } from '$ixirjs/ui/utils/math';
@@ -37,6 +37,9 @@
 
 	let inputEl = $state<HTMLInputElement>();
 	let isFocused = $state(false);
+	// The in-progress edit string. The element's `value` attribute renders it, so a rerender while
+	// focused restores what was typed instead of clobbering it.
+	let draft = $state('');
 
 	// Locale separators + pre-compiled regexes
 	const separators = $derived.by(() => {
@@ -120,7 +123,8 @@
 	function handleFocus() {
 		if (readonly) return;
 		isFocused = true;
-		if (inputEl) inputEl.value = amount !== undefined ? toEditString(amount) : '';
+		draft = amount !== undefined ? toEditString(amount) : '';
+		if (inputEl) inputEl.value = draft;
 	}
 
 	function handleBlur(event: FocusEvent) {
@@ -130,8 +134,19 @@
 	}
 
 	function handleInput(event: Event) {
-		// Currency commits on blur or an explicit keyboard/paste operation.
 		oninput?.(event);
+		if (event.defaultPrevented) return;
+
+		draft = (event.currentTarget as HTMLInputElement).value;
+		// `commitAndNotify` is equality-gated, so this is safe alongside the blur/change commits.
+		commitAndNotify(parseRaw(draft), event, 'input');
+	}
+
+	function handleChange(event: Event) {
+		onchange?.(event);
+		if (event.defaultPrevented) return;
+
+		commitAndNotify(parseRaw(inputEl?.value ?? ''), event, 'change');
 	}
 
 	function handleKeydown(ev: KeyboardEvent) {
@@ -141,15 +156,16 @@
 		const dir = ev.key === 'ArrowUp' ? 1 : -1;
 		const multiplier = ev.shiftKey ? 10 : ev.altKey ? 0.1 : 1;
 		commitAndNotify((amount ?? 0) + dir * stepSize * multiplier, ev, 'step');
-		if (inputEl && amount !== undefined) inputEl.value = toEditString(amount);
+		if (amount !== undefined) draft = toEditString(amount);
+		if (inputEl && amount !== undefined) inputEl.value = draft;
 	}
 
 	function handlePaste(ev: ClipboardEvent) {
 		ev.preventDefault();
 		const parsed = parseRaw(ev.clipboardData?.getData('text') ?? '');
 		if (parsed === undefined) return;
-		const str = toEditString(parsed);
-		if (inputEl) inputEl.value = str;
+		draft = toEditString(parsed);
+		if (inputEl) inputEl.value = draft;
 		commitAndNotify(parsed, ev, 'paste');
 	}
 </script>
@@ -170,7 +186,7 @@
 		inputmode="decimal"
 		autocomplete="off"
 		spellcheck={false}
-		value={isFocused ? (amount !== undefined ? toEditString(amount) : '') : ''}
+		value={isFocused ? draft : ''}
 		{placeholder}
 		{disabled}
 		{readonly}
@@ -179,12 +195,11 @@
 			isFocused
 				? 'text-foreground placeholder:text-muted-foreground'
 				: 'text-transparent placeholder:text-transparent',
-			disabled && INPUT_DISABLED_CLASS,
 			control.class
 		)}
 		{...control.attrs}
 		oninput={handleInput}
-		{onchange}
+		onchange={handleChange}
 		onfocus={handleFocus}
 		onblur={handleBlur}
 		onkeydown={handleKeydown}
