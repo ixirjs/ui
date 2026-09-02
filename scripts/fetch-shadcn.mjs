@@ -22,7 +22,9 @@ const ITEMS = [
 	'table',
 	'badge',
 	'separator',
-	'label'
+	'label',
+	'input',
+	'popover'
 ];
 
 const VERIFY = process.argv.includes('--verify');

@@ -12,6 +12,11 @@ import IxirTableDirect from './ixir-table-direct.test.svelte';
 import ShadcnTable from './shadcn-table.test.svelte';
 import IxirMenu from './ixir-menu.test.svelte';
 import ShadcnMenu from './shadcn-menu.test.svelte';
+import IxirInput from './ixir-input.test.svelte';
+import ShadcnInput from './shadcn-input.test.svelte';
+import IxirInputBare from './ixir-input-bare.test.svelte';
+import IxirPopover from './ixir-popover.test.svelte';
+import ShadcnPopover from './shadcn-popover.test.svelte';
 import IxirTree from './ixir-tree.test.svelte';
 import ControlTree from './control-tree.test.svelte';
 
@@ -83,6 +88,26 @@ export const FAMILIES: Family[] = [
 		opponent: 'zero',
 		ixir: IxirTableDirect,
 		shadcn: ShadcnTable
+	},
+	// One unit is one text field. shadcn's is a bare `<input>`; ours is Root + Control, so the
+	// skeletons differ by construction — the census prints the difference rather than hiding it.
+	{ name: 'input', unit: 'per field', opponent: 'zero', ixir: IxirInput, shadcn: ShadcnInput },
+	// The same field as the control alone, no Root: the like-for-like skeleton against shadcn.
+	{
+		name: 'input-bare',
+		unit: 'per field',
+		opponent: 'zero',
+		ixir: IxirInputBare,
+		shadcn: ShadcnInput
+	},
+	// One unit is one OPEN popover: trigger + content. bits-ui gets `ContentStatic` + `forceMount`
+	// so the server emits content instead of an empty portal.
+	{
+		name: 'popover',
+		unit: 'per popover',
+		opponent: 'bits',
+		ixir: IxirPopover,
+		shadcn: ShadcnPopover
 	},
 	{ name: 'menu', unit: 'per item', opponent: 'bits', ixir: IxirMenu, shadcn: ShadcnMenu },
 	{

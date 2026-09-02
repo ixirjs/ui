@@ -1,11 +1,11 @@
 {
 	"source": "https://shadcn-svelte.com/registry",
-	"fetched": "2026-08-21",
+	"fetched": "2026-09-02",
 	"shadcnSvelteCli": "1.5.0",
 	"bitsUi": "2.19.0",
 	"tailwindVariants": "^3.3.1",
 	"svelte": "5.56.8",
-	"registryHash": "bb18a383f940250b",
+	"registryHash": "b7278016a3be6377",
 	"items": [
 		"button",
 		"card",
@@ -16,7 +16,9 @@
 		"table",
 		"badge",
 		"separator",
-		"label"
+		"label",
+		"input",
+		"popover"
 	],
 	"files": [
 		"accordion/accordion-content.svelte",
@@ -65,8 +67,16 @@
 		"dropdown-menu/dropdown-menu-trigger.svelte",
 		"dropdown-menu/dropdown-menu.svelte",
 		"dropdown-menu/index.ts",
+		"input/index.ts",
+		"input/input.svelte",
 		"label/index.ts",
 		"label/label.svelte",
+		"popover/index.ts",
+		"popover/popover-close.svelte",
+		"popover/popover-content.svelte",
+		"popover/popover-portal.svelte",
+		"popover/popover-trigger.svelte",
+		"popover/popover.svelte",
 		"select/index.ts",
 		"select/select-content.svelte",
 		"select/select-group-heading.svelte",
