@@ -345,7 +345,7 @@ export const inputRootProps: PropDefinition[] = [
 	},
 	{
 		name: 'value',
-		type: 'string | number | string[] | null',
+		type: 'string | number | string[] | Date | null',
 		default: 'undefined',
 		description: 'The current value of the input. Bind this prop for two-way value binding.'
 	},
@@ -525,7 +525,7 @@ export const inputNumberControlOwnProps: PropDefinition[] = [
 	},
 	{
 		name: 'onnumberchange',
-		type: 'StateChangeCallback<number | undefined, InputBond>',
+		type: 'InputStateChangeCallback<number | undefined, Record<never, never>, Event>',
 		default: 'undefined',
 		description: 'Semantic number callback; native `oninput` and `onchange` are event-only.'
 	},
@@ -796,7 +796,7 @@ export const inputFileControlOwnProps: PropDefinition[] = [
 	},
 	{
 		name: 'onfileschange',
-		type: 'StateChangeCallback<File[], InputBond>',
+		type: 'InputStateChangeCallback<File[], Record<never, never>, Event>',
 		default: 'undefined',
 		description: 'Semantic file-list callback; native `oninput` and `onchange` are event-only.'
 	},
@@ -835,7 +835,7 @@ export const inputTextControlProps: PropDefinition[] = [
 	},
 	{
 		name: 'onvaluechange',
-		type: 'StateChangeCallback<string, InputBond>',
+		type: 'InputStateChangeCallback<string, Record<never, never>, Event>',
 		default: 'undefined',
 		description: 'Semantic value callback; native `oninput` and `onchange` are event-only.'
 	},
@@ -900,7 +900,7 @@ export const inputPasswordControlProps: PropDefinition[] = [
 	},
 	{
 		name: 'onvaluechange',
-		type: 'StateChangeCallback<string, InputBond>',
+		type: 'InputStateChangeCallback<string, Record<never, never>, Event>',
 		default: 'undefined',
 		description: 'Semantic value callback; native `oninput` and `onchange` are event-only.'
 	},
@@ -1066,7 +1066,7 @@ export const inputPhoneControlProps: PropDefinition[] = [
 	},
 	{
 		name: 'onvaluechange',
-		type: 'StateChangeCallback<string, InputBond>',
+		type: 'InputStateChangeCallback<string, Record<never, never>, Event>',
 		default: 'undefined',
 		description: 'Semantic value callback; native `oninput` and `onchange` are event-only.'
 	},
@@ -1257,7 +1257,7 @@ export const inputPinControlProps: PropDefinition[] = [
 	},
 	{
 		name: 'onvaluechange',
-		type: 'StateChangeCallback<string, InputBond>',
+		type: 'InputStateChangeCallback<string, Record<never, never>, Event>',
 		default: 'undefined',
 		description: 'Semantic value callback; native `oninput` and `onchange` are event-only.'
 	},
@@ -1354,7 +1354,7 @@ export const inputNumberControlProps: PropDefinition[] = [
 	},
 	{
 		name: 'onnumberchange',
-		type: '(value: number | undefined, context: StateChangeContext<InputBond, Event>) => void',
+		type: '(value: number | undefined, context: StateChangeContext<InputBond, Event> & Record<never, never>) => void',
 		default: 'undefined',
 		description: 'Semantic number callback; native `oninput` and `onchange` are event-only.'
 	},
@@ -1431,7 +1431,7 @@ export const inputFileControlProps: PropDefinition[] = [
 	},
 	{
 		name: 'onfileschange',
-		type: '(value: File[], context: StateChangeContext<InputBond, Event>) => void',
+		type: '(value: File[], context: StateChangeContext<InputBond, Event> & Record<never, never>) => void',
 		default: 'undefined',
 		description: 'Semantic file-list callback; native `oninput` and `onchange` are event-only.'
 	},
@@ -1496,7 +1496,7 @@ export const inputUrlControlProps: PropDefinition[] = [
 	},
 	{
 		name: 'onvaluechange',
-		type: '(value: string, context: StateChangeContext<InputBond, Event>) => void',
+		type: '(value: string, context: StateChangeContext<InputBond, Event> & Record<never, never>) => void',
 		default: 'undefined',
 		description: 'Semantic value callback; native `oninput` and `onchange` are event-only.'
 	},
@@ -1555,7 +1555,7 @@ export const inputEmailControlProps: PropDefinition[] = [
 	},
 	{
 		name: 'onvaluechange',
-		type: '(value: string, context: StateChangeContext<InputBond, Event>) => void',
+		type: '(value: string, context: StateChangeContext<InputBond, Event> & Record<never, never>) => void',
 		default: 'undefined',
 		description: 'Semantic value callback; native `oninput` and `onchange` are event-only.'
 	},
@@ -1632,7 +1632,7 @@ export const inputOtpControlProps: PropDefinition[] = [
 	},
 	{
 		name: 'onvaluechange',
-		type: '(value: string, context: StateChangeContext<InputBond, Event>) => void',
+		type: '(value: string, context: StateChangeContext<InputBond, Event> & Record<never, never>) => void',
 		default: 'undefined',
 		description: 'Semantic value callback; native `oninput` and `onchange` are event-only.'
 	},

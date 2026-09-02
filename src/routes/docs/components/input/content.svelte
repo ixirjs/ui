@@ -90,17 +90,45 @@
 
 		<DocSection title="Input.Root" subtitle="The styled container — wrap every control with this">
 			<DocOnly for="markdown">
-				💡 **Why a compound component?** `Input.Root` is the shared styled shell. Every control
-				lives inside one. Other components (dropdowns, selects) can reuse the same shell for visual
-				consistency without rebuilding it.
+				💡 **Why a compound component?** `Input.Root` is the reusable field shell — the bordered
+				frame that every control lives inside, and that Combobox, Popover, DropdownMenu and your own
+				compositions fill with custom content: icons, chips, triggers, any markup. Its state is what
+				spans that content (`Input.Placeholder`, root-level `bind:value`, the `{'{ input }'}`
+				snippet argument), so the shell is the default shape. The one exception: a plain text field
+				repeated many times with nothing to coordinate can render `InputTextControl` alone — it
+				keeps every preset and class hook and drops the shell.
 			</DocOnly>
 			<DocOnly for="html">
 				<DocCallout variant="info" title="Why a compound component?">
-					<code class="bg-muted rounded px-1.5 py-0.5 text-xs">Input.Root</code> is the shared styled
-					shell. Every control lives inside one. Other components (dropdowns, selects) can reuse the same
-					shell for visual consistency without rebuilding it.
+					<code class="bg-muted rounded px-1.5 py-0.5 text-xs">Input.Root</code> is the reusable
+					field shell — the bordered frame that every control lives inside, and that Combobox,
+					Popover, DropdownMenu and your own compositions fill with custom content: icons, chips,
+					triggers, any markup. Its state is what spans that content (<code
+						class="bg-muted rounded px-1.5 py-0.5 text-xs">Input.Placeholder</code
+					>, root-level <code class="bg-muted rounded px-1.5 py-0.5 text-xs">bind:value</code>, the
+					<code class="bg-muted rounded px-1.5 py-0.5 text-xs">{'{ input }'}</code> snippet
+					argument), so the shell is the default shape. The one exception: a plain text field
+					repeated many times with nothing to coordinate can render
+					<code class="bg-muted rounded px-1.5 py-0.5 text-xs">InputTextControl</code> alone — it keeps
+					every preset and class hook and drops the shell.
 				</DocCallout>
 			</DocOnly>
+
+			<DocExample
+				title="Custom content"
+				description="The shell takes any markup, not only controls — here a chip, a control and a trailing action share one frame."
+				code={`<Input.Root>
+  <span class="chip">Tag</span>
+  <Input.TextControl placeholder="Add a tag…" />
+  <button type="button">Add</button>
+</Input.Root>`}
+			>
+				<Input.Root class="w-72 gap-1 pl-1">
+					<span class="bg-muted text-foreground rounded px-1.5 py-0.5 text-xs">Tag</span>
+					<Input.TextControl placeholder="Add a tag…" />
+					<button type="button" class="text-muted-foreground px-2 text-xs">Add</button>
+				</Input.Root>
+			</DocExample>
 
 			<DocExample
 				title="With Icon"
