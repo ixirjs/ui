@@ -30,8 +30,8 @@
 		"datagrid": {
 			"micros": 12.6,
 			"gcShare": 0.197,
-			"bytesPerUnit": 743,
-			"sha": "6ab456e7c00b"
+			"bytesPerUnit": 722,
+			"sha": "6966a2d2755b"
 		},
 		"tree": {
 			"micros": 23.74,

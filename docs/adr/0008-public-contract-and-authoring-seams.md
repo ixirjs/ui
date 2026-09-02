@@ -107,6 +107,12 @@ The contract includes:
   attributes on those parts. `AccordionItem.Header` (polymorphic `as="button"`) and
   `AccordionItem.Body` (real enter/exit transitions) keep the dispatch. A root's own element still
   resolves fully when its source is rich (`variants`, `presetLayer`, a function preset).
+  `DataGrid.Cell` joined them on 2026-08-30 (`DatagridCellProps<T>` — the `E`/`B` type parameters
+  are gone with `as`/`base`): a `role="gridcell"` div inside a CSS grid has no legitimate retag,
+  and a literal cell is −24% on a row's mount (`perf-vs-shadcn-2026-08.md` §19). With no
+  dispatch left to render nothing through, a hidden column's cell now renders with the `hidden`
+  attribute — out of the layout and the accessibility tree, but present in the DOM and in SSR
+  output.
 - An Atom declares whether it captures its element: `static capturesElement = false` on a class,
   `captures: false` in a `defineAtom` spec. Nothing in the public contract reads a part's `.element`
   that its rendered `id` cannot find.

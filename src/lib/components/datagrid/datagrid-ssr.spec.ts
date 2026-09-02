@@ -10,8 +10,11 @@ describe('DataGrid SSR', () => {
 		expect(body).toContain('Active');
 		expect(body).toContain('Bob');
 		expect(body).toContain('Pending');
-		expect(body).not.toContain('classified');
-		expect(body).not.toContain('private');
+		// A hidden column's cell is rendered with `hidden` rather than omitted: the cell is a literal
+		// tag with no block of its own (ADR 0008, 2026-08-30), and `hidden` keeps it out of the
+		// layout and the accessibility tree alike.
+		expect(body).toMatch(/role="gridcell" hidden=""><!---->classified</);
+		expect(body).toMatch(/role="gridcell" hidden=""><!---->private</);
 	});
 
 	it('uses the explicit fallback template during server rendering', () => {

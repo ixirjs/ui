@@ -126,11 +126,9 @@ export interface DatagridColumnProps<
 
 // `onclick` was re-declared here; it is now inherited from `ElementProps` with the same element
 // type. Kept as an interface rather than collapsed to an alias so it stays augmentable.
-export interface DatagridCellProps<
-	T = unknown,
-	E extends HtmlElementTagName = 'div',
-	B extends Base = Base
-> extends RenderProps<E, B, DatagridChildren<T>> {
+// The cell IS its `<div>` — no `as`, no `base`, no motion (`PlainPartProps`, ADR 0008): the
+// dispatch that honoured them was half of a cell's mount cost, three cells per row.
+export interface DatagridCellProps<T = unknown> extends PlainPartProps<'div', DatagridChildren<T>> {
 	/** Native click callback. Receives only the DOM event. */
 	onclick?: ((event: MouseEvent) => void) | undefined;
 }

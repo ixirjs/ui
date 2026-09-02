@@ -61,8 +61,10 @@ describe('hydration-anchor budget (comments per rendered unit)', () => {
 	});
 
 	// 20 → 19 on 2026-08-25: the row IS its element (`PlainPartProps`), no dispatch anchor. §17.
+	// 19 → 16 on 2026-08-30: so is each of the three cells — a hidden column's cell carries
+	// `hidden` instead of dispatching to nothing, which removes the block per cell. §19.
 	it('datagrid row (record row + three cells)', () => {
-		expect(marginalComments(DatagridAblation, (n) => ({ n }))).toBe(19);
+		expect(marginalComments(DatagridAblation, (n) => ({ n }))).toBe(16);
 	});
 
 	// Pinned the day Tree's root/header/body became their element: 3 anchors fewer per node than the

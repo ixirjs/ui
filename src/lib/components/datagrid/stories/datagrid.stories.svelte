@@ -239,22 +239,20 @@
 								</span>
 							</DataGridCmp.Cell>
 
-							<DataGridCmp.Cell
-								base={Select.Root}
-								class="justify-end"
-								placement="bottom-end"
-								offset={0}
-							>
-								<Select.Trigger
-									class="flex aspect-square items-center justify-center rounded-md p-1 text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground"
-								>
-									<Icon src={MoreVerticalIcon} />
-								</Select.Trigger>
-								<Select.Content>
-									<Select.Item value="view">View Profile</Select.Item>
-									<Select.Item value="edit">Edit</Select.Item>
-									<Select.Item value="remove">Remove</Select.Item>
-								</Select.Content>
+							<!-- A cell is its own <div> (no `base`), so the row menu's Select nests inside it. -->
+							<DataGridCmp.Cell class="justify-end">
+								<Select.Root placement="bottom-end" offset={0}>
+									<Select.Trigger
+										class="flex aspect-square items-center justify-center rounded-md p-1 text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground"
+									>
+										<Icon src={MoreVerticalIcon} />
+									</Select.Trigger>
+									<Select.Content>
+										<Select.Item value="view">View Profile</Select.Item>
+										<Select.Item value="edit">Edit</Select.Item>
+										<Select.Item value="remove">Remove</Select.Item>
+									</Select.Content>
+								</Select.Root>
 							</DataGridCmp.Cell>
 						</DataGridCmp.Row>
 					{/each}

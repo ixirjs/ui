@@ -1,14 +1,10 @@
 <script lang="ts" module>
 	const CELL_ATTRS = { role: 'gridcell' };
-	const cellAttrs = () => CELL_ATTRS;
+	const HIDDEN_CELL_ATTRS = { role: 'gridcell', hidden: true };
 </script>
 
-<script
-	lang="ts"
-	generics="T = unknown, E extends HtmlElementTagName = 'div', B extends Base = Base"
->
+<script lang="ts" generics="T = unknown">
 	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
-	import type { Base, BasePropsOf, HtmlElementTagName } from '$ixirjs/ui/authoring';
 	import type { DataGridBond } from '$ixirjs/ui/components/datagrid/bond.svelte';
 	import { getDatagridRowRenderContext } from '$ixirjs/ui/components/datagrid/context';
 	import type { DatagridCellProps } from '$ixirjs/ui/components/datagrid/types';
@@ -18,29 +14,21 @@
 	const bond = rowRender?.datagrid as DataGridBond<T> | undefined;
 	const initialIndex = rowRender?.claimCellIndex();
 
-	let {
-		as = undefined,
-		base = undefined,
-		children = undefined,
-		...restProps
-	}: DatagridCellProps<T, E, B> & BasePropsOf<B> = $props();
+	const props: DatagridCellProps<T> = $props();
 
-	const isHidden = $derived(
-		!bond || initialIndex === undefined
-			? false
-			: (bond.columnAt(initialIndex)?.props.hidden ?? false)
-	);
-
-	const el = Kernel.element(() => restProps, {
+	// The cell IS its `<div>` (`PlainPartProps`): no `as`, no `base`, no motion, and no dispatch —
+	// a hidden column's cell carries `hidden` instead of rendering nothing, which is what lets the
+	// part be a literal tag with no block, branch or anchor of its own
+	// (perf-vs-shadcn-2026-08.md §19).
+	const el = Kernel.element(() => props, {
 		preset: 'datagrid.cell',
 		class: 'border-border flex h-full items-center py-2 text-left',
 		state: bond,
-		as: () => as,
-		base: () => base,
-		attrs: cellAttrs
+		attrs: () =>
+			!bond || initialIndex === undefined || !(bond.columnAt(initialIndex)?.props.hidden ?? false)
+				? CELL_ATTRS
+				: HIDDEN_CELL_ATTRS
 	});
-	const leaf = Kernel.render(el);
 </script>
 
-<!-- One computed-callee render keeps a hidden cell at one anchor. -->
-{@render (isHidden ? undefined : leaf)?.(el, children, { datagrid: bond })}
+<div {...el.attrs}>{@render props.children?.({ datagrid: bond })}</div>
