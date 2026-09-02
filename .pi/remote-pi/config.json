@@ -1,4 +1,4 @@
 {
-  "agent_name": "ui",
-  "auto_start_relay": true
+	"agent_name": "ui",
+	"auto_start_relay": true
 }
