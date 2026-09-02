@@ -144,10 +144,6 @@ export interface FieldControlProps<
 > extends RenderProps<E, B, FieldChildren> {
 	/** Current value of the control. */
 	value?: unknown;
-	/** The value reinterpreted as a Date; `undefined` when it does not parse. */
-	valueAsDate?: Date;
-	/** The value reinterpreted as a number; `NaN` when it does not parse. */
-	valueAsNumber?: number;
 	/** Bindable parsed Date, for date and datetime controls. */
 	date?: Date | null;
 	/** Bindable parsed number, for numeric controls. */

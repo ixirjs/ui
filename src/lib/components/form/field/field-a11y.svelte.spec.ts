@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { tick } from 'svelte';
 import Probe from '$ixirjs/ui/test/components/form/field/field-a11y.test.svelte';
+import DisabledProbe from '$ixirjs/ui/test/components/form/field/field-a11y-disabled.test.svelte';
 
 // Parts are located by the ids they render (`field-<part>-<seed>`): the redesigned Kernel emits no
 // DEV `data-kind` markers. This proves the rendered control
@@ -44,5 +45,20 @@ describe('Field.Root — Bond state does not leak onto the element', () => {
 			expect(root.hasAttribute(attr), `${attr} leaked onto the field root`).toBe(false);
 		}
 		expect(root.outerHTML).not.toContain('[object Object]');
+	});
+});
+
+// Field state (disabled/readonly/required) must reach the native input, not just its aria/data
+// twins — a screen reader honours aria-disabled, but form submission and browser behaviour honour
+// the plain attribute.
+describe('Field.Control — disabled/readonly/required reach the native input', () => {
+	it('sets the native boolean properties, not just aria/data', async () => {
+		render(DisabledProbe, { value: '' });
+		await tick();
+		const el = document.querySelector<HTMLInputElement>('[data-testid="probe-control"]')!;
+
+		expect(el.disabled).toBe(true);
+		expect(el.readOnly).toBe(true);
+		expect(el.required).toBe(true);
 	});
 });

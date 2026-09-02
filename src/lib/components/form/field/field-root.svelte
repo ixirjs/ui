@@ -69,9 +69,6 @@
 		set checked(next: boolean | undefined) {
 			checked = next;
 		},
-		get type() {
-			return typeof value;
-		},
 		get disabled() {
 			return disabled;
 		},

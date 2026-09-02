@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
 	import { FieldContext } from './bond.svelte';
 	import type { StateChangeContext } from '$ixirjs/ui/types';
@@ -123,6 +124,10 @@
 
 	// The ordinary control reaches a native leaf unless the consumer supplies `base`; the value
 	// shapes and handlers travel as element props so a renderer receives them unchanged.
+	// Read once at init, matching field-root's `factory` read: `class` must be a static string, and
+	// the wrapper's own class must not land on a consumer-supplied `base` (e.g. Input.Control).
+	const hasBase = untrack(() => base !== undefined);
+
 	const el = Kernel.element(
 		() => ({
 			...restProps,
@@ -143,7 +148,7 @@
 		}),
 		{
 			preset: 'field.control',
-			class: 'border-border flex items-center',
+			class: hasBase ? '' : 'border-border flex items-center',
 			state: bond,
 			as: () => as,
 			base: () => base,
@@ -156,10 +161,13 @@
 					id,
 					'aria-labelledby': bond.labelId,
 					'aria-describedby': bond.descriptionId,
+					disabled: disabled || undefined,
 					'data-disabled': disabled ? '' : undefined,
 					'aria-disabled': disabled ? 'true' : 'false',
+					readonly: readonly || undefined,
 					'data-readonly': readonly ? '' : undefined,
 					'aria-readonly': readonly ? 'true' : 'false',
+					required: required || undefined,
 					'data-required': required ? '' : undefined,
 					// No meaningful "false": an optional control does not advertise the attribute.
 					'aria-required': required ? 'true' : undefined,

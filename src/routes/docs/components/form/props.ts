@@ -157,18 +157,6 @@ export const fieldControlProps: PropDefinition[] = [
 		default: 'undefined',
 		description: 'Current value of the control.'
 	},
-	{
-		name: 'valueAsDate',
-		type: 'Date',
-		default: 'undefined',
-		description: 'The value reinterpreted as a Date; `undefined` when it does not parse.'
-	},
-	{
-		name: 'valueAsNumber',
-		type: 'number',
-		default: 'undefined',
-		description: 'The value reinterpreted as a number; `NaN` when it does not parse.'
-	},
 	renderPropsRow
 ];
 
