@@ -182,7 +182,10 @@
 
 <!-- Functional: fn( ch sep ch sep ch [/ alpha] ) -->
 {#snippet functionalFormat()}
-	<span class="font-mono text-sm text-blue-500 select-none dark:text-blue-400">{def.fn}</span>
+	<span
+		class="font-mono text-sm select-none"
+		style="color: var(--input-hl-primary, var(--foreground))">{def.fn}</span
+	>
 	<span class="text-muted-foreground font-mono text-sm select-none">(</span>
 	{@render (def.colorspace ? colorspaceLabel : undefined)?.()}
 	{#each def.channels as ch, i (ch.id)}
@@ -194,8 +197,9 @@
 {/snippet}
 
 {#snippet colorspaceLabel()}
-	<span class="mr-1 font-mono text-sm text-violet-500 select-none dark:text-violet-400"
-		>{def.colorspace}</span
+	<span
+		class="mr-1 font-mono text-sm select-none"
+		style="color: var(--input-hl-secondary, var(--foreground))">{def.colorspace}</span
 	>
 {/snippet}
 

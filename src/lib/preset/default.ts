@@ -199,12 +199,8 @@ const styledEntries = {
 	field: entry(layout.stack, 'gap-2'),
 	'field.label': entry(text.label),
 	'field.helper-text': entry(text.meta),
-	input: entry(layout.stack, 'gap-1'),
-	'input.control': entry(
-		interaction.focus,
-		interaction.control,
-		'w-full rounded-md border border-input bg-background px-3 py-2 text-sm'
-	),
+	input: entry('gap-1'),
+	'input.control': entry(interaction.focus, interaction.control, 'text-sm'),
 	label: entry(text.label),
 	'list.root': entry(layout.stack, surface.card, 'divide-y divide-border'),
 	'list.item': entry('px-4 py-3'),
