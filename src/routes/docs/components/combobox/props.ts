@@ -221,8 +221,8 @@ export const comboboxControlProps: PropDefinition[] = [
 	},
 	{
 		name: 'date',
-		type: 'Date | null',
-		default: 'null',
+		type: 'Date | undefined',
+		default: 'undefined',
 		description: 'Date value for date inputs'
 	},
 	{
@@ -251,7 +251,7 @@ export const comboboxControlProps: PropDefinition[] = [
 	},
 	{
 		name: 'ondatechange',
-		type: 'InputStateChangeCallback<Date | null, InputControlChangeDetails, Event>',
+		type: 'InputStateChangeCallback<Date | undefined, InputControlChangeDetails, Event>',
 		default: 'undefined',
 		description: 'Semantic callback for native date/time input types.'
 	},
