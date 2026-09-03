@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { useControl, toFiniteNumber } from './shared';
-	import type { InputNumberControlProps } from './types';
+	import type { InputChangeReason, InputNumberControlProps } from './types';
 
 	let {
 		class: klass = '',
@@ -18,6 +18,7 @@
 		onchange = undefined,
 		oninput = undefined,
 		onnumberchange = undefined,
+		onvaluechange = undefined,
 		...restProps
 	}: InputNumberControlProps = $props();
 
@@ -41,18 +42,24 @@
 	const decrementSnippet = $derived(showControls ? (decrement ?? defaultDecrement) : undefined);
 	const incrementSnippet = $derived(showControls ? (increment ?? defaultIncrement) : undefined);
 
+	// `onnumberchange` is the deprecated alias; both fire with the same value and context.
+	function notify(event: Event | undefined, reason: InputChangeReason) {
+		control.notify(onvaluechange, number, event, reason);
+		control.notify(onnumberchange, number, event, reason);
+	}
+
 	function handleDecrement(event?: MouseEvent) {
 		if (!canDecrement) return;
 		number = parseFloat((numberValue - step).toPrecision(10));
 		control.setValue(number);
-		control.notify(onnumberchange, number, event, 'decrement');
+		notify(event, 'decrement');
 	}
 
 	function handleIncrement(event?: MouseEvent) {
 		if (!canIncrement) return;
 		number = parseFloat((numberValue + step).toPrecision(10));
 		control.setValue(number);
-		control.notify(onnumberchange, number, event, 'increment');
+		notify(event, 'increment');
 	}
 
 	function handleInput(event: Event) {
@@ -61,7 +68,7 @@
 
 		number = toFiniteNumber(event.currentTarget as HTMLInputElement);
 		control.setValue(number);
-		control.notify(onnumberchange, number, event, number === undefined ? 'clear' : 'input');
+		notify(event, number === undefined ? 'clear' : 'input');
 	}
 </script>
 

@@ -218,6 +218,11 @@ export interface InputNumberControlOwnProps {
 	/** Replaces the increment button. Receives the action to call and whether the step is available. */
 	increment?: Snippet<[{ action: (event?: MouseEvent) => void; disabled: boolean }]>;
 	/** Semantic number callback; native `oninput` and `onchange` are event-only. */
+	onvaluechange?: InputStateChangeCallback<number | undefined>;
+	/**
+	 * Semantic number callback. Fires alongside `onvaluechange`.
+	 * @deprecated Use `onvaluechange`.
+	 */
 	onnumberchange?: InputStateChangeCallback<number | undefined>;
 }
 
