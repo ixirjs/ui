@@ -130,24 +130,22 @@
 		return stepWrap(displayHours, hourFormat === 12 ? 1 : 0, hourFormat === 12 ? 12 : 23, dir);
 	}
 
-	function togglePeriod(event?: MouseEvent | KeyboardEvent) {
+	// The one writer for the meridiem: typing `a`/`p`, clicking, and the toggle keys all land here.
+	function setPeriod(period: 'AM' | 'PM', event?: MouseEvent | KeyboardEvent) {
 		if (disabled || readonly || hh === undefined) return;
-		const newPeriod = p === 'AM' ? 'PM' : 'AM';
-		const newHH = displayToInternal(displayHours ?? 12, newPeriod);
-		emit(event, { hh: newHH, period: newPeriod });
+		emit(event, { hh: displayToInternal(displayHours ?? 12, period), period });
 	}
+
+	const otherPeriod = $derived<'AM' | 'PM'>(p === 'AM' ? 'PM' : 'AM');
 
 	function handlePeriodKey(ev: KeyboardEvent) {
 		const { key } = ev;
-		if (key.toLowerCase() === 'a') {
-			const newHH = displayToInternal(displayHours ?? 12, 'AM');
-			emit(ev, { hh: newHH, period: 'AM' });
-		} else if (key.toLowerCase() === 'p') {
-			const newHH = displayToInternal(displayHours ?? 12, 'PM');
-			emit(ev, { hh: newHH, period: 'PM' });
+		const typed = key.toLowerCase();
+		if (typed === 'a' || typed === 'p') {
+			setPeriod(typed === 'a' ? 'AM' : 'PM', ev);
 		} else if (['ArrowUp', 'ArrowDown', ' ', 'Enter'].includes(key)) {
 			ev.preventDefault();
-			togglePeriod(ev);
+			setPeriod(otherPeriod, ev);
 		} else if (key === 'ArrowLeft') {
 			ev.preventDefault();
 			(withSeconds ? segSeconds : segMinutes)?.focus();
@@ -280,7 +278,7 @@
 			'focus:bg-foreground/10 focus:outline-none',
 			disabled && INPUT_DISABLED_CLASS
 		)}
-		onclick={togglePeriod}
+		onclick={(event) => setPeriod(otherPeriod, event)}
 		onkeydown={handlePeriodKey}
 	>
 		{p ?? '--'}
