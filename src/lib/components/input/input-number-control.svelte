@@ -30,7 +30,8 @@
 		type: () => 'number',
 		base: 'input-number-field text-foreground placeholder:text-muted-foreground h-full w-full flex-1 bg-transparent text-center text-sm outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none'
 	});
-	const numberValue = $derived(number ?? 0);
+	// With no value yet, a step starts from the lower bound rather than an arbitrary 0.
+	const numberValue = $derived(number ?? min ?? 0);
 
 	const canDecrement = $derived(
 		!disabled && !readonly && (min === undefined || numberValue - step >= min)
