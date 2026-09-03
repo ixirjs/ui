@@ -1,10 +1,11 @@
 <script lang="ts">
-	import { useControl, INPUT_DISABLED_CLASS } from '$ixirjs/ui/components/input/shared';
+	import { useControl, INPUT_DISABLED_CLASS } from '../shared';
 	import { clamp } from '$ixirjs/ui/utils/math';
 	import HiddenInput from '../hidden-input.svelte';
 	import { cn } from '$ixirjs/ui/utils';
 	import type { StateChangeContext } from '$ixirjs/ui/types';
 	import type { InputColorControlProps } from './types';
+	import type { InputChangeReason } from '../types';
 	import type { ColorFormat, ChannelValues, ChannelDef } from './types';
 	import Segment from './segment.svelte';
 	import { FORMAT_DEFS, parseColor, buildColor, detectFormat } from './shared';
@@ -67,7 +68,7 @@
 		segRefs[clamp(i, 0, segCount - 1)]?.focus();
 	}
 
-	function commitValue(built: string, event: Event | undefined, reason: string) {
+	function commitValue(built: string, event: Event | undefined, reason: InputChangeReason) {
 		const changed = built !== value;
 		value = built;
 		control.setValue(built);

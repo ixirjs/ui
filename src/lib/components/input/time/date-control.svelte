@@ -9,11 +9,11 @@
 -->
 <script lang="ts">
 	import DateTimeControl from './datetime-control.svelte';
-	import type { InputDateControlProps } from '$ixirjs/ui/components/input/types';
+	import type { InputDateControlProps } from '../types';
 
 	let {
 		value = $bindable(''),
-		date = $bindable<Date | null>(null),
+		date = $bindable<Date | undefined>(undefined),
 		...restProps
 	}: InputDateControlProps = $props();
 </script>

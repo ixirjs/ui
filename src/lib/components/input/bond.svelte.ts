@@ -47,7 +47,7 @@ export class InputBond {
 
 	// The last date the control parsed out of its element (`input.valueAsDate`), for the types
 	// Date.parse cannot read back from the raw string — time and week.
-	#valueAsDate = $state.raw<Date | null>(null);
+	#valueAsDate = $state.raw<Date | undefined>(undefined);
 
 	// InputModel backed by the bindable `value` prop; typed coercions (number/date/files) stay on props.
 	readonly value: InputModel = createInput({
@@ -82,7 +82,7 @@ export class InputBond {
 	}
 
 	/** @internal The control reports its element's parsed date on input. */
-	declareDate(date: Date | null): void {
+	declareDate(date: Date | undefined): void {
 		this.#valueAsDate = date;
 	}
 

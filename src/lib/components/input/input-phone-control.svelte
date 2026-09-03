@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { useControl, INPUT_OVERLAY_FIELD_CLASS } from '$ixirjs/ui/components/input/shared';
+	import { useControl, INPUT_OVERLAY_FIELD_CLASS } from './shared';
 	import { cn } from '$ixirjs/ui/utils';
 	import SegmentOverlay from './segment-overlay.svelte';
 	import {
@@ -10,11 +10,8 @@
 		phoneDigitSlotKinds,
 		phoneMaskMaxDigits,
 		phoneOverlaySpans
-	} from '$ixirjs/ui/components/input/phone-mask';
-	import type {
-		InputPhoneControlProps,
-		PhoneSpan as Span
-	} from '$ixirjs/ui/components/input/types';
+	} from './phone-mask';
+	import type { InputChangeReason, InputPhoneControlProps, PhoneSpan as Span } from './types';
 
 	let {
 		class: klass = '',
@@ -72,7 +69,7 @@
 		}
 	});
 
-	function commitValue(next: string, event: Event, reason: string) {
+	function commitValue(next: string, event: Event, reason: InputChangeReason) {
 		value = next;
 		control.setValue(value);
 		control.notify(onvaluechange, value, event, reason);

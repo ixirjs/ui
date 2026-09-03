@@ -1,15 +1,11 @@
 <script lang="ts">
-	import { useControl, INPUT_DISABLED_CLASS } from '$ixirjs/ui/components/input/shared';
+	import { useControl, INPUT_DISABLED_CLASS } from '../shared';
 	import HiddenInput from '../hidden-input.svelte';
 	import { cn } from '$ixirjs/ui/utils';
 	import { untrack } from 'svelte';
 	import type { StateChangeContext } from '$ixirjs/ui/types';
 	import { createParsedValue } from '../parsed-value.svelte';
-	import type {
-		InputTimeControlProps,
-		InputNumber24HourControlProps,
-		InputNumber12HourControlProps
-	} from '$ixirjs/ui/components/input/types';
+	import type { InputTimeControlProps } from '../types';
 	import Segment from './segment.svelte';
 	import {
 		parseTimeString,
@@ -38,11 +34,7 @@
 		oninput = undefined,
 		onvaluechange = undefined,
 		...restProps
-	}: InputTimeControlProps &
-		(
-			| InputNumber12HourControlProps
-			| (Omit<InputNumber24HourControlProps, 'hourFormat'> & { hourFormat?: 24 })
-		) = $props();
+	}: InputTimeControlProps = $props();
 
 	// Registers the segment wrapper. It is not an <input>, so the semantic type is declared.
 	const control = useControl({

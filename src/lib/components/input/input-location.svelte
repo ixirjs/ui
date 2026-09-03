@@ -5,11 +5,11 @@
 		isValidLongitude,
 		LOCATION_SEGMENT_STYLES,
 		parseLocationCoords
-	} from '$ixirjs/ui/components/input/location';
-	import { useControl } from '$ixirjs/ui/components/input/shared';
-	import SegmentedField from '$ixirjs/ui/components/input/segmented-field.svelte';
-	import type { InputBond as InputBondType } from '$ixirjs/ui/components/input/bond.svelte';
-	import type { InputLocationControlProps } from '$ixirjs/ui/components/input/types';
+	} from './location';
+	import { useControl } from './shared';
+	import SegmentedField from './segmented-field.svelte';
+	import type { InputBond as InputBondType } from './bond.svelte';
+	import type { InputLocationControlProps } from './types';
 	import type { StateChangeContext } from '$ixirjs/ui/types';
 	import { createParsedValue } from './parsed-value.svelte';
 

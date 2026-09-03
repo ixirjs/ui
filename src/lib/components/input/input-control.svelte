@@ -71,7 +71,7 @@
 		}
 
 		if (DATE_INPUT_TYPES.includes(inputType)) {
-			date = input.valueAsDate;
+			date = input.valueAsDate ?? undefined;
 			control.setDate(date);
 			control.notify(ondatechange, date, event, 'input', changeDetails());
 		}

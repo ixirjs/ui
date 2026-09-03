@@ -1,4 +1,4 @@
-import type { PhoneSpan, PhoneSpanType } from '$ixirjs/ui/components/input/types';
+import type { PhoneSpan, PhoneSpanType } from './types';
 
 export type PhoneMaskToken =
 	| { type: 'digit'; optional: boolean; slotIndex: number }

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { cn } from '$ixirjs/ui/utils';
-	import { InputBond } from '$ixirjs/ui/components/input/bond.svelte';
+	import { InputBond } from '../bond.svelte';
 	import { Swatch as SwatchComponent } from '$ixirjs/ui/components/swatch';
 
 	const bond = InputBond.get();

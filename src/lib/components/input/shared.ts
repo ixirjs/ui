@@ -3,6 +3,7 @@ import type { PresetLike, PresetModuleName } from '$ixirjs/ui/preset';
 import type { StateChangeContext } from '$ixirjs/ui/types';
 import type { ClassValue } from 'svelte/elements';
 import { InputContext, type InputBond, type InputStateProps } from './bond.svelte';
+import type { InputChangeReason } from './types';
 
 export interface ControlOptions {
 	preset: () => unknown;
@@ -43,7 +44,7 @@ export function useControl(options: ControlOptions) {
 
 	function context<Details extends object = Record<never, never>, E extends Event = Event>(
 		event?: E,
-		reason?: string,
+		reason?: InputChangeReason,
 		details?: Details
 	): StateChangeContext<InputBond, E> & Details {
 		return {
@@ -77,7 +78,7 @@ export function useControl(options: ControlOptions) {
 		setChecked(checked: boolean) {
 			bond?.setChecked(checked);
 		},
-		setDate(date: Date | null) {
+		setDate(date: Date | undefined) {
 			bond?.declareDate(date);
 		},
 		context,
@@ -109,7 +110,7 @@ export function useControl(options: ControlOptions) {
 				| undefined,
 			value: Value,
 			event?: E,
-			reason?: string,
+			reason?: InputChangeReason,
 			details?: Details
 		) {
 			callback?.(value, context(event, reason, details));

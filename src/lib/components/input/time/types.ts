@@ -55,7 +55,7 @@ export interface DateTimeParts {
 // `'datetime'` and `InputDateControlProps` has no `mode` at all — one component, two names that
 // each mean exactly one thing.
 export type DateTimeControlImplProps = Omit<
-	import('$ixirjs/ui/components/input/types').InputDateTimeControlProps,
+	import('../types').InputDateTimeControlProps,
 	'mode'
 > & {
 	/**

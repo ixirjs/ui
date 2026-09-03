@@ -1,6 +1,6 @@
 import type { StateChangeCallback } from '$ixirjs/ui/types';
-import type { InputBond } from '$ixirjs/ui/components/input/bond.svelte';
-import type { ControlPropsBase } from '$ixirjs/ui/components/input/types';
+import type { InputBond } from '../bond.svelte';
+import type { ControlPropsBase } from '../types';
 export type ColorFormat =
 	| 'named'
 	| 'hex'

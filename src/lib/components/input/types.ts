@@ -16,6 +16,22 @@ export interface InputSnippetProps extends SnippetProps {
 
 export type InputChildren = Snippet<[InputSnippetProps]>;
 
+/** Why a control reported a change — the `reason` on every Input state-change context. */
+export type InputChangeReason =
+	| 'input'
+	| 'change'
+	| 'blur'
+	| 'paste'
+	| 'clear'
+	| 'step'
+	| 'rollover'
+	| 'increment'
+	| 'decrement'
+	| 'backspace'
+	| 'delete'
+	| 'toggle'
+	| 'commit';
+
 export type HourAmPmDigits = `0${number}` | `1${0 | 1 | 2}`;
 export type HourDigits = `${0 | 1}${number}` | `2${0 | 1 | 2 | 3}`;
 export type MinuteDigits = `${0 | 1 | 2 | 3 | 4 | 5}${number}`;
@@ -76,7 +92,7 @@ export type InputStateChangeCallback<
 export interface InputControlChangeDetails {
 	value?: unknown;
 	files?: File[] | undefined;
-	date?: Date | null | undefined;
+	date?: Date | undefined;
 	number?: number | undefined;
 	checked?: boolean | undefined;
 }
@@ -88,9 +104,9 @@ interface InputControlBaseProps {
 	files?: File[];
 	/**
 	 * Date value for date inputs
-	 * @default null
+	 * @default undefined
 	 */
-	date?: Date | null;
+	date?: Date | undefined;
 	/** Number value for number inputs */
 	number?: number;
 	/** Checked state for checkbox/radio inputs */
@@ -113,7 +129,7 @@ interface InputControlBaseProps {
 	/** Semantic callback for `type="file"`. */
 	onfileschange?: InputStateChangeCallback<File[], InputControlChangeDetails>;
 	/** Semantic callback for native date/time input types. */
-	ondatechange?: InputStateChangeCallback<Date | null, InputControlChangeDetails>;
+	ondatechange?: InputStateChangeCallback<Date | undefined, InputControlChangeDetails>;
 	/** Semantic callback for `type="checkbox"` and `type="radio"`. */
 	oncheckedchange?: InputStateChangeCallback<boolean, InputControlChangeDetails>;
 }
@@ -153,7 +169,7 @@ interface CommonControlProps {
 
 // Number Control
 
-export interface InputNumber12HourControlProps {
+export interface InputTime12HourProps {
 	/** Selects the 12-hour variant, where `min`/`max` take an `hh:mm` string with an am/pm segment. */
 	hourFormat: 12;
 	/** Lowest accepted value. Values below it are rejected. */
@@ -162,7 +178,7 @@ export interface InputNumber12HourControlProps {
 	max?: Time;
 }
 
-export interface InputNumber24HourControlProps {
+export interface InputTime24HourProps {
 	/** Selects the 24-hour variant, where `min`/`max` take a 24-hour `HH:mm` string. */
 	hourFormat: 24;
 	/** Lowest accepted value. Values below it are rejected. */
@@ -170,6 +186,11 @@ export interface InputNumber24HourControlProps {
 	/** Highest accepted value. Values above it are rejected. */
 	max?: TimeFull;
 }
+
+/** @deprecated Renamed to `InputTime12HourProps`. */
+export type InputNumber12HourControlProps = InputTime12HourProps;
+/** @deprecated Renamed to `InputTime24HourProps`. */
+export type InputNumber24HourControlProps = InputTime24HourProps;
 
 export type InputNumberControlProps = ControlPropsBase<'min' | 'max' | 'step'> &
 	InputNumberControlOwnProps;
@@ -201,7 +222,7 @@ export interface InputNumberControlOwnProps {
 }
 
 // Time Control
-export interface InputTimeControlProps extends ControlPropsBase<'min' | 'max'> {
+export interface InputTimeControlBaseProps extends ControlPropsBase<'min' | 'max'> {
 	// HH:MM or HH:MM:SS, always 24h internally
 	/** Bindable time string (HH:mm or HH:mm:ss). */
 	value?: string;
@@ -230,13 +251,20 @@ export interface InputTimeControlProps extends ControlPropsBase<'min' | 'max'> {
 	onvaluechange?: InputStateChangeCallback<string, { date: Date | undefined }>;
 }
 
+/**
+ * The time control's full prop type: the shared base plus the hour-format variant, which decides
+ * whether `min`/`max` are read as 12-hour or 24-hour strings.
+ */
+export type InputTimeControlProps = InputTimeControlBaseProps &
+	(InputTime12HourProps | (Omit<InputTime24HourProps, 'hourFormat'> & { hourFormat?: 24 }));
+
 export interface InputDateTimeControlProps extends ControlPropsBase {
 	// YYYY-MM-DDTHH:MM or YYYY-MM-DDTHH:MM:SS
 	/** Bindable datetime string. */
 	value?: string;
 	// bindable, derived from value
 	/** Bindable Date object. */
-	date?: Date | null;
+	date?: Date | undefined;
 	/** Renders date and time segments together rather than a date alone. */
 	mode?: 'datetime';
 	// default false
@@ -246,7 +274,7 @@ export interface InputDateTimeControlProps extends ControlPropsBase {
 	 */
 	withSeconds?: boolean;
 	/** Semantic value callback with the synchronized `date` in context. */
-	onvaluechange?: InputStateChangeCallback<string, { date: Date | null }>;
+	onvaluechange?: InputStateChangeCallback<string, { date: Date | undefined }>;
 }
 
 export interface InputDateControlProps extends ControlPropsBase {
@@ -255,9 +283,9 @@ export interface InputDateControlProps extends ControlPropsBase {
 	value?: string;
 	// bindable, derived from value
 	/** Bindable Date object. */
-	date?: Date | null;
+	date?: Date | undefined;
 	/** Semantic value callback with `date` in context. `ondatechange` belongs to native-type `Input.Control`. */
-	onvaluechange?: InputStateChangeCallback<string, { date: Date | null }>;
+	onvaluechange?: InputStateChangeCallback<string, { date: Date | undefined }>;
 }
 
 export type InputFileControlProps = ControlPropsBase<'files' | 'accept' | 'multiple'> &

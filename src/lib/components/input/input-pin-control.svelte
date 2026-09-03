@@ -12,7 +12,7 @@
 <script lang="ts">
 	import { useControl, INPUT_DISABLED_CLASS } from './shared';
 	import { cn } from '$ixirjs/ui/utils';
-	import type { InputPinControlProps } from './types';
+	import type { InputChangeReason, InputPinControlProps } from './types';
 
 	let {
 		class: klass = '',
@@ -85,7 +85,7 @@
 		selEnd = inputEl.selectionEnd ?? 0;
 	}
 
-	function emit(event: Event, reason: string) {
+	function emit(event: Event, reason: InputChangeReason) {
 		control.notify(onvaluechange, value, event, reason);
 		if (isFull && !wasFull) oncomplete?.(value);
 		wasFull = isFull;

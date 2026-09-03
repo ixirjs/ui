@@ -43,9 +43,9 @@
 <script lang="ts">
 	let timeValue = $state('');
 	let dateTimeValue = $state('');
-	let dateTimeDate = $state<Date | null>(null);
+	let dateTimeDate = $state<Date | undefined>(undefined);
 	let dateValue = $state('');
-	let dateDate = $state<Date | null>(null);
+	let dateDate = $state<Date | undefined>(undefined);
 	let files = $state<File[]>([]);
 	let urlValue = $state('');
 	let phoneValue = $state('');

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { INPUT_DISABLED_CLASS } from '$ixirjs/ui/components/input/shared';
+	import { INPUT_DISABLED_CLASS } from '../shared';
 	// This segment is a `contenteditable` field whose text is managed imperatively: setting
 	// `textContent` (rather than binding it) is required to avoid Svelte re-rendering fighting the
 	// caret position on every keystroke. The no-dom-manipulating rule doesn't fit this pattern.

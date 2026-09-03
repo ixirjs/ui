@@ -4,7 +4,7 @@
 	import SegmentOverlay from './segment-overlay.svelte';
 	import { clamp as clampRange } from '$ixirjs/ui/utils/math';
 	import { createParsedValue } from './parsed-value.svelte';
-	import type { InputCurrencyControlProps } from './types';
+	import type { InputChangeReason, InputCurrencyControlProps } from './types';
 
 	let {
 		class: klass = '',
@@ -86,7 +86,7 @@
 		onRawChange: (raw) => control.setValue(raw)
 	});
 
-	function commitAndNotify(n: number | undefined, event: Event, reason: string) {
+	function commitAndNotify(n: number | undefined, event: Event, reason: InputChangeReason) {
 		const previousValue = value;
 		parsedValue.setParsed(n === undefined ? undefined : clamp(n));
 		if (Object.is(previousValue, value)) return;

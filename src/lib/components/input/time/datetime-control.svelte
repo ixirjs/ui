@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { useControl, INPUT_DISABLED_CLASS } from '$ixirjs/ui/components/input/shared';
+	import { useControl, INPUT_DISABLED_CLASS } from '../shared';
 	import HiddenInput from '../hidden-input.svelte';
 	import { cn } from '$ixirjs/ui/utils';
 	import { clamp } from '$ixirjs/ui/utils/math';
@@ -23,7 +23,7 @@
 		class: klass = '',
 		value = $bindable(''),
 		name = undefined,
-		date = $bindable<Date | null>(null),
+		date = $bindable<Date | undefined>(undefined),
 		mode = 'datetime',
 		withSeconds = false,
 		disabled = false,
@@ -47,11 +47,11 @@
 		type: () => (isDateOnly ? 'date' : 'datetime-local')
 	});
 
-	const parsedValue = createParsedValue<string, Date | null>({
+	const parsedValue = createParsedValue<string, Date | undefined>({
 		raw: { get: () => value, set: (next) => (value = next) },
 		parsed: { get: () => date, set: (next) => (date = next) },
 		parse: (raw) => {
-			if (!raw) return { value: null };
+			if (!raw) return { value: undefined };
 			const parsed = new Date(isDateOnly ? `${raw}T00:00:00` : raw);
 			return Number.isNaN(parsed.getTime()) ? undefined : { value: parsed };
 		},
