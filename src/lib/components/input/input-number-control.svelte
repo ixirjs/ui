@@ -110,7 +110,7 @@
 		onclick={dec}
 		disabled={dis}
 		aria-label="Decrement"
-		class="input-number-decrement text-foreground hover:bg-muted disabled:text-muted-foreground flex h-full aspect-square shrink-0 cursor-pointer items-center justify-center transition-colors disabled:cursor-not-allowed"
+		class="input-number-decrement text-foreground hover:bg-muted disabled:text-muted-foreground flex h-full w-8 shrink-0 cursor-pointer items-center justify-center transition-colors disabled:cursor-not-allowed"
 	>
 		<svg viewBox="0 0 16 16" fill="none" class="h-3 w-3" aria-hidden="true">
 			<path d="M3 8h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
@@ -130,7 +130,7 @@
 		onclick={inc}
 		disabled={dis}
 		aria-label="Increment"
-		class="input-number-increment text-foreground hover:bg-muted disabled:text-muted-foreground flex h-full aspect-square shrink-0 cursor-pointer items-center justify-center transition-colors disabled:cursor-not-allowed"
+		class="input-number-increment text-foreground hover:bg-muted disabled:text-muted-foreground flex h-full w-8 shrink-0 cursor-pointer items-center justify-center transition-colors disabled:cursor-not-allowed"
 	>
 		<svg viewBox="0 0 16 16" fill="none" class="h-3 w-3" aria-hidden="true">
 			<path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />

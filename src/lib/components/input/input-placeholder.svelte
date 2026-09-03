@@ -19,7 +19,7 @@
 	const el = Kernel.element(() => restProps, {
 		preset: 'input.placeholder',
 		class:
-			'text-muted-foreground pointer-events-none absolute inset-0 flex h-full w-full items-center px-1 leading-1 outline-none',
+			'text-muted-foreground pointer-events-none absolute inset-0 flex h-full w-full items-center px-2 leading-1 outline-none',
 		state: bond,
 		as: () => as,
 		base: () => base,

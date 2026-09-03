@@ -106,18 +106,19 @@
 			: []
 	);
 
-	// Intl part types map to classes; the overlay renders them as ordinary spans.
-	const PART_CLASS: Record<string, string> = {
-		currency: 'text-muted-foreground font-normal',
-		integer: 'text-foreground font-medium',
-		decimal: 'text-muted-foreground',
-		fraction: 'text-foreground/70',
-		group: 'text-muted-foreground/60',
-		literal: 'text-muted-foreground/60'
+	// Intl part types map to the same `--input-hl-*` variables the email/url controls highlight
+	// with, so one theme drives every segmented control.
+	const PART_STYLE: Record<string, string> = {
+		currency: 'color: var(--input-hl-muted, var(--foreground))',
+		integer: 'color: var(--input-hl-primary, var(--foreground)); font-weight: 500',
+		decimal: 'color: var(--input-hl-muted, var(--foreground))',
+		group: 'color: var(--input-hl-muted, var(--foreground))',
+		literal: 'color: var(--input-hl-muted, var(--foreground))',
+		fraction: 'color: var(--input-hl-secondary, var(--foreground))'
 	};
 
 	const overlaySpans = $derived(
-		formattedParts.map((part) => ({ text: part.value, class: PART_CLASS[part.type] }))
+		formattedParts.map((part) => ({ text: part.value, style: PART_STYLE[part.type] }))
 	);
 
 	function handleFocus() {
