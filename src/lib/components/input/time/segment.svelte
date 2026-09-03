@@ -54,6 +54,9 @@
 		});
 	});
 
+	// Separator characters advance to the next segment; none of them is a valid digit here.
+	const SEPARATOR_KEYS = [':', '/', ' ', ',', '.'];
+
 	const clamp = (v: number) => clampRange(v, min, max);
 
 	function commitBuffer(buf: string, andAdvance: boolean, event: Event) {
@@ -116,6 +119,12 @@
 		} else if (ev.key === 'ArrowRight') {
 			ev.preventDefault();
 			onfocusmove?.(1);
+		} else if (SEPARATOR_KEYS.includes(ev.key)) {
+			// Typing the separator between segments commits what is buffered and moves on, the way
+			// a native date field behaves.
+			ev.preventDefault();
+			if (buffer) commitBuffer(buffer, true, ev);
+			else onfocusmove?.(1);
 		} else if (ev.key === 'Backspace' || ev.key === 'Delete') {
 			ev.preventDefault();
 			if (buffer) buffer = buffer.slice(0, -1);

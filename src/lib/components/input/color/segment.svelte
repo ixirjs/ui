@@ -76,6 +76,8 @@
 		});
 	});
 
+	const SEPARATOR_KEYS = [':', '/', ' ', ','];
+
 	const clamp = (v: number) => clampRange(v, channel.min, channel.max);
 
 	// Parse el.textContent into a channel value (stripping the suffix first).
@@ -146,6 +148,14 @@
 		if (disabled || readonly) return;
 
 		const { key } = ev;
+
+		// Typing a separator commits the segment and moves right. `.` only counts as one for hex
+		// channels — elsewhere it is the decimal point.
+		if (SEPARATOR_KEYS.includes(key) || (key === '.' && isHex)) {
+			ev.preventDefault();
+			commit(ev, true);
+			return;
+		}
 
 		const isAllowedChar = isHex
 			? /^[0-9a-fA-F]$/i.test(key)
