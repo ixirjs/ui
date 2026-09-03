@@ -22,6 +22,7 @@
 		type = 'numeric',
 		groupSize = undefined,
 		placeholder = '·',
+		ariaLabel = 'One-time password',
 		disabled = false,
 		readonly = false,
 		// manifest key keeps the pre-rename name so existing presets stay valid
@@ -139,7 +140,7 @@
 		{value}
 		{disabled}
 		{readonly}
-		aria-label="One-time password"
+		aria-label={ariaLabel}
 		class="absolute inset-0 z-10 h-full w-full bg-transparent text-center font-mono tracking-[1em] text-transparent caret-transparent outline-none"
 		oninput={handleInput}
 		{onchange}

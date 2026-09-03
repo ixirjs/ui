@@ -455,6 +455,11 @@ export interface InputPinControlProps extends ControlPropsBase {
 	// default 'numeric'
 	/** Accepted character set. */
 	type?: 'numeric' | 'alpha' | 'alphanumeric';
+	/**
+	 * Accessible name for the field. The cells are decoration, so this names the whole control.
+	 * @default 'One-time password'
+	 */
+	ariaLabel?: string;
 	// separator every N slots (e.g. 3 for "123—456")
 	/** Visual grouping (gap every N slots). */
 	groupSize?: number;
