@@ -99,13 +99,9 @@
 	aria-label="Color"
 	{...control.attrs}
 >
-	{@render (value
-		? isNamedFmt
-			? namedInput
-			: isHexFmt
-				? hexFormat
-				: functionalFormat
-		: placeholderText)()}
+	<!-- Empty value falls back to the plain text field, so the control is typeable from scratch
+	     instead of showing a dead placeholder span. -->
+	{@render (value && !isNamedFmt ? (isHexFmt ? hexFormat : functionalFormat) : namedInput)()}
 </span>
 
 <HiddenInput {name} {value} />
@@ -117,7 +113,7 @@
 		spellcheck={false}
 		autocomplete="off"
 		value={String(channels['name'] ?? '')}
-		placeholder="e.g. red, cornflowerblue"
+		{placeholder}
 		{disabled}
 		{readonly}
 		class="text-foreground placeholder:text-muted-foreground min-w-[12ch] bg-transparent font-mono text-sm outline-none"
@@ -212,8 +208,4 @@
 {#snippet functionalAlpha()}
 	<span class="text-muted-foreground mx-0.5 font-mono text-sm select-none">/</span>
 	{@render alphaSegment()}
-{/snippet}
-
-{#snippet placeholderText()}
-	<span class="text-muted-foreground font-mono text-sm">{placeholder}</span>
 {/snippet}
