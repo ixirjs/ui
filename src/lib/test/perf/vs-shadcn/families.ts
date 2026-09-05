@@ -1,4 +1,4 @@
-/** The parity set: one entry per family, both sides rendering the same fixture shape. */
+/** Diagnostic workloads. Only parity.ts names an executable, scoped equivalence claim. */
 import IxirCard from './ixir-card.test.svelte';
 import ShadcnCard from './shadcn-card.test.svelte';
 import IxirCardDirect from './ixir-card-direct.test.svelte';
@@ -63,11 +63,7 @@ export const FAMILIES: Family[] = [
 		opponent: 'bits',
 		ixir: IxirAccordion,
 		shadcn: ShadcnAccordion,
-		// 50/200, not 100/800: our accordion mount is superlinear, so 800 items is minutes per round.
-		// A cold 400-item mount costs 2.2 s against bits-ui's 0.09 — see §6 of
-		// docs/research/perf-vs-shadcn-2026-08.md. Every figure here is a slope, so the low pair is
-		// still a valid per-unit cost; it simply understates the gap at scale. Raise it to 100/800
-		// once the mount is linear.
+		// Retain historical counts for baseline continuity; the separate growth gate covers larger mounts.
 		clientCounts: [50, 200]
 	},
 	// The same shipped accordion, imported part by part. The behavioural counterpart of
@@ -117,7 +113,7 @@ export const FAMILIES: Family[] = [
 		opponentLabel: 'control',
 		ixir: IxirTree,
 		shadcn: ControlTree,
-		// Same reason as accordion: the mount is superlinear, so 800 nodes is minutes per round.
+		// Historical diagnostic counts; growth fixtures separately cover breadth and depth.
 		clientCounts: [50, 200]
 	}
 ];

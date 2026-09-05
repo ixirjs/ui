@@ -2,7 +2,7 @@ import { render } from 'vitest-browser-svelte';
 import { describe, expect, it, vi } from 'vitest';
 import type { StateChangeContext } from '$ixirjs/ui/types';
 import AccordionRoot from './accordion-root.svelte';
-import type { AccordionBond } from './bond.svelte';
+import { AccordionBond } from './bond.svelte';
 
 describe('Accordion callbacks', () => {
 	it('reports only onvaluechange in single mode after the Bond commits', () => {
@@ -62,4 +62,26 @@ describe('Accordion callbacks', () => {
 		bond.open(['two']);
 		expect(onvalueschange).toHaveBeenCalledTimes(1);
 	});
+});
+
+it('keeps bulk order, existing duplicates, equality gating and plain backing reads', () => {
+	const props = { values: ['first', 'first'], multiple: true };
+	const bond = new AccordionBond(props);
+	const commits: string[][] = [];
+	bond.bindCommit((next) => {
+		props.values = next;
+		commits.push(next);
+	});
+	const ids = Array.from({ length: 100 }, (_, i) => `v${i}`);
+	bond.open(ids);
+	expect(props.values).toEqual(['first', 'first', ...ids]);
+	bond.open(ids);
+	expect(commits).toHaveLength(1);
+	props.values[2] = 'replaced';
+	expect(bond.isValueOpen('replaced')).toBe(true);
+	expect(bond.isValueOpen('v0')).toBe(false);
+	bond.close(ids);
+	expect(props.values).toEqual(['first', 'first', 'replaced']);
+	bond.close(ids);
+	expect(commits).toHaveLength(2);
 });

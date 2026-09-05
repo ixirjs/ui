@@ -10,21 +10,34 @@
  * output handed to the page.
  */
 import { chromium } from 'playwright';
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { cpus, loadavg } from 'node:os';
 import { pathToFileURL } from 'node:url';
 
 const root = join(import.meta.dirname, '..');
+const loadAtStart = loadavg()[0];
+const fingerprint = (path) =>
+	createHash('sha256')
+		.update(readFileSync(join(root, path)))
+		.digest('hex');
+const artifacts = {
+	client: fingerprint('.bench-out/vs-client/vs-client.js'),
+	ssr: fingerprint('.bench-out/vs-ssr/ssr-entry.js')
+};
 const SIDES = ['ixir', 'shadcn'];
 const LOW = 100;
 const HIGH = 800;
 
 const args = process.argv.slice(2);
+for (const arg of args)
+	if (arg.startsWith('--') && !['--json'].includes(arg))
+		throw new Error(`unknown benchmark option: ${arg}`);
 const JSON_OUT = args.includes('--json');
 const only = args.filter((a) => !a.startsWith('--'));
 
-const ROUNDS = Number(process.env.BENCH_ROUNDS ?? 10);
+const ROUNDS = Number(process.env.BENCH_ROUNDS ?? 19);
 const WARMUP = Number(process.env.BENCH_WARMUP ?? 3);
 const STORM = Number(process.env.BENCH_STORM ?? 100);
 const BROAD = Number(process.env.BENCH_BROAD ?? 4);
@@ -32,7 +45,11 @@ const BROAD = Number(process.env.BENCH_BROAD ?? 4);
 // ─── SSR markup for the hydrate leg ────────────────────────────────────────────────────────────
 
 const { render } = await import('svelte/server');
-const { FAMILIES } = await import(pathToFileURL(join(root, '.bench-out/vs-ssr/ssr-entry.js')).href);
+const { FAMILIES, pairedComparison, workload } = await import(
+	pathToFileURL(join(root, '.bench-out/vs-ssr/ssr-entry.js')).href
+);
+for (const name of only)
+	if (!FAMILIES.some((family) => family.name === name)) throw new Error(`unknown family: ${name}`);
 const families = only.length ? FAMILIES.filter((f) => only.includes(f.name)) : FAMILIES;
 
 const ssr = {};
@@ -51,80 +68,128 @@ const browser = await chromium.launch({
 	// garbage. The heap leg below does NOT rely on it — it takes a real snapshot over CDP.
 	args: ['--js-flags=--expose-gc']
 });
-const page = await browser.newPage();
-await page.goto('about:blank');
-await page.addScriptTag({
-	content: readFileSync(join(root, '.bench-out/vs-client/vs-client.js'), 'utf8')
-});
+const diagnostics = [];
+let results;
+try {
+	const page = await browser.newPage();
+	page.on('pageerror', (error) => diagnostics.push(error.message));
+	page.on('console', (message) => {
+		if (message.type() === 'warning' || message.type() === 'error')
+			diagnostics.push(message.text());
+	});
+	await page.goto('about:blank');
+	await page.addScriptTag({
+		content: readFileSync(join(root, '.bench-out/vs-client/vs-client.js'), 'utf8')
+	});
 
-const results = await page.evaluate(
-	// eslint-disable-next-line no-undef
-	(options) => globalThis.VsBench.run(options),
-	{
-		rounds: ROUNDS,
-		warmup: WARMUP,
-		storm: STORM,
-		broadIterations: BROAD,
-		ssr,
-		families: families.map((f) => f.name)
+	results = await page.evaluate(
+		// eslint-disable-next-line no-undef
+		(options) => globalThis.VsBench.run(options),
+		{
+			rounds: ROUNDS,
+			warmup: WARMUP,
+			storm: STORM,
+			broadIterations: BROAD,
+			ssr,
+			families: families.map((f) => f.name)
+		}
+	);
+
+	if (diagnostics.length) {
+		throw new Error(`unexpected browser diagnostics:\n${diagnostics.join('\n')}`);
 	}
-);
 
-// ─── Retained heap, by heap snapshot ───────────────────────────────────────────────────────────
-//
-// Bytes of REACHABLE OBJECT the mounted tree holds, taken while the tree is live and diffed
-// between the two counts so page-fixed cost cancels. This used to read
-// `performance.memory.usedJSHeapSize` from inside the page, which is page-wide: it carries V8's
-// fragmentation and every other allocation made so far, and it reported a card at 112 kB/unit
-// (+730% against shadcn) where the reachable objects are 25 kB (+85%). A snapshot forces a full
-// GC and counts what is actually retained, which is the question the column asks.
-const cdp = await page.context().newCDPSession(page);
-await cdp.send('HeapProfiler.enable');
+	// ─── Retained heap, by heap snapshot ───────────────────────────────────────────────────────────
+	//
+	// Bytes of REACHABLE OBJECT the mounted tree holds, taken while the tree is live and diffed
+	// between the two counts so page-fixed cost cancels. This used to read
+	// `performance.memory.usedJSHeapSize` from inside the page, which is page-wide: it carries V8's
+	// fragmentation and every other allocation made so far, and it reported a card at 112 kB/unit
+	// (+730% against shadcn) where the reachable objects are 25 kB (+85%). A snapshot forces a full
+	// GC and counts what is actually retained, which is the question the column asks.
+	const cdp = await page.context().newCDPSession(page);
+	await cdp.send('HeapProfiler.enable');
 
-/** Total self_size over every node in one snapshot. */
-async function snapshotBytes() {
-	let raw = '';
-	const collect = (event) => (raw += event.chunk);
-	cdp.on('HeapProfiler.addHeapSnapshotChunk', collect);
-	await cdp.send('HeapProfiler.collectGarbage');
-	await cdp.send('HeapProfiler.takeHeapSnapshot', { reportProgress: false });
-	cdp.off('HeapProfiler.addHeapSnapshotChunk', collect);
+	/** Total self_size over every node in one snapshot. */
+	async function snapshotBytes() {
+		let raw = '';
+		const collect = (event) => (raw += event.chunk);
+		cdp.on('HeapProfiler.addHeapSnapshotChunk', collect);
+		await cdp.send('HeapProfiler.collectGarbage');
+		await cdp.send('HeapProfiler.takeHeapSnapshot', { reportProgress: false });
+		cdp.off('HeapProfiler.addHeapSnapshotChunk', collect);
 
-	const snapshot = JSON.parse(raw);
-	const fields = snapshot.snapshot.meta.node_fields;
-	const stride = fields.length;
-	const sizeAt = fields.indexOf('self_size');
-	let total = 0;
-	for (let i = 0; i < snapshot.nodes.length; i += stride) total += snapshot.nodes[i + sizeAt];
-	return total;
-}
+		const snapshot = JSON.parse(raw);
+		const fields = snapshot.snapshot.meta.node_fields;
+		const stride = fields.length;
+		const sizeAt = fields.indexOf('self_size');
+		let total = 0;
+		for (let i = 0; i < snapshot.nodes.length; i += stride) total += snapshot.nodes[i + sizeAt];
+		return total;
+	}
 
-for (const family of families) {
-	for (const side of SIDES) {
-		for (const n of family.clientCounts ?? [LOW, HIGH]) {
-			// eslint-disable-next-line no-undef
-			await page.evaluate((held) => globalThis.VsBench.hold(...held), [family.name, side, n]);
-			results[family.name][side].heap ??= {};
-			results[family.name][side].heap[n] = await snapshotBytes();
-			// eslint-disable-next-line no-undef
-			await page.evaluate(() => globalThis.VsBench.release());
+	for (const family of families) {
+		for (const side of SIDES) {
+			for (const n of family.clientCounts ?? [LOW, HIGH]) {
+				// eslint-disable-next-line no-undef
+				await page.evaluate((held) => globalThis.VsBench.hold(...held), [family.name, side, n]);
+				results[family.name][side].heap ??= {};
+				results[family.name][side].heap[n] = await snapshotBytes();
+				// eslint-disable-next-line no-undef
+				await page.evaluate(() => globalThis.VsBench.release());
+			}
 		}
 	}
-}
 
-if (process.env.BENCH_DEBUG) console.log(JSON.stringify(results, null, 1));
-await browser.close();
+	if (process.env.BENCH_DEBUG) console.log(JSON.stringify(results, null, 1));
+} finally {
+	await browser.close();
+}
+if (diagnostics.length)
+	throw new Error(`unexpected browser diagnostics:\n${diagnostics.join('\n')}`);
 
 // ─── Report ────────────────────────────────────────────────────────────────────────────────────
 
 const provenance = JSON.parse(readFileSync(join(root, 'bench/vs-shadcn/provenance.json'), 'utf8'));
 const machine = `${cpus()[0]?.model ?? 'unknown'} ×${cpus().length}`;
 // See the note in vs-bench.ts: a loaded box inflates every absolute here and distorts the ratios.
-const load = loadavg()[0];
+const load = Math.max(loadAtStart, loadavg()[0]);
+
+const comparisons = Object.fromEntries(
+	families.map((family) => {
+		const [lo, hi] = family.clientCounts ?? [LOW, HIGH];
+		const metrics = Object.fromEntries(
+			['mount', 'hydrate', 'targeted', 'broad'].map((metric) => {
+				const series = (side) => {
+					const samples = results[family.name][side].samples[metric];
+					if (samples[hi]?.length !== ROUNDS - WARMUP || samples[lo]?.length !== ROUNDS - WARMUP)
+						throw new Error(`missing samples: ${family.name}/${side}/${metric}`);
+					return metric === 'targeted'
+						? samples[hi]
+						: samples[hi].map((value, i) => (value - samples[lo][i]) / (hi - lo));
+				};
+				return [metric, pairedComparison(series('ixir'), series('shadcn'))];
+			})
+		);
+		return [
+			family.name,
+			{
+				workload: workload(family.name),
+				qualification:
+					load > cpus().length / 4 ? 'busy-machine' : 'diagnostic-only; inspect workload parity',
+				metrics
+			}
+		];
+	})
+);
 
 if (JSON_OUT) {
 	console.log(
-		JSON.stringify({ machine, load, provenance, storm: STORM, broad: BROAD, results }, null, '\t')
+		JSON.stringify(
+			{ machine, load, provenance, artifacts, storm: STORM, broad: BROAD, comparisons, results },
+			null,
+			'\t'
+		)
 	);
 	process.exit(0);
 }
@@ -166,6 +231,9 @@ const pct = (ours, theirs, family) =>
 			? `${(ours / theirs).toFixed(0)}×`.padStart(6)
 			: `${ours > theirs ? '+' : ''}${(((ours - theirs) / theirs) * 100).toFixed(0)}%`.padStart(6);
 
+console.log(
+	'\nDiagnostic runtime comparison only: no styled paint/motion completion or behavioral-equivalence claim.'
+);
 console.log(
 	`\n@ixirjs/ui vs shadcn-svelte — client cost (lower is better)\n\n` +
 		`  shadcn-svelte registry ${provenance.registryHash}, bits-ui ${provenance.bitsUi}, svelte ${provenance.svelte}\n` +
@@ -238,7 +306,11 @@ for (const family of families) {
 }
 
 console.log(
-	'\n  Run 3× and compare medians; a difference under ~10% is below this harness’s resolution.\n' +
+	'\n  Endpoint medians; raw samples are included in --json. Balanced order; GC between arms.\n' +
+		'  Ratios are diagnostic, not statistically established competitive wins.\n' +
 		'  `heap B/unit` is reachable bytes from a real heap snapshot (full GC first), diffed\n' +
 		'  between the two counts — retained object cost, not page-wide `usedJSHeapSize`.\n'
 );
+
+console.log('Paired 95% bootstrap intervals (within-run diagnostics only):');
+console.log(JSON.stringify(comparisons, null, 2));

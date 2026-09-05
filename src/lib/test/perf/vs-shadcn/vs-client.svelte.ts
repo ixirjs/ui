@@ -4,8 +4,8 @@
  * `scripts/bench-vs-client.mjs` builds it, injects it and prints the report.
  *
  * Same discipline as `nesting-client.svelte.ts`, and for the same reasons:
- *   - Floor each ENDPOINT across rounds, then take the slope. Never floor per-round slopes.
- *   - The two sides interleave at the innermost level so drift and GC pauses hit both equally.
+ *   - Retain raw samples and summarize each endpoint with its median.
+ *   - Counterbalance family/side order and drain between arms outside the timed region.
  *   - `flushSync()` inside every timed region — an update that has not flushed has not done the
  *     work, and is the client-side analogue of never reading SSR's lazy `body`.
  *
@@ -13,6 +13,8 @@
  */
 import { flushSync, hydrate, mount, unmount } from 'svelte';
 import { FAMILIES } from './families.js';
+import { assertButtons } from './parity';
+import { median, roundOrder, validateSampling } from '../samples';
 
 const SIDES = ['ixir', 'shadcn'] as const;
 type Side = (typeof SIDES)[number];
@@ -39,7 +41,10 @@ export type Options = {
 };
 
 export type Census = { elements: number; comments: number; texts: number };
+type Metric = 'mount' | 'hydrate' | 'targeted' | 'broad';
+
 export type SideResult = {
+	samples: Record<Metric, Record<string, number[]>>;
 	mount: Record<string, number>;
 	hydrate: Record<string, number>;
 	/** One prop change on a single probe unit embedded in a tree of `n` others. */
@@ -75,30 +80,55 @@ function makeProps(n: number) {
 	return props;
 }
 
-const min = (into: Record<string, number>, k: string, value: number) => {
-	into[k] = Math.min(into[k] ?? Infinity, value);
-};
+/** Full collection outside timing; yield so teardown work cannot leak into the next arm. */
+async function drain(): Promise<void> {
+	const gc = (globalThis as { gc?: () => void }).gc;
+	if (!gc) throw new Error('benchmark requires exposed GC');
+	gc();
+	await new Promise((resolve) => setTimeout(resolve, 0));
+}
 
-/** Drain BEFORE a timed region, never inside it, and once per round — see the nesting half. */
-const drain = () => (globalThis as { gc?: () => void }).gc?.();
+function record(result: SideResult, metric: Metric, key: string, value: number): void {
+	if (!Number.isFinite(value) || value <= 0) throw new Error(`invalid ${metric} sample: ${value}`);
+	const samples = (result.samples[metric][key] ??= []);
+	samples.push(value);
+	result[metric][key] = median(samples);
+}
 
 export async function run(
 	options: Options = {}
 ): Promise<Record<string, Record<Side, SideResult>>> {
-	const rounds = options.rounds ?? 10;
+	const rounds = options.rounds ?? 19;
 	const warmup = options.warmup ?? 3;
 	const storm = options.storm ?? 100;
 	const broadIterations = options.broadIterations ?? 4;
+	validateSampling(rounds, warmup);
+	for (const value of [storm, broadIterations]) {
+		if (!Number.isSafeInteger(value) || value < 1)
+			throw new Error('invalid update iteration count');
+	}
+	for (const name of options.families ?? []) {
+		if (!FAMILIES.some((family) => family.name === name))
+			throw new Error(`unknown family: ${name}`);
+	}
 	const ssr = options.ssr ?? {};
 	const families = options.families?.length
 		? FAMILIES.filter((f) => options.families!.includes(f.name))
 		: FAMILIES;
 
+	// Check before any timed work; an absent hydrate arm must never become a blank report cell.
+	for (const family of families)
+		for (const side of SIDES)
+			for (const n of family.clientCounts ?? COUNTS) {
+				if (!ssr[`${family.name}:${side}:${n}`])
+					throw new Error(`missing hydration markup: ${family.name}/${side}/${n}`);
+			}
 	const results: Record<string, Record<Side, SideResult>> = {};
 	for (const family of families) {
 		results[family.name] = {} as Record<Side, SideResult>;
 		for (const side of SIDES) {
 			results[family.name]![side] = {
+				samples: { mount: {}, hydrate: {}, targeted: {}, broad: {} },
 				mount: {},
 				hydrate: {},
 				targeted: {},
@@ -109,12 +139,12 @@ export async function run(
 	}
 
 	for (let round = 0; round < rounds; round++) {
-		drain();
 		// Iterate families outermost so a family with its own counts stays interleaved between its
 		// two sides, which is the pairing the comparison depends on.
-		for (const family of families) {
-			for (const n of family.clientCounts ?? COUNTS) {
-				for (const side of SIDES) {
+		for (const family of roundOrder(families, round)) {
+			for (const n of roundOrder(family.clientCounts ?? COUNTS, round)) {
+				for (const side of roundOrder(SIDES, round)) {
+					await drain();
 					const measured = round >= warmup;
 					const k = String(n);
 					const result = results[family.name]![side];
@@ -152,14 +182,17 @@ export async function run(
 						flushSync();
 					}
 					const broadMs = (performance.now() - t2) / broadIterations;
+					if (family.name === 'button')
+						assertButtons(target, n, `t${broadIterations - 1}`, `b${storm - 1}`);
 
-					unmount(app);
+					await unmount(app);
 					target.remove();
 
 					// ── hydrate over the server's own markup ─────────────────────────────────────
 					let hydrateMs = NaN;
 					const html = ssr[`${family.name}:${side}:${n}`];
 					if (html) {
+						await drain();
 						const hydrateTarget = makeTarget();
 						hydrateTarget.innerHTML = html;
 						const t3 = performance.now();
@@ -169,15 +202,16 @@ export async function run(
 						});
 						flushSync();
 						hydrateMs = performance.now() - t3;
-						unmount(hydrated);
+						if (family.name === 'button') assertButtons(hydrateTarget, n);
+						await unmount(hydrated);
 						hydrateTarget.remove();
 					}
 
 					if (!measured) continue;
-					min(result.mount, k, mountMs);
-					min(result.targeted, k, targetedMs);
-					min(result.broad, k, broadMs);
-					if (!Number.isNaN(hydrateMs)) min(result.hydrate, k, hydrateMs);
+					record(result, 'mount', k, mountMs);
+					record(result, 'targeted', k, targetedMs);
+					record(result, 'broad', k, broadMs);
+					record(result, 'hydrate', k, hydrateMs);
 				}
 			}
 		}

@@ -12,7 +12,7 @@ function makeBacking(initial = false) {
 	return { backing, read: () => open };
 }
 
-describe('Disclosure — degenerate SelectionModel over {self}', () => {
+describe('Disclosure — boolean backing', () => {
 	it('starts from the backing value', () => {
 		expect(createDisclosure(makeBacking(false).backing).isOpen).toBe(false);
 		expect(createDisclosure(makeBacking(true).backing).isOpen).toBe(true);
@@ -66,4 +66,34 @@ describe('Disclosure — degenerate SelectionModel over {self}', () => {
 		expect(count).toBeGreaterThan(initial);
 		dispose();
 	});
+});
+
+it('preserves backing access order, repeated writes, detached methods and rejected commits', () => {
+	let value = false;
+	const trace: unknown[] = [];
+	let reject = false;
+	const model = createDisclosure({
+		get: () => {
+			trace.push('get');
+			return value;
+		},
+		set: (next) => {
+			trace.push(next);
+			if (!reject) value = next;
+		}
+	});
+	const { open, close, toggle } = model;
+	open();
+	open();
+	close();
+	close();
+	toggle();
+	toggle();
+	expect(trace).toEqual([true, true, 'get', false, 'get', false, 'get', true, 'get', 'get', false]);
+	reject = true;
+	open();
+	expect(model.isOpen).toBe(false);
+	value = true;
+	close();
+	expect(model.isOpen).toBe(true);
 });

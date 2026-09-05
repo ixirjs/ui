@@ -58,8 +58,8 @@ export function createSelection<T>(backing: SelectionBacking<T>): SelectionModel
 	 *
 	 * Built only for a backing that declares itself `indexed`. Skipped when the caller defines its
 	 * own `equals` (a `Set` is SameValueZero and cannot honour it), and below a handful of values,
-	 * where allocating the Set costs more than the comparisons it saves — which is every single-mode
-	 * selection, and `createDisclosure`, whose whole "selection" is one sentinel.
+	 * where allocating the Set costs more than the comparisons it saves — including single-mode
+	 * selections. Bulk operations below use temporary indexes, independent of backing reactivity.
 	 */
 	const membership = $derived.by(() => {
 		if (!backing.indexed || backing.equals) return undefined;
@@ -81,8 +81,19 @@ export function createSelection<T>(backing: SelectionBacking<T>): SelectionModel
 		const incoming = asValues(value);
 		if (backing.mode() === 'multiple') {
 			const next = list();
-			for (const item of incoming) {
-				if (!next.some((current) => equals(current, item))) next.push(item);
+			// Keep existing duplicates and original values (notably -0). A Set only answers membership.
+			if (equals === sameValueZero && incoming.length >= SET_MIN) {
+				const seen = new Set(next);
+				for (const item of incoming) {
+					if (!seen.has(item)) {
+						seen.add(item);
+						next.push(item);
+					}
+				}
+			} else {
+				for (const item of incoming) {
+					if (!next.some((current) => equals(current, item))) next.push(item);
+				}
 			}
 			backing.set(next);
 		} else {
@@ -94,7 +105,15 @@ export function createSelection<T>(backing: SelectionBacking<T>): SelectionModel
 
 	const deselect = (value: T | T[]): void => {
 		const outgoing = asValues(value);
-		backing.set(list().filter((current) => !outgoing.some((item) => equals(current, item))));
+		const current = list();
+		if (equals === sameValueZero && outgoing.length >= SET_MIN) {
+			const removed = new Set<T>();
+			// `some` skipped sparse holes; Set(outgoing) would turn them into undefined values.
+			outgoing.forEach((item) => removed.add(item));
+			backing.set(current.filter((item) => !removed.has(item)));
+		} else {
+			backing.set(current.filter((item) => !outgoing.some((value) => equals(item, value))));
+		}
 	};
 
 	const toggle = (value: T): void => {

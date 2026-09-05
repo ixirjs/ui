@@ -8,6 +8,8 @@
 import { flushSync, mount, unmount } from 'svelte';
 import { DEFAULT_COUNTS, FIXTURES } from './fixtures.js';
 
+export const fixtureNames = FIXTURES.map((fixture) => fixture.name);
+
 export type Options = { rounds?: number; only?: string[] };
 export type Result = {
 	name: string;
@@ -54,6 +56,10 @@ async function mountOnce(component: any, n: number): Promise<{ ms: number; eleme
 
 export async function run(options: Options = {}): Promise<Result[]> {
 	const rounds = options.rounds ?? 3;
+	if (!Number.isSafeInteger(rounds) || rounds < 1) throw new Error('invalid growth rounds');
+	for (const name of options.only ?? []) {
+		if (!fixtureNames.includes(name)) throw new Error(`unknown growth scenario: ${name}`);
+	}
 	const only = options.only?.length ? new Set(options.only) : undefined;
 	const results: Result[] = [];
 

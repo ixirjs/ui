@@ -152,6 +152,8 @@ type Displaced = { node: HTMLElement; prop: 'width' | 'height'; previous: string
 function flushPending(): void {
 	const runs = pending.splice(0);
 	const displaced: Displaced[] = [];
+	// Batch-local membership; keep the ordered list for restoring the first displaced values.
+	const seen = { width: new Set<HTMLElement>(), height: new Set<HTMLElement>() };
 
 	// 1. Writes. Every `auto` target goes to `auto` now, once per node and axis.
 	for (const run of runs) {
@@ -159,7 +161,8 @@ function flushPending(): void {
 		for (const prop in run.input) {
 			if (!hasAutoTarget(run.input[prop])) continue;
 			const axis = isWidthProperty(prop) ? 'width' : 'height';
-			if (displaced.some((d) => d.node === run.node && d.prop === axis)) continue;
+			if (seen[axis].has(run.node)) continue;
+			seen[axis].add(run.node);
 			displaced.push({ node: run.node, prop: axis, previous: run.node.style[axis] });
 			run.node.style[axis] = 'auto';
 		}

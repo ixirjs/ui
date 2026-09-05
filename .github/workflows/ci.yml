@@ -60,3 +60,19 @@ jobs:
 
       - name: SSR fingerprint and cost report
         run: bun run bench:ssr -- --no-gate
+
+      - name: Install Chromium for performance contracts
+        run: bunx playwright install --with-deps chromium
+
+      - name: Mount growth gate
+        run: bun run bench:growth
+
+      - name: Styled Chromium workloads and parity contracts
+        run: bun run bench:workloads > workloads-chromium.json
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: performance-workloads
+          path: workloads-*.json
+          if-no-files-found: error

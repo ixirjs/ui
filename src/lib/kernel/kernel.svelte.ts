@@ -45,7 +45,8 @@ import { getPreset } from '$ixirjs/ui/preset/context.svelte';
 import { HtmlElement } from '$ixirjs/ui/components/element';
 import {
 	useElementMotion,
-	type ElementMotion
+	type ElementMotion,
+	type ElementMotionOptions
 } from '$ixirjs/ui/components/element/use-element-motion.svelte';
 import { mergeSpreadProps, composeHandlers, EMPTY as EMPTY_SHARED } from '$ixirjs/ui/kernel/merge';
 import {
@@ -54,7 +55,11 @@ import {
 	withConsumerClass,
 	containsPlaceholder
 } from './resolve/classes';
-import { resolvePreset as toRecord } from './resolve/preset';
+import {
+	resolvePreset as toRecord,
+	preparePresetEntry,
+	type PreparedPresetEntry
+} from './resolve/preset';
 import { mergeVariants, resolveLocalVariants } from './resolve/variants';
 import { resolveConsumedVariantKeys, resolvePresetLayer } from './resolve/resolvers';
 import { simpleRecord } from './resolve/default-record';
@@ -368,6 +373,10 @@ function element(props: () => Record<string, unknown>, spec: ElementSpec): Kerne
 	// `el.attrs` on a literal tag cannot honour it, and DEV says so once per key.
 	const initialEntry = entryFor(installed, spec.preset);
 	const staticRecordValue = staticRecordFor(spec.preset, initialEntry);
+	const prepared =
+		!staticRecordValue && typeof initialEntry === 'function'
+			? preparePresetEntry(initialEntry)
+			: undefined;
 	// L4: whether anything will actually read `state` this init. A context HANDLE in `spec.state`
 	// only pays its `getContext` when one of these is true; a plain value (most Bonds still passed
 	// directly) is unaffected either way.
@@ -389,7 +398,9 @@ function element(props: () => Record<string, unknown>, spec: ElementSpec): Kerne
 	const initialRecord =
 		staticRecordValue ??
 		(typeof initialEntry === 'function'
-			? toRecord(initialEntry({ bond: state } as never))
+			? prepared
+				? prepared.resolve({ bond: state } as never)
+				: toRecord(initialEntry({ bond: state } as never))
 			: undefined);
 	// L1: a static preset entry — resolved once above, from a non-function entry or a cached
 	// `simpleRecord` hit, never a fresh call — with no layer, no `variantProps`, and no
@@ -460,16 +471,16 @@ function element(props: () => Record<string, unknown>, spec: ElementSpec): Kerne
 	const effectiveSpec: ElementSpec =
 		specMotion === spec.motion ? spec : ({ ...spec, motion: specMotion } as ElementSpec);
 
-	let motionRune: ElementMotion<never> | undefined;
+	let motionOptions: ElementMotionOptions<never> | undefined;
 	if (specMotion) {
-		motionRune = useElementMotion<never>({
+		motionOptions = {
 			motion: () => (specMotion() ?? undefined) as never,
 			onmount: () => props().onmount as never,
 			ondestroy: () => props().ondestroy as never,
 			onintroend: () => props().onintroend as never,
 			onexitend: () => props().onexitend as never,
 			once: true
-		});
+		};
 	}
 
 	// One allocation per part: everything else — `#resolve`, `#ownMerged`, the per-part fields — now
@@ -485,8 +496,9 @@ function element(props: () => Record<string, unknown>, spec: ElementSpec): Kerne
 		userBase,
 		ownAttrsKind,
 		ownAttrsValue,
-		motionRune,
-		presetRender
+		motionOptions,
+		presetRender,
+		prepared
 	);
 }
 
@@ -494,6 +506,7 @@ class Handle implements KernelElement {
 	readonly #props: () => Record<string, unknown>;
 	readonly #spec: ElementSpec;
 	readonly #installed: Partial<Preset> | undefined;
+	readonly #prepared: PreparedPresetEntry | undefined;
 	readonly #state: unknown;
 	readonly #staticRecordValue: PresetEntryRecord | undefined;
 	readonly #staticEntry: boolean;
@@ -506,7 +519,7 @@ class Handle implements KernelElement {
 	readonly #ownAttrsMemo: (() => Record<string, unknown>) | undefined;
 	#ownMergedCache: Map<string, string> | undefined;
 
-	readonly #motion: ElementMotion<never> | undefined;
+	#motion: ElementMotion<never> | ElementMotionOptions<never> | undefined;
 	readonly #tag: string;
 	/** The preset's `render.as`, when it declared one — the fallback for a part's own `as`. */
 	readonly #fallbackTag: string;
@@ -527,12 +540,14 @@ class Handle implements KernelElement {
 		userBase: readonly string[],
 		ownAttrsKind: OwnAttrsKind,
 		ownAttrsValue: Record<string, unknown> | (() => Record<string, unknown>) | undefined,
-		motion: ElementMotion<never> | undefined,
-		presetRender: PresetRender | undefined
+		motion: ElementMotionOptions<never> | undefined,
+		presetRender: PresetRender | undefined,
+		prepared: PreparedPresetEntry | undefined
 	) {
 		this.#props = props;
 		this.#spec = spec;
 		this.#installed = installed;
+		this.#prepared = prepared;
 		this.#state = state;
 		this.#staticRecordValue = staticRecordValue;
 		this.#staticEntry = staticEntry;
@@ -623,7 +638,11 @@ class Handle implements KernelElement {
 			// resolves inside the memo so its reads are tracked.
 			record =
 				staticRecordFor(key, entry) ??
-				(typeof entry === 'function' ? toRecord(entry({ bond: state } as never)) : undefined);
+				(typeof entry === 'function'
+					? this.#prepared?.entry === entry
+						? this.#prepared.resolve({ bond: state } as never)
+						: toRecord(entry({ bond: state } as never))
+					: undefined);
 		}
 		let own = this.#ownAttrs();
 		// The static lane (L1/L2): a static entry with no consumer `variants`/`defaults`. Everything a
@@ -763,6 +782,9 @@ class Handle implements KernelElement {
 		return rest;
 	}
 	motion() {
+		if (this.#motion && !('attach' in this.#motion)) {
+			this.#motion = useElementMotion(this.#motion);
+		}
 		return this.#motion;
 	}
 	resolvedMotion() {
@@ -771,16 +793,28 @@ class Handle implements KernelElement {
 	// Decided once: a part's reason to escalate is declared in its spec, not discovered.
 	mode() {
 		const fixed = this.#tag as string;
-		return (this.#mode ??= renderMode({
-			isDiv: fixed === 'div',
-			isHeading: fixed === 'h3',
-			isButton: fixed === 'button',
-			plain: false,
-			motion: this.#spec.motion?.() ?? NO_MOTION,
-			attrs: this.#attrsFn(),
-			base: this.#base(),
-			canLeafTransition: this.#motion !== undefined
-		}));
+		if (this.#mode === undefined) {
+			this.#mode = renderMode({
+				isDiv: fixed === 'div',
+				isHeading: fixed === 'h3',
+				isButton: fixed === 'button',
+				plain: false,
+				motion: this.#spec.motion?.() ?? NO_MOTION,
+				attrs: this.#attrsFn(),
+				base: this.#base(),
+				canLeafTransition: this.#motion !== undefined
+			});
+			// Kernel.render chooses its leaf during component init. Only native transition leaves
+			// need this owner; HtmlElement and custom renderers construct their own, from raw motion.
+			if (
+				this.#mode === 'divLocal' ||
+				this.#mode === 'dynamicLocal' ||
+				this.#mode === 'divGlobal' ||
+				this.#mode === 'dynamicGlobal'
+			)
+				this.motion();
+		}
+		return this.#mode;
 	}
 	renderer() {
 		const target = resolveRenderTarget(this.#base(), HtmlElement);

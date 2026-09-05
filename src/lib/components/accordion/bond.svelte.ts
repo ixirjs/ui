@@ -110,12 +110,26 @@ export class AccordionBond implements IAccordion {
 	open(ids: string[]): void {
 		if (this.multiple) {
 			const next = [...this.props.values];
-			for (const id of ids) if (!next.includes(id)) next.push(id);
+			if (ids.length >= 8) {
+				const seen = new Set(next);
+				for (const id of ids) {
+					if (!seen.has(id)) {
+						seen.add(id);
+						next.push(id);
+					}
+				}
+			} else {
+				for (const id of ids) if (!next.includes(id)) next.push(id);
+			}
 			this.#set(next);
 		} else this.#set(ids.slice(0, 1));
 	}
 	close(ids: string[]): void {
-		this.#set(this.props.values.filter((v) => !ids.includes(v)));
+		const current = this.props.values;
+		if (ids.length >= 8) {
+			const removed = new Set(ids);
+			this.#set(current.filter((value) => !removed.has(value)));
+		} else this.#set(current.filter((value) => !ids.includes(value)));
 	}
 	toggle(id: string): void {
 		const open = this.isValueOpen(id);

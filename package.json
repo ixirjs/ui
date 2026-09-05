@@ -40,13 +40,14 @@
 		"sync:props": "node scripts/sync-props.mjs",
 		"sync:surface": "vitest --run public-surface -u",
 		"archive:surface": "node scripts/archive-surface.mjs",
-		"bench:vs-shadcn": "BENCH_ENTRY=test/perf/vs-shadcn/vs-bench.ts BENCH_OUT=.bench-out/vs vite build -c scripts/bench.vite.config.ts && node .bench-out/vs/vs-bench.js",
+		"bench:vs-shadcn": "BENCH_ENTRY=test/perf/vs-shadcn/vs-bench.ts BENCH_OUT=.bench-out/vs vite build -c scripts/bench.vite.config.ts && node --expose-gc .bench-out/vs/vs-bench.js",
 		"bench:vs-shadcn:client": "BENCH_ENTRY=test/perf/vs-shadcn/ssr-entry.ts BENCH_OUT=.bench-out/vs-ssr vite build -c scripts/bench.vite.config.ts && BENCH_CLIENT_ENTRY=test/perf/vs-shadcn/vs-client.svelte.ts BENCH_CLIENT_NAME=VsBench BENCH_CLIENT_FILE=vs-client.js BENCH_CLIENT_OUT=.bench-out/vs-client vite build -c scripts/bench-client.vite.config.ts && node scripts/bench-vs-client.mjs",
 		"bench:vs-shadcn:fetch": "node scripts/fetch-shadcn.mjs",
 		"bench:vs-shadcn:size": "node scripts/bench-vs-size.mjs",
 		"bench:vs-shadcn:ab": "node scripts/bench-vs-ab.mjs",
 		"bench:vs-shadcn:own": "node scripts/bench-vs-own.mjs",
 		"bench:vs-shadcn:primitives": "node scripts/bench-vs-primitives.mjs",
+		"bench:workloads": "BENCH_ENTRY=test/perf/vs-shadcn/ssr-entry.ts BENCH_OUT=.bench-out/vs-ssr vite build -c scripts/bench.vite.config.ts >&2 && BENCH_STYLED=1 BENCH_CLIENT_ENTRY=test/perf/workloads/workloads.svelte.ts BENCH_CLIENT_NAME=Workloads BENCH_CLIENT_FILE=workloads.js BENCH_CLIENT_OUT=.bench-out/workloads vite build -c scripts/bench-client.vite.config.ts >&2 && node scripts/bench-workloads.mjs",
 		"bench:growth": "BENCH_CLIENT_ENTRY=test/perf/growth/growth-client.svelte.ts BENCH_CLIENT_NAME=GrowthBench BENCH_CLIENT_FILE=growth-client.js BENCH_CLIENT_OUT=.bench-out/growth-client vite build -c scripts/bench-client.vite.config.ts && node scripts/bench-growth.mjs"
 	},
 	"files": [

@@ -13,9 +13,8 @@
  *   cancels and what remains is the marginal cost of one unit.
  * - **Interleaved at the innermost loop.** The two sides alternate within a round, so thermal drift
  *   and background load hit both equally. A-then-B is the classic false win here.
- * - **Floored endpoints, then subtract.** Flooring the two endpoints separately, rather than taking
- *   the minimum of per-round slopes, avoids the downward bias of pairing a fast HIGH with a slow
- *   LOW. Same reasoning as `ssr-bench.ts`.
+ * - **Median endpoints, raw samples retained.** No minimum-only result; both endpoint arrays and
+ *   per-round slopes are included in JSON. These are diagnostic ratios, not confidence intervals.
  * - **Spread reported, not just the median.** The IQR of per-round slopes is printed beside every
  *   figure. A win narrower than the spread is not a win.
  * - **Output census, always.** Bytes, hydration anchors and elements per unit, plus a tag/ARIA
@@ -28,8 +27,10 @@ import { render } from 'svelte/server';
 import { PerformanceObserver } from 'node:perf_hooks';
 import { readFileSync } from 'node:fs';
 import { cpus, loadavg } from 'node:os';
+import { workload } from './parity';
 import { census, type Census } from './dom.js';
 import { FAMILIES, type Family } from './families.js';
+import { median, roundOrder, validateSampling, pairedComparison } from '../samples';
 
 const SIDES = ['ixir', 'shadcn'] as const;
 type Side = (typeof SIDES)[number];
@@ -37,7 +38,7 @@ type Side = (typeof SIDES)[number];
 const LOW = 100;
 const HIGH = 800;
 const ITERATIONS = Number(process.env.BENCH_ITER ?? 8);
-const ROUNDS = Number(process.env.BENCH_ROUNDS ?? 16);
+const ROUNDS = Number(process.env.BENCH_ROUNDS ?? 19);
 const WARMUP_ROUNDS = 3;
 const GC_WARMUP_MS = Number(process.env.BENCH_GC_WARMUP_MS ?? 120);
 const GC_BUDGET_MS = Number(process.env.BENCH_GC_MS ?? 400);
@@ -46,10 +47,20 @@ const CENSUS_LOW = 2;
 const CENSUS_HIGH = 12;
 
 const args = process.argv.slice(2);
+for (const arg of args)
+	if (arg.startsWith('--') && !['--json'].includes(arg))
+		throw new Error(`unknown benchmark option: ${arg}`);
 const JSON_OUT = args.includes('--json');
 const only = new Set(args.filter((arg) => !arg.startsWith('--')));
 const families = only.size > 0 ? FAMILIES.filter((f) => only.has(f.name)) : FAMILIES;
-if (families.length === 0) throw new Error(`no such family: ${[...only].join(', ')}`);
+for (const name of only)
+	if (!FAMILIES.some((family) => family.name === name)) throw new Error(`unknown family: ${name}`);
+validateSampling(ROUNDS, WARMUP_ROUNDS);
+for (const value of [ITERATIONS, GC_WARMUP_MS, GC_BUDGET_MS]) {
+	if (!Number.isFinite(value) || value <= 0)
+		throw new Error('invalid benchmark iterations or GC budget');
+}
+if (!Number.isSafeInteger(ITERATIONS)) throw new Error('iterations must be an integer');
 
 // ─── Timing ────────────────────────────────────────────────────────────────────────────────────
 
@@ -68,19 +79,27 @@ function renderMs(family: Family, side: Side, n: number): number {
 type Key = `${string}:${Side}`;
 const key = (family: Family, side: Side): Key => `${family.name}:${side}`;
 
-const floorLow = new Map<Key, number>();
-const floorHigh = new Map<Key, number>();
+const gc = (globalThis as { gc?: () => void }).gc;
+if (!gc) throw new Error('SSR benchmark requires node --expose-gc');
+const loadAtStart = loadavg()[0] ?? 0;
+const samplesLow = new Map<Key, number[]>();
+const samplesHigh = new Map<Key, number[]>();
 const slopes = new Map<Key, number[]>();
 
 for (let round = 0; round < ROUNDS; round++) {
-	for (const family of families) {
-		for (const side of SIDES) {
-			const low = renderMs(family, side, LOW);
-			const high = renderMs(family, side, HIGH);
+	for (const family of roundOrder(families, round)) {
+		for (const side of roundOrder(SIDES, round)) {
+			gc();
+			const endpoints = new Map<number, number>();
+			for (const n of roundOrder([LOW, HIGH], round)) endpoints.set(n, renderMs(family, side, n));
+			const low = endpoints.get(LOW)!;
+			const high = endpoints.get(HIGH)!;
 			if (round < WARMUP_ROUNDS) continue;
 			const k = key(family, side);
-			floorLow.set(k, Math.min(floorLow.get(k) ?? Infinity, low));
-			floorHigh.set(k, Math.min(floorHigh.get(k) ?? Infinity, high));
+			if (!Number.isFinite(low) || low <= 0 || !Number.isFinite(high) || high <= 0)
+				throw new Error(`invalid timing: ${k}`);
+			(samplesLow.get(k) ?? samplesLow.set(k, []).get(k)!).push(low);
+			(samplesHigh.get(k) ?? samplesHigh.set(k, []).get(k)!).push(high);
 			(slopes.get(k) ?? slopes.set(k, []).get(k)!).push(((high - low) * 1000) / (HIGH - LOW));
 		}
 	}
@@ -140,6 +159,7 @@ function censusPerUnit(family: Family, side: Side): Census & { unitSkeleton: str
 // ─── Collect ───────────────────────────────────────────────────────────────────────────────────
 
 type Row = {
+	samples: { low: number[]; high: number[]; slopes: number[] };
 	micros: number;
 	spread: [number, number];
 	gcShare: number;
@@ -153,7 +173,8 @@ for (const family of families) {
 		const k = key(family, side);
 		const sorted = [...slopes.get(k)!].sort((a, b) => a - b);
 		results[family.name]![side] = {
-			micros: ((floorHigh.get(k)! - floorLow.get(k)!) * 1000) / (HIGH - LOW),
+			samples: { low: samplesLow.get(k)!, high: samplesHigh.get(k)!, slopes: slopes.get(k)! },
+			micros: ((median(samplesHigh.get(k)!) - median(samplesLow.get(k)!)) * 1000) / (HIGH - LOW),
 			spread: [
 				sorted[Math.floor(sorted.length * 0.25)]!,
 				sorted[Math.floor(sorted.length * 0.75)]!
@@ -175,11 +196,24 @@ const machine = {
 	// that no amount of flooring or interleaving removes, because the competing work is not this
 	// process's. Ratios survive load better than absolutes, but not reliably: the same pair read
 	// +107% idle and +164% loaded. Provenance without this field is provenance that lies.
-	loadavg: loadavg()[0] ?? 0
+	loadavg: Math.max(loadAtStart, loadavg()[0] ?? 0)
 };
 
+const workloads = Object.fromEntries(
+	families.map((family) => [family.name, workload(family.name)])
+);
+const comparisons = Object.fromEntries(
+	families.map((family) => [
+		family.name,
+		pairedComparison(
+			results[family.name]!.ixir.samples.slopes,
+			results[family.name]!.shadcn.samples.slopes
+		)
+	])
+);
+
 if (JSON_OUT) {
-	console.log(JSON.stringify({ machine, provenance, results }, null, '\t'));
+	console.log(JSON.stringify({ machine, provenance, workloads, comparisons, results }, null, '\t'));
 	process.exit(0);
 }
 
@@ -200,14 +234,14 @@ const verdict = (family: Family, ours: number, theirs: number, spread: number) =
 	if (family.opponent === 'hand') return `${(ours / theirs).toFixed(0)}× floor`;
 	const change = ((ours - theirs) / theirs) * 100;
 	const inNoise = Math.abs(ours - theirs) < spread;
-	return `${change > 0 ? '+' : ''}${change.toFixed(0)}%${inNoise ? '~' : change < 0 ? ' WIN' : ' LOSS'}`;
+	return `${change > 0 ? '+' : ''}${change.toFixed(0)}%${inNoise ? '~' : ''} diagnostic`;
 };
 
 console.log(
 	`\n@ixirjs/ui vs shadcn-svelte — SSR marginal cost (lower is better)\n\n` +
 		`  shadcn-svelte registry ${provenance.registryHash} (fetched ${provenance.fetched}), ` +
 		`bits-ui ${provenance.bitsUi}, svelte ${provenance.svelte}\n` +
-		`  ${machine.cpu}, ${machine.node}, ${machine.rounds} measured rounds × ${machine.iterations} iterations, sides interleaved\n` +
+		`  ${machine.cpu}, ${machine.node}, ${machine.rounds} measured rounds × ${machine.iterations} iterations, sides counterbalanced\n` +
 		`  1-minute load average ${machine.loadavg.toFixed(2)} of ${cpus().length} cores\n` +
 		(machine.loadavg > cpus().length / 4
 			? '\n  ! THIS BOX IS BUSY. Absolute µs below are inflated and the ratios are unreliable.\n' +
@@ -252,3 +286,6 @@ console.log(
 		'  verdict means the gap is inside the round-to-round spread and is not a result. `× floor`\n' +
 		'  means the opponent is hand-written markup with none of the behaviour, not a rival library.\n'
 );
+
+console.log('Paired 95% bootstrap intervals (within-run diagnostics only):');
+console.log(JSON.stringify(comparisons, null, 2));

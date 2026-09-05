@@ -1,0 +1,9 @@
+
+Shipped JS for the same five families — card, button, accordion, menu, table/datagrid
+  (svelte external on both sides; it ships once per app either way)
+
+  side          raw       gzip     brotli        css
+  ixir      249.0 kB    65.2 kB    55.6 kB     0.4 kB
+  shadcn    301.7 kB    71.5 kB    60.0 kB     0.0 kB
+  vs            -17%        -9%        -7%
+

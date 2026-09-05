@@ -1,0 +1,67 @@
+{
+	"baseline": "3f05960e2f7239b66e2093bf34fcd2e645d68eca",
+	"baselineMeaning": "Only these nine runtime files are substituted; fixtures and harness are identical current sources in both arms. Not a clean-checkout comparison.",
+	"node": "v24.13.1",
+	"bun": "1.4.0",
+	"platform": "Linux-7.2.2-zen1-1-zen-x86_64-with-glibc2.44",
+	"runtime": {
+		"src/lib/capability/models/disclosure.svelte.ts": {
+			"before": "9a35a286214912760f69482b8edeb29956a3501ab9701d38972cade71411b986",
+			"after": "f5b9b693464438661b55c4bd8383f19bd7b506d514ade604e6ae5fe23b70bba5"
+		},
+		"src/lib/capability/models/selection.svelte.ts": {
+			"before": "c28e8d70b0d4eb92790507236682cc8c836b99d98876d008be39e034fbdcd587",
+			"after": "3b3afd29c8c6f50206185373d9b4cc914c60945a80510ae3975859f357901d09"
+		},
+		"src/lib/capability/models/roving.svelte.ts": {
+			"before": "91e3f213564a98403936b979d81af52092cc72a07f6c382c979af866b12ec06d",
+			"after": "f7ae194ba0606ec6a5fa24c7d853355c1b422e0fa05da05f0673576dc7716530"
+		},
+		"src/lib/components/accordion/bond.svelte.ts": {
+			"before": "8318fa2f02074ba449dcf6d892dd104ee6f8ff04041d8dac90b9a38bd30320e2",
+			"after": "a5e8bc449eb6d2ffad7cf5eb395ce294ff1817020381ab7845e06f555770948d"
+		},
+		"src/lib/components/tree/bond.svelte.ts": {
+			"before": "c350854108187f9f540fb6910ec66259cf1df5c5a9fe74512f94a9479ef21534",
+			"after": "037e5c27293e6c46bb77d3db5e0d1080eda1b8e95fb5c1624ea4a9c813ce1be8"
+		},
+		"src/lib/utils/animate.ts": {
+			"before": "aafe109d226801495f98dc4198b031f875db5fccbfbd77f32ba5960248d0f060",
+			"after": "7eec2b3e2166a20cbec8e8372f4bbd7056f5f32b6e30a5ec10f405e73f104edf"
+		},
+		"src/lib/preset/context.svelte.ts": {
+			"before": "1b5fb449e3ed225fcf61c51c848ed7c3b06dc159f5d4aa0cc7f38aef9ded4be5",
+			"after": "4fe9e8446622be4d8c25e51802480e2a57871aaceee8652758396e5d1d50235c"
+		},
+		"src/lib/kernel/kernel.svelte.ts": {
+			"before": "eb77b4e67d293462f06e5feb8fec61986e4803b90e118d5f2d19465dbf1d8ad1",
+			"after": "c665d106e4848fe3dd63fd5c656360be32b294cd8bfe8e65d6173c7abd98a8e1"
+		},
+		"src/lib/kernel/resolve/preset.ts": {
+			"before": "f38b02321e41a6f5f1514a1c5decc6ae0b7fc8d70442eb264fa60e8eed681021",
+			"after": "f9637b1c9c6cadf469c6995d11521679db7190df3c4eda22fc337e97d8073ace"
+		}
+	},
+	"inputs": {
+		"docs/research/evidence/performance-plan/client.mjs": "ce178e7863697853af101c88987a6b9c37507e49d31e694d458ed8b3f32bad79",
+		"docs/research/evidence/performance-plan/build.config.mjs": "6d9c475de4833606c8638762acab59c176c49d775c265931a47ca77af820487d",
+		"docs/research/evidence/performance-plan/compare.mjs": "86c7a195e9e4b522951d2c599f30e967aad3b727a3d0d9cbb80da5b5ef5b1484",
+		"src/lib/test/perf/workloads/customization.test.svelte": "b577eedbd197e2e1b4ca96c99ffc7a60943a16169f6cd62c68565a4376098904",
+		"src/lib/test/perf/samples.ts": "ab8cc54f12f920c161551c14b54dcc03b164811d44d816afdfcee05fb3096b15",
+		"src/app.css": "ce2107a91c05de831e896a6cef8721468eb78c35cbd7f971453e8a7bbf34ec44",
+		"package.json": "5db633848b1cb8538e3a6cadc17b1c23c70fa1d6699372f61c9e230efa9dff70",
+		"bun.lock": "afc1e4c0632e8875c2677b5582112990668e3b17ddecd6a1c83e4f19146fa84e",
+		"scripts/bench-client.vite.config.ts": "d72dbf40e546978c46c355bbe114608a3bc12e8b54e92e07868b36902b91bc02",
+		"scripts/bench-vs-size.mjs": "e1b0f31ca0d2bda7b767cf5d3e1204e2a6fffcd01f4610dc3fee14b3fcfc526b"
+	},
+	"sizeArtifacts": {
+		"size-ixir": {
+			"sha256": "500c934f025158a6c72126f115eee10e4f4eb93c9ecdaea579ef802dceeb9e14",
+			"bytes": 256481
+		},
+		"size-before-ixir": {
+			"sha256": "78256025c4244bf1bea63e1a95e2979058b4488712627e1e4eca10a731a43111",
+			"bytes": 254978
+		}
+	}
+}

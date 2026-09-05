@@ -164,3 +164,62 @@ describe('RovingFocus — reactive over the injected list', () => {
 		expect(r.activeId).toBeNull();
 	});
 });
+
+it('reads controlled state and membership afresh after rejected, normalized and list-changing writes', () => {
+	let ids = ['a', 'b', 'c'];
+	let active: string | null = 'a';
+	let commit = (_id: string | null) => {};
+	const requests: Array<string | null> = [];
+	const roving = createRovingFocus({
+		ids: () => ids,
+		active: {
+			get: () => active,
+			set: (id) => {
+				requests.push(id);
+				commit(id);
+			}
+		}
+	});
+	expect(roving.next()).toBe('a'); // Rejected, not optimistically highlighted.
+	commit = () => {
+		active = 'c';
+	};
+	expect(roving.next()).toBe('c'); // Owner normalized the requested b.
+	commit = (id) => {
+		active = id;
+		ids = ['b', 'c'];
+	};
+	expect(roving.first()).toBeNull(); // Requested a disappeared during the write.
+	commit = (id) => {
+		active = id;
+		ids.splice(0, ids.length, 'x');
+	};
+	expect(roving.goto('b')).toBeNull(); // Same-array mutation also invalidates membership.
+	expect(requests).toEqual(['b', 'b', 'a', 'b']);
+	ids = ['x', 'y'];
+	active = 'y';
+	expect(roving.activeIndex).toBe(1);
+	commit = () => {
+		active = 'x';
+	};
+	roving.clear();
+	expect(roving.activeId).toBe('x'); // Clear is also controlled.
+});
+
+it.each(['next', 'previous', 'first', 'last', 'goto'] as const)(
+	'%s shares pre-write list reads but validates the post-write list',
+	(method) => {
+		let reads = 0;
+		const roving = createRovingFocus({
+			ids: () => {
+				reads++;
+				return ['a', 'b', 'c'];
+			}
+		});
+		roving.goto('b');
+		reads = 0;
+		const next = method === 'goto' ? roving.goto('a') : roving[method]();
+		expect(next).toBe(method === 'next' || method === 'last' ? 'c' : 'a');
+		expect(reads).toBe(2);
+	}
+);

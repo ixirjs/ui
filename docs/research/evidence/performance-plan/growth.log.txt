@@ -1,0 +1,31 @@
+$ BENCH_CLIENT_ENTRY=test/perf/growth/growth-client.svelte.ts BENCH_CLIENT_NAME=GrowthBench BENCH_CLIENT_FILE=growth-client.js BENCH_CLIENT_OUT=.bench-out/growth-client vite build -c scripts/bench-client.vite.config.ts && node scripts/bench-growth.mjs
+vite v7.3.2 building client environment for production...
+transforming...
+✓ 410 modules transformed.
+rendering chunks...
+computing gzip size...
+.bench-out/growth-client/ui.css              0.24 kB │ gzip:   0.14 kB
+.bench-out/growth-client/growth-client.js  704.17 kB │ gzip: 170.78 kB
+✓ built in 1.59s
+
+Mount growth shape — t ∝ n^k over four sizes (1.00 = linear, 2.00 = quadratic)
+
+  AMD Ryzen 9 PRO 8945HS w/ Radeon 780M Graphics ×16, chromium, best of 3, load 2.94
+  k fits all four log timings; load, GC and fixed overhead can still affect the estimate.
+
+  family        unit      n=50    n=100    n=200    n=400        k
+  accordion     item         3.9 ms     7.0 ms    13.4 ms    22.2 ms     0.85
+  tabs          tab          4.5 ms     5.9 ms    10.3 ms    20.6 ms     0.74
+  tree          node         4.8 ms     8.5 ms    15.3 ms    33.8 ms     0.93
+  tree-depth    level        3.7 ms     6.5 ms    15.3 ms    47.1 ms     1.22
+  datagrid      row          3.8 ms     6.8 ms    12.5 ms    24.3 ms     0.89
+  datagrid-columns column       4.7 ms     5.2 ms    10.4 ms    20.3 ms     0.73
+  dropdown-menu item         2.3 ms     4.1 ms     7.5 ms    14.1 ms     0.87
+  select        option       4.4 ms     6.5 ms    10.7 ms    19.3 ms     0.71
+  stepper       step         4.0 ms     7.2 ms    13.0 ms    26.5 ms     0.90
+
+  ! tree-depth k=1.22 is a KNOWN DEFECT, not a target.
+    NOT a target, and the cause is OPEN. `keyboardOwner` walked `#parentNode?.keyboardOwner` on every read and every header's `attrs` reads it, which is O(depth) per header and O(n^2) over a chain; caching it at construction (the parent chain is fixed then) moved k only 1.37 -> 1.30, inside run-to-run spread. So that walk was real and is fixed, but it was not the dominant term. Ruled out as the cause: Svelte's own component nesting (control fixture, k=0.86). 2026-08-25: also ruled out the eager block re-run that was accordion's cause -- the call-count probe shows every per-level count flat (44 effects, 16 deriveds, 3 renders, 6 mark_reactions per level) and the mode() fix left k unchanged. What grows is per-level work in an uncounted frame; DOM insertion depth and the effect-tree walk are the remaining suspects. Still unexplained. Never raise this entry.
+
+gate OK — baseline 2026-08-25
+

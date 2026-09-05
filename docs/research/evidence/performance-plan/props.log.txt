@@ -1,0 +1,4 @@
+
+2 type(s) had no named or inherited props; no table emitted:
+  - lazy.LazyComponentProps
+  - slider.SliderResolvedPartProps

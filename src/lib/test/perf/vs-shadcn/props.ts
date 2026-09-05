@@ -13,6 +13,7 @@
  */
 export type FixtureProps = {
 	n?: number;
+	onpress?: () => void;
 	tint?: string;
 	bump?: string;
 };

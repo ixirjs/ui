@@ -1,5 +1,6 @@
 import { svelte, vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 import { defineConfig } from 'vite';
+import tailwindcss from '@tailwindcss/vite';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -17,7 +18,10 @@ const lib = path.join(root, 'src/lib');
 
 export default defineConfig({
 	root,
-	plugins: [svelte({ preprocess: [vitePreprocess()] })],
+	plugins: [
+		svelte({ preprocess: [vitePreprocess()] }),
+		...(process.env.BENCH_STYLED ? [tailwindcss()] : [])
+	],
 	resolve: {
 		alias: [
 			{ find: /^\$ixirjs\/ui$/, replacement: lib },

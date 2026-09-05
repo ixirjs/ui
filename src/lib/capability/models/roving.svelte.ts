@@ -42,7 +42,6 @@ export function createRovingFocus<T = unknown>(backing: RovingBacking<T>): Rovin
 	const cell = backing.active ?? { get: () => own.id, set: (id) => (own.id = id) };
 
 	const ids = (): readonly string[] => backing.ids();
-	const idAt = (i: number): string | null => ids()[i] ?? null;
 
 	// The `item` role projection reads `activeId` once per rendered item, so a window of twenty items
 	// costs twenty scans of the id list — invisible at twenty ids, not at the ten thousand a
@@ -55,10 +54,10 @@ export function createRovingFocus<T = unknown>(backing: RovingBacking<T>): Rovin
 	let lastIds: readonly string[] | undefined;
 	let lastId: string | null = null;
 	let lastIndex = -1;
-	const indexOfActive = (): number => {
+	const indexOfActive = (snapshot?: readonly string[]): number => {
 		const id = cell.get();
 		if (id === null) return -1;
-		const current = ids();
+		const current = snapshot ?? ids();
 		if (current === lastIds && id === lastId && current[lastIndex] === id) return lastIndex;
 		lastIds = current;
 		lastId = id;
@@ -66,9 +65,10 @@ export function createRovingFocus<T = unknown>(backing: RovingBacking<T>): Rovin
 		return lastIndex;
 	};
 	const activeId = (): string | null => (indexOfActive() < 0 ? null : cell.get());
-	// Reads back through the cell: a controlled owner may reject or normalize the write.
-	const set = (i: number): string | null => {
-		cell.set(idAt(i));
+	// Share only the pre-write list within a request. Always read back with a fresh list: a
+	// controlled owner may reject/normalize the write or change membership synchronously.
+	const set = (id: string | null): string | null => {
+		cell.set(id);
 		return activeId();
 	};
 
@@ -84,33 +84,34 @@ export function createRovingFocus<T = unknown>(backing: RovingBacking<T>): Rovin
 			return id !== null && backing.item ? (backing.item(id) ?? null) : null;
 		},
 		next() {
-			const n = ids().length;
-			if (n === 0) return set(-1);
-			const index = indexOfActive();
-			if (index < 0) return set(0);
+			const current = ids();
+			const n = current.length;
+			if (n === 0) return set(null);
+			const index = indexOfActive(current);
+			if (index < 0) return set(current[0] ?? null);
 			const i = index + 1;
-			return set(i >= n ? (wrap ? 0 : n - 1) : i);
+			return set(current[i >= n ? (wrap ? 0 : n - 1) : i] ?? null);
 		},
 		previous() {
-			const n = ids().length;
-			if (n === 0) return set(-1);
-			const index = indexOfActive();
-			if (index <= 0) return set(wrap ? n - 1 : 0);
-			return set(index - 1);
+			const current = ids();
+			const n = current.length;
+			if (n === 0) return set(null);
+			const index = indexOfActive(current);
+			if (index <= 0) return set(current[wrap ? n - 1 : 0] ?? null);
+			return set(current[index - 1] ?? null);
 		},
 		first() {
-			return set(ids().length ? 0 : -1);
+			return set(ids()[0] ?? null);
 		},
 		last() {
-			const n = ids().length;
-			return set(n ? n - 1 : -1);
+			const current = ids();
+			return set(current[current.length - 1] ?? null);
 		},
 		goto(id: string) {
-			cell.set(ids().includes(id) ? id : null);
-			return activeId();
+			return set(ids().includes(id) ? id : null);
 		},
 		clear() {
-			set(-1);
+			set(null);
 		}
 	};
 }

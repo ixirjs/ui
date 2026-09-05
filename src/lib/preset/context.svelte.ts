@@ -115,9 +115,22 @@ function resolvePresetEntry(entry: PresetEntry, context: PresetContext): PresetE
 	return typeof entry === 'function' ? entry(context) : entry;
 }
 
+// The composition is configuration, not a cached factory result. Kernel may consume this pair
+// directly; invoking the public entry still returns the same explicit merged-layer shape.
+const entryLayers = new WeakMap<PresetEntry, readonly [PresetEntry, PresetEntry]>();
+
+/** @internal Immutable composition structure, without invoking either factory. */
+export function presetEntryLayers(
+	entry: PresetEntry
+): readonly [PresetEntry, PresetEntry] | undefined {
+	return entryLayers.get(entry);
+}
+
 function mergePresetEntries(existing: PresetEntry, next: PresetEntry): PresetEntry {
-	return (context) =>
+	const entry: PresetEntry = (context) =>
 		mergePresetLayers(resolvePresetEntry(existing, context), resolvePresetEntry(next, context));
+	entryLayers.set(entry, Object.freeze([existing, next]));
+	return entry;
 }
 
 // Unknown preset keys are *not* an error: an app may register slots for its own components through

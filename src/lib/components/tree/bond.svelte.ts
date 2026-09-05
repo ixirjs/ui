@@ -150,11 +150,32 @@ export class TreeBond implements ITreeNode {
 	 * `firstVisibleHeaderId` without building it.
 	 */
 	get visibleHeaderIds(): readonly string[] {
-		if (this.props.disabled) return [];
-		const own = this.headerId;
-		const ids = own ? [own] : [];
-		if (!this.isOpen) return ids;
-		for (const child of this.items.values()) ids.push(...child.visibleHeaderIds);
+		const ids: string[] = [];
+		const stack: Iterator<ITreeNode>[] = [];
+		const visit = (node: TreeBond) => {
+			if (node.props.disabled) return;
+			const own = node.headerId;
+			if (own) ids.push(own);
+			if (node.isOpen) stack.push(node.items.values());
+		};
+		visit(this);
+		while (stack.length) {
+			const next = stack[stack.length - 1]!.next();
+			if (next.done) {
+				stack.pop();
+				continue;
+			}
+			const child = next.value;
+			// Only bypass the known native getter. Extensions own their visibility contract.
+			if (
+				Object.getPrototypeOf(child) === TreeBond.prototype &&
+				!Object.hasOwn(child, 'visibleHeaderIds')
+			) {
+				visit(child as TreeBond);
+			} else {
+				for (const id of child.visibleHeaderIds) ids.push(id);
+			}
+		}
 		return ids;
 	}
 

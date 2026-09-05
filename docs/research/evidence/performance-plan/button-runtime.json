@@ -1,0 +1,326 @@
+{
+	"machine": "AMD Ryzen 9 PRO 8945HS w/ Radeon 780M Graphics ×16",
+	"load": 4.09,
+	"provenance": {
+		"source": "https://shadcn-svelte.com/registry",
+		"fetched": "2026-09-02",
+		"shadcnSvelteCli": "1.5.0",
+		"bitsUi": "2.19.0",
+		"tailwindVariants": "^3.3.1",
+		"svelte": "5.56.8",
+		"registryHash": "b7278016a3be6377",
+		"items": [
+			"button",
+			"card",
+			"dialog",
+			"select",
+			"dropdown-menu",
+			"accordion",
+			"table",
+			"badge",
+			"separator",
+			"label",
+			"input",
+			"popover"
+		],
+		"files": [
+			"accordion/accordion-content.svelte",
+			"accordion/accordion-item.svelte",
+			"accordion/accordion-trigger.svelte",
+			"accordion/accordion.svelte",
+			"accordion/index.ts",
+			"badge/badge.svelte",
+			"badge/index.ts",
+			"button/button.svelte",
+			"button/index.ts",
+			"card/card-action.svelte",
+			"card/card-content.svelte",
+			"card/card-description.svelte",
+			"card/card-footer.svelte",
+			"card/card-header.svelte",
+			"card/card-title.svelte",
+			"card/card.svelte",
+			"card/index.ts",
+			"dialog/dialog-close.svelte",
+			"dialog/dialog-content.svelte",
+			"dialog/dialog-description.svelte",
+			"dialog/dialog-footer.svelte",
+			"dialog/dialog-header.svelte",
+			"dialog/dialog-overlay.svelte",
+			"dialog/dialog-portal.svelte",
+			"dialog/dialog-title.svelte",
+			"dialog/dialog-trigger.svelte",
+			"dialog/dialog.svelte",
+			"dialog/index.ts",
+			"dropdown-menu/dropdown-menu-checkbox-group.svelte",
+			"dropdown-menu/dropdown-menu-checkbox-item.svelte",
+			"dropdown-menu/dropdown-menu-content.svelte",
+			"dropdown-menu/dropdown-menu-group-heading.svelte",
+			"dropdown-menu/dropdown-menu-group.svelte",
+			"dropdown-menu/dropdown-menu-item.svelte",
+			"dropdown-menu/dropdown-menu-label.svelte",
+			"dropdown-menu/dropdown-menu-portal.svelte",
+			"dropdown-menu/dropdown-menu-radio-group.svelte",
+			"dropdown-menu/dropdown-menu-radio-item.svelte",
+			"dropdown-menu/dropdown-menu-separator.svelte",
+			"dropdown-menu/dropdown-menu-shortcut.svelte",
+			"dropdown-menu/dropdown-menu-sub-content.svelte",
+			"dropdown-menu/dropdown-menu-sub-trigger.svelte",
+			"dropdown-menu/dropdown-menu-sub.svelte",
+			"dropdown-menu/dropdown-menu-trigger.svelte",
+			"dropdown-menu/dropdown-menu.svelte",
+			"dropdown-menu/index.ts",
+			"input/index.ts",
+			"input/input.svelte",
+			"label/index.ts",
+			"label/label.svelte",
+			"popover/index.ts",
+			"popover/popover-close.svelte",
+			"popover/popover-content.svelte",
+			"popover/popover-portal.svelte",
+			"popover/popover-trigger.svelte",
+			"popover/popover.svelte",
+			"select/index.ts",
+			"select/select-content.svelte",
+			"select/select-group-heading.svelte",
+			"select/select-group.svelte",
+			"select/select-item.svelte",
+			"select/select-label.svelte",
+			"select/select-portal.svelte",
+			"select/select-scroll-down-button.svelte",
+			"select/select-scroll-up-button.svelte",
+			"select/select-separator.svelte",
+			"select/select-trigger.svelte",
+			"select/select.svelte",
+			"separator/index.ts",
+			"separator/separator.svelte",
+			"table/index.ts",
+			"table/table-body.svelte",
+			"table/table-caption.svelte",
+			"table/table-cell.svelte",
+			"table/table-footer.svelte",
+			"table/table-head.svelte",
+			"table/table-header.svelte",
+			"table/table-row.svelte",
+			"table/table.svelte"
+		]
+	},
+	"artifacts": {
+		"client": "fc016f34e942f362e7707f76ece7e71d1aa457565b24047505932457a1368bd1",
+		"ssr": "8b7882487afffb5d0eb1754cadc3ccb99c5a9bb82e2ced43f837c9e1eca4228e"
+	},
+	"storm": 100,
+	"broad": 4,
+	"comparisons": {
+		"button": {
+			"workload": "native button text, type, click, class updates and hydration",
+			"qualification": "busy-machine",
+			"metrics": {
+				"mount": {
+					"ratio": 0.805825243113289,
+					"interval": [0.6798982184352629, 0.9177177182968376],
+					"status": "lower"
+				},
+				"hydrate": {
+					"ratio": 0.9005886193733956,
+					"interval": [0.7996121521911995, 1.0253164541522057],
+					"status": "inconclusive"
+				},
+				"targeted": {
+					"ratio": 1.1086142312440437,
+					"interval": [0.9770491749456703, 1.248031498820756],
+					"status": "inconclusive"
+				},
+				"broad": {
+					"ratio": 1.0780287475871966,
+					"interval": [0.9619297670960759, 1.2059753958933725],
+					"status": "inconclusive"
+				}
+			}
+		}
+	},
+	"results": {
+		"button": {
+			"ixir": {
+				"samples": {
+					"mount": {
+						"100": [
+							3.199999988079071, 2.5, 1.9000000059604645, 2.5, 1.9000000059604645,
+							1.7000000178813934, 1.7999999821186066, 1.5999999940395355, 1.800000011920929,
+							1.800000011920929, 1.300000011920929, 1.699999988079071, 1.5999999940395355,
+							1.9000000059604645, 1.7000000178813934, 2
+						],
+						"800": [
+							9.099999994039536, 10, 10.400000005960464, 13, 14.5, 13.699999988079071,
+							9.099999994039536, 10.400000005960464, 9, 13.800000011920929, 10.900000005960464, 13,
+							11, 10.800000011920929, 11.300000011920929, 10.300000011920929
+						]
+					},
+					"hydrate": {
+						"100": [
+							1.5999999940395355, 1.699999988079071, 1.5999999940395355, 1.7000000178813934,
+							1.5999999940395355, 2.9000000059604645, 2.4000000059604645, 2.9000000059604645,
+							1.7000000178813934, 1.5, 1.699999988079071, 1.5999999940395355, 2.899999976158142,
+							1.5999999940395355, 1.699999988079071, 2.300000011920929
+						],
+						"800": [
+							11.299999982118607, 12.099999994039536, 9.5, 10.5, 13.300000011920929,
+							10.599999994039536, 9.300000011920929, 10.900000005960464, 8.5, 9.300000011920929,
+							10.5, 10.699999988079071, 7.699999988079071, 11.399999976158142, 8.800000011920929,
+							14.699999988079071
+						]
+					},
+					"targeted": {
+						"100": [
+							0.01, 0.015, 0.01199999988079071, 0.010999999940395355, 0.01, 0.01199999988079071,
+							0.01, 0.01199999988079071, 0.01, 0.01, 0.00800000011920929, 0.010999999940395355,
+							0.01, 0.010999999940395355, 0.01, 0.01
+						],
+						"800": [
+							0.020999999940395354, 0.015999999940395356, 0.019000000059604644,
+							0.015999999940395356, 0.01699999988079071, 0.02, 0.02800000011920929, 0.015, 0.015,
+							0.02, 0.02399999976158142, 0.015, 0.023000000119209288, 0.019000000059604644,
+							0.014000000059604644, 0.014000000059604644
+						]
+					},
+					"broad": {
+						"100": [
+							0.5499999970197678, 1.1000000014901161, 0.6000000014901161, 0.6499999985098839,
+							0.5750000029802322, 0.625, 0.4749999940395355, 0.6000000014901161, 0.5499999970197678,
+							0.5499999970197678, 0.44999999552965164, 0.875, 0.42500000447034836,
+							0.6000000014901161, 0.5499999970197678, 0.9499999955296516
+						],
+						"800": [
+							6.450000002980232, 7.274999998509884, 6.449999995529652, 5.674999997019768,
+							5.399999998509884, 6.450000002980232, 5.4749999940395355, 4.350000001490116,
+							5.149999998509884, 5.424999997019768, 6.425000004470348, 4.475000001490116,
+							5.924999997019768, 4.375, 3.7999999970197678, 5.774999998509884
+						]
+					}
+				},
+				"mount": {
+					"100": 1.800000011920929,
+					"800": 10.850000008940697
+				},
+				"hydrate": {
+					"100": 1.699999988079071,
+					"800": 10.549999997019768
+				},
+				"targeted": {
+					"100": 0.01,
+					"800": 0.017999999970197675
+				},
+				"broad": {
+					"100": 0.5875000022351742,
+					"800": 5.574999995529652
+				},
+				"census": {
+					"100": {
+						"elements": 101,
+						"comments": 104,
+						"texts": 103
+					},
+					"800": {
+						"elements": 801,
+						"comments": 804,
+						"texts": 803
+					}
+				},
+				"heap": {
+					"100": 7559346,
+					"800": 10340882
+				}
+			},
+			"shadcn": {
+				"samples": {
+					"mount": {
+						"100": [
+							2.199999988079071, 2.5999999940395355, 2.4000000059604645, 2.0999999940395355,
+							4.200000017881393, 3.300000011920929, 2.100000023841858, 2, 2.2000000178813934, 3,
+							2.0999999940395355, 3.199999988079071, 2.5999999940395355, 2.300000011920929,
+							2.800000011920929, 2.7000000178813934
+						],
+						"800": [
+							12.900000005960464, 20.400000005960464, 12.5, 15.699999988079071, 19,
+							18.799999982118607, 12.299999982118607, 13.599999994039536, 11.600000023841858, 14,
+							10.699999988079071, 13.800000011920929, 11.099999994039536, 13.800000011920929,
+							12.900000005960464, 14.099999994039536
+						]
+					},
+					"hydrate": {
+						"100": [
+							2.699999988079071, 1.7999999821186066, 1.5, 1.9000000059604645, 1.7000000178813934,
+							2.5, 2.5, 2.300000011920929, 1.5999999940395355, 1.9000000059604645, 1.5,
+							3.199999988079071, 1.5, 2.300000011920929, 1.5999999940395355, 1.5999999940395355
+						],
+						"800": [
+							9.700000017881393, 10.800000011920929, 13.300000011920929, 13.200000017881393,
+							10.700000017881393, 13.099999994039536, 11, 12, 11.800000011920929, 9.699999988079071,
+							14.699999988079071, 9.900000005960464, 13.300000011920929, 10.5, 12, 9.300000011920929
+						]
+					},
+					"targeted": {
+						"100": [
+							0.017000000178813934, 0.015, 0.01300000011920929, 0.010999999940395355,
+							0.014000000059604644, 0.015, 0.01, 0.010999999940395355, 0.01199999988079071,
+							0.012000000178813934, 0.01199999988079071, 0.014000000059604644, 0.01600000023841858,
+							0.010999999940395355, 0.01800000011920929, 0.02399999976158142
+						],
+						"800": [
+							0.01600000023841858, 0.022000000178813935, 0.015, 0.01800000011920929,
+							0.01699999988079071, 0.027000000178813936, 0.014000000059604644, 0.01699999988079071,
+							0.01399999976158142, 0.015999999940395356, 0.014000000059604644, 0.01699999988079071,
+							0.015999999940395356, 0.015, 0.015, 0.014000000059604644
+						]
+					},
+					"broad": {
+						"100": [
+							0.8500000014901161, 0.9250000044703484, 0.5749999955296516, 0.4750000014901161,
+							0.4749999940395355, 0.7749999985098839, 0.4749999940395355, 0.8500000014901161,
+							0.4750000014901161, 0.4750000014901161, 0.4750000014901161, 0.5, 0.6499999985098839,
+							0.6499999985098839, 0.5249999985098839, 0.4750000014901161
+						],
+						"800": [
+							4.75, 5.625, 5.5, 5.649999998509884, 5.424999997019768, 6.949999995529652,
+							4.524999998509884, 4.524999998509884, 4.600000001490116, 5.049999997019768,
+							4.449999995529652, 5.225000001490116, 4.200000002980232, 4.649999998509884,
+							6.524999998509884, 5.024999998509884
+						]
+					}
+				},
+				"mount": {
+					"100": 2.5,
+					"800": 13.700000002980232
+				},
+				"hydrate": {
+					"100": 1.8499999940395355,
+					"800": 11.400000005960464
+				},
+				"targeted": {
+					"100": 0.013500000089406966,
+					"800": 0.015999999940395356
+				},
+				"broad": {
+					"100": 0.5124999992549419,
+					"800": 5.037499997764826
+				},
+				"census": {
+					"100": {
+						"elements": 101,
+						"comments": 205,
+						"texts": 204
+					},
+					"800": {
+						"elements": 801,
+						"comments": 1605,
+						"texts": 1604
+					}
+				},
+				"heap": {
+					"100": 7635142,
+					"800": 10828726
+				}
+			}
+		}
+	}
+}

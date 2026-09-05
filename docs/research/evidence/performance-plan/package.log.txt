@@ -1,0 +1,20 @@
+d.ts type declaration files for the following files were likely not generated due to the following errors:
+/home/abdel/Projects/ixirjs/ui/src/lib/test/perf/vs-shadcn/size-ixir.ts
+  - Exported variable 'used' has or is using name '$$IsomorphicComponent' from external module "/home/abdel/Projects/ixirjs/ui/src/lib/components/datagrid/cell/datagrid-cell.svelte" but cannot be named.
+  - Exported variable 'used' has or is using name '$$IsomorphicComponent' from external module "/home/abdel/Projects/ixirjs/ui/src/lib/components/datagrid/datagrid-body.svelte" but cannot be named.
+  - Exported variable 'used' has or is using name '$$IsomorphicComponent' from external module "/home/abdel/Projects/ixirjs/ui/src/lib/components/datagrid/datagrid-root.svelte" but cannot be named.
+  - Exported variable 'used' has or is using name '$$IsomorphicComponent' from external module "/home/abdel/Projects/ixirjs/ui/src/lib/components/datagrid/row/datagrid-row.svelte" but cannot be named.
+  - Exported variable 'used' has or is using name '$$IsomorphicComponent' from external module "/home/abdel/Projects/ixirjs/ui/src/lib/components/dropdown-menu/dropdown-menu-content.svelte" but cannot be named.
+  - Exported variable 'used' has or is using name '$$IsomorphicComponent' from external module "/home/abdel/Projects/ixirjs/ui/src/lib/components/dropdown-menu/dropdown-menu-trigger.svelte" but cannot be named.
+/home/abdel/Projects/ixirjs/ui/src/lib/test/perf/vs-shadcn/size-shadcn.ts
+  - The inferred type of 'used' cannot be named without a reference to '../../../../../node_modules/bits-ui/dist/bits/utilities/dismissible-layer/types'. This is likely not portable. A type annotation is necessary.
+  - The inferred type of 'used' cannot be named without a reference to '../../../../../node_modules/bits-ui/dist/bits/utilities/escape-layer/types'. This is likely not portable. A type annotation is necessary.
+  - The inferred type of 'used' cannot be named without a reference to '../../../../../node_modules/bits-ui/dist/bits/utilities/floating-layer/use-floating-layer.svelte'. This is likely not portable. A type annotation is necessary.
+  - The inferred type of 'used' cannot be named without a reference to '../../../../../node_modules/bits-ui/dist/internal/events'. This is likely not portable. A type annotation is necessary.
+  - The inferred type of 'used' cannot be named without a reference to '../../../../../node_modules/bits-ui/dist/internal/floating-svelte/types'. This is likely not portable. A type annotation is necessary.
+  - The inferred type of 'used' cannot be named without a reference to '../../../../../node_modules/bits-ui/dist/internal/types'. This is likely not portable. A type annotation is necessary.
+src/lib -> dist
+Running publint v0.3.18 for @ixirjs/ui...
+Packing files with `bun pack`...
+Linting...
+All good!

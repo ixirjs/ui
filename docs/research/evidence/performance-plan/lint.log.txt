@@ -1,0 +1,5 @@
+$ prettier --check . && eslint . && node scripts/sync-props.mjs --check --strict
+Checking formatting...
+[warn] .codex/hooks.json
+[warn] Code style issues found in the above file. Run Prettier with --write to fix.
+error: script "lint" exited with code 1

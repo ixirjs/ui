@@ -28,3 +28,8 @@ and that thing was the preset context. A directory for one file is a boundary th
 
 The `'$preset'` sentinel inside a `class` array is replaced with the resolved preset classes. Order
 is `[base, '$preset', consumer class]` — base first, the consumer's own class last so it wins.
+
+Installed composition pairs are immutable configuration; their factory results are not. Context keeps
+weak pair metadata so Kernel can prepare the outer merge once, invoke both factories on every read,
+and avoid an intermediate layer wrapper. Public entry calls retain the original merged-layer shape.
+No application factory is classified as static, and mutable records/getters remain supported.

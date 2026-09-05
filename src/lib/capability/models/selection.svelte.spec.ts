@@ -251,3 +251,84 @@ describe('membership index', () => {
 		expect(selection.isSelected('V3')).toBe(true);
 	});
 });
+
+// Characterization for the bulk fast path: comparisons may change, stored values and writes may not.
+describe('bulk backing contracts', () => {
+	it('preserves existing duplicates, identity, NaN, signed zero and undefined', () => {
+		const object = {};
+		let values: unknown[] = [-0, NaN, undefined, object, object];
+		const writes: unknown[][] = [];
+		const selection = createSelection<unknown>({
+			get: () => values,
+			set: (next) => {
+				values = next;
+				writes.push(next);
+			},
+			mode: () => 'multiple'
+		});
+		selection.select([0, NaN, object, undefined, 1, 2, 3, 4, 1]);
+		expect(values).toEqual([-0, NaN, undefined, object, object, 1, 2, 3, 4]);
+		expect(Object.is(values[0], -0)).toBe(true);
+		expect(values[3]).toBe(object);
+		selection.deselect([object, NaN, 1, 2, 3, 4, 5, 6]);
+		expect(values).toEqual([-0, undefined]);
+		selection.select([]);
+		selection.deselect([]);
+		expect(writes).toHaveLength(4);
+		expect(writes[2]).not.toBe(writes[3]);
+	});
+
+	it('ignores sparse outgoing holes but visits incoming holes', () => {
+		let values: Array<number | undefined> = [undefined, 1, 2];
+		const selection = createSelection<number | undefined>({
+			get: () => values,
+			set: (next) => {
+				values = next;
+			},
+			mode: () => 'multiple'
+		});
+		const holes = new Array<number | undefined>(8);
+		holes[7] = 1;
+		selection.deselect(holes);
+		expect(values).toEqual([undefined, 2]);
+		values = [2];
+		selection.select(holes);
+		expect(values).toEqual([2, undefined, 1]);
+	});
+
+	it('retains comparator direction and the comparator captured at construction', () => {
+		let values = ['A', 'A'];
+		const backing: SelectionBacking<string> = {
+			get: () => values,
+			set: (next) => {
+				values = next;
+			},
+			mode: () => 'multiple',
+			equals: (left, right) => left.toLowerCase() === right
+		};
+		const selection = createSelection(backing);
+		delete backing.equals;
+		selection.select(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']);
+		expect(values).toEqual(['A', 'A', 'b', 'c', 'd', 'e', 'f', 'g', 'h']);
+		selection.deselect(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']);
+		expect(values).toEqual([]);
+	});
+
+	it('never caches unindexed backing mutations or assumes the owner accepted a write', () => {
+		const values = Array.from({ length: 12 }, (_, i) => i);
+		const writes: number[][] = [];
+		const selection = createSelection<number>({
+			get: () => values,
+			set: (next) => {
+				writes.push(next);
+			},
+			mode: () => 'multiple'
+		});
+		selection.select(Array.from({ length: 12 }, (_, i) => i + 12));
+		expect(selection.values).toBe(values);
+		expect(selection.isSelected(12)).toBe(false);
+		values[0] = 99;
+		selection.deselect([99, 1, 2, 3, 4, 5, 6, 7]);
+		expect(writes[1]).toEqual([8, 9, 10, 11]);
+	});
+});

@@ -1,0 +1,92 @@
+{
+	"browser": "chromium",
+	"reducedMotion": "no-preference",
+	"version": "147.0.7727.15",
+	"artifacts": {
+		"js": "2a5c6ba50a00f3b459788dbf1cd5757044d6f0783151d166010dc0bfd12fc93f",
+		"css": "3d20026aa47eab3c9089754e5524e921a15e4747e4a5112355f4bf30c3a482ef"
+	},
+	"parity": "button mount/hydrate/text/type/click/class-update assertions passed on both sides",
+	"positioning": "styled positioning, offset update, close and portal teardown assertions passed",
+	"expandedTree": {
+		"n": 100,
+		"mountAndNavigationSettled": 35.29999998211861,
+		"classification": "styled expanded-tree smoke; not a comparative latency sample"
+	},
+	"load": 1.97,
+	"cores": 16,
+	"results": [
+		{
+			"scenario": "motion",
+			"n": 1000,
+			"rounds": 7,
+			"warmup": 3,
+			"samples": [
+				{
+					"mountSettled": 152.69999998807907,
+					"updateSettled": 47,
+					"frameIntervals": [
+						116.60000000000014, 33.399999999999864, 33.299999999999955, 16.700000000000045
+					]
+				},
+				{
+					"mountSettled": 130.30000001192093,
+					"updateSettled": 48,
+					"frameIntervals": [
+						99.89999999999986, 16.700000000000045, 33.299999999999955, 16.700000000000045
+					]
+				},
+				{
+					"mountSettled": 120.2999999821186,
+					"updateSettled": 41.80000001192093,
+					"frameIntervals": [100, 16.700000000000045, 33.299999999999955, 16.700000000000045]
+				},
+				{
+					"mountSettled": 147.7999999821186,
+					"updateSettled": 34.30000001192093,
+					"frameIntervals": [
+						116.59999999999991, 16.700000000000045, 33.200000000000045, 16.700000000000045
+					]
+				}
+			],
+			"classification": "styled own-cost; frame waits included; no competitor claim"
+		},
+		{
+			"scenario": "selection",
+			"n": 1000,
+			"rounds": 7,
+			"warmup": 3,
+			"samples": [
+				{
+					"mountSettled": 39.60000002384186,
+					"updateSettled": 27.599999994039536,
+					"frameIntervals": [
+						16.699999999999818, 16.700000000000273, 16.59999999999991, 16.699999999999818
+					]
+				},
+				{
+					"mountSettled": 33.5,
+					"updateSettled": 32.80000001192093,
+					"frameIntervals": [
+						16.699999999999818, 16.59999999999991, 16.800000000000182, 16.59999999999991
+					]
+				},
+				{
+					"mountSettled": 49.900000005960464,
+					"updateSettled": 33.19999998807907,
+					"frameIntervals": [
+						33.29999999999973, 16.700000000000273, 16.699999999999818, 16.59999999999991
+					]
+				},
+				{
+					"mountSettled": 33.400000005960464,
+					"updateSettled": 32.900000005960464,
+					"frameIntervals": [
+						16.800000000000182, 16.59999999999991, 16.59999999999991, 16.699999999999818
+					]
+				}
+			],
+			"classification": "styled own-cost; frame waits included; no competitor claim"
+		}
+	]
+}
