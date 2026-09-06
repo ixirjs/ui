@@ -198,9 +198,5 @@
 		"mergePresetLayers",
 		"setPreset"
 	],
-	"utilsExports": [
-		"cn",
-		"defineVariants",
-		"isBrowser"
-	]
+	"utilsExports": ["cn", "defineVariants", "isBrowser"]
 }
