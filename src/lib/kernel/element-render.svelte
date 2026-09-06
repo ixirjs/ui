@@ -1,4 +1,5 @@
 <script module lang="ts">
+	import type { Snippet } from 'svelte';
 	import HtmlElement from '$ixirjs/ui/components/element/html-element.svelte';
 	import { componentBase, resolveRendererProps } from './render/render-target';
 	import {
@@ -52,10 +53,13 @@
 		return branchByMode[mode] ?? (componentBranch as ElementBranch);
 	}
 
-	export { elementBranch, componentBranch };
+	// Keep optional caller arguments without emitting optional snippet parameter syntax.
+	type KernelBranch = Snippet<[el: KernelElement, body?: ElementBody, arg?: unknown]>;
+	export const elementBranch: KernelBranch = elementBranchLeaf;
+	export const componentBranch: KernelBranch = componentBranchLeaf;
 </script>
 
-{#snippet elementBranch(el: KernelElement, body?: ElementBody, arg?: unknown)}
+{#snippet elementBranchLeaf(el: KernelElement, body: ElementBody | undefined, arg: unknown)}
 	<HtmlElement
 		{...resolveRendererProps(
 			HTML_ELEMENT_TARGET,
@@ -70,7 +74,7 @@
 	</HtmlElement>
 {/snippet}
 
-{#snippet componentBranch(el: KernelElement, body?: ElementBody, arg?: unknown)}
+{#snippet componentBranchLeaf(el: KernelElement, body: ElementBody | undefined, arg: unknown)}
 	{@const renderer = el.renderer()}
 	<RendererAdapter
 		component={renderer.component}

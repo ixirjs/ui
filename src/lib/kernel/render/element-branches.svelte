@@ -127,18 +127,19 @@
 		return motion.decorate(out);
 	}
 
-	export {
-		divPlain,
-		headingPlain,
-		divBranch,
-		headingBranch,
-		buttonBranch,
-		dynamicBranch,
-		divLocal,
-		dynamicLocal,
-		divGlobal,
-		dynamicGlobal
-	};
+	// Explicit optional contracts avoid optional snippet parameters: Svelte 5.46's ESM compiler
+	// can leave their `?` in JavaScript with newer printer dependencies. Defaults would add
+	// derived signals per invocation. These aliases keep the same callable without wrappers.
+	export const divPlain: ElementBranch = divPlainLeaf;
+	export const headingPlain: ElementBranch = headingPlainLeaf;
+	export const divBranch: ElementBranch = divBranchLeaf;
+	export const headingBranch: ElementBranch = headingBranchLeaf;
+	export const buttonBranch: ElementBranch = buttonBranchLeaf;
+	export const dynamicBranch: ElementBranch = dynamicBranchLeaf;
+	export const divLocal: ElementBranch = divLocalLeaf;
+	export const dynamicLocal: ElementBranch = dynamicLocalLeaf;
+	export const divGlobal: ElementBranch = divGlobalLeaf;
+	export const dynamicGlobal: ElementBranch = dynamicGlobalLeaf;
 </script>
 
 <!-- ── plain: every attribute this element has, written literally ─────────────────── -->
@@ -161,14 +162,14 @@
 	drops `class=""` where the spread path emits it, so the caller keeps that case on `divBranch`.
 -->
 
-{#snippet divPlain(view: ElementView, body?: ElementBody, arg?: unknown)}
+{#snippet divPlainLeaf(view: ElementView, body: ElementBody | undefined, arg: unknown)}
 	{@const a = view.plainAttrs!()}
 	<div class={a.class} id={a.id} role={a.role} data-bond={a.bond} data-kind={a.kind}>
 		{@render body?.(arg)}
 	</div>
 {/snippet}
 
-{#snippet headingPlain(view: ElementView, body?: ElementBody, arg?: unknown)}
+{#snippet headingPlainLeaf(view: ElementView, body: ElementBody | undefined, arg: unknown)}
 	{@const a = view.plainAttrs!()}
 	<h3 class={a.class} id={a.id} role={a.role} data-bond={a.bond} data-kind={a.kind}>
 		{@render body?.(arg)}
@@ -177,19 +178,19 @@
 
 <!-- ── bare: no transition to drive ─────────────────────────────────────────────────────────── -->
 
-{#snippet divBranch(view: ElementView, body?: ElementBody, arg?: unknown)}
+{#snippet divBranchLeaf(view: ElementView, body: ElementBody | undefined, arg: unknown)}
 	<div {...view.spread()}>{@render body?.(arg)}</div>
 {/snippet}
 
-{#snippet headingBranch(view: ElementView, body?: ElementBody, arg?: unknown)}
+{#snippet headingBranchLeaf(view: ElementView, body: ElementBody | undefined, arg: unknown)}
 	<h3 {...view.spread()}>{@render body?.(arg)}</h3>
 {/snippet}
 
-{#snippet buttonBranch(view: ElementView, body?: ElementBody, arg?: unknown)}
+{#snippet buttonBranchLeaf(view: ElementView, body: ElementBody | undefined, arg: unknown)}
 	<button {...view.spread()}>{@render body?.(arg)}</button>
 {/snippet}
 
-{#snippet dynamicBranch(view: ElementView, body?: ElementBody, arg?: unknown)}
+{#snippet dynamicBranchLeaf(view: ElementView, body: ElementBody | undefined, arg: unknown)}
 	<svelte:element this={view.tag()} {...view.spread()}>
 		{@render body?.(arg)}
 	</svelte:element>
@@ -197,7 +198,7 @@
 
 <!-- ── local transitions: default-scoped, do not play on an ancestor's enter/exit ────────────── -->
 
-{#snippet divLocal(view: ElementView, body?: ElementBody, arg?: unknown)}
+{#snippet divLocalLeaf(view: ElementView, body: ElementBody | undefined, arg: unknown)}
 	{@const motion = view.motion!()!}
 	{@const applyInitial = motion.applyInitial}
 	{@const attachMotion = motion.attach}
@@ -209,7 +210,7 @@
 	</div>
 {/snippet}
 
-{#snippet dynamicLocal(view: ElementView, body?: ElementBody, arg?: unknown)}
+{#snippet dynamicLocalLeaf(view: ElementView, body: ElementBody | undefined, arg: unknown)}
 	{@const motion = view.motion!()!}
 	{@const applyInitial = motion.applyInitial}
 	{@const attachMotion = motion.attach}
@@ -230,7 +231,7 @@
 
 <!-- ── global transitions: play when any ancestor block enters or exits ──────────────────────── -->
 
-{#snippet divGlobal(view: ElementView, body?: ElementBody, arg?: unknown)}
+{#snippet divGlobalLeaf(view: ElementView, body: ElementBody | undefined, arg: unknown)}
 	{@const motion = view.motion!()!}
 	{@const applyInitial = motion.applyInitial}
 	{@const attachMotion = motion.attach}
@@ -242,7 +243,7 @@
 	</div>
 {/snippet}
 
-{#snippet dynamicGlobal(view: ElementView, body?: ElementBody, arg?: unknown)}
+{#snippet dynamicGlobalLeaf(view: ElementView, body: ElementBody | undefined, arg: unknown)}
 	{@const motion = view.motion!()!}
 	{@const applyInitial = motion.applyInitial}
 	{@const attachMotion = motion.attach}

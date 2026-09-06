@@ -49,14 +49,14 @@
 		control.notify(onnumberchange, number, event, reason);
 	}
 
-	function handleDecrement(event?: MouseEvent) {
+	function handleDecrement(event: MouseEvent | undefined) {
 		if (!canDecrement) return;
 		number = parseFloat((numberValue - step).toPrecision(10));
 		control.setValue(number);
 		notify(event, 'decrement');
 	}
 
-	function handleIncrement(event?: MouseEvent) {
+	function handleIncrement(event: MouseEvent | undefined) {
 		if (!canIncrement) return;
 		number = parseFloat((numberValue + step).toPrecision(10));
 		control.setValue(number);

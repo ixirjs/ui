@@ -12,6 +12,7 @@
 		divGlobal,
 		dynamicGlobal,
 		type ElementBody,
+		type ElementBranch,
 		type ElementView
 	} from '$ixirjs/ui/kernel/render/element-branches.svelte';
 	import type { ElementType, HtmlElementProps, HtmlElementTagName } from './types';
@@ -100,6 +101,9 @@
 	//
 	// `spread` is the class folded into the attrs, memoized on the same derived chain, because that
 	// is what the leaves consume: they no longer set `class` separately and so copy nothing.
+	// Typed aliases preserve optional arguments without per-call default-value signals.
+	const bareDiv: ElementBranch = bareDivLeaf;
+	const bareElement: ElementBranch = bareElementLeaf;
 	const viewSpread = $derived({ class: finalKlass, ...rawAttrs });
 	const view = {
 		tag: () => finalAs,
@@ -137,13 +141,13 @@
 <!-- The pair takes the same two parameters as the shared leaves so the single ternary dispatch above
      stays one call signature; both read their operands from this component's own state instead,
      `elementProps` being the decorated attrs the shared leaves derive for themselves. -->
-{#snippet bareDiv(_view: ElementView, _body?: ElementBody)}
+{#snippet bareDivLeaf(_view: ElementView, _body: ElementBody | undefined)}
 	<div {@attach applyInitial} {@attach attachFunction} class={finalKlass} {...elementProps}>
 		{@render children?.()}
 	</div>
 {/snippet}
 
-{#snippet bareElement(_view: ElementView, _body?: ElementBody)}
+{#snippet bareElementLeaf(_view: ElementView, _body: ElementBody | undefined)}
 	<svelte:element
 		this={finalAs}
 		{@attach applyInitial}

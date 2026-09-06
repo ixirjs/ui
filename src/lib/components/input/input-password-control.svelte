@@ -27,7 +27,7 @@
 		base: INPUT_FIELD_CLASS
 	});
 
-	function toggle(event?: MouseEvent) {
+	function toggle(event: MouseEvent | undefined) {
 		if (disabled) return;
 		visible = !visible;
 		control.notify(onvisiblechange, visible, event, 'toggle', { value });

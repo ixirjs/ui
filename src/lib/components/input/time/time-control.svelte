@@ -95,7 +95,7 @@
 		control.notify(onvaluechange, value, ev, 'input', { date });
 	}
 
-	function hourOverride(displayH: number, dir?: 1 | -1): TimeParts {
+	function hourOverride(displayH: number, dir: 1 | -1 | undefined): TimeParts {
 		if (hourFormat === 24) return { hh: displayH };
 		let period = p ?? 'AM';
 		if (
@@ -131,7 +131,7 @@
 	}
 
 	// The one writer for the meridiem: typing `a`/`p`, clicking, and the toggle keys all land here.
-	function setPeriod(period: 'AM' | 'PM', event?: MouseEvent | KeyboardEvent) {
+	function setPeriod(period: 'AM' | 'PM', event: MouseEvent | KeyboardEvent | undefined) {
 		if (disabled || readonly || hh === undefined) return;
 		emit(event, { hh: displayToInternal(displayHours ?? 12, period), period });
 	}
