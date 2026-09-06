@@ -1,10 +1,8 @@
 <script module lang="ts">
-	import { ContextMenuBond } from '$ixirjs/ui/components/context-menu/bond.svelte';
-	import { SelectBond } from '$ixirjs/ui/components/select/bond.svelte';
+	import { PopupBond } from '$ixirjs/ui/components/overlay/popup/bond.svelte';
 	import { CollapsibleBond } from '$ixirjs/ui/components/collapsible/bond.svelte';
 	import { AlertBond } from '$ixirjs/ui/components/alert/bond.svelte';
 	import { createInput } from '$ixirjs/ui/capability/models';
-	import { DropdownMenuBond } from '$ixirjs/ui/components/dropdown-menu/bond.svelte';
 	import { TreeBond } from '$ixirjs/ui/components/tree/bond.svelte';
 
 	export type ConstructSubject =
@@ -25,14 +23,14 @@
 		// deepest overlay in the library — a menu bundle plus its own manual trigger.
 		'context-menu': () => {
 			const props = $state({ open: false, disabled: false });
-			ContextMenuBond.create(props as never);
-			return { destroy: () => undefined };
+			const bond = PopupBond.create('context-menu', props as never);
+			return { destroy: () => bond.dispose() };
 		},
 		// Select is a plain state class on the redesigned Kernel: nothing to destroy.
 		select: () => {
 			const props = $state({ open: false, disabled: false, values: [] as string[] });
-			SelectBond.create(props as never);
-			return { destroy: () => undefined };
+			const bond = PopupBond.create('select', props as never);
+			return { destroy: () => bond.dispose() };
 		},
 		// Collapsible is a plain state class on the redesigned Kernel: nothing to destroy.
 		collapsible: () => {
@@ -48,8 +46,8 @@
 		// Select extends the menu base; this splits inherited cost from Select's own.
 		menu: () => {
 			const props = $state({ open: false, disabled: false });
-			DropdownMenuBond.create(props as never);
-			return { destroy: () => undefined };
+			const bond = PopupBond.create('dropdown-menu', props as never);
+			return { destroy: () => bond.dispose() };
 		},
 		// Tree is a plain state class on the redesigned Kernel: nothing to destroy.
 		tree: () => {

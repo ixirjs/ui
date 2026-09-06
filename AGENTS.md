@@ -118,6 +118,14 @@ runtime, `defineBond`/`definePart`/`useRoot`/`defineLeaf` and the capability reg
 Copy **Card** for a presentation family, **Accordion** for a behavioural one, **Popover**/**Dialog**
 for an overlay.
 
+### Canonical popup families
+
+Popover, DropdownMenu, Select, Combobox, Tooltip, ContextMenu, DatePicker and PopoverDialog now
+share `components/overlay/popup/PopupBond` (implemented in `bond.svelte.ts`) and one collection-item
+runtime. Read `src/lib/components/overlay/popup/README.md` before changing these families. Their
+family Bond names are interfaces only; legacy constructors and popup `factory` props are removed.
+Use `PopupBond.create` for standalone state or `PopupBond.mount` inside a component root. Parts still use the same Kernel seam, contexts and presets.
+
 ## Component anatomy
 
 A multi-part component is a folder `src/lib/components/<name>/`:

@@ -7,7 +7,7 @@ import type {
 	PopoverContentProps
 } from '$ixirjs/ui/components/popover';
 import type { StateChangeCallback } from '$ixirjs/ui/types';
-import type { TooltipBond, TooltipBondProps } from './bond.svelte';
+import type { TooltipBond } from './bond.svelte';
 
 // Tooltip Snippet Props
 
@@ -18,11 +18,9 @@ export type TooltipChildren = Snippet<[TooltipSnippetProps]>;
 /** Per-instance presentation layers for Tooltip's Popover-backed parts. */
 export type TooltipPresets = PopoverPresets;
 
-export type TooltipRootProps = OmitKey<PopoverRootProps, 'factory' | 'onopenchange' | 'presets'> & {
+export type TooltipRootProps = OmitKey<PopoverRootProps, 'onopenchange' | 'presets'> & {
 	/** Per-instance presentation overrides for this family’s compound slots. */
 	presets?: TooltipPresets | undefined;
-	/** Replaces the Bond constructor, so a family can be extended or fused. */
-	factory?: ((props: TooltipBondProps) => TooltipBond) | undefined;
 	/** Called after a real open-state transition commits; pointer and dismissal details are included when available. */
 	onopenchange?: StateChangeCallback<boolean, TooltipBond> | undefined;
 };

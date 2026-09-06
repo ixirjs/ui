@@ -7,3 +7,5 @@ export type * from '$ixirjs/ui/components/tooltip/types';
 // hydrate −28% and 5 hydration anchors fewer on the direct call site (`bench:vs-shadcn`,
 // 2026-08-27). Use these where one part renders many times.
 export { TooltipRoot, TooltipContent, TooltipTrigger } from '$ixirjs/ui/components/tooltip';
+
+export type { TooltipBond } from '$ixirjs/ui/components/overlay/popup/types';

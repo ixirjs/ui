@@ -1,5 +1,5 @@
 export * as Tooltip from './atoms';
-export { TooltipBond, type TooltipBondProps } from './bond.svelte';
+export { type TooltipBond, type TooltipBondProps } from './bond.svelte';
 export type { TooltipSnippetProps, TooltipChildren, TooltipRootProps } from './types';
 
 // The same parts, named directly. `<Tooltip.Root>` is a member expression, so the compiler treats it as a

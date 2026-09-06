@@ -1,6 +1,6 @@
 import type { Component, Snippet } from 'svelte';
 import type { Placement } from '@floating-ui/dom';
-import type { Factory, StateChangeCallback } from '$ixirjs/ui/types';
+import type { StateChangeCallback } from '$ixirjs/ui/types';
 import type { PopoverBond } from './bond.svelte';
 import type { PresetLike } from '$ixirjs/ui/preset';
 import type { BondPresetLayers } from '$ixirjs/ui/authoring';
@@ -53,8 +53,6 @@ export interface PopoverRootProps {
 	presets?: PopoverPresets | undefined;
 	/** Extend */
 	extend?: Record<string, unknown>;
-	/** Factory */
-	factory?: Factory<PopoverBond>;
 	/** Called after a real open-state transition commits; dismissal events and reasons are included when available. */
 	onopenchange?: StateChangeCallback<boolean, PopoverBond> | undefined;
 	/** Children */

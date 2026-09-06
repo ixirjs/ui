@@ -4,7 +4,7 @@ import Probe, {
 	capturedBond,
 	resetCapturedBond
 } from '$ixirjs/ui/test/components/dropdown-menu/dropdown-menu-atom-probe.test.svelte';
-import { DropdownMenuBond } from './bond.svelte';
+import { PopupBond } from '$ixirjs/ui/components/overlay/popup/bond.svelte';
 
 /**
  * Rewritten DOM-level. It used to assert Atom instances through `nodeByPart` — machinery the
@@ -19,7 +19,7 @@ describe('DropdownMenu rendered parts', () => {
 		const dropdown = capturedBond;
 
 		expect(dropdown).toBeDefined();
-		expect(dropdown).toBeInstanceOf(DropdownMenuBond);
+		expect(dropdown).toBeInstanceOf(PopupBond);
 		expect(dropdown?.isOpen).toBe(true);
 
 		const trigger = document.querySelector('[aria-haspopup="menu"]');

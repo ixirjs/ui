@@ -35,3 +35,4 @@ storybook-static
 
 # Agent memory scratch
 memory/
+graphify-out/

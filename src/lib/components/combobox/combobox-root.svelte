@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { untrack } from 'svelte';
+	import { PopupBond } from '$ixirjs/ui/components/overlay/popup/bond.svelte';
 	import { useMenuRoot } from '$ixirjs/ui/components/dropdown-menu/bond.svelte';
 	import { SelectContext } from '$ixirjs/ui/components/select/bond.svelte';
-	import { ComboboxBond, ComboboxContext, type ComboboxBondProps } from './bond.svelte';
+	import { ComboboxContext, type ComboboxBondProps } from './bond.svelte';
 	import type { ComboboxRootProps } from './types';
 
 	const ID = $props.id();
@@ -21,7 +21,6 @@
 		keys = [],
 		query = $bindable(''),
 		presets = undefined,
-		factory = undefined,
 		children = undefined,
 		onopenchange = undefined,
 		onvaluechange = undefined,
@@ -104,9 +103,7 @@
 		}
 	};
 
-	// `factory` is read once, at init, by design.
-	const build = untrack(() => factory);
-	const bond = build ? build(bondProps) : ComboboxBond.create(bondProps);
+	const bond = PopupBond.mount('combobox', bondProps);
 	useMenuRoot(bond);
 	SelectContext.share(bond);
 	ComboboxContext.share(bond);

@@ -5,7 +5,7 @@ import Probe, {
 	resetCapturedBond
 } from '$ixirjs/ui/test/components/select/select-atom-probe.test.svelte';
 import LayerProbe from '$ixirjs/ui/test/components/select/select-preset-probe.test.svelte';
-import { SelectBond } from './bond.svelte';
+import { PopupBond } from '$ixirjs/ui/components/overlay/popup/bond.svelte';
 
 /**
  * Rewritten DOM-level. It used to assert Atom instances through `nodeByPart` — machinery the
@@ -21,7 +21,7 @@ describe('Select rendered parts', () => {
 		const select = capturedBond;
 
 		expect(select).toBeDefined();
-		expect(select).toBeInstanceOf(SelectBond);
+		expect(select).toBeInstanceOf(PopupBond);
 		expect(select?.isOpen).toBe(true);
 
 		const trigger = document.querySelector('[aria-haspopup="listbox"]');

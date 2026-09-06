@@ -20,12 +20,6 @@ export const popoverRootProps: PropDefinition[] = [
 		description: 'Extend'
 	},
 	{
-		name: 'factory',
-		type: 'Factory<PopoverBond>',
-		default: 'undefined',
-		description: 'Factory'
-	},
-	{
 		name: 'offset',
 		type: 'number',
 		default: 'undefined',

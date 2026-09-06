@@ -1,7 +1,7 @@
 <script lang="ts" generics="T, Option = unknown">
-	import { untrack } from 'svelte';
+	import { PopupBond } from '$ixirjs/ui/components/overlay/popup/bond.svelte';
 	import { useMenuRoot } from '$ixirjs/ui/components/dropdown-menu/bond.svelte';
-	import { SelectBond, SelectContext, type SelectStateProps } from './bond.svelte';
+	import { SelectContext, type SelectStateProps } from './bond.svelte';
 	import type { SelectRootProps } from './types';
 
 	const ID = $props.id();
@@ -23,7 +23,6 @@
 		optionLabel = undefined,
 		query = $bindable(''),
 		presets = undefined,
-		factory = undefined,
 		children = undefined,
 		onopenchange = undefined,
 		onvaluechange = undefined,
@@ -115,9 +114,7 @@
 		}
 	};
 
-	// `factory` is read once, at init, by design.
-	const build = untrack(() => factory);
-	const bond = build ? build(bondProps) : SelectBond.create(bondProps);
+	const bond = PopupBond.mount('select', bondProps);
 	useMenuRoot(bond);
 	SelectContext.share(bond);
 	bond.bindCommit((next, context) => {

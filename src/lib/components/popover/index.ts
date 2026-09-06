@@ -1,8 +1,8 @@
 export * as Popover from './atoms';
 export { clickoutPopover, popover } from './attachments.svelte';
 export {
-	PopoverBond,
-	PopoverBondBase,
+	type PopoverBond,
+	type PopoverBondBase,
 	PopoverContext,
 	type PopoverBondProps,
 	type PopoverParams,

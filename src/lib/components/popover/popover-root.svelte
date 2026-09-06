@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { untrack } from 'svelte';
+	import { PopupBond } from '$ixirjs/ui/components/overlay/popup/bond.svelte';
 	import { OverlayContext } from '$ixirjs/ui/components/overlay/model.svelte';
 	import { useOutsidePress, usePositioned } from '$ixirjs/ui/components/overlay/behavior.svelte';
-	import { PopoverBond, PopoverContext, type PopoverBondBase } from './bond.svelte';
+	import { PopoverContext, type PopoverBondBase } from './bond.svelte';
 	import type { PopoverRootProps } from './types';
 
 	// The nearest overlay host: an owning overlay gates this popover's open state.
@@ -19,7 +19,6 @@
 		position = 'absolute',
 		portal = undefined,
 		presets = undefined,
-		factory = undefined,
 		onopenchange = undefined,
 		children = undefined
 	}: PopoverRootProps = $props();
@@ -54,9 +53,7 @@
 			return presets;
 		}
 	};
-	// `factory` is read once, at init, by design.
-	const build = untrack(() => factory);
-	const bond = PopoverContext.share(build ? build(bondProps) : PopoverBond.create(bondProps));
+	const bond = PopoverContext.share(PopupBond.mount('popover', bondProps));
 	OverlayContext.share(bond);
 	// Controlled state: the Bond decides, the root writes, the callback fires after the write with
 	// the staged `event`/`reason` a dismissal handed it.

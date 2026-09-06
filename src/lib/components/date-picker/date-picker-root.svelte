@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { PopupBond } from '$ixirjs/ui/components/overlay/popup/bond.svelte';
 	import { untrack } from 'svelte';
 	import { OverlayContext } from '$ixirjs/ui/components/overlay/model.svelte';
 	import { useOutsidePress, usePositioned } from '$ixirjs/ui/components/overlay/behavior.svelte';
@@ -8,7 +9,7 @@
 		type PopoverBondBase
 	} from '$ixirjs/ui/components/popover/bond.svelte';
 	import type { CalendarRange } from '$ixirjs/ui/components/calendar/types';
-	import { DatePickerBond, DatePickerContext, type DatePickerBondProps } from './bond.svelte';
+	import { DatePickerContext, type DatePickerBondProps } from './bond.svelte';
 	import type { DatePickerRootProps } from './types';
 
 	const ID = $props.id();
@@ -30,7 +31,6 @@
 		placeholder = 'Select a date',
 		format = 'MM/dd/yyyy',
 		presets = undefined,
-		factory = undefined,
 		children,
 		onopenchange = undefined,
 		onvaluechange = undefined,
@@ -170,9 +170,7 @@
 			return presets;
 		}
 	};
-	// `factory` is read once, at init, by design.
-	const build = untrack(() => factory);
-	const bond = DatePickerContext.share(build ? build(bondProps) : DatePickerBond.create(bondProps));
+	const bond = DatePickerContext.share(PopupBond.mount('date-picker', bondProps));
 	// Shared under Popover's and the overlay host's keys too: `DatePicker.Tail`/`DatePicker.Indicator`
 	// ARE the Popover parts, and a nested popover gates its own open state on the host.
 	PopoverContext.share(bond as unknown as PopoverBond);

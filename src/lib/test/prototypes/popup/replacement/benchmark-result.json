@@ -1,0 +1,237 @@
+{
+	"recorded": "2026-09-06T01:26:27.481Z",
+	"node": "v24.13.1",
+	"cpu": "AMD Ryzen 9 PRO 8945HS w/ Radeon 780M Graphics",
+	"load": [2.53, 2.33, 2.87],
+	"scope": "Canonical roots and handles only, unstyled; SSR checked against frozen pre-removal HTML. No legacy runtime or cross-implementation timing comparison. Not a published bundle-size or retained-heap benchmark.",
+	"ssr": [
+		{
+			"name": "popover",
+			"bytes": 826,
+			"comments": 28,
+			"exactParity": true
+		},
+		{
+			"name": "dropdown-menu",
+			"bytes": 830,
+			"comments": 28,
+			"exactParity": true
+		},
+		{
+			"name": "select",
+			"bytes": 1453,
+			"comments": 35,
+			"exactParity": true
+		},
+		{
+			"name": "combobox",
+			"bytes": 1814,
+			"comments": 39,
+			"exactParity": true
+		},
+		{
+			"name": "tooltip",
+			"bytes": 1038,
+			"comments": 33,
+			"exactParity": true
+		},
+		{
+			"name": "context-menu",
+			"bytes": 834,
+			"comments": 28,
+			"exactParity": true
+		},
+		{
+			"name": "date-picker",
+			"bytes": 923,
+			"comments": 31,
+			"exactParity": true
+		},
+		{
+			"name": "popover-dialog",
+			"bytes": 1011,
+			"comments": 28,
+			"exactParity": true
+		}
+	],
+	"server": [
+		{
+			"name": "popover",
+			"microseconds": 103.00568
+		},
+		{
+			"name": "dropdown-menu",
+			"microseconds": 114.28128000000015
+		},
+		{
+			"name": "select",
+			"microseconds": 159.1922199999999
+		},
+		{
+			"name": "combobox",
+			"microseconds": 180.3839400000004
+		},
+		{
+			"name": "tooltip",
+			"microseconds": 91.05578000000038
+		},
+		{
+			"name": "context-menu",
+			"microseconds": 70.79119999999989
+		},
+		{
+			"name": "date-picker",
+			"microseconds": 76.27883999999995
+		},
+		{
+			"name": "popover-dialog",
+			"microseconds": 41.967859999999746
+		}
+	],
+	"client": [
+		{
+			"name": "popover",
+			"operation": "mount",
+			"microseconds": 1899.9999985098839,
+			"elements": 13
+		},
+		{
+			"name": "popover",
+			"operation": "hydrate",
+			"microseconds": 1500,
+			"elements": 13
+		},
+		{
+			"name": "dropdown-menu",
+			"operation": "mount",
+			"microseconds": 1799.9999970197678,
+			"elements": 14
+		},
+		{
+			"name": "dropdown-menu",
+			"operation": "hydrate",
+			"microseconds": 1600.0000014901161,
+			"elements": 14
+		},
+		{
+			"name": "select",
+			"operation": "mount",
+			"microseconds": 2200.0000029802322,
+			"elements": 16
+		},
+		{
+			"name": "select",
+			"operation": "hydrate",
+			"microseconds": 1799.9999970197678,
+			"elements": 16
+		},
+		{
+			"name": "combobox",
+			"operation": "mount",
+			"microseconds": 2299.9999970197678,
+			"elements": 17
+		},
+		{
+			"name": "combobox",
+			"operation": "hydrate",
+			"microseconds": 2000,
+			"elements": 17
+		},
+		{
+			"name": "tooltip",
+			"operation": "mount",
+			"microseconds": 899.9999985098839,
+			"elements": 8
+		},
+		{
+			"name": "tooltip",
+			"operation": "hydrate",
+			"microseconds": 799.9999970197678,
+			"elements": 8
+		},
+		{
+			"name": "context-menu",
+			"operation": "mount",
+			"microseconds": 1200.0000029802322,
+			"elements": 7
+		},
+		{
+			"name": "context-menu",
+			"operation": "hydrate",
+			"microseconds": 1100.0000014901161,
+			"elements": 7
+		},
+		{
+			"name": "date-picker",
+			"operation": "mount",
+			"microseconds": 3899.999998509884,
+			"elements": 151
+		},
+		{
+			"name": "date-picker",
+			"operation": "hydrate",
+			"microseconds": 3299.9999970197678,
+			"elements": 151
+		},
+		{
+			"name": "popover-dialog",
+			"operation": "mount",
+			"microseconds": 1500,
+			"elements": 11
+		},
+		{
+			"name": "popover-dialog",
+			"operation": "hydrate",
+			"microseconds": 1299.9999970197678,
+			"elements": 11
+		}
+	],
+	"handles": {
+		"menu": {
+			"canonical": {
+				"microseconds": 0.4999999888241291,
+				"checksum": 32700
+			}
+		},
+		"select": {
+			"canonical": {
+				"microseconds": 0.4999999888241291,
+				"checksum": 32700
+			}
+		}
+	},
+	"growth": {
+		"canonical": [
+			{
+				"name": "dropdown-menu",
+				"unit": "item",
+				"counts": [50, 100, 200, 400],
+				"ms": [1.6000000014901161, 2.7000000029802322, 4.899999998509884, 9],
+				"elements": [52, 102, 202, 402]
+			},
+			{
+				"name": "select",
+				"unit": "option",
+				"counts": [50, 100, 200, 400],
+				"ms": [3.100000001490116, 4, 7, 12.399999998509884],
+				"elements": [58, 108, 208, 408]
+			}
+		]
+	},
+	"gates": {
+		"canonical": {
+			"exponents": {
+				"dropdown-menu": {
+					"fitted": 0.833538162487876,
+					"endpoint": 0.8306176983286868
+				},
+				"select": {
+					"fitted": 0.6807354919457063,
+					"endpoint": 0.6666666663777174
+				}
+			},
+			"failures": []
+		}
+	},
+	"diagnostics": []
+}

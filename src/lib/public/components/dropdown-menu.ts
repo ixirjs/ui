@@ -14,3 +14,5 @@ export {
 // The item is the multiplied part here, and the internal barrel cannot name it — `DropdownMenuItem`
 // is taken there by the item's TYPE. The published barrel has no such clash.
 export { default as DropdownMenuItem } from '$ixirjs/ui/components/dropdown-menu/item/dropdown-menu-item.svelte';
+
+export type { DropdownMenuBond } from '$ixirjs/ui/components/overlay/popup/types';

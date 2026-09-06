@@ -96,40 +96,46 @@
 	{#snippet template(args)}
 		<div class="flex h-screen flex-col items-center justify-center gap-4">
 			<AContextMenu.Root disabled={args.disabled} placement={args.placement}>
-				<AContextMenu.Trigger>
-					<div
-						class="flex h-40 w-72 items-center justify-center rounded-lg border-2 border-dashed border-border bg-muted text-sm font-medium"
+				{#snippet children({ popover })}
+					<AContextMenu.Trigger>
+						<div
+							class="flex h-40 w-72 items-center justify-center rounded-lg border-2 border-dashed border-border bg-muted text-sm font-medium"
+						>
+							Right-click to open the context menu
+						</div>
+					</AContextMenu.Trigger>
+					<AContextMenu.Content preset="context-menu.content" variant="soft" class="min-w-48">
+						<AContextMenu.Item
+							preset="context-menu.item"
+							class="flex items-center gap-2 border-none"
+							onclick={() => (basicAction = 'Copy')}
+						>
+							<Icon src={CopyIcon} class="size-4 text-muted-foreground" />
+							Copy
+						</AContextMenu.Item>
+						<AContextMenu.Item
+							preset="context-menu.item"
+							class="flex items-center gap-2 border-none"
+							onclick={() => (basicAction = 'Paste')}
+						>
+							<Icon src={MoreIcon} class="size-4 text-muted-foreground" />
+							Paste
+						</AContextMenu.Item>
+						<AContextMenu.Divider />
+						<AContextMenu.Item
+							preset="context-menu.item"
+							class="flex items-center gap-2 border-none text-destructive"
+							onclick={() => (basicAction = 'Delete')}
+						>
+							<Icon src={CloseIcon} class="size-4" />
+							Delete
+						</AContextMenu.Item>
+					</AContextMenu.Content>
+					<!-- The root supplies a family interface; no constructor injection or manual disposal. -->
+					<code class="text-muted-foreground font-mono text-xs"
+						>profile: {popover.profile.name} · open: {String(popover.isOpen)}</code
 					>
-						Right-click to open the context menu
-					</div>
-				</AContextMenu.Trigger>
-				<AContextMenu.Content preset="context-menu.content" variant="soft" class="min-w-48">
-					<AContextMenu.Item
-						preset="context-menu.item"
-						class="flex items-center gap-2 border-none"
-						onclick={() => (basicAction = 'Copy')}
-					>
-						<Icon src={CopyIcon} class="size-4 text-muted-foreground" />
-						Copy
-					</AContextMenu.Item>
-					<AContextMenu.Item
-						preset="context-menu.item"
-						class="flex items-center gap-2 border-none"
-						onclick={() => (basicAction = 'Paste')}
-					>
-						<Icon src={MoreIcon} class="size-4 text-muted-foreground" />
-						Paste
-					</AContextMenu.Item>
-					<AContextMenu.Divider />
-					<AContextMenu.Item
-						preset="context-menu.item"
-						class="flex items-center gap-2 border-none text-destructive"
-						onclick={() => (basicAction = 'Delete')}
-					>
-						<Icon src={CloseIcon} class="size-4" />
-						Delete
-					</AContextMenu.Item>
-				</AContextMenu.Content>
+				{/snippet}
 			</AContextMenu.Root>
 			<p class="text-sm text-muted-foreground">
 				Last action: <strong>{basicAction || '—'}</strong>

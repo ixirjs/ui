@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { Kernel } from '$ixirjs/ui/kernel/kernel.svelte';
-	import { DatePickerBond } from './bond.svelte';
+	import { DatePickerContext } from './bond.svelte';
 	import { CalendarBond } from '$ixirjs/ui/components/calendar/bond.svelte';
 	import { Icon } from '$ixirjs/ui/components/icon';
 	import type { DatePickerHeaderProps } from './types';
 
-	const datePickerBond = DatePickerBond.get();
+	const datePickerBond = DatePickerContext.get();
 	const calendarBond = CalendarBond.get();
 
 	let {

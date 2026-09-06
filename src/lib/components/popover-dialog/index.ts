@@ -2,7 +2,7 @@
 // One Bond (`PopoverDialogBond`, consistent with DialogBond/DrawerBond) shared under both halves'
 // context keys, so each half's own parts render unchanged under it.
 export * as PopoverDialog from './atoms';
-export { PopoverDialogBond, type PopoverDialogBondProps } from './bond.svelte';
+export { type PopoverDialogBond, type PopoverDialogBondProps } from './bond.svelte';
 export * from './types';
 
 // The same parts, named directly. `<PopoverDialog.Root>` is a member expression, so the compiler treats it as a

@@ -59,11 +59,19 @@
 	{/snippet}
 
 	{#snippet extra()}
+		<DocSection title="State and customization">
+			<code>ContextMenu.Root</code> owns the canonical <code>context-menu</code> profile. Its
+			<code>children</code> snippet receives <code>popover</code>, typed as the
+			<code>ContextMenuBond</code> interface. Use bindable props and Bond commands, not a
+			constructor or <code>factory</code> prop. The root handles teardown; see the
+			<a href="/docs/migration">popup migration notes</a> for standalone authoring.
+		</DocSection>
+
 		<DocSection title="Related Components">
 			<DocOnly for="markdown">
-				- [Dropdown Menu](/docs/components/dropdown-menu): Underlying selection and item behavior
-				reused by ContextMenu - [Popover](/docs/components/popover): Floating panel with positioning
-				logic
+				- [Dropdown Menu](/docs/components/dropdown-menu): Shared navigation, typeahead and item
+				behavior reused by ContextMenu - [Popover](/docs/components/popover): Floating panel with
+				positioning logic
 			</DocOnly>
 
 			<DocOnly for="html">
@@ -76,7 +84,7 @@
 							Dropdown Menu
 						</h4>
 						<p class="text-muted-foreground text-sm">
-							Underlying selection and item behavior reused by ContextMenu
+							Shared navigation, typeahead and item behavior reused by ContextMenu
 						</p>
 					</a>
 					<a

@@ -1,11 +1,7 @@
 <script lang="ts">
 	import ContextMenuRoot from '$ixirjs/ui/components/context-menu/context-menu-root.svelte';
 	import ContextMenuTrigger from '$ixirjs/ui/components/context-menu/context-menu-trigger.svelte';
-	import {
-		ContextMenuBond,
-		type ContextMenuBond as ContextMenuBondInstance,
-		type ContextMenuBondProps
-	} from '$ixirjs/ui/components/context-menu/bond.svelte';
+	import type { ContextMenuBond as ContextMenuBondInstance } from '$ixirjs/ui/components/context-menu/bond.svelte';
 	import type { StateChangeCallback } from '$ixirjs/ui/types';
 
 	let {
@@ -16,15 +12,10 @@
 		onopenchange?: StateChangeCallback<boolean, ContextMenuBondInstance> | undefined;
 	} = $props();
 	let open = $state(false);
-	let bond: ContextMenuBondInstance | undefined;
-
-	function factory(props: ContextMenuBondProps): ContextMenuBondInstance {
-		bond = ContextMenuBond.create(props);
-		return bond;
-	}
+	let root: ReturnType<typeof ContextMenuRoot>;
 
 	export function getBond(): ContextMenuBondInstance {
-		return bond!;
+		return root.getBond();
 	}
 
 	export function getOpen(): boolean {
@@ -36,7 +27,7 @@
 	}
 </script>
 
-<ContextMenuRoot bind:open {factory} {onopenchange}>
+<ContextMenuRoot bind:open bind:this={root} {onopenchange}>
 	{#snippet children()}
 		<ContextMenuTrigger data-testid="context-menu-trigger" {onclick}>Target</ContextMenuTrigger>
 	{/snippet}

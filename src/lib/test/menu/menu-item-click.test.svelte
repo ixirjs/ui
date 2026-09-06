@@ -13,10 +13,7 @@
 	// The root's outside-press dismissal stages `reason: 'outside-press'`, never `'item-select'`, so
 	// it cannot inflate the count this fixture reads; the item's own handler is the only source.
 	import { DropdownMenu } from '$ixirjs/ui/components/dropdown-menu';
-	import {
-		DropdownMenuBond,
-		type DropdownMenuBondProps
-	} from '$ixirjs/ui/components/dropdown-menu/bond.svelte';
+	import type { DropdownMenuBond } from '$ixirjs/ui/components/dropdown-menu/bond.svelte';
 
 	let {
 		open = $bindable(true),
@@ -35,18 +32,20 @@
 	// changes nothing, so the count reads 1 either way (verified by mutation — dropping the item's
 	// `preventDefault` left an "exactly once" assertion still passing). `stageOpenChange` is called
 	// unconditionally by both the Atom's handler and `atom.close()`, so counting it does have teeth.
-	function factory(props: DropdownMenuBondProps) {
-		const bond = DropdownMenuBond.create(props);
+	function observe(bond: DropdownMenuBond) {
 		const staged = bond.stageOpenChange.bind(bond);
 		bond.stageOpenChange = (context) => {
 			if (context?.reason === 'item-select') onselect?.();
 			staged(context);
 		};
-		return bond;
+		return '';
 	}
 </script>
 
-<DropdownMenu.Root bind:open {factory}>
-	<DropdownMenu.Trigger>Options</DropdownMenu.Trigger>
-	<DropdownMenu.Item {onclick} data-testid="item">Item</DropdownMenu.Item>
+<DropdownMenu.Root bind:open>
+	{#snippet children({ popover })}
+		{observe(popover)}
+		<DropdownMenu.Trigger>Options</DropdownMenu.Trigger>
+		<DropdownMenu.Item {onclick} data-testid="item">Item</DropdownMenu.Item>
+	{/snippet}
 </DropdownMenu.Root>

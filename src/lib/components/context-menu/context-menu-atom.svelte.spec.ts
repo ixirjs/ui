@@ -4,7 +4,7 @@ import Probe, {
 	capturedBond,
 	resetCapturedBond
 } from '$ixirjs/ui/test/components/context-menu/context-menu-atom-probe.test.svelte';
-import { ContextMenuBond } from './bond.svelte';
+import { PopupBond } from '$ixirjs/ui/components/overlay/popup/bond.svelte';
 
 /**
  * Rewritten DOM-level: it used to assert a `PopoverVirtualTriggerAtom` instance through
@@ -19,7 +19,7 @@ describe('ContextMenu virtual anchor', () => {
 		const contextMenu = capturedBond;
 
 		expect(contextMenu).toBeDefined();
-		expect(contextMenu).toBeInstanceOf(ContextMenuBond);
+		expect(contextMenu).toBeInstanceOf(PopupBond);
 
 		const trigger = document.querySelector<HTMLElement>('[aria-haspopup="menu"]')!;
 		expect(trigger).not.toBeNull();

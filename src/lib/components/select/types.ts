@@ -1,6 +1,6 @@
 import type { Component, Snippet } from 'svelte';
 import type { RenderProps, Base, SnippetProps, HtmlElementTagName } from '$ixirjs/ui/authoring';
-import type { Factory, StateChangeCallback } from '$ixirjs/ui/types';
+import type { StateChangeCallback } from '$ixirjs/ui/types';
 import type { SelectBond } from './bond.svelte';
 import type { DropdownMenuPresets } from '$ixirjs/ui/components/dropdown-menu';
 import type { PresetLike } from '$ixirjs/ui/preset';
@@ -76,8 +76,6 @@ export interface SelectRootProps<
 	query?: string;
 	/** Per-instance presentation overrides for bonded Select parts. */
 	presets?: SelectPresets | undefined;
-	/** Factory */
-	factory?: Factory<SelectBond>;
 	/** Children */
 	children?: SelectChildren;
 	/** Fired after open state commits. */

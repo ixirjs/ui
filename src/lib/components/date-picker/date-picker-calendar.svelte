@@ -6,14 +6,14 @@
 		Body as CalendarBody,
 		Day as CalendarDay
 	} from '$ixirjs/ui/components/calendar/atoms';
-	import { DatePickerBond } from './bond.svelte';
+	import { DatePickerContext } from './bond.svelte';
 	import DatePickerHeader from './date-picker-header.svelte';
 	import DatePickerMonths from './date-picker-months.svelte';
 	import DatePickerYears from './date-picker-years.svelte';
 	import type { CalendarRange, Day as CalendarDayType } from '$ixirjs/ui/components/calendar/types';
 	import type { DatePickerCalendarProps } from './types';
 
-	const datePickerBond = DatePickerBond.get();
+	const datePickerBond = DatePickerContext.get();
 
 	let {
 		class: klass = '',

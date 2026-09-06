@@ -4,7 +4,7 @@
 	import type { PresetModuleName } from '$ixirjs/ui/preset';
 	import { LIST_ITEM_AS, LIST_ITEM_CLASS } from '$ixirjs/ui/components/list/item-class';
 	import { SelectContext } from '$ixirjs/ui/components/select/bond.svelte';
-	import { SelectItemAtom } from './bond.svelte';
+	import { selectItem } from '$ixirjs/ui/components/overlay/popup/item';
 	import type { SelectItemProps } from './types';
 
 	const select = SelectContext.getOrThrow('<SelectItem> must be used within a <Select>.');
@@ -22,18 +22,18 @@
 	}: SelectItemProps<D> = $props();
 
 	// Live getters, not a `$derived` snapshot: the option is constructed once and read through.
-	const item = new SelectItemAtom<D, typeof select>(
+	const item = selectItem<D>(
 		{
 			get id() {
 				return id;
 			},
 			get value() {
-				return value;
+				return value!;
 			},
 			get data() {
 				return data;
 			}
-		} as never,
+		},
 		select
 	);
 

@@ -1,7 +1,7 @@
 /**
  * The overlay's shared object on the redesigned `Kernel` — a plain state class.
  *
- * Every overlay family (Popover, Dialog, Drawer, Sidebar, Tooltip, the menus) extends it. It owns
+ * Modal/host families extend it; popup families implement the structural OverlayState contract. It owns
  * the open/disabled/modal facts, the controlled commit the root wires, the staged reason a policy
  * hands to the next `onopenchange`, and the ids of the parts that rendered — written by each part
  * at its init, so cross-part ARIA (`aria-controls`, `aria-labelledby`) and dismissal geometry
@@ -58,8 +58,23 @@ export type EscapeOutcome = 'close' | 'ignore' | 'clear-and-close' | 'handled';
 
 type Commit<B> = (open: boolean, context: StateChangeContext<B>) => void;
 
+/** Structural contract shared by popup and modal implementations. */
+export interface OverlayState<Props extends OverlayProps = OverlayProps> extends OverlayLike {
+	readonly name: string;
+	readonly props: Props;
+	readonly id: string;
+	readonly ids: Partial<Record<OverlayPart, string>>;
+	readonly modal: boolean;
+	bindCommit(commit: Commit<this>): void;
+	stageOpenChange(context: OverlayOpenChange): void;
+	takeOpenChangeContext(): OverlayOpenChange;
+	attachPart(part: OverlayPart, id: string): () => void;
+	partId(part: OverlayPart): string | undefined;
+	element(part: OverlayPart): HTMLElement | null;
+}
+
 /** The nearest overlay host — what a nested popover gates its own `open` on. */
-export const OverlayContext = Kernel.context<OverlayBond>('popover-owner');
+export const OverlayContext = Kernel.context<OverlayState>('popover-owner');
 
 export class OverlayBond<Props extends OverlayProps = OverlayProps> implements OverlayLike {
 	readonly name: string;

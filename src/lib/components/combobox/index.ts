@@ -1,7 +1,6 @@
 export * as Combobox from './atoms';
 
-// Bond/state — the extension contract: a consumer subclasses `ComboboxBond` and hands the root a
-// `factory` that builds it.
+// Family state interface and context; runtime construction belongs to PopupBond.
 export * from './bond.svelte';
 
 export * from './types';

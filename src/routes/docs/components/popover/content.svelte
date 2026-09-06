@@ -44,6 +44,15 @@
 	{/snippet}
 
 	{#snippet extra()}
+		<DocSection title="State and customization">
+			<code>Popover.Root</code> owns the canonical <code>popover</code> profile. Its
+			<code>children</code> snippet receives <code>popover</code>, typed as the
+			<code>PopoverBond</code> interface. Use bindable props and Bond commands, not a constructor or
+			<code>factory</code>
+			prop. The root handles teardown; see the
+			<a href="/docs/migration">popup migration notes</a> for standalone authoring.
+		</DocSection>
+
 		<DocSection title="Portal containment">
 			Popover content resolves an explicit <code>portal</code> first, then the ambient portal, then
 			<code>root.l0</code>. A popover inside a dialog remains clipped, positioned, and stacked

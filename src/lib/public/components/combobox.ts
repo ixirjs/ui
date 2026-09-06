@@ -12,3 +12,5 @@ export {
 	ComboboxControl,
 	ComboboxSelections
 } from '$ixirjs/ui/components/combobox';
+
+export type { ComboboxBond } from '$ixirjs/ui/components/overlay/popup/types';

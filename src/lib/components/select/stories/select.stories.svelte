@@ -91,7 +91,7 @@
 
 	// Searchable story: `bind:query` two-way-binds the bond's `query` prop (what `Select.Query`
 	// writes, and Escape clears via `ClearThenClose`). We filter a derived view off it; `keys`
-	// stays the FULL list so a selected-but-filtered-out item keeps its label.
+	// identifies the choices; the story resolves selected labels from its full data.
 	let countrySearch = $state('');
 	const filteredCountries = $derived(
 		countries.filter((c) => c.label.toLowerCase().includes(countrySearch.trim().toLowerCase()))
@@ -160,6 +160,12 @@
 							{/each}
 						</div>
 					</ASelect.Content>
+					<!-- The root supplies a family interface; no constructor injection or manual disposal. -->
+					<code class="text-muted-foreground font-mono text-xs"
+						>profile: {select.profile.name} · open: {String(select.isOpen)} · values: {JSON.stringify(
+							select.props.values ?? []
+						)}</code
+					>
 				{/snippet}
 			</ASelect.Root>
 		</div>

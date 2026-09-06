@@ -319,3 +319,12 @@ moves that one call to `installPreset`.
 - `CONTEXT.md`
 - `docs/research/api-evolvability.md`
 - `docs/research/architecture-review-2026-07.md`
+
+### Popup consolidation follow-up
+
+The eight popup families (Popover, DropdownMenu, Select, Combobox, Tooltip, ContextMenu,
+DatePicker and PopoverDialog) now use the canonical `PopupBond` and `CollectionItemAtom` runtime.
+Family Bond names are type-only interfaces, including on the experimental entry. Their legacy
+constructors, root/item factory props and factory adapters are removed; unrelated families retain
+their existing APIs. Roots own teardown, while standalone canonical state must be disposed by its
+owner. See `src/lib/components/overlay/popup/README.md` and the published migration guide.

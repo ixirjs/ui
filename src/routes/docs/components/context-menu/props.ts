@@ -14,9 +14,9 @@ export const contextMenuTriggerProps: PropDefinition[] = [
 export const contextMenuRootProps: PropDefinition[] = [
 	{
 		name: 'children',
-		type: 'Snippet<[{ popover: PopoverBond; }]>',
+		type: 'Snippet<[{ popover: ContextMenuBond; }]>',
 		default: 'undefined',
-		description: 'Children'
+		description: "Content receives this family's shared state."
 	},
 	{
 		name: 'disabled',
@@ -29,12 +29,6 @@ export const contextMenuRootProps: PropDefinition[] = [
 		type: '{ [x: string]: unknown; }',
 		default: 'undefined',
 		description: 'Extend'
-	},
-	{
-		name: 'factory',
-		type: '((props: ContextMenuBondProps) => ContextMenuBond) | undefined',
-		default: 'undefined',
-		description: 'Advanced factory for a custom context-menu bond.'
 	},
 	{
 		name: 'offset',
@@ -210,12 +204,6 @@ export const contextMenuItemProps: PropDefinition[] = [
 		type: '(this: DropdownMenuItemAtom) => Partial<TransitionConfig> | void',
 		default: 'undefined',
 		description: 'Transition function for exiting'
-	},
-	{
-		name: 'factory',
-		type: '() => DropdownMenuItemAtom',
-		default: 'undefined',
-		description: 'Factory function for advanced custom item Atom creation'
 	},
 	{
 		name: 'id',

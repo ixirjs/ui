@@ -1,35 +1,73 @@
 <script lang="ts">
-	import PopoverRoot from '$ixirjs/ui/components/popover/popover-root.svelte';
-	import type { PopoverBond } from '$ixirjs/ui/components/popover/bond.svelte';
-	import type { StateChangeContext } from '$ixirjs/ui/types';
-	import { TooltipBond, type TooltipBondProps } from './bond.svelte';
+	import { PopupBond } from '$ixirjs/ui/components/overlay/popup/bond.svelte';
+	import { OverlayContext } from '$ixirjs/ui/components/overlay/model.svelte';
+	import { useOutsidePress, usePositioned } from '$ixirjs/ui/components/overlay/behavior.svelte';
+	import { PopoverContext, type PopoverBondBase } from '$ixirjs/ui/components/popover/bond.svelte';
 	import type { TooltipRootProps } from './types';
+
+	// The nearest overlay host: an owning overlay gates this popover's open state.
+	const owner = OverlayContext.get();
+
+	const ID = $props.id();
 
 	let {
 		open = $bindable(false),
-		factory = defaultFactory,
+		disabled = false,
+		placements = ['bottom-start', 'bottom-end', 'top-start', 'top-end', 'bottom', 'top'],
+		placement = 'bottom',
+		offset = 2,
+		position = 'absolute',
+		portal = undefined,
+		presets = undefined,
 		onopenchange = undefined,
-		...restProps
+		children = undefined
 	}: TooltipRootProps = $props();
 
-	// Construct a TooltipBond (name 'tooltip') instead of the default PopoverBond, so the
-	// shared popover atoms resolve their presets under the `tooltip.*` namespace. The bond is
-	// shared under popover's context keys too (via `parts: [PopoverBond]`), so `<Popover.*>`
-	// atom components still find it.
-	function defaultFactory(bondProps: TooltipBondProps): TooltipBond {
-		return TooltipBond.create(bondProps);
-	}
+	// Live props: read through getters wherever the Bond needs them.
+	const bondProps = {
+		get id() {
+			return ID;
+		},
+		get open() {
+			return open && (owner?.isOpen ?? true);
+		},
+		get disabled() {
+			return disabled;
+		},
+		get placement() {
+			return placement;
+		},
+		get offset() {
+			return offset;
+		},
+		get position() {
+			return position;
+		},
+		get placements() {
+			return placements ?? [];
+		},
+		get portal() {
+			return portal;
+		},
+		get presets() {
+			return presets;
+		}
+	};
+	const bond = PopoverContext.share(PopupBond.mount('tooltip', bondProps));
+	OverlayContext.share(bond);
+	// Controlled state: the Bond decides, the root writes, the callback fires after the write with
+	// the staged `event`/`reason` a dismissal handed it.
+	bond.bindCommit((next, context) => {
+		open = next;
+		onopenchange?.(next, context);
+	});
+	usePositioned(bond);
+	useOutsidePress(bond, {
+		event: 'click',
+		onDismiss: (event, o) => (o as PopoverBondBase).onclickoutside?.(event, o as PopoverBondBase)
+	});
 
-	function popoverFactory(bondProps: TooltipBondProps): PopoverBond {
-		return factory(bondProps);
-	}
-
-	function forwardOpenChange(value: boolean, context: StateChangeContext<PopoverBond>): void {
-		onopenchange?.(value, {
-			...context,
-			bond: context.bond as TooltipBond
-		});
-	}
+	export const getBond = () => bond;
 </script>
 
-<PopoverRoot bind:open factory={popoverFactory} onopenchange={forwardOpenChange} {...restProps} />
+{@render children?.({ popover: bond })}

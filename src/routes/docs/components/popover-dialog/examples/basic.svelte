@@ -1,17 +1,26 @@
 <script lang="ts">
-	import { PopoverDialog } from '$lib/components/popover-dialog';
-	import { Button } from '$lib/components/button';
+	import { PopoverDialog } from '@ixirjs/ui/components/popover-dialog';
+	import { Button } from '@ixirjs/ui/components/button';
 </script>
 
 <PopoverDialog.Root>
-	<PopoverDialog.Trigger>
-		{#snippet children()}
-			<Button>Open</Button>
-		{/snippet}
-	</PopoverDialog.Trigger>
-	<PopoverDialog.Content class="w-64 p-4">
-		<PopoverDialog.Body>
-			<p class="text-sm">A popover here, a modal dialog on a small screen.</p>
-		</PopoverDialog.Body>
-	</PopoverDialog.Content>
+	{#snippet children({ popoverDialog })}
+		<PopoverDialog.Trigger base={Button} variant="outline">Open dialog</PopoverDialog.Trigger>
+		<!-- Dialog owns the portalled modal surface; Content is its inner presentation. -->
+		<PopoverDialog.Dialog aria-label="Project details">
+			<PopoverDialog.Content class="w-80">
+				<PopoverDialog.Header>Project details</PopoverDialog.Header>
+				<PopoverDialog.Body
+					><p>A Popover trigger opens this focus-managed modal.</p></PopoverDialog.Body
+				>
+				<PopoverDialog.Footer
+					><PopoverDialog.CloseButton>Close</PopoverDialog.CloseButton></PopoverDialog.Footer
+				>
+			</PopoverDialog.Content>
+		</PopoverDialog.Dialog>
+		<!-- Read the root-owned interface; no factory or manual teardown. -->
+		<code class="text-muted-foreground block font-mono text-xs"
+			>profile: {popoverDialog.profile.name} · open: {String(popoverDialog.isOpen)}</code
+		>
+	{/snippet}
 </PopoverDialog.Root>

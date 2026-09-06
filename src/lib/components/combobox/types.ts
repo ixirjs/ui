@@ -1,6 +1,6 @@
 import type { Snippet } from 'svelte';
 import type { RenderProps, Base, SnippetProps, HtmlElementTagName } from '$ixirjs/ui/authoring';
-import type { Factory, StateChangeCallback } from '$ixirjs/ui/types';
+import type { StateChangeCallback } from '$ixirjs/ui/types';
 import type { ComboboxBond } from './bond.svelte';
 import type {
 	SelectPresets,
@@ -62,8 +62,6 @@ export interface ComboboxRootProps {
 	query?: string;
 	/** Per-instance presentation overrides for bonded Combobox parts. */
 	presets?: ComboboxPresets | undefined;
-	/** Custom factory function to create a ComboboxBond instance. */
-	factory?: Factory<ComboboxBond>;
 	/** Combobox content. Receives the ComboboxBond instance for custom composition. */
 	children?: ComboboxChildren;
 	/** Fired after open state commits. */

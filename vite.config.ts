@@ -19,6 +19,10 @@ export default defineConfig({
 		reportCompressedSize: false
 	},
 	optimizeDeps: {
+		// Vite's dependency scanner cannot follow Svelte snippet exports: it sees only the
+		// component's HTML virtual module, not the exports emitted by the Svelte compiler.
+		// The browser dependencies we want pre-bundled are already explicit below.
+		noDiscovery: true,
 		include: ['clsx', 'tailwind-merge', 'es-toolkit', 'date-fns']
 	}
 });

@@ -10,9 +10,31 @@
 
 # Migration Guide On 2026-08-27 the Bond/Atom authoring runtime was removed. A component family is
 now a plain state class published under `Kernel.context`, and every part renders through
-`Kernel.element`. Consumers of the components are unaffected: component names, props, snippet
-arguments, element ids, ARIA, `data-*` state and preset keys are unchanged. Only code that authored
-its own family against the old seams has to change. ## Removed from `@ixirjs/ui/shared`
+`Kernel.element`. Normal component markup, bindings and presets remain supported. Popup constructor
+values and `factory` props are removed, so those callers must migrate too. ## Canonical popup state
+Popover, DropdownMenu, Select, Combobox, Tooltip, ContextMenu, DatePicker and PopoverDialog share
+one runtime and one collection-item implementation. Family Bond names are interfaces, not
+constructors. Root/item `factory` props and `mountFactory` are removed. Use bindable props,
+snippets, presets and capability composition rather than subclass injection. Children snippets and
+`getBond()` expose root-owned state; never manually dispose it. Other families retain their factory
+APIs.
+
+{codeBlock(
+	`import { PopupBond, isSelectBond } from '@ixirjs/ui/experimental';
+import type { SelectBond } from '@ixirjs/ui/components/select';
+
+// Standalone state only: do not pass this object to a library Root.
+const state: SelectBond = PopupBond.create('select', liveProps);
+state.select(['alpha']); // selection commands take arrays
+state.dispose();        // standalone owner releases its resources
+
+// Component children/getBond() already return root-owned interfaces.
+if (isSelectBond(contextValue)) contextValue.unselect(['alpha']);
+// Custom component roots use PopupBond.mount(profile, liveProps) at init.`,
+	'typescript'
+)}
+
+## Removed from `@ixirjs/ui/shared`
 
 {list([
 	'defineBond — a plain class plus Kernel.context<T>(key).',
@@ -39,7 +61,8 @@ its own family against the old seams has to change. ## Removed from `@ixirjs/ui/
 `@ixirjs/ui/shared` gained `Kernel`, `ElementSpec` and `KernelElement`, and still exports the
 behaviour models (`createDisclosure`, `createSelection`, `createRovingFocus`, `createTypeahead`,
 `createInput`, `createValidation`, …) as ordinary functions. `@ixirjs/ui/experimental` still exports
-every concrete Bond class — those are the plain classes now. ## 1. The definition becomes a class
+the canonical `PopupBond` runtime and type-only popup family names. Other families retain their
+concrete classes. ## 1. The definition becomes a class
 
 {codeBlock(
 	`import { Kernel } from '@ixirjs/ui/shared';

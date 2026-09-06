@@ -235,6 +235,18 @@ attrs: () => ({
 </div>
 
 <Section.Root>
+	<Section.Header><Section.Title>One runtime, family interfaces</Section.Title></Section.Header>
+	<p class="text-muted-foreground text-sm leading-relaxed">
+		Popover, DropdownMenu, Select, Combobox, Tooltip, ContextMenu, DatePicker and PopoverDialog
+		share <code>PopupBond</code>. Their names, such as <code>SelectBond</code>, are interfaces,
+		imported with <code>import type</code>. Library roots create their state and own teardown;
+		children snippets and <code>getBond()</code> expose its commands. No popup <code>factory</code>
+		prop or family constructor remains. The Card example below still illustrates independent-family authoring;
+		see <a href="/docs/migration">popup migration</a> for the shared runtime.
+	</p>
+</Section.Root>
+
+<Section.Root>
 	<Section.Header>
 		<Section.Title>Core model</Section.Title>
 		<Section.Subtitle>Four names describe the whole authoring model.</Section.Subtitle>

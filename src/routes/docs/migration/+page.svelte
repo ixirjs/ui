@@ -4,6 +4,18 @@
 
 	const END = '<' + '/script>';
 
+	const popupCode = `import { PopupBond, isSelectBond } from '@ixirjs/ui/experimental';
+import type { SelectBond } from '@ixirjs/ui/components/select';
+
+// Standalone state only: do not pass this object to a library Root.
+const state: SelectBond = PopupBond.create('select', liveProps);
+state.select(['alpha']); // selection commands take arrays
+state.dispose();        // standalone owner releases its resources
+
+// Component children/getBond() already return root-owned interfaces.
+if (isSelectBond(contextValue)) contextValue.unselect(['alpha']);
+// Custom component roots use PopupBond.mount(profile, liveProps) at init.`;
+
 	const removedShared = [
 		['defineBond', 'a plain class + Kernel.context<T>(key)'],
 		['useRoot', 'build the class, share it, call Kernel.element'],
@@ -189,9 +201,9 @@ attrs: () => ({
 	<p class="text-muted-foreground m-0 mb-6 max-w-[640px] text-[17px] leading-[1.65]">
 		On 2026-08-27 the Bond/Atom authoring runtime was removed. A family is now a plain state class
 		published under <code class="font-mono text-sm">Kernel.context</code>, and every part renders
-		through <code class="font-mono text-sm">Kernel.element</code>. If you only
-		<em>use</em> components, nothing here affects you — component names, props, snippet arguments, element
-		ids, ARIA and preset keys are unchanged.
+		through <code class="font-mono text-sm">Kernel.element</code>. Normal markup, bindings and
+		presets remain supported. Popup constructor values and
+		<code>factory</code> props are now removed; those callers must migrate as described below.
 	</p>
 	<div class="flex flex-wrap gap-3">
 		<Button href="/docs/bonds" as="a" variant="primary">Understand Bonds</Button>
@@ -200,10 +212,28 @@ attrs: () => ({
 </div>
 
 <Section.Root>
+	<Section.Header><Section.Title>Canonical popup state</Section.Title></Section.Header>
+	<p class="text-muted-foreground text-sm leading-relaxed">
+		Popover, DropdownMenu, Select, Combobox, Tooltip, ContextMenu, DatePicker and PopoverDialog now
+		share one <code>PopupBond</code> and one collection-item implementation. Their family names are
+		interfaces, not constructors; root and item <code>factory</code> props and
+		<code>mountFactory</code> are removed. Replace subclass injection with props, snippets, presets
+		and capability composition. Existing <code>getBond()</code> and children snippets expose root-owned
+		state, so do not construct or dispose that state yourself.
+	</p>
+	<CodeBlock lang="typescript" code={popupCode} />
+	<p class="text-muted-foreground text-sm leading-relaxed">
+		Use <code>instanceof PopupBond</code> or profile discovery instead of family constructor checks.
+		Standalone state uses <code>create</code> plus <code>dispose</code>; custom component roots use
+		<code>mount</code> for automatic teardown. Other families' factory APIs are unchanged.
+	</p>
+</Section.Root>
+
+<Section.Root>
 	<Section.Header>
 		<Section.Title>Who this affects</Section.Title>
 		<Section.Subtitle>
-			Only code that authored its own family against the old seams.
+			Authors using removed Kernel seams, and callers using popup constructors or factory props.
 		</Section.Subtitle>
 	</Section.Header>
 
@@ -214,7 +244,7 @@ attrs: () => ({
 				You render library components, style them with presets, augment prop interfaces, or pass
 				<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">base</code>/<code
 					class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">as</code
-				>. The public component contract did not change.
+				>. No change is needed unless you also use popup constructors or factory props.
 			</p>
 		</div>
 		<div class="border-border rounded-lg border p-4">
@@ -290,7 +320,8 @@ attrs: () => ({
 		survived as ordinary functions.
 		<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">@ixirjs/ui/experimental</code
 		>
-		still exports every concrete Bond class — they are the plain classes now.
+		exports the canonical PopupBond runtime and type-only popup family interfaces. Other families retain
+		their concrete classes.
 	</DocCallout>
 
 	<DocCallout variant="warning" title="Symbol lifecycle keys are gone too">
@@ -348,9 +379,9 @@ attrs: () => ({
 	</div>
 
 	<DocCallout variant="warning" title="Live getters, never a snapshot">
-		The Bond must read props <em>where</em> it reads them. Hand it an object of getters over the
-		root's own props — spreading them into a plain object once at init freezes the family at its
-		mount-time values.
+		For non-popup families that still accept a factory, the Bond must read props <em>where</em> it
+		reads them. Hand it an object of getters over the root's own props — spreading them into a plain
+		object once at init freezes the family at its mount-time values.
 		<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">factory</code>, by contrast,
 		is read once, under
 		<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">untrack</code>, by design.

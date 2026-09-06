@@ -12,3 +12,5 @@ export {
 	PopoverIndicator,
 	PopoverTail
 } from '$ixirjs/ui/components/popover';
+
+export type { PopoverBond } from '$ixirjs/ui/components/overlay/popup/types';

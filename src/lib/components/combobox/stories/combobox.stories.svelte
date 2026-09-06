@@ -44,7 +44,7 @@
 
 	// `bind:query` two-way-binds each Root's `query` prop — what `Combobox.Query` writes and
 	// Escape clears (`ClearThenClose`). We filter a derived view off it. `keys` stays the FULL
-	// list so a selected-but-filtered-out item keeps its chip/label.
+	// list of choice identities; mounted selection handles supply chip labels.
 	const allKeys = languages.map((l) => l.value);
 	const match = (q: string) => (l: Option) =>
 		l.label.toLowerCase().includes(q.trim().toLowerCase());
@@ -86,58 +86,65 @@
 				multiple={args.multiple}
 				disabled={args.disabled}
 			>
-				<ACombobox.Trigger
-					base={Input.Root}
-					class="flex h-auto min-h-11 w-full flex-wrap items-center gap-1 px-3 py-2"
-				>
-					{#if args.multiple}
-						<ACombobox.Selections class="flex flex-wrap gap-1">
-							{#snippet children({ selections })}
-								{#each selections as selection (selection.id)}
-									<div animate:flip={{ duration: 200 }}>
-										<ACombobox.Selection
-											{selection}
-											class="bg-primary/10 text-primary inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium"
-										>
-											{selection.label}
-										</ACombobox.Selection>
-									</div>
-								{/each}
-							{/snippet}
-						</ACombobox.Selections>
-					{/if}
-					<ACombobox.Query class={inputClass} placeholder={args.placeholder} />
-				</ACombobox.Trigger>
-
-				<ACombobox.Content variant="flat" class="z-50 overflow-hidden">
-					<div class="max-h-60 overflow-auto py-1">
-						{#each defaultFiltered as item (item.value)}
-							<div animate:flip={{ duration: 150 }}>
-								<ACombobox.Item value={item.value} variant="flat">
-									<span class="flex-1">{item.label}</span>
-									{#if args.multiple}
-										<span
-											class="text-primary opacity-0 data-on:opacity-100"
-											data-on={defaultValues.includes(item.value) ? '' : undefined}
-											>{@render checkIcon()}</span
-										>
-									{:else}
-										<span
-											class="text-primary opacity-0 data-on:opacity-100"
-											data-on={defaultValue === item.value ? '' : undefined}
-											>{@render checkIcon()}</span
-										>
-									{/if}
-								</ACombobox.Item>
-							</div>
-						{/each}
-						{#if defaultFiltered.length === 0}
-							<div class="text-muted-foreground px-3 py-6 text-center text-sm">
-								No language matches "{defaultSearch}"
-							</div>
+				{#snippet children({ combobox })}
+					<ACombobox.Trigger
+						base={Input.Root}
+						class="flex h-auto min-h-11 w-full flex-wrap items-center gap-1 px-3 py-2"
+					>
+						{#if args.multiple}
+							<ACombobox.Selections class="flex flex-wrap gap-1">
+								{#snippet children({ selections })}
+									{#each selections as selection (selection.id)}
+										<div animate:flip={{ duration: 200 }}>
+											<ACombobox.Selection
+												{selection}
+												class="bg-primary/10 text-primary inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium"
+											>
+												{selection.label}
+											</ACombobox.Selection>
+										</div>
+									{/each}
+								{/snippet}
+							</ACombobox.Selections>
 						{/if}
-					</div>
-				</ACombobox.Content>
+						<ACombobox.Query class={inputClass} placeholder={args.placeholder} />
+					</ACombobox.Trigger>
+
+					<ACombobox.Content variant="flat" class="z-50 overflow-hidden">
+						<div class="max-h-60 overflow-auto py-1">
+							{#each defaultFiltered as item (item.value)}
+								<div animate:flip={{ duration: 150 }}>
+									<ACombobox.Item value={item.value} variant="flat">
+										<span class="flex-1">{item.label}</span>
+										{#if args.multiple}
+											<span
+												class="text-primary opacity-0 data-on:opacity-100"
+												data-on={defaultValues.includes(item.value) ? '' : undefined}
+												>{@render checkIcon()}</span
+											>
+										{:else}
+											<span
+												class="text-primary opacity-0 data-on:opacity-100"
+												data-on={defaultValue === item.value ? '' : undefined}
+												>{@render checkIcon()}</span
+											>
+										{/if}
+									</ACombobox.Item>
+								</div>
+							{/each}
+							{#if defaultFiltered.length === 0}
+								<div class="text-muted-foreground px-3 py-6 text-center text-sm">
+									No language matches "{defaultSearch}"
+								</div>
+							{/if}
+						</div>
+					</ACombobox.Content>
+					<!-- The root supplies a family interface; no constructor injection or manual disposal. -->
+					<code class="text-muted-foreground font-mono text-xs"
+						>profile: {combobox.profile.name} · open: {String(combobox.isOpen)} · query: {combobox
+							.props.query ?? ''} · values: {JSON.stringify(combobox.props.values ?? [])}</code
+					>
+				{/snippet}
 			</ACombobox.Root>
 			<p class="text-muted-foreground text-xs">
 				{#if args.multiple}

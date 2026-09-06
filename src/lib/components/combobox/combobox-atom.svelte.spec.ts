@@ -4,7 +4,7 @@ import Probe, {
 	capturedBond,
 	resetCapturedBond
 } from '$ixirjs/ui/test/components/combobox/combobox-atom-probe.test.svelte';
-import { ComboboxBond } from './bond.svelte';
+import { PopupBond } from '$ixirjs/ui/components/overlay/popup/bond.svelte';
 
 /**
  * Rewritten DOM-level. It used to assert Atom instances through `nodeByPart` — machinery the
@@ -20,7 +20,7 @@ describe('Combobox rendered parts', () => {
 		const combobox = capturedBond;
 
 		expect(combobox).toBeDefined();
-		expect(combobox).toBeInstanceOf(ComboboxBond);
+		expect(combobox).toBeInstanceOf(PopupBond);
 		expect(combobox?.isOpen).toBe(true);
 
 		expect(document.querySelector('[aria-haspopup="listbox"]')).not.toBeNull();

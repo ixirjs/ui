@@ -60,7 +60,7 @@
 
 <Story name="Basic">
 	{#snippet template(args)}
-		<div class="flex h-screen items-start justify-center pt-24">
+		<div class="flex h-screen flex-col items-center gap-3 pt-24">
 			<ADatePicker.Root
 				bind:value
 				{min}
@@ -72,15 +72,18 @@
 				offset={args.offset}
 				placement={args.placement}
 			>
-				<ADatePicker.Trigger base={Button} class="w-64 gap-4">
-					{#if value}
-						<div>{value.toDateString()}</div>
-					{:else}
-						<div>{args.placeholder}</div>
-					{/if}
-					<ADatePicker.Indicator class="ml-auto" />
-				</ADatePicker.Trigger>
-				<ADatePicker.Calendar />
+				{#snippet children({ datePicker })}
+					<ADatePicker.Trigger base={Button} class="w-64 gap-4">
+						<span>{datePicker.formattedValue || args.placeholder}</span>
+						<ADatePicker.Indicator class="ml-auto" />
+					</ADatePicker.Trigger>
+					<ADatePicker.Calendar />
+					<!-- The root supplies a family interface; no constructor injection or manual disposal. -->
+					<code class="text-muted-foreground font-mono text-xs"
+						>profile: {datePicker.profile.name} · open: {String(datePicker.isOpen)} · date: {datePicker.formattedValue ||
+							'—'}</code
+					>
+				{/snippet}
 			</ADatePicker.Root>
 		</div>
 	{/snippet}

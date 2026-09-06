@@ -58,16 +58,23 @@
 	{#snippet template(args)}
 		<div class="flex h-screen w-full flex-col items-center justify-center gap-4">
 			<ADropdownMenu.Root {...args}>
-				<ADropdownMenu.Trigger base={Button}>Options</ADropdownMenu.Trigger>
-				<ADropdownMenu.Content>
-					<ADropdownMenu.Item onclick={() => (lastAction = 'Edit')}>Edit</ADropdownMenu.Item>
-					<ADropdownMenu.Item onclick={() => (lastAction = 'Duplicate')}
-						>Duplicate</ADropdownMenu.Item
+				{#snippet children({ popover })}
+					<ADropdownMenu.Trigger base={Button}>Options</ADropdownMenu.Trigger>
+					<ADropdownMenu.Content>
+						<ADropdownMenu.Item onclick={() => (lastAction = 'Edit')}>Edit</ADropdownMenu.Item>
+						<ADropdownMenu.Item onclick={() => (lastAction = 'Duplicate')}
+							>Duplicate</ADropdownMenu.Item
+						>
+						<ADropdownMenu.Item onclick={() => (lastAction = 'Archive')}>Archive</ADropdownMenu.Item
+						>
+						<ADropdownMenu.Divider />
+						<ADropdownMenu.Item onclick={() => (lastAction = 'Delete')}>Delete</ADropdownMenu.Item>
+					</ADropdownMenu.Content>
+					<!-- The root supplies a family interface; no constructor injection or manual disposal. -->
+					<code class="text-muted-foreground font-mono text-xs"
+						>profile: {popover.profile.name} · open: {String(popover.isOpen)}</code
 					>
-					<ADropdownMenu.Item onclick={() => (lastAction = 'Archive')}>Archive</ADropdownMenu.Item>
-					<ADropdownMenu.Divider />
-					<ADropdownMenu.Item onclick={() => (lastAction = 'Delete')}>Delete</ADropdownMenu.Item>
-				</ADropdownMenu.Content>
+				{/snippet}
 			</ADropdownMenu.Root>
 			<code class="text-muted-foreground text-xs font-mono">action: {lastAction}</code>
 		</div>

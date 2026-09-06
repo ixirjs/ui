@@ -7,27 +7,24 @@ const preset = setPreset({
 });`;
 
 const useCases = [
-	{
-		title: 'Responsive menus',
-		description: 'Anchored beside the trigger on desktop, full-height sheet on mobile.'
-	},
+	{ title: 'Confirmations', description: 'Open a modal confirmation from an in-flow trigger.' },
 	{
 		title: 'Filter panels',
-		description: 'A compact popover that needs the whole screen when it is small.'
+		description: 'Keep filter controls inside a focus-managed modal surface.'
 	},
 	{
 		title: 'Detail views',
-		description: 'Preview in place on a wide layout, focus-trapped modal on a narrow one.'
+		description: 'Present details without navigating away from the current page.'
 	}
 ];
 
 export const metadata = {
 	title: 'PopoverDialog - IXIR UI',
-	description: 'A popover on wide screens that becomes a modal dialog on small ones.',
+	description: 'A Popover trigger with a portalled Dialog presentation.',
 	componentTitle: 'PopoverDialog',
 	componentDescription:
-		'A fused Bond: Popover supplies the trigger and positioning, Dialog supplies the modal parts. One open state drives both, so the same content is an anchored popover on a desktop and a focus-trapping dialog on a phone.',
-	summary: 'Popover on desktop, modal dialog on small screens',
+		'The canonical popover-dialog profile shares one open state between Popover trigger and Dialog modal parts. Render Content inside Dialog; there is no automatic viewport-dependent positioning mode.',
+	summary: 'Popover trigger and focus-managed modal presentation',
 	category: 'Overlay' as const,
 	componentType: 'compound' as const,
 	status: 'beta' as const,
@@ -36,9 +33,9 @@ export const metadata = {
 	useCases,
 	presetCode,
 	accessibility: [
-		'The trigger carries `aria-haspopup="dialog"` and `aria-expanded` in both modes',
-		'The dialog mode traps focus and restores it to the trigger on close',
+		'The trigger carries `aria-haspopup="dialog"` and `aria-expanded`',
+		'Modal presentation traps focus and restores the previously focused element on close',
 		'Escape closes through the shared overlay stack, innermost first',
-		'One open state drives both presentations, so assistive tech never sees two surfaces'
+		'One open state drives the trigger and its modal surface'
 	]
 };

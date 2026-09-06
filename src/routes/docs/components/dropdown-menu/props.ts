@@ -32,12 +32,6 @@ export const dropdownMenuItemProps: PropDefinition[] = [
 		description: 'Transition function for exiting'
 	},
 	{
-		name: 'factory',
-		type: '() => DropdownMenuItemAtom',
-		default: 'undefined',
-		description: 'Factory function for advanced custom item Atom creation'
-	},
-	{
 		name: 'id',
 		type: 'string',
 		default: 'generated id',
@@ -83,9 +77,9 @@ export const dropdownMenuContentProps: PropDefinition[] = [renderPropsRow];
 export const dropdownMenuRootProps: PropDefinition[] = [
 	{
 		name: 'children',
-		type: 'Snippet<[{ popover: PopoverBond; }]>',
+		type: 'Snippet<[{ popover: DropdownMenuBond; }]>',
 		default: 'undefined',
-		description: 'Children'
+		description: "Content receives this family's shared state."
 	},
 	{
 		name: 'disabled',
@@ -98,12 +92,6 @@ export const dropdownMenuRootProps: PropDefinition[] = [
 		type: '{ [x: string]: unknown; }',
 		default: 'undefined',
 		description: 'Extend'
-	},
-	{
-		name: 'factory',
-		type: '((props: DropdownMenuBondProps) => DropdownMenuBond) | undefined',
-		default: 'undefined',
-		description: 'Replaces the Bond constructor, so a family can be extended or fused.'
 	},
 	{
 		name: 'offset',

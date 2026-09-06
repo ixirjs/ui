@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { DocContentProps } from '$docs/types';
-	import { DocComponentPage, DocExample } from '$docs/components';
+	import { DocComponentPage, DocExample, DocSection } from '$docs/components';
 	import type { PropsSection } from '$docs/components';
 	import {
 		selectRootProps,
@@ -37,5 +37,15 @@
 			description="Select with multiple value support"
 			{...ex('./examples/multiple.svelte')}
 		/>
+	{/snippet}
+	{#snippet extra()}
+		<DocSection title="State and customization">
+			<code>Select.Root</code> owns the canonical <code>select</code> profile. Its
+			<code>children</code> snippet receives <code>select</code>, typed as the
+			<code>SelectBond</code> interface. Use bindable props and Bond commands, not a constructor or
+			<code>factory</code>
+			prop. The root handles teardown; see the
+			<a href="/docs/migration">popup migration notes</a> for standalone authoring.
+		</DocSection>
 	{/snippet}
 </DocComponentPage>

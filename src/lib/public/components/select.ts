@@ -14,3 +14,5 @@ export {
 	SelectQuery,
 	SelectSelections
 } from '$ixirjs/ui/components/select';
+
+export type { SelectBond } from '$ixirjs/ui/components/overlay/popup/types';

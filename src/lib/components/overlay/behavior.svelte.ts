@@ -10,7 +10,7 @@ import { on } from 'svelte/events';
 import { containsTarget, focus, focusTrap, isBrowser } from '$ixirjs/ui/utils/dom.svelte';
 import { acquireBodyLock, acquireInert, siblingsOf } from '$ixirjs/ui/utils/document-lock';
 import { isTopOverlay, useEscapeStack } from './escape-stack.svelte';
-import type { OverlayBond, OverlayKnobs, OverlayPart } from './model.svelte';
+import type { OverlayState, OverlayKnobs, OverlayPart } from './model.svelte';
 
 export {
 	enrollOverlay,
@@ -19,7 +19,7 @@ export {
 	useEscapeStack
 } from './escape-stack.svelte';
 
-type Overlay = OverlayBond;
+type Overlay = OverlayState;
 
 // ---------------------------------------------------------------------------------------------
 // Trigger

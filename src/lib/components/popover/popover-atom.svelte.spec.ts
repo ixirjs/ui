@@ -5,7 +5,7 @@ import Probe, {
 	resetCapturedBond
 } from '$ixirjs/ui/test/components/popover/popover-atom-probe.test.svelte';
 import LayerProbe from '$ixirjs/ui/test/components/popover/popover-preset-probe.test.svelte';
-import { PopoverBond } from './bond.svelte';
+import { PopupBond } from '$ixirjs/ui/components/overlay/popup/bond.svelte';
 
 /**
  * DOM-level: the family no longer registers Atoms, so what used to be asserted on `nodeByPart`
@@ -19,7 +19,7 @@ describe('Popover rendered parts', () => {
 		const popover = capturedBond;
 
 		expect(popover).toBeDefined();
-		expect(popover).toBeInstanceOf(PopoverBond);
+		expect(popover).toBeInstanceOf(PopupBond);
 		expect(popover?.isOpen).toBe(true);
 		expect(popover?.shouldTrackPosition).toBe(true);
 

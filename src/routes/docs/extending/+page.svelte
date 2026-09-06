@@ -3,31 +3,21 @@
 
 	const END = '<' + '/script>';
 
-	// ── Extend an existing component ───────────────────────────────────────────
-	// Shape verified against src/lib/components/select/bond.svelte.ts (SelectBondBase
-	// extends DropdownMenuBondBase) and src/lib/components/popover-dialog/bond.svelte.ts.
-	const extendCode = `import { Kernel } from '@ixirjs/ui/shared';
-import { DropdownMenuBond } from '@ixirjs/ui/experimental';
+	// Canonical popup authoring: no constructor injection.
+	const extendCode = `import { PopupBond, isSelectBond } from '@ixirjs/ui/experimental';
+import type { SelectBond } from '@ixirjs/ui/components/select';
 
-// A command-palette flavour of dropdown-menu. A Bond is a plain class, so
-// "extend" is what the word means in JavaScript.
-type Props = ConstructorParameters<typeof DropdownMenuBond>[0];
+// In a component root: live props, canonical state, root-owned disposal.
+const bond: SelectBond = PopupBond.mount('select', liveProps);
+bond.select(['alpha']);
 
-export class CommandMenuBond extends DropdownMenuBond {
-  query = $state('');
-
-  constructor(props: Props) {
-    super(props, 'command-menu');   // the name drives the preset path
-  }
-}
-
-// Its own context key — parts of the new family resolve this one.
-export const CommandMenuContext = Kernel.context<CommandMenuBond>('bond/command-menu');`;
+// Family names are interfaces, not subclass constructors.
+if (isSelectBond(contextValue)) contextValue.select(['beta']);`;
 
 	// ── Reuse the parent family's parts ────────────────────────────────────────
 	// Shape verified against src/lib/components/popover-dialog/popover-dialog-root.svelte.
 	const reuseCode = `// One instance, shared under BOTH keys, so each family's own parts resolve it.
-const bond = PopoverDialogContext.share(PopoverDialogBond.create(bondProps));
+const bond = PopoverDialogContext.share(PopupBond.mount('popover-dialog', bondProps));
 DialogContext.share(bond);
 PopoverContext.share(bond);
 OverlayContext.share(bond);`;
@@ -209,8 +199,8 @@ declare module '@ixirjs/ui/components/tree' {
 		Extending &amp; authoring.
 	</h1>
 	<p class="text-muted-foreground m-0 mb-6 max-w-[640px] text-[17px] leading-[1.65]">
-		A component family is a plain state class plus one Svelte component per part. Extending one is
-		<code>extends</code>; authoring one is a class and a handful of
+		A component family combines shared state with one Svelte component per part. Popup families
+		share <code>PopupBond</code>; authoring a new family uses a state class and
 		<code>Kernel.element</code> calls.
 	</p>
 </div>
@@ -229,8 +219,8 @@ declare module '@ixirjs/ui/components/tree' {
 			>. No new class needed.
 		</li>
 		<li>
-			<strong>Extend</strong> — subclass a family's Bond, add state or override a getter, publish it under
-			your own context key.
+			<strong>Compose behavior</strong> — combine capabilities with a canonical popup profile; popup roots
+			do not accept custom factories.
 		</li>
 		<li>
 			<strong>Author</strong> — a new plain state class, one context key, one part component per slot.
@@ -251,10 +241,10 @@ declare module '@ixirjs/ui/components/tree' {
 
 <Section.Root>
 	<Section.Header>
-		<Section.Title>Extend a component</Section.Title>
+		<Section.Title>Compose popup behavior</Section.Title>
 		<Section.Subtitle>
-			A Bond is an ordinary class. Subclass it, add what differs, and give the result its own
-			context key.
+			Select a profile and supply live props. Family names describe interfaces; one runtime owns the
+			behavior.
 		</Section.Subtitle>
 	</Section.Header>
 
@@ -262,15 +252,10 @@ declare module '@ixirjs/ui/components/tree' {
 		<CodeBlock lang="typescript" code={extendCode} />
 	</div>
 
-	<DocCallout variant="info" title="This is how the library does it">
-		<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">SelectBond</code> and
-		<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">ComboboxBond</code> extend
-		<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">DropdownMenuBondBase</code>;
-		<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">DialogBond</code> and
-		<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">PopoverBond</code> extend the
-		shared
-		<code class="bg-muted text-foreground rounded px-1 py-0.5 text-xs">OverlayBond</code>. There is
-		no separate composition protocol to learn.
+	<DocCallout variant="info" title="Canonical popup families">
+		Popover, DropdownMenu, Select, Combobox, Tooltip, ContextMenu, DatePicker and PopoverDialog use
+		one <code>PopupBond</code> implementation and one collection-item runtime. Their legacy constructors
+		and custom factory props are removed; use props, presets and capabilities.
 	</DocCallout>
 </Section.Root>
 

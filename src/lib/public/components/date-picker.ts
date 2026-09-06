@@ -10,3 +10,5 @@ export {
 	DatePickerRoot,
 	DatePickerCalendar
 } from '$ixirjs/ui/components/date-picker';
+
+export type { DatePickerBond } from '$ixirjs/ui/components/overlay/popup/types';

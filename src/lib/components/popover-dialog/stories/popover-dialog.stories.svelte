@@ -3,8 +3,8 @@
 	import { PopoverDialog } from '..';
 	import { Button } from '$ixirjs/ui/components/button';
 
-	// PopoverDialog is the first Fusion: `parts: [Popover, Dialog]`. Popover's
-	// trigger/disclosure opens Dialog's modal content (centered, backdrop, focus-trapped).
+	// The canonical popover-dialog profile shares one state object with the existing
+	// Popover trigger and Dialog modal parts; no class fusion or custom factory.
 	const { Story } = defineMeta({
 		title: 'Atoms/PopoverDialog',
 		parameters: {
@@ -45,26 +45,32 @@
 	{#snippet template(args)}
 		<div class="flex h-full flex-col items-center justify-center gap-3 p-8">
 			<PopoverDialog.Root bind:open disabled={args.disabled}>
-				<!-- Reused <Popover.Trigger>: click toggles open, ARIA = dialog. -->
-				<PopoverDialog.Trigger base={Button} variant="primary">Open Dialog</PopoverDialog.Trigger>
+				{#snippet children({ popoverDialog })}
+					<!-- Reused <Popover.Trigger>: click toggles open, ARIA = dialog. -->
+					<PopoverDialog.Trigger base={Button} variant="primary">Open Dialog</PopoverDialog.Trigger>
 
-				<!-- Dialog self-portals the modal; Header/Body are reused <Dialog.*> atoms. -->
-				<PopoverDialog.Dialog type={args.type}>
-					<PopoverDialog.Content>
-						<PopoverDialog.Header>Modal title</PopoverDialog.Header>
-						<PopoverDialog.Body>
-							<p>
-								This panel is opened by a Popover trigger but presented in Dialog (modal) style —
-								centered, backdropped, and focus-trapped. It is a single fused bond, and these atoms
-								are the very same Popover/Dialog components, reused.
-							</p>
-						</PopoverDialog.Body>
-						<div class="flex justify-end gap-4 px-8 pt-2">
-							<Button variant="ghost" onclick={() => (open = false)}>Cancel</Button>
-							<Button variant="primary" onclick={() => (open = false)}>Confirm</Button>
-						</div>
-					</PopoverDialog.Content>
-				</PopoverDialog.Dialog>
+					<!-- Dialog self-portals the modal; Header/Body are reused <Dialog.*> atoms. -->
+					<PopoverDialog.Dialog type={args.type}>
+						<PopoverDialog.Content>
+							<PopoverDialog.Header>Modal title</PopoverDialog.Header>
+							<PopoverDialog.Body>
+								<p>
+									This panel is opened by a Popover trigger but presented in Dialog (modal) style —
+									centered, backdropped, and focus-trapped. It is a single fused bond, and these
+									atoms are the very same Popover/Dialog components, reused.
+								</p>
+							</PopoverDialog.Body>
+							<div class="flex justify-end gap-4 px-8 pt-2">
+								<Button variant="ghost" onclick={() => popoverDialog.close()}>Cancel</Button>
+								<Button variant="primary" onclick={() => popoverDialog.close()}>Confirm</Button>
+							</div>
+						</PopoverDialog.Content>
+					</PopoverDialog.Dialog>
+					<!-- The root supplies a family interface; no constructor injection or manual disposal. -->
+					<code class="text-muted-foreground font-mono text-xs"
+						>profile: {popoverDialog.profile.name} · open: {String(popoverDialog.isOpen)}</code
+					>
+				{/snippet}
 			</PopoverDialog.Root>
 			<!-- Live readout so the open/close round-trip is observable from the toolbar. -->
 			<code class="text-muted-foreground text-xs font-mono">open: {open ? 'true' : 'false'}</code>

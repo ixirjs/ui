@@ -77,96 +77,32 @@
 			</p>
 
 			<Popover_.Root bind:open {...args}>
-				<Popover_.Trigger variant="chip">
-					<span
-						class="bg-primary text-primary-foreground flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold"
-					>
-						JD
-					</span>
-					<span class="text-foreground font-medium">Jane Doe</span>
-					<Popover_.Indicator />
-				</Popover_.Trigger>
-
-				<Popover_.Content class="bg-card w-64 p-0" autoClose>
-					<Popover_.Tail />
-
-					<div class="border-border flex items-center gap-3 border-b px-4 py-3">
+				{#snippet children({ popover })}
+					<Popover_.Trigger variant="chip">
 						<span
-							class="bg-primary text-primary-foreground flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold"
+							class="bg-primary text-primary-foreground flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold"
 						>
 							JD
 						</span>
-						<div class="min-w-0">
-							<p class="text-foreground truncate text-sm font-medium leading-tight">Jane Doe</p>
-							<p class="text-muted-foreground truncate text-xs leading-tight">jane@example.com</p>
-						</div>
-					</div>
-					{#snippet userIcon()}
-						<svg
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="2"
-							class="h-4 w-4 shrink-0"
-						>
-							<circle cx="12" cy="7" r="4"></circle>
-							<path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"></path>
-						</svg>
-					{/snippet}
-					{#snippet settingsIcon()}
-						<svg
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="2"
-							class="h-4 w-4 shrink-0"
-						>
-							<circle cx="12" cy="12" r="3"></circle>
-							<path
-								d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
-							></path>
-						</svg>
-					{/snippet}
-					{#snippet bellIcon()}
-						<svg
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="2"
-							class="h-4 w-4 shrink-0"
-						>
-							<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path>
-							<path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-						</svg>
-					{/snippet}
-					{#snippet billingIcon()}
-						<svg
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="2"
-							class="h-4 w-4 shrink-0"
-						>
-							<rect x="2" y="5" width="20" height="14" rx="2"></rect>
-							<line x1="2" y1="10" x2="22" y2="10"></line>
-						</svg>
-					{/snippet}
+						<span class="text-foreground font-medium">Jane Doe</span>
+						<Popover_.Indicator />
+					</Popover_.Trigger>
 
-					<div class="p-1">
-						{#each [[userIcon, 'Profile'], [settingsIcon, 'Settings'], [bellIcon, 'Notifications'], [billingIcon, 'Billing']] as [icon, label] (label)}
-							{@const iconSnippet = icon as import('svelte').Snippet}
-							<button
-								class="hover:bg-muted text-foreground flex w-full items-center gap-2.5 rounded-md px-3 py-1.5 text-left text-sm transition-colors"
+					<Popover_.Content class="bg-card w-64 p-0" autoClose>
+						<Popover_.Tail />
+
+						<div class="border-border flex items-center gap-3 border-b px-4 py-3">
+							<span
+								class="bg-primary text-primary-foreground flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold"
 							>
-								{@render iconSnippet()}
-								<span class="flex-1">{label}</span>
-							</button>
-						{/each}
-					</div>
-					<div class="border-border border-t p-1">
-						<button
-							class="hover:bg-muted flex w-full items-center gap-2.5 rounded-md px-3 py-1.5 text-left text-sm text-destructive transition-colors"
-						>
+								JD
+							</span>
+							<div class="min-w-0">
+								<p class="text-foreground truncate text-sm font-medium leading-tight">Jane Doe</p>
+								<p class="text-muted-foreground truncate text-xs leading-tight">jane@example.com</p>
+							</div>
+						</div>
+						{#snippet userIcon()}
 							<svg
 								viewBox="0 0 24 24"
 								fill="none"
@@ -174,14 +110,84 @@
 								stroke-width="2"
 								class="h-4 w-4 shrink-0"
 							>
-								<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-								<polyline points="16 17 21 12 16 7"></polyline>
-								<line x1="21" y1="12" x2="9" y2="12"></line>
+								<circle cx="12" cy="7" r="4"></circle>
+								<path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"></path>
 							</svg>
-							<span class="flex-1">Sign out</span>
-						</button>
-					</div>
-				</Popover_.Content>
+						{/snippet}
+						{#snippet settingsIcon()}
+							<svg
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+								class="h-4 w-4 shrink-0"
+							>
+								<circle cx="12" cy="12" r="3"></circle>
+								<path
+									d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
+								></path>
+							</svg>
+						{/snippet}
+						{#snippet bellIcon()}
+							<svg
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+								class="h-4 w-4 shrink-0"
+							>
+								<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path>
+								<path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+							</svg>
+						{/snippet}
+						{#snippet billingIcon()}
+							<svg
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+								class="h-4 w-4 shrink-0"
+							>
+								<rect x="2" y="5" width="20" height="14" rx="2"></rect>
+								<line x1="2" y1="10" x2="22" y2="10"></line>
+							</svg>
+						{/snippet}
+
+						<div class="p-1">
+							{#each [[userIcon, 'Profile'], [settingsIcon, 'Settings'], [bellIcon, 'Notifications'], [billingIcon, 'Billing']] as [icon, label] (label)}
+								{@const iconSnippet = icon as import('svelte').Snippet}
+								<button
+									class="hover:bg-muted text-foreground flex w-full items-center gap-2.5 rounded-md px-3 py-1.5 text-left text-sm transition-colors"
+								>
+									{@render iconSnippet()}
+									<span class="flex-1">{label}</span>
+								</button>
+							{/each}
+						</div>
+						<div class="border-border border-t p-1">
+							<button
+								class="hover:bg-muted flex w-full items-center gap-2.5 rounded-md px-3 py-1.5 text-left text-sm text-destructive transition-colors"
+							>
+								<svg
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+									class="h-4 w-4 shrink-0"
+								>
+									<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+									<polyline points="16 17 21 12 16 7"></polyline>
+									<line x1="21" y1="12" x2="9" y2="12"></line>
+								</svg>
+								<span class="flex-1">Sign out</span>
+							</button>
+						</div>
+					</Popover_.Content>
+					<!-- The root supplies a family interface; no constructor injection or manual disposal. -->
+					<code class="text-muted-foreground font-mono text-xs"
+						>profile: {popover.profile.name} · open: {String(popover.isOpen)}</code
+					>
+				{/snippet}
 			</Popover_.Root>
 
 			<p class="text-muted-foreground/70 text-xs">Click the chip to open the account menu</p>

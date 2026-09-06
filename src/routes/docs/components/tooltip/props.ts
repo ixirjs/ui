@@ -42,12 +42,6 @@ export const tooltipRootProps: PropDefinition[] = [
 		description: 'Extend'
 	},
 	{
-		name: 'factory',
-		type: '((props: TooltipBondProps) => TooltipBond) | undefined',
-		default: 'undefined',
-		description: 'Replaces the Bond constructor, so a family can be extended or fused.'
-	},
-	{
 		name: 'offset',
 		type: 'number',
 		default: 'undefined',

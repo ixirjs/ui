@@ -47,13 +47,19 @@
 
 <Story name="Basic">
 	{#snippet template(args)}
-		<div class="flex h-screen w-full items-center justify-center">
+		<div class="flex h-screen w-full flex-col items-center justify-center gap-3">
 			<Tooltip_.Root {...args}>
-				<Tooltip_.Trigger base={Button}>Hover me</Tooltip_.Trigger>
-				<Tooltip_.Content>
-					This is a tooltip
-					<Tooltip_.Tail />
-				</Tooltip_.Content>
+				{#snippet children({ popover })}
+					<Tooltip_.Trigger base={Button}>Hover me</Tooltip_.Trigger>
+					<Tooltip_.Content>
+						This is a tooltip
+						<Tooltip_.Tail />
+					</Tooltip_.Content>
+					<!-- The root supplies a family interface; no constructor injection or manual disposal. -->
+					<code class="text-muted-foreground font-mono text-xs"
+						>profile: {popover.profile.name} · open: {String(popover.isOpen)}</code
+					>
+				{/snippet}
 			</Tooltip_.Root>
 		</div>
 	{/snippet}

@@ -10,3 +10,5 @@ export {
 	ContextMenuTrigger,
 	ContextMenuContent
 } from '$ixirjs/ui/components/context-menu';
+
+export type { ContextMenuBond } from '$ixirjs/ui/components/overlay/popup/types';

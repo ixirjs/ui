@@ -1,3 +1,4 @@
+import type { Snippet } from 'svelte';
 import type { RenderProps, Base, HtmlElementTagName } from '$ixirjs/ui/authoring';
 import type { OmitKey } from '$ixirjs/ui/types';
 import type {
@@ -11,7 +12,7 @@ import type { DropdownMenuItemProps } from '$ixirjs/ui/components/dropdown-menu/
 import type { DividerProps } from '$ixirjs/ui/components/divider';
 import type { ListGroupProps, ListTitleProps } from '$ixirjs/ui/components/list';
 import type { StateChangeCallback } from '$ixirjs/ui/types';
-import type { ContextMenuBond, ContextMenuBondProps } from './bond.svelte';
+import type { ContextMenuBond } from './bond.svelte';
 
 // Extension points: merge custom props into context-menu parts by augmenting these interfaces.
 // Each part's props alias another family's type, so these seams are the only way to extend
@@ -35,15 +36,15 @@ export type ContextMenuPresets = DropdownMenuPresets;
 
 export type ContextMenuRootProps = OmitKey<
 	PopoverRootProps,
-	'factory' | 'onopenchange' | 'presets'
+	'onopenchange' | 'presets' | 'children'
 > &
 	ContextMenuRootExtendProps & {
 		/** Per-instance presentation overrides for this family’s compound slots. */
 		presets?: ContextMenuPresets | undefined;
-		/** Advanced factory for a custom context-menu bond. */
-		factory?: ((props: ContextMenuBondProps) => ContextMenuBond) | undefined;
 		/** Runs after an open-state transition commits. */
 		onopenchange?: StateChangeCallback<boolean, ContextMenuBond> | undefined;
+		/** Content receives this family's shared state. */
+		children?: Snippet<[{ popover: ContextMenuBond }]>;
 	};
 
 export interface ContextMenuTriggerProps<

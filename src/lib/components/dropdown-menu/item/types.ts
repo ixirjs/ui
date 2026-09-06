@@ -46,7 +46,4 @@ export interface DropdownMenuItemProps<
 
 	/** Initial state configuration */
 	initial?: (this: DropdownMenuItemAtom) => void | (() => void);
-
-	/** Factory function for advanced custom item Atom creation */
-	factory?: () => DropdownMenuItemAtom;
 }

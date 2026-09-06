@@ -3,10 +3,10 @@
 	import { animate } from '$ixirjs/ui/authoring';
 	import { getYear, getMonth, setMonth } from '$ixirjs/ui/utils/date';
 	import { cn } from '$ixirjs/ui/utils';
-	import { DatePickerBond } from './bond.svelte';
+	import { DatePickerContext } from './bond.svelte';
 	import type { DatePickerMonthsProps } from './types';
 
-	const datePicker = DatePickerBond.getOrThrow(
+	const datePicker = DatePickerContext.getOrThrow(
 		'<DatePicker.Months /> must be used within a <DatePicker.Root />'
 	);
 

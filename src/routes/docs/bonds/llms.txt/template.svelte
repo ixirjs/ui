@@ -21,7 +21,12 @@
 	'defineBond, useRoot, definePart, defineLeaf, createAtomInstance and the Bond/Atom classes were removed on 2026-08-27.'
 ])}
 
-## Write the Bond
+## Popup family interfaces Popover, DropdownMenu, Select, Combobox, Tooltip, ContextMenu, DatePicker
+and PopoverDialog share `PopupBond`. Family Bond names are type-only interfaces. Library roots own
+construction and teardown; read state through children snippets or `getBond()` and mutate through
+commands. Popup roots/items do not accept `factory`. Standalone owners use `PopupBond.create` and
+`dispose`; component-root authors use `PopupBond.mount`. The Card example below remains valid for
+independent families. See [Migration](/docs/migration) for the popup API change. ## Write the Bond
 
 {codeBlock(
 	`import { Kernel } from '@ixirjs/ui/shared';

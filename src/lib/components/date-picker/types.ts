@@ -3,7 +3,7 @@ import type { Placement } from '@floating-ui/dom';
 import type { ComponentBase, RenderProps, SnippetProps } from '$ixirjs/ui/authoring';
 import type { Day, CalendarRange } from '$ixirjs/ui/components/calendar/types';
 import type { DatePickerBond } from './bond.svelte';
-import type { Factory, StateChangeCallback } from '$ixirjs/ui/types';
+import type { StateChangeCallback } from '$ixirjs/ui/types';
 import type { PresetLike } from '$ixirjs/ui/preset';
 import type { BondPresetLayers } from '$ixirjs/ui/authoring';
 
@@ -97,8 +97,6 @@ export interface DatePickerRootProps {
 	format?: string;
 	/** Per-instance presentation overrides for DatePicker's parts. */
 	presets?: DatePickerPresets | undefined;
-	/** Replaces the Bond constructor, so a family can be extended or fused. */
-	factory?: Factory<DatePickerBond>;
 	/** Compose Trigger + Calendar inside Root. */
 	children?: DatePickerChildren;
 	/** Fired after open state commits. */

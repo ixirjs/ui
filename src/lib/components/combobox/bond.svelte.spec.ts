@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { ComboboxBond } from './bond.svelte';
+import { PopupBond } from '$ixirjs/ui/components/overlay/popup/bond.svelte';
 
 // Verifies that query (filter box) and value (trigger box) are independent stores — editing one
 // must not affect the other. They were a single shared store before this fix. Read through
@@ -8,7 +8,7 @@ describe('Combobox input model — query vs value are separate stores', () => {
 	it('set(query) filters without touching value; set(value) selects without touching query', () => {
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const props: any = { query: '', values: [], multiple: false };
-		const bond = ComboboxBond.create(props);
+		const bond = PopupBond.create('combobox', props);
 		const input = bond.input;
 
 		// Type in the search box → only `query` changes.

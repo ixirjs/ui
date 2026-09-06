@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { Combobox } from '$lib/components/combobox';
-	import { Input } from '$lib/components/input';
+	import { Combobox } from '@ixirjs/ui/components/combobox';
+	import { Input } from '@ixirjs/ui/components/input';
 
 	const options = [
 		{ value: 'option1', label: 'Option 1' },
@@ -14,13 +14,19 @@
 
 <div class="w-64">
 	<Combobox.Root bind:value={singleValue} bind:label={singleLabel}>
-		<Combobox.Trigger base={Input.Root}>
-			<Combobox.Control placeholder="Select an option..." />
-		</Combobox.Trigger>
-		<Combobox.Content>
-			{#each options as option, i (i)}
-				<Combobox.Item value={option.value}>{option.label}</Combobox.Item>
-			{/each}
-		</Combobox.Content>
+		{#snippet children({ combobox })}
+			<Combobox.Trigger base={Input.Root}>
+				<Combobox.Control placeholder="Select an option..." />
+			</Combobox.Trigger>
+			<Combobox.Content>
+				{#each options as option, i (i)}
+					<Combobox.Item value={option.value}>{option.label}</Combobox.Item>
+				{/each}
+			</Combobox.Content>
+			<!-- Read the root-owned interface; no factory or manual teardown. -->
+			<code class="text-muted-foreground block font-mono text-xs"
+				>profile: {combobox.profile.name} · open: {String(combobox.isOpen)}</code
+			>
+		{/snippet}
 	</Combobox.Root>
 </div>

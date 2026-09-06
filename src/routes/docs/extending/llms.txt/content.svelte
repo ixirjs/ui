@@ -15,37 +15,29 @@
 
 <FrontMatter {frontmatter} />
 
-# Extending & Authoring A component family is a plain state class plus one Svelte component per
-part. The element seam `Kernel` lives at `@ixirjs/ui/shared`, together with the behaviour models
-(`createDisclosure`, `createSelection`, `createRovingFocus`, `createTypeahead`, …). Concrete Bond
-classes, used as extension bases, are expert APIs from `@ixirjs/ui/experimental`. ## Extend a family
+# Extending & Authoring Popup families share one `PopupBond` implementation. Their family names are
+interfaces, not subclasses, and popup roots/items do not accept custom factories. Use live props,
+presets and capabilities. Standalone owners use `PopupBond.create` and dispose their state;
+component roots use `PopupBond.mount` for root-owned teardown.
 
 {codeBlock(
-	`import { Kernel } from '@ixirjs/ui/shared';
-import { DropdownMenuBond } from '@ixirjs/ui/experimental';
+	`import { PopupBond, isSelectBond } from '@ixirjs/ui/experimental';
+import type { SelectBond } from '@ixirjs/ui/components/select';
 
-type Props = ConstructorParameters<typeof DropdownMenuBond>[0];
+// In a component root: live props, canonical state, root-owned disposal.
+const bond: SelectBond = PopupBond.mount('select', liveProps);
+bond.select(['alpha']);
 
-export class CommandMenuBond extends DropdownMenuBond {
-  query = $state('');
-
-  constructor(props: Props) {
-    super(props, 'command-menu');   // the name drives the preset path
-  }
-}
-
-export const CommandMenuContext = Kernel.context<CommandMenuBond>('bond/command-menu');`,
+// Family names are interfaces, not subclass constructors.
+if (isSelectBond(contextValue)) contextValue.select(['beta']);`,
 	'typescript'
 )}
 
-A Bond is an ordinary class, so extension is `extends`. There is no composition protocol and no spec
-record: `SelectBond` and `ComboboxBond` extend `DropdownMenuBondBase`, `DialogBond` and
-`PopoverBond` extend `OverlayBond`. ## Reuse parts you did not write A part resolves the context key
-its own family publishes. Share one instance under several keys and both families' parts bind to it
-— which is all `PopoverDialog` is.
+## Reuse parts you did not write A part resolves the context key its own family publishes. Share one
+instance under several keys and both families' parts bind to it — which is all `PopoverDialog` is.
 
 {codeBlock(
-	`const bond = PopoverDialogContext.share(PopoverDialogBond.create(bondProps));
+	`const bond = PopoverDialogContext.share(PopupBond.mount('popover-dialog', bondProps));
 DialogContext.share(bond);
 PopoverContext.share(bond);
 OverlayContext.share(bond);`,

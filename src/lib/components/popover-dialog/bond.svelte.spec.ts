@@ -1,7 +1,8 @@
 import { flushSync, tick } from 'svelte';
 import { describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
-import { PopoverDialogBond, PopoverDialogContext } from './bond.svelte';
+import { PopupBond } from '$ixirjs/ui/components/overlay/popup/bond.svelte';
+import { PopoverDialogContext } from './bond.svelte';
 import { DialogContext } from '$ixirjs/ui/components/dialog/bond.svelte';
 import { PopoverContext } from '$ixirjs/ui/components/popover/bond.svelte';
 import { OverlayContext } from '$ixirjs/ui/components/overlay/model.svelte';
@@ -25,7 +26,7 @@ import FocusProbe from '$ixirjs/ui/test/components/popover-dialog/popover-dialog
 describe('PopoverDialogBond — the Popover/Dialog fusion (§9.4.1)', () => {
 	it('rebrands identity to popover-dialog', () => {
 		const props = $state({ open: false, disabled: false });
-		expect(new PopoverDialogBond(props).name).toBe('popover-dialog');
+		expect(PopupBond.create('popover-dialog', props).name).toBe('popover-dialog');
 		expect(PopoverDialogContext.key).toContain('popover-dialog');
 	});
 

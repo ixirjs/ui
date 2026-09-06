@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { untrack } from 'svelte';
+	import { PopupBond } from '$ixirjs/ui/components/overlay/popup/bond.svelte';
 	import { useMenuRoot } from '$ixirjs/ui/components/dropdown-menu/bond.svelte';
-	import { ContextMenuBond, ContextMenuContext, type ContextMenuBondProps } from './bond.svelte';
+	import { ContextMenuContext, type ContextMenuBondProps } from './bond.svelte';
 	import type { ContextMenuRootProps } from './types';
 
 	const ID = $props.id();
@@ -17,7 +17,6 @@
 		position = 'absolute',
 		portal = undefined,
 		presets = undefined,
-		factory = undefined,
 		onopenchange = undefined,
 		children = undefined
 	}: ContextMenuRootProps = $props();
@@ -51,8 +50,7 @@
 			return presets;
 		}
 	};
-	const build = untrack(() => factory);
-	const bond = build ? build(bondProps) : ContextMenuBond.create(bondProps);
+	const bond = PopupBond.mount('context-menu', bondProps);
 	useMenuRoot(bond);
 	ContextMenuContext.share(bond);
 	bond.bindCommit((next, context) => {

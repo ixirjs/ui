@@ -4,7 +4,7 @@
 	import type { PresetModuleName } from '$ixirjs/ui/preset';
 	import { LIST_ITEM_AS, LIST_ITEM_CLASS } from '$ixirjs/ui/components/list/item-class';
 	import { DropdownMenuContext } from '$ixirjs/ui/components/dropdown-menu/bond.svelte';
-	import { DropdownMenuItemAtom } from './bond.svelte';
+	import { menuItem } from '$ixirjs/ui/components/overlay/popup/item';
 	import type { DropdownMenuItemProps } from './types';
 
 	const menu = DropdownMenuContext.getOrThrow(
@@ -23,7 +23,7 @@
 	}: DropdownMenuItemProps = $props();
 
 	// Live getters, not a `$derived` snapshot: typeahead reads `props.disabled` through this object.
-	const item = new DropdownMenuItemAtom(
+	const item = menuItem(
 		{
 			get id() {
 				return id;

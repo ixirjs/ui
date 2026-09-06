@@ -18,7 +18,8 @@ const COMPONENTS = join(process.cwd(), 'src/lib/components');
 // `this.collection<…>` on the older runtime; a mount-ordered `items` map on the redesigned Kernel.
 // The menu families' map is a `SvelteMap` — roving and typeahead read the membership itself, not
 // just facts derived from it — so the reactive spelling counts as ownership too.
-const OWNS_COLLECTION = /\bthis\.collection<|readonly items = new (Svelte)?Map<|new Collection</;
+const OWNS_COLLECTION =
+	/\bthis\.collection<|(?:readonly|const) items = new (Svelte)?Map<|new Collection</;
 
 function familiesOwningACollection(): string[] {
 	const owners = new Set<string>();
@@ -28,7 +29,14 @@ function familiesOwningACollection(): string[] {
 		for (const file of walk(dir)) {
 			if (!file.endsWith('.svelte.ts') && !file.endsWith('.ts')) continue;
 			if (file.includes('.spec.')) continue;
-			if (OWNS_COLLECTION.test(readFileSync(file, 'utf8'))) owners.add(family);
+			if (OWNS_COLLECTION.test(readFileSync(file, 'utf8'))) {
+				// Popup profiles share exactly two collection paths: menu and selection. These fixtures
+				// cover the canonical map, including ContextMenu/Combobox's shared item implementation.
+				if (file.endsWith('/overlay/popup/bond.svelte.ts')) {
+					owners.add('dropdown-menu');
+					owners.add('select');
+				} else owners.add(family);
+			}
 		}
 	}
 	return [...owners].sort();
@@ -65,14 +73,12 @@ describe('growth benchmark coverage', () => {
 
 	it('lists no fixture for a family that no longer owns a collection', () => {
 		const owners = new Set(familiesOwningACollection());
-		// `select` and `context-menu` inherit their collection from `DropdownMenuBondBase` rather
-		// than declaring one, so they never appear in the source scan. Select still earns a fixture:
-		// it overrides `navigableItems`, which is the very seam the roving model reads.
+		// Menu and selection paths now come from the shared popup runtime scan above.
 		// `datagrid-columns` and `tree-depth` are SECOND axes of their families, not families of
 		// their own: neither name can match a directory and neither must read as stale. A family
 		// earns more than one growth shape when a child reads more than one owner-wide thing --
 		// `datagrid` a second collection, `tree` its ancestor chain.
-		const inherited = new Set(['select', 'datagrid-columns', 'tree-depth']);
+		const inherited = new Set(['datagrid-columns', 'tree-depth']);
 		const stale = FIXTURES.map((fixture) => fixture.name).filter(
 			(name) => !owners.has(name) && !inherited.has(name)
 		);

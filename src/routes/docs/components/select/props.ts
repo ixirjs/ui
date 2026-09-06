@@ -44,12 +44,6 @@ export const selectItemProps: PropDefinition[] = [
 		description: 'Transition function for exiting'
 	},
 	{
-		name: 'factory',
-		type: '() => SelectItemController<T>',
-		default: 'undefined',
-		description: 'Factory function to create a custom SelectItemController instance'
-	},
-	{
 		name: 'id',
 		type: 'string',
 		default: 'generated id',
@@ -106,12 +100,6 @@ export const selectRootProps: PropDefinition[] = [
 		type: 'boolean',
 		default: 'false',
 		description: 'Disabled'
-	},
-	{
-		name: 'factory',
-		type: 'Factory<SelectBond>',
-		default: 'undefined',
-		description: 'Factory'
 	},
 	{
 		name: 'keys',

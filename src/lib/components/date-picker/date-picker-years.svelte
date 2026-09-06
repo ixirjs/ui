@@ -3,11 +3,11 @@
 	import { animate } from '$ixirjs/ui/authoring';
 	import { getYear, setYear } from '$ixirjs/ui/utils/date';
 	import { cn } from '$ixirjs/ui/utils';
-	import { DatePickerBond } from './bond.svelte';
+	import { DatePickerContext } from './bond.svelte';
 	import type { DatePickerYearsProps } from './types';
 	import { Icon } from '$ixirjs/ui/components/icon';
 
-	const datePicker = DatePickerBond.getOrThrow(
+	const datePicker = DatePickerContext.getOrThrow(
 		'<DatePicker.Years /> must be used within a <DatePicker.Root />'
 	);
 

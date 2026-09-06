@@ -47,6 +47,21 @@ const surface = {
 };
 
 describe('published source surfaces', () => {
+	it('does not expose removed popup constructors or factory adapters', () => {
+		for (const name of [
+			'PopoverBond',
+			'DropdownMenuBond',
+			'SelectBond',
+			'ComboboxBond',
+			'TooltipBond',
+			'ContextMenuBond',
+			'DatePickerBond',
+			'PopoverDialogBond',
+			'mountFactory'
+		])
+			expect(experimental).not.toHaveProperty(name);
+	});
+
 	// Formatted through prettier with the repo's own config: the snapshot is a checked-in `.json`,
 	// so `prettier --check` in `bun run lint` has an opinion about it (short arrays collapse onto
 	// one line). Without this the formatter and the snapshot writer would each insist on their own.

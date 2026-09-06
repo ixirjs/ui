@@ -60,12 +60,6 @@ export const datePickerRootProps: PropDefinition[] = [
 		description: 'Last day of the selected range. Omit for single-day selection.'
 	},
 	{
-		name: 'factory',
-		type: 'Factory<DatePickerBond>',
-		default: 'undefined',
-		description: 'Replaces the Bond constructor, so a family can be extended or fused.'
-	},
-	{
 		name: 'format',
 		type: 'string',
 		default: 'undefined',

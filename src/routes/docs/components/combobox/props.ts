@@ -14,12 +14,6 @@ export const comboboxRootProps: PropDefinition[] = [
 		description: 'Disables the combobox, preventing user interaction.'
 	},
 	{
-		name: 'factory',
-		type: 'Factory<ComboboxBond>',
-		default: 'undefined',
-		description: 'Custom factory function to create a ComboboxBond instance.'
-	},
-	{
 		name: 'keys',
 		type: 'string[]',
 		default: 'undefined',

@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { untrack } from 'svelte';
-	import { DropdownMenuBond, useMenuRoot, type DropdownMenuBondProps } from './bond.svelte';
+	import { PopupBond } from '$ixirjs/ui/components/overlay/popup/bond.svelte';
+	import { useMenuRoot, type DropdownMenuBondProps } from './bond.svelte';
 	import type { DropdownMenuRootProps } from './types';
 
 	const ID = $props.id();
@@ -14,7 +14,6 @@
 		position = 'absolute',
 		portal = undefined,
 		presets = undefined,
-		factory = undefined,
 		onopenchange = undefined,
 		children = undefined
 	}: DropdownMenuRootProps = $props();
@@ -49,9 +48,7 @@
 			return presets;
 		}
 	};
-	// `factory` is read once, at init, by design.
-	const build = untrack(() => factory);
-	const bond = build ? build(bondProps) : DropdownMenuBond.create(bondProps);
+	const bond = PopupBond.mount('dropdown-menu', bondProps);
 	useMenuRoot(bond);
 	// Controlled state: the Bond decides, the root writes, the callback fires after the write with
 	// the staged `event`/`reason` a dismissal handed it.
