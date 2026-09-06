@@ -34,7 +34,25 @@ const pkg = JSON.parse(readFileSync('package.json', 'utf8')) as {
 
 const sorted = (names: string[]) => [...names].sort();
 
+const componentExports = Object.fromEntries(
+	Object.entries(componentFacades)
+		.sort(([a], [b]) => a.localeCompare(b))
+		.map(([path, facade]) => [
+			path.slice('./components/'.length),
+			{
+				exports: sorted(Object.keys(facade)),
+				namespaces: Object.fromEntries(
+					Object.entries(facade)
+						.filter(([, value]) => value !== null && typeof value === 'object')
+						.sort(([a], [b]) => a.localeCompare(b))
+						.map(([name, value]) => [name, sorted(Object.keys(value as object))])
+				)
+			}
+		])
+);
+
 const surface = {
+	componentExports,
 	packageExports: sorted(Object.keys(pkg.exports)),
 	componentFacades: sorted(
 		Object.keys(componentFacades).map((name) => name.slice('./components/'.length))

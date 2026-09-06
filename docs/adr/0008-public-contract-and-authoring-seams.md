@@ -2,6 +2,11 @@
 
 ## Status
 
+**Compatibility policy superseded by [ADR 0011](./0011-additive-first-api-compatibility.md).**
+The historical pre-1.0 removals below describe the path to the adopted worktree baseline, not
+permission for further removals. Supported APIs are now additive-first with no scheduled retirement.
+See [the current policy and evidence](../api/README.md).
+
 Accepted for package layering. [ADR 0009](./0009-native-renderer-and-lazy-runtime-kernel.md)
 supersedes its rendering, descendant-authoring, and retired low-level public surfaces.
 

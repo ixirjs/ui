@@ -15,6 +15,7 @@ Authoritative evidence: [`package.json`](package.json), [`svelte.config.js`](sve
 - [`README.md`](README.md) — package purpose, consumer prerequisites, and basic development entry points.
 - [`package.json`](package.json) — package exports and verified scripts.
 - [`src/lib/index.ts`](src/lib/index.ts) — curated root package API.
+- [`docs/api/README.md`](docs/api/README.md) — additive-first compatibility policy, frozen declaration baseline, family evolution decisions and external consumer rehearsal.
 
 ## Project index router
 
@@ -70,6 +71,7 @@ SvelteKit routes/docs/stories ──imports──> src/lib public/component APIs
 | Unit/browser tests            | `bunx vitest run`                                          | Vitest client and server projects                                    | [`vitest.config.ts`](vitest.config.ts).                                                                                           |
 | End-to-end tests              | `bunx playwright test`                                     | `e2e/`, with build + preview web server                              | [`playwright.config.ts`](playwright.config.ts).                                                                                   |
 | Build                         | `bun run build`                                            | SvelteKit application                                                | `package.json`; uses Netlify adapter via [`svelte.config.js`](svelte.config.js).                                                  |
+| API compatibility             | `bun run check:api`; `bun run check:consumer`              | Built declarations and unpacked external consumer                    | `scripts/api-contract.mjs`, `scripts/check-consumer.mjs`; no repository aliases in the consumer.                                  |
 | Package exports               | `bun run prepack`                                          | Generated package plus publication lint                              | `package.json`; invokes `svelte-kit sync`, `svelte-package`, and `publint`.                                                       |
 | Scaffold a component          | `bun run scaffold <name> --slots root,header:trigger,body` | New family folder plus its preset-key registration                   | [`scripts/scaffold.mjs`](scripts/scaffold.mjs); `--static` for the Button shape, `--dry` to preview.                              |
 | Convention audits             | `bun run test:unit -- --run`                               | Enforced as specs under `src/lib/test/contracts/`, not shell scripts | e.g. [`root-identity-audit.spec.ts`](src/lib/test/contracts/root-identity-audit.spec.ts).                                         |
@@ -94,7 +96,7 @@ SvelteKit routes/docs/stories ──imports──> src/lib public/component APIs
 - Components and directories use kebab-case; variables/functions use camelCase.
 - New modules follow the static `Button` or bonded `Card`/`Accordion` anatomy. Shared state belongs on the family's state class; behaviour is composed from models; every part renders through `Kernel.element`.
 - Public package surfaces are explicit. A new top-level module generally requires updates to its component facade, [`src/lib/index.ts`](src/lib/index.ts), public facade, aggregate convention, and public-surface test; consult the authoring guide for the exact list.
-- Test-only Svelte files belong under `src/lib/test/` and use the `*.test.svelte` convention. Bond interface and `atom.spread` behavior are primary test surfaces.
+- Test-only Svelte files belong under `src/lib/test/` and use the `*.test.svelte` convention. Rendered outcomes and reachable state contracts are the primary test surfaces.
 - Do not copy legacy patterns; `AGENTS.md` marks the canonical exemplar for each module shape and names the parts that are migration debt.
 
 ## Cross-project change guide

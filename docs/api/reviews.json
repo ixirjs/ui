@@ -1,0 +1,25 @@
+[
+	{
+		"key": "declarations:dist/components/overlay/popup/types.d.ts",
+		"before": "c6cd0cfcd8f627f77abc447b75063c1f73e96798ef52593016c4ae3e226bba1e",
+		"after": "9d7d604bf1443906c49c7f63d760d1da9ad32616ccc1d9c26a2f8e03ba7984d9",
+		"reason": "T3: replace implementation-derived Pick member groups with independent, equivalent interfaces. Keep every exposed member and runtime object. Authorized in the API compatibility plan.",
+		"checks": [
+			"src/lib/test/types/popup-contract.type-test.ts",
+			"src/lib/test/compatibility/consumer.test.svelte",
+			"scripts/check-consumer.mjs"
+		]
+	},
+	{
+		"key": "declarations:dist/kernel/render/element-branches.svelte.d.ts",
+		"before": "6bc6e1bcc851f2569b588bfb59ff7068f6dee111a17e1302c1ddd9bfd1f03998",
+		"after": "1496df1a024e6c26160db56c8e13df01d39384bbd603614bc07bad5bede8ad80",
+		"reason": "User-approved Svelte 5.46.4 compatibility fix: typed aliases preserve the optional callable signatures while required implementation parameters avoid the ESM compiler/printer optional-marker bug. No wrappers or default-argument derived signals.",
+		"checks": [
+			"src/lib/test/types/render-branch-contract.type-test.ts",
+			"scripts/check-consumer.mjs",
+			"src/lib/kernel/render/transition-leaf.svelte.spec.ts",
+			"src/lib/test/contracts/anchor-budget.spec.ts"
+		]
+	}
+]

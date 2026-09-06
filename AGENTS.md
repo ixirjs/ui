@@ -327,6 +327,23 @@ Some code is intentionally vestigial or pending removal (e.g. element-less roots
 `rest`). Confirm before deleting anything that merely looks dead, and flag out-of-scope bugs
 rather than fixing them mid-pass.
 
+## API compatibility
+
+Raw published `.svelte` must compile at the declared Svelte minimum. Its ESM compiler can leave
+optional implementation parameters (`arg?`) in emitted JavaScript with newer printer dependencies.
+Keep optional caller types, but accept explicit `undefined` in implementations; the renderer's typed
+snippet aliases are the worked example. Do not substitute snippet defaults: those add derived signals.
+CI checks both installed and minimum Svelte with `scripts/check-consumer.mjs`.
+
+[ADR 0011](docs/adr/0011-additive-first-api-compatibility.md) supersedes pre-1.0 removal permissions.
+The adopted worktree API is additive-first with no scheduled removals. Before changing any public
+prop, binding, callback, snippet/state member, factory, preset key, import or rendering capability,
+read `docs/api/README.md` and record today's consumer use and tomorrow's additive evolution path.
+Keep existing aliases and reachable state members; experimental constructors do not make their
+stable snippet/prop types experimental. Never regenerate `docs/api/current-baseline.json` or rewrite
+frozen compatibility fixtures to make a candidate pass. `bun run check:api` gates declaration changes;
+`bun run check:consumer` rehearses an unchanged consumer against the actual package outside aliases.
+
 ## graphify
 
 This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.

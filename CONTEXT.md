@@ -50,7 +50,7 @@ literally in the part's `attrs`.
 **Capability** — historical. Behaviour is composed from **models** — `createDisclosure`,
 `createSelection`, `createRovingFocus`, `createTypeahead`, `createInput`, `createSort`,
 `createPagination`, `createValidation`, `createStatus`, `createGeometry` — plain functions a Bond
-calls in its constructor, exported from `@ixirjs/ui/capability`. Their ARIA and `data-*` projections
+calls in its constructor, exported for consumers from `@ixirjs/ui/shared`. Their ARIA and `data-*` projections
 are written by the parts that own those elements. The registration protocol (`defineBondCapability`,
 `defineAtomCapability`, slot keys, the host) was deleted with the runtime.
 
@@ -68,7 +68,7 @@ part)`: the first keeps the canonical one, later ones take the lowest free suffi
 teardown.
 
 **Spread** — the merged attribute object a part renders: `<div {...el.attrs}>`.
-Equals `{ ...attrs, ...handlers, ...attachments }`. The atom's interface is the
+Equals `{ ...attrs, ...handlers, ...attachments }`. The part's interface is the
 spread; that's the test surface.
 
 **Attribute merge order** — one order, owned by `Kernel.element`: `class` first, then the preset's
@@ -107,11 +107,11 @@ See §"Bond context plumbing".
 
 **Preset record** — the closed presentation contract `{ class, attrs, variants,
 compounds, defaults, render? }`, authored with `definePreset(...)`. Presets do not own
-attachments or lifecycle; that behavior belongs in capabilities.
+attachments or lifecycle; that behavior belongs in parts and behavior models.
 
 **`base` / `as` / preset cascade** — rich render props govern what component renders and how
 variants/presets merge. Order: `defaults → preset → variants → restProps` (last wins). Tests under
-`src/lib/components/atom/resolve/` pin this contract. `presentation.svelte.ts` evaluates it into one
+`src/lib/kernel/resolve/` pin this contract. `presentation.svelte.ts` evaluates it into one
 tracked snapshot. Kernel renders the ordinary native path directly; custom renderers, driver-only
 motion, or renderer lifecycle hooks enter the richer component leaves.
 
@@ -129,8 +129,7 @@ _hierarchy levels_, hyphens stay _inside_ a level (`dropdown-menu.item`). A fuse
 keys from `bond.name`, which is what lets Dialog's parts resolve `popover-dialog.*` under
 PopoverDialog.
 
-layers.) A re-exported atom re-namespaces automatically (combobox reusing the
-popover tail → `combobox.tail`).
+Shared parts select family preset keys from their state/context; preserve existing fallback resolution.
 
 A part declares its key once, in its Kernel spec (`preset: 'accordion.item.header'`), and a
 consumer's `preset` prop overrides it. The `preset` prop is typed `PresetKey`, which also accepts an
@@ -144,9 +143,10 @@ names that family's key verbatim rather than waking its own fallback — the two
 visibility of a content region. Dialog, Drawer, Popover, Tooltip, Context Menu,
 Dropdown Menu, Select, and Combobox all use disclosure behavior.
 
-**OverlayBond** — the shared base for overlay families. It owns the open/close
-surface and common overlay props. Concrete overlays add their own capabilities,
-part atoms, and positioning or modal behavior.
+**Overlay state** — modal/host families retain their plain `OverlayBond` base; the eight popup
+families share `PopupBond` behind family interfaces. Both satisfy the structural `OverlayState`
+contract. Roots own disposal; standalone popup owners dispose their own state. Existing factory
+contracts on non-popup families remain supported.
 
 **Portal** — an in-place containment scope and mount target, not a body-detached escape hatch. A portal owns the DOM place where teleported content paints; host portals keep nested overlays scrolling, clipping, and stacking with their host.
 
@@ -162,20 +162,13 @@ part atoms, and positioning or modal behavior.
 
 **Layer anchor / relation** — a named z reference registered with `ZLayer.anchor(...)`; a relation (`{ below }` or `{ above }`) pins a layer just below or above that anchor. Use it for sticky-under/sticky-over cases instead of magic z constants.
 
-**Portal host capabilities** — reusable overlay policies in
-`src/lib/components/portal/host/capabilities` and
-`src/lib/components/portal/host/policies`. They cover escape, trigger behavior,
-dismissal, focus, focus restore, outside press, backdrop press, layer state, and
-modal/positioned surface concerns. Prefer adding or decorating a capability over
-copying `$effect` blocks into each overlay root.
+**Overlay behavior** — shared attribute, event and lifecycle helpers in
+`src/lib/components/overlay/behavior.svelte.ts` consume `OverlayState`. They own trigger,
+dismissal, focus and modal policies without depending on one concrete family class. Portal
+mounting and surfaces live under `src/lib/components/portal/mounting` and `surface`.
 
-**Overlay view helpers** — narrow helpers such as `overlayIsOpen`,
-`overlayIsDisabled`, and `closeOverlay` let capabilities read or mutate an
-overlay-shaped Bond without casting to one concrete component family.
-
-**Queryable** — narrow interface (`clearQuery(): boolean`) for overlays that
-have typeable query input, such as Combobox and Select. Escape and clear policies
-depend on this small contract instead of the whole concrete Bond.
+**Query dismissal** — the popup family's `onEscape` clears a nonempty query before closing.
+Preserve that existing ordering when adding dismissal policies.
 
 ## Testing posture
 
@@ -203,35 +196,10 @@ fully decoupled from any bond.
 
 ## Other deep modules
 
-**Collection** — `Bond.collection<T>(kind)` returns a typed `Collection<T>`
-with insertion-order reactive `values`, `get/has/indexOf/size`, and
-`set(id, bond) → cleanup`.
-
-**A Collection IS a capability.**
-`collection(kind)` lazily registers a `collectionCapability<T>(kind)` at slot
-`collection:<kind>` in the single `#capabilities` home — there is **no** parallel
-`#collections` map. The `Collection` is the capability's `surface`, exactly as
-`SelectionModel` is the `selection` capability's surface. This is a _structural_
-unification: surface-only by default, so runtime behavior is byte-for-byte the old
-children registry. What's new is that a collection is now **addressable** by
-`capability('collection:<kind>')`, **overridable** by spec last-wins through the same
-machinery as `selection`/`focus`, and can project **positional ARIA**
-(`aria-posinset`/`aria-setsize`/`data-index` from `indexOf`) onto
-`role('item')`/`role('container')` — opt in per component with
-`collectionCapability(kind, { positional: true })`, default off (emits nothing).
-Call `collection()` directly on the Bond.
-
-Adopted by every family that holds a children registry: accordion (`item`), datagrid
-(`row`/`column`), form (`field`), tabs (`item`), stepper (`step`), dropdown-menu
-(`item`). Items register their **real bond** from the child root atom's `onmount` via
-`parent.attachItem(id, bond)` (returns the unregister cleanup).
-
-Conventions:
-
-- Insertion order only; sorting is a `$derived` view on the parent.
-- Selection / highlight state lives on the parent, not the collection.
-- Duplicate-id set throws in dev, replaces in prod.
-- Many collections per bond namespace by slot: `collection:item`, `collection:row`, …
+**Collection** — a root-owned `Map` (or the popup runtime's `SvelteMap`) of registered children.
+Children register their own identity and release it on teardown; selection and focus remain on
+the owning state. There is no public `Bond.collection` or capability registry. Preserve existing
+family registration methods because some are reachable through public state interfaces.
 
 **Child→parent seam** — a child Bond or part should depend on a **narrow
 parent-facing interface**, not the whole parent Bond. The parent Bond exposes
@@ -240,7 +208,7 @@ collection registration, or a specific capability surface. The child stores that
 small interface, which keeps tests simple and avoids reaching through
 `parent.parent.parent` chains.
 
-**Roving focus** — `createRovingFocus({ ids, item })` from `@ixirjs/ui/capability`: a model over the
+**Roving focus** — `createRovingFocus({ ids, item })` from `@ixirjs/ui/shared`: a model over the
 ids currently reachable, with `next`/`previous`/`first`/`last`/`goto`. The keyboard handler and the
 `tabindex`/`aria-activedescendant` attributes are written by the part that owns the element. Tree
 owns one model at the outermost node, because navigation crosses node boundaries.
@@ -270,5 +238,12 @@ list reads downstream as valid. See `docs/adr/0010`.
 `formatPath(parsePath(name))` before comparison, so `items.0.qty` and `items[0].qty`
 are one key. A field's `errors` are its own schema's plus the slice of the form's
 that match its name; the merged view — not the field's own model — is what the
-`VALIDATION` capability surface publishes, so a form-level error still reaches
+field's `errors` getter exposes, so a form-level error still reaches
 `aria-invalid` on the control.
+
+## Compatibility
+
+[ADR 0011](docs/adr/0011-additive-first-api-compatibility.md) and [the API policy](docs/api/README.md)
+protect the adopted worktree surface. No scheduled removals. Review each API for today's use and
+tomorrow's additive evolution; preserve aliases, augmentation, factories, bindings and reachable
+state members. Documentation of older runtimes in historical ADRs is not current authoring guidance.

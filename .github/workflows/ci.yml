@@ -40,6 +40,13 @@ jobs:
       - name: Package exports
         run: bun run prepack
 
+      # prepack has already built the package and checked its declaration contract.
+      - name: Unchanged external consumer upgrade
+        run: node scripts/check-consumer.mjs
+
+      - name: Declared Svelte minimum consumer
+        run: node scripts/check-consumer.mjs --minimum
+
       - name: Storybook build
         run: bun run storybook:build
 
