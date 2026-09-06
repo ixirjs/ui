@@ -1,4 +1,17 @@
 import { PopupBond } from './bond.svelte';
+import type { SvelteMap } from 'svelte/reactivity';
+import type {
+	RovingFocus,
+	TypeaheadSurface,
+	SelectionModel,
+	InputModel
+} from '$ixirjs/ui/capability';
+import type {
+	DropdownMenuItem,
+	MenuItemSource
+} from '$ixirjs/ui/components/dropdown-menu/bond.svelte';
+import type { SelectItemAtom } from '$ixirjs/ui/components/select/item/bond.svelte';
+import type { ComboboxSelection } from '$ixirjs/ui/components/combobox/types';
 import type { PopupProfile } from './profiles';
 import type { OverlayState, OverlayProps } from '$ixirjs/ui/components/overlay/model.svelte';
 import type { ComputePositionReturn, VirtualElement } from '@floating-ui/dom';
@@ -29,47 +42,55 @@ export interface PositionedPopup<
 	notifyComputed(value: ComputePositionReturn): void;
 	onEscape(event: KeyboardEvent): void;
 }
-type MenuMembers = Pick<
-	PopupBond,
-	| 'items'
-	| 'roving'
-	| 'typeahead'
-	| 'ariaHasPopup'
-	| 'triggerToggles'
-	| 'contentRole'
-	| 'contentAttrs'
-	| 'navigableItems'
-	| 'itemText'
-	| 'itemDomId'
-	| 'registerItem'
-	| 'unregisterItem'
-	| 'mountItem'
-	| 'unmountItem'
-	| 'item'
->;
-type SelectionMembers = Pick<PopupBond, 'selection' | 'selections' | 'select' | 'unselect'>;
-type InputMembers = Pick<
-	PopupBond,
-	'input' | 'userSelections' | 'allSelections' | 'addSelection' | 'deleteSelection'
->;
-type DateMembers = Pick<
-	PopupBond,
-	| 'formattedValue'
-	| 'hasValue'
-	| 'isYearsPickerOpen'
-	| 'isMonthsPickerOpen'
-	| 'formatDate'
-	| 'selectDate'
-	| 'selectStart'
-	| 'selectEnd'
-	| 'clear'
-	| 'openYearsPicker'
-	| 'closeYearsPicker'
-	| 'toggleYearsPicker'
-	| 'openMonthsPicker'
-	| 'closeMonthsPicker'
-	| 'toggleMonthsPicker'
->;
+// These declarations intentionally do not derive from PopupBond. An implementation refactor
+// must satisfy the contract, not silently rewrite the contract through Pick/ReturnType.
+interface MenuMembers {
+	readonly items: SvelteMap<string, DropdownMenuItem>;
+	readonly roving: RovingFocus<DropdownMenuItem>;
+	readonly typeahead: TypeaheadSurface;
+	readonly ariaHasPopup: 'dialog' | 'menu' | 'listbox';
+	readonly triggerToggles: boolean;
+	readonly contentRole: 'dialog' | 'menu' | 'listbox';
+	readonly contentAttrs: Record<string, unknown>;
+	readonly navigableItems: MenuItemSource;
+	itemText(item: DropdownMenuItem | undefined, id: string): string | undefined | null;
+	itemDomId(id: string): string;
+	registerItem(id: string, item: DropdownMenuItem): () => void;
+	unregisterItem(id: string): void;
+	mountItem(id: string, item: DropdownMenuItem): () => void;
+	unmountItem(id: string): void;
+	item(id: string): DropdownMenuItem | undefined;
+}
+interface SelectionMembers {
+	readonly selection: SelectionModel<string>;
+	readonly selections: SelectItemAtom<unknown>[];
+	select(ids: string[]): void;
+	unselect(ids: string[]): void;
+}
+interface InputMembers {
+	readonly input: InputModel;
+	readonly userSelections: ComboboxSelection[];
+	readonly allSelections: ComboboxSelection[];
+	addSelection(label: string): void;
+	deleteSelection(id: string): void;
+}
+interface DateMembers {
+	readonly formattedValue: string;
+	readonly hasValue: boolean;
+	readonly isYearsPickerOpen: boolean;
+	readonly isMonthsPickerOpen: boolean;
+	formatDate(date: Date): string;
+	selectDate(date: Date): void;
+	selectStart(date: Date): void;
+	selectEnd(date: Date): void;
+	clear(): void;
+	openYearsPicker(): void;
+	closeYearsPicker(): void;
+	toggleYearsPicker(): void;
+	openMonthsPicker(): void;
+	closeMonthsPicker(): void;
+	toggleMonthsPicker(): void;
+}
 export interface PopoverBond extends PositionedPopup<PopoverBondProps> {}
 export interface DropdownMenuBond extends PositionedPopup<DropdownMenuBondProps>, MenuMembers {}
 export interface SelectBond
