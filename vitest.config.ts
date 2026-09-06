@@ -7,6 +7,10 @@ export default defineConfig({
 		projects: [
 			{
 				extends: './vite.config.ts',
+				// Dependency discovery is disabled in Vite; browser tests also need these CJS trees bundled.
+				optimizeDeps: {
+					include: ['@testing-library/svelte', '@testing-library/jest-dom/vitest']
+				},
 				test: {
 					name: 'client',
 					environment: 'browser',

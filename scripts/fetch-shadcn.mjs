@@ -6,7 +6,7 @@
  *   node scripts/fetch-shadcn.mjs            # fetch + write + hash
  *   node scripts/fetch-shadcn.mjs --verify   # fail if the live registry no longer matches
  */
-import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
+import { lstatSync, mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { dirname, join } from 'node:path';
 
@@ -28,13 +28,34 @@ const ITEMS = [
 ];
 
 const VERIFY = process.argv.includes('--verify');
-const files = {};
+const files = Object.create(null);
 /**
  * Raw upstream content, keyed the same way — the provenance hash is taken over THIS, not over what
  * lands on disk. A pin should identify the opponent, so local rewrites (the `$UTILS$` path and the
  * `@ts-nocheck` marker below) must not move it, and `--verify` must fail only when shadcn changed.
  */
-const upstream = {};
+const upstream = Object.create(null);
+
+// Registry filenames are untrusted. Reject traversal on either platform and existing symlinks,
+// including ancestors of OUT, before any fetched content is written.
+function registryPath(target) {
+	if (
+		typeof target !== 'string' ||
+		/[\\:]/.test(target) ||
+		target.split('/').some((part) => !part || part !== part.trim() || part.endsWith('.'))
+	) {
+		throw new Error('Invalid registry file path');
+	}
+	const path = join(OUT, target);
+	for (let current = path; current !== dirname(current); current = dirname(current)) {
+		try {
+			if (lstatSync(current).isSymbolicLink()) throw new Error('Registry path contains a symlink');
+		} catch (error) {
+			if (error.code !== 'ENOENT') throw error;
+		}
+	}
+	return path;
+}
 
 /**
  * Opt a vendored file out of `bun run check`.
@@ -65,6 +86,7 @@ for (const item of ITEMS) {
 			.replaceAll('$lib/utils.js', '../utils')
 			.replaceAll('"../utils.js"', '"../utils"');
 		const target = file.target ?? file.path;
+		registryPath(target);
 		upstream[target] = file.content;
 		files[target] = suppressTypecheck(content);
 	}
@@ -91,7 +113,7 @@ if (VERIFY) {
 }
 
 for (const [target, content] of Object.entries(files)) {
-	const path = join(OUT, target);
+	const path = registryPath(target);
 	mkdirSync(dirname(path), { recursive: true });
 	writeFileSync(path, content);
 }

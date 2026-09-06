@@ -32,7 +32,7 @@
 	}
 
 	let isDark = $derived(appTheme ? appTheme.colorScheme === 'dark' : true);
-	let highlightedCode = $state('');
+	let highlightedCode = $state<string | undefined>('');
 	let isLoading = $state(true);
 
 	function normalizeLang(value: string): BundledLanguage {
@@ -104,7 +104,7 @@
 			.catch((err) => {
 				if (!alive) return;
 				console.error('Syntax highlighting error:', err);
-				highlightedCode = `<pre><code>${code}</code></pre>`;
+				highlightedCode = undefined;
 				isLoading = false;
 			});
 
@@ -118,17 +118,29 @@
 	class="code-block {transparent ? 'transparent' : ''} {className}"
 	style:--left-border-width={showLeftBorder ? '1px' : '0px'}
 >
-	{#if isLoading}
-		<div class="bg-code-bg animate-pulse p-3.5">
-			<div class="bg-muted-foreground/20 h-3 w-3/4 rounded"></div>
-			<div class="bg-muted-foreground/20 mt-2 h-3 w-1/2 rounded"></div>
-		</div>
-	{:else}
-		<div class="overflow-x-auto">
-			{@html highlightedCode}
-		</div>
-	{/if}
+	{@render (isLoading ? loading : content)()}
 </div>
+
+{#snippet loading()}
+	<div class="bg-code-bg animate-pulse p-3.5">
+		<div class="bg-muted-foreground/20 h-3 w-3/4 rounded"></div>
+		<div class="bg-muted-foreground/20 mt-2 h-3 w-1/2 rounded"></div>
+	</div>
+{/snippet}
+
+{#snippet content()}
+	<div class="overflow-x-auto">
+		{@render (highlightedCode === undefined ? fallback : highlighted)()}
+	</div>
+{/snippet}
+
+{#snippet fallback()}
+	<pre><code>{code}</code></pre>
+{/snippet}
+
+{#snippet highlighted()}
+	{@html highlightedCode ?? ''}
+{/snippet}
 
 <style>
 	.code-block :global(pre) {
