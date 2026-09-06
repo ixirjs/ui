@@ -2,7 +2,10 @@
 	import { Section, CodeBlock, DocCallout } from '$docs/components';
 	import { Button } from '$lib/components/button';
 
-	const END = '<' + '/script>';
+	import TilesExample from './examples/tiles-example.svelte';
+	import bondCode from './examples/tiles.svelte.ts?raw';
+	import rootCode from './examples/tiles-root.svelte?raw';
+	import partCode from './examples/tiles-trigger.svelte?raw';
 
 	const popupCode = `import { PopupBond, isSelectBond } from '@ixirjs/ui/experimental';
 import type { SelectBond } from '@ixirjs/ui/components/select';
@@ -14,7 +17,7 @@ state.dispose();        // standalone owner releases its resources
 
 // Component children/getBond() already return root-owned interfaces.
 if (isSelectBond(contextValue)) contextValue.unselect(['alpha']);
-// Custom component roots use PopupBond.mount(profile, liveProps) at init.`;
+// Custom component roots use PopupBond.mount('select', liveProps) at init.`;
 
 	const removedShared = [
 		['defineBond', 'a plain class + Kernel.context<T>(key)'],
@@ -35,94 +38,8 @@ if (isSelectBond(contextValue)) contextValue.unselect(['alpha']);
 		['capability definition helpers, role & slot keys', 'attrs written literally in each part']
 	];
 
-	// Before / after, verified against src/lib/components/card/bond.svelte.ts.
-	const bondCode = `// Before — a definition, a base class, an atom map.
-class TilesBondBase extends Bond<TilesProps> {
-  select(value: string) { this.props.value = value; }
-}
-export const TilesBond = defineBond({
-  name: 'tiles',
-  base: TilesBondBase,
-  atoms: { root: defineAtom('root'), item: { atom: defineAtom('item'), role: roles.item } }
-});
-
-// After — a plain class and one context key.
-import { Kernel } from '@ixirjs/ui/shared';
-
-export const TilesContext = Kernel.context<TilesBond>('bond/tiles');
-
-export class TilesBond {
-  readonly name = 'tiles';
-  readonly props: TilesProps;
-  constructor(props: TilesProps) { this.props = props; }
-  static create(props: TilesProps) { return new TilesBond(props); }
-
-  get id() { return this.props.id ?? 'tiles'; }
-  get rootId() { return Kernel.id(this.id, 'tiles-root'); }
-  select(value: string) { this.props.value = value; }
-}`;
-
-	// Verified against src/lib/components/card/card-root.svelte and accordion-root.svelte.
-	const rootCode = `// Before
-const root = useRoot(TilesBond, { value: valueProp }, {
-  id: () => ID,
-  preset: () => preset,
-  class: 'flex flex-wrap gap-2',
-  props: () => ({ ...restProps, class: klass })
-});
-export const getBond = root.getBond;
-
-// After — the root does the four things useRoot did, in the open.
-const ID = $props.id();
-const bondProps = {                 // live getters, never a snapshot
-  get id() { return ID; },
-  get value() { return value; },
-  get disabled() { return disabled; }
-};
-const build = untrack(() => factory);
-const bond = TilesContext.share(build ? build(bondProps) : TilesBond.create(bondProps));
-bond.bindCommit((next, context) => {   // what controlledProp used to own
-  value = next;
-  onvaluechange?.(next, context);
-});
-export const getBond = () => bond;
-
-const el = Kernel.element(() => restProps, {
-  preset: 'tiles',
-  class: 'flex flex-wrap gap-2',
-  state: bond,
-  attrs: () => ({ id: bond.rootId })
-});`;
-
-	// Verified against src/lib/components/card/card-title.svelte.
-	const partCode = `<!-- Before -->
-<script lang="ts">
-  const props: TilesItemProps = $props();
-  const el = definePart(TilesBond, 'item', () => props, {
-    as: 'div',
-    class: 'tiles-item',
-    context: 'optional'
-  });
-${END}
-{@render Kernel.render(el)(el, props.children)}
-
-<!-- After -->
-<script lang="ts">
-  import { Kernel } from '@ixirjs/ui/shared';
-  import { TilesContext } from './bond.svelte';
-
-  const props: TilesItemProps = $props();
-  const bond = TilesContext.get();          // getOrThrow(message) when required
-  const el = Kernel.element(() => props, {
-    preset: 'tiles.item',
-    class: 'tiles-item',
-    state: bond
-  });
-${END}
-<div {...el.attrs}>{@render props.children?.()}</div>`;
-
 	// Verified against src/lib/components/accordion/item/accordion-item-body.svelte.
-	const leafCode = `// A part with a REASON to dispatch — real transitions, an \`animate\` driver, a
+	const leafCode = `// A part with a REASON to dispatch — real enter/exit transitions, a
 // \`base\` renderer, or a polymorphic \`as\` — declares it and binds ONE leaf.
 const el = Kernel.element(() => restProps, {
   preset: 'accordion.item.body',
@@ -191,6 +108,13 @@ attrs: () => ({
 	/>
 </svelte:head>
 
+<DocCallout variant="info" title="Future upgrades: additive-first">
+	The current API baseline is protected by an additive-first policy with no scheduled removals.
+	Existing imports, aliases, bindings, callbacks, presets and supported factories remain working.
+	The historical migrations below explain changes made before that baseline; they are not a verified
+	release-by-release migration map. Deprecation does not require an immediate rewrite.
+</DocCallout>
+
 <div class="animate-page-in mb-9">
 	<p class="text-muted-foreground m-0 mb-2.5 font-mono text-[11px] tracking-[0.05em] uppercase">
 		Migration Guide
@@ -210,6 +134,15 @@ attrs: () => ({
 		<Button href="/docs/extending" as="a" variant="outline">Author components</Button>
 	</div>
 </div>
+
+<Section.Root>
+	<Section.Header><Section.Title>A runnable current example</Section.Title></Section.Header>
+	<p class="text-muted-foreground text-sm">
+		The state, root and trigger source shown below is this live example. The human and LLM
+		documentation share those files, which also compile and run against the packed package.
+	</p>
+	<TilesExample />
+</Section.Root>
 
 <Section.Root>
 	<Section.Header><Section.Title>Canonical popup state</Section.Title></Section.Header>
@@ -375,7 +308,7 @@ attrs: () => ({
 	</Section.Header>
 
 	<div class="overflow-hidden rounded-lg">
-		<CodeBlock lang="typescript" code={rootCode} />
+		<CodeBlock lang="svelte" code={rootCode} />
 	</div>
 
 	<DocCallout variant="warning" title="Live getters, never a snapshot">

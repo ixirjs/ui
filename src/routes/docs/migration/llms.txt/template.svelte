@@ -1,6 +1,9 @@
 <script lang="ts">
 	import { FrontMatter } from '$docs/md/components';
 	import { codeBlock, list } from '$docs/md/template';
+	import bondCode from '../examples/tiles.svelte.ts?raw';
+	import rootCode from '../examples/tiles-root.svelte?raw';
+	import partCode from '../examples/tiles-trigger.svelte?raw';
 
 	let { data } = $props();
 	const { frontmatter } = $derived(data);
@@ -8,16 +11,21 @@
 
 <FrontMatter {frontmatter} />
 
-# Migration Guide On 2026-08-27 the Bond/Atom authoring runtime was removed. A component family is
-now a plain state class published under `Kernel.context`, and every part renders through
-`Kernel.element`. Normal component markup, bindings and presets remain supported. Popup constructor
-values and `factory` props are removed, so those callers must migrate too. ## Canonical popup state
-Popover, DropdownMenu, Select, Combobox, Tooltip, ContextMenu, DatePicker and PopoverDialog share
-one runtime and one collection-item implementation. Family Bond names are interfaces, not
-constructors. Root/item `factory` props and `mountFactory` are removed. Use bindable props,
-snippets, presets and capability composition rather than subclass injection. Children snippets and
-`getBond()` expose root-owned state; never manually dispose it. Other families retain their factory
-APIs.
+# Migration Guide ## Future upgrades: additive-first The current API baseline is protected by an
+additive-first policy with no scheduled removals. Preserve existing imports, aliases, bindings,
+callbacks, presets and supported factories. Deprecation does not require an immediate rewrite. The
+historical migrations below describe changes before that baseline, not a verified release-by-release
+migration map. Unknown version boundaries must not be treated as automatic migration instructions.
+## Historical authoring migration On 2026-08-27 the Bond/Atom authoring runtime was removed. A
+component family is now a plain state class published under `Kernel.context`, and every part renders
+through `Kernel.element`. Normal component markup, bindings and presets remain supported. Popup
+constructor values and `factory` props are removed, so those callers must migrate too. ## Canonical
+popup state Popover, DropdownMenu, Select, Combobox, Tooltip, ContextMenu, DatePicker and
+PopoverDialog share one runtime and one collection-item implementation. Family Bond names are
+interfaces, not constructors. Root/item `factory` props and `mountFactory` are removed. Use bindable
+props, snippets, presets and capability composition rather than subclass injection. Children
+snippets and `getBond()` expose root-owned state; never manually dispose it. Other families retain
+their factory APIs.
 
 {codeBlock(
 	`import { PopupBond, isSelectBond } from '@ixirjs/ui/experimental';
@@ -30,7 +38,7 @@ state.dispose();        // standalone owner releases its resources
 
 // Component children/getBond() already return root-owned interfaces.
 if (isSelectBond(contextValue)) contextValue.unselect(['alpha']);
-// Custom component roots use PopupBond.mount(profile, liveProps) at init.`,
+// Custom component roots use PopupBond.mount('select', liveProps) at init.`,
 	'typescript'
 )}
 
@@ -62,72 +70,23 @@ if (isSelectBond(contextValue)) contextValue.unselect(['alpha']);
 behaviour models (`createDisclosure`, `createSelection`, `createRovingFocus`, `createTypeahead`,
 `createInput`, `createValidation`, …) as ordinary functions. `@ixirjs/ui/experimental` still exports
 the canonical `PopupBond` runtime and type-only popup family names. Other families retain their
-concrete classes. ## 1. The definition becomes a class
+concrete classes. The following state, root and trigger sources are the live example on the human
+documentation page and are checked against the packed package. ## 1. The definition becomes a class
 
-{codeBlock(
-	`import { Kernel } from '@ixirjs/ui/shared';
-
-export const TilesContext = Kernel.context<TilesBond>('bond/tiles');
-
-export class TilesBond {
-  readonly name = 'tiles';
-  readonly props: TilesProps;
-  constructor(props: TilesProps) { this.props = props; }
-  static create(props: TilesProps) { return new TilesBond(props); }
-
-  get id() { return this.props.id ?? 'tiles'; }
-  get rootId() { return Kernel.id(this.id, 'tiles-root'); }
-  select(value: string) { this.props.value = value; }
-}`,
-	'typescript'
-)}
+{codeBlock(bondCode, 'typescript')}
 
 `Kernel.context('bond/tiles')` mints the canonical key `@ixirjs/context/bond/tiles` — the same
 string `defineBond` generated. ## 2. The root does its own wiring
 
-{codeBlock(
-	`const ID = $props.id();
-const bondProps = {                    // live getters, never a snapshot
-  get id() { return ID; },
-  get value() { return value; },
-  get disabled() { return disabled; }
-};
-const build = untrack(() => factory);  // factory is read once, at init, by design
-const bond = TilesContext.share(build ? build(bondProps) : TilesBond.create(bondProps));
-bond.bindCommit((next, context) => {   // what controlledProp used to own
-  value = next;
-  onvaluechange?.(next, context);
-});
-export const getBond = () => bond;
-
-const el = Kernel.element(() => restProps, {
-  preset: 'tiles',
-  class: 'flex flex-wrap gap-2',
-  state: bond,
-  attrs: () => ({ id: bond.rootId })
-});`,
-	'typescript'
-)}
+{codeBlock(rootCode, 'svelte')}
 
 ## 3. Parts render their own element
 
-{codeBlock(
-	`// Before: definePart(TilesBond, 'item', () => props, { as: 'div', class: 'tiles-item' })
-// After:
-const bond = TilesContext.get();          // getOrThrow(message) when a root is required
-const el = Kernel.element(() => props, {
-  preset: 'tiles.item',
-  class: 'tiles-item',
-  state: bond
-});
+{codeBlock(partCode, 'svelte')}
 
-// Template: <div {...el.attrs}>…</div>`,
-	'typescript'
-)}
-
-A part keeps a dispatch only when it has a reason — real transitions, an `animate` driver, a `base`
-renderer, or a polymorphic `as`. It declares that in the spec and binds its leaf once in the script
-with `const leaf = Kernel.render(el);`, then renders that identifier. Rendering the inline
+A part keeps a dispatch only when it has a reason — real enter/exit transitions, a `base` renderer,
+or a polymorphic `as`. It declares that in the spec and binds its leaf once in the script with
+`const leaf = Kernel.render(el);`, then renders that identifier. Rendering the inline
 `Kernel.render(el)(…)` call instead costs a snippet block and a hydration anchor. ## 4. The registry
 becomes ids and Maps
 
